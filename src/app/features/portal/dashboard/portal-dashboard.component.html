@@ -123,7 +123,7 @@
           </div>
 
           <p class="text-3xl font-bold text-gray-800">
-            {{ credit.totalAmount | currency: "ARS" : "symbol" : "1.0-0" }}
+            {{ credit.totalToReturn | currency: "ARS" : "symbol" : "1.0-0" }}
           </p>
 
           @if (credit.pendingPenalty > 0) {

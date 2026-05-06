@@ -37,6 +37,7 @@ export interface PortalCredit {
   id: string;
   type: 'SALE' | 'LOAN';
   totalAmount: number;
+  totalToReturn: number;
   installmentsCount: number;
   paymentFrequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
   status: 'ACTIVE' | 'SETTLED';

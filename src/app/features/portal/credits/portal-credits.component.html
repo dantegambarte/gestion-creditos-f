@@ -50,10 +50,10 @@
             </div>
             <div class="flex items-center gap-4">
               <div class="text-right">
-                <p class="text-xs text-gray-400">Total</p>
+                <p class="text-xs text-gray-400">Total a devolver</p>
                 <p class="font-bold text-gray-800">
                   {{
-                    credit.totalAmount | currency: "ARS" : "symbol" : "1.0-0"
+                    credit.totalToReturn | currency: "ARS" : "symbol" : "1.0-0"
                   }}
                 </p>
               </div>

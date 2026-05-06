@@ -99,6 +99,7 @@ function mapPortalCredit(raw: Record<string, unknown>): PortalCredit {
     id: raw['id'] as string,
     type: raw['type'] as 'SALE' | 'LOAN',
     totalAmount: raw['total_amount'] as number,
+    totalToReturn: raw['total_to_return'] as number,
     installmentsCount: raw['installments_count'] as number,
     paymentFrequency: raw['payment_frequency'] as
       | 'WEEKLY'
