@@ -22,6 +22,8 @@
 | **CL-01** | Crear Cliente | Se realizó la creación de un cliente. | Debería salir un mensaje que el cliente se guardó correctamente. | Corregido / Validado |
 | **CL-02** | Ver Cliente | Click en "Ver" en un cliente. | Debería mostrar los datos del cliente. | Corregido / Validado |
 | **CL-03** | Gestión de Clientes | Click en "Editar" en un cliente. | Los cambios deberían guardarse en la DB. | Corregido / Validado |
+| **CL-04** | Editar Clientes | Click en "Editar" en un cliente. | Debería salir un cartel que fue exitoso. | Error |
+
 
 
 
@@ -72,12 +74,15 @@
 - `cypress/e2e/35-product-success-toast-regression.cy.ts` → PR-05 toast de éxito: **passing**
 - `cypress/e2e/33-product-create-modal-regression.cy.ts` → PR-06 modal crear producto: **passing**
 
-## 🟢 
+## 🟢 Módulo: Planilla
 
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
+| **PL-01** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar el botón "Generar Planilla". | Corregido / Validado |
+| **PL-02** | Botones | Los botones no están correctamente ubicados. |Deberían seguir los patrones visuales. | Corregido / Validado |
 
-## 🟢 
+## 🟢 Módulo: Gastos
 
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
+| **GA-01** | Gastos | Se hizo click en desactivar gasto "Alquiler". | Debería poder activarlo nuevamente. | Corregido / Validado |

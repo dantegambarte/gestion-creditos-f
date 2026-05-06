@@ -206,6 +206,17 @@ Módulo Clientes
 
 ---
 
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-04]
+**Título / Descripción:** [Editar Clientes]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click sobre el boton "Editar" en un cliente.]
+* **Resultado Esperado:** [Al modificar los datos deben debería salir un cartel "Modificación Exitosa".]
+* **Resultado Obtenido (Actual):** [El apretar "Guardar Cambios" no sale ningun cartel.]
+
+
+---
+
 
 Módulo Producto
 
