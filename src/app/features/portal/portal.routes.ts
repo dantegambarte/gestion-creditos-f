@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-// import { portalAuthGuard } from './auth/portal-auth.guard'; // TODO: re-enable with guard
+import { portalAuthGuard } from './auth/portal-auth.guard';
 import { portalLoginGuard } from './auth/portal-login.guard';
 
 export const PORTAL_ROUTES: Routes = [
@@ -13,7 +13,7 @@ export const PORTAL_ROUTES: Routes = [
   },
   {
     path: '',
-    // TODO: re-enable auth guard when maquetado is done → canActivate: [portalAuthGuard]
+    canActivate: [portalAuthGuard],
     loadComponent: () =>
       import('./layout/portal-layout.component').then(
         (c) => c.PortalLayoutComponent,

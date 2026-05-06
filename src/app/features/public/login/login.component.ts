@@ -59,6 +59,7 @@ export class LoginComponent implements OnDestroy {
     { label: 'Admin', dni: '12345678' },
     { label: 'Vendedor', dni: '87654321' },
     { label: 'Cobrador', dni: '11223344' },
+    { label: 'Vend./Cobrador', dni: '55667788' },
   ];
 
   private destroy$ = new Subject<void>();

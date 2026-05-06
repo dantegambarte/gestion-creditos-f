@@ -15,5 +15,7 @@ export const noAuthGuard: CanActivateFn = () => {
     return router.createUrlTree(['/seller']);
   if (user.roles.includes(Roles.COLLECTOR))
     return router.createUrlTree(['/collector']);
-  return router.createUrlTree(['/admin']);
+  if (user.roles.includes(Roles.SELLER_COLLECTOR))
+    return router.createUrlTree(['/seller']);
+  return router.createUrlTree(['/login']);
 };

@@ -59,6 +59,19 @@ export const MOCK_USERS: AuthUser[] = [
     token:
       'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3ItMDAzIiwicm9sZSI6IkNPTExFQ1RPUiIsImF1ZCI6InNpc3RlbWEtaW50ZXJubyJ9.mock_collector',
   },
+  {
+    id: 'usr-004',
+    full_name: 'Ana Romero',
+    name: 'Ana Romero',
+    dni: '55667788',
+    email: 'vendedor.cobrador@siscreditos.com',
+    avatar: 'AR',
+    roles: ['SELLER_COLLECTOR'],
+    is_temp_password: false,
+    force_relogin_at: null,
+    token:
+      'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3ItMDA0Iiwicm9sZSI6IlNFTExFUl9DT0xMRUNUT1IiLCJhdWQiOiJzaXN0ZW1hLWludGVybm8ifQ.mock_seller_collector',
+  },
 ];
 
 // ── Servicio ──────────────────────────────────────────────────────────────────

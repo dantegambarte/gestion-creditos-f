@@ -8,5 +8,5 @@ export const portalLoginGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (!auth.isAuthenticated()) return true;
-  return router.createUrlTree([AppRoutes.DASHBOARD]);
+  return router.createUrlTree([AppRoutes.PORTAL_DASHBOARD]);
 };
