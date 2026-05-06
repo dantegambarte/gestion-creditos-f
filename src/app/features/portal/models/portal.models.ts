@@ -20,6 +20,7 @@ export interface UpcomingInstallment {
   status: 'PENDING' | 'OVERDUE' | 'PARTIAL';
   creditId: string;
   creditType: 'SALE' | 'LOAN';
+  creditInstallmentsCount: number;
 }
 
 export interface AccountSummary {
@@ -30,19 +31,25 @@ export interface AccountSummary {
   statusIndicator: 'GREEN' | 'YELLOW' | 'RED';
   totalPaidAmount: number;
   pendingPenaltyAmount: number;
+  activeCredits: number;
+  settledCredits: number;
+  totalInstallmentsCount: number;
   upcomingInstallments: UpcomingInstallment[];
 }
 
 export interface PortalCredit {
   id: string;
   type: 'SALE' | 'LOAN';
+  name: string | null;
   totalAmount: number;
   totalToReturn: number;
   installmentsCount: number;
+  installmentAmount: number | null;
   paymentFrequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
   status: 'ACTIVE' | 'SETTLED';
   createdAt: string;
   approvedAt: string | null;
+  settledAt: string | null;
   totalInstallments: number;
   paidInstallments: number;
   nextDueDate: string | null;
@@ -63,4 +70,8 @@ export interface PortalInstallment {
 
 export interface PortalCreditDetail extends PortalCredit {
   installments: PortalInstallment[];
+  downPayment: number;
+  downPaymentMethod: string | null;
+  prepaidInstallments: number;
+  interestRate: number | null;
 }
