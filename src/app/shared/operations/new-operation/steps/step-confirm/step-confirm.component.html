@@ -30,21 +30,18 @@
       </div>
     </div>
 
-    <!-- Producto -->
+    <!-- Tipo de operación -->
     <div class="mb-5 pb-5" style="border-bottom: 1px solid var(--ff-border)">
       <span
         class="text-[10px] font-bold uppercase tracking-wider mb-3 block"
         style="color: var(--ff-text-muted)"
-        >Producto</span
+        >Operación</span
       >
       <p class="text-sm font-semibold" style="color: var(--ff-text-primary)">
-        {{
-          form.selectedType() === "VENTA"
-            ? "Venta a Crédito - " +
-              form.selectedProducts().length +
-              " unidad(es)"
-            : "Préstamo Express - Crédito Personal"
-        }}
+        {{ operationTypeLabel() }}
+        @if (form.selectedType() === "SALE") {
+          - {{ form.selectedProducts().length }} unidad(es)
+        }
       </p>
     </div>
 
@@ -57,43 +54,66 @@
       >
       <div class="space-y-3">
         <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Monto del crédito</span>
+          <span style="color: var(--ff-text-secondary)">Total base</span>
           <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
             {{ form.capital() | currencyArs }}
           </span>
         </div>
+        @if (form.selectedType() === "SALE") {
+          <div class="flex justify-between items-center text-sm">
+            <span style="color: var(--ff-text-secondary)">Enganche</span>
+            <span
+              class="font-bold ff-mono"
+              style="color: var(--ff-text-primary)"
+            >
+              {{ form.downPayment() | currencyArs }}
+            </span>
+          </div>
+        }
         <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Plazo</span>
-          <span class="font-bold" style="color: var(--ff-text-primary)">
-            {{ form.installmentsCount() }} cuotas
-            {{
-              form.selectedType() === "PRESTAMO"
-                ? form.selectedFrequency().label.split(" ")[0].toLowerCase() +
-                  "es"
-                : ""
-            }}
+          <span style="color: var(--ff-text-secondary)">Capital financiado</span>
+          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
+            {{ form.financedCapital() | currencyArs }}
           </span>
         </div>
         <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Tasa de interés</span>
+          <span style="color: var(--ff-text-secondary)">Plan de cuotas</span>
           <span class="font-bold" style="color: var(--ff-text-primary)">
-            {{
-              form.selectedType() === "PRESTAMO"
-                ? form.loanInterest() + "% mensual"
-                : form.interestRate() + "% fijo"
-            }}
+            {{ installmentsLabel() }}
+          </span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span style="color: var(--ff-text-secondary)">Fecha primer pago</span>
+          <span class="font-bold" style="color: var(--ff-text-primary)">
+            {{ (form.firstDueDate() | date: "dd/MM/yyyy") || "No definida" }}
+          </span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span style="color: var(--ff-text-secondary)">Valor cuota</span>
+          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
+            {{ form.installmentValue() | currencyArs }}
+          </span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span style="color: var(--ff-text-secondary)">Total a devolver</span>
+          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
+            {{ form.totalToPay() | currencyArs }}
           </span>
         </div>
         <div
           class="flex justify-between items-center text-sm pt-2"
           style="border-top: 1px solid var(--ff-border)"
         >
-          <span style="color: var(--ff-text-secondary)">Cuota estimada</span>
+          <span style="color: var(--ff-text-secondary)">Tipo de tasa</span>
           <span
-            class="font-bold text-base ff-mono"
-            style="color: var(--ff-accent)"
+            class="font-bold"
+            style="color: var(--ff-text-primary)"
           >
-            {{ form.installmentValue() | currencyArs }}
+            {{
+              form.selectedType() === "LOAN"
+                ? form.loanInterest() + "% mensual"
+                : form.interestRate() + "% fijo"
+            }}
           </span>
         </div>
       </div>

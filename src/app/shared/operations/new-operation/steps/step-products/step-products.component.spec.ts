@@ -33,7 +33,7 @@ describe('StepProductsComponent (CR-03)', () => {
       { id: 'p1', name: 'Heladera', price: 1000, stock: 2 },
     ]);
 
-    component.changeOperationType('PRESTAMO');
+    component.changeOperationType('LOAN');
     fixture.detectChanges();
 
     expect(component.usesProducts).toBeFalse();
