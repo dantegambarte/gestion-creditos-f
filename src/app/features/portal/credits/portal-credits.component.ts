@@ -1,6 +1,6 @@
 import { Component, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { SkeletonModule } from 'primeng/skeleton';
 import { PortalService } from '../portal.service';
 import { PortalCredit } from '../models/portal.models';
@@ -8,7 +8,7 @@ import { PortalCredit } from '../models/portal.models';
 @Component({
   selector: 'app-portal-credits',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, SkeletonModule],
+  imports: [CommonModule, CurrencyPipe, DatePipe, SkeletonModule, RouterLink],
   templateUrl: './portal-credits.component.html',
 })
 export class PortalCreditsComponent implements OnInit {

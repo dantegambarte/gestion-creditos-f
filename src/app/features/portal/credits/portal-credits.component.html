@@ -1,7 +1,13 @@
 <div class="flex flex-col gap-4" data-cy="portal-credits-page">
   <!-- Título -->
   <div>
-    <h2 class="text-xl font-bold" style="color: var(--ff-text-primary)" data-cy="portal-credits-title">Mis créditos</h2>
+    <div class="flex items-center justify-between">
+      <h2 class="text-xl font-bold" style="color: var(--ff-text-primary)" data-cy="portal-credits-title">Mis créditos</h2>
+      <a [routerLink]="['/portal/dashboard']" class="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-75"
+         style="color: var(--ff-accent)">
+        <i class="pi pi-arrow-left text-xs"></i> Volver
+      </a>
+    </div>
     @if (!loading && credits.length > 0) {
       <p class="text-sm mt-0.5" style="color: var(--ff-text-secondary)">
         {{ totalCredits }} crédito{{ totalCredits !== 1 ? 's' : '' }} registrado{{ totalCredits !== 1 ? 's' : '' }} · {{ activeCreditsCount }} activo{{ activeCreditsCount !== 1 ? 's' : '' }}

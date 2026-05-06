@@ -91,8 +91,13 @@
     <!-- Próximos vencimientos (col ancha) -->
     <div class="md:col-span-2 rounded-xl overflow-hidden" style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
       <div class="px-4 py-3 flex items-center justify-between" style="border-bottom: 1px solid var(--ff-border)">
-        <span class="text-sm font-semibold" style="color: var(--ff-text-primary)">Próximos vencimientos</span>
-        <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background: rgba(79,110,247,0.15); color: var(--ff-accent)">30 DÍAS</span>
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-semibold" style="color: var(--ff-text-primary)">Próximos vencimientos</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background: rgba(79,110,247,0.15); color: var(--ff-accent)">30 DÍAS</span>
+        </div>
+        <a [routerLink]="['/portal/credits']" class="text-xs font-medium transition-opacity hover:opacity-75" style="color: var(--ff-accent)">
+          Ver todos mis créditos →
+        </a>
       </div>
 
       @if (summary.upcomingInstallments.length === 0) {
@@ -140,11 +145,8 @@
           }
         </div>
         <!-- Footer -->
-        <div class="px-4 py-3 flex items-center justify-between text-xs" style="border-top: 1px solid var(--ff-border); color: var(--ff-text-muted)">
-          <span>{{ summary.upcomingInstallments.length }} cuota{{ summary.upcomingInstallments.length !== 1 ? 's' : '' }} próxima{{ summary.upcomingInstallments.length !== 1 ? 's' : '' }} · Total {{ upcomingTotal | currency:'ARS':'symbol':'1.0-0' }}</span>
-          <a [routerLink]="['/portal/credits']" class="font-medium transition-opacity hover:opacity-75" style="color: var(--ff-accent)">
-            Ver todos mis créditos →
-          </a>
+        <div class="px-4 py-3 text-xs" style="border-top: 1px solid var(--ff-border); color: var(--ff-text-muted)">
+          {{ summary.upcomingInstallments.length }} cuota{{ summary.upcomingInstallments.length !== 1 ? 's' : '' }} próxima{{ summary.upcomingInstallments.length !== 1 ? 's' : '' }} · Total {{ upcomingTotal | currency:'ARS':'symbol':'1.0-0' }}
         </div>
       }
     </div>
