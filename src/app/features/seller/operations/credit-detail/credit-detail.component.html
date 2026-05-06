@@ -1,379 +1,436 @@
 <p-toast />
 
-<div class="p-4 max-w-4xl mx-auto">
-  @if (loading) {
-    <app-loading-state />
-  } @else if (error) {
-    <app-error-state />
-  } @else if (credit) {
-    @if (credit.rejectionReason) {
-      <div
-        class="auth-warning-banner mb-4"
-        style="
-          border-color: rgba(248, 113, 113, 0.3);
-          background: rgba(248, 113, 113, 0.08);
-          color: var(--ff-danger);
-        "
-      >
-        <i class="pi pi-times-circle shrink-0"></i>
-        <p class="text-sm">
-          <strong>Motivo de rechazo:</strong> {{ credit.rejectionReason }}
-        </p>
-      </div>
-    }
+@if (loading) {
+  <app-loading-state />
+} @else if (error) {
+  <app-error-state />
+} @else if (credit) {
 
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <p-tag
-          [value]="credit.type === 'SALE' ? 'Venta' : 'Préstamo'"
-          [severity]="credit.type === 'SALE' ? 'info' : 'secondary'"
-        />
-        <p-tag
-          [value]="statusLabel(credit.status)"
-          [severity]="statusSeverity(credit.status)"
-        />
+  @if (credit.rejectionReason) {
+    <div
+      class="auth-warning-banner mx-6 mt-4"
+      style="border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.08); color: var(--ff-danger)"
+    >
+      <i class="pi pi-times-circle shrink-0"></i>
+      <p class="text-sm"><strong>Motivo de rechazo:</strong> {{ credit.rejectionReason }}</p>
+    </div>
+  }
+
+  <!-- Header bar -->
+  <div
+    class="flex flex-wrap items-center gap-4 px-6 py-4 border-b"
+    style="border-color: var(--ff-border)"
+  >
+    <div class="flex items-center gap-2">
+      <p-tag
+        [value]="credit.type === 'SALE' ? 'Venta' : 'Préstamo'"
+        [severity]="credit.type === 'SALE' ? 'info' : 'secondary'"
+      />
+      <p-tag [value]="statusLabel(credit.status)" [severity]="statusSeverity(credit.status)" />
+    </div>
+
+    <div class="flex items-center gap-6 text-sm">
+      <div>
+        <div class="ud-label text-xs">Monto total</div>
+        <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
+          {{ credit.totalAmount | currencyArs: 0 }}
+        </div>
       </div>
+      @if (installmentAmount) {
+        <div>
+          <div class="ud-label text-xs">Cuota</div>
+          <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
+            {{ installmentAmount | currencyArs: 0 }} / mes
+          </div>
+        </div>
+      }
+      <div>
+        <div class="ud-label text-xs">Cuotas</div>
+        <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
+          {{ credit.installmentsCount }}
+        </div>
+      </div>
+      @if (credit.approvedAt) {
+        <div>
+          <div class="ud-label text-xs">Aprobado</div>
+          <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
+            {{ credit.approvedAt | date: 'dd/MM/yyyy' }}
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="flex items-center gap-3 ml-auto flex-wrap">
+      @if (credit.customerName) {
+        <span class="text-sm font-semibold" style="color: var(--ff-accent)">
+          {{ credit.customerName }} →
+        </span>
+      }
+      @if (credit.createdByName) {
+        <span class="text-xs" style="color: var(--ff-text-muted)">
+          Vendedor: {{ credit.createdByName }}
+        </span>
+      }
+      @if (isAdmin && credit.status === 'PENDING_APPROVAL') {
+        <p-button label="Aprobar" icon="pi pi-check" severity="success" size="small" (onClick)="openApproveDialog()" />
+        <p-button label="Rechazar" icon="pi pi-times" severity="danger" size="small" (onClick)="openRejectDialog()" />
+      }
+      @if (isAdmin && credit.status === 'ACTIVE') {
+        <p-button
+          label="Cancelación anticipada"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (onClick)="openSettlementDialog()"
+        />
+      }
       <p-button
         label="Volver"
         icon="pi pi-arrow-left"
         severity="secondary"
         [outlined]="true"
+        size="small"
         (onClick)="goBack()"
       />
     </div>
+  </div>
 
-    @if (isAdmin) {
-      <div
-        class="mb-6 p-4 rounded flex flex-wrap gap-3"
-        style="
-          background: rgba(79, 110, 247, 0.08);
-          border: 1px solid rgba(79, 110, 247, 0.2);
-        "
-      >
-        @if (credit.status === "PENDING_APPROVAL") {
-          <p-button
-            label="Aprobar"
-            icon="pi pi-check"
-            severity="success"
-            (onClick)="openApproveDialog()"
-          />
-          <p-button
-            label="Rechazar"
-            icon="pi pi-times"
-            severity="danger"
-            (onClick)="openRejectDialog()"
-          />
-        }
-        @if (credit.status === "ACTIVE") {
-          <p-button
-            label="Cancelación anticipada"
-            icon="pi pi-ban"
-            severity="warning"
-            (onClick)="openSettlementDialog()"
-          />
-        }
-      </div>
-    }
+  <!-- Two-column layout -->
+  <div class="flex" style="min-height: 0">
 
-    <!-- Info crédito -->
-    <div class="ff-panel p-4 mb-6">
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <div class="ud-label">Monto total</div>
-          <div class="ud-value ff-mono">
-            {{ credit.totalAmount | currencyArs: 2 }}
-          </div>
-        </div>
-        @if (credit.type === "SALE") {
+    <!-- Left: financial details + units -->
+    <div
+      class="flex flex-col gap-4 p-4"
+      style="width: 420px; min-width: 420px; border-right: 1px solid var(--ff-border)"
+    >
+
+      <!-- Detalles financieros -->
+      <div class="ff-panel p-4">
+        <h3 class="font-semibold mb-4" style="color: var(--ff-text-primary)">Detalles financieros</h3>
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <div class="ud-label">Monto financiado</div>
-            <div class="ud-value ff-mono">
-              {{ credit.financedAmount | currencyArs: 2 }}
-            </div>
+            <div class="ud-label">Monto total</div>
+            <div class="ud-value ff-mono">{{ credit.totalAmount | currencyArs: 0 }}</div>
           </div>
-        }
-        <div>
-          <div class="ud-label">Cuotas</div>
-          <div class="ud-value">
-            {{ credit.installmentsCount }} —
-            {{ frequencyLabel(credit.paymentFrequency) }}
+          <div>
+            <div class="ud-label">Frecuencia</div>
+            <div class="ud-value">{{ frequencyLabel(credit.paymentFrequency) }}</div>
           </div>
-        </div>
-        @if (credit.interestRate !== null) {
           <div>
             <div class="ud-label">Tasa de interés</div>
-            <div class="ud-value">{{ credit.interestRate }}%</div>
-          </div>
-        }
-        <div>
-          <div class="ud-label">Fecha de alta</div>
-          <div class="ud-value">
-            {{ credit.createdAt | date: "dd/MM/yyyy" }}
-          </div>
-        </div>
-        @if (credit.approvedAt) {
-          <div>
-            <div class="ud-label">Fecha de aprobación</div>
             <div class="ud-value">
-              {{ credit.approvedAt | date: "dd/MM/yyyy" }}
+              @if (credit.interestRate !== null) {
+                {{ credit.interestRate }}%
+              } @else {
+                N/A (Venta)
+              }
             </div>
           </div>
-        }
-        @if (credit.approvedBy) {
-          <div>
-            <div class="ud-label">Aprobado por</div>
-            <div class="ud-value">{{ credit.approvedBy }}</div>
-          </div>
-        }
-        @if (credit.createdByName) {
-          <div>
-            <div class="ud-label">Creado por</div>
-            <div class="ud-value">{{ credit.createdByName }}</div>
-          </div>
-        }
-        @if (credit.notes) {
-          <div class="col-span-2">
-            <div class="ud-label">Notas</div>
-            <div class="ud-value">{{ credit.notes }}</div>
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Datos del cliente -->
-    <div class="ff-panel p-4 mb-6">
-      <h3 class="font-semibold mb-3" style="color: var(--ff-text-primary)">
-        Datos del cliente
-      </h3>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <div class="ud-label">Nombre</div>
-          <div class="ud-value font-semibold">{{ credit.customerName }}</div>
-        </div>
-        <div>
-          <div class="ud-label">DNI</div>
-          <div class="ud-value ff-mono">{{ credit.customerDni }}</div>
-        </div>
-        @if (credit.customerPhone) {
-          <div>
-            <div class="ud-label">Teléfono</div>
-            <div class="ud-value">{{ credit.customerPhone }}</div>
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Condiciones iniciales (solo SALE) -->
-    @if (credit.type === "SALE") {
-      <div class="ff-panel p-4 mb-6">
-        <h3 class="font-semibold mb-3" style="color: var(--ff-text-primary)">
-          Condiciones iniciales
-        </h3>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <div class="ud-label">Monto financiado</div>
-            <div class="ud-value ff-mono">
-              {{ credit.financedAmount | currencyArs: 2 }}
-            </div>
-          </div>
-          @if (credit.downPayment > 0) {
+          @if (credit.type === 'SALE' && credit.downPayment > 0) {
             <div>
               <div class="ud-label">Enganche</div>
-              <div class="ud-value ff-mono">
-                {{ credit.downPayment | currencyArs: 2 }}
+              <div class="ud-value ff-mono">{{ credit.downPayment | currencyArs: 0 }}</div>
+            </div>
+            <div>
+              <div class="ud-label">Cuotas adelantadas</div>
+              <div class="ud-value">0</div>
+            </div>
+            <div>
+              <div class="ud-label">Método enganche</div>
+              <div class="ud-value">
+                {{ credit.downPaymentMethod === 'CASH' ? 'Efectivo' : 'Transferencia' }}
               </div>
-              @if (credit.downPaymentMethod) {
-                <div class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
-                  {{
-                    credit.downPaymentMethod === "CASH"
-                      ? "Efectivo"
-                      : "Transferencia"
-                  }}
-                </div>
-              }
-              @if (credit.downPaymentTransferReference) {
-                <div class="text-xs" style="color: var(--ff-text-muted)">
-                  Ref: {{ credit.downPaymentTransferReference }}
-                </div>
-              }
+            </div>
+          }
+          @if (credit.notes) {
+            <div class="col-span-2">
+              <div class="ud-label">Notas</div>
+              <div class="ud-value italic text-sm" style="color: var(--ff-text-secondary)">
+                {{ credit.notes }}
+              </div>
             </div>
           }
         </div>
       </div>
-    }
 
-    <!-- Cancelación anticipada registrada -->
-    @if (credit.settledAt) {
-      <div
-        class="ff-panel p-4 mb-6"
-        style="
-          background: rgba(52, 211, 153, 0.06);
-          border-color: rgba(52, 211, 153, 0.2);
-        "
-      >
-        <h3 class="font-semibold mb-3" style="color: var(--ff-success)">
-          Cancelación anticipada
-        </h3>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <div class="ud-label" style="color: var(--ff-success)">Fecha</div>
-            <div class="ud-value">
-              {{ credit.settledAt | date: "dd/MM/yyyy" }}
-            </div>
+      <!-- Unidades incluidas (SALE) -->
+      @if (credit.type === 'SALE' && credit.units && credit.units.length > 0) {
+        <div class="ff-panel">
+          <div class="ff-list-header">
+            <span class="ff-list-header__title">Unidades incluidas</span>
           </div>
-          @if (credit.settlementAmount) {
+          <p-table [value]="credit.units" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Producto</th>
+                <th>Variante</th>
+                <th>Código</th>
+                <th class="text-right">Precio hist.</th>
+                <th class="text-right">Tasa</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-u>
+              <tr>
+                <td>{{ u.productName }}</td>
+                <td style="color: var(--ff-text-secondary)">{{ variantLabel(u) }}</td>
+                <td class="ff-mono font-semibold">{{ u.unitCode }}</td>
+                <td class="text-right ff-mono">{{ u.historicalPrice | currencyArs: 0 }}</td>
+                <td class="text-right ff-mono">
+                  @if (u.historicalRate !== null) {
+                    {{ (u.historicalRate * 100).toFixed(0) }}%
+                  } @else {
+                    <span style="color: var(--ff-text-muted)">—</span>
+                  }
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      }
+
+      <!-- Cancelación anticipada registrada -->
+      @if (credit.settledAt) {
+        <div
+          class="ff-panel p-4"
+          style="background: rgba(52, 211, 153, 0.06); border-color: rgba(52, 211, 153, 0.2)"
+        >
+          <h3 class="font-semibold mb-3" style="color: var(--ff-success)">Cancelación anticipada</h3>
+          <div class="grid grid-cols-2 gap-4">
             <div>
-              <div class="ud-label" style="color: var(--ff-success)">Monto</div>
-              <div class="ud-value ff-mono">
-                {{ credit.settlementAmount | currencyArs: 2 }}
+              <div class="ud-label" style="color: var(--ff-success)">Fecha</div>
+              <div class="ud-value">{{ credit.settledAt | date: 'dd/MM/yyyy' }}</div>
+            </div>
+            @if (credit.settlementAmount) {
+              <div>
+                <div class="ud-label" style="color: var(--ff-success)">Monto</div>
+                <div class="ud-value ff-mono">{{ credit.settlementAmount | currencyArs: 2 }}</div>
               </div>
-            </div>
-          }
-          @if (credit.settlementType) {
-            <div>
-              <div class="ud-label" style="color: var(--ff-success)">Tipo</div>
-              <div class="ud-value">{{ credit.settlementType }}</div>
-            </div>
-          }
-        </div>
-      </div>
-    }
-
-    <!-- Unidades (solo SALE) -->
-    @if (credit.type === "SALE" && credit.units && credit.units.length > 0) {
-      <div class="ff-panel mb-6">
-        <div class="ff-list-header">
-          <span class="ff-list-header__title">Unidades</span>
-        </div>
-        <p-table [value]="credit.units" styleClass="p-datatable-sm">
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Producto</th>
-              <th>Variante</th>
-              <th>Código de unidad</th>
-              <th class="text-right">Precio histórico</th>
-              <th class="text-right">Tasa aplicada</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-u>
-            <tr>
-              <td>{{ u.productName }}</td>
-              <td style="color: var(--ff-text-secondary)">
-                {{ variantLabel(u) }}
-              </td>
-              <td class="ff-mono font-semibold">{{ u.unitCode }}</td>
-              <td class="text-right ff-mono">
-                {{ u.historicalPrice | currencyArs: 2 }}
-              </td>
-              <td class="text-right ff-mono">
-                @if (u.historicalRate !== null) {
-                  {{ (u.historicalRate * 100).toFixed(2) }}%
-                } @else {
-                  <span style="color: var(--ff-text-muted); font-size: 11px"
-                    >Pendiente</span
-                  >
-                }
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
-    }
-
-    <!-- Cuotas / cronograma -->
-    <div class="ff-panel mb-6">
-      <div class="ff-list-header">
-        <span class="ff-list-header__title">Cuotas</span>
-      </div>
-      <p-table [value]="credit.installments" styleClass="p-datatable-sm">
-        <ng-template pTemplate="header">
-          <tr>
-            <th>#</th>
-            <th>Vencimiento</th>
-            <th class="text-right">Monto cuota</th>
-            <th class="text-right">Pagado</th>
-            <th class="text-right">Mora</th>
-            <th>Estado</th>
-            @if (isAdmin) {
-              <th class="text-center">Acciones</th>
             }
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-inst>
-          <tr
-            [class.inst-overdue]="inst.status === 'OVERDUE'"
-            [class.inst-paid]="inst.status === 'PAID'"
-          >
-            <td class="ff-mono">{{ inst.installmentNumber }}</td>
-            <td class="ff-mono">{{ inst.dueDate | date: "dd/MM/yyyy" }}</td>
-            <td class="text-right ff-mono">
-              {{ inst.amountDue | currencyArs: 2 }}
-            </td>
-            <td class="text-right ff-mono">
-              {{ inst.amountPaid | currencyArs: 2 }}
-            </td>
-            <td
-              class="text-right ff-mono"
-              [style.color]="inst.penaltyAmount > 0 ? 'var(--ff-danger)' : ''"
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Right: installment schedule + side panel -->
+    <div class="flex flex-col flex-1 p-4">
+      <div class="ff-panel flex flex-col overflow-hidden" style="min-height: 400px; height: calc(100vh - 200px)">
+
+        <!-- Tabs header -->
+        <div
+          class="flex items-center gap-3 px-4 pt-4 pb-3 flex-shrink-0 border-b"
+          style="border-color: var(--ff-border)"
+        >
+          <span class="font-semibold" style="color: var(--ff-text-primary)">Cronograma de cuotas</span>
+          <div class="flex gap-2 ml-2">
+            <button
+              class="px-3 py-1 text-xs font-semibold rounded-full transition-opacity"
+              [style.opacity]="activeTab !== 'paid' ? '0.5' : '1'"
+              style="background: rgba(52, 211, 153, 0.15); color: var(--ff-success)"
+              (click)="activeTab = 'paid'"
+            >{{ paidCount }} PAGADAS</button>
+            <button
+              class="px-3 py-1 text-xs font-semibold rounded-full transition-opacity"
+              [style.opacity]="activeTab !== 'pending' ? '0.5' : '1'"
+              style="background: rgba(79, 110, 247, 0.15); color: var(--ff-accent)"
+              (click)="activeTab = 'pending'"
+            >{{ pendingCount }} PENDIENTES</button>
+            <button
+              class="px-3 py-1 text-xs font-semibold rounded-full transition-opacity"
+              [style.opacity]="activeTab !== 'overdue' ? '0.5' : '1'"
+              style="background: rgba(248, 113, 113, 0.12); color: var(--ff-danger)"
+              (click)="activeTab = 'overdue'"
+            >{{ overdueCount }} VENCIDAS</button>
+          </div>
+        </div>
+
+        <!-- Table + side panel row -->
+        <div class="flex flex-1 overflow-hidden">
+
+          <!-- Table -->
+          <div class="flex-1 overflow-y-auto">
+            <p-table [value]="credit.installments" styleClass="p-datatable-sm">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th>Nº</th>
+                  <th>Vencimiento</th>
+                  <th class="text-right">Monto</th>
+                  <th class="text-right">Pagado</th>
+                  <th class="text-right">Mora</th>
+                  <th>Estado</th>
+                  @if (isAdmin) { <th class="text-center">Acciones</th> }
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-inst>
+                <tr
+                  class="cursor-pointer"
+                  [class.inst-overdue]="inst.status === 'OVERDUE'"
+                  [class.inst-paid]="inst.status === 'PAID'"
+                  [style.background]="selectedInstallment?.id === inst.id ? 'rgba(79,110,247,0.1)' : ''"
+                  (click)="selectInstallment(inst)"
+                >
+                  <td class="ff-mono">{{ inst.installmentNumber }}</td>
+                  <td class="ff-mono">{{ inst.dueDate | date: 'dd/MM/yyyy' }}</td>
+                  <td class="text-right ff-mono">{{ inst.amountDue | currencyArs: 0 }}</td>
+                  <td
+                    class="text-right ff-mono"
+                    [style.color]="inst.amountPaid > 0 ? 'var(--ff-success)' : ''"
+                  >
+                    {{ inst.amountPaid > 0 ? (inst.amountPaid | currencyArs: 0) : '—' }}
+                  </td>
+                  <td
+                    class="text-right ff-mono"
+                    [style.color]="inst.penaltyAmount > 0 ? 'var(--ff-danger)' : ''"
+                  >
+                    {{ inst.penaltyAmount > 0 ? (inst.penaltyAmount | currencyArs: 0) : '—' }}
+                  </td>
+                  <td>
+                    <span
+                      class="ff-badge"
+                      [class.ff-badge--pagado]="inst.status === 'PAID'"
+                      [class.ff-badge--pendiente]="inst.status === 'PENDING' || inst.status === 'PARTIAL'"
+                      [class.ff-badge--vencido]="inst.status === 'OVERDUE'"
+                      [class.ff-badge--liquidado]="inst.status === 'WAIVED' || inst.status === 'SETTLED'"
+                    >{{ installmentLabel(inst.status) }}</span>
+                  </td>
+                  @if (isAdmin) {
+                    <td class="text-center">
+                      <div class="flex justify-center gap-1">
+                        @if (inst.status === 'OVERDUE') {
+                          <p-button
+                            icon="pi pi-exclamation-circle"
+                            severity="danger"
+                            [text]="true"
+                            size="small"
+                            pTooltip="Aplicar mora"
+                            (onClick)="$event.stopPropagation(); openPenaltyDialog(inst)"
+                          />
+                          @if (inst.penaltyAmount > 0) {
+                            <p-button
+                              icon="pi pi-minus-circle"
+                              severity="warning"
+                              [text]="true"
+                              size="small"
+                              pTooltip="Condonar mora"
+                              (onClick)="$event.stopPropagation(); openWaiveDialog(inst)"
+                            />
+                          }
+                        }
+                        @if (inst.status === 'PENDING' || inst.status === 'OVERDUE') {
+                          <p-button
+                            icon="pi pi-dollar"
+                            severity="success"
+                            [text]="true"
+                            size="small"
+                            pTooltip="Pago anticipado"
+                            (onClick)="$event.stopPropagation(); openEarlyPayDialog(inst)"
+                          />
+                        }
+                      </div>
+                    </td>
+                  }
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+
+          <!-- Cuota side panel -->
+          @if (selectedInstallment) {
+            <div
+              class="flex flex-col flex-shrink-0 border-l"
+              style="width: 220px; border-color: var(--ff-border); background: var(--ff-secondary)"
             >
-              {{ inst.penaltyAmount | currencyArs: 2 }}
-            </td>
-            <td>
-              <span
-                class="ff-badge"
-                [class.ff-badge--pendiente]="
-                  inst.status === 'PENDING' || inst.status === 'PARTIAL'
-                "
-                [class.ff-badge--pagado]="inst.status === 'PAID'"
-                [class.ff-badge--vencido]="inst.status === 'OVERDUE'"
-                [class.ff-badge--liquidado]="
-                  inst.status === 'WAIVED' || inst.status === 'SETTLED'
-                "
-                >{{ installmentLabel(inst.status) }}</span
+              <div
+                class="flex items-start justify-between px-4 pt-4 pb-3 border-b"
+                style="border-color: var(--ff-border)"
               >
-            </td>
-            @if (isAdmin) {
-              <td class="text-center">
-                <div class="flex justify-center gap-1">
-                  @if (inst.status === "OVERDUE") {
+                <div>
+                  <div class="text-sm font-semibold" style="color: var(--ff-text-primary)">
+                    Cuota {{ selectedInstallment.installmentNumber }} de {{ credit.installmentsCount }}
+                  </div>
+                  <div class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
+                    Vence {{ selectedInstallment.dueDate | date: 'dd/MM/yyyy' }}
+                  </div>
+                </div>
+                <button
+                  class="text-sm mt-0.5"
+                  style="color: var(--ff-text-muted)"
+                  (click)="selectedInstallment = null"
+                >
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 px-4 py-3 border-b" style="border-color: var(--ff-border)">
+                <div>
+                  <div class="ud-label text-xs">Vencimiento</div>
+                  <div class="text-sm ff-mono" style="color: var(--ff-text-primary)">
+                    {{ selectedInstallment.dueDate | date: 'dd/MM/yyyy' }}
+                  </div>
+                </div>
+                <div>
+                  <div class="ud-label text-xs">Monto</div>
+                  <div class="text-sm ff-mono font-semibold" style="color: var(--ff-text-primary)">
+                    {{ selectedInstallment.amountDue | currencyArs: 0 }}
+                  </div>
+                </div>
+                <div>
+                  <div class="ud-label text-xs">Saldo pendiente</div>
+                  <div class="text-sm ff-mono" style="color: var(--ff-text-primary)">
+                    {{ (selectedInstallment.amountDue - selectedInstallment.amountPaid) | currencyArs: 0 }}
+                  </div>
+                </div>
+                <div>
+                  <div class="ud-label text-xs">Estado</div>
+                  <span
+                    class="ff-badge"
+                    style="font-size: 10px"
+                    [class.ff-badge--pagado]="selectedInstallment.status === 'PAID'"
+                    [class.ff-badge--pendiente]="selectedInstallment.status === 'PENDING' || selectedInstallment.status === 'PARTIAL'"
+                    [class.ff-badge--vencido]="selectedInstallment.status === 'OVERDUE'"
+                  >{{ installmentLabel(selectedInstallment.status) }}</span>
+                </div>
+              </div>
+
+              @if (isAdmin) {
+                <div class="flex flex-col gap-2 px-4 py-3">
+                  @if (selectedInstallment.status === 'PENDING' || selectedInstallment.status === 'OVERDUE') {
                     <p-button
-                      icon="pi pi-exclamation-circle"
-                      severity="danger"
-                      [text]="true"
+                      label="Pago anticipado"
+                      severity="success"
+                      styleClass="w-full"
                       size="small"
-                      pTooltip="Aplicar mora"
-                      (onClick)="openPenaltyDialog(inst)"
+                      (onClick)="openEarlyPayDialog(selectedInstallment)"
                     />
-                    @if (inst.penaltyAmount > 0) {
+                  }
+                  @if (selectedInstallment.status === 'OVERDUE') {
+                    <p-button
+                      label="Aplicar mora"
+                      severity="warning"
+                      [outlined]="true"
+                      styleClass="w-full"
+                      size="small"
+                      (onClick)="openPenaltyDialog(selectedInstallment)"
+                    />
+                    @if (selectedInstallment.penaltyAmount > 0) {
                       <p-button
-                        icon="pi pi-minus-circle"
-                        severity="warning"
-                        [text]="true"
+                        label="Condonar mora"
+                        severity="secondary"
+                        [outlined]="true"
+                        styleClass="w-full"
                         size="small"
-                        pTooltip="Condonar mora"
-                        (onClick)="openWaiveDialog(inst)"
+                        (onClick)="openWaiveDialog(selectedInstallment)"
                       />
                     }
                   }
-                  @if (inst.status === "PENDING" || inst.status === "OVERDUE") {
-                    <p-button
-                      icon="pi pi-dollar"
-                      severity="success"
-                      [text]="true"
-                      size="small"
-                      pTooltip="Pago anticipado"
-                      (onClick)="openEarlyPayDialog(inst)"
-                    />
-                  }
                 </div>
-              </td>
-            }
-          </tr>
-        </ng-template>
-      </p-table>
+              }
+            </div>
+          }
+        </div>
+      </div>
     </div>
-  }
-</div>
+  </div>
+}
 
 <!-- Dialog: Aprobar crédito -->
 <p-dialog
@@ -393,30 +450,14 @@
         min="1"
         max="120"
         class="w-full rounded-xl p-3 text-sm outline-none"
-        style="
-          border: 1px solid var(--ff-border);
-          background: var(--ff-secondary);
-          color: var(--ff-text-primary);
-        "
+        style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
       />
     </div>
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
-        type="button"
-        class="cancel-btn w-full"
-        (click)="showApproveDialog = false"
-      >
-        Cancelar
-      </button>
-      <p-button
-        label="Confirmar"
-        severity="success"
-        styleClass="w-full"
-        (onClick)="confirmApprove()"
-        [loading]="processingApprove"
-      />
+      <button type="button" class="cancel-btn w-full" (click)="showApproveDialog = false">Cancelar</button>
+      <p-button label="Confirmar" severity="success" styleClass="w-full" (onClick)="confirmApprove()" [loading]="processingApprove" />
     </div>
   </ng-template>
 </p-dialog>
@@ -433,43 +474,24 @@
   <div class="flex flex-col gap-4 py-2">
     <div
       class="auth-warning-banner"
-      style="
-        border-color: rgba(248, 113, 113, 0.3);
-        background: rgba(248, 113, 113, 0.08);
-        color: var(--ff-danger);
-      "
+      style="border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.08); color: var(--ff-danger)"
     >
       <i class="pi pi-exclamation-triangle shrink-0"></i>
       <p class="text-sm font-semibold">Esta acción es irreversible.</p>
     </div>
     <div class="flex flex-col gap-1">
-      <label class="auth-label"
-        >Motivo de rechazo (mín. 5, máx. 500 caracteres)</label
-      >
+      <label class="auth-label">Motivo de rechazo (mín. 5, máx. 500 caracteres)</label>
       <textarea
         pTextarea
         [(ngModel)]="rejectReason"
         rows="4"
         maxlength="500"
         class="w-full resize-none rounded-xl p-3 text-sm outline-none"
-        style="
-          border: 1px solid var(--ff-border);
-          background: var(--ff-secondary);
-          color: var(--ff-text-primary);
-        "
+        style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
         placeholder="Describe el motivo..."
       ></textarea>
-      <div
-        class="flex justify-between text-xs mt-1"
-        style="color: var(--ff-text-muted)"
-      >
-        <span
-          [style.color]="
-            rejectCharCount() > 0 && rejectCharCount() < 5
-              ? 'var(--ff-danger)'
-              : ''
-          "
-        >
+      <div class="flex justify-between text-xs mt-1" style="color: var(--ff-text-muted)">
+        <span [style.color]="rejectCharCount() > 0 && rejectCharCount() < 5 ? 'var(--ff-danger)' : ''">
           Mínimo 5 caracteres
         </span>
         <span>{{ rejectCharCount() }}/500</span>
@@ -478,13 +500,7 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
-        type="button"
-        class="cancel-btn w-full"
-        (click)="showRejectDialog = false"
-      >
-        Cancelar
-      </button>
+      <button type="button" class="cancel-btn w-full" (click)="showRejectDialog = false">Cancelar</button>
       <p-button
         label="Rechazar"
         severity="danger"
@@ -509,10 +525,7 @@
   <div class="flex flex-col gap-4 py-2">
     <div class="auth-warning-banner">
       <i class="pi pi-info-circle shrink-0"></i>
-      <p class="text-sm">
-        El monto de cancelación incluye todas las cuotas pendientes y moras
-        acumuladas. Se calculará al confirmar.
-      </p>
+      <p class="text-sm">El monto de cancelación incluye todas las cuotas pendientes y moras acumuladas. Se calculará al confirmar.</p>
     </div>
     <div class="flex flex-col gap-1">
       <label class="auth-label">Método de pago</label>
@@ -525,7 +538,7 @@
         appendTo="body"
       />
     </div>
-    @if (settlementPaymentMethod === "TRANSFER") {
+    @if (settlementPaymentMethod === 'TRANSFER') {
       <div class="flex flex-col gap-1">
         <label class="auth-label">Referencia de transferencia</label>
         <input
@@ -541,20 +554,8 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
-        type="button"
-        class="cancel-btn w-full"
-        (click)="showSettlementDialog = false"
-      >
-        Cancelar
-      </button>
-      <p-button
-        label="Confirmar"
-        severity="warning"
-        styleClass="w-full"
-        (onClick)="confirmSettlement()"
-        [loading]="processingSettlement"
-      />
+      <button type="button" class="cancel-btn w-full" (click)="showSettlementDialog = false">Cancelar</button>
+      <p-button label="Confirmar" severity="warning" styleClass="w-full" (onClick)="confirmSettlement()" [loading]="processingSettlement" />
     </div>
   </ng-template>
 </p-dialog>
@@ -577,11 +578,7 @@
         min="0.01"
         step="0.01"
         class="w-full rounded-xl p-3 text-sm outline-none"
-        style="
-          border: 1px solid var(--ff-border);
-          background: var(--ff-secondary);
-          color: var(--ff-text-primary);
-        "
+        style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
         placeholder="0.00"
       />
     </div>
@@ -592,24 +589,14 @@
         [(ngModel)]="penaltyReason"
         maxlength="255"
         class="w-full rounded-xl p-3 text-sm outline-none"
-        style="
-          border: 1px solid var(--ff-border);
-          background: var(--ff-secondary);
-          color: var(--ff-text-primary);
-        "
+        style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
         placeholder="Motivo..."
       />
     </div>
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
-        type="button"
-        class="cancel-btn w-full"
-        (click)="showPenaltyDialog = false"
-      >
-        Cancelar
-      </button>
+      <button type="button" class="cancel-btn w-full" (click)="showPenaltyDialog = false">Cancelar</button>
       <p-button
         label="Aplicar"
         severity="danger"
@@ -633,27 +620,13 @@
 >
   <div class="py-2">
     <p class="text-sm" style="color: var(--ff-text-primary)">
-      ¿Confirmar condonación de mora para la cuota #{{
-        waiveInstallment?.installmentNumber
-      }}?
+      ¿Confirmar condonación de mora para la cuota #{{ waiveInstallment?.installmentNumber }}?
     </p>
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
-        type="button"
-        class="cancel-btn w-full"
-        (click)="showWaiveDialog = false"
-      >
-        Cancelar
-      </button>
-      <p-button
-        label="Condonar"
-        severity="warning"
-        styleClass="w-full"
-        (onClick)="confirmWaivePenalty()"
-        [loading]="processingWaive"
-      />
+      <button type="button" class="cancel-btn w-full" (click)="showWaiveDialog = false">Cancelar</button>
+      <p-button label="Condonar" severity="warning" styleClass="w-full" (onClick)="confirmWaivePenalty()" [loading]="processingWaive" />
     </div>
   </ng-template>
 </p-dialog>
@@ -669,8 +642,7 @@
 >
   <div class="flex flex-col gap-4 py-2">
     <p class="text-sm ff-mono" style="color: var(--ff-text-primary)">
-      Cuota #{{ earlyPayInstallment?.installmentNumber }} —
-      {{ earlyPayInstallment?.amountDue | currencyArs: 2 }}
+      Cuota #{{ earlyPayInstallment?.installmentNumber }} — {{ earlyPayInstallment?.amountDue | currencyArs: 2 }}
     </p>
     <div class="flex flex-col gap-1">
       <label class="auth-label">Método de pago</label>
@@ -683,7 +655,7 @@
         appendTo="body"
       />
     </div>
-    @if (earlyPayMethod === "TRANSFER") {
+    @if (earlyPayMethod === 'TRANSFER') {
       <div class="flex flex-col gap-1">
         <label class="auth-label">Referencia (opcional)</label>
         <input
@@ -691,11 +663,7 @@
           [(ngModel)]="earlyPayTransferRef"
           maxlength="100"
           class="w-full rounded-xl p-3 text-sm outline-none"
-          style="
-            border: 1px solid var(--ff-border);
-            background: var(--ff-secondary);
-            color: var(--ff-text-primary);
-          "
+          style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
           placeholder="Número de operación..."
         />
       </div>
@@ -703,13 +671,7 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
-        type="button"
-        class="cancel-btn w-full"
-        (click)="showEarlyPayDialog = false"
-      >
-        Cancelar
-      </button>
+      <button type="button" class="cancel-btn w-full" (click)="showEarlyPayDialog = false">Cancelar</button>
       <p-button
         label="Confirmar pago"
         severity="success"

@@ -69,6 +69,33 @@ export class CreditDetailComponent implements OnInit {
   loading = false;
   error: AppError | null = null;
 
+  selectedInstallment: CreditDetail['installments'][number] | null = null;
+  activeTab: 'all' | 'paid' | 'pending' | 'overdue' = 'all';
+
+  get paidCount(): number {
+    return this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0;
+  }
+
+  get pendingCount(): number {
+    return this.credit?.installments.filter((i) => i.status === 'PENDING' || i.status === 'PARTIAL').length ?? 0;
+  }
+
+  get overdueCount(): number {
+    return this.credit?.installments.filter((i) => i.status === 'OVERDUE').length ?? 0;
+  }
+
+  get installmentAmount(): number | null {
+    return this.credit?.installments[0]?.amountDue ?? null;
+  }
+
+  /**
+   * Selecciona o deselecciona una cuota para mostrar el panel lateral de detalle.
+   * @param {CreditDetail['installments'][number]} inst - Cuota clickeada.
+   */
+  selectInstallment(inst: CreditDetail['installments'][number]): void {
+    this.selectedInstallment = this.selectedInstallment?.id === inst.id ? null : inst;
+  }
+
   showApproveDialog = false;
   approveInstallmentsCount: number | null = null;
   processingApprove = false;
