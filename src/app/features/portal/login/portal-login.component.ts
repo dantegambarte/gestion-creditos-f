@@ -63,12 +63,12 @@ export class PortalLoginComponent {
           this.failedAttempts = 0;
           this.router.navigate([AppRoutes.PORTAL_DASHBOARD]);
         },
-        error: (err) => {
+        error: () => {
           this.loading = false;
           this.failedAttempts++;
           this.errorMessage = this.isBlocked
             ? 'Demasiados intentos fallidos. Recargá la página para intentar de nuevo.'
-            : (err?.message ?? 'Error al iniciar sesión.');
+            : 'Credenciales incorrectas.';
         },
       });
   }

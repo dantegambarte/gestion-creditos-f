@@ -16,7 +16,7 @@
       Ingresá tu DNI y la contraseña que te proporcionó el negocio.
     </p>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form" novalidate>
       <!-- DNI -->
       <div class="auth-field">
         <label class="auth-label" for="dni">DNI</label>
@@ -28,19 +28,24 @@
             formControlName="dni"
             placeholder="28456789"
             class="w-full pl-10"
+            aria-required="true"
+            [attr.aria-invalid]="submitted && form.controls['dni'].invalid ? 'true' : null"
+            [attr.aria-describedby]="submitted && form.controls['dni'].invalid ? 'dni-error' : null"
             [class.ng-invalid]="submitted && form.controls['dni'].invalid"
             [class.ng-dirty]="submitted && form.controls['dni'].invalid"
           />
         </p-iconField>
-        @if (submitted && form.controls['dni'].hasError('required')) {
-          <small class="auth-error">
-            <i class="pi pi-exclamation-circle text-xs"></i> El DNI es requerido.
-          </small>
-        } @else if (submitted && form.controls['dni'].hasError('pattern')) {
-          <small class="auth-error">
-            <i class="pi pi-exclamation-circle text-xs"></i> Ingresá un DNI válido (7 u 8 dígitos sin puntos).
-          </small>
-        }
+        <div id="dni-error" role="alert" aria-live="polite">
+          @if (submitted && form.controls['dni'].hasError('required')) {
+            <small class="auth-error">
+              <i class="pi pi-exclamation-circle text-xs" aria-hidden="true"></i> El DNI es requerido.
+            </small>
+          } @else if (submitted && form.controls['dni'].hasError('pattern')) {
+            <small class="auth-error">
+              <i class="pi pi-exclamation-circle text-xs" aria-hidden="true"></i> Ingresá un DNI válido (7 u 8 dígitos sin puntos).
+            </small>
+          }
+        </div>
       </div>
 
       <!-- Contraseña -->
@@ -49,7 +54,7 @@
         <p-iconField iconPosition="left">
           <p-inputIcon styleClass="pi pi-lock" />
           <p-password
-            id="password"
+            inputId="password"
             formControlName="password"
             placeholder="••••••••"
             [feedback]="false"
@@ -60,22 +65,24 @@
             [class.ng-dirty]="submitted && form.controls['password'].invalid"
           />
         </p-iconField>
-        @if (submitted && form.controls['password'].hasError('required')) {
-          <small class="auth-error">
-            <i class="pi pi-exclamation-circle text-xs"></i> La contraseña es requerida.
-          </small>
-        }
+        <div id="password-error" role="alert" aria-live="polite">
+          @if (submitted && form.controls['password'].hasError('required')) {
+            <small class="auth-error">
+              <i class="pi pi-exclamation-circle text-xs" aria-hidden="true"></i> La contraseña es requerida.
+            </small>
+          }
+        </div>
       </div>
 
       <!-- Error de login / bloqueo -->
       @if (isBlocked) {
-        <div class="auth-warning-banner" style="background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: var(--ff-danger)">
-          <i class="pi pi-lock text-sm flex-shrink-0"></i>
+        <div role="alert" class="auth-warning-banner" style="background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: var(--ff-danger)">
+          <i class="pi pi-lock text-sm flex-shrink-0" aria-hidden="true"></i>
           <span>{{ errorMessage }}</span>
         </div>
       } @else if (errorMessage) {
-        <div class="auth-warning-banner" style="background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: var(--ff-danger)">
-          <i class="pi pi-exclamation-triangle text-sm flex-shrink-0"></i>
+        <div role="alert" class="auth-warning-banner" style="background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: var(--ff-danger)">
+          <i class="pi pi-exclamation-triangle text-sm flex-shrink-0" aria-hidden="true"></i>
           <span>{{ errorMessage }} ({{ failedAttempts }}/{{ maxAttempts }})</span>
         </div>
       }
