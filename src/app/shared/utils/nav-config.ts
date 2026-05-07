@@ -1,6 +1,11 @@
 import { AppRoutes } from '../models/enums/routes.enum';
 import { NavItem } from '../models/interface/nav-item';
 
+// SELLER_COLLECTOR comparte las rutas del módulo /seller
+function sellerPrefix(role: string): string {
+  return role === 'ADMIN' ? 'admin' : 'seller';
+}
+
 export const NAV_CONFIG: NavItem[] = [
   {
     label: 'Principal',
@@ -16,26 +21,26 @@ export const NAV_CONFIG: NavItem[] = [
 
   {
     label: 'Gestión',
-    requiredRoles: ['ADMIN', 'SELLER'],
+    requiredRoles: ['ADMIN', 'SELLER', 'SELLER_COLLECTOR'],
     isGroupLabel: true,
   },
   {
     label: 'Operaciones',
     icon: 'pi pi-file-edit',
-    route: (role) => `/${role.toLowerCase()}/${AppRoutes.OPERATIONS}`,
-    requiredRoles: ['ADMIN', 'SELLER'],
+    route: (role) => `/${sellerPrefix(role)}/${AppRoutes.OPERATIONS}`,
+    requiredRoles: ['ADMIN', 'SELLER', 'SELLER_COLLECTOR'],
   },
   {
     label: 'Clientes',
     icon: 'pi pi-users',
-    route: (role) => `/${role.toLowerCase()}/${AppRoutes.CLIENTS}`,
-    requiredRoles: ['ADMIN', 'SELLER'],
+    route: (role) => `/${sellerPrefix(role)}/${AppRoutes.CLIENTS}`,
+    requiredRoles: ['ADMIN', 'SELLER', 'SELLER_COLLECTOR'],
   },
   {
     label: 'Productos',
     icon: 'pi pi-box',
-    route: (role) => `/${role.toLowerCase()}/${AppRoutes.PRODUCTS}`,
-    requiredRoles: ['ADMIN', 'SELLER'],
+    route: (role) => `/${sellerPrefix(role)}/${AppRoutes.PRODUCTS}`,
+    requiredRoles: ['ADMIN', 'SELLER', 'SELLER_COLLECTOR'],
   },
 
   {
@@ -129,25 +134,25 @@ export const NAV_CONFIG: NavItem[] = [
 
   {
     label: 'Cobranza en campo',
-    requiredRoles: ['COLLECTOR'],
+    requiredRoles: ['COLLECTOR', 'SELLER_COLLECTOR'],
     isGroupLabel: true,
   },
   {
     label: 'Mi Ruta',
     icon: 'pi pi-map',
     route: AppRoutes.ROUTE,
-    requiredRoles: ['COLLECTOR'],
+    requiredRoles: ['COLLECTOR', 'SELLER_COLLECTOR'],
   },
   {
     label: 'Mis cobros',
     icon: 'pi pi-dollar',
     route: AppRoutes.COLLECTOR_PAYMENTS,
-    requiredRoles: ['COLLECTOR'],
+    requiredRoles: ['COLLECTOR', 'SELLER_COLLECTOR'],
   },
   {
     label: 'Mis comisiones',
     icon: 'pi pi-percentage',
     route: AppRoutes.COLLECTOR_COMMISSIONS,
-    requiredRoles: ['COLLECTOR'],
+    requiredRoles: ['COLLECTOR', 'SELLER_COLLECTOR'],
   },
 ];

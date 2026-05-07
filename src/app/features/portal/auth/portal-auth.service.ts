@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ApiHttpService } from '../../../core/http/api-http.service';
 import { environment } from '../../../../environments/environment';
-import { PortalCustomer, PortalLoginPayload } from '../models/portal.models';
+import { PortalChangePasswordPayload, PortalCustomer, PortalLoginPayload } from '../models/portal.models';
 import { LoginResponseRaw } from '../models/interface/login.interface';
 
 const isBrowser = typeof localStorage !== 'undefined';
@@ -61,6 +61,19 @@ export class PortalAuthService {
   }
 
   /**
+   * Cambia la contraseña del cliente autenticado. Al completar exitosamente,
+   * actualiza el flag portalIsTempPassword a false tanto en memoria como en localStorage.
+   * @param payload
+   * @returns
+   */
+  changePassword(payload: PortalChangePasswordPayload): Observable<void> {
+    return this.api.post<null>('auth/portal/change-password', payload).pipe(
+      tap(() => this._markPasswordChanged()),
+      map(() => undefined),
+    );
+  }
+
+  /**
    * Cierra la sesión del usuario. Elimina el token JWT y la información del cliente del localStorage, y actualiza el estado del cliente en el servicio. Retorna un Observable que emite void al completar. Si la llamada a la API de logout falla, el método aún limpiará el estado local para asegurar que el usuario quede desconectado en la interfaz, aunque idealmente se debería manejar el error para informar al usuario.
    * @returns
    */
@@ -72,6 +85,19 @@ export class PortalAuthService {
       }),
       map(() => undefined),
     );
+  }
+
+  /**
+   * Marca la contraseña del cliente como permanente en memoria y localStorage.
+   */
+  private _markPasswordChanged(): void {
+    const current = this._customer$.value;
+    if (!current) return;
+    const updated: PortalCustomer = { ...current, portalIsTempPassword: false };
+    if (isBrowser) {
+      localStorage.setItem(this.CUSTOMER_KEY, JSON.stringify(updated));
+    }
+    this._customer$.next(updated);
   }
 
   /**

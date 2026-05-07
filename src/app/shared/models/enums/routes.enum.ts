@@ -45,6 +45,7 @@ export enum AppRoutes {
   PORTAL_DASHBOARD = '/portal/dashboard',
   PORTAL_CREDITS = '/portal/credits',
   PORTAL_CREDIT_DETAIL = '/portal/credits/:id',
+  PORTAL_CHANGE_PASSWORD = '/portal/change-password',
 
   // Profile
   PROFILE = 'profile',

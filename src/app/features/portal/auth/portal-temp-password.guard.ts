@@ -3,10 +3,13 @@ import { CanActivateFn, Router } from '@angular/router';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { PortalAuthService } from './portal-auth.service';
 
-export const portalLoginGuard: CanActivateFn = () => {
+/** Redirige a change-password si el cliente tiene contraseña temporal activa. */
+export const portalTempPasswordGuard: CanActivateFn = () => {
   const auth = inject(PortalAuthService);
   const router = inject(Router);
 
-  if (!auth.isAuthenticated()) return true;
-  return router.createUrlTree([AppRoutes.PORTAL_DASHBOARD]);
+  if (auth.snapshot?.portalIsTempPassword) {
+    return router.createUrlTree([AppRoutes.PORTAL_CHANGE_PASSWORD]);
+  }
+  return true;
 };
