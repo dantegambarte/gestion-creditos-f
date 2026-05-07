@@ -1,12 +1,12 @@
 <div class="min-h-screen flex flex-col" style="background: var(--ff-bg)">
   <!-- Navbar -->
   <header style="background: var(--ff-sidebar); border-bottom: 1px solid var(--ff-border)">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="font-mono font-bold text-lg" style="color: var(--ff-text-primary); letter-spacing: -0.03em">finFlow</span>
-        <span class="text-xs font-semibold px-2 py-0.5 rounded uppercase tracking-wider" style="background: rgba(79,110,247,0.15); color: var(--ff-accent)">Portal Cliente</span>
+        <span class="hidden sm:inline text-xs font-semibold px-2 py-0.5 rounded uppercase tracking-wider" style="background: rgba(79,110,247,0.15); color: var(--ff-accent)">Portal Cliente</span>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 sm:gap-3">
         @if (customer) {
           <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                style="background: rgba(79,110,247,0.2); color: var(--ff-accent); border: 1px solid rgba(79,110,247,0.3); font-family: var(--ff-font-mono)">
@@ -19,12 +19,12 @@
         <button
           type="button"
           (click)="logout()"
-          class="text-xs font-medium px-3 py-1.5 rounded transition-all"
+          class="text-xs font-medium px-2.5 sm:px-3 py-1.5 rounded transition-all"
           style="border: 1px solid var(--ff-border); color: var(--ff-text-secondary); background: transparent"
           onmouseenter="this.style.color='var(--ff-text-primary)'; this.style.background='var(--ff-secondary)'"
           onmouseleave="this.style.color='var(--ff-text-secondary)'; this.style.background='transparent'"
         >
-          <i class="pi pi-sign-out mr-1.5"></i>Cerrar sesión
+          <i class="pi pi-sign-out sm:mr-1.5"></i><span class="hidden sm:inline">Cerrar sesión</span>
         </button>
       </div>
     </div>

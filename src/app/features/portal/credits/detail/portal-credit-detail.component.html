@@ -7,7 +7,7 @@
 
   @if (loading) {
     <p-skeleton height="10rem" borderRadius="0.75rem" />
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <p-skeleton height="18rem" borderRadius="0.75rem" />
       <p-skeleton height="18rem" borderRadius="0.75rem" />
     </div>
@@ -91,7 +91,7 @@
     </div>
 
     <!-- Dos columnas: info + cronograma -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
       <!-- Columna izquierda -->
       <div class="flex flex-col gap-4">
@@ -155,7 +155,7 @@
           </h3>
           <div class="mb-3">
             <p class="text-xs mb-0.5" style="color: var(--ff-text-muted)">Deuda restante</p>
-            <p class="text-2xl sm:text-3xl font-bold font-mono" style="color: var(--ff-accent); letter-spacing: -0.02em">
+            <p class="text-xl sm:text-2xl font-bold font-mono" style="color: var(--ff-accent); letter-spacing: -0.02em">
               {{ pendingBalance | currency:'ARS':'symbol':'1.0-0' }}
             </p>
           </div>
@@ -191,14 +191,17 @@
           </h3>
         </div>
         <div class="overflow-x-auto">
-          <table class="ff-table w-full text-xs" style="min-width: 480px" data-cy="portal-credit-detail-installments-table">
+          <table class="ff-table w-full text-xs" data-cy="portal-credit-detail-installments-table">
             <thead>
               <tr>
                 <th class="text-center">N°</th>
-                <th>Vencimiento</th>
+                <th>
+                  <span class="hidden sm:inline">Vencimiento</span>
+                  <span class="sm:hidden">Vence</span>
+                </th>
                 <th class="text-right">Monto</th>
-                <th class="text-right">Pagado</th>
-                <th class="text-right">Mora</th>
+                <th class="text-right hidden sm:table-cell">Pagado</th>
+                <th class="text-right hidden sm:table-cell">Mora</th>
                 <th class="text-center">Estado</th>
               </tr>
             </thead>
@@ -210,10 +213,10 @@
                   <td class="text-center" style="color: var(--ff-text-secondary)">{{ inst.installmentNumber }}</td>
                   <td style="color: var(--ff-text-secondary)">{{ inst.dueDate | date:'dd/MM/yyyy' }}</td>
                   <td class="text-right ff-mono">{{ inst.amountDue | currency:'ARS':'symbol':'1.0-0' }}</td>
-                  <td class="text-right ff-mono" style="color: var(--ff-text-secondary)">
+                  <td class="text-right ff-mono hidden sm:table-cell" style="color: var(--ff-text-secondary)">
                     {{ inst.amountPaid > 0 ? (inst.amountPaid | currency:'ARS':'symbol':'1.0-0') : '—' }}
                   </td>
-                  <td class="text-right ff-mono">
+                  <td class="text-right ff-mono hidden sm:table-cell">
                     @if (inst.penaltyAmount > 0) {
                       <span style="color: #f87171">{{ inst.penaltyAmount | currency:'ARS':'symbol':'1.0-0' }}</span>
                     } @else {

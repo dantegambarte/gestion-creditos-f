@@ -54,7 +54,7 @@
       <div class="flex-1 grid grid-cols-2 md:grid-cols-2 gap-4">
         <div>
           <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color: var(--ff-text-muted)">Deuda total vigente</p>
-          <p class="text-2xl sm:text-3xl font-bold font-mono" style="color: #34d399; letter-spacing: -0.02em">
+          <p class="text-lg sm:text-2xl font-bold font-mono" style="color: #34d399; letter-spacing: -0.02em">
             {{ summary.totalOwed | currency:'ARS':'symbol':'1.0-0' }}
           </p>
         </div>
@@ -87,16 +87,16 @@
   </div>
 
   <!-- Sección inferior: dos columnas -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
     <!-- Próximos vencimientos (col ancha) -->
-    <div class="md:col-span-2 rounded-xl overflow-hidden" style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
-      <div class="px-4 py-3 flex items-center justify-between" style="border-bottom: 1px solid var(--ff-border)">
+    <div class="lg:col-span-2 rounded-xl overflow-hidden" style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
+      <div class="px-4 py-3 flex items-center justify-between flex-wrap gap-2" style="border-bottom: 1px solid var(--ff-border)">
         <div class="flex items-center gap-2">
           <span class="text-sm font-semibold" style="color: var(--ff-text-primary)">Próximos vencimientos</span>
           <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background: rgba(79,110,247,0.15); color: var(--ff-accent)">30 DÍAS</span>
         </div>
         <a [routerLink]="['/portal/credits']" class="text-xs font-medium transition-opacity hover:opacity-75" style="color: var(--ff-accent)">
-          Ver todos mis créditos →
+          Ver mis créditos →
         </a>
       </div>
 
@@ -108,38 +108,37 @@
       } @else {
         <div>
           @for (inst of summary.upcomingInstallments; track inst.id; let isFirst = $first) {
-            <div class="px-4 py-3 flex items-center justify-between gap-3"
+            <div class="px-4 py-3"
                  [style.border-top]="isFirst ? 'none' : '1px solid var(--ff-border)'">
-              <div class="flex items-center gap-3 min-w-0">
-                <!-- Badge tipo -->
+              <!-- Fila 1: badge tipo + cuota info + estado -->
+              <div class="flex items-center gap-2 mb-1.5">
                 <span class="text-xs font-bold px-2 py-0.5 rounded flex-shrink-0"
                   [style.background]="inst.creditType === 'SALE' ? 'rgba(79,110,247,0.15)' : 'rgba(251,176,64,0.15)'"
                   [style.color]="inst.creditType === 'SALE' ? 'var(--ff-accent)' : 'var(--ff-warning)'">
                   {{ upcomingTypeLabel(inst) }}
                 </span>
-                <div class="min-w-0">
-                  <p class="text-sm font-medium" style="color: var(--ff-text-primary)">
-                    Cuota {{ inst.installmentNumber }} de {{ inst.creditInstallmentsCount }}
-                  </p>
-                  <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
-                    Vence el {{ inst.dueDate | date:'dd/MM/yyyy' }}
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center gap-3 flex-shrink-0 text-right">
-                <p class="text-sm font-bold font-mono" style="color: var(--ff-text-primary)">
-                  {{ inst.amountDue | currency:'ARS':'symbol':'1.0-0' }}
+                <p class="text-sm font-medium flex-1 min-w-0 truncate" style="color: var(--ff-text-primary)">
+                  Cuota {{ inst.installmentNumber }} de {{ inst.creditInstallmentsCount }}
                 </p>
-                @if (daysUntil(inst.dueDate); as days) {
-                  <span class="hidden sm:inline text-xs" [style.color]="days < 0 ? '#f87171' : 'var(--ff-text-muted)'">
-                    {{ days < 0 ? (-days) + ' días atrás' : '(' + days + ' días)' }}
-                  </span>
-                }
-                <span class="text-xs font-semibold px-2 py-0.5 rounded"
+                <span class="text-xs font-semibold px-2 py-0.5 rounded flex-shrink-0"
                   [style.background]="inst.status === 'OVERDUE' ? 'rgba(248,113,113,0.12)' : 'rgba(139,151,184,0.15)'"
                   [style.color]="inst.status === 'OVERDUE' ? '#f87171' : 'var(--ff-text-secondary)'">
                   {{ inst.status === 'OVERDUE' ? 'VENCIDA' : 'PENDIENTE' }}
                 </span>
+              </div>
+              <!-- Fila 2: fecha + monto -->
+              <div class="flex items-center justify-between">
+                <p class="text-xs" style="color: var(--ff-text-muted)">
+                  Vence el {{ inst.dueDate | date:'dd/MM/yyyy' }}
+                  @if (daysUntil(inst.dueDate); as days) {
+                    <span class="hidden sm:inline" [style.color]="days < 0 ? '#f87171' : 'var(--ff-text-muted)'">
+                      · {{ days < 0 ? (-days) + ' días atrás' : days + ' días' }}
+                    </span>
+                  }
+                </p>
+                <p class="text-sm font-bold font-mono flex-shrink-0" style="color: var(--ff-text-primary)">
+                  {{ inst.amountDue | currency:'ARS':'symbol':'1.0-0' }}
+                </p>
               </div>
             </div>
           }

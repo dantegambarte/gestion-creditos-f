@@ -272,6 +272,10 @@ body {
   border: 1px solid var(--ff-border);
   border-radius: 8px;
   padding: 40px;
+
+  @media (max-width: 400px) {
+    padding: 28px 20px;
+  }
 }
 
 .auth-logo {
@@ -1153,6 +1157,15 @@ table.ff-table {
     &:hover {
       filter: invert(0.8);
     }
+  }
+}
+
+// ─── ff-table — padding compacto en mobile ───────────────────────────────────
+@media (max-width: 639px) {
+  table.ff-table th,
+  table.ff-table td {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
   }
 }
 
