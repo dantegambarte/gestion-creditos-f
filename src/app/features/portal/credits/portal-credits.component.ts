@@ -1,6 +1,15 @@
-import { Component, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  OnInit,
+  PLATFORM_ID,
+  inject,
+} from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SkeletonModule } from 'primeng/skeleton';
 import { PortalService } from '../portal.service';
 import { PortalCredit } from '../models/portal.models';
@@ -10,11 +19,14 @@ import { PortalCredit } from '../models/portal.models';
   standalone: true,
   imports: [CommonModule, CurrencyPipe, DatePipe, SkeletonModule, RouterLink],
   templateUrl: './portal-credits.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PortalCreditsComponent implements OnInit {
   private readonly portalService = inject(PortalService);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   credits: PortalCredit[] = [];
   loading = true;
@@ -33,16 +45,21 @@ export class PortalCreditsComponent implements OnInit {
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    this.portalService.getCredits().subscribe({
-      next: (data) => {
-        this.credits = data;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err?.message ?? 'Error al cargar los créditos.';
-      },
-    });
+    this.portalService
+      .getCredits()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          this.credits = data;
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.loading = false;
+          this.error = err?.message ?? 'Error al cargar los créditos.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   /**

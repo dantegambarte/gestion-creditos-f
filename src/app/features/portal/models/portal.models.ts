@@ -10,6 +10,11 @@ export interface PortalLoginPayload {
   password: string;
 }
 
+export interface PortalChangePasswordPayload {
+  current_password: string;
+  new_password: string;
+}
+
 export interface UpcomingInstallment {
   id: string;
   installmentNumber: number;

@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, timeout } from 'rxjs/operators';
+
+const REQUEST_TIMEOUT_MS = 30_000;
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../models/api-response';
 import { toAppError } from '../models/app-error';
@@ -25,6 +27,7 @@ export class ApiHttpService {
     return this.http
       .get<ApiResponse<T>>(this.url(path), { params: httpParams })
       .pipe(
+        timeout(REQUEST_TIMEOUT_MS),
         map(this.unwrap<T>()),
         catchError((err) => throwError(() => toAppError(err))),
       );
@@ -38,6 +41,7 @@ export class ApiHttpService {
    */
   post<T>(path: string, body?: unknown): Observable<T> {
     return this.http.post<ApiResponse<T>>(this.url(path), body).pipe(
+      timeout(REQUEST_TIMEOUT_MS),
       map(this.unwrap<T>()),
       catchError((err) => throwError(() => toAppError(err))),
     );
@@ -51,6 +55,7 @@ export class ApiHttpService {
    */
   put<T>(path: string, body?: unknown): Observable<T> {
     return this.http.put<ApiResponse<T>>(this.url(path), body).pipe(
+      timeout(REQUEST_TIMEOUT_MS),
       map(this.unwrap<T>()),
       catchError((err) => throwError(() => toAppError(err))),
     );
@@ -64,6 +69,7 @@ export class ApiHttpService {
    */
   patch<T>(path: string, body?: unknown): Observable<T> {
     return this.http.patch<ApiResponse<T>>(this.url(path), body).pipe(
+      timeout(REQUEST_TIMEOUT_MS),
       map(this.unwrap<T>()),
       catchError((err) => throwError(() => toAppError(err))),
     );
@@ -76,6 +82,7 @@ export class ApiHttpService {
    */
   delete<T>(path: string): Observable<T> {
     return this.http.delete<ApiResponse<T>>(this.url(path)).pipe(
+      timeout(REQUEST_TIMEOUT_MS),
       map(this.unwrap<T>()),
       catchError((err) => throwError(() => toAppError(err))),
     );

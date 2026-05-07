@@ -32,10 +32,17 @@
 
   <!-- Aviso contraseña temporal -->
   @if (customer?.portalIsTempPassword) {
-    <div class="px-4 py-2 flex items-center gap-2 text-sm" style="background: rgba(251,176,64,0.08); border-bottom: 1px solid rgba(251,176,64,0.25); color: var(--ff-warning)">
-      <div class="max-w-5xl mx-auto w-full flex items-center gap-2">
-        <i class="pi pi-exclamation-triangle text-sm"></i>
-        <span>Tu contraseña es temporal. Comunicarte con el negocio para solicitar el cambio.</span>
+    <div class="px-4 py-2 text-sm" style="background: rgba(251,176,64,0.08); border-bottom: 1px solid rgba(251,176,64,0.25); color: var(--ff-warning)">
+      <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-exclamation-triangle flex-shrink-0"></i>
+          <span>Tu contraseña es temporal y debe ser cambiada.</span>
+        </div>
+        <a [routerLink]="changePasswordRoute"
+           class="text-xs font-semibold whitespace-nowrap underline underline-offset-2 hover:opacity-75 transition-opacity"
+           style="color: var(--ff-warning)">
+          Cambiar ahora
+        </a>
       </div>
     </div>
   }

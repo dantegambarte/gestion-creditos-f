@@ -14,6 +14,8 @@ export class PortalLayoutComponent {
   private readonly auth = inject(PortalAuthService);
   private readonly router = inject(Router);
 
+  readonly changePasswordRoute = AppRoutes.PORTAL_CHANGE_PASSWORD;
+
   /**
    * Devuelve el cliente autenticado actualmente, o null si no hay ninguno.
    */

@@ -1,6 +1,15 @@
 import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser } from '@angular/common';
-import { Component, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  OnInit,
+  PLATFORM_ID,
+  inject,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SkeletonModule } from 'primeng/skeleton';
 import { AccountSummary, UpcomingInstallment } from '../models/portal.models';
 import { PortalAuthService } from '../auth/portal-auth.service';
@@ -11,11 +20,14 @@ import { PortalService } from '../portal.service';
   standalone: true,
   imports: [CommonModule, CurrencyPipe, DatePipe, RouterLink, SkeletonModule],
   templateUrl: './portal-dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PortalDashboardComponent implements OnInit {
   private readonly portalService = inject(PortalService);
   private readonly authService = inject(PortalAuthService);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   summary: AccountSummary | null = null;
   loading = true;
@@ -60,15 +72,20 @@ export class PortalDashboardComponent implements OnInit {
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    this.portalService.getAccountSummary().subscribe({
-      next: (data) => {
-        this.summary = data;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err?.message ?? 'Error al cargar el resumen.';
-      },
-    });
+    this.portalService
+      .getAccountSummary()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          this.summary = data;
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.loading = false;
+          this.error = err?.message ?? 'Error al cargar el resumen.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 }

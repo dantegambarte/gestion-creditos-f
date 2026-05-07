@@ -36,6 +36,10 @@
           <small class="auth-error">
             <i class="pi pi-exclamation-circle text-xs"></i> El DNI es requerido.
           </small>
+        } @else if (submitted && form.controls['dni'].hasError('pattern')) {
+          <small class="auth-error">
+            <i class="pi pi-exclamation-circle text-xs"></i> Ingresá un DNI válido (7 u 8 dígitos sin puntos).
+          </small>
         }
       </div>
 
@@ -63,11 +67,16 @@
         }
       </div>
 
-      <!-- Error de login -->
-      @if (errorMessage) {
+      <!-- Error de login / bloqueo -->
+      @if (isBlocked) {
+        <div class="auth-warning-banner" style="background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: var(--ff-danger)">
+          <i class="pi pi-lock text-sm flex-shrink-0"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+      } @else if (errorMessage) {
         <div class="auth-warning-banner" style="background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: var(--ff-danger)">
           <i class="pi pi-exclamation-triangle text-sm flex-shrink-0"></i>
-          <span>{{ errorMessage }}</span>
+          <span>{{ errorMessage }} ({{ failedAttempts }}/{{ maxAttempts }})</span>
         </div>
       }
 
@@ -77,6 +86,7 @@
         label="Iniciar sesión"
         styleClass="w-full justify-center"
         [loading]="loading"
+        [disabled]="isBlocked"
       />
     </form>
 

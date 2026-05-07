@@ -54,7 +54,7 @@
         <div>
           <p class="text-xs uppercase tracking-wider mb-0.5" style="color: var(--ff-text-muted)">Aprobado</p>
           <p class="font-semibold text-sm" style="color: var(--ff-text-primary)">
-            {{ credit.approvedAt | date:'dd/MM/yyyy' }}
+            {{ credit.approvedAt ? (credit.approvedAt | date:'dd/MM/yyyy') : '—' }}
           </p>
         </div>
       </div>

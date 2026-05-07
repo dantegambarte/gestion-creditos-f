@@ -30,13 +30,19 @@ export class PortalLoginComponent {
   private readonly router = inject(Router);
 
   form = this.fb.group({
-    dni: ['', Validators.required],
+    dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
     password: ['', Validators.required],
   });
 
   loading = false;
   submitted = false;
   errorMessage = '';
+  failedAttempts = 0;
+  readonly maxAttempts = 5;
+
+  get isBlocked(): boolean {
+    return this.failedAttempts >= this.maxAttempts;
+  }
 
   /**
    * Maneja el envío del formulario de inicio de sesión.
@@ -46,7 +52,7 @@ export class PortalLoginComponent {
     this.submitted = true;
     this.errorMessage = '';
 
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.isBlocked) return;
 
     this.loading = true;
     this.auth
@@ -54,11 +60,15 @@ export class PortalLoginComponent {
       .subscribe({
         next: () => {
           this.loading = false;
+          this.failedAttempts = 0;
           this.router.navigate([AppRoutes.PORTAL_DASHBOARD]);
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err?.message ?? 'Error al iniciar sesión.';
+          this.failedAttempts++;
+          this.errorMessage = this.isBlocked
+            ? 'Demasiados intentos fallidos. Recargá la página para intentar de nuevo.'
+            : (err?.message ?? 'Error al iniciar sesión.');
         },
       });
   }

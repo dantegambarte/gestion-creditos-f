@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { portalAuthGuard } from './auth/portal-auth.guard';
 import { portalLoginGuard } from './auth/portal-login.guard';
+import { portalTempPasswordGuard } from './auth/portal-temp-password.guard';
 
 export const PORTAL_ROUTES: Routes = [
   {
@@ -20,7 +21,15 @@ export const PORTAL_ROUTES: Routes = [
       ),
     children: [
       {
+        path: 'change-password',
+        loadComponent: () =>
+          import('./change-password/portal-change-password.component').then(
+            (c) => c.PortalChangePasswordComponent,
+          ),
+      },
+      {
         path: 'dashboard',
+        canActivate: [portalTempPasswordGuard],
         loadComponent: () =>
           import('./dashboard/portal-dashboard.component').then(
             (c) => c.PortalDashboardComponent,
@@ -28,6 +37,7 @@ export const PORTAL_ROUTES: Routes = [
       },
       {
         path: 'credits',
+        canActivate: [portalTempPasswordGuard],
         loadComponent: () =>
           import('./credits/portal-credits.component').then(
             (c) => c.PortalCreditsComponent,
@@ -35,6 +45,7 @@ export const PORTAL_ROUTES: Routes = [
       },
       {
         path: 'credits/:id',
+        canActivate: [portalTempPasswordGuard],
         loadComponent: () =>
           import('./credits/detail/portal-credit-detail.component').then(
             (c) => c.PortalCreditDetailComponent,
