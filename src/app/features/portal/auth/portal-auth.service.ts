@@ -124,13 +124,10 @@ export class PortalAuthService {
     try {
       const parts = token.split('.');
       if (parts.length !== 3) throw new Error('invalid jwt');
-      const payload = JSON.parse(
-        atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')),
-      );
-      if (payload.exp && payload.exp * 1000 < Date.now()) {
-        this._clearSession();
-        return;
-      }
+      // No se verifica expiración: un AT expirado sigue siendo válido para bootstrap.
+      // El error interceptor detectará TOKEN_EXPIRED en la primera llamada y hará
+      // el refresh automáticamente. Si aquí limpiamos la sesión, el refresh nunca ocurre.
+      JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
     } catch {
       this._clearSession();
       return;

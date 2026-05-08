@@ -18,11 +18,14 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
 
   const token =
     typeof localStorage !== 'undefined' ? localStorage.getItem(tokenKey) : null;
-  if (!token) return next(req);
 
-  return next(
-    req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` },
-    }),
-  );
+  // withCredentials envía la cookie HttpOnly rt en todas las requests a la API
+  const cloned = token
+    ? req.clone({
+        setHeaders: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      })
+    : req.clone({ withCredentials: true });
+
+  return next(cloned);
 };
