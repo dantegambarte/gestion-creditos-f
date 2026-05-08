@@ -1,115 +1,587 @@
 <p-toast position="top-right" />
-<div class="flex flex-col h-full" style="background: var(--ff-bg)">
-  <!-- Header / step bar -->
-  <div
-    class="shrink-0 px-6 py-3 flex items-center gap-4"
-    style="
-      background: var(--ff-panel);
-      border-bottom: 1px solid var(--ff-border);
-    "
-  >
-    <h1
-      class="text-xl font-bold shrink-0"
-      style="color: var(--ff-text-primary)"
-    >
+<div class="min-h-full bg-slate-900 text-slate-100">
+  <div class="mx-auto max-w-7xl px-6 py-6 md:px-8 md:py-8">
+    <div class="mb-4 flex items-center justify-between">
+      <h1 class="text-xl font-semibold tracking-tight md:text-2xl">
       Nueva Operación de Crédito
-    </h1>
-
-    <div class="flex-1">
-      <p-steps
-        [model]="steps"
-        [(activeIndex)]="activeIndex"
-        [readonly]="true"
-        styleClass="[&_.p-steps-list]:justify-center"
+      </h1>
+      <p-button
+        icon="pi pi-times"
+        [rounded]="true"
+        [text]="true"
+        severity="secondary"
+        routerLink="../"
+        styleClass="text-slate-300"
       />
     </div>
 
-    <p-button
-      icon="pi pi-times"
-      [text]="true"
-      [rounded]="true"
-      severity="secondary"
-      routerLink="../"
-      pTooltip="Cancelar operación"
-    />
-  </div>
+    <div class="flex h-[calc(100vh-10rem)] flex-col rounded-2xl border border-slate-700 bg-slate-800 p-4 md:p-6">
+      <form
+        [formGroup]="operationForm"
+        class="flex-1 overflow-x-hidden overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-5 md:p-7"
+      >
+        @switch (activeIndex) {
+          @case (0) {
+            <section class="flex h-full flex-col gap-5">
+              <h2 class="text-lg font-semibold">Paso 1 · Cliente</h2>
 
-  <!-- Step content -->
-  <div class="flex-1 overflow-y-auto p-6 md:p-8">
-    <div class="max-w-5xl mx-auto space-y-6">
-      <div class="ff-panel p-6 md:p-8 min-h-[450px] flex flex-col">
-        <div class="flex-1">
-          @switch (activeIndex) {
-            @case (0) {
-              <app-step-client class="animate-fadein block" />
-            }
-            @case (1) {
-              <app-step-products class="animate-fadein block" />
-            }
-            @case (2) {
-              <app-step-conditions class="animate-fadein block" />
-            }
-            @case (3) {
-              <app-step-confirm class="animate-fadein block" />
-            }
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-slate-300">Buscar cliente</label>
+                <input
+                  pInputText
+                  [(ngModel)]="searchText"
+                  [ngModelOptions]="{ standalone: true }"
+                  class="h-11 w-full rounded-xl border border-slate-600 bg-slate-800 px-3 text-slate-100"
+                  placeholder="DNI, nombre o apellido"
+                />
+              </div>
+
+              <div class="min-h-0 flex-1 overflow-y-auto pr-1">
+                <div class="grid gap-3 md:grid-cols-2">
+                  @for (client of filteredClients(); track client.id) {
+                    <button
+                      type="button"
+                      [class]="operationForm.controls.customerId.value === client.id
+                        ? 'rounded-xl border border-emerald-500 bg-emerald-900/30 p-4 text-left transition'
+                        : 'rounded-xl border border-slate-700 bg-slate-800 p-4 text-left transition'"
+                      (click)="selectClient(client)"
+                    >
+                      <div class="flex items-center justify-between">
+                        <div class="font-medium">{{ client.name }}</div>
+                        <span
+                          [class]="client.status === 'ACTIVE'
+                            ? 'rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-300'
+                            : 'rounded-full bg-red-500/20 px-2 py-1 text-xs text-red-300'"
+                        >
+                          {{ client.status === 'ACTIVE' ? 'ACTIVO' : 'INACTIVO' }}
+                        </span>
+                      </div>
+                      <div class="mt-2 text-sm text-slate-400">DNI: {{ client.dni }}</div>
+                    </button>
+                  }
+                </div>
+              </div>
+
+              @if (!isClientStepValid() && operationForm.controls.customerId.value) {
+                <p class="text-sm text-red-400">
+                  El cliente seleccionado está inactivo. No podés avanzar.
+                </p>
+              }
+            </section>
           }
-        </div>
 
-        <!-- Navigation bar -->
-        <div
-          class="flex justify-between items-center mt-8 pt-6"
-          style="border-top: 1px solid var(--ff-border)"
-        >
-          <div class="text-sm font-medium" style="color: var(--ff-text-muted)">
-            Paso {{ activeIndex + 1 }} de 4 · {{ steps?.[activeIndex]?.label }}
-          </div>
+          @case (1) {
+            <section class="flex h-full min-h-0 flex-col gap-5">
+              <h2 class="text-lg font-semibold">Paso 2 · Tipo y Producto</h2>
 
-          <div class="flex items-center gap-3">
-            @if (activeIndex === 0) {
-              <p-button
-                label="Cancelar"
-                severity="danger"
-                [text]="true"
-                routerLink="../"
-                styleClass="h-11 px-5"
-                data-cy="btn-cancelar-wizard"
-              />
-            } @else {
-              <p-button
-                label="Anterior"
-                icon="pi pi-arrow-left"
-                severity="secondary"
-                [outlined]="true"
-                (onClick)="prevStep()"
-                styleClass="h-11 px-5"
-                data-cy="btn-anterior-wizard"
-              />
-            }
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-slate-300">Tipo de Operación</label>
+                <p-dropdown
+                  [options]="operationTypeOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  [showClear]="true"
+                  formControlName="operationType"
+                  styleClass="w-full"
+                />
+              </div>
 
-            @if (activeIndex < 3) {
-              <p-button
-                label="Siguiente"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                severity="primary"
-                styleClass="h-11 px-6 rounded-xl"
-                [disabled]="!canNext"
-                (onClick)="nextStep()"
-                data-cy="btn-siguiente-wizard"
-              />
-            } @else {
-              <p-button
-                label="Enviar para Aprobación"
-                icon="pi pi-check"
-                severity="success"
-                styleClass="h-11 px-6 rounded-xl"
-                [disabled]="!isConfirmed || submitting"
-                [loading]="submitting"
-                (onClick)="finish()"
-                data-cy="btn-enviar-aprobacion"
-              />
-            }
-          </div>
+              @if (operationForm.controls.operationType.value === 'LOAN') {
+                @if (loadingLoanData) {
+                  <div class="space-y-2 rounded-xl border border-slate-700 bg-slate-800 p-4">
+                    <div class="h-4 w-40 animate-pulse rounded bg-slate-700"></div>
+                    <div class="h-11 w-full animate-pulse rounded-xl bg-slate-700"></div>
+                  </div>
+                } @else {
+                  <div class="mt-2 flex flex-col gap-2">
+                    <label class="block text-sm font-medium text-slate-300">Monto total</label>
+                    <p-inputNumber
+                      formControlName="totalAmount"
+                      mode="currency"
+                      currency="ARS"
+                      locale="es-AR"
+                      [min]="1"
+                      styleClass="block w-full max-w-sm"
+                      inputStyleClass="h-11 w-full rounded-xl px-3"
+                    />
+                  </div>
+                }
+              }
+
+              @if (operationForm.controls.operationType.value === 'SALE') {
+                @if (loadingSaleData) {
+                  <div class="rounded-xl border border-slate-700 bg-slate-800 p-3">
+                    <div class="grid gap-3 md:grid-cols-2">
+                      <div class="space-y-2 rounded-lg border border-slate-700 p-3">
+                        <div class="h-4 w-32 animate-pulse rounded bg-slate-700"></div>
+                        <div class="h-14 w-full animate-pulse rounded bg-slate-700"></div>
+                        <div class="h-14 w-full animate-pulse rounded bg-slate-700"></div>
+                      </div>
+                      <div class="space-y-2 rounded-lg border border-slate-700 p-3">
+                        <div class="h-4 w-24 animate-pulse rounded bg-slate-700"></div>
+                        <div class="h-14 w-full animate-pulse rounded bg-slate-700"></div>
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="min-h-0 flex-1 rounded-xl border border-slate-700 bg-slate-800 p-3">
+                    <div class="grid h-full min-h-0 gap-3 md:grid-cols-2 md:items-stretch">
+                      <div class="flex min-h-0 flex-col rounded-lg border border-slate-700 p-3">
+                        <p class="mb-2 text-sm font-semibold text-slate-300">Catálogo</p>
+                        <div class="relative mb-2">
+                          <i class="pi pi-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                          <input
+                            pInputText
+                            [(ngModel)]="catalogSearchText"
+                            [ngModelOptions]="{ standalone: true }"
+                            class="h-11 w-full rounded-xl border border-slate-600 bg-slate-800 px-3 pl-10 text-slate-100"
+                            placeholder="Buscar producto por nombre"
+                          />
+                        </div>
+                        <div class="min-h-0 flex-1 space-y-2 overflow-y-auto pt-1 pb-4 pr-1">
+                          @for (item of filteredCatalogProducts; track item.productoId) {
+                            <div class="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900 p-2">
+                              <div>
+                                <div class="text-sm font-medium">{{ item.nombre }}</div>
+                                <div class="text-xs text-slate-400">Stock: {{ item.stockDisponible }}</div>
+                                <div class="text-xs text-slate-400">
+                                  {{ item.precio | currencyArs }}
+                                </div>
+                              </div>
+                              <p-button
+                                [label]="isCatalogProductOutOfStock(item) ? 'Sin stock' : 'Agregar'"
+                                [icon]="isCatalogProductOutOfStock(item) ? 'pi pi-exclamation-circle' : 'pi pi-plus'"
+                                [severity]="isCatalogProductOutOfStock(item) ? 'secondary' : 'primary'"
+                                [loading]="loadingProductRatesByCatalogId[item.productoId] === true"
+                                (onClick)="addProduct(item)"
+                                styleClass="h-9 px-3 rounded-lg"
+                              />
+                            </div>
+                          }
+                          @if (filteredCatalogProducts.length === 0) {
+                            <div class="rounded-lg border border-dashed border-slate-600 p-4 text-center text-sm text-slate-400">
+                              No hay productos que coincidan con la búsqueda.
+                            </div>
+                          }
+                        </div>
+                      </div>
+
+                      <div class="flex min-h-0 flex-col rounded-lg border border-slate-700 p-3">
+                      <div class="mb-2 flex items-center justify-between">
+                        <p class="text-sm font-semibold text-slate-300">Carrito</p>
+                        <p-button
+                          label="Vaciar carrito"
+                          icon="pi pi-trash"
+                          severity="secondary"
+                          [text]="true"
+                          [disabled]="cartLines.length === 0"
+                          (onClick)="clearCart()"
+                        />
+                      </div>
+                      <div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+                        @for (line of cartLines; track line.productoId) {
+                          <div class="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900 p-2">
+                            <div>
+                              <div class="text-sm font-medium">{{ line.nombre }}</div>
+                              <div class="text-xs text-slate-400">
+                                {{ line.precio | currencyArs }} × {{ line.cantidad }} = {{ line.subtotal | currencyArs }}
+                              </div>
+                            </div>
+                            <div class="flex items-center gap-1">
+                              <p-button
+                                icon="pi pi-minus"
+                                severity="secondary"
+                                [outlined]="true"
+                                (onClick)="decreaseQuantity(line.productoId)"
+                                styleClass="h-8 w-8"
+                              />
+                              <span class="w-6 text-center text-sm">{{ line.cantidad }}</span>
+                              <p-button
+                                icon="pi pi-plus"
+                                severity="secondary"
+                                [outlined]="true"
+                                [disabled]="line.cantidad >= line.stockDisponible"
+                                (onClick)="increaseQuantity(line.productoId)"
+                                styleClass="h-8 w-8"
+                              />
+                              <p-button
+                                icon="pi pi-times"
+                                severity="danger"
+                                [text]="true"
+                                (onClick)="removeProduct(line.productoId)"
+                              />
+                            </div>
+                          </div>
+                        }
+
+                        @if (cartLines.length === 0) {
+                          <div class="rounded-lg border border-dashed border-slate-600 p-4 text-center text-sm text-slate-400">
+                            Todavía no agregaste productos al carrito.
+                          </div>
+                        }
+                      </div>
+
+                      <div class="mt-4 rounded-lg border border-slate-700 bg-slate-900 px-3 py-4">
+                        <p class="text-xs text-slate-400">Total carrito</p>
+                        <p class="mt-1 text-lg font-bold text-emerald-300">{{ totalCarrito | currencyArs }}</p>
+                      </div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+
+              <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
+                <p class="text-sm text-slate-400">Capital base</p>
+                <p class="mt-1 text-2xl font-bold text-emerald-300">
+                  @if (operationForm.controls.operationType.value === 'LOAN') {
+                    {{ prestamoTotal | currencyArs }}
+                  } @else {
+                    {{ totalCarrito | currencyArs }}
+                  }
+                </p>
+              </div>
+            </section>
+          }
+
+          @case (2) {
+            <section class="flex h-full min-h-0 flex-col gap-5 pr-1 pb-2">
+              <h2 class="text-lg font-semibold">Paso 3 · Condiciones Financieras</h2>
+
+              <div class="grid min-h-0 flex-1 gap-4 pt-1 lg:grid-cols-2">
+                <div class="flex min-h-0 flex-col gap-4 rounded-xl border border-slate-700 bg-slate-800 p-4 overflow-hidden">
+                  <div class="rounded-lg border border-slate-700 bg-slate-900/40 p-3">
+                    <div class="grid gap-3 md:grid-cols-2">
+                      @if (operationForm.controls.operationType.value === 'SALE') {
+                        <div class="space-y-2">
+                          <label class="block text-sm font-medium text-slate-300">Anticipo / Enganche</label>
+                          <p-inputNumber
+                            formControlName="downPayment"
+                            mode="currency"
+                            currency="ARS"
+                            locale="es-AR"
+                            [allowEmpty]="true"
+                            placeholder="Ingresar anticipo"
+                            [min]="0"
+                            [max]="capitalBase"
+                            styleClass="w-full"
+                            inputStyleClass="h-11 w-full rounded-xl px-3"
+                          />
+                        </div>
+                      }
+
+                      <div class="space-y-2">
+                        <label class="text-sm font-medium text-slate-300">Frecuencia de pago</label>
+                        <p-dropdown
+                          [options]="paymentFrequencyOptions"
+                          optionLabel="label"
+                          optionValue="value"
+                          formControlName="paymentFrequency"
+                          placeholder="Seleccionar frecuencia"
+                          styleClass="w-full"
+                        />
+                      </div>
+                    </div>
+
+                    @if (paymentFrequencyOptions.length === 0) {
+                      <div class="mt-2">
+                        <p-message
+                          severity="warn"
+                          text="No hay frecuencias disponibles para esta operación. Revisá la configuración de tasas."
+                        />
+                      </div>
+                    }
+                  </div>
+
+                  @if (operationForm.controls.operationType.value === 'SALE') {
+                    <div class="min-h-0 flex-1 space-y-3 rounded-lg border border-slate-700 bg-slate-900 p-3 overflow-y-auto">
+                      <p class="text-sm font-semibold text-slate-200">Cuotas por producto</p>
+                      @for (line of cartLines; track line.productoId) {
+                        <div class="space-y-2 rounded-lg border border-slate-700 bg-slate-800 p-3">
+                          <div class="flex items-center justify-between gap-3">
+                            <div>
+                              <p class="text-sm font-medium text-slate-100">{{ line.nombre }}</p>
+                              <p class="text-xs text-slate-400">{{ getLinePlanSubtitle(line) }}</p>
+                            </div>
+                            <p class="text-sm font-semibold text-emerald-300">{{ getLineInstallmentValue(line) | currencyArs }} / cuota</p>
+                          </div>
+
+                          <p-dropdown
+                            [options]="getInstallmentsOptionsForLine(line)"
+                            optionLabel="label"
+                            optionValue="value"
+                            [ngModel]="line.selectedInstallments"
+                            (ngModelChange)="onSaleInstallmentsChange(line.productoId, $event)"
+                            [ngModelOptions]="{ standalone: true }"
+                            appendTo="body"
+                            [scrollHeight]="'180px'"
+                            placeholder="Seleccionar cuotas para este producto"
+                            styleClass="w-full"
+                          />
+
+                          @if (getInstallmentsOptionsForLine(line).length === 0) {
+                            <p-message
+                              severity="warn"
+                              text="Este producto no tiene cuotas para la frecuencia elegida."
+                            />
+                          }
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <div class="space-y-2">
+                      <label class="text-sm font-medium text-slate-300">Cantidad de cuotas</label>
+                      <div data-cy="ddl-installments">
+                        <p-dropdown
+                          [options]="installmentsOptions"
+                          optionLabel="label"
+                          optionValue="value"
+                          formControlName="installmentsCount"
+                          placeholder="Seleccionar cuotas"
+                          [styleClass]="installmentsDropdownClass"
+                        />
+                      </div>
+
+                      @if (isInstallmentsRefreshing) {
+                        <p class="text-xs text-blue-300">
+                          Las cuotas se actualizaron según la frecuencia seleccionada.
+                        </p>
+                      }
+
+                      @if (installmentsOptions.length === 0) {
+                        <p-message
+                          severity="warn"
+                          text="No hay cuotas disponibles para esta combinación. Revisá la configuración de tasas antes de continuar."
+                        />
+                      }
+                    </div>
+                  }
+
+                </div>
+
+                <div class="flex flex-col rounded-xl border border-slate-700 bg-slate-800 p-4 self-start">
+                  <h3 class="mb-4 text-base font-semibold">Resumen del Plan</h3>
+
+                  <div class="flex flex-col gap-3 text-sm">
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">Capital base</span>
+                      <span class="font-semibold text-slate-100">{{ capitalBase | currencyArs }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">Anticipo</span>
+                      <span class="font-semibold text-slate-100">
+                        {{ (operationForm.controls.operationType.value === 'SALE' ? getValidatedDownPayment() : 0) | currencyArs }}
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">Capital a financiar</span>
+                      <span class="font-semibold text-slate-100">{{ capitalAFinanciar | currencyArs }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">Tasa de interés</span>
+                      <span class="font-semibold text-slate-100">{{ interestRate * 100 }}%</span>
+                    </div>
+                    @if (operationForm.controls.operationType.value === 'SALE') {
+                      <div class="max-h-28 space-y-2 overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-3 pr-2 xl:max-h-36">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Detalle de cuotas por producto</p>
+                        @for (line of cartLines; track line.productoId) {
+                          <div class="flex items-center justify-between text-xs">
+                            <div class="min-w-0 pr-2">
+                              <p class="truncate text-slate-300">{{ line.nombre }}</p>
+                              <div class="mt-0.5 flex items-center gap-2">
+                                <span class="text-slate-400">{{ line.selectedInstallments ?? 0 }} cuotas</span>
+                                <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                                  {{ getLineRatePercent(line) }}%
+                                </span>
+                              </div>
+                            </div>
+                            <span class="font-semibold text-slate-100">{{ getLineInstallmentValue(line) | currencyArs }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                    <div class="flex items-center justify-between border-t border-slate-700 pt-3">
+                      <span class="text-slate-300">
+                        {{ operationForm.controls.operationType.value === 'SALE' ? 'Valor total de la cuota mensual' : 'Valor de cada cuota' }}
+                      </span>
+                      <span class="text-lg font-bold text-emerald-300">{{ valorCuota | currencyArs }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-300">Total a devolver</span>
+                      <span class="text-lg font-bold text-emerald-300">{{ totalADevolver | currencyArs }}</span>
+                    </div>
+
+                    <div class="space-y-2 border-t border-slate-700 pt-3">
+                      <label class="text-sm font-medium text-slate-300">Fecha del primer pago</label>
+                      <p-calendar
+                        formControlName="firstPaymentDate"
+                        dateFormat="dd/mm/yy"
+                        [minDate]="todayDate"
+                        [showIcon]="true"
+                        appendTo="body"
+                        styleClass="w-full"
+                        inputStyleClass="h-11 w-full rounded-xl"
+                      />
+                      @if (operationForm.controls.firstPaymentDate.touched && operationForm.controls.firstPaymentDate.errors?.['pastDate']) {
+                        <p class="text-xs text-red-400">La fecha del primer pago no puede ser anterior a hoy.</p>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          }
+
+          @case (3) {
+            <section class="space-y-5">
+              <h2 class="text-lg font-semibold">Paso 4 · Confirmación</h2>
+
+              <div class="grid gap-4 lg:grid-cols-2">
+                <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
+                  <h3 class="mb-4 text-base font-semibold">Resumen de la Operación</h3>
+
+                  <div class="space-y-3 text-sm">
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">Cliente</span>
+                      <span class="font-semibold text-slate-100">
+                        {{ form.selectedClient()?.name || 'Sin cliente' }}
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">DNI</span>
+                      <span class="font-semibold text-slate-100">{{ form.selectedClient()?.dni || '-' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">Tipo de operación</span>
+                      <span class="font-semibold text-slate-100">
+                        {{ operationForm.controls.operationType.value === 'SALE' ? 'Venta' : 'Préstamo' }}
+                      </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">Capital financiado</span>
+                      <span class="font-semibold text-slate-100">{{ capitalAFinanciar | currencyArs }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">Enganche</span>
+                      <span class="font-semibold text-slate-100">
+                        {{ (operationForm.controls.operationType.value === 'SALE' ? getValidatedDownPayment() : 0) | currencyArs }}
+                      </span>
+                    </div>
+                    @if (operationForm.controls.operationType.value === 'SALE') {
+                      <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">
+                        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Plan por producto</p>
+                        <div class="space-y-1 text-xs">
+                          @for (line of cartLines; track line.productoId) {
+                            <div class="flex items-center justify-between gap-3">
+                              <span class="text-slate-300">{{ line.nombre }}</span>
+                              <span class="font-semibold text-slate-100">{{ line.selectedInstallments ?? 0 }} cuotas</span>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    } @else {
+                      <div class="flex items-center justify-between">
+                        <span class="text-slate-400">Cantidad de cuotas</span>
+                        <span class="font-semibold text-slate-100">{{ operationForm.controls.installmentsCount.value ?? 0 }}</span>
+                      </div>
+                    }
+                    <div class="flex items-center justify-between">
+                      <span class="text-slate-400">Valor de cuota</span>
+                      <span class="font-semibold text-slate-100">{{ valorCuota | currencyArs }}</span>
+                    </div>
+                    <div class="flex items-center justify-between border-t border-slate-700 pt-3">
+                      <span class="text-slate-300">Total a devolver</span>
+                      <span class="text-lg font-bold text-emerald-300">{{ totalADevolver | currencyArs }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
+                  <h3 class="mb-4 text-base font-semibold">Declaraciones y Autorizaciones</h3>
+
+                  <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                      <p-checkbox formControlName="chkIdentity" [binary]="true" data-cy="chk-identity" />
+                      <label class="text-sm text-slate-200">Verifiqué la identidad del cliente.</label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <p-checkbox formControlName="chkConditions" [binary]="true" data-cy="chk-conditions" />
+                      <label class="text-sm text-slate-200">Expliqué condiciones y costos del plan.</label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <p-checkbox formControlName="chkDisbursement" [binary]="true" data-cy="chk-disbursement" />
+                      <label class="text-sm text-slate-200">Informé que el desembolso requiere aprobación.</label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <p-checkbox formControlName="chkCapacity" [binary]="true" data-cy="chk-capacity" />
+                      <label class="text-sm text-slate-200">Validé capacidad de pago del cliente.</label>
+                    </div>
+                  </div>
+
+                  <div class="mt-4">
+                    <p-message
+                      severity="warn"
+                      text="Esta operación será enviada a revisión del supervisor antes de ser desembolsada..."
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+          }
+
+          @default {
+            <section class="flex h-full min-h-[260px] items-center justify-center rounded-xl border border-dashed border-slate-700">
+              <p class="text-slate-400">Pasos 3 y 4: se completan después de validar este rediseño.</p>
+            </section>
+          }
+        }
+      </form>
+
+      <div class="mt-4 flex items-center justify-between border-t border-slate-700 pt-4">
+        <span class="text-sm text-slate-400">Paso {{ activeIndex + 1 }} de 4 · {{ steps?.[activeIndex]?.label }}</span>
+
+        <div class="flex items-center gap-3">
+          @if (activeIndex === 0) {
+            <p-button
+              label="Cancelar"
+              severity="secondary"
+              [outlined]="true"
+              routerLink="../"
+              styleClass="h-11 px-5 rounded-xl"
+            />
+          } @else {
+            <p-button
+              label="Anterior"
+              icon="pi pi-arrow-left"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="prevStep()"
+              styleClass="h-11 px-5 rounded-xl"
+            />
+          }
+
+          @if (activeIndex < 3) {
+            <p-button
+              label="Siguiente"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              severity="primary"
+              [disabled]="!canNext"
+              (onClick)="nextStep()"
+              styleClass="h-11 px-6 rounded-xl"
+            />
+          } @else {
+            <p-button
+              label="Enviar para Aprobación"
+              icon="pi pi-check"
+              severity="success"
+              data-cy="btn-enviar-aprobacion"
+              [disabled]="!canSubmitOperation"
+              [loading]="submitting"
+              (onClick)="submitOperation()"
+              styleClass="h-11 px-6 rounded-xl"
+            />
+          }
         </div>
       </div>
     </div>

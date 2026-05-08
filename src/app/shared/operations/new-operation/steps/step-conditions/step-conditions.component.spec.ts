@@ -9,7 +9,7 @@ describe('StepConditionsComponent', () => {
 
   const formMock = {
     firstDueDate,
-    selectedType: signal<'VENTA' | 'PRESTAMO'>('VENTA'),
+    selectedType: signal<'SALE' | 'LOAN'>('SALE'),
     getTodayStart: () => todayStart,
     normalizeToLocalDayStart: (date: Date) =>
       new Date(date.getFullYear(), date.getMonth(), date.getDate()),

@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-// PrimeNG
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -12,7 +11,13 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
+
+import {
+  Credit,
+  CreditStatus,
+  CreditType,
+} from '../../features/seller/models/credit.model';
+import { CreditsService } from '../../features/seller/operations/credits.service';
 
 @Component({
   selector: 'operations',
@@ -28,103 +33,86 @@ import { TagModule } from 'primeng/tag';
     DropdownModule,
     IconFieldModule,
     InputIconModule,
-    TagModule,
     DialogModule,
   ],
   templateUrl: './operations.component.html',
   styleUrl: './operations.component.scss',
 })
-export class OperationsComponent {
-  operations = [
-    {
-      date: '15-04',
-      client: 'Juan Pérez García',
-      type: 'VENTA',
-      amount: 35000,
-      installments: 12,
-      status: 'PEND. APROBACIÓN',
-    },
-    {
-      date: '14-04',
-      client: 'María López',
-      type: 'PRÉSTAMO',
-      amount: 15000,
-      installments: 6,
-      status: 'APROBADO',
-    },
-    {
-      date: '13-04',
-      client: 'Carlos Ruiz',
-      type: 'VENTA',
-      amount: 22000,
-      installments: 8,
-      status: 'ACTIVO',
-    },
-    {
-      date: '12-04',
-      client: 'Ana García',
-      type: 'PRÉSTAMO',
-      amount: 8000,
-      installments: 4,
-      status: 'RECHAZADO',
-    },
-  ];
+export class OperationsComponent implements OnInit {
+  private readonly creditsService = inject(CreditsService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  operations: Credit[] = [];
+  loading = false;
 
   statusOptions = [
     { label: 'Todos', value: null },
-    { label: 'Pendiente', value: 'PEND. APROBACIÓN' },
-    { label: 'Aprobado', value: 'APROBADO' },
-    { label: 'Activo', value: 'ACTIVO' },
-    { label: 'Rechazado', value: 'RECHAZADO' },
+    { label: 'Pendiente de aprobación', value: 'PENDING_APPROVAL' as CreditStatus },
+    { label: 'Activo', value: 'ACTIVE' as CreditStatus },
+    { label: 'Liquidado', value: 'SETTLED' as CreditStatus },
+    { label: 'Rechazado', value: 'REJECTED' as CreditStatus },
   ];
 
-  selectedStatus: any;
-  searchTerm: string = '';
+  selectedStatus: CreditStatus | null = null;
+  searchTerm = '';
 
-  showNewOperationModal: boolean = false;
+  showNewOperationModal = false;
+
+  ngOnInit(): void {
+    this.loadOperations();
+  }
 
   /**
-   *  Devuelve una clase de severidad basada en el estado de la operación para mostrar diferentes colores en la interfaz de usuario. Por ejemplo, 'PEND. APROBACIÓN' devuelve 'warning', 'APROBADO' devuelve 'success', etc. Esto se utiliza para resaltar visualmente el estado de cada operación en la tabla.
-   * @param status
-   * @returns
+   * Devuelve una clase de severidad según el estado real del crédito.
+   * @param {CreditStatus} status - Estado recibido desde backend.
+   * @returns {'warning' | 'success' | 'secondary' | 'danger'} Severidad visual del badge.
    */
-  getStatusSeverity(status: string) {
+  getStatusSeverity(status: CreditStatus): 'warning' | 'success' | 'secondary' | 'danger' {
     switch (status) {
-      case 'PEND. APROBACIÓN':
+      case 'PENDING_APPROVAL':
         return 'warning';
-      case 'APROBADO':
+      case 'ACTIVE':
         return 'success';
-      case 'ACTIVO':
-        return 'info';
-      case 'RECHAZADO':
-        return 'danger';
-      default:
+      case 'SETTLED':
         return 'secondary';
+      case 'REJECTED':
+        return 'danger';
     }
   }
 
-  loadOperations() {}
-
   /**
-   *  Abre el modal de nueva operación estableciendo la variable `showNewOperationModal` a `true`, lo que hace que el componente `NewOperationComponent` se muestre en la interfaz de usuario. Esta función se puede llamar desde un botón o enlace en la plantilla para iniciar el proceso de creación de una nueva operación.
+   * Traduce el estado técnico del backend a una etiqueta legible para la tabla.
+   * @param {CreditStatus} status - Estado real del crédito.
+   * @returns {string} Texto visible para el usuario.
    */
-  openNewOperation() {
-    this.showNewOperationModal = true;
+  getStatusLabel(status: CreditStatus): string {
+    switch (status) {
+      case 'PENDING_APPROVAL':
+        return 'PEND. APROBACIÓN';
+      case 'ACTIVE':
+        return 'ACTIVO';
+      case 'SETTLED':
+        return 'LIQUIDADO';
+      case 'REJECTED':
+        return 'RECHAZADO';
+    }
   }
 
   /**
-   *  Cierra el modal de nueva operación estableciendo la variable `showNewOperationModal` a `false`, lo que oculta el componente `NewOperationComponent` en la interfaz de usuario.
-   *  Esta función se puede llamar desde el componente hijo `NewOperationComponent` para cerrar el modal una vez que se haya completado la creación de la nueva operación o si el usuario decide cancelar el proceso.
+   * Traduce el tipo técnico del crédito a la etiqueta usada en la UI.
+   * @param {CreditType} type - Tipo del crédito recibido desde backend.
+   * @returns {string} Tipo legible para la tabla.
    */
-  closeNewOperation() {
-    this.showNewOperationModal = false;
+  getTypeLabel(type: CreditType): string {
+    return type === 'SALE' ? 'VENTA' : 'PRÉSTAMO';
   }
 
   /**
-   * Devuelve el listado de operaciones aplicando en conjunto el filtro por estado y el texto buscado.
-   * La búsqueda ignora mayúsculas/minúsculas y tildes para evitar falsos negativos como "Perez" vs "Pérez".
+   * Devuelve el listado visible aplicando filtro de estado y búsqueda por cliente o DNI.
+   * La búsqueda ignora mayúsculas/minúsculas y tildes para evitar falsos negativos.
    */
-  get filteredOperations() {
+  get filteredOperations(): Credit[] {
     const term = this.normalizeText(this.searchTerm);
 
     return this.operations.filter((operation) => {
@@ -135,18 +123,63 @@ export class OperationsComponent {
         return matchesStatus;
       }
 
-      const normalizedClient = this.normalizeText(operation.client);
-      return matchesStatus && normalizedClient.includes(term);
+      const normalizedClient = this.normalizeText(operation.customerName);
+      const normalizedDni = this.normalizeText(operation.customerDni);
+
+      return (
+        matchesStatus &&
+        (normalizedClient.includes(term) || normalizedDni.includes(term))
+      );
     });
   }
 
   /**
-   * Normaliza un texto para comparaciones de búsqueda flexibles.
-   * @param value Texto original a normalizar.
-   * @returns Texto en minúsculas y sin diacríticos.
+   * Navega al detalle de la operación usando la ruta relativa al módulo activo.
+   * @param {string} id - ID del crédito a visualizar.
    */
-  private normalizeText(value: string): string {
-    return value
+  navigateToDetail(id: string): void {
+    this.router.navigate([id], { relativeTo: this.route });
+  }
+
+  /**
+   * Carga las operaciones reales desde backend para reemplazar la tabla mockeada.
+   */
+  loadOperations(): void {
+    this.loading = true;
+
+    this.creditsService.list().subscribe({
+      next: (operations) => {
+        this.operations = operations;
+        this.loading = false;
+      },
+      error: () => {
+        this.operations = [];
+        this.loading = false;
+      },
+    });
+  }
+
+  /**
+   * Abre el modal de nueva operación.
+   */
+  openNewOperation(): void {
+    this.showNewOperationModal = true;
+  }
+
+  /**
+   * Cierra el modal de nueva operación.
+   */
+  closeNewOperation(): void {
+    this.showNewOperationModal = false;
+  }
+
+  /**
+   * Normaliza un texto para comparaciones flexibles.
+   * @param {string} value - Texto original.
+   * @returns {string} Texto sin diacríticos, en minúsculas y sin espacios sobrantes.
+   */
+  private normalizeText(value: string | null | undefined): string {
+    return (value ?? '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()

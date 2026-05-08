@@ -59,6 +59,7 @@ export interface ClientOperation {
   dni: string;
   phone: string;
   email: string;
+  status: 'ACTIVE' | 'INACTIVE';
   previousCredits: number;
   delinquency: string;
   paymentCapacity: number;

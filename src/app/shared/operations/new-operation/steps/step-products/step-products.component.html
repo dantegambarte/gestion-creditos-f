@@ -44,6 +44,32 @@
     }
   </div>
 
+  @if (!usesProducts) {
+    <div
+      class="rounded-xl p-5"
+      style="background: var(--ff-secondary); border: 1px solid var(--ff-border)"
+    >
+      <div class="flex flex-col gap-2 max-w-md">
+        <label
+          class="text-xs font-bold uppercase tracking-wider"
+          style="color: var(--ff-text-muted)"
+          >Monto total (total_amount)</label
+        >
+        <p-inputNumber
+          [ngModel]="form.loanCapital()"
+          (ngModelChange)="form.loanCapital.set($event ?? 0)"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [min]="1"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11"
+          data-cy="input-loan-total-amount"
+        />
+      </div>
+    </div>
+  }
+
   @if (usesProducts) {
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       <!-- Productos disponibles -->
@@ -90,6 +116,9 @@
                     style="color: var(--ff-text-muted)"
                     >Unidad: {{ prod.unitCode || "—" }}</span
                   >
+                  <span class="text-[11px]" style="color: var(--ff-text-muted)">
+                    Disponibles: {{ prod.stock }}
+                  </span>
                 </div>
               </div>
               <div class="flex items-center gap-5">
@@ -101,15 +130,15 @@
                 </span>
                 <p-button
                   [icon]="isProductSelected(prod.id) ? 'pi pi-check' : 'pi pi-plus'"
-                  [rounded]="true"
-                  [severity]="isProductSelected(prod.id) ? 'secondary' : 'primary'"
-                  size="small"
-                  styleClass="w-8 h-8"
-                  [disabled]="isProductSelected(prod.id)"
-                  (onClick)="addProduct(prod)"
-                />
+                    [rounded]="true"
+                    [severity]="isProductSelected(prod.id) ? 'secondary' : 'primary'"
+                    size="small"
+                    styleClass="w-8 h-8"
+                    [disabled]="isProductSelected(prod.id) || prod.stock <= 0"
+                    (onClick)="addProduct(prod)"
+                  />
+                </div>
               </div>
-            </div>
           }
         </div>
       </div>
@@ -143,7 +172,7 @@
                       class="text-[10px] ff-mono"
                       style="color: var(--ff-text-muted)"
                       >Código: {{ item.unitCode || "—" }} · Valor Unit:
-                      {{ item.price | currencyArs }}</span
+                      {{ (item.historicalPrice ?? item.price) | currencyArs }}</span
                     >
                   </div>
                   <div class="flex items-center gap-3">
@@ -151,7 +180,7 @@
                       class="text-sm font-bold ff-mono"
                       style="color: var(--ff-text-primary)"
                     >
-                      {{ item.price | currencyArs }}
+                      {{ (item.historicalPrice ?? item.price) | currencyArs }}
                     </span>
                     <p-button
                       icon="pi pi-trash"

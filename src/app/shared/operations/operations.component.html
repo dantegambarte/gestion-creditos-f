@@ -27,6 +27,8 @@
           [options]="statusOptions"
           [(ngModel)]="selectedStatus"
           placeholder="Estado"
+          optionLabel="label"
+          optionValue="value"
           styleClass="h-11"
         />
 
@@ -38,7 +40,7 @@
           <input
             pInputText
             type="text"
-            placeholder="Buscar..."
+            placeholder="Buscar por cliente o DNI"
             [(ngModel)]="searchTerm"
             class="h-11 pl-10 w-full md:w-64"
           />
@@ -46,68 +48,73 @@
       </div>
     </div>
 
-    <p-table
-      [value]="filteredOperations"
-      styleClass="p-datatable-sm"
-      [responsiveLayout]="'scroll'"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Fecha</th>
-          <th>Cliente</th>
-          <th>Tipo</th>
-          <th>Monto</th>
-          <th>Cuotas</th>
-          <th class="text-center">Estado</th>
-          <th class="text-center">Acciones</th>
-        </tr>
-      </ng-template>
+    @if (loading) {
+      <div class="p-6 text-sm" style="color: var(--ff-text-secondary)">
+        Cargando operaciones...
+      </div>
+    } @else if (filteredOperations.length === 0) {
+      <div class="p-6 text-sm" style="color: var(--ff-text-secondary)">
+        No hay operaciones para mostrar.
+      </div>
+    } @else {
+      <p-table
+        [value]="filteredOperations"
+        styleClass="p-datatable-sm"
+        [responsiveLayout]="'scroll'"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Cuotas</th>
+            <th class="text-center">Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </ng-template>
 
-      <ng-template pTemplate="body" let-op>
-        <tr>
-          <td style="color: var(--ff-text-secondary)">{{ op.date }}</td>
-          <td class="font-bold">{{ op.client }}</td>
-          <td>
-            <span
-              class="text-xs font-bold"
-              [style.color]="
-                op.type === 'VENTA' ? 'var(--ff-accent)' : '#A78BFA'
-              "
-              >{{ op.type }}</span
-            >
-          </td>
-          <td class="ff-mono font-bold">
-            {{ op.amount | currencyArs }}
-          </td>
-          <td style="color: var(--ff-text-secondary)">{{ op.installments }}</td>
-          <td class="text-center">
-            <span
-              class="ff-badge"
-              [class.ff-badge--activo]="
-                getStatusSeverity(op.status) === 'success'
-              "
-              [class.ff-badge--pendiente]="
-                getStatusSeverity(op.status) === 'warning'
-              "
-              [class.ff-badge--vencido]="
-                getStatusSeverity(op.status) === 'danger'
-              "
-              [class.ff-badge--pagado]="
-                getStatusSeverity(op.status) === 'secondary'
-              "
-              >{{ op.status }}</span
-            >
-          </td>
-          <td class="text-center">
-            <p-button
-              label="Ver"
-              severity="secondary"
-              [outlined]="true"
-              size="small"
-            />
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+        <ng-template pTemplate="body" let-op>
+          <tr>
+            <td style="color: var(--ff-text-secondary)">{{ op.createdAt | date: 'dd-MM' }}</td>
+            <td>
+              <div class="font-bold">{{ op.customerName }}</div>
+              <div class="ff-mono text-xs" style="color: var(--ff-text-muted)">
+                {{ op.customerDni }}
+              </div>
+            </td>
+            <td>
+              <span
+                class="text-xs font-bold"
+                [style.color]="op.type === 'SALE' ? 'var(--ff-accent)' : '#A78BFA'"
+              >{{ getTypeLabel(op.type) }}</span>
+            </td>
+            <td class="ff-mono font-bold">
+              {{ op.totalAmount | currencyArs }}
+            </td>
+            <td style="color: var(--ff-text-secondary)">{{ op.installmentsCount }}</td>
+            <td class="text-center">
+              <span
+                class="ff-badge"
+                [class.ff-badge--activo]="getStatusSeverity(op.status) === 'success'"
+                [class.ff-badge--pendiente]="getStatusSeverity(op.status) === 'warning'"
+                [class.ff-badge--vencido]="getStatusSeverity(op.status) === 'danger'"
+                [class.ff-badge--pagado]="getStatusSeverity(op.status) === 'secondary'"
+              >{{ getStatusLabel(op.status) }}</span>
+            </td>
+            <td class="text-center">
+              <p-button
+                label="Ver"
+                icon="pi pi-eye"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="$event.stopPropagation(); navigateToDetail(op.id)"
+              />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
   </div>
 </div>

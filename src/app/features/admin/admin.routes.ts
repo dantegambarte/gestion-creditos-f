@@ -17,6 +17,13 @@ export const ADMIN_ROUTES: Routes = [
       ),
   },
   {
+    path: AppRoutes.OPERATIONS_DETAIL,
+    loadComponent: () =>
+      import('../seller/operations/credit-detail/credit-detail.component').then(
+        (c) => c.CreditDetailComponent,
+      ),
+  },
+  {
     path: AppRoutes.OPERATIONS,
     loadComponent: () =>
       import('../../shared/operations/operations.component').then(

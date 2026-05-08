@@ -21,7 +21,7 @@
       <input
         pInputText
         type="text"
-        placeholder="Buscar por nombre, cédula o teléfono..."
+        placeholder="Buscar por nombre o DNI..."
         [ngModel]="form.searchClient()"
         (ngModelChange)="form.searchClient.set($event)"
         class="w-full h-11 pl-10"
@@ -36,7 +36,7 @@
         background: var(--ff-secondary);
       "
     >
-      @for (client of form.clients; track client.id) {
+      @for (client of form.filteredClients(); track client.id) {
         <div
           class="flex items-center justify-between p-4 cursor-pointer transition-colors"
           [style.background]="
@@ -50,8 +50,9 @@
               : '2px solid transparent'
           "
           style="border-bottom: 1px solid var(--ff-border)"
+          [class.opacity-70]="client.status !== 'ACTIVE'"
           [attr.data-cy]="'cliente-item-' + client.dni"
-          (click)="form.selectedClient.set(client)"
+          (click)="selectClient(client)"
         >
           <div class="flex items-center gap-4">
             <div
@@ -65,16 +66,23 @@
               {{ initials(client.name) }}
             </div>
             <div class="flex flex-col">
-              <span
-                class="text-sm font-bold"
-                [style.color]="
-                  form.selectedClient()?.id === client.id
-                    ? 'var(--ff-text-primary)'
-                    : 'var(--ff-text-secondary)'
-                "
-              >
-                {{ client.name }}
-              </span>
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-sm font-bold"
+                  [style.color]="
+                    form.selectedClient()?.id === client.id
+                      ? 'var(--ff-text-primary)'
+                      : 'var(--ff-text-secondary)'
+                  "
+                >
+                  {{ client.name }}
+                </span>
+                @if (client.status !== 'ACTIVE') {
+                  <span class="ff-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--ff-danger)">
+                    Inactivo
+                  </span>
+                }
+              </div>
               <span class="text-xs ff-mono" style="color: var(--ff-text-muted)">
                 CC {{ client.dni }} · Tel: {{ client.phone }}
               </span>
@@ -86,10 +94,18 @@
               class="pi pi-check-circle text-xl animate-fadein"
               style="color: var(--ff-accent)"
             ></i>
+          } @else if (client.status !== 'ACTIVE') {
+            <i class="pi pi-lock" style="color: var(--ff-danger)"></i>
           }
         </div>
       }
     </div>
+
+    @if (form.selectedClient() && !form.isSelectedClientActive()) {
+      <small class="text-xs font-medium" style="color: var(--ff-danger)">
+        El cliente seleccionado está inactivo. Activá el cliente para continuar.
+      </small>
+    }
   </div>
 
   <!-- Columna derecha: detalle del seleccionado -->
@@ -120,7 +136,13 @@
             >
               CC {{ client.dni }}
             </p>
-            <span class="ff-badge ff-badge--activo">Cliente activo</span>
+            @if (client.status === 'ACTIVE') {
+              <span class="ff-badge ff-badge--activo">Cliente activo</span>
+            } @else {
+              <span class="ff-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--ff-danger)">
+                Cliente inactivo
+              </span>
+            }
           </div>
         </div>
 
