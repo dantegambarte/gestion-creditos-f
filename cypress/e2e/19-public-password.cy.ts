@@ -12,8 +12,10 @@ describe('Recuperar Contraseña (/forgot-password)', () => {
     cy.visit('/forgot-password');
   });
 
-  it('muestra el título "Recuperar Contraseña"', () => {
-    cy.contains('h2', 'Recuperar Contraseña').should('be.visible');
+  it('muestra el texto guía de recuperación', () => {
+    cy.contains('p', 'Ingresá tu email para recuperar el acceso').should(
+      'be.visible',
+    );
   });
 
   it('muestra el campo de email', () => {
@@ -53,8 +55,10 @@ describe('Cambiar Contraseña (/change-password)', () => {
     cy.loginAs('ADMIN', '/change-password');
   });
 
-  it('muestra el título "Cambiar contraseña"', () => {
-    cy.contains('h2', 'Cambiar contraseña').should('be.visible');
+  it('muestra el texto guía de cambio de contraseña', () => {
+    cy.contains('p', 'Ingresá tu contraseña actual y la nueva').should(
+      'be.visible',
+    );
   });
 
   it('tiene el campo contraseña actual', () => {

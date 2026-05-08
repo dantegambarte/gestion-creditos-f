@@ -1,8 +1,8 @@
-import { DatePipe, Location } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
@@ -58,7 +58,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly collectionsService = inject(CollectionsService);
   private readonly paymentsService = inject(PaymentsService);
-  private readonly location = inject(Location);
+  private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
 
@@ -99,7 +99,7 @@ export class CollectionSheetDetailComponent implements OnInit {
    * Navega hacia atrás en el historial del navegador utilizando el servicio Location de Angular. Esto permite al usuario regresar a la página anterior, que presumiblemente es la lista de planillas de cobranza o el dashboard del cobrador, dependiendo de cómo haya llegado a esta página de detalle.
    */
   goBack(): void {
-    this.location.back();
+    this.router.navigate([AppRoutes.COLLECTOR, 'route']);
   }
 
   /**

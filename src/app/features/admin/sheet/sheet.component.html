@@ -1,21 +1,19 @@
 <p-toast />
 
 <div class="p-6 space-y-6">
-  <p-card styleClass="shadow-sm">
+  <div class="ff-panel p-6">
     <div class="mb-4">
-      <h2 class="text-base font-semibold text-gray-800">
+      <h2 class="text-base font-semibold" style="color: var(--ff-text-primary)">
         Generar planilla de cobro
       </h2>
-      <p class="text-xs text-gray-400">
+      <p class="text-xs" style="color: var(--ff-text-muted)">
         Seleccioná un cobrador o generá para todos.
       </p>
     </div>
 
     <div class="flex flex-wrap items-end gap-4">
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide"
-          >Cobrador</label
-        >
+        <label class="auth-label">Cobrador</label>
         <p-dropdown
           [options]="collectorOptions"
           [(ngModel)]="selectedCollectorId"
@@ -29,20 +27,16 @@
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide"
-          >Fecha</label
-        >
+        <label class="auth-label">Fecha</label>
         <input
           type="date"
           [(ngModel)]="selectedDate"
-          class="native-date-input border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 h-10"
+          class="native-date-input h-10"
         />
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide"
-          >Filtro de cuotas</label
-        >
+        <label class="auth-label">Filtro de cuotas</label>
         <p-dropdown
           [options]="filterOptions"
           [(ngModel)]="selectedFilter"
@@ -58,7 +52,7 @@
           label="Generar planilla"
           icon="pi pi-file-export"
           [loading]="generating"
-          [disabled]="!selectedCollectorId || generatingAll"
+          [disabled]="!selectedCollectorId || generating || generatingAll"
           (onClick)="generatePlanilla()"
         />
         <p-button
@@ -67,35 +61,37 @@
           severity="secondary"
           [outlined]="true"
           [loading]="generatingAll"
-          [disabled]="generating"
+          [disabled]="generating || generatingAll"
           (onClick)="generateForAll()"
         />
       </div>
     </div>
-  </p-card>
+  </div>
 
   @if (results.length > 0) {
     <div class="space-y-3">
-      <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-        Planillas generadas
-      </h3>
+      <h3 class="auth-label">Planillas generadas</h3>
       @for (result of results; track result.sheetId) {
-        <div
-          class="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3"
-        >
+        <div class="auth-success-banner justify-between">
           <div class="flex items-center gap-3">
-            <i class="pi pi-check-circle text-green-600 text-lg"></i>
+            <i
+              class="pi pi-check-circle text-lg shrink-0"
+              style="color: var(--ff-success)"
+            ></i>
             <div>
-              <p class="text-sm font-semibold text-gray-800">
+              <p
+                class="text-sm font-semibold"
+                style="color: var(--ff-text-primary)"
+              >
                 {{ result.collectorName }}
               </p>
-              <p class="text-xs text-gray-500">
+              <p class="text-xs" style="color: var(--ff-text-secondary)">
                 {{ formatDate(result.fecha) }} · {{ result.clientCount }} cuotas
                 · {{ formatCurrency(result.totalAmount) }}
               </p>
             </div>
           </div>
-          <div class="flex gap-2">
+          <div class="flex gap-2 shrink-0">
             <p-button
               label="Descargar PDF"
               icon="pi pi-download"
@@ -118,13 +114,11 @@
     </div>
   }
 
-  <p-card styleClass="shadow-sm">
-    <div class="flex items-center justify-between mb-4">
+  <div class="ff-panel">
+    <div class="ff-list-header">
       <div>
-        <h2 class="text-base font-semibold text-gray-800">
-          Historial de planillas
-        </h2>
-        <p class="text-xs text-gray-400">
+        <span class="ff-list-header__title">Historial de planillas</span>
+        <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
           Planillas de cobro generadas anteriormente.
         </p>
       </div>
@@ -140,9 +134,10 @@
     @if (loadingHistorial) {
       <app-loading-state />
     } @else if (historial.length === 0) {
-      <p class="text-sm text-gray-400 text-center py-10">
+      <div class="ff-empty-state">
+        <i class="pi pi-inbox"></i>
         No hay planillas generadas aún.
-      </p>
+      </div>
     } @else {
       <p-table
         [value]="historial"
@@ -162,12 +157,10 @@
         </ng-template>
         <ng-template pTemplate="body" let-sheet>
           <tr>
-            <td class="text-sm text-gray-700">
-              {{ formatDate(sheet.sheetDate) }}
-            </td>
+            <td>{{ formatDate(sheet.sheetDate) }}</td>
             <td class="font-medium">{{ sheet.collectorName }}</td>
-            <td class="text-center font-mono">{{ sheet.totalItems }}</td>
-            <td class="text-sm text-gray-500">
+            <td class="text-center ff-mono">{{ sheet.totalItems }}</td>
+            <td style="color: var(--ff-text-secondary)">
               {{ filterLabel(sheet.filterUsed) }}
             </td>
             <td class="text-center">
@@ -194,7 +187,7 @@
         </ng-template>
       </p-table>
     }
-  </p-card>
+  </div>
 </div>
 
 <p-dialog
@@ -207,28 +200,36 @@
     <app-loading-state />
   } @else if (reviewSheetDetail) {
     <div class="space-y-4">
-      <div class="grid grid-cols-2 gap-3 text-sm bg-gray-50 rounded-xl p-4">
+      <div
+        class="grid grid-cols-2 gap-3 text-sm rounded-lg p-4"
+        style="
+          background: var(--ff-secondary);
+          border: 1px solid var(--ff-border);
+        "
+      >
         <div>
-          <span class="text-gray-500">Cobrador:</span>
-          <span class="font-semibold">{{
+          <span class="ud-label">Cobrador</span>
+          <span class="ud-value font-semibold">{{
             reviewSheetDetail.collectorName
           }}</span>
         </div>
         <div>
-          <span class="text-gray-500">Fecha:</span>
-          <span class="font-semibold">{{
+          <span class="ud-label">Fecha</span>
+          <span class="ud-value font-semibold">{{
             formatDate(reviewSheetDetail.sheetDate)
           }}</span>
         </div>
         <div>
-          <span class="text-gray-500">Filtro:</span>
-          <span class="font-semibold">{{
+          <span class="ud-label">Filtro</span>
+          <span class="ud-value font-semibold">{{
             filterLabel(reviewSheetDetail.filterUsed)
           }}</span>
         </div>
         <div>
-          <span class="text-gray-500">Total cuotas:</span>
-          <span class="font-semibold">{{ reviewSheetDetail.totalItems }}</span>
+          <span class="ud-label">Total cuotas</span>
+          <span class="ud-value ff-mono font-semibold">{{
+            reviewSheetDetail.totalItems
+          }}</span>
         </div>
       </div>
       <p-table
@@ -248,16 +249,19 @@
         </ng-template>
         <ng-template pTemplate="body" let-item>
           <tr>
-            <td class="text-gray-400 text-xs">{{ item.orderNumber }}</td>
+            <td style="color: var(--ff-text-muted)">{{ item.orderNumber }}</td>
             <td class="font-medium">{{ item.customerName }}</td>
-            <td class="text-sm text-gray-500">
+            <td style="color: var(--ff-text-secondary)">
               {{ item.creditType === "SALE" ? "Venta" : "Préstamo" }}
             </td>
-            <td class="text-center font-mono">{{ item.installmentNumber }}</td>
-            <td class="text-sm text-gray-500">
+            <td class="text-center ff-mono">{{ item.installmentNumber }}</td>
+            <td style="color: var(--ff-text-secondary)">
               {{ formatDate(item.dueDate) }}
             </td>
-            <td class="text-right font-mono font-semibold text-blue-600">
+            <td
+              class="text-right ff-mono font-semibold"
+              style="color: var(--ff-accent)"
+            >
               {{ formatCurrency(item.amountDue) }}
             </td>
           </tr>

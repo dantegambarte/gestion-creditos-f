@@ -16,12 +16,14 @@ export class ExpenseCategoriesService {
   private readonly api = inject(ApiHttpService);
 
   /**
-   * Obtiene todas las categorías de gastos desde la API, mapeando cada objeto recibido (en formato ExpenseCategoryRaw) a un objeto en formato ExpenseCategory utilizando la función toCategory. El resultado es un Observable que emite un arreglo de categorías de gastos en el formato utilizado por la aplicación.
+   * Obtiene categorías de gastos desde la API y permite incluir inactivas cuando se usa para administración.
+   * @param includeInactive - Indica si se deben incluir categorías inactivas en la respuesta.
    * @returns
    */
-  getAll(): Observable<ExpenseCategory[]> {
+  getAll(includeInactive = false): Observable<ExpenseCategory[]> {
+    const params = includeInactive ? { include_inactive: 'true' } : undefined;
     return this.api
-      .get<ExpenseCategoryRaw[]>('expense-categories')
+      .get<ExpenseCategoryRaw[]>('expense-categories', params)
       .pipe(map((items) => items.map(toCategory)));
   }
 

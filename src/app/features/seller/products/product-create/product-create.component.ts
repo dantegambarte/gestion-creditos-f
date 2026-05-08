@@ -13,6 +13,8 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { ToastModule } from 'primeng/toast';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef } from '@angular/core';
 import { AppError } from '../../../../core/models/app-error';
 import { HeaderService } from '../../../../core/services/header.service';
 import { ProductBrandsService } from '../../../admin/config/services/product-brands.service';
@@ -42,6 +44,8 @@ export class ProductCreateComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
   private readonly messageService = inject(MessageService);
+  // DestroyRef permite usar takeUntilDestroyed para cancelar suscripciones al destruir el componente
+  private readonly destroyRef = inject(DestroyRef);
 
   form!: FormGroup;
   submitting = false;
@@ -51,7 +55,7 @@ export class ProductCreateComponent implements OnInit {
 
   ngOnInit(): void {
     this.header.set([
-      { label: 'Productos', route: '/seller/products' },
+      { label: 'Productos', route: `/${this.routePrefix}/products` },
       { label: 'Nuevo producto' },
     ]);
 
@@ -70,32 +74,53 @@ export class ProductCreateComponent implements OnInit {
       categoryId: [null],
     });
 
-    this.categoriesService.getAll().subscribe({
-      next: (r) =>
-        (this.categoryOptions = r
-          .filter((c) => c.active)
-          .map((c) => ({ label: c.name, value: c.id }))),
-      error: () => {},
-    });
+    // Carga categorías activas para el dropdown; muestra advertencia si falla
+    this.categoriesService
+      .getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (r) =>
+          (this.categoryOptions = r
+            .filter((c) => c.active)
+            .map((c) => ({ label: c.name, value: c.id }))),
+        error: () =>
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se pudieron cargar las categorías.',
+          }),
+      });
 
-    this.brandsService.getAll().subscribe({
-      next: (r) =>
-        (this.brandOptions = r
-          .filter((b) => b.active)
-          .map((b) => ({ label: b.name, value: b.id }))),
-      error: () => {},
-    });
+    // Carga marcas activas para el dropdown; muestra advertencia si falla
+    this.brandsService
+      .getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (r) =>
+          (this.brandOptions = r
+            .filter((b) => b.active)
+            .map((b) => ({ label: b.name, value: b.id }))),
+        error: () =>
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se pudieron cargar las marcas.',
+          }),
+      });
   }
 
+  /**
+   * Indica si un campo del formulario es inválido y ya fue tocado/modificado.
+   * @param field - Nombre del control del formulario.
+   */
   isInvalid(field: string): boolean {
     const c = this.form.get(field);
     return !!(c && c.invalid && (c.dirty || c.touched));
   }
 
   /**
-   * Obtiene el mensaje de error para un campo específico.
-   * @param field
-   * @returns
+   * Obtiene el mensaje de error para un campo específico del formulario.
+   * @param field - Nombre del control del formulario.
    */
   getError(field: string): string {
     const c = this.form.get(field);
@@ -110,8 +135,7 @@ export class ProductCreateComponent implements OnInit {
   }
 
   /**
-   * Maneja el envío del formulario.
-   * @returns
+   * Maneja el envío del formulario: valida, llama al servicio y gestiona la respuesta.
    */
   onSubmit(): void {
     if (this.form.invalid) {
@@ -130,6 +154,7 @@ export class ProductCreateComponent implements OnInit {
         brandId: raw.brandId || undefined,
         categoryId: raw.categoryId || undefined,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (product) => {
           this.submitting = false;
@@ -138,23 +163,38 @@ export class ProductCreateComponent implements OnInit {
             summary: 'Éxito',
             detail: 'Producto registrado correctamente.',
           });
+          // Espera 1.5 s para que el usuario vea el toast antes de redirigir
           setTimeout(
-            () => this.router.navigate(['/seller/products', product.id]),
-            2000,
+            () => this.router.navigate([`/${this.routePrefix}/products`, product.id]),
+            1500,
           );
         },
         error: (err: AppError) => {
           this.submitting = false;
+
           if (err.status === 409) {
+            // Título duplicado: marca el campo como inválido con el mensaje del servidor
             this.form.get('title')!.setErrors({ serverError: err.message });
             this.form.get('title')!.markAsDirty();
-          } else {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: err.message || 'Error al registrar el producto.',
-            });
+            return;
           }
+
+          if (err.status === 422) {
+            // La categoría o marca seleccionada ya no está activa en el servidor
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Datos inválidos',
+              detail: err.message || 'La categoría o marca seleccionada no es válida.',
+            });
+            return;
+          }
+
+          // Error genérico de red o servidor
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: err.message || 'Error al registrar el producto.',
+          });
         },
       });
   }
@@ -163,6 +203,10 @@ export class ProductCreateComponent implements OnInit {
    * Navega de regreso a la lista de productos sin guardar los cambios.
    */
   cancel(): void {
-    this.router.navigate(['/seller/products']);
+    this.router.navigate([`/${this.routePrefix}/products`]);
+  }
+
+  private get routePrefix(): string {
+    return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
   }
 }

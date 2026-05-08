@@ -14,17 +14,53 @@
 
 describe('Gestión de Clientes — Unhappy Paths', () => {
   beforeEach(() => {
+    cy.intercept('GET', '**/api/customers*', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: [
+          {
+            id: 'cust-001',
+            full_name: 'Ana Garcia',
+            dni: '12345678',
+            address: null,
+            phone: '3811234567',
+            email: null,
+            status: 'ACTIVE',
+            portal_enabled: false,
+            created_at: '2024-01-15T00:00:00Z',
+            collector_id: null,
+            collector_name: null,
+          },
+          {
+            id: 'cust-002',
+            full_name: 'Sin Creditos',
+            dni: '22222222',
+            address: null,
+            phone: '3810000000',
+            email: null,
+            status: 'ACTIVE',
+            portal_enabled: false,
+            created_at: '2024-01-20T00:00:00Z',
+            collector_id: null,
+            collector_name: null,
+          },
+        ],
+      },
+    }).as('getCustomers');
     cy.viewport(1280, 720);
     cy.loginAs('ADMIN', '/admin/clients');
+    cy.wait('@getCustomers');
   });
 
   // ── Búsqueda sin resultados ──────────────────────────────────────────────────
   it('búsqueda con string sin coincidencias → tabla muestra 0 filas', () => {
+    cy.get('[data-cy="input-buscar-cliente"]').should('not.be.disabled');
     cy.get('[data-cy="input-buscar-cliente"]').type('XNOMATCHZZZZZZ999');
     // La tabla filtra por el getter filteredClients → 0 resultados
-    cy.get('p-table tbody tr').should('have.length', 0);
+    cy.get('tbody tr').should('have.length', 0);
     // PrimeNG renderiza una fila de empty state — verificamos que no hay filas de datos
-    cy.get('p-table tbody tr[data-cy]').should('not.exist');
+    cy.get('tbody tr[data-cy]').should('not.exist');
   });
 
   // ── Crear: campos requeridos vacíos ─────────────────────────────────────────
@@ -55,12 +91,12 @@ describe('Gestión de Clientes — Unhappy Paths', () => {
     // Hacer click en otro campo dispara blur en dni → Angular marca touched
     cy.get('p-dialog input[formControlName="nombres"]').click();
 
-    cy.get('p-dialog').find('span.text-red-500').should('exist');
+    cy.get('p-dialog').find('.auth-error').should('exist');
   });
 
   // ── Crear: cancelar no modifica tabla ────────────────────────────────────────
   it('cancelar creación no agrega fila a la tabla', () => {
-    cy.get('p-table tbody tr').its('length').then((initialCount) => {
+    cy.get('tbody tr').its('length').then((initialCount) => {
       cy.get('[data-cy="btn-nuevo-cliente"]').click();
       cy.contains('Crear Cliente').should('be.visible');
 
@@ -72,13 +108,13 @@ describe('Gestión de Clientes — Unhappy Paths', () => {
       cy.get('p-dialog button').contains('Cancelar').click();
       cy.get('p-dialog[ng-reflect-visible="true"]').should('not.exist');
 
-      cy.get('p-table tbody tr').should('have.length', initialCount);
+      cy.get('tbody tr').should('have.length', initialCount);
     });
   });
 
   // ── Editar: cancelar no modifica tabla ───────────────────────────────────────
   it('cancelar edición no modifica datos en la tabla', () => {
-    cy.get('p-table tbody tr')
+    cy.get('tbody tr')
       .first()
       .find('[data-cy^="btn-editar-"]')
       .click();
@@ -97,13 +133,13 @@ describe('Gestión de Clientes — Unhappy Paths', () => {
         cy.get('p-dialog[ng-reflect-visible="true"]').should('not.exist');
 
         // El valor original sigue en la tabla (no se modificó)
-        cy.get('p-table tbody').contains(originalValue as string).should('exist');
+        cy.get('tbody').contains(originalValue as string).should('exist');
       });
   });
 
   // ── Tabla: botón Créditos solo visible cuando credits > 0 ───────────────────
   it('botón Créditos no aparece en filas con 0 créditos activos', () => {
-    cy.get('p-table tbody tr').each(($row) => {
+    cy.get('tbody tr').each(($row) => {
       const creditsBadge = $row.find('[data-cy^="btn-creditos-"]');
       if (creditsBadge.length === 0) {
         // Fila sin créditos → verificar que no hay botón créditos

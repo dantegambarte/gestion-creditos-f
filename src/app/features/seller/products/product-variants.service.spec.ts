@@ -27,6 +27,9 @@ const mockVariantRaw: ProductVariantRaw = {
   product_status: 'ACTIVE',
   brand_id: 'brand-1',
   brand_name: 'Apple',
+  available_count: 7,
+  reserved_count: 2,
+  sold_count: 5,
 };
 
 describe('ProductVariantsService', () => {

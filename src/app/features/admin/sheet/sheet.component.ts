@@ -125,11 +125,10 @@ export class SheetComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Genera una planilla para el cobrador seleccionado.
-   * @returns
+   * Genera una planilla para el cobrador seleccionado evitando reentradas mientras ya hay una generación en curso.
    */
   generatePlanilla(): void {
-    if (!this.selectedCollectorId) return;
+    if (!this.selectedCollectorId || this.generating || this.generatingAll) return;
     this.generating = true;
     this.collectionsService
       .generate({
@@ -170,9 +169,10 @@ export class SheetComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Genera planillas para todos los cobradores.
+   * Genera planillas para todos los cobradores y evita ejecuciones concurrentes desde re-clicks.
    */
   generateForAll(): void {
+    if (this.generatingAll || this.generating) return;
     this.generatingAll = true;
     this.usersService
       .listCollectors()

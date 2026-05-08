@@ -1,6 +1,7 @@
 <p-toast />
 
 <div class="p-6 space-y-6">
+  <!-- KPI Cards -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     @if (loadingStats) {
       @for (i of [1, 2, 3]; track i) {
@@ -18,15 +19,24 @@
       <p-card styleClass="shadow-sm">
         <div class="flex items-center gap-4">
           <div
-            class="bg-red-100 rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0"
+            class="rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0"
+            style="background: rgba(248, 113, 113, 0.12)"
           >
-            <i class="pi pi-exclamation-triangle text-red-500 text-2xl"></i>
+            <i
+              class="pi pi-exclamation-triangle text-2xl"
+              style="color: var(--ff-danger)"
+            ></i>
           </div>
           <div>
-            <p class="text-4xl font-black text-red-600 leading-none">
+            <p
+              class="text-4xl font-black leading-none ff-mono"
+              style="color: var(--ff-danger)"
+            >
               {{ stats.enMoraCount }}
             </p>
-            <span class="text-sm text-gray-500 mt-1 block">En Mora</span>
+            <span class="text-sm block mt-1" style="color: var(--ff-text-muted)"
+              >En Mora</span
+            >
           </div>
         </div>
       </p-card>
@@ -34,15 +44,24 @@
       <p-card styleClass="shadow-sm">
         <div class="flex items-center gap-4">
           <div
-            class="bg-amber-100 rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0"
+            class="rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0"
+            style="background: rgba(251, 176, 64, 0.12)"
           >
-            <i class="pi pi-clock text-amber-500 text-2xl"></i>
+            <i
+              class="pi pi-clock text-2xl"
+              style="color: var(--ff-warning)"
+            ></i>
           </div>
           <div>
-            <p class="text-3xl font-black text-amber-600 leading-none">
+            <p
+              class="text-3xl font-black leading-none ff-mono"
+              style="color: var(--ff-warning)"
+            >
               {{ stats.sinAplicar | currencyArs }}
             </p>
-            <span class="text-sm text-gray-500 mt-1 block">Sin Aplicar</span>
+            <span class="text-sm block mt-1" style="color: var(--ff-text-muted)"
+              >Sin Aplicar</span
+            >
           </div>
         </div>
       </p-card>
@@ -50,64 +69,90 @@
       <p-card styleClass="shadow-sm">
         <div class="flex items-center gap-4">
           <div
-            class="bg-orange-100 rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0"
+            class="rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0"
+            style="background: rgba(251, 176, 64, 0.08)"
           >
-            <i class="pi pi-exclamation-circle text-orange-500 text-2xl"></i>
+            <i
+              class="pi pi-exclamation-circle text-2xl"
+              style="color: var(--ff-warning)"
+            ></i>
           </div>
           <div>
-            <p class="text-3xl font-black text-orange-600 leading-none">
+            <p
+              class="text-3xl font-black leading-none ff-mono"
+              style="color: var(--ff-text-primary)"
+            >
               {{ stats.aplicada | currencyArs }}
             </p>
-            <span class="text-sm text-gray-500 mt-1 block">Aplicado</span>
+            <span class="text-sm block mt-1" style="color: var(--ff-text-muted)"
+              >Aplicado</span
+            >
           </div>
         </div>
       </p-card>
     }
   </div>
 
-  <p-card styleClass="shadow-sm">
-    <div class="flex flex-wrap gap-3 mb-4 items-center">
-      <p-dropdown
-        [options]="estadoOptions"
-        [(ngModel)]="filterEstado"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Estado"
-        styleClass="w-40"
-        (onChange)="applyFilters()"
-      />
-      <p-dropdown
-        [options]="diasOptions"
-        [(ngModel)]="filterDias"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Días en Mora"
-        styleClass="w-44"
-        (onChange)="applyFilters()"
-      />
-      <input
-        pInputText
-        class="flex-1 min-w-48 h-11 px-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 shadow-sm"
-        placeholder="Buscar cliente..."
-        [(ngModel)]="searchTerm"
-        (input)="applyFilters()"
-      />
-      <p-button
-        label="Buscar"
-        icon="pi pi-search"
-        styleClass="h-11 px-5 rounded-xl"
-        (onClick)="applyFilters()"
-      />
+  <!-- Tabla mora -->
+  <div class="ff-panel">
+    <div class="ff-list-header">
+      <div class="ff-list-header__actions" style="flex: 1; flex-wrap: wrap">
+        <p-dropdown
+          [options]="estadoOptions"
+          [(ngModel)]="filterEstado"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Estado"
+          styleClass="w-40"
+          (onChange)="applyFilters()"
+        />
+        <p-dropdown
+          [options]="diasOptions"
+          [(ngModel)]="filterDias"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Días en Mora"
+          styleClass="w-44"
+          (onChange)="applyFilters()"
+        />
+        <input
+          pInputText
+          class="flex-1 min-w-48 h-11 px-3.5"
+          placeholder="Buscar cliente..."
+          [(ngModel)]="searchTerm"
+          (input)="applyFilters()"
+        />
+        <p-button
+          label="Buscar"
+          icon="pi pi-search"
+          styleClass="h-11 px-5 rounded-xl"
+          (onClick)="applyFilters()"
+        />
+      </div>
     </div>
 
-    <div class="flex gap-2 mb-4 flex-wrap">
+    <!-- Chip filters -->
+    <div
+      class="flex gap-2 px-4 py-3 flex-wrap"
+      style="border-bottom: 1px solid var(--ff-border)"
+    >
       @for (chip of statusChips; track chip.value) {
         <button
           class="px-4 py-1.5 rounded-full text-sm font-medium border transition-colors"
-          [class]="
+          [style.background]="
             activeStatusFilter === chip.value
-              ? 'bg-gray-800 text-white border-gray-800'
-              : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+              ? 'rgba(79,110,247,0.15)'
+              : 'transparent'
+          "
+          [style.color]="
+            activeStatusFilter === chip.value
+              ? 'var(--ff-accent)'
+              : 'var(--ff-text-secondary)'
+          "
+          [style.borderColor]="
+            activeStatusFilter === chip.value
+              ? 'var(--ff-accent)'
+              : 'var(--ff-border)'
           "
           (click)="setStatusFilter(chip.value)"
         >
@@ -163,10 +208,8 @@
         </ng-template>
       </p-table>
     } @else if (filteredClients.length === 0) {
-      <div
-        class="flex flex-col items-center justify-center py-16 text-gray-400"
-      >
-        <i class="pi pi-inbox text-5xl mb-3"></i>
+      <div class="ff-empty-state">
+        <i class="pi pi-inbox"></i>
         <p class="text-lg font-medium">No hay clientes en mora</p>
         <p class="text-sm">
           Todos están al día. ¡Excelente trabajo del equipo!
@@ -193,34 +236,33 @@
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-row>
-          <tr [class.bg-red-50]="row.daysOverdue > 30">
-            <td class="font-semibold text-gray-800">{{ row.clientName }}</td>
-            <td class="text-gray-600 text-sm">{{ row.dni }}</td>
-            <td class="text-center text-gray-600">
+          <tr [class.dq-row--critical]="row.daysOverdue > 30">
+            <td class="font-semibold">{{ row.clientName }}</td>
+            <td class="ff-mono text-sm" style="color: var(--ff-text-secondary)">
+              {{ row.dni }}
+            </td>
+            <td class="text-center" style="color: var(--ff-text-secondary)">
               #{{ row.installmentNumber }}
             </td>
-            <td class="text-right font-mono font-semibold text-gray-800">
+            <td class="text-right ff-mono font-semibold">
               {{ row.amount | currencyArs }}
             </td>
             <td class="text-center">
               <span
-                class="px-2 py-0.5 rounded-full text-xs font-bold"
-                [class]="
-                  row.daysOverdue > 15
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-green-100 text-green-700'
-                "
+                class="ff-badge"
+                [class.ff-badge--vencido]="row.daysOverdue > 15"
+                [class.ff-badge--activo]="row.daysOverdue <= 15"
+                >{{ row.daysOverdue }} días</span
               >
-                {{ row.daysOverdue }} días
-              </span>
             </td>
             <td
-              class="text-right font-mono font-bold"
-              [class]="row.daysOverdue > 15 ? 'text-red-600' : 'text-amber-600'"
+              class="text-right ff-mono font-bold"
+              [style.color]="
+                row.daysOverdue > 15 ? 'var(--ff-danger)' : 'var(--ff-warning)'
+              "
             >
               {{ row.delinquencyAmount | currencyArs }}
             </td>
-
             <td class="text-center">
               <p-tag
                 [value]="statusLabel(row.status)"
@@ -265,7 +307,10 @@
         </ng-template>
         <ng-template pTemplate="footer">
           <tr>
-            <td colspan="8" class="text-sm text-gray-500">
+            <td
+              colspan="8"
+              style="color: var(--ff-text-muted); font-size: 13px"
+            >
               Mostrando {{ filteredClients.length }} de
               {{ stats.enMoraCount }} cuotas en mora
             </td>
@@ -273,7 +318,7 @@
         </ng-template>
       </p-table>
     }
-  </p-card>
+  </div>
 </div>
 
 <p-dialog
@@ -285,19 +330,24 @@
   [resizable]="false"
 >
   <div class="flex flex-col gap-4 py-2">
-    <p class="text-sm text-gray-700">
+    <p class="text-sm" style="color: var(--ff-text-primary)">
       Cliente: <strong>{{ applyingRow?.clientName }}</strong> · Cuota #{{
         applyingRow?.installmentNumber
       }}
     </p>
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Monto de mora</label>
+      <label class="auth-label">Monto de mora</label>
       <input
         type="number"
         [(ngModel)]="applyAmount"
         min="0.01"
         step="0.01"
-        class="w-full rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        class="w-full rounded-xl p-3 text-sm outline-none"
+        style="
+          border: 1px solid var(--ff-border);
+          background: var(--ff-secondary);
+          color: var(--ff-text-primary);
+        "
         placeholder="0.00"
       />
     </div>

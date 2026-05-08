@@ -27,14 +27,76 @@
 
 const ADMIN_NEW_OP = '/admin/operations/new';
 
+const CLIENTS_MOCK = [
+  {
+    id: 'cust-001',
+    full_name: 'Ana Garcia',
+    dni: '10293847',
+    phone: '3811234567',
+    email: 'ana@example.com',
+    status: 'ACTIVE',
+    portal_enabled: false,
+    created_at: '2026-01-01T00:00:00Z',
+    collector_id: null,
+    collector_name: null,
+  },
+  {
+    id: 'cust-002',
+    full_name: 'Bruno Perez',
+    dni: '22334455',
+    phone: '3810000000',
+    email: 'bruno@example.com',
+    status: 'ACTIVE',
+    portal_enabled: false,
+    created_at: '2026-01-01T00:00:00Z',
+    collector_id: null,
+    collector_name: null,
+  },
+];
+
+const PRODUCT_UNITS_MOCK = [
+  {
+    id: 'unit-001',
+    unit_code: 'UN-001',
+    status: 'AVAILABLE',
+    notes: null,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+    variant_id: 'var-001',
+    color: 'Negro',
+    size: 'M',
+    capacity: '128GB',
+    current_price: 100000,
+    product_id: 'prod-001',
+    product_name: 'Moto X',
+  },
+];
+
+function stubNewOperationData(): void {
+  cy.intercept('GET', /\/api\/customers(\?.*)?$/, {
+    statusCode: 200,
+    body: { ok: true, data: CLIENTS_MOCK },
+  }).as('wizardCustomers');
+
+  cy.intercept('GET', /\/api\/product-units(\?.*)?$/, {
+    statusCode: 200,
+    body: { ok: true, data: PRODUCT_UNITS_MOCK },
+  }).as('wizardUnits');
+}
+
 // Alias helpers para PrimeNG p-steps items
 const getStepLabel = (label: string) =>
   cy.contains('.p-steps-item', label);
 
+const getWizardButton = (dataCy: string) =>
+  cy.get(`[data-cy="${dataCy}"] button`);
+
 describe('Wizard — Nueva Operación de Crédito', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
+    stubNewOperationData();
     cy.loginAs('ADMIN', ADMIN_NEW_OP);
+    cy.wait(['@wizardCustomers', '@wizardUnits']);
   });
 
   // ── Estructura general ────────────────────────────────────────────────────────
@@ -54,32 +116,32 @@ describe('Wizard — Nueva Operación de Crédito', () => {
   // ── Paso 0: Cliente ───────────────────────────────────────────────────────────
   describe('Paso 0 — Selección de Cliente', () => {
     it('muestra la lista de clientes con al menos un registro', () => {
-      cy.get('.h-\\[380px\\]').first().children().should('have.length.gte', 1);
+      cy.get('[data-cy^="cliente-item-"]').should('have.length.gte', 1);
     });
 
     it('el botón Siguiente está deshabilitado sin cliente seleccionado', () => {
-      cy.get('[data-cy="btn-siguiente-wizard"]').should('have.attr', 'ng-reflect-disabled', 'true');
+      getWizardButton('btn-siguiente-wizard').should('be.disabled');
     });
 
     it('filtra la lista al escribir en el campo de búsqueda', () => {
-      cy.get('.h-\\[380px\\]').first().children().its('length').then((total) => {
+      cy.get('[data-cy^="cliente-item-"]').its('length').then((total) => {
         cy.get('[data-cy="input-buscar-cliente-wizard"]').type('Ana');
-        cy.get('.h-\\[380px\\]').first().children().should('have.length.lte', total);
+        cy.get('[data-cy^="cliente-item-"]').should('have.length.lte', total);
       });
     });
 
     it('seleccionar un cliente habilita el panel de detalle y el botón Siguiente', () => {
-      cy.get('.h-\\[380px\\]').first().children().first().click();
+      cy.get('[data-cy^="cliente-item-"]').first().click();
 
       // Panel derecho muestra datos
       cy.contains('Cliente activo').should('be.visible');
       cy.contains('Teléfono').should('be.visible');
 
-      cy.get('[data-cy="btn-siguiente-wizard"]').parent().should('not.have.attr', 'disabled');
+      getWizardButton('btn-siguiente-wizard').should('not.be.disabled');
     });
 
     it('muestra ícono de check en el cliente seleccionado', () => {
-      cy.get('.h-\\[380px\\]').first().children().first().click();
+      cy.get('[data-cy^="cliente-item-"]').first().click();
       cy.get('.pi-check-circle').should('be.visible');
     });
 
@@ -91,7 +153,7 @@ describe('Wizard — Nueva Operación de Crédito', () => {
   // ── Paso 1: Productos ─────────────────────────────────────────────────────────
   describe('Paso 1 — Productos', () => {
     beforeEach(() => {
-      cy.get('.h-\\[380px\\]').first().children().first().click();
+      cy.get('[data-cy^="cliente-item-"]').first().click();
       cy.get('[data-cy="btn-siguiente-wizard"]').click();
       cy.contains('Paso 2 de 4').scrollIntoView().should('be.visible');
     });
@@ -110,7 +172,7 @@ describe('Wizard — Nueva Operación de Crédito', () => {
   // ── Paso 2: Condiciones ───────────────────────────────────────────────────────
   describe('Paso 2 — Condiciones Financieras', () => {
     beforeEach(() => {
-      cy.get('.h-\\[380px\\]').first().children().first().click();
+      cy.get('[data-cy^="cliente-item-"]').first().click();
       cy.get('[data-cy="btn-siguiente-wizard"]').click();
       cy.contains('Paso 2 de 4').scrollIntoView().should('be.visible');
       cy.get('[data-cy="btn-siguiente-wizard"]').click();
@@ -136,11 +198,12 @@ describe('Wizard — Nueva Operación de Crédito', () => {
   // ── Paso 3: Confirmación ──────────────────────────────────────────────────────
   describe('Paso 3 — Confirmación', () => {
     beforeEach(() => {
-      cy.get('.h-\\[380px\\]').first().children().first().click();
+      cy.get('[data-cy^="cliente-item-"]').first().click();
       cy.get('[data-cy="btn-siguiente-wizard"]').click();
       cy.contains('Paso 2 de 4').scrollIntoView().should('be.visible');
       cy.get('[data-cy="btn-siguiente-wizard"]').click();
       cy.contains('Paso 3 de 4').scrollIntoView().should('be.visible');
+      cy.get('input#first-due-date').clear().type('31/12/2099').blur();
       cy.get('[data-cy="btn-siguiente-wizard"]').click();
       cy.contains('Paso 4 de 4').scrollIntoView().should('be.visible');
     });
@@ -153,7 +216,7 @@ describe('Wizard — Nueva Operación de Crédito', () => {
     });
 
     it('el botón "Enviar para Aprobación" está deshabilitado sin checkboxes', () => {
-      cy.get('[data-cy="btn-enviar-aprobacion"]').should('have.attr', 'ng-reflect-disabled', 'true');
+      getWizardButton('btn-enviar-aprobacion').should('be.disabled');
     });
 
     it('habilita "Enviar para Aprobación" al marcar los 4 checkboxes', () => {
@@ -161,7 +224,7 @@ describe('Wizard — Nueva Operación de Crédito', () => {
       cy.get('[data-cy="chk-conditions"] .p-checkbox-box').click();
       cy.get('[data-cy="chk-disbursement"] .p-checkbox-box').click();
       cy.get('[data-cy="chk-capacity"] .p-checkbox-box').click();
-      cy.get('[data-cy="btn-enviar-aprobacion"]').parent().should('not.have.attr', 'disabled');
+      getWizardButton('btn-enviar-aprobacion').should('not.be.disabled');
     });
 
     it('muestra aviso amarillo sobre revisión de supervisor', () => {

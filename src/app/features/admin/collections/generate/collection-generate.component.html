@@ -1,7 +1,7 @@
 <p-toast />
 
 <div class="p-6 max-w-2xl mx-auto">
-  <div class="flex items-center justify-between mb-6">
+  <div class="mb-6">
     <div>
       <h1 class="text-2xl font-bold text-gray-800">
         Generar planilla de cobro
@@ -10,12 +10,6 @@
         Configurá los parámetros de la planilla.
       </p>
     </div>
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="cancel()"
-    />
   </div>
 
   <p-message
@@ -62,10 +56,21 @@
         />
       </div>
 
-      <div class="flex justify-end pt-2">
+      <div class="flex gap-3 pt-2">
         <p-button
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="h-11 px-5 rounded-xl"
+          (onClick)="cancel()"
+        />
+        <p-button
+          type="button"
           label="Generar planilla"
           icon="pi pi-check"
+          severity="primary"
+          styleClass="h-11 px-5 rounded-xl"
           (onClick)="confirm()"
           [loading]="processing"
           [disabled]="!isValid"

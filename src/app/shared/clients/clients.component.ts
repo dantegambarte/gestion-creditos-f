@@ -99,6 +99,7 @@ export class ClientsComponent implements OnInit {
   showEditModal: boolean = false;
   showViewModal: boolean = false;
   submitted: boolean = false;
+  creatingClient: boolean = false;
   selectedClient: Client | null = null;
   editError: string = '';
 
@@ -302,7 +303,9 @@ export class ClientsComponent implements OnInit {
    */
   createClient(): void {
     this.submitted = true;
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.creatingClient) return;
+
+    this.creatingClient = true;
 
     const { nombres, apellidos, dni, telefonoPrincipal, email, direccion } =
       this.form.value;
@@ -319,20 +322,49 @@ export class ClientsComponent implements OnInit {
       })
       .subscribe({
         next: () => {
-          this.showCreateModal = false;
-          this.submitted = false;
-          this.form = this.buildForm();
-          this.loadClients();
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Cliente guardado correctamente.',
-          });
+          this.handleCreateSuccess();
         },
         error: (err) => {
-          console.error('Error al crear cliente', err);
+          this.handleCreateError(err);
         },
       });
+  }
+
+  /**
+   * Aplica el flujo de post-alta cuando la API confirma la creación del cliente.
+   * Primero dispara feedback visible de éxito y luego refresca la grilla.
+   */
+  private handleCreateSuccess(): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Cliente guardado correctamente.',
+      life: 4500,
+    });
+    this.showCreateModal = false;
+    this.submitted = false;
+    this.creatingClient = false;
+    this.form = this.buildForm();
+    this.loadClients();
+  }
+
+  /**
+   * Resuelve errores de alta mostrando feedback visible y liberando el estado de carga.
+   * @param err Error devuelto por la API.
+   */
+  private handleCreateError(err: { status?: number; message?: string }): void {
+    this.creatingClient = false;
+    const detail =
+      err?.status === 409
+        ? 'Ya existe un cliente con ese DNI.'
+        : err?.message || 'No se pudo guardar el cliente. Intentá nuevamente.';
+    this.messageService.add({
+      severity: 'error',
+      summary: 'No se pudo crear el cliente',
+      detail,
+      life: 5000,
+    });
+    console.error('Error al crear cliente', err);
   }
 
   /**

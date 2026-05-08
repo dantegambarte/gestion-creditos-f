@@ -1,94 +1,132 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-  <div class="border border-gray-200 rounded-2xl p-6 bg-white shadow-sm">
-    <h3 class="text-base font-bold text-gray-900 mb-6">
+  <!-- Resumen de la operación -->
+  <div class="ff-panel p-6">
+    <h3 class="text-base font-bold mb-6" style="color: var(--ff-text-primary)">
       Resumen de la Operación
     </h3>
 
-    <div class="mb-5 pb-5 border-b border-gray-100">
+    <!-- Cliente -->
+    <div class="mb-5 pb-5" style="border-bottom: 1px solid var(--ff-border)">
       <span
-        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3 block"
+        class="text-[10px] font-bold uppercase tracking-wider mb-3 block"
+        style="color: var(--ff-text-muted)"
         >Cliente</span
       >
       <div class="flex items-center gap-3">
         <div
-          class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm"
+          class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
+          style="background: var(--ff-accent)"
         >
           {{ initials(form.selectedClient()?.name) }}
         </div>
         <div>
-          <p class="font-bold text-gray-900 text-sm">
+          <p class="font-bold text-sm" style="color: var(--ff-text-primary)">
             {{ form.selectedClient()?.name || "No seleccionado" }}
           </p>
-          <p class="text-xs text-gray-500">
+          <p class="text-xs ff-mono" style="color: var(--ff-text-muted)">
             CC {{ form.selectedClient()?.dni }}
           </p>
         </div>
       </div>
     </div>
 
-    <div class="mb-5 pb-5 border-b border-gray-100">
+    <!-- Tipo de operación -->
+    <div class="mb-5 pb-5" style="border-bottom: 1px solid var(--ff-border)">
       <span
-        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3 block"
-        >Producto</span
+        class="text-[10px] font-bold uppercase tracking-wider mb-3 block"
+        style="color: var(--ff-text-muted)"
+        >Operación</span
       >
-      <p class="text-sm font-semibold text-gray-800">
-        {{
-          form.selectedType() === "VENTA"
-            ? "Venta a Crédito - " +
-              form.selectedProducts().length +
-              " producto(s)"
-            : "Préstamo Express - Crédito Personal"
-        }}
+      <p class="text-sm font-semibold" style="color: var(--ff-text-primary)">
+        {{ operationTypeLabel() }}
+        @if (form.selectedType() === "SALE") {
+          - {{ form.selectedProducts().length }} unidad(es)
+        }
       </p>
     </div>
 
+    <!-- Condiciones financieras -->
     <div>
       <span
-        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-4 block"
+        class="text-[10px] font-bold uppercase tracking-wider mb-4 block"
+        style="color: var(--ff-text-muted)"
         >Condiciones Financieras</span
       >
       <div class="space-y-3">
         <div class="flex justify-between items-center text-sm">
-          <span class="text-gray-500">Monto del crédito</span>
-          <span class="font-bold text-gray-900"
-            >{{ form.capital() | currencyArs }}</span
-          >
+          <span style="color: var(--ff-text-secondary)">Total base</span>
+          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
+            {{ form.capital() | currencyArs }}
+          </span>
         </div>
+        @if (form.selectedType() === "SALE") {
+          <div class="flex justify-between items-center text-sm">
+            <span style="color: var(--ff-text-secondary)">Enganche</span>
+            <span
+              class="font-bold ff-mono"
+              style="color: var(--ff-text-primary)"
+            >
+              {{ form.downPayment() | currencyArs }}
+            </span>
+          </div>
+        }
         <div class="flex justify-between items-center text-sm">
-          <span class="text-gray-500">Plazo</span>
-          <span class="font-bold text-gray-900">
-            {{ form.installmentsCount() }} cuotas
-            {{
-              form.selectedType() === "PRESTAMO"
-                ? form.selectedFrequency().label.split(" ")[0].toLowerCase() +
-                  "es"
-                : ""
-            }}
+          <span style="color: var(--ff-text-secondary)">Capital financiado</span>
+          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
+            {{ form.financedCapital() | currencyArs }}
           </span>
         </div>
         <div class="flex justify-between items-center text-sm">
-          <span class="text-gray-500">Tasa de interés</span>
-          <span class="font-bold text-gray-900">
+          <span style="color: var(--ff-text-secondary)">Plan de cuotas</span>
+          <span class="font-bold" style="color: var(--ff-text-primary)">
+            {{ installmentsLabel() }}
+          </span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span style="color: var(--ff-text-secondary)">Fecha primer pago</span>
+          <span class="font-bold" style="color: var(--ff-text-primary)">
+            {{ (form.firstDueDate() | date: "dd/MM/yyyy") || "No definida" }}
+          </span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span style="color: var(--ff-text-secondary)">Valor cuota</span>
+          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
+            {{ form.installmentValue() | currencyArs }}
+          </span>
+        </div>
+        <div class="flex justify-between items-center text-sm">
+          <span style="color: var(--ff-text-secondary)">Total a devolver</span>
+          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
+            {{ form.totalToPay() | currencyArs }}
+          </span>
+        </div>
+        <div
+          class="flex justify-between items-center text-sm pt-2"
+          style="border-top: 1px solid var(--ff-border)"
+        >
+          <span style="color: var(--ff-text-secondary)">Tipo de tasa</span>
+          <span
+            class="font-bold"
+            style="color: var(--ff-text-primary)"
+          >
             {{
-              form.selectedType() === "PRESTAMO"
+              form.selectedType() === "LOAN"
                 ? form.loanInterest() + "% mensual"
                 : form.interestRate() + "% fijo"
             }}
           </span>
         </div>
-        <div class="flex justify-between items-center text-sm pt-1">
-          <span class="text-gray-500">Cuota estimada</span>
-          <span class="font-bold text-blue-600 text-base"
-            >{{ form.installmentValue() | currencyArs }}</span
-          >
-        </div>
       </div>
     </div>
   </div>
 
+  <!-- Declaraciones + advertencia -->
   <div class="flex flex-col gap-4">
-    <div class="border border-gray-200 rounded-2xl p-6 bg-white shadow-sm">
-      <h3 class="text-base font-bold text-gray-900 mb-6">
+    <div class="ff-panel p-6">
+      <h3
+        class="text-base font-bold mb-6"
+        style="color: var(--ff-text-primary)"
+      >
         Declaraciones y Autorizaciones
       </h3>
       <div class="flex flex-col gap-5">
@@ -103,7 +141,8 @@
           />
           <label
             for="chk1"
-            class="text-sm text-gray-700 leading-snug cursor-pointer select-none"
+            class="text-sm leading-snug cursor-pointer select-none"
+            style="color: var(--ff-text-primary)"
           >
             Confirmo que la información del cliente es correcta y he verificado
             su identidad.
@@ -120,7 +159,8 @@
           />
           <label
             for="chk2"
-            class="text-sm text-gray-700 leading-snug cursor-pointer select-none"
+            class="text-sm leading-snug cursor-pointer select-none"
+            style="color: var(--ff-text-primary)"
           >
             El cliente ha sido informado de las condiciones financieras y ha
             dado su consentimiento.
@@ -137,7 +177,8 @@
           />
           <label
             for="chk3"
-            class="text-sm text-gray-700 leading-snug cursor-pointer select-none"
+            class="text-sm leading-snug cursor-pointer select-none"
+            style="color: var(--ff-text-primary)"
           >
             Autorizo el desembolso inmediato al finalizar la aprobación del
             crédito.
@@ -154,7 +195,8 @@
           />
           <label
             for="chk4"
-            class="text-sm text-gray-700 leading-snug cursor-pointer select-none"
+            class="text-sm leading-snug cursor-pointer select-none"
+            style="color: var(--ff-text-primary)"
           >
             He revisado el plan de pagos y confirmo que las cuotas están dentro
             de la capacidad del cliente.
@@ -163,11 +205,10 @@
       </div>
     </div>
 
-    <div
-      class="bg-yellow-50 border border-yellow-200/80 rounded-xl p-4 flex gap-3 shadow-sm"
-    >
-      <i class="pi pi-exclamation-triangle text-yellow-600 mt-0.5"></i>
-      <p class="text-sm text-yellow-800 font-medium leading-relaxed">
+    <!-- Advertencia -->
+    <div class="auth-warning-banner">
+      <i class="pi pi-exclamation-triangle shrink-0"></i>
+      <p class="text-sm font-medium leading-relaxed">
         Esta operación será enviada a revisión del supervisor antes de ser
         desembolsada. El cliente será notificado por correo y SMS.
       </p>

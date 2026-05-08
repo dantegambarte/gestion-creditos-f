@@ -120,14 +120,14 @@ export class ClientsListComponent implements OnInit, OnDestroy {
    * @param id - El ID del cliente.
    */
   navigateToDetail(id: string): void {
-    this.router.navigate([AppRoutes.CLIENTS, id]);
+    this.router.navigate(['/seller', AppRoutes.CLIENTS, id]);
   }
 
   /**
    * Navega a la vista de creación de un nuevo cliente.
    */
   navigateToCreate(): void {
-    this.router.navigate([AppRoutes.CLIENTS_NEW]);
+    this.router.navigate(['/seller', AppRoutes.CLIENTS, 'new']);
   }
 
   /**

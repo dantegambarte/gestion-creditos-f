@@ -56,48 +56,75 @@ export const SELLER_ROUTES: Routes = [
   {
     path: AppRoutes.PRODUCTS,
     loadComponent: () =>
-      import('./products/products-list/products-list.component').then(
-        (c) => c.ProductsListComponent,
+      import('./products/products-shell/products-shell.component').then(
+        (c) => c.ProductsShellComponent,
       ),
-  },
-  {
-    path: AppRoutes.PRODUCTS_NEW,
-    canActivate: [roleGuard],
-    data: { roles: ['ADMIN'] },
-    loadComponent: () =>
-      import('./products/product-create/product-create.component').then(
-        (c) => c.ProductCreateComponent,
-      ),
-  },
-  {
-    path: AppRoutes.PRODUCTS_EDIT,
-    canActivate: [roleGuard],
-    data: { roles: ['ADMIN'] },
-    loadComponent: () =>
-      import('./products/product-edit/product-edit.component').then(
-        (c) => c.ProductEditComponent,
-      ),
-  },
-  {
-    path: 'products/:id/variants/:variantId/units',
-    loadComponent: () =>
-      import('./products/product-units/product-units.component').then(
-        (c) => c.ProductUnitsComponent,
-      ),
-  },
-  {
-    path: 'products/:id/variants',
-    loadComponent: () =>
-      import('./products/product-variants/product-variants.component').then(
-        (c) => c.ProductVariantsComponent,
-      ),
-  },
-  {
-    path: AppRoutes.PRODUCTS_DETAIL,
-    loadComponent: () =>
-      import('./products/product-detail/product-detail.component').then(
-        (c) => c.ProductDetailComponent,
-      ),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./products/products-list/products-list.component').then(
+            (c) => c.ProductsListComponent,
+          ),
+      },
+      {
+        path: 'new',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./products/product-create/product-create.component').then(
+            (c) => c.ProductCreateComponent,
+          ),
+      },
+      {
+        path: ':id/variants/:variantId/units',
+        loadComponent: () =>
+          import('./products/product-units/product-units.component').then(
+            (c) => c.ProductUnitsComponent,
+          ),
+      },
+      {
+        path: ':id/variants',
+        loadComponent: () =>
+          import('./products/product-variants/product-variants.component').then(
+            (c) => c.ProductVariantsComponent,
+          ),
+      },
+      {
+        path: ':id/edit',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./products/product-edit/product-edit.component').then(
+            (c) => c.ProductEditComponent,
+          ),
+      },
+      {
+        path: ':id',
+        loadComponent: () =>
+          import('./products/product-detail/product-detail.component').then(
+            (c) => c.ProductDetailComponent,
+          ),
+      },
+      {
+        path: 'config/categories',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('../admin/config/product-categories/product-categories-config.component').then(
+            (c) => c.ProductCategoriesConfigComponent,
+          ),
+      },
+      {
+        path: 'config/brands',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('../admin/config/product-brands/product-brands-config.component').then(
+            (c) => c.ProductBrandsConfigComponent,
+          ),
+      },
+    ],
   },
   {
     path: 'commissions',

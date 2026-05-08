@@ -148,7 +148,8 @@ export class ClientCreateComponent implements OnInit {
             detail: 'Cliente registrado correctamente.',
           });
           setTimeout(
-            () => this.router.navigate([AppRoutes.CLIENTS, customer.id]),
+            () =>
+              this.router.navigate(['/seller', AppRoutes.CLIENTS, customer.id]),
             2000,
           );
         },
@@ -177,6 +178,6 @@ export class ClientCreateComponent implements OnInit {
    * Navega de vuelta a la lista de clientes sin guardar los cambios.
    */
   cancel(): void {
-    this.router.navigate([AppRoutes.CLIENTS]);
+    this.router.navigate(['/seller', AppRoutes.CLIENTS]);
   }
 }

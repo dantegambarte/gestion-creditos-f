@@ -1,0 +1,90 @@
+<nav class="products-nav">
+  <span class="products-nav__section">PRODUCTOS</span>
+
+  <a
+    class="products-nav__tab"
+    [class.products-nav__tab--active]="activeTab === 'list'"
+    [routerLink]="listLink"
+  >
+    <i class="pi pi-list"></i>
+    <span>Listado</span>
+  </a>
+
+  @if (isAdmin) {
+    <a
+      class="products-nav__tab"
+      [class.products-nav__tab--active]="activeTab === 'new'"
+      [routerLink]="newLink"
+    >
+      <i class="pi pi-plus"></i>
+      <span>Nuevo producto</span>
+    </a>
+  }
+
+  @if (productId) {
+    <a
+      class="products-nav__tab"
+      [class.products-nav__tab--active]="activeTab === 'detail'"
+      [routerLink]="detailLink"
+    >
+      <i class="pi pi-eye"></i>
+      <span>Detalle</span>
+    </a>
+
+    <a
+      class="products-nav__tab"
+      [class.products-nav__tab--active]="activeTab === 'variants'"
+      [routerLink]="variantsLink"
+    >
+      <i class="pi pi-sitemap"></i>
+      <span>Variantes</span>
+    </a>
+  } @else {
+    <span class="products-nav__tab products-nav__tab--disabled">
+      <i class="pi pi-eye"></i>
+      <span>Detalle</span>
+    </span>
+    <span class="products-nav__tab products-nav__tab--disabled">
+      <i class="pi pi-sitemap"></i>
+      <span>Variantes</span>
+    </span>
+  }
+
+  @if (effectiveVariantId) {
+    <a
+      class="products-nav__tab"
+      [class.products-nav__tab--active]="activeTab === 'units'"
+      [routerLink]="unitsLink"
+    >
+      <i class="pi pi-box"></i>
+      <span>Unidades</span>
+    </a>
+  } @else {
+    <span class="products-nav__tab products-nav__tab--disabled">
+      <i class="pi pi-box"></i>
+      <span>Unidades</span>
+    </span>
+  }
+
+  <span class="products-nav__divider"></span>
+
+  @if (isAdmin) {
+    <a
+      class="products-nav__tab"
+      [class.products-nav__tab--active]="activeTab === 'categories'"
+      [routerLink]="categoriesLink"
+    >
+      <i class="pi pi-tag"></i>
+      <span>Categorías</span>
+    </a>
+
+    <a
+      class="products-nav__tab"
+      [class.products-nav__tab--active]="activeTab === 'brands'"
+      [routerLink]="brandsLink"
+    >
+      <i class="pi pi-bookmark"></i>
+      <span>Marcas</span>
+    </a>
+  }
+</nav>

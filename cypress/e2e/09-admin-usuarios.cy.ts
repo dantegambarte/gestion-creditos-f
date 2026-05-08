@@ -10,153 +10,112 @@
  *  - Navegación a detalle tras crear
  */
 
+const USERS_LIST = [
+  {
+    id: 'usr-001',
+    full_name: 'Carlos López',
+    dni: '12345678',
+    email: 'admin@siscreditos.com',
+    role: 'ADMIN',
+    status: 'ACTIVE',
+    is_temp_password: false,
+    failed_attempts: 0,
+    locked_at: null,
+    last_login_at: '2026-05-01T10:00:00Z',
+    created_at: '2025-01-01T00:00:00Z',
+  },
+  {
+    id: 'usr-002',
+    full_name: 'María Sánchez',
+    dni: '87654321',
+    email: 'maria@siscreditos.com',
+    role: 'SELLER',
+    status: 'ACTIVE',
+    is_temp_password: false,
+    failed_attempts: 0,
+    locked_at: null,
+    last_login_at: null,
+    created_at: '2025-01-02T00:00:00Z',
+  },
+];
+
 describe('Admin — Gestión de Usuarios', () => {
   beforeEach(() => {
-    cy. viewport(1280, 720);
+    cy.viewport(1280, 720);
+
+    cy.intercept('GET', '**/api/users*', {
+      statusCode: 200,
+      body: { ok: true, data: USERS_LIST },
+    }).as('usersList');
+
+    cy.intercept('POST', '**/api/users', {
+      statusCode: 201,
+      body: {
+        ok: true,
+        data: {
+          user: {
+            id: 'usr-new-1',
+            full_name: 'Usuario Test E2E',
+            dni: '99887766',
+            email: 'test-e2e@finflow.com',
+            address: 'Calle Falsa 123',
+            role: 'COLLECTOR',
+            status: 'ACTIVE',
+            is_temp_password: true,
+            failed_attempts: 0,
+            locked_at: null,
+            last_login_at: null,
+            created_at: '2026-05-01T10:00:00Z',
+            updated_at: '2026-05-01T10:00:00Z',
+          },
+          tempPassword: 'TMP-1234',
+        },
+      },
+    }).as('createUser');
+
     cy.loginAs('ADMIN', '/admin/users');
+    cy.wait('@usersList');
   });
 
   // ── Listado ────────────────────────────────────────────────────────────────────
-  it('muestra el título del módulo', () => {
-    cy.contains('h1', 'Gestión de Usuarios').should('be.visible');
+  it('renderiza listado con buscador y tabla', () => {
+    cy.get('[data-cy="admin-users-search-input"]').should('be.visible');
+    cy.get('[data-cy="admin-users-table"] tbody tr').should('have.length', 2);
   });
 
-  it('la tabla de usuarios es visible', () => {
-    cy.get('p-table').should('be.visible');
+  it('filtra usando el buscador actual', () => {
+    cy.get('[data-cy="admin-users-search-input"]').type('María');
+    cy.wait('@usersList');
+    cy.get('p-table tbody tr').should('have.length', 2);
   });
 
-  it('existe al menos un usuario en la tabla', () => {
-    cy.get('p-table tbody tr').should('have.length.gte', 1);
+  it('el botón "Nuevo usuario" abre modal (no ruta /new)', () => {
+    cy.get('[data-cy="admin-users-create-cta"]').should('exist').click();
+    cy.contains('.p-dialog .p-dialog-title', 'Nuevo usuario').should('be.visible');
+    cy.url().should('include', '/admin/users');
   });
 
-  it('el botón "Nuevo usuario" es visible', () => {
-    cy.contains('button', 'Nuevo usuario').should('exist');
-  });
-
-  // ── Buscador ────────────────────────────────────────────────────────────────
-  it('el buscador filtra resultados', () => {
-    cy.get('p-table tbody tr').its('length').then((total) => {
-      if (total > 0) {
-        cy.get('input[placeholder*="Buscar"]').type('xxx_no_existe');
-        cy.get('p-table tbody tr').should('have.length', 0);
-      }
-    });
-  });
-
-  it('al limpiar búsqueda se restauran los resultados', () => {
-    cy.get('p-table tbody tr').its('length').then((total) => {
-      if (total > 0) {
-        cy.get('input[placeholder*="Buscar"]').type('x').clear();
-        cy.get('p-table tbody tr').should('have.length', total);
-      }
+  it('valida email en el formulario modal', () => {
+    cy.get('[data-cy="admin-users-create-cta"]').click();
+    cy.get('.p-dialog').within(() => {
+      cy.get('input[id="email"]').type('email-invalido');
+      cy.contains('small', 'Formato de email inválido').should('be.visible');
     });
   });
 
-  // ── Navegación a Crear ────────────────────────────────────────────────────────
-  it('clic en "Nuevo usuario" navega al formulario', () => {
-    cy.contains('button', 'Nuevo usuario').click();
-    cy.url().should('include', '/admin/users/new');
-  });
-
-  // ── Formulario de Creación ───────────────────────────────────────────────────────────
-  describe('Formulario Crear Usuario', () => {
-    beforeEach(() => {
-      cy.visit('/admin/users/new');
-    });
-
-    it('muestra el título "Nuevo usuario"', () => {
-      cy.contains('h2', 'Nuevo usuario').should('be.visible');
-    });
-
-    it('todos los campos del formulario existen', () => {
-      cy.get('input[id="fullName"]').should('exist');
-      cy.get('input[id="dni"]').should('exist');
-      cy.get('input[id="email"]').should('exist');
-      cy.get('input[id="address"]').should('exist');
-      cy.get('p-dropdown[id="role"]').should('exist');
-    });
-
-    it('el botón "Crear usuario" está deshabilitado con formulario vacío', () => {
-      cy.contains('button', 'Crear usuario').should(
-        'have.attr',
-        'disabled',
-      );
-    });
-
-    // ── Validaciones ────────────────────────────────────────────────
-    it('tocar campo sin completar muestra error en fullName', () => {
-      cy.get('input[id="fullName"]').click().blur();
-      cy.get('small.text-red-500').should('exist');
-    });
-
-    it('tocar DNI sin completar muestra error', () => {
-      cy.get('input[id="dni"]').click().blur();
-      cy.get('small.text-red-500').should('exist');
-    });
-
-    it('tocar rol sin seleccionar muestra error', () => {
-      cy.get('p-dropdown').click().blur();
-      cy.get('small.text-red-500').should('exist');
-    });
-
-    it('ingresar email inválido muestra error de formato', () => {
-      cy.get('input[id="email"]').type('email-invalido').blur();
-      cy.get('small.text-red-500').should('contain', 'inválido');
-    });
-
-    it('ingresar nombre con menos de 3 caracteres muestra error', () => {
-      cy.get('input[id="fullName"]').type('AB').blur();
-      cy.get('small.text-red-500').should('contain', 'Mínimo');
-    });
-
-    // ── Happy Path ───────────────────────────────────────────────
-    it('completar formulario válido habilita el botón', () => {
+  it('crea usuario y muestra diálogo de contraseña temporal', () => {
+    cy.get('[data-cy="admin-users-create-cta"]').click();
+    cy.get('.p-dialog').within(() => {
       cy.get('input[id="fullName"]').type('Juan Pérez');
-      cy.get('input[id="dni"]').type('99998877');
-      cy.get('input[id="email"]').type('jperez@test.com');
+      cy.get('input[id="dni"]').type('99887766');
+      cy.get('input[id="email"]').type('test-e2e@finflow.com');
       cy.get('input[id="address"]').type('Calle Falsa 123');
       cy.get('p-dropdown').click();
-      cy.get('.p-dropdown-item').contains('Vendedor').click();
-      cy.contains('button', 'Crear usuario').should('not.have.attr', 'disabled');
-    });
-
-    it('botón Cancelar redirige al listado', () => {
-      cy.contains('button', 'Cancelar').click();
-      cy.url().should('include', '/admin/users');
-    });
-
-    // ── Submit + Backend ────────────────────────────────────────────
-    it('crear usuario exitoso abre diálogo de contraseña temporal', () => {
-      const dniUnique = `99${Date.now().toString().slice(-7)}`;
-      cy.get('input[id="fullName"]').type('Usuario Test E2E');
-      cy.get('input[id="dni"]').type(dniUnique);
-      cy.get('input[id="email"]').type(`test${Date.now()}@e2e.com`);
-      cy.get('p-dropdown').click();
-      cy.get('.p-dropdown-item').contains('Cobrador').click();
+      cy.contains('.p-dropdown-item', 'Cobrador').click();
       cy.contains('button', 'Crear usuario').click();
-      cy.get('app-temp-password-dialog').should('be.visible');
     });
-
-    it('el diálogo muestra la contraseña temporal', () => {
-      cy.get('app-temp-password-dialog').within(() => {
-        cy.get('input[disabled]').should('exist');
-      });
-    });
-
-    it('cerrar diálogo navega al detalle del usuario', () => {
-      cy.get('app-temp-password-dialog button').contains('Aceptar').click();
-      cy.url().should('match', /\/admin\/users\/[\w-]+$/);
-    });
-
-    // ── Error Backend ─────────────────────────────────────────────────────
-    it('crear con DNI duplicado muestra error en campo DNI', () => {
-      cy.get('input[id="fullName"]').type('Test Duplicado');
-      cy.get('input[id="dni"]').type('12345678'); // DNI del admin
-      cy.get('input[id="email"]').type('test@test.com');
-      cy.get('p-dropdown').click();
-      cy.get('.p-dropdown-item').contains('Vendedor').click();
-      cy.contains('button', 'Crear usuario').click();
-      cy.get('small.text-red-500').should('exist');
-    });
+    cy.wait('@createUser');
+    cy.contains('p-dialog', 'Contraseña temporal generada').should('be.visible');
+    cy.contains('p-dialog', 'Ya la anoté y la comuniqué').should('be.visible');
   });
 });

@@ -1,129 +1,135 @@
 <p-toast />
 <div class="p-6">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-semibold text-gray-800">Gestión de Clientes</h1>
-    <div class="flex flex-wrap items-center gap-3">
-      <p-button
-        label="Nuevo Cliente"
-        icon="pi pi-plus"
-        severity="primary"
-        styleClass="h-11 px-5 rounded-xl shadow-sm"
-        data-cy="btn-nuevo-cliente"
-        (onClick)="showCreateModal = true"
-      />
-      <p-dropdown
-        [options]="filterOptions"
-        [(ngModel)]="selectedFilter"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Todos"
-        styleClass="w-full md:w-44 h-11 rounded-xl border-gray-200 flex items-center"
-        data-cy="dropdown-filtro-clientes"
-      />
-      <p-iconField iconPosition="left">
-        <p-inputIcon styleClass="pi pi-search text-gray-400 z-10" />
-        <input
-          pInputText
-          type="text"
-          [(ngModel)]="searchTerm"
-          placeholder="Buscar cliente..."
-          data-cy="input-buscar-cliente"
-          class="w-full md:w-64 h-11 pl-10 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+  <div class="ff-panel">
+    <div class="ff-list-header">
+      <span class="ff-list-header__title">Gestión de Clientes</span>
+      <div class="ff-list-header__actions">
+        <p-button
+          label="Nuevo Cliente"
+          icon="pi pi-plus"
+          severity="primary"
+          styleClass="h-11 px-5 rounded-xl shadow-sm"
+          data-cy="btn-nuevo-cliente"
+          (onClick)="showCreateModal = true"
         />
-      </p-iconField>
+        <p-dropdown
+          [options]="filterOptions"
+          [(ngModel)]="selectedFilter"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todos"
+          styleClass="h-11"
+          data-cy="dropdown-filtro-clientes"
+        />
+        <p-iconField iconPosition="left">
+          <p-inputIcon
+            styleClass="pi pi-search z-10"
+            style="color: var(--ff-text-muted)"
+          />
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Buscar cliente..."
+            data-cy="input-buscar-cliente"
+            class="h-11 pl-10 w-full md:w-64"
+          />
+        </p-iconField>
+      </div>
     </div>
-  </div>
 
-  <p-table
-    [value]="filteredClients"
-    styleClass="p-datatable-sm"
-    [tableStyle]="{ 'min-width': '50rem' }"
-  >
-    <ng-template pTemplate="header">
-      <tr>
-        <th class="text-xs font-semibold text-gray-500 uppercase">DNI</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Nombre</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Teléfono</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Créditos</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Riesgo</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Acciones</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-client>
-      <tr class="border-b border-gray-100">
-        <td>
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-700">{{ client.dni }}</span>
+    <p-table
+      [value]="filteredClients"
+      styleClass="p-datatable-sm"
+      [tableStyle]="{ 'min-width': '50rem' }"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>DNI</th>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Créditos</th>
+          <th>Riesgo</th>
+          <th>Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-client>
+        <tr>
+          <td>
+            <div class="flex items-center gap-2">
+              <span class="ff-mono text-sm">{{ client.dni }}</span>
+              <span
+                class="inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold"
+                [style.background-color]="client.avatarColor"
+                >{{ client.initials }}</span
+              >
+            </div>
+          </td>
+          <td class="font-medium">{{ client.name }}</td>
+          <td style="color: var(--ff-text-secondary)">{{ client.phone }}</td>
+          <td>{{ client.credits }}</td>
+          <td>
             <span
-              class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-xs font-semibold"
-              [style.background-color]="client.avatarColor"
-              >{{ client.initials }}</span
+              class="ff-badge"
+              [class.ff-badge--activo]="
+                getRiskSeverity(client.risk) === 'success'
+              "
+              [class.ff-badge--pendiente]="
+                getRiskSeverity(client.risk) === 'warning'
+              "
+              [class.ff-badge--vencido]="
+                getRiskSeverity(client.risk) === 'danger'
+              "
+              >{{ getRiskLabel(client.risk) }}</span
             >
-          </div>
-        </td>
-        <td class="text-sm font-medium text-gray-800">{{ client.name }}</td>
-        <td class="text-sm text-gray-600">{{ client.phone }}</td>
-        <td class="text-sm text-gray-700">{{ client.credits }}</td>
-        <td>
-          <p-tag
-            [value]="getRiskLabel(client.risk)"
-            [severity]="getRiskSeverity(client.risk)"
-          ></p-tag>
-        </td>
-        <td>
-          <div class="flex items-center gap-2">
-            <p-button
-              label="Ver"
-              severity="info"
-              size="small"
-              [outlined]="true"
-              styleClass="text-xs"
-              [attr.data-cy]="'btn-ver-' + client.dni"
-              (onClick)="openView(client)"
-            />
-            @if (canEditClients) {
+          </td>
+          <td>
+            <div class="flex items-center gap-2">
               <p-button
-                label="Editar"
-                severity="success"
+                label="Ver"
+                severity="secondary"
                 size="small"
                 [outlined]="true"
-                styleClass="text-xs"
-                [attr.data-cy]="'btn-editar-' + client.dni"
-                (onClick)="openEdit(client)"
+                [attr.data-cy]="'btn-ver-' + client.dni"
+                (onClick)="openView(client)"
               />
-            }
-            @if (client.credits > 0) {
-              <p-button
-                label="Créditos"
-                severity="warning"
-                size="small"
-                [outlined]="true"
-                styleClass="text-xs"
-                [attr.data-cy]="'btn-creditos-' + client.dni"
-                (onClick)="openCredits(client)"
-              />
-            }
-          </div>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+              @if (canEditClients) {
+                <p-button
+                  label="Editar"
+                  severity="secondary"
+                  size="small"
+                  [outlined]="true"
+                  [attr.data-cy]="'btn-editar-' + client.dni"
+                  (onClick)="openEdit(client)"
+                />
+              }
+              @if (client.credits > 0) {
+                <p-button
+                  label="Créditos"
+                  severity="secondary"
+                  size="small"
+                  [outlined]="true"
+                  [attr.data-cy]="'btn-creditos-' + client.dni"
+                  (onClick)="openCredits(client)"
+                />
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 </div>
 
+<!-- Dialog: Ver cliente -->
 <p-dialog
   [(visible)]="showViewModal"
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
   [style]="{ width: '420px' }"
-  styleClass="rounded-2xl overflow-hidden"
+  header="Ver Cliente"
 >
-  <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
-      <i class="pi pi-user text-blue-500 text-lg"></i>
-      <span class="font-semibold text-gray-800 text-base">Ver Cliente</span>
-    </div>
-  </ng-template>
   @if (selectedClient) {
     <div class="flex flex-col gap-3 py-2">
       <div class="flex items-center gap-3 mb-2">
@@ -133,68 +139,74 @@
           >{{ selectedClient.initials }}</span
         >
         <div>
-          <p class="font-semibold text-gray-800">{{ selectedClient.name }}</p>
-          <p class="text-sm text-gray-500">DNI: {{ selectedClient.dni }}</p>
+          <p class="font-semibold" style="color: var(--ff-text-primary)">
+            {{ selectedClient.name }}
+          </p>
+          <p class="text-sm ff-mono" style="color: var(--ff-text-muted)">
+            DNI: {{ selectedClient.dni }}
+          </p>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3">
-        <div>
-          <p class="text-xs text-gray-500 font-medium">Teléfono</p>
-          <p class="text-sm text-gray-800">{{ selectedClient.phone }}</p>
+        <div class="cr-detail-cell">
+          <p class="ud-label">Teléfono</p>
+          <p class="ud-value">{{ selectedClient.phone }}</p>
         </div>
-        <div>
-          <p class="text-xs text-gray-500 font-medium">Créditos activos</p>
-          <p class="text-sm text-gray-800">{{ selectedClient.credits }}</p>
+        <div class="cr-detail-cell">
+          <p class="ud-label">Créditos activos</p>
+          <p class="ud-value">{{ selectedClient.credits }}</p>
         </div>
-        <div>
-          <p class="text-xs text-gray-500 font-medium">Riesgo</p>
-          <p-tag
-            [value]="getRiskLabel(selectedClient.risk)"
-            [severity]="getRiskSeverity(selectedClient.risk)"
-          ></p-tag>
+        <div class="cr-detail-cell">
+          <p class="ud-label">Riesgo</p>
+          <span
+            class="ff-badge mt-1"
+            [class.ff-badge--activo]="
+              getRiskSeverity(selectedClient.risk) === 'success'
+            "
+            [class.ff-badge--pendiente]="
+              getRiskSeverity(selectedClient.risk) === 'warning'
+            "
+            [class.ff-badge--vencido]="
+              getRiskSeverity(selectedClient.risk) === 'danger'
+            "
+            >{{ getRiskLabel(selectedClient.risk) }}</span
+          >
         </div>
       </div>
     </div>
   }
   <ng-template pTemplate="footer">
-    <div class="flex justify-end pt-2">
-      <button type="button" class="cancel-btn" (click)="showViewModal = false">
-        Cerrar
-      </button>
-    </div>
+    <button type="button" class="cancel-btn" (click)="showViewModal = false">
+      Cerrar
+    </button>
   </ng-template>
 </p-dialog>
 
+<!-- Dialog: Editar cliente -->
 <p-dialog
   [(visible)]="showEditModal"
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
   [style]="{ width: '480px' }"
-  styleClass="rounded-2xl overflow-hidden"
+  header="Editar Cliente"
 >
-  <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
-      <i class="pi pi-pencil text-blue-500 text-lg"></i>
-      <span class="font-semibold text-gray-800 text-base">Editar Cliente</span>
-    </div>
-  </ng-template>
   <form [formGroup]="editForm" class="flex flex-col gap-4 py-2">
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700">Nombre</label>
+        <label class="auth-label">Nombre</label>
         <input pInputText formControlName="nombre" class="client-input" />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700">Apellido</label>
+        <label class="auth-label">Apellido</label>
         <input pInputText formControlName="apellido" class="client-input" />
       </div>
     </div>
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Teléfono</label>
+      <label class="auth-label">Teléfono</label>
       <input pInputText formControlName="phone" class="client-input" />
     </div>
-    <p class="text-sm text-gray-500">
+    <p class="text-sm" style="color: var(--ff-text-muted)">
       Solo podés editar nombre, apellido y teléfono desde esta vista porque son
       los datos que hoy persisten en este flujo.
     </p>
@@ -216,26 +228,19 @@
   </ng-template>
 </p-dialog>
 
+<!-- Dialog: Crear cliente -->
 <p-dialog
   [(visible)]="showCreateModal"
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
   [style]="{ width: '480px' }"
-  styleClass="rounded-2xl overflow-hidden"
-  headerStyleClass="border-b border-gray-100 bg-white"
+  header="Crear Cliente"
 >
-  <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
-      <i class="pi pi-user text-blue-500 text-lg"></i>
-      <span class="font-semibold text-gray-800 text-base">Crear Cliente</span>
-    </div>
-  </ng-template>
-
   <form [formGroup]="form" class="flex flex-col gap-4 py-2">
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700">Nombres</label>
+        <label class="auth-label">Nombres</label>
         <input
           pInputText
           formControlName="nombres"
@@ -246,11 +251,11 @@
           "
         />
         @if (isInvalid("nombres")) {
-          <span class="text-xs text-red-500">{{ getError("nombres") }}</span>
+          <span class="auth-error">{{ getError("nombres") }}</span>
         }
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700">Apellidos</label>
+        <label class="auth-label">Apellidos</label>
         <input
           pInputText
           formControlName="apellidos"
@@ -261,15 +266,13 @@
           "
         />
         @if (isInvalid("apellidos")) {
-          <span class="text-xs text-red-500">{{ getError("apellidos") }}</span>
+          <span class="auth-error">{{ getError("apellidos") }}</span>
         }
       </div>
     </div>
 
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700"
-        >DNI</label
-      >
+      <label class="auth-label">DNI</label>
       <input
         pInputText
         formControlName="dni"
@@ -279,15 +282,13 @@
         "
       />
       @if (isInvalid("dni")) {
-        <span class="text-xs text-red-500">{{ getError("dni") }}</span>
+        <span class="auth-error">{{ getError("dni") }}</span>
       }
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700"
-          >Teléfono Principal</label
-        >
+        <label class="auth-label">Teléfono Principal</label>
         <input
           pInputText
           formControlName="telefonoPrincipal"
@@ -298,15 +299,11 @@
           "
         />
         @if (isInvalid("telefonoPrincipal")) {
-          <span class="text-xs text-red-500">{{
-            getError("telefonoPrincipal")
-          }}</span>
+          <span class="auth-error">{{ getError("telefonoPrincipal") }}</span>
         }
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700"
-          >Teléfono Alterno</label
-        >
+        <label class="auth-label">Teléfono Alterno</label>
         <input
           pInputText
           formControlName="telefonoAlterno"
@@ -317,17 +314,13 @@
           "
         />
         @if (isInvalid("telefonoAlterno")) {
-          <span class="text-xs text-red-500">{{
-            getError("telefonoAlterno")
-          }}</span>
+          <span class="auth-error">{{ getError("telefonoAlterno") }}</span>
         }
       </div>
     </div>
 
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700"
-        >Correo Electrónico</label
-      >
+      <label class="auth-label">Correo Electrónico</label>
       <input
         pInputText
         formControlName="email"
@@ -337,12 +330,12 @@
         "
       />
       @if (isInvalid("email")) {
-        <span class="text-xs text-red-500">{{ getError("email") }}</span>
+        <span class="auth-error">{{ getError("email") }}</span>
       }
     </div>
 
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Dirección</label>
+      <label class="auth-label">Dirección</label>
       <input
         pInputText
         formControlName="direccion"
@@ -353,15 +346,13 @@
         "
       />
       @if (isInvalid("direccion")) {
-        <span class="text-xs text-red-500">{{ getError("direccion") }}</span>
+        <span class="auth-error">{{ getError("direccion") }}</span>
       }
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700"
-          >Ingresos Mensuales</label
-        >
+        <label class="auth-label">Ingresos Mensuales</label>
         <input
           pInputText
           formControlName="ingresos"
@@ -372,13 +363,11 @@
           "
         />
         @if (isInvalid("ingresos")) {
-          <span class="text-xs text-red-500">{{ getError("ingresos") }}</span>
+          <span class="auth-error">{{ getError("ingresos") }}</span>
         }
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700"
-          >Capacidad de Pago</label
-        >
+        <label class="auth-label">Capacidad de Pago</label>
         <input
           pInputText
           [value]="abilityToPay"
@@ -398,6 +387,7 @@
         type="button"
         class="cancel-btn cancel-btn--danger"
         (click)="form.reset()"
+        [disabled]="creatingClient"
         title="Borrar campos"
       >
         <i class="pi pi-trash mr-1"></i>Borrar
@@ -407,7 +397,8 @@
         icon="pi pi-user"
         severity="primary"
         styleClass="h-11 px-5 rounded-xl"
-        [disabled]="form.invalid"
+        [loading]="creatingClient"
+        [disabled]="form.invalid || creatingClient"
         (onClick)="createClient()"
       />
     </div>

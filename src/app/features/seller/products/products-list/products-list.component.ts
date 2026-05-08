@@ -27,6 +27,8 @@ import {
   ProductStatus,
 } from '../../models/product.model';
 import { ProductsService } from '../products.service';
+import { InputIconModule } from 'primeng/inputicon';
+import { IconFieldModule } from 'primeng/iconfield';
 
 @Component({
   selector: 'app-products-list',
@@ -44,6 +46,8 @@ import { ProductsService } from '../products.service';
     LoadingStateComponent,
     ErrorStateComponent,
     EmptyStateComponent,
+    InputIconModule,
+    IconFieldModule,
   ],
   templateUrl: './products-list.component.html',
 })
@@ -104,15 +108,19 @@ export class ProductsListComponent implements OnInit, OnDestroy {
   }
 
   navigateToDetail(id: string): void {
-    this.router.navigate([AppRoutes.SELLER_PRODUCTS, id]);
+    this.router.navigate([`/${this.routePrefix}/products`, id]);
   }
 
   navigateToEdit(id: string): void {
-    this.router.navigate([`/seller/products/${id}/edit`]);
+    this.router.navigate([`/${this.routePrefix}/products/${id}/edit`]);
   }
 
   navigateToCreate(): void {
-    this.router.navigate([AppRoutes.SELLER_PRODUCTS_NEW]);
+    this.router.navigate([`/${this.routePrefix}/products/new`]);
+  }
+
+  private get routePrefix(): string {
+    return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
   }
 
   variantPriceLabel(product: Product): string {

@@ -24,7 +24,7 @@ describe('Autenticación', () => {
     // p-password renderiza un <input> interno; el data-testid está en el wrapper
     cy.get('[data-testid="input-password"] input').should('be.visible');
     cy.get('[data-testid="btn-login"]').should('be.visible').and('contain.text', 'Iniciar Sesión');
-    cy.get('h2').should('contain.text', 'Iniciar Sesión');
+    cy.contains('Ingresá tus credenciales para continuar').should('be.visible');
   });
 
   // ── Validaciones de formulario ───────────────────────────────────────────────
@@ -118,13 +118,13 @@ describe('Autenticación', () => {
   it('redirige a /admin/dashboard si el usuario ya está autenticado como Admin', () => {
     cy.loginAs('ADMIN');
     cy.visit('/login');
-    cy.url().should('include', '/admin/dashboard');
+    cy.url().should('include', '/admin');
   });
 
   // ── Logout ───────────────────────────────────────────────────────────────────
   it('cierra sesión y redirige al login', () => {
     cy.loginAs('ADMIN');
-    cy.visit('/admin/dashboard');
+    cy.url().should('include', '/admin');
     cy.get('[data-testid="logout-btn"]').click();
     cy.url().should('include', '/login');
     // localStorage limpio

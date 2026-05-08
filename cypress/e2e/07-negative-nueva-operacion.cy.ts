@@ -14,19 +14,66 @@
 
 const ADMIN_NEW_OP = '/admin/operations/new';
 
+const CLIENTS_MOCK = [
+  {
+    id: 'cust-001',
+    full_name: 'Ana Garcia',
+    dni: '10293847',
+    phone: '3811234567',
+    email: 'ana@example.com',
+    status: 'ACTIVE',
+    portal_enabled: false,
+    created_at: '2026-01-01T00:00:00Z',
+    collector_id: null,
+    collector_name: null,
+  },
+];
+
+const PRODUCT_UNITS_MOCK = [
+  {
+    id: 'unit-001',
+    unit_code: 'UN-001',
+    status: 'AVAILABLE',
+    notes: null,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+    variant_id: 'var-001',
+    color: 'Negro',
+    size: 'M',
+    capacity: '128GB',
+    current_price: 100000,
+    product_id: 'prod-001',
+    product_name: 'Moto X',
+  },
+];
+
+function stubNewOperationData(): void {
+  cy.intercept('GET', /\/api\/customers(\?.*)?$/, {
+    statusCode: 200,
+    body: { ok: true, data: CLIENTS_MOCK },
+  }).as('wizardCustomers');
+
+  cy.intercept('GET', /\/api\/product-units(\?.*)?$/, {
+    statusCode: 200,
+    body: { ok: true, data: PRODUCT_UNITS_MOCK },
+  }).as('wizardUnits');
+}
+
 const getStepLabel = (label: string) =>
   cy.contains('.p-steps-item', label);
 
 describe('Wizard Nueva Operación — Unhappy Paths', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
+    stubNewOperationData();
     cy.loginAs('ADMIN', ADMIN_NEW_OP);
+    cy.wait(['@wizardCustomers', '@wizardUnits']);
   });
 
   // ── Recarga en step intermedio ───────────────────────────────────────────────
   it('recarga en Step 2 (Productos) → wizard regresa a Step 0 (estado en memoria)', () => {
     // Avanzar a paso 2
-    cy.get('.h-\\[380px\\]').first().children().first().click();
+    cy.get('[data-cy^="cliente-item-"]').first().click();
     cy.get('[data-cy="btn-siguiente-wizard"]').click();
     cy.contains('Paso 2 de 4').scrollIntoView().should('be.visible');
 
@@ -53,7 +100,7 @@ describe('Wizard Nueva Operación — Unhappy Paths', () => {
 
   it('botón X en header cancela el wizard desde cualquier paso', () => {
     // Avanzar a paso 2 antes de cancelar
-    cy.get('.h-\\[380px\\]').first().children().first().click();
+    cy.get('[data-cy^="cliente-item-"]').first().click();
     cy.get('[data-cy="btn-siguiente-wizard"]').click();
     cy.contains('Paso 2 de 4').scrollIntoView().should('be.visible');
 
@@ -64,7 +111,7 @@ describe('Wizard Nueva Operación — Unhappy Paths', () => {
   // ── Step 4: checkboxes incompletos → botón deshabilitado ────────────────────
   it('Step 4: marcar solo 3 de 4 checkboxes mantiene botón enviar deshabilitado', () => {
     // Navegar hasta Step 4
-    cy.get('.h-\\[380px\\]').first().children().first().click();
+    cy.get('[data-cy^="cliente-item-"]').first().click();
     cy.get('[data-cy="btn-siguiente-wizard"]').click();
     cy.contains('Paso 2 de 4').scrollIntoView().should('be.visible');
 
@@ -107,7 +154,7 @@ describe('Wizard Nueva Operación — Unhappy Paths', () => {
   });
 
   it('Step 4: marcar los 4 checkboxes habilita el botón enviar', () => {
-    cy.get('.h-\\[380px\\]').first().children().first().click();
+    cy.get('[data-cy^="cliente-item-"]').first().click();
     cy.get('[data-cy="btn-siguiente-wizard"]').click();
     cy.contains('Paso 2 de 4').scrollIntoView().should('be.visible');
 

@@ -1,138 +1,248 @@
-<div class="flex flex-col gap-6">
-  <div class="flex items-center gap-3">
-    <button
-      pButton
-      type="button"
-      icon="pi pi-arrow-left"
-      class="p-button-text p-button-secondary p-button-sm"
-      (click)="back()"
-    ></button>
-    <h2 class="text-xl font-bold text-gray-800">Detalle del crédito</h2>
-  </div>
+<div class="flex flex-col gap-5" data-cy="portal-credit-detail-page">
+  <!-- Volver -->
+  <a [routerLink]="['/portal/credits']" class="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-75 w-fit"
+     style="color: var(--ff-accent)" data-cy="portal-credit-detail-back-action">
+    <i class="pi pi-arrow-left text-xs"></i> Volver a mis créditos
+  </a>
 
   @if (loading) {
-    <p-skeleton height="8rem" borderRadius="0.75rem" />
-    <p-skeleton height="20rem" borderRadius="0.75rem" />
+    <p-skeleton height="10rem" borderRadius="0.75rem" />
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <p-skeleton height="18rem" borderRadius="0.75rem" />
+      <p-skeleton height="18rem" borderRadius="0.75rem" />
+    </div>
   } @else if (credit) {
-    <!-- Credit header -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+    <!-- Header del crédito -->
+    <div class="rounded-xl p-5" style="background: var(--ff-panel); border: 1px solid var(--ff-border)" data-cy="portal-credit-detail-summary-card">
+      <!-- Tipo + nombre + estado -->
+      <div class="flex items-center gap-2 mb-3 flex-wrap">
+        <span class="text-xs font-bold px-2 py-0.5 rounded"
+          [style.background]="credit.type === 'SALE' ? 'rgba(79,110,247,0.15)' : 'rgba(251,176,64,0.15)'"
+          [style.color]="credit.type === 'SALE' ? 'var(--ff-accent)' : 'var(--ff-warning)'">
+          {{ credit.type === 'SALE' ? 'VENTA' : 'PRÉSTAMO' }}
+        </span>
+        <span class="font-bold text-base flex-1" style="color: var(--ff-text-primary)" data-cy="portal-credit-detail-title">
+          {{ displayName }}
+        </span>
+        <span class="text-xs font-semibold"
+          [style.color]="credit.status === 'ACTIVE' ? '#34d399' : 'var(--ff-text-muted)'">
+          ● {{ credit.status === 'ACTIVE' ? 'ACTIVO' : 'LIQUIDADO' }}
+        </span>
+      </div>
+
+      <!-- Métricas principales -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <div>
-          <p class="text-xs text-gray-400">Tipo</p>
-          <p class="font-semibold text-gray-800">
-            {{ credit.type === "SALE" ? "Venta en cuotas" : "Préstamo" }}
+          <p class="text-xs uppercase tracking-wider mb-0.5" style="color: var(--ff-text-muted)">Monto total</p>
+          <p class="font-bold font-mono text-base sm:text-lg" style="color: var(--ff-text-primary); letter-spacing: -0.02em">
+            {{ credit.totalToReturn | currency:'ARS':'symbol':'1.0-0' }}
           </p>
         </div>
         <div>
-          <p class="text-xs text-gray-400">Monto total</p>
-          <p class="font-semibold text-gray-800">
-            {{ credit.totalAmount | currency: "ARS" : "symbol" : "1.0-0" }}
+          <p class="text-xs uppercase tracking-wider mb-0.5" style="color: var(--ff-text-muted)">Cuota {{ frequencyLabel | lowercase }}</p>
+          <p class="font-bold font-mono text-base sm:text-lg" style="color: var(--ff-text-primary); letter-spacing: -0.02em">
+            {{ installmentAmount | currency:'ARS':'symbol':'1.0-0' }}
           </p>
         </div>
         <div>
-          <p class="text-xs text-gray-400">Frecuencia</p>
-          <p class="font-semibold text-gray-800">{{ frequencyLabel }}</p>
+          <p class="text-xs uppercase tracking-wider mb-0.5" style="color: var(--ff-text-muted)">Cuotas</p>
+          <p class="font-bold text-base sm:text-lg" style="color: var(--ff-text-primary)">
+            {{ credit.installmentsCount }} cuotas
+          </p>
         </div>
         <div>
-          <p class="text-xs text-gray-400">Estado</p>
-          <p-tag
-            [value]="credit.status === 'ACTIVE' ? 'Activo' : 'Saldado'"
-            [severity]="credit.status === 'ACTIVE' ? 'success' : 'secondary'"
-          />
+          <p class="text-xs uppercase tracking-wider mb-0.5" style="color: var(--ff-text-muted)">Aprobado</p>
+          <p class="font-semibold text-sm" style="color: var(--ff-text-primary)">
+            {{ credit.approvedAt ? (credit.approvedAt | date:'dd/MM/yyyy') : '—' }}
+          </p>
         </div>
+      </div>
+
+      <!-- Progreso -->
+      <div class="mb-3">
+        <div class="flex justify-between items-center mb-1.5 text-xs" style="color: var(--ff-text-muted)">
+          <span>Progreso de pago</span>
+          <span>{{ paidCount }} de {{ credit.installmentsCount }} cuotas · {{ progressPercent }}%</span>
+        </div>
+        <div class="h-2 rounded-full overflow-hidden" style="background: var(--ff-secondary)">
+          <div class="h-2 rounded-full transition-all"
+            [style.width.%]="progressPercent"
+            [style.background]="credit.status === 'SETTLED' ? '#34d399' :
+                                 overdueCount > 0 ? '#f97316' : 'var(--ff-accent)'">
+          </div>
+        </div>
+      </div>
+
+      <!-- Contadores de estado -->
+      <div class="flex gap-2 flex-wrap">
+        <span class="text-xs font-semibold px-2 py-0.5 rounded" style="background: rgba(52,211,153,0.12); color: #34d399">
+          {{ paidCount }} PAGADAS
+        </span>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded" style="background: rgba(139,151,184,0.12); color: var(--ff-text-secondary)">
+          {{ pendingCount }} PENDIENTES
+        </span>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded"
+          [style.background]="overdueCount > 0 ? 'rgba(248,113,113,0.12)' : 'rgba(74,82,120,0.2)'"
+          [style.color]="overdueCount > 0 ? '#f87171' : 'var(--ff-text-muted)'">
+          {{ overdueCount }} VENCIDAS
+        </span>
       </div>
     </div>
 
-    <!-- Installments table -->
-    <div
-      class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
-    >
-      <div class="px-4 py-3 border-b border-gray-100">
-        <h3 class="font-semibold text-gray-700">Cronograma de cuotas</h3>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="text-center px-3 py-2 text-gray-500 font-medium">
-                N°
-              </th>
-              <th class="text-left px-3 py-2 text-gray-500 font-medium">
-                Vencimiento
-              </th>
-              <th class="text-right px-3 py-2 text-gray-500 font-medium">
-                Monto
-              </th>
-              <th class="text-right px-3 py-2 text-gray-500 font-medium">
-                Pagado
-              </th>
-              <th class="text-right px-3 py-2 text-gray-500 font-medium">
-                Mora
-              </th>
-              <th class="text-center px-3 py-2 text-gray-500 font-medium">
-                Estado
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (inst of credit.installments; track inst.id) {
-              <tr
-                class="border-t border-gray-50"
-                [class.bg-red-50]="inst.status === 'OVERDUE'"
-                [class.bg-green-50]="inst.status === 'PAID'"
-              >
-                <td class="px-3 py-2 text-center text-gray-600">
-                  {{ inst.installmentNumber }}
-                </td>
-                <td class="px-3 py-2 text-gray-700">
-                  {{ inst.dueDate | date: "dd/MM/yyyy" }}
-                </td>
-                <td class="px-3 py-2 text-right font-medium">
-                  {{ inst.amountDue | currency: "ARS" : "symbol" : "1.0-0" }}
-                </td>
-                <td class="px-3 py-2 text-right text-gray-600">
-                  {{ inst.amountPaid | currency: "ARS" : "symbol" : "1.0-0" }}
-                </td>
-                <td class="px-3 py-2 text-right">
-                  @if (inst.penaltyAmount > 0) {
-                    <span class="text-red-600 font-medium">{{
-                      inst.penaltyAmount | currency: "ARS" : "symbol" : "1.0-0"
-                    }}</span>
-                  } @else {
-                    <span class="text-gray-300">—</span>
+    <!-- Dos columnas: info + cronograma -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      <!-- Columna izquierda -->
+      <div class="flex flex-col gap-4">
+
+        <!-- Información del crédito -->
+        <div class="rounded-xl p-5" style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
+          <h3 class="text-xs font-semibold uppercase tracking-wider mb-4" style="color: var(--ff-text-muted)">
+            Información del crédito
+          </h3>
+          <div class="flex flex-col gap-2.5 text-sm">
+            <div class="flex justify-between">
+              <span style="color: var(--ff-text-muted)">Tipo de crédito</span>
+              <span class="font-medium" style="color: var(--ff-text-primary)">
+                {{ credit.type === 'SALE' ? 'Venta a crédito' : 'Préstamo' }}
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span style="color: var(--ff-text-muted)">Frecuencia</span>
+              <span class="font-medium" style="color: var(--ff-text-primary)">{{ frequencyLabel }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span style="color: var(--ff-text-muted)">Tasa de interés</span>
+              <span class="font-medium" style="color: var(--ff-text-primary)">{{ interestRateLabel }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span style="color: var(--ff-text-muted)">Enganche abonado</span>
+              <span class="font-medium font-mono" style="color: var(--ff-text-primary)">
+                @if (credit.downPayment > 0) {
+                  {{ credit.downPayment | currency:'ARS':'symbol':'1.0-0' }}
+                  @if (credit.downPaymentMethod) {
+                    <span class="text-xs font-normal" style="color: var(--ff-text-muted)">
+                      ({{ credit.downPaymentMethod === 'CASH' ? 'Efectivo' : 'Transferencia' }})
+                    </span>
                   }
-                </td>
-                <td class="px-3 py-2 text-center">
-                  <p-tag
-                    [value]="installmentLabel(inst.status)"
-                    [severity]="installmentSeverity(inst.status)"
-                  />
-                </td>
+                } @else {
+                  <span style="color: var(--ff-text-muted)">—</span>
+                }
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span style="color: var(--ff-text-muted)">Cuotas adelantadas</span>
+              <span class="font-medium font-mono" style="color: var(--ff-text-primary)">
+                {{ credit.prepaidInstallments > 0 ? credit.prepaidInstallments : '—' }}
+              </span>
+            </div>
+            <div class="flex justify-between" style="border-top: 1px solid var(--ff-border); padding-top: 10px; margin-top: 2px">
+              <span style="color: var(--ff-text-muted)">Fecha de alta</span>
+              <span class="font-medium" style="color: var(--ff-text-primary)">{{ credit.createdAt | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span style="color: var(--ff-text-muted)">Fecha de aprobación</span>
+              <span class="font-medium" style="color: var(--ff-text-primary)">{{ (credit.approvedAt | date:'dd/MM/yyyy') || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen financiero -->
+        <div class="rounded-xl p-5" style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
+          <h3 class="text-xs font-semibold uppercase tracking-wider mb-4" style="color: var(--ff-text-muted)">
+            Resumen financiero
+          </h3>
+          <div class="mb-3">
+            <p class="text-xs mb-0.5" style="color: var(--ff-text-muted)">Deuda restante</p>
+            <p class="text-xl sm:text-2xl font-bold font-mono" style="color: var(--ff-accent); letter-spacing: -0.02em">
+              {{ pendingBalance | currency:'ARS':'symbol':'1.0-0' }}
+            </p>
+          </div>
+          <div class="flex flex-col gap-2 text-sm pt-3" style="border-top: 1px solid var(--ff-border)">
+            <div class="flex justify-between">
+              <span style="color: var(--ff-text-muted)">Total a devolver</span>
+              <span class="font-medium font-mono" style="color: var(--ff-text-primary)">
+                {{ credit.totalToReturn | currency:'ARS':'symbol':'1.0-0' }}
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span style="color: var(--ff-text-muted)">Ya pagado</span>
+              <span class="font-medium font-mono" style="color: #34d399">
+                {{ totalPaid | currency:'ARS':'symbol':'1.0-0' }}
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span style="color: var(--ff-text-muted)">Mora acumulada</span>
+              <span class="font-medium font-mono"
+                [style.color]="totalPenalty > 0 ? '#f87171' : 'var(--ff-text-muted)'">
+                {{ totalPenalty | currency:'ARS':'symbol':'1.0-0' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna derecha: Cronograma -->
+      <div class="rounded-xl overflow-hidden" style="background: var(--ff-panel); border: 1px solid var(--ff-border)" data-cy="portal-credit-detail-installments-section">
+        <div class="px-4 py-3" style="border-bottom: 1px solid var(--ff-border)">
+          <h3 class="text-xs font-semibold uppercase tracking-wider" style="color: var(--ff-text-muted)" data-cy="portal-credit-detail-installments-title">
+            Cronograma de cuotas ({{ credit.installmentsCount }})
+          </h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="ff-table w-full text-xs" data-cy="portal-credit-detail-installments-table">
+            <thead>
+              <tr>
+                <th class="text-center">N°</th>
+                <th>
+                  <span class="hidden sm:inline">Vencimiento</span>
+                  <span class="sm:hidden">Vence</span>
+                </th>
+                <th class="text-right">Monto</th>
+                <th class="text-right hidden sm:table-cell">Pagado</th>
+                <th class="text-right hidden sm:table-cell">Mora</th>
+                <th class="text-center">Estado</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (inst of credit.installments; track inst.id) {
+                <tr data-cy="portal-credit-detail-installment-row"
+                  [class.inst-overdue]="inst.status === 'OVERDUE'"
+                  [class.inst-paid]="inst.status === 'PAID'">
+                  <td class="text-center" style="color: var(--ff-text-secondary)">{{ inst.installmentNumber }}</td>
+                  <td style="color: var(--ff-text-secondary)">{{ inst.dueDate | date:'dd/MM/yyyy' }}</td>
+                  <td class="text-right ff-mono">{{ inst.amountDue | currency:'ARS':'symbol':'1.0-0' }}</td>
+                  <td class="text-right ff-mono hidden sm:table-cell" style="color: var(--ff-text-secondary)">
+                    {{ inst.amountPaid > 0 ? (inst.amountPaid | currency:'ARS':'symbol':'1.0-0') : '—' }}
+                  </td>
+                  <td class="text-right ff-mono hidden sm:table-cell">
+                    @if (inst.penaltyAmount > 0) {
+                      <span style="color: #f87171">{{ inst.penaltyAmount | currency:'ARS':'symbol':'1.0-0' }}</span>
+                    } @else {
+                      <span style="color: var(--ff-text-muted)">—</span>
+                    }
+                  </td>
+                  <td class="text-center">
+                    <span class="text-xs font-semibold"
+                      [style.color]="inst.status === 'PAID' ? '#34d399' :
+                                     inst.status === 'OVERDUE' ? '#f87171' :
+                                     inst.status === 'PARTIAL' ? 'var(--ff-warning)' : 'var(--ff-text-secondary)'">
+                      {{ installmentLabel(inst.status) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="px-4 py-3 text-xs" style="border-top: 1px solid var(--ff-border); color: var(--ff-text-muted)">
+          Los cobros son registrados por tu cobrador y aprobados por el negocio. Para consultas, contactá directamente.
+        </div>
       </div>
     </div>
 
-    <!-- Summary footer -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <p class="text-xs text-gray-400">Total pagado</p>
-          <p class="text-xl font-bold text-green-600">
-            {{ totalPaid | currency: "ARS" : "symbol" : "1.0-0" }}
-          </p>
-        </div>
-        <div>
-          <p class="text-xs text-gray-400">Saldo pendiente</p>
-          <p class="text-xl font-bold text-gray-800">
-            {{ pendingBalance | currency: "ARS" : "symbol" : "1.0-0" }}
-          </p>
-        </div>
-      </div>
-    </div>
   } @else if (error) {
-    <div class="text-center py-8 text-red-500 text-sm">{{ error }}</div>
+    <div class="text-center py-8 text-sm" style="color: var(--ff-danger)">{{ error }}</div>
   }
 </div>

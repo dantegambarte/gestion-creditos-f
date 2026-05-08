@@ -2,8 +2,8 @@
  * SUITE: Portal Cliente — Créditos y Detalle de Crédito
  *
  * El portal usa autenticación propia (portal-login), no la del sistema interno.
- * cy.loginAs no aplica. Inyectamos directamente el token del portal en localStorage
- * e interceptamos los endpoints del portal.
+ * Usamos cy.loginPortalAs para inyectar el contrato real de storage portal
+ * e interceptamos sólo los endpoints que cada caso necesita.
  *
  * Rutas: /portal/credits  ·  /portal/credits/:id
  *
@@ -13,8 +13,15 @@
  *  - Botón Volver en el detalle
  */
 
-const PORTAL_TOKEN = 'portal-mock-token-001';
-const PORTAL_USER = { id: 'cust-001', full_name: 'Ana García', dni: '12345678' };
+const PORTAL_SESSION = {
+  token: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjdXN0LTAwMSIsImZ1bGxfbmFtZSI6IkFuYSBHYXJjw61hIiwiZG5pIjoiMTIzNDU2NzgiLCJwb3J0YWxfaXNfdGVtcF9wYXNzd29yZCI6ZmFsc2V9.sig',
+  customer: {
+    id: 'cust-001',
+    fullName: 'Ana García',
+    dni: '12345678',
+    portalIsTempPassword: false,
+  },
+};
 
 const PORTAL_CREDITS_MOCK = [
   {
@@ -54,9 +61,16 @@ const PORTAL_CREDIT_DETAIL_MOCK = {
 function setupPortalSession() {
   cy.intercept('GET', /\/api\/portal\/me/, {
     statusCode: 200,
-    body: { ok: true, data: PORTAL_USER },
+    body: { ok: true, data: { id: 'cust-001', full_name: 'Ana García', dni: '12345678' } },
   }).as('portalMe');
 
+  cy.intercept('GET', /\/api\/portal\/credits$/, {
+    statusCode: 200,
+    body: { ok: true, data: PORTAL_CREDITS_MOCK },
+  }).as('portalCredits');
+}
+
+function setupPortalCreditsList() {
   cy.intercept('GET', /\/api\/portal\/credits$/, {
     statusCode: 200,
     body: { ok: true, data: PORTAL_CREDITS_MOCK },
@@ -68,20 +82,15 @@ describe('Portal — Lista de Créditos (/portal/credits)', () => {
     cy.viewport(1280, 720);
     setupPortalSession();
 
-    cy.visit('/portal/credits', {
-      onBeforeLoad(win) {
-        win.localStorage.setItem('portal_token', PORTAL_TOKEN);
-        win.localStorage.setItem('portal_user', JSON.stringify(PORTAL_USER));
-      },
-    });
+    cy.loginPortalAs('/portal/credits', PORTAL_SESSION);
   });
 
   it('muestra el título "Mis créditos"', () => {
-    cy.contains('h2', 'Mis créditos').should('be.visible');
+    cy.get('[data-cy="portal-credits-title"]').should('be.visible');
   });
 
   it('renderiza al menos una tarjeta de crédito o skeleton', () => {
-    cy.get('p-skeleton, .cursor-pointer').should('exist');
+    cy.get('p-skeleton, [data-cy="portal-credits-card"]').should('exist');
   });
 
   it('muestra crédito tipo Venta en cuotas', () => {
@@ -97,7 +106,7 @@ describe('Portal — Lista de Créditos (/portal/credits)', () => {
   });
 
   it('clic en un crédito navega al detalle', () => {
-    cy.get('.cursor-pointer').first().click();
+    cy.get('[data-cy="portal-credits-card"]').first().click();
     cy.url().should('include', '/portal/credits/');
   });
 });
@@ -108,7 +117,7 @@ describe('Portal — Detalle de Crédito (/portal/credits/:id)', () => {
 
     cy.intercept('GET', /\/api\/portal\/me/, {
       statusCode: 200,
-      body: { ok: true, data: PORTAL_USER },
+      body: { ok: true, data: { id: 'cust-001', full_name: 'Ana García', dni: '12345678' } },
     }).as('portalMe');
 
     cy.intercept('GET', /\/api\/portal\/credits\/crd-p01/, {
@@ -116,18 +125,15 @@ describe('Portal — Detalle de Crédito (/portal/credits/:id)', () => {
       body: { ok: true, data: PORTAL_CREDIT_DETAIL_MOCK },
     }).as('portalCreditDetail');
 
-    cy.visit('/portal/credits/crd-p01', {
-      onBeforeLoad(win) {
-        win.localStorage.setItem('portal_token', PORTAL_TOKEN);
-        win.localStorage.setItem('portal_user', JSON.stringify(PORTAL_USER));
-      },
-    });
+    setupPortalCreditsList();
+
+    cy.loginPortalAs('/portal/credits/crd-p01', PORTAL_SESSION);
 
     cy.wait('@portalCreditDetail');
   });
 
   it('muestra el título "Detalle del crédito"', () => {
-    cy.contains('h2', 'Detalle del crédito').should('be.visible');
+    cy.get('[data-cy="portal-credit-detail-title"]').should('be.visible');
   });
 
   it('muestra el tipo de crédito', () => {
@@ -147,17 +153,20 @@ describe('Portal — Detalle de Crédito (/portal/credits/:id)', () => {
   });
 
   it('muestra la tabla de cuotas', () => {
-    cy.contains('Cronograma de cuotas').should('exist');
+    cy.get('[data-cy="portal-credit-detail-installments-title"]').should('exist');
   });
 
   it('muestra filas de cuotas en la tabla', () => {
-    cy.get('table tbody tr').should('have.length.gte', 1);
+    cy.get('[data-cy="portal-credit-detail-installments-table"] tbody tr').should('have.length.gte', 1);
   });
 
   it('botón Volver navega a la lista de créditos', () => {
-    cy.get('button[icon="pi pi-arrow-left"], button.p-button-text').first().click();
+    cy.get('[data-cy="portal-credit-detail-back-action"]').click();
+    cy.wait('@portalCredits');
     cy.url().should('include', '/portal/credits');
     cy.url().should('not.include', '/crd-p01');
+    cy.url().should('not.include', '/portal/login');
+    cy.url().should('not.include', '/login');
   });
 });
 
@@ -168,14 +177,9 @@ describe('Portal — Lista de Créditos vacía', () => {
       body: { ok: true, data: [] },
     }).as('emptyCredits');
 
-    cy.visit('/portal/credits', {
-      onBeforeLoad(win) {
-        win.localStorage.setItem('portal_token', PORTAL_TOKEN);
-        win.localStorage.setItem('portal_user', JSON.stringify(PORTAL_USER));
-      },
-    });
+    cy.loginPortalAs('/portal/credits', PORTAL_SESSION);
 
     cy.wait('@emptyCredits');
-    cy.contains('No tenés créditos registrados').should('be.visible');
+    cy.get('[data-cy="portal-credits-empty-state"]').should('be.visible');
   });
 });

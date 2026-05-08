@@ -1,181 +1,109 @@
 /**
- * SUITE: Portal Cliente — B2C
- *
- * Cubre:
- *  - Dashboard del cliente (información general)
- *  - Validación de deuda total
- *  - Navegación a "Mis Créditos"
- *  - Tabla de amortización (p-table)
- *  - Detalle de cada crédito
- *  - Acceso público sin login (/portal/dashboard, /portal/credits)
+ * SUITE: Portal Cliente — Dashboard y Créditos (UI actual)
  */
 
-describe('Portal Cliente — Dashboard y Mis Créditos', () => {
+const PORTAL_SESSION = {
+  token:
+    'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjdXN0LTAwMSIsImZ1bGxfbmFtZSI6IkFuYSBHYXJjw61hIiwiZG5pIjoiMTIzNDU2NzgiLCJwb3J0YWxfaXNfdGVtcF9wYXNzd29yZCI6ZmFsc2V9.sig',
+  customer: {
+    id: 'cust-001',
+    fullName: 'Ana García',
+    dni: '12345678',
+    portalIsTempPassword: false,
+  },
+};
+
+const SUMMARY = {
+  total_owed: 150000,
+  paid_count: 8,
+  pending_count: 2,
+  overdue_count: 0,
+  status_indicator: 'GREEN',
+  total_paid_amount: 95000,
+  pending_penalty_amount: 0,
+  upcoming_installments: [],
+};
+
+const CREDITS = [
+  {
+    id: 'cred-1',
+    type: 'SALE',
+    total_amount: 120000,
+    installments_count: 12,
+    payment_frequency: 'WEEKLY',
+    status: 'ACTIVE',
+    created_at: '2026-01-10T00:00:00Z',
+    approved_at: '2026-01-11T00:00:00Z',
+    total_installments: 12,
+    paid_installments: 5,
+    next_due_date: '2026-06-01T00:00:00Z',
+    next_due_amount: 10000,
+    pending_penalty: 0,
+    has_overdue: false,
+  },
+];
+
+describe('Portal Cliente — Dashboard y Créditos', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-    cy.visit('/portal/dashboard');
+
+    cy.intercept('GET', '**/api/portal/me', {
+      statusCode: 200,
+      body: { ok: true, data: SUMMARY },
+    }).as('portalSummary');
+
+    cy.intercept('GET', '**/api/portal/credits', {
+      statusCode: 200,
+      body: { ok: true, data: CREDITS },
+    }).as('portalCredits');
   });
 
-  // ── Dashboard ──────────────────────────────────────────────────────────
-  it('el dashboard es accesible sin autenticación', () => {
-    cy.url().should('include', '/portal/dashboard');
+  it('muestra dashboard real con saludo y saldo total', () => {
+    cy.loginPortalAs('/portal/dashboard', PORTAL_SESSION);
+    cy.wait('@portalCredits');
+
+    cy.contains('Hola, Ana').should('be.visible');
+    cy.contains('Saldo total de créditos').should('be.visible');
+    cy.contains('Créditos activos').should('be.visible');
   });
 
-  it('muestra el título "Mi Dashboard"', () => {
-    cy.contains('h1', 'Mi Dashboard').should('be.visible');
+  it('desde dashboard navega a detalle por CTA "Ver detalle"', () => {
+    cy.intercept('GET', '**/api/portal/credits/cred-1', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          ...CREDITS[0],
+          installments: [
+            {
+              id: 'inst-1',
+              installment_number: 1,
+              due_date: '2026-01-17T00:00:00Z',
+              amount_due: 10000,
+              amount_paid: 10000,
+              penalty_amount: 0,
+              status: 'PAID',
+            },
+          ],
+        },
+      },
+    }).as('portalCreditDetail');
+
+    cy.loginPortalAs('/portal/credits', PORTAL_SESSION);
+    cy.wait('@portalCredits');
+
+    cy.get('[data-cy="portal-credits-card"]').first().click();
+    cy.url().should('include', '/portal/credits/cred-1');
+    cy.wait('@portalCreditDetail');
+    cy.contains('h2', 'Detalle del crédito').should('be.visible');
   });
 
-  it('muestra el nombre del cliente', () => {
-    cy.get('[data-cy="nombre-cliente"]').should('exist');
-  });
+  it('muestra vista real de /portal/credits como tarjetas', () => {
+    cy.loginPortalAs('/portal/credits', PORTAL_SESSION);
+    cy.wait('@portalCredits');
 
-  it('muestra la sección de deuda total', () => {
-    cy.contains('Deuda Total').should('be.visible');
-  });
-
-  it('el monto de deuda total es visible', () => {
-    cy.get('[data-cy="deuda-total"]').should('exist');
-  });
-
-  it('muestra el monto de deuda en formato moneda', () => {
-    cy.get('[data-cy="deuda-total"]').should('contain', '$');
-  });
-
-  it('muestra la sección de crédito activo', () => {
-    cy.contains('Crédito Activo').should('be.visible');
-  });
-
-  it('muestra botón "Mis Créditos"', () => {
-    cy.contains('button', 'Mis Créditos').should('exist');
-  });
-
-  // ── Navegación a Mis Créditos ─────────────────────────────────────────
-  it('al hacer clic en "Mis Créditos" navega a /portal/credits', () => {
-    cy.contains('button', 'Mis Créditos').click();
-    cy.url().should('include', '/portal/credits');
-  });
-
-  // ── Lista de Mis Créditos ────────────────────────────────────────────────
-  describe('Mis Créditos', () => {
-    beforeEach(() => {
-      cy.visit('/portal/credits');
-    });
-
-    it('la página de créditos es visible', () => {
-      cy.url().should('include', '/portal/credits');
-    });
-
-    it('muestra el título "Mis Créditos"', () => {
-      cy.contains('h1', 'Mis Créditos').should('be.visible');
-    });
-
-    it('la tabla de créditos es visible (p-table)', () => {
-      cy.get('p-table').should('be.visible');
-    });
-
-    it('la tabla contiene columnas: Producto, Monto, Saldo, Cuota, Próxima Fecha', () => {
-      const cols = ['Producto', 'Monto', 'Saldo', 'Cuota', 'Próxima Fecha'];
-      cols.forEach((col) => {
-        cy.get('p-table th').contains(col).should('exist');
-      });
-    });
-
-    it('si existe crédito, muestra al menos una fila', () => {
-      cy.get('p-table tbody tr').should('have.length.gte', 1);
-    });
-
-    // ── Ver Detalle del Crédito ───────────────────────────────────────
-    it('al hacer clic en "Ver" abre el modal de detalle', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-ver-"]').click();
-      cy.contains('Detalle del Crédito').should('be.visible');
-    });
-
-    it('el modal muestra información del crédito', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-ver-"]').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('[data-cy="credito-producto"]').should('exist');
-        cy.get('[data-cy="credito-monto"]').should('exist');
-        cy.get('[data-cy="credito-saldo"]').should('exist');
-      });
-    });
-
-    it('el botón Cerrar cierra el modal', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-ver-"]').click();
-      cy.get('p-dialog').within(() => {
-        cy.contains('button', 'Cerrar').click();
-      });
-      cy.get('p-dialog[ng-reflect-visible="true"]').should('not.exist');
-    });
-
-    // ── Tabla de Amortización ──────────────────────────────────────
-    it('el botón "Ver Cuotas" abre la tabla de amortización', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-cuotas-"]').click();
-      cy.contains('Tabla de Amortización').should('be.visible');
-    });
-
-    it('la tabla de amortización contiene columnas: #, Fecha, Capital, Interés, Cuota, Saldo', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-cuotas-"]').click();
-      cy.get('p-dialog').within(() => {
-        const cols = ['#', 'Fecha', 'Capital', 'Interés', 'Cuota', 'Saldo'];
-        cols.forEach((col) => {
-          cy.get('p-table th').contains(col).should('exist');
-        });
-      });
-    });
-
-    it('la tabla de amortización muestra las cuotas', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-cuotas-"]').click();
-      cy.get('p-dialog p-table tbody tr').should('have.length.gte', 1);
-    });
-
-    it('cada fila muestra el número de cuota', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-cuotas-"]').click();
-      cy.get('p-dialog p-table tbody tr').first().find('td').should('exist');
-    });
-
-    it('cada fila muestra la fecha de vencimiento', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-cuotas-"]').click();
-      cy.get('p-dialog p-table tbody tr').first().find('td').eq(1).should('exist');
-    });
-
-    it('cada fila muestra el monto de capital', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-cuotas-"]').click();
-      cy.get('p-dialog p-table tbody tr').first().find('td').eq(2).should('exist');
-    });
-
-    it('cada fila muestra el monto de interés', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-cuotas-"]').click();
-      cy.get('p-dialog p-table tbody tr').first().find('td').eq(3).should('exist');
-    });
-
-    it('cada fila muestra el monto de cuota', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-cuotas-"]').click();
-      cy.get('p-dialog p-table tbody tr').first().find('td').eq(4).should('exist');
-    });
-
-    it('cada fila muestra el saldo restante', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-cuotas-"]').click();
-      cy.get('p-dialog p-table tbody tr').first().find('td').eq(5).should('exist');
-    });
-
-    it('el botón Cerrar cierra el modal de amortización', () => {
-      cy.get('p-table tbody tr').first().find('[data-cy^="btn-cuotas-"]').click();
-      cy.get('p-dialog').within(() => {
-        cy.contains('button', 'Cerrar').click();
-      });
-      cy.get('p-dialog[ng-reflect-visible="true"]').should('not.exist');
-    });
-
-    // ── Estado del Crédito ──────────────────────────────────────────
-    it('cada crédito muestra badge p-tag con estado', () => {
-      cy.get('p-table tbody tr').first().find('p-tag').should('exist');
-    });
-  });
-
-  // ── Navegación de Regreso ─────────────────────────────────────────
-  it('desde Mis Créditos puede volver al Dashboard', () => {
-    cy.visit('/portal/credits');
-    cy.contains('button', 'Volver').click();
-    cy.url().should('include', '/portal/dashboard');
+    cy.contains('h2', 'Mis créditos').should('be.visible');
+    cy.contains('Venta en cuotas').should('be.visible');
+    cy.get('p-tag').should('contain', 'Activo');
   });
 });

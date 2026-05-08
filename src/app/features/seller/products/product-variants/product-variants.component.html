@@ -2,26 +2,46 @@
 <p-confirmDialog />
 
 <div class="p-4">
-  <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
     <div class="flex items-center gap-3 flex-wrap">
-      <p-button
-        label="Volver"
-        icon="pi pi-arrow-left"
-        severity="secondary"
-        [outlined]="true"
-        (onClick)="goBack()"
-      />
-      <h2 class="text-xl font-semibold">
-        Variantes{{ productName ? " — " + productName : "" }}
-      </h2>
+      <a
+        class="prod-action-link flex items-center gap-1"
+        (click)="goBack()"
+        style="cursor: pointer"
+      >
+        <i class="pi pi-arrow-left text-sm"></i> Volver al producto
+      </a>
+      <span style="color: var(--ff-text-muted)">/</span>
+      <h1 class="font-bold text-base" style="color: var(--ff-text-primary)">
+        Variantes
+      </h1>
     </div>
     @if (isAdmin) {
       <p-button
         label="Nueva variante"
         icon="pi pi-plus"
+        severity="primary"
+        styleClass="h-10 px-4 rounded-xl"
         (onClick)="openCreate()"
       />
     }
+  </div>
+
+  <!-- Product info bar -->
+  @if (productName) {
+    <div class="mb-4 flex items-center gap-3 flex-wrap">
+      <span class="font-bold" style="color: var(--ff-text-primary)">{{
+        productName
+      }}</span>
+    </div>
+  }
+
+  <!-- Variant count subtitle -->
+  <div class="flex items-center gap-3 mb-4">
+    <span class="text-sm font-medium" style="color: var(--ff-text-secondary)">
+      Variantes ({{ variants.length }})
+    </span>
   </div>
 
   @if (loading) {
@@ -29,157 +49,252 @@
   } @else if (error) {
     <app-error-state />
   } @else {
-    <p-table
-      [value]="variants"
-      styleClass="p-datatable-sm"
-      responsiveLayout="scroll"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Color</th>
-          <th>Talle</th>
-          <th>Capacidad</th>
-          <th class="text-right">Precio</th>
-          <th class="text-center">Disponibles</th>
-          <th class="text-center">Reservadas</th>
-          <th class="text-center">Vendidas</th>
-          <th class="text-center">Estado</th>
-          <th></th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-v>
-        <tr>
-          <td>{{ v.color ?? "—" }}</td>
-          <td>{{ v.size ?? "—" }}</td>
-          <td>{{ v.capacity ?? "—" }}</td>
-          <td class="text-right font-mono">
-            {{ v.currentPrice | currencyArs: 2 }}
-          </td>
-          <td class="text-center">{{ v.availableCount ?? "—" }}</td>
-          <td class="text-center">{{ v.reservedCount ?? "—" }}</td>
-          <td class="text-center">{{ v.soldCount ?? "—" }}</td>
-          <td class="text-center">
-            <p-tag
-              [value]="v.status === 'ACTIVE' ? 'Activa' : 'Inactiva'"
-              [severity]="v.status === 'ACTIVE' ? 'success' : 'danger'"
-            />
-          </td>
-          <td>
-            <div class="flex gap-1 justify-end flex-wrap">
-              <p-button
-                label="Ver unidades"
-                icon="pi pi-list"
-                severity="secondary"
-                [outlined]="true"
-                size="small"
-                (onClick)="navigateToUnits(v)"
-              />
-              @if (isAdmin) {
-                <p-button
-                  icon="pi pi-pencil"
-                  severity="secondary"
-                  [outlined]="true"
-                  size="small"
-                  (onClick)="openEdit(v)"
-                />
-                @if (v.status === "ACTIVE") {
-                  <p-button
-                    icon="pi pi-ban"
-                    severity="danger"
-                    [outlined]="true"
-                    size="small"
-                    (onClick)="confirmDeactivate(v)"
-                  />
-                } @else {
-                  <p-button
-                    icon="pi pi-check-circle"
-                    severity="secondary"
-                    [outlined]="true"
-                    size="small"
-                    (onClick)="confirmActivate(v)"
-                  />
-                }
-              }
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="9" class="text-center text-gray-400 py-6">
-            Sin variantes registradas.
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  }
-</div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- ── LEFT: table ── -->
+      <div [class]="isAdmin ? 'lg:col-span-7' : 'lg:col-span-12'">
+        <div class="ff-panel overflow-hidden">
+          <p-table [value]="variants" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>VARIANTE</th>
+                <th class="text-right">PRECIO</th>
+                <th class="text-center">DISPONIBLES</th>
+                <th class="text-center">RESERVADAS</th>
+                <th class="text-center">VENDIDAS</th>
+                <th class="text-center">ESTADO</th>
+                <th>ACCIONES</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-v>
+              <tr>
+                <td>
+                  <span
+                    class="font-medium"
+                    style="color: var(--ff-text-primary)"
+                  >
+                    {{
+                      v.color && v.capacity
+                        ? v.color + " · " + v.capacity
+                        : v.color || v.capacity || "—"
+                    }}
+                  </span>
+                  @if (v.size) {
+                    <span
+                      class="text-xs ml-1"
+                      style="color: var(--ff-text-muted)"
+                      >{{ v.size }}</span
+                    >
+                  }
+                </td>
+                <td
+                  class="text-right ff-mono font-bold"
+                  style="color: var(--ff-accent)"
+                >
+                  {{ v.currentPrice | currencyArs: 2 }}
+                </td>
+                <td class="text-center">
+                  @if (
+                    (v.availableCount ?? 0) <= 3 && (v.availableCount ?? 0) > 0
+                  ) {
+                    <span
+                      class="font-bold ff-mono"
+                      style="color: var(--ff-warning)"
+                    >
+                      {{ v.availableCount }}
+                      <i class="pi pi-arrow-down text-xs ml-0.5"></i>
+                    </span>
+                  } @else {
+                    <span
+                      class="font-bold ff-mono"
+                      style="color: var(--ff-success)"
+                      >{{ v.availableCount ?? "—" }}</span
+                    >
+                  }
+                </td>
+                <td
+                  class="text-center ff-mono"
+                  style="color: var(--ff-text-secondary)"
+                >
+                  {{ v.reservedCount ?? "—" }}
+                </td>
+                <td
+                  class="text-center ff-mono"
+                  style="color: var(--ff-text-muted)"
+                >
+                  {{ v.soldCount ?? "—" }}
+                </td>
+                <td class="text-center">
+                  <span
+                    class="ff-badge"
+                    [class.ff-badge--activo]="v.status === 'ACTIVE'"
+                    [class.ff-badge--inactivo]="v.status !== 'ACTIVE'"
+                    >{{ v.status === "ACTIVE" ? "ACTIVO" : "INACTIVO" }}</span
+                  >
+                </td>
+                <td>
+                  <div class="flex items-center gap-3 flex-wrap">
+                    <a
+                      class="prod-action-link text-xs"
+                      (click)="navigateToUnits(v)"
+                      style="cursor: pointer"
+                    >
+                      Ver unidades
+                    </a>
+                    @if (isAdmin) {
+                      <a
+                        class="prod-action-link text-xs"
+                        (click)="openEdit(v)"
+                        style="cursor: pointer"
+                      >
+                        Editar
+                      </a>
+                      @if (v.status === "ACTIVE") {
+                        <a
+                          class="prod-action-link text-xs"
+                          style="color: var(--ff-danger); cursor: pointer"
+                          (click)="confirmDeactivate(v)"
+                        >
+                          Desactivar
+                        </a>
+                      } @else {
+                        <a
+                          class="prod-action-link text-xs"
+                          (click)="confirmActivate(v)"
+                          style="cursor: pointer"
+                        >
+                          Activar
+                        </a>
+                      }
+                    }
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td
+                  colspan="7"
+                  class="text-center py-8"
+                  style="color: var(--ff-text-muted)"
+                >
+                  Sin variantes registradas.
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      </div>
 
-<p-dialog
-  [(visible)]="showDialog"
-  [header]="editingVariant ? 'Editar variante' : 'Nueva variante'"
-  [modal]="true"
-  [style]="{ width: '420px' }"
-  [draggable]="false"
->
-  <form [formGroup]="form" (ngSubmit)="saveDialog()">
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1">Color</label>
-      <input
-        pInputText
-        formControlName="color"
-        class="w-full"
-        placeholder="Ej: Negro"
-      />
-    </div>
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1">Talle</label>
-      <input
-        pInputText
-        formControlName="size"
-        class="w-full"
-        placeholder="Ej: XL"
-      />
-    </div>
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1">Capacidad</label>
-      <input
-        pInputText
-        formControlName="capacity"
-        class="w-full"
-        placeholder="Ej: 128GB"
-      />
-    </div>
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1">Precio *</label>
-      <p-inputNumber
-        formControlName="currentPrice"
-        mode="currency"
-        currency="ARS"
-        locale="es-AR"
-        styleClass="w-full"
-        [class.ng-invalid]="isInvalid('currentPrice')"
-      />
-      @if (isInvalid("currentPrice")) {
-        <small class="text-red-500">Precio requerido y mayor a 0.</small>
+      <!-- ── RIGHT: inline form (admin only) ── -->
+      @if (isAdmin) {
+        <div class="lg:col-span-5">
+          <div class="ff-panel p-6 space-y-4">
+            <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
+              {{ editingVariant ? "Editar variante" : "Nueva variante" }}
+            </h3>
+
+            <form [formGroup]="form" (ngSubmit)="saveDialog()">
+              <div class="space-y-4">
+                <div class="flex flex-col gap-1">
+                  <label
+                    class="text-xs font-bold uppercase tracking-wider"
+                    style="color: var(--ff-text-muted)"
+                    >Color</label
+                  >
+                  <input
+                    pInputText
+                    formControlName="color"
+                    placeholder="Ej: Negro, Azul marino..."
+                    class="w-full h-11"
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label
+                    class="text-xs font-bold uppercase tracking-wider"
+                    style="color: var(--ff-text-muted)"
+                    >Talle</label
+                  >
+                  <input
+                    pInputText
+                    formControlName="size"
+                    placeholder="Ej: S, M, L, XL, 42..."
+                    class="w-full h-11"
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label
+                    class="text-xs font-bold uppercase tracking-wider"
+                    style="color: var(--ff-text-muted)"
+                    >Capacidad</label
+                  >
+                  <input
+                    pInputText
+                    formControlName="capacity"
+                    placeholder="Ej: 128 GB, 256 GB..."
+                    class="w-full h-11"
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label
+                    class="text-xs font-bold uppercase tracking-wider"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Precio de venta *
+                  </label>
+                  <p-inputNumber
+                    formControlName="currentPrice"
+                    mode="currency"
+                    currency="ARS"
+                    locale="es-AR"
+                    styleClass="w-full"
+                    inputStyleClass="w-full h-11 rounded-xl"
+                    [class.ng-invalid]="isInvalid('currentPrice')"
+                  />
+                  <small class="text-xs" style="color: var(--ff-text-muted)">
+                    Completá solo los atributos que aplican. El precio es
+                    obligatorio.
+                  </small>
+                  @if (isInvalid("currentPrice")) {
+                    <small style="color: var(--ff-danger)"
+                      >Precio requerido y mayor a 0.</small
+                    >
+                  }
+                </div>
+
+                @if (dialogError) {
+                  <p
+                    class="text-sm px-3 py-2 rounded-lg"
+                    style="
+                      color: var(--ff-danger);
+                      background: rgba(239, 68, 68, 0.1);
+                    "
+                  >
+                    {{ dialogError }}
+                  </p>
+                }
+
+                <p-button
+                  type="submit"
+                  [label]="
+                    editingVariant ? 'Guardar cambios' : 'Agregar variante'
+                  "
+                  severity="primary"
+                  styleClass="w-full justify-center h-11 rounded-xl"
+                  [loading]="dialogSubmitting"
+                />
+                <p-button
+                  type="button"
+                  label="Cancelar"
+                  severity="secondary"
+                  [text]="true"
+                  styleClass="w-full justify-center h-9"
+                  (onClick)="openCreate()"
+                />
+              </div>
+            </form>
+          </div>
+        </div>
       }
     </div>
-    @if (dialogError) {
-      <p class="text-red-500 text-sm mb-3">{{ dialogError }}</p>
-    }
-    <div class="flex justify-end gap-2">
-      <p-button
-        label="Cancelar"
-        severity="secondary"
-        [outlined]="true"
-        type="button"
-        (onClick)="showDialog = false"
-      />
-      <p-button
-        [label]="editingVariant ? 'Guardar' : 'Crear'"
-        type="submit"
-        [loading]="dialogSubmitting"
-      />
-    </div>
-  </form>
-</p-dialog>
+  }
+</div>

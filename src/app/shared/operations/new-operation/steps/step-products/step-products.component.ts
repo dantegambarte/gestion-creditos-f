@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
@@ -21,6 +22,7 @@ import { OperationFormService } from '../../operation-form.service';
     InputTextModule,
     IconFieldModule,
     InputIconModule,
+    InputNumberModule,
     ButtonModule,
     DropdownModule,
     TagModule,
@@ -35,28 +37,37 @@ export class StepProductsComponent {
    * @returns {boolean} true cuando corresponde mostrar y habilitar productos.
    */
   get usesProducts(): boolean {
-    return this.form.selectedType() === 'VENTA';
+    return this.form.selectedType() === 'SALE';
   }
 
   /**
    * Cambia el tipo de operación delegando la limpieza de estado al servicio.
-   * @param {'VENTA' | 'PRESTAMO'} type - Tipo elegido por el usuario.
+   * @param {'SALE' | 'LOAN'} type - Tipo elegido por el usuario.
    */
-  changeOperationType(type: 'VENTA' | 'PRESTAMO') {
+  changeOperationType(type: 'SALE' | 'LOAN') {
     this.form.setOperationType(type);
   }
 
   /**
-   * Agrega un producto al listado seleccionado del flujo de venta.
-   * @param {ProductOperation} prod - Producto elegido.
+   * Indica si la unidad ya está seleccionada para evitar duplicados en la venta.
+   * @param {string} productId - ID real de la unidad seleccionable.
+   * @returns {boolean} true cuando la unidad ya fue agregada.
+   */
+  isProductSelected(productId: string): boolean {
+    return this.form.isProductSelected(productId);
+  }
+
+  /**
+   * Agrega una unidad al listado seleccionado del flujo de venta.
+   * @param {ProductOperation} prod - Unidad elegida.
    */
   addProduct(prod: ProductOperation) {
     this.form.addProduct(prod);
   }
 
   /**
-   * Quita un producto del listado seleccionado del flujo de venta.
-   * @param {ProductOperation} prod - Producto a remover.
+   * Quita una unidad del listado seleccionado del flujo de venta.
+   * @param {ProductOperation} prod - Unidad a remover.
    */
   removeProduct(prod: ProductOperation) {
     this.form.removeProduct(prod);

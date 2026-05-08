@@ -29,16 +29,15 @@ function toVariant(raw: ProductVariantRaw): ProductVariant {
     productStatus: raw.product_status,
     brandId: raw.brand_id,
     brandName: raw.brand_name,
-  };
-}
-
-function toVariantDetail(raw: ProductVariantDetailRaw): ProductVariantDetail {
-  return {
-    ...toVariant(raw),
     availableCount: raw.available_count,
     reservedCount: raw.reserved_count,
     soldCount: raw.sold_count,
   };
+}
+
+// toVariantDetail es un alias: el tipo base ya incluye los contadores
+function toVariantDetail(raw: ProductVariantDetailRaw): ProductVariantDetail {
+  return toVariant(raw);
 }
 
 @Injectable({ providedIn: 'root' })

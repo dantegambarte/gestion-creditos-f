@@ -1,8 +1,9 @@
-<div class="tab-content">
+<div class="tab-content" data-cy="client-detail-credits-tab">
   <div class="filter-bar">
     <div class="search-wrap">
       <i class="pi pi-search search-icon"></i>
       <input
+        data-cy="client-detail-credits-search-input"
         pInputText
         type="text"
         placeholder="Buscar crédito..."
@@ -11,6 +12,7 @@
       />
     </div>
     <p-dropdown
+      data-cy="client-detail-credits-status-filter"
       [options]="estadoOptions"
       [(ngModel)]="selectedEstado"
       optionLabel="label"
@@ -23,9 +25,10 @@
     </button>
   </div>
 
-  <div class="credits-list">
+  <div class="credits-list" data-cy="client-detail-credits-list">
     @for (credit of filteredCredits; track credit.id) {
       <div
+        data-cy="client-detail-credits-card"
         class="credit-card"
         [ngClass]="'card-' + credit.estado.toLowerCase().replace(' ', '-')"
       >
@@ -49,7 +52,10 @@
             }
           </div>
           <div class="card-actions">
-            <button class="action-btn btn-outline-blue">
+            <button
+              class="action-btn btn-outline-blue"
+              data-cy="client-detail-credits-view-detail-action"
+            >
               <i class="pi pi-eye"></i>
               Ver detalle
             </button>
@@ -149,7 +155,7 @@
     }
 
     @if (filteredCredits.length === 0) {
-      <div class="empty-state">
+      <div class="empty-state" data-cy="client-detail-credits-empty-state">
         <i class="pi pi-inbox text-gray-300 text-4xl mb-2"></i>
         <p>No se encontraron créditos</p>
       </div>

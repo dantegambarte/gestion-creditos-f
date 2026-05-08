@@ -308,7 +308,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   loadCatRows(): void {
     this.loadingCats = true;
     this.catSvc
-      .getAll()
+      .getAll(true)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.loadingCats = false)),

@@ -74,8 +74,10 @@ function fromUpdatePayload(p: ProductUpdatePayload): Record<string, unknown> {
 export class ProductsService {
   private readonly api = inject(ApiHttpService);
 
-    // TODO: agregar documentacion de las funciones
-
+  /**
+   * Obtiene la lista de productos aplicando los filtros opcionales de estado, búsqueda y categoría.
+   * @param filters - Filtros opcionales: status, search, categoryId.
+   */
   list(filters?: ProductListFilters): Observable<Product[]> {
     const params: Record<string, string> = {};
     if (filters?.status) params['status'] = filters.status;
@@ -86,30 +88,52 @@ export class ProductsService {
       .pipe(map((items) => items.map(toProduct)));
   }
 
+  /**
+   * Obtiene el detalle completo de un producto por su ID, incluyendo variantes y contadores de stock.
+   * @param id - UUID del producto.
+   */
   getById(id: string): Observable<ProductDetail> {
     return this.api
       .get<ProductDetailRaw>(`products/${id}`)
       .pipe(map(toProductDetail));
   }
 
+  /**
+   * Crea un nuevo producto y retorna su detalle completo.
+   * Solo incluye en el body los campos definidos (descripción, modelo, marca y categoría son opcionales).
+   * @param payload - Datos del producto a crear.
+   */
   create(payload: ProductCreatePayload): Observable<ProductDetail> {
     return this.api
       .post<ProductDetailRaw>('products', fromCreatePayload(payload))
       .pipe(map(toProductDetail));
   }
 
+  /**
+   * Actualiza un producto existente con los campos provistos. Solo envía los campos definidos en el payload.
+   * @param id - UUID del producto.
+   * @param payload - Campos a actualizar (todos opcionales).
+   */
   update(id: string, payload: ProductUpdatePayload): Observable<ProductDetail> {
     return this.api
       .put<ProductDetailRaw>(`products/${id}`, fromUpdatePayload(payload))
       .pipe(map(toProductDetail));
   }
 
+  /**
+   * Desactiva un producto (baja lógica). Solo disponible si el producto no tiene créditos activos.
+   * @param id - UUID del producto.
+   */
   deactivate(id: string): Observable<void> {
     return this.api
       .patch<void>(`products/${id}/deactivate`)
       .pipe(map(() => undefined));
   }
 
+  /**
+   * Reactiva un producto previamente desactivado.
+   * @param id - UUID del producto.
+   */
   activate(id: string): Observable<void> {
     return this.api
       .patch<void>(`products/${id}/activate`)

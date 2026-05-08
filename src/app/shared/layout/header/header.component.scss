@@ -1,0 +1,138 @@
+// ─── Header shell ─────────────────────────────────────────────────────────────
+.app-header {
+  height: 56px;
+  flex-shrink: 0;
+  background: var(--ff-bg);
+  border-bottom: 1px solid var(--ff-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+}
+
+// ─── Título / breadcrumbs ─────────────────────────────────────────────────────
+.app-header__title {
+  font-family: var(--ff-font-ui);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ff-text-primary);
+}
+
+.app-header__crumb {
+  font-family: var(--ff-font-ui);
+  font-size: 13px;
+
+  &--link {
+    color: var(--ff-text-secondary);
+    cursor: pointer;
+    transition: color 150ms;
+
+    &:hover {
+      color: var(--ff-accent);
+    }
+  }
+
+  &--current {
+    color: var(--ff-text-primary);
+    font-weight: 500;
+  }
+}
+
+// ─── Fecha ───────────────────────────────────────────────────────────────────
+.app-header__date {
+  font-family: var(--ff-font-ui);
+  font-size: 13px;
+  color: var(--ff-text-secondary);
+}
+
+// ─── Dot "En vivo" ────────────────────────────────────────────────────────────
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ff-success);
+  flex-shrink: 0;
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.3);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.1);
+  }
+}
+
+.app-header__live-text {
+  font-family: var(--ff-font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ff-success);
+}
+
+// ─── Campana ──────────────────────────────────────────────────────────────────
+.app-header__bell {
+  position: relative;
+  padding: 8px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--ff-text-secondary);
+  cursor: pointer;
+  transition:
+    background 150ms,
+    color 150ms;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--ff-text-primary);
+  }
+}
+
+.app-header__bell-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: var(--ff-danger);
+  border-radius: 50%;
+  border: 2px solid var(--ff-bg);
+}
+
+// ─── Sección usuario ──────────────────────────────────────────────────────────
+.app-header__user-section {
+  border-left: 1px solid var(--ff-border);
+}
+
+.app-header__user-name {
+  font-family: var(--ff-font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ff-text-primary);
+}
+
+.app-header__user-role {
+  font-family: var(--ff-font-ui);
+  font-size: 11px;
+  color: var(--ff-text-secondary);
+}
+
+.app-header__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(79, 110, 247, 0.2);
+  color: var(--ff-accent);
+  font-family: var(--ff-font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(79, 110, 247, 0.3);
+}

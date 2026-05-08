@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { CustomersService } from '../../../../../features/seller/clients/customers.service';
 import { ProductsService } from '../../../../../features/seller/products/products.service';
+import { ProductUnitsService } from '../../../../../features/seller/products/product-units.service';
 import { OperationFormService } from '../../operation-form.service';
 import { StepProductsComponent } from './step-products.component';
 
@@ -16,6 +17,7 @@ describe('StepProductsComponent (CR-03)', () => {
       providers: [
         { provide: CustomersService, useValue: { list: () => of([]) } },
         { provide: ProductsService, useValue: { list: () => of([]) } },
+        { provide: ProductUnitsService, useValue: { getAll: () => of([]) } },
       ],
     }).compileComponents();
 
@@ -31,7 +33,7 @@ describe('StepProductsComponent (CR-03)', () => {
       { id: 'p1', name: 'Heladera', price: 1000, stock: 2 },
     ]);
 
-    component.changeOperationType('PRESTAMO');
+    component.changeOperationType('LOAN');
     fixture.detectChanges();
 
     expect(component.usesProducts).toBeFalse();
@@ -40,19 +42,50 @@ describe('StepProductsComponent (CR-03)', () => {
     expect(
       fixture.nativeElement.querySelector('[data-cy="input-buscar-producto"]'),
     ).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('Productos Disponibles');
+    expect(fixture.nativeElement.textContent).not.toContain('Unidades Disponibles');
   });
 
   it('filtra productos por nombre al escribir en el buscador (CR-04)', () => {
     formService.availableProducts = [
-      { id: 'p1', name: 'Aire Acondicionado', price: 1200, stock: 2 },
-      { id: 'p2', name: 'Heladera', price: 900, stock: 3 },
+      {
+        id: 'u1',
+        name: 'Aire Acondicionado',
+        price: 1200,
+        stock: 1,
+        unitCode: 'AA-001',
+      },
+      {
+        id: 'u2',
+        name: 'Heladera',
+        price: 900,
+        stock: 1,
+        unitCode: 'HL-001',
+      },
     ];
 
     formService.searchProduct.set('aire');
 
     expect(formService.filteredAvailableProducts()).toEqual([
-      { id: 'p1', name: 'Aire Acondicionado', price: 1200, stock: 2 },
+      {
+        id: 'u1',
+        name: 'Aire Acondicionado',
+        price: 1200,
+        stock: 1,
+        unitCode: 'AA-001',
+      },
+    ]);
+  });
+
+  it('filtra también por código de unidad', () => {
+    formService.availableProducts = [
+      { id: 'u1', name: 'Aire Acondicionado', price: 1200, stock: 1, unitCode: 'AA-001' },
+      { id: 'u2', name: 'Heladera', price: 900, stock: 1, unitCode: 'HL-001' },
+    ];
+
+    formService.searchProduct.set('hl-001');
+
+    expect(formService.filteredAvailableProducts()).toEqual([
+      { id: 'u2', name: 'Heladera', price: 900, stock: 1, unitCode: 'HL-001' },
     ]);
   });
 });

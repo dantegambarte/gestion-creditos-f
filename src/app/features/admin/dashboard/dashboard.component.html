@@ -1,52 +1,22 @@
-<div class="p-6 space-y-6">
-  <!-- Banner de Bienvenida -->
-  <div
-    class="bg-gradient-to-r from-blue-700 to-indigo-600 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between"
-  >
-    <div>
-      <h2 class="text-2xl font-bold tracking-tight">¡Hola, {{ userName }}!</h2>
-      <p class="text-blue-100 opacity-80 text-sm mt-1">
-        <i class="pi pi-calendar mr-1"></i> {{ today }} · Todo marcha bien hoy.
-      </p>
-    </div>
-    <i class="pi pi-th-large text-white/20 text-6xl hidden lg:block"></i>
-  </div>
-
+<div class="db-main">
   <!-- KPI Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div class="db-kpis">
     @if (loadingKpis) {
       @for (i of [1, 2, 3, 4]; track i) {
-        <p-card styleClass="shadow-sm">
-          <div class="flex items-center justify-between mb-3">
-            <p-skeleton width="55%" height="1rem" />
-            <p-skeleton shape="circle" size="2.5rem" />
-          </div>
-          <p-skeleton width="70%" height="2rem" styleClass="mb-2" />
-          <p-skeleton width="80%" height="0.75rem" />
-        </p-card>
+        <div class="db-kpi">
+          <p-skeleton width="55%" height="0.75rem" styleClass="mb-3" />
+          <p-skeleton width="70%" height="1.75rem" styleClass="mb-2" />
+          <p-skeleton width="60%" height="0.65rem" />
+        </div>
       }
     } @else {
       @for (kpi of kpis; track kpi.label) {
-        <p-card styleClass="shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-sm font-medium text-gray-500">{{
-              kpi.label
-            }}</span>
-            <span
-              [class]="
-                kpi.iconBg +
-                ' w-10 h-10 rounded-full flex items-center justify-center'
-              "
-            >
-              <i [class]="kpi.icon"></i>
-            </span>
-          </div>
-          <p class="text-2xl font-bold text-gray-800 mb-1">{{ kpi.value }}</p>
-          <p
-            [class]="
-              'text-xs font-medium ' +
-              (kpi.trendUp ? 'text-green-600' : 'text-red-500')
-            "
+        <div class="db-kpi">
+          <span class="db-kpi__label">{{ kpi.label }}</span>
+          <span class="db-kpi__value">{{ kpi.value }}</span>
+          <span
+            class="db-kpi__trend"
+            [style.color]="kpi.trendUp ? '#34D399' : '#F87171'"
           >
             <i
               [class]="
@@ -54,144 +24,96 @@
               "
             ></i>
             {{ kpi.trend }}
-          </p>
-        </p-card>
+          </span>
+        </div>
       }
     }
   </div>
 
-  <!-- Gráficos -->
-  <div class="grid grid-cols-12 gap-4">
-    <!-- Cobranza Mensual (line) — 9/12 -->
-    <div class="col-span-12 lg:col-span-9" style="min-height: 480px">
-      <p-card styleClass="shadow-sm chart-card">
-        <ng-template pTemplate="header">
-          <div class="flex items-center justify-between px-4 pt-4">
-            <span class="text-base font-semibold text-gray-800"
-              >Cobranza por Mes</span
-            >
-            <span class="text-xs text-gray-400">Últimos 12 meses</span>
-          </div>
-        </ng-template>
-        <div class="flex-1" style="min-height: 0">
-          @if (lineData) {
-            <p-chart
-              type="line"
-              [data]="lineData"
-              [options]="lineOptions"
-              width="100%"
-              height="100%"
-            />
-          } @else {
-            <p-skeleton height="100%" />
-          }
-        </div>
-      </p-card>
+  <!-- Panels row -->
+  <div class="db-panels">
+    <!-- Últimas operaciones (65%) -->
+    <div class="db-panel" style="flex: 65">
+      <div class="db-panel__header">
+        <span>Últimas operaciones</span>
+        <a class="db-panel__link cursor-pointer">Ver todas</a>
+      </div>
+      <div class="db-panel__body">
+        <p-table
+          [value]="recentOps"
+          [loading]="loadingOps"
+          [rows]="5"
+          styleClass="p-datatable-sm db-table"
+          responsiveLayout="scroll"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Tipo</th>
+              <th>Cuotas</th>
+              <th class="text-right">Monto</th>
+              <th>Estado</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-op>
+            <tr>
+              <td>{{ op.date }}</td>
+              <td class="db-td--client">{{ op.client }}</td>
+              <td>
+                <p-tag
+                  [value]="op.type"
+                  [severity]="op.type === 'VENTA' ? 'info' : 'warning'"
+                  [rounded]="true"
+                />
+              </td>
+              <td>{{ op.installments }}</td>
+              <td class="text-right db-td--amount">
+                {{ op.amount | currencyArs }}
+              </td>
+              <td>
+                <span
+                  class="db-status"
+                  [class.db-status--active]="
+                    op.status === 'Activo' || op.status === 'Al día'
+                  "
+                  [class.db-status--pending]="op.status === 'Pendiente'"
+                  [class.db-status--settled]="op.status === 'Liquidado'"
+                  [class.db-status--danger]="
+                    op.status === 'En mora' ||
+                    op.status === 'Vencido' ||
+                    op.status === 'Rechazado'
+                  "
+                  >{{ op.status }}</span
+                >
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6" class="db-empty">
+                @if (opsError) {
+                  No se pudieron cargar las operaciones recientes.
+                } @else {
+                  Sin operaciones recientes.
+                }
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
     </div>
 
-    <!-- Distribución por Estado (doughnut) — 3/12 -->
-    <div class="col-span-12 lg:col-span-3" style="min-height: 480px">
-      <p-card styleClass="shadow-sm chart-card">
-        <ng-template pTemplate="header">
-          <div class="flex items-center justify-between px-4 pt-4">
-            <span class="text-base font-semibold text-gray-800"
-              >Distribución por Estado</span
-            >
-          </div>
-        </ng-template>
-        <div class="flex-1" style="min-height: 0">
-          @if (pieData) {
-            <p-chart
-              type="doughnut"
-              [data]="pieData"
-              [options]="pieOptions"
-              width="100%"
-              height="100%"
-            />
-          } @else {
-            <p-skeleton height="100%" />
-          }
-        </div>
-      </p-card>
+    <!-- Próximos vencimientos (35%) -->
+    <div class="db-panel" style="flex: 35">
+      <div class="db-panel__header">
+        <span>Próximos vencimientos</span>
+      </div>
+      <div class="db-panel__body db-panel__body--empty">
+        <span class="db-placeholder">Sin datos</span>
+      </div>
     </div>
   </div>
-
-  <!-- Tabla Últimas Operaciones -->
-  <p-card styleClass="shadow-sm">
-    <ng-template pTemplate="header">
-      <div class="flex items-center justify-between px-4 pt-4">
-        <span class="text-base font-semibold text-gray-800"
-          >Últimas operaciones</span
-        >
-        <a class="text-sm text-blue-600 hover:underline cursor-pointer"
-          >Ver todas</a
-        >
-      </div>
-    </ng-template>
-
-    <p-table
-      [value]="recentOps"
-      [loading]="loadingOps"
-      [rows]="5"
-      styleClass="p-datatable-sm"
-      responsiveLayout="scroll"
-    >
-      <ng-template pTemplate="header">
-        <tr class="text-xs uppercase text-gray-400">
-          <th>Fecha</th>
-          <th>Cliente</th>
-          <th>Tipo</th>
-          <th>Cuotas</th>
-          <th class="text-right">Monto</th>
-          <th>Estado</th>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="body" let-op>
-        <tr class="hover:bg-gray-50/50 transition-colors">
-          <td class="text-sm text-gray-500">{{ op.date }}</td>
-          <td class="font-semibold text-gray-700">{{ op.client }}</td>
-          <td>
-            <p-tag
-              [value]="op.type"
-              [severity]="op.type === 'VENTA' ? 'info' : 'warning'"
-              [rounded]="true"
-            />
-          </td>
-          <td class="text-sm text-gray-500">{{ op.installments }}</td>
-          <td class="text-right font-bold text-gray-800">
-            {{ op.amount | currencyArs }}
-          </td>
-          <td>
-            <p-tag
-              [value]="op.status"
-              [severity]="
-                op.status === 'Al día'
-                  ? 'success'
-                  : op.status === 'En mora'
-                    ? 'danger'
-                    : op.status === 'Vencido'
-                      ? 'warning'
-                      : op.status === 'Activo'
-                        ? 'info'
-                        : 'secondary'
-              "
-            />
-          </td>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="6" class="text-center text-gray-400 py-6">
-            @if (opsError) {
-              No se pudieron cargar las operaciones recientes.
-            } @else {
-              Sin operaciones recientes.
-            }
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </p-card>
 </div>

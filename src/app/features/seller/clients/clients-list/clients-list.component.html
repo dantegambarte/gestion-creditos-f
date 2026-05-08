@@ -1,97 +1,118 @@
-<div class="p-4">
-  <div class="flex flex-wrap gap-3 mb-4 items-center justify-between">
-    <div class="flex flex-wrap gap-3 items-center">
-      <span class="p-input-icon-left">
-        <i class="pi pi-search"></i>
-        <input
-          pInputText
-          type="text"
-          placeholder="Buscar por nombre, DNI o teléfono"
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="onSearchChange($event)"
-          class="w-72"
-        />
-      </span>
-      <p-dropdown
-        [options]="statusOptions"
-        [(ngModel)]="selectedStatus"
-        (onChange)="applyFilters()"
-        placeholder="Estado"
-        [showClear]="true"
-        optionLabel="label"
-        optionValue="value"
-      />
-      @if (canFilterByCollector) {
+<div class="p-4" data-cy="seller-clients-page">
+  <div class="ff-panel">
+    <div class="ff-list-header">
+      <div class="ff-list-header__actions" style="flex: 1; flex-wrap: wrap">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search" style="color: var(--ff-text-muted)"></i>
+          <input
+            data-cy="seller-clients-search-input"
+            pInputText
+            type="text"
+            placeholder="Buscar por nombre, DNI o teléfono"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange($event)"
+            class="h-11 w-72"
+          />
+        </span>
         <p-dropdown
-          [options]="[]"
-          [(ngModel)]="selectedCollectorId"
-          placeholder="Cobrador (próximamente)"
+          data-cy="seller-clients-status-filter"
+          [options]="statusOptions"
+          [(ngModel)]="selectedStatus"
+          (onChange)="applyFilters()"
+          placeholder="Estado"
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-          [disabled]="true"
+        />
+        @if (canFilterByCollector) {
+          <p-dropdown
+            [options]="[]"
+            [(ngModel)]="selectedCollectorId"
+            placeholder="Cobrador (próximamente)"
+            [showClear]="true"
+            optionLabel="label"
+            optionValue="value"
+            [disabled]="true"
+          />
+        }
+      </div>
+      @if (canCreate) {
+        <p-button
+          data-cy="seller-clients-create-cta"
+          label="Nuevo cliente"
+          icon="pi pi-plus"
+          severity="primary"
+          styleClass="h-11 px-5 rounded-xl shadow-sm"
+          (onClick)="navigateToCreate()"
         />
       }
     </div>
-    @if (canCreate) {
-      <p-button
-        label="Nuevo cliente"
-        icon="pi pi-plus"
-        (onClick)="navigateToCreate()"
-      />
+
+    @if (loading) {
+      <app-loading-state />
+    } @else if (error) {
+      <app-error-state />
+    } @else if (customers.length === 0) {
+      <div data-cy="seller-clients-empty-state">
+        <app-empty-state />
+      </div>
+    } @else {
+      <p-table
+        data-cy="seller-clients-table"
+        [value]="customers"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Nombre</th>
+            <th>DNI</th>
+            <th>Teléfono</th>
+            <th>Estado</th>
+            <th>Cobrador</th>
+            <th>Alta</th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-customer>
+          <tr>
+            <td class="font-medium">{{ customer.fullName }}</td>
+            <td class="ff-mono">{{ customer.dni }}</td>
+            <td style="color: var(--ff-text-secondary)">
+              {{ customer.phone ?? "—" }}
+            </td>
+            <td>
+              <span
+                class="ff-badge"
+                [class.ff-badge--activo]="customer.status === 'ACTIVE'"
+                [class.ff-badge--inactivo]="customer.status !== 'ACTIVE'"
+                >{{
+                  customer.status === "ACTIVE" ? "Activo" : "Inactivo"
+                }}</span
+              >
+            </td>
+            <td style="color: var(--ff-text-secondary)">
+              {{ customer.collectorName ?? "—" }}
+            </td>
+            <td style="color: var(--ff-text-secondary)">
+              {{ customer.createdAt | date: "dd/MM/yyyy" }}
+            </td>
+            <td>
+              <p-button
+                data-cy="seller-clients-view-detail-action"
+                label="Ver"
+                icon="pi pi-eye"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="navigateToDetail(customer.id)"
+              />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
     }
   </div>
-
-  @if (loading) {
-    <app-loading-state />
-  } @else if (error) {
-    <app-error-state />
-  } @else if (customers.length === 0) {
-    <app-empty-state />
-  } @else {
-    <p-table
-      [value]="customers"
-      [paginator]="true"
-      [rows]="10"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      styleClass="p-datatable-sm"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Nombre</th>
-          <th>DNI</th>
-          <th>Teléfono</th>
-          <th>Estado</th>
-          <th>Cobrador</th>
-          <th>Alta</th>
-          <th></th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-customer>
-        <tr>
-          <td>{{ customer.fullName }}</td>
-          <td>{{ customer.dni }}</td>
-          <td>{{ customer.phone ?? "—" }}</td>
-          <td>
-            <p-tag
-              [value]="customer.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
-              [severity]="customer.status === 'ACTIVE' ? 'success' : 'danger'"
-            />
-          </td>
-          <td>{{ customer.collectorName ?? "—" }}</td>
-          <td>{{ customer.createdAt | date: "dd/MM/yyyy" }}</td>
-          <td>
-            <p-button
-              label="Ver"
-              icon="pi pi-eye"
-              severity="secondary"
-              [outlined]="true"
-              size="small"
-              (onClick)="navigateToDetail(customer.id)"
-            />
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  }
 </div>

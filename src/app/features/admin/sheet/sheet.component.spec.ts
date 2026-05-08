@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { HeaderService } from '../../../core/services/header.service';
 import { UsersService } from '../users/users.service';
@@ -97,5 +97,23 @@ describe('SheetComponent (planillas)', () => {
     component.generatePlanilla();
     expect(msgSpy).toHaveBeenCalledWith(jasmine.objectContaining({ severity: 'warn' }));
     expect(component.results.length).toBe(0);
+  });
+
+  it('generatePlanilla evita reentrada cuando ya está generando', () => {
+    collectionsSpy.generate.and.returnValue(NEVER);
+    component.selectedCollectorId = 'c1';
+
+    component.generatePlanilla();
+    component.generatePlanilla();
+
+    expect(collectionsSpy.generate).toHaveBeenCalledTimes(1);
+  });
+
+  it('generateForAll evita reentrada cuando ya está generando para todos', () => {
+    component.generatingAll = true;
+
+    component.generateForAll();
+
+    expect(usersSpy.listCollectors).toHaveBeenCalledTimes(1);
   });
 });

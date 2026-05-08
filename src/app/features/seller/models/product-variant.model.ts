@@ -14,13 +14,14 @@ export interface ProductVariant {
   productStatus: string;
   brandId: string | null;
   brandName: string | null;
-}
-
-export interface ProductVariantDetail extends ProductVariant {
   availableCount: number;
   reservedCount: number;
   soldCount: number;
 }
+
+// ProductVariantDetail no agrega campos extra; se mantiene como alias tipado
+// para distinguir respuestas de getById (con contadores garantizados) de getAll.
+export type ProductVariantDetail = ProductVariant;
 
 export interface ProductVariantCreatePayload {
   productId: string;
@@ -53,13 +54,13 @@ export interface ProductVariantRaw {
   product_status: string;
   brand_id: string | null;
   brand_name: string | null;
-}
-
-export interface ProductVariantDetailRaw extends ProductVariantRaw {
   available_count: number;
   reserved_count: number;
   sold_count: number;
 }
+
+// ProductVariantDetailRaw se mantiene como alias para compatibilidad con getById
+export type ProductVariantDetailRaw = ProductVariantRaw;
 
 export interface ProductVariantFilters {
   productId?: string;

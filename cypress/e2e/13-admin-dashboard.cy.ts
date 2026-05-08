@@ -11,39 +11,65 @@
 describe('Admin — Dashboard', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
+
+    cy.intercept('GET', '**/api/reports/summary', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          active_portfolio_balance: 950000,
+          pending_credits_count: 3,
+          overdue_count: 2,
+          today_collected: 120000,
+        },
+      },
+    }).as('summary');
+
+    cy.intercept('GET', '**/api/credits*', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: [
+          {
+            id: 'cred-01',
+            type: 'SALE',
+            total_amount: 100000,
+            installments_count: 10,
+            payment_frequency: 'WEEKLY',
+            interest_rate: 0,
+            status: 'ACTIVE',
+            created_at: '2026-05-01T00:00:00Z',
+            approved_at: '2026-05-01T00:00:00Z',
+            customer_id: 'cust-1',
+            customer_name: 'Ana García',
+            customer_dni: '12345678',
+            created_by_id: 'usr-001',
+            created_by_name: 'Carlos López',
+          },
+        ],
+      },
+    }).as('credits');
+
     cy.loginAs('ADMIN', '/admin/dashboard');
+    cy.wait('@summary');
+    cy.wait('@credits');
   });
 
-  it('muestra el banner de bienvenida con el nombre del usuario', () => {
-    cy.contains('¡Hola,').should('be.visible');
+  it('renderiza la grilla KPI actual', () => {
+    cy.contains('Cartera Activa').should('be.visible');
+    cy.contains('Pend. Aprobación').should('be.visible');
+    cy.contains('En Mora').should('be.visible');
+    cy.contains('Cobrado Hoy').should('be.visible');
   });
 
-  it('muestra la fecha de hoy en el banner', () => {
-    cy.get('.bg-gradient-to-r').contains(/\d{1,2}/).should('exist');
+  it('muestra panel de últimas operaciones con tabla', () => {
+    cy.contains('Últimas operaciones').should('be.visible');
+    cy.get('p-table').should('be.visible');
+    cy.get('p-table tbody tr').should('have.length.gte', 1);
   });
 
-  it('renderiza la sección de KPI cards (skeleton o cards)', () => {
-    cy.get('p-card, p-skeleton').should('exist');
-  });
-
-  it('el grid de KPI tiene 4 columnas de contenido', () => {
-    // Espera a que carguen o estén en skeleton
-    cy.get('.grid.grid-cols-1 p-card, .grid.grid-cols-1 p-skeleton')
-      .should('have.length.gte', 4);
-  });
-
-  it('renderiza al menos un contenedor de gráfico', () => {
-    cy.get('p-chart, canvas').should('exist');
-  });
-
-  it('existe la sección de operaciones recientes', () => {
-    cy.contains('Operaciones Recientes').should('exist');
-  });
-
-  it('la tabla de operaciones recientes renderiza (con datos o vacía)', () => {
-    cy.contains('Operaciones Recientes')
-      .parents('p-card')
-      .find('p-table, p-skeleton')
-      .should('exist');
+  it('muestra el panel de próximos vencimientos', () => {
+    cy.contains('Próximos vencimientos').should('be.visible');
+    cy.contains('Sin datos').should('be.visible');
   });
 });

@@ -1,4 +1,5 @@
 <p-dialog
+  data-cy="admin-users-create-modal"
   header="Nuevo usuario"
   [(visible)]="displayCreateModal"
   [modal]="true"
@@ -15,12 +16,16 @@
   }
 </p-dialog>
 
-<div class="p-4">
-  <div class="flex flex-wrap gap-3 mb-4 items-center justify-between">
-    <div class="flex flex-wrap gap-3 items-center">
+<div class="ff-panel" style="margin: 24px" data-cy="admin-users-page">
+  <div class="ff-list-header">
+    <div class="ff-list-header__actions" style="flex: 1">
       <p-iconField iconPosition="left">
-        <p-inputIcon styleClass="pi pi-search text-gray-400 z-10" />
+        <p-inputIcon
+          styleClass="pi pi-search z-10"
+          style="color: var(--ff-text-muted)"
+        />
         <input
+          data-cy="admin-users-search-input"
           pInputText
           type="text"
           placeholder="Buscar por nombre, DNI o email"
@@ -30,6 +35,7 @@
         />
       </p-iconField>
       <p-dropdown
+        data-cy="admin-users-role-filter"
         [options]="roleOptions"
         [(ngModel)]="selectedRole"
         (onChange)="applyFilters()"
@@ -39,6 +45,7 @@
         optionValue="value"
       />
       <p-dropdown
+        data-cy="admin-users-status-filter"
         [options]="statusOptions"
         [(ngModel)]="selectedStatus"
         (onChange)="applyFilters()"
@@ -49,6 +56,7 @@
       />
     </div>
     <p-button
+      data-cy="admin-users-create-cta"
       label="Nuevo usuario"
       icon="pi pi-plus"
       severity="primary"
@@ -62,9 +70,12 @@
   } @else if (error) {
     <app-error-state />
   } @else if (users.length === 0) {
-    <app-empty-state />
+    <div data-cy="admin-users-empty-state">
+      <app-empty-state />
+    </div>
   } @else {
     <p-table
+      data-cy="admin-users-table"
       [value]="users"
       [paginator]="true"
       [rows]="15"
@@ -89,25 +100,35 @@
               {{ user.fullName }}
               @if (user.lockedAt) {
                 <i
-                  class="pi pi-lock text-red-500 text-sm"
+                  class="pi pi-lock text-sm"
+                  style="color: var(--ff-danger)"
                   pTooltip="Usuario bloqueado"
                 ></i>
               }
             </div>
           </td>
-          <td>{{ user.dni }}</td>
+          <td class="ff-mono">{{ user.dni }}</td>
           <td>{{ user.email ?? "—" }}</td>
           <td>
-            <p-tag
-              [value]="roleLabel(user.role)"
-              [severity]="roleSeverity(user.role)"
-            />
+            <span
+              class="ff-role-chip"
+              [class.ff-role--admin]="user.role === 'ADMIN'"
+              [class.ff-role--seller]="user.role === 'SELLER'"
+              [class.ff-role--collector]="user.role === 'COLLECTOR'"
+              [class.ff-role--cashier]="user.role === 'CASHIER'"
+              [class.ff-role--seller-collector]="
+                user.role === 'SELLER_COLLECTOR'
+              "
+              >{{ roleLabel(user.role) }}</span
+            >
           </td>
           <td>
-            <p-tag
-              [value]="user.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
-              [severity]="user.status === 'ACTIVE' ? 'success' : 'danger'"
-            />
+            <span
+              class="ff-badge"
+              [class.ff-badge--activo]="user.status === 'ACTIVE'"
+              [class.ff-badge--inactivo]="user.status !== 'ACTIVE'"
+              >{{ user.status === "ACTIVE" ? "Activo" : "Inactivo" }}</span
+            >
           </td>
           <td>
             {{
@@ -118,6 +139,7 @@
           </td>
           <td>
             <p-button
+              data-cy="admin-users-view-detail-action"
               label="Ver"
               icon="pi pi-eye"
               severity="secondary"

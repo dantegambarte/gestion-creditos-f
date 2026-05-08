@@ -48,13 +48,11 @@ describe('ClientsComponent', () => {
   let routerSpy: jasmine.SpyObj<Router>;
   let customersServiceSpy: jasmine.SpyObj<CustomersService>;
   let authSpy: jasmine.SpyObj<MockAuthService>;
-  let messageServiceSpy: jasmine.SpyObj<MessageService>;
 
   beforeEach(async () => {
     routerSpy = jasmine.createSpyObj('Router', ['navigate'], { url: '/admin/clients' });
     customersServiceSpy = jasmine.createSpyObj('CustomersService', ['list', 'create', 'update']);
     authSpy = jasmine.createSpyObj('MockAuthService', ['hasRole']);
-    messageServiceSpy = jasmine.createSpyObj('MessageService', ['add']);
     customersServiceSpy.list.and.returnValue(of(MOCK_CUSTOMERS));
     authSpy.hasRole.and.returnValue(true);
 
@@ -65,12 +63,13 @@ describe('ClientsComponent', () => {
         { provide: MockAuthService, useValue: authSpy },
         { provide: CustomersService, useValue: customersServiceSpy },
         { provide: FormatService, useValue: { currency: (n: number) => `$${n}` } },
-        { provide: MessageService, useValue: messageServiceSpy },
+        MessageService,
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ClientsComponent);
     component = fixture.componentInstance;
+    spyOn((component as any).messageService, 'add');
     fixture.detectChanges();
   });
 
@@ -111,6 +110,11 @@ describe('ClientsComponent', () => {
     beforeEach(() => {
       const client = component.clients[0];
       component.openEdit(client);
+      component.editForm.setValue({
+        nombre: 'Juan',
+        apellido: 'Pérez',
+        phone: '1123456789',
+      });
     });
 
     it('T1 - debería llamar a customersService.update con el UUID y el payload correcto', () => {
@@ -218,10 +222,39 @@ describe('ClientsComponent', () => {
       expect(customersServiceSpy.create).toHaveBeenCalled();
       expect(component.showCreateModal).toBeFalse();
       expect((component as any).loadClients).toHaveBeenCalled();
-      expect(messageServiceSpy.add).toHaveBeenCalledWith({
+      expect((component as any).messageService.add).toHaveBeenCalledWith({
         severity: 'success',
         summary: 'Éxito',
         detail: 'Cliente guardado correctamente.',
+        life: 4500,
+      });
+    });
+
+    it('muestra toast de error si la API responde conflicto por DNI duplicado', () => {
+      customersServiceSpy.create.and.returnValue(
+        throwError(() => ({ status: 409 })),
+      );
+      component.showCreateModal = true;
+      component.form.setValue({
+        nombres: 'Laura',
+        apellidos: 'Gómez',
+        dni: '99887766',
+        telefonoPrincipal: '3101112222',
+        telefonoAlterno: '',
+        email: 'laura@test.com',
+        direccion: 'Calle 10',
+        ingresos: '5000000',
+      });
+
+      component.createClient();
+
+      expect(component.creatingClient).toBeFalse();
+      expect(component.showCreateModal).toBeTrue();
+      expect((component as any).messageService.add).toHaveBeenCalledWith({
+        severity: 'error',
+        summary: 'No se pudo crear el cliente',
+        detail: 'Ya existe un cliente con ese DNI.',
+        life: 5000,
       });
     });
   });

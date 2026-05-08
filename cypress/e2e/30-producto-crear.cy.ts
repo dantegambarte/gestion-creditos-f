@@ -1,5 +1,5 @@
 /**
- * SUITE: Admin — Crear Producto (/seller/products/new)
+ * SUITE: Admin — Crear Producto (/admin/products/new)
  *
  * Cubre:
  *  - Título "Nuevo producto"
@@ -24,42 +24,44 @@ describe('Admin — Crear Producto', () => {
       body: { ok: true, data: [{ id: 'c-001', name: 'Vehículos' }] },
     }).as('categories');
 
-    cy.loginAs('ADMIN', '/seller/products/new');
+    cy.loginAs('ADMIN', '/admin/products/new');
+    cy.wait('@brands');
+    cy.wait('@categories');
   });
 
   it('muestra el título "Nuevo producto"', () => {
-    cy.contains('h2', 'Nuevo producto').should('be.visible');
+    cy.contains('h1', 'Nuevo producto').should('be.visible');
   });
 
   it('tiene el campo título', () => {
-    cy.get('input[id="title"]').should('exist');
+    cy.get('input[formcontrolname="title"]').should('exist');
   });
 
   it('tiene el campo descripción', () => {
-    cy.get('textarea[id="description"]').should('exist');
+    cy.get('textarea[formcontrolname="description"]').should('exist');
   });
 
   it('tiene el campo modelo', () => {
-    cy.get('input[id="model"]').should('exist');
+    cy.get('input[formcontrolname="model"]').should('exist');
   });
 
-  it('botón Registrar producto deshabilitado con formulario vacío', () => {
-    cy.contains('button', 'Registrar producto').should('be.disabled');
+  it('botón Crear producto deshabilitado con formulario vacío', () => {
+    cy.contains('button', 'Crear producto').should('be.disabled');
   });
 
   it('tocar campo título sin completar muestra error', () => {
-    cy.get('input[id="title"]').click().blur();
-    cy.get('small.text-red-500').should('exist');
+    cy.get('input[formcontrolname="title"]').click().blur();
+    cy.contains('small', 'Este campo es requerido.').should('exist');
   });
 
   it('botón Cancelar navega a la lista de productos', () => {
     cy.contains('button', 'Cancelar').click();
-    cy.url().should('include', '/seller/products');
+    cy.url().should('include', '/admin/products');
     cy.url().should('not.include', '/new');
   });
 
-  it('completar el título habilita el botón Registrar producto', () => {
-    cy.get('input[id="title"]').type('Producto E2E Test');
-    cy.contains('button', 'Registrar producto').should('not.be.disabled');
+  it('completar el título habilita el botón Crear producto', () => {
+    cy.get('input[formcontrolname="title"]').type('Producto E2E Test');
+    cy.contains('button', 'Crear producto').should('not.be.disabled');
   });
 });

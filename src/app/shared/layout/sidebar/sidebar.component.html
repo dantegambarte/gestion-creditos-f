@@ -1,77 +1,37 @@
-<aside
-  class="flex flex-col h-dvh w-64 bg-slate-900 text-slate-300 shrink-0 shadow-xl z-20 select-none"
->
-  <div class="h-16 flex items-center gap-3 px-6 shrink-0 mt-2">
-    <div
-      class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-900/20"
-    >
-      <i class="pi pi-credit-card text-white text-sm"></i>
-    </div>
-    <span class="font-bold text-xl text-white tracking-tight">SisCreditos</span>
+<aside class="sidebar flex flex-col h-dvh shrink-0 select-none">
+  <!-- Logo -->
+  <div class="sidebar__logo">
+    <span class="sidebar__logo-text">finFlow</span>
   </div>
 
-  @if (currentUser) {
-    <div class="px-6 py-4 flex items-center gap-3">
-      <p-avatar
-        [label]="currentUser.avatar"
-        shape="circle"
-        size="large"
-        styleClass="bg-blue-600 text-white font-bold shadow-sm"
-      />
-      <div class="min-w-0 flex-1">
-        <p class="text-sm font-bold text-white truncate">
-          {{ currentUser.name }}
-        </p>
-        <div class="flex gap-1 mt-0.5 overflow-hidden">
-          @for (role of currentUser.roles; track role) {
-            <span
-              class="text-[10px] uppercase font-bold text-blue-400 tracking-wider"
-            >
-              {{ role }}
-            </span>
-          }
-        </div>
-      </div>
-    </div>
-  }
-
+  <!-- Nav -->
   <nav
-    class="flex-1 overflow-y-auto px-4 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    class="sidebar__nav flex-1 overflow-y-auto hide-scrollbar"
     aria-label="Navegación principal"
   >
-    <ul class="flex flex-col gap-1">
+    <ul class="flex flex-col">
       @for (item of visibleItems; track item.label) {
         @if (item.isGroupLabel) {
-          <li class="pt-5 pb-2 px-2">
-            <span
-              class="text-xs font-bold text-slate-500 uppercase tracking-widest"
-              >{{ item.label }}</span
-            >
+          <li class="sidebar__group-label">
+            <span>{{ item.label }}</span>
           </li>
         } @else {
           <li>
             <a
               pRipple
               [routerLink]="item.route"
-              routerLinkActive="bg-blue-600/20 text-blue-400 font-bold"
+              routerLinkActive="nav-item--active"
               [routerLinkActiveOptions]="{ exact: false }"
-              class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors cursor-pointer"
+              class="nav-item"
               [attr.data-testid]="item.testId ?? null"
             >
-              <div class="flex items-center gap-3">
-                <i
-                  [class]="item.icon"
-                  class="text-lg opacity-70 group-hover:opacity-100 transition-opacity w-5 text-center"
-                ></i>
-                <span class="text-sm">{{ item.label }}</span>
+              <div class="flex items-center gap-2">
+                <i class="{{ item.icon }} nav-item__icon"></i>
+                <span class="nav-item__label">{{ item.label }}</span>
               </div>
 
               @if (item.badge) {
-                <p-badge
-                  [value]="item.badge"
-                  severity="danger"
-                  styleClass="text-[10px] min-w-[1.25rem] h-5"
-                />
+                <span class="nav-item__badge">{{ item.badge }}</span>
               }
             </a>
           </li>
@@ -80,18 +40,35 @@
     </ul>
   </nav>
 
-  <div class="px-4 pb-5 pt-2">
-    <ul class="flex flex-col gap-1">
+  <!-- Footer usuario -->
+  <div class="sidebar__footer">
+    @if (currentUser) {
+      <div class="sidebar__user">
+        <div class="sidebar__avatar">{{ currentUser.avatar }}</div>
+        <div class="min-w-0 flex-1">
+          <p class="sidebar__user-name truncate">{{ currentUser.name }}</p>
+          <p class="sidebar__user-role">
+            @for (role of currentUser.roles; track role) {
+              {{ role }}
+            }
+          </p>
+        </div>
+      </div>
+    }
+
+    <ul class="flex flex-col gap-0.5 mt-3">
       <li>
         <a
           pRipple
           [routerLink]="null"
           pTooltip="Próximamente"
           tooltipPosition="right"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-not-allowed opacity-60"
+          class="nav-item nav-item--disabled"
         >
-          <i class="pi pi-user text-lg opacity-70"></i>
-          <span class="text-sm font-medium">Mi Perfil</span>
+          <div class="flex items-center gap-2">
+            <i class="pi pi-user nav-item__icon"></i>
+            <span class="nav-item__label">Mi Perfil</span>
+          </div>
         </a>
       </li>
       <li>
@@ -99,10 +76,12 @@
           pRipple
           (click)="logout()"
           data-testid="logout-btn"
-          class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-400 transition-colors cursor-pointer"
+          class="nav-item nav-item--logout w-full"
         >
-          <i class="pi pi-sign-out text-lg opacity-70"></i>
-          <span class="text-sm font-medium">Cerrar Sesión</span>
+          <div class="flex items-center gap-2">
+            <i class="pi pi-sign-out nav-item__icon"></i>
+            <span class="nav-item__label">Cerrar Sesión</span>
+          </div>
         </button>
       </li>
     </ul>

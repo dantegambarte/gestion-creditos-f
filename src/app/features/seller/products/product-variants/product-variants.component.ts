@@ -81,7 +81,7 @@ export class ProductVariantsComponent implements OnInit {
 
   ngOnInit(): void {
     this.header.set([
-      { label: 'Productos', route: '/seller/products' },
+      { label: 'Productos', route: `/${this.routePrefix}/products` },
       { label: 'Variantes' },
     ]);
     this.buildForm();
@@ -216,12 +216,16 @@ export class ProductVariantsComponent implements OnInit {
 
   navigateToUnits(variant: ProductVariant): void {
     this.router.navigate([
-      '/seller/products',
+      `/${this.routePrefix}/products`,
       this.productId,
       'variants',
       variant.id,
       'units',
     ]);
+  }
+
+  private get routePrefix(): string {
+    return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
   }
 
   isInvalid(field: string): boolean {
@@ -243,8 +247,8 @@ export class ProductVariantsComponent implements OnInit {
       next: (p) => {
         this.productName = p.title;
         this.header.set([
-          { label: 'Productos', route: '/seller/products' },
-          { label: p.title, route: `/seller/products/${this.productId}` },
+          { label: 'Productos', route: `/${this.routePrefix}/products` },
+          { label: p.title, route: `/${this.routePrefix}/products/${this.productId}` },
           { label: 'Variantes' },
         ]);
       },

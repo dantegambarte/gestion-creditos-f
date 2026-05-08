@@ -14,245 +14,99 @@
 describe('Admin — Caja y Tesorería', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
+
+    cy.intercept('GET', '**/api/cash-register/dashboard*', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          date: '2026-05-05',
+          cash_amount: 120000,
+          transfer_amount: 80000,
+          total_collected: 200000,
+          total_outflows: 30000,
+          approved_count: 12,
+          pending_count: 2,
+          net_balance: 170000,
+          pending_amount: 12000,
+          down_payments_total: 35000,
+          down_payments_count: 3,
+        },
+      },
+    }).as('cashDashboard');
+
+    cy.intercept('GET', '**/api/cash-register*', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: [
+          {
+            id: 'reg-1',
+            register_date: '2026-05-04',
+            total_collected: 180000,
+            cash_amount: 110000,
+            transfer_amount: 70000,
+            declared_cash: 109000,
+            difference: -1000,
+            difference_status: 'SHORTAGE',
+            observations: 'Faltó cambio al cierre',
+            created_at: '2026-05-04T23:00:00Z',
+            closed_by_name: 'Carlos López',
+          },
+        ],
+      },
+    }).as('cashHistory');
+
+    cy.intercept('POST', '**/api/cash-register/close', {
+      statusCode: 201,
+      body: {
+        ok: true,
+        data: {
+          id: 'reg-2',
+          register_date: '2026-05-05',
+          total_collected: 200000,
+          cash_amount: 120000,
+          transfer_amount: 80000,
+          declared_cash: 120000,
+          difference: 0,
+          difference_status: 'EXACT',
+          observations: 'Cierre correcto',
+          created_at: '2026-05-05T23:00:00Z',
+          closed_by_name: 'Carlos López',
+        },
+      },
+    }).as('closeCash');
+
     cy.loginAs('ADMIN', '/admin/cash-register');
+    cy.wait('@cashDashboard');
+    cy.wait('@cashHistory');
   });
 
-  // ── Estado Inicial ──────────────────────────────────────────────────────
-  it('muestra el título "Caja y Tesorería"', () => {
-    cy.contains('h1', 'Caja y Tesorería').should('be.visible');
+  it('muestra la pantalla real de caja del día', () => {
+    cy.get('[data-cy="admin-cash-register-title"]').should('be.visible');
+    cy.get('[data-cy="admin-cash-register-history-title"]').should('be.visible');
   });
 
-  it('indica el estado de caja (Abierta/Cerrada)', () => {
-    cy.get('[data-cy="estado-caja"]').should('exist');
+  it('renderiza KPIs actuales', () => {
+    cy.get('[data-cy="admin-cash-register-kpis"]').should('be.visible');
+    cy.get('[data-cy="admin-cash-register-kpis"]').contains('Efectivo').should('be.visible');
+    cy.get('[data-cy="admin-cash-register-kpis"]').contains('Total recaudado').should('be.visible');
+    cy.get('[data-cy="admin-cash-register-kpis"]').contains('Balance neto').should('be.visible');
   });
 
-  // ── Apertura de Caja ────────────────────────────────────────────────────────────
-  describe('Apertura de Caja', () => {
-    it('el botón "Abrir Caja" es visible cuando está cerrada', () => {
-      cy.contains('button', 'Abrir Caja').should('exist');
+  it('permite iniciar flujo real de cierre de caja', () => {
+    cy.get('[data-cy="admin-cash-register-close-day-cta"]').click();
+    cy.get('[data-cy="admin-cash-register-declared-cash-input"]', { timeout: 12000 }).should('exist');
+    cy.get('[data-cy="admin-cash-register-close-modal"]').within(() => {
+      cy.contains('Cierre de caja del día').should('be.visible');
     });
 
-    it('al hacer clic en "Abrir Caja" muestra el modal', () => {
-      cy.contains('button', 'Abrir Caja').click();
-      cy.contains('Abrir Caja').should('be.visible');
+    cy.get('[data-cy="admin-cash-register-close-modal"]').within(() => {
+      cy.get('[data-cy="admin-cash-register-close-confirm-action"]').click();
     });
 
-    it('el modal tiene campo para saldo inicial', () => {
-      cy.contains('button', 'Abrir Caja').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('input[formControlName="saldoInicial"]').should('exist');
-      });
-    });
-
-    it('el botón "Confirmar" está deshabilitado sin monto', () => {
-      cy.contains('button', 'Abrir Caja').click();
-      cy.get('p-dialog').within(() => {
-        cy.contains('button', 'Confirmar').should(
-          'have.attr',
-          'ng-reflect-disabled',
-          'true',
-        );
-      });
-    });
-
-    it('completa saldo inicial y abre la caja', () => {
-      cy.contains('button', 'Abrir Caja').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('input[formControlName="saldoInicial"]').type('5000000');
-      });
-      cy.get('p-dialog').contains('button', 'Confirmar').click();
-      cy.get('p-dialog[ng-reflect-visible="true"]').should('not.exist');
-    });
-
-    it('tras abrir, el estado cambia a "Abierta"', () => {
-      cy.contains('button', 'Abrir Caja').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('input[formControlName="saldoInicial"]').type('3000000');
-      });
-      cy.get('p-dialog').contains('button', 'Confirmar').click();
-      cy.get('[data-cy="estado-caja"]').should('contain', 'Abierta');
-    });
-
-    it('tras abrir, muestra el botón "Cerrar Caja"', () => {
-      cy.contains('button', 'Abrir Caja').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('input[formControlName="saldoInicial"]').type('2000000');
-      });
-      cy.get('p-dialog').contains('button', 'Confirmar').click();
-      cy.contains('button', 'Cerrar Caja').should('exist');
-    });
-  });
-
-  // ── Registro de Gastos (Happy Path) ──────────────────────────────────────────────
-  describe('Registro de Gastos', () => {
-    beforeEach(() => {
-      if (cy.contains('Abrir Caja').length > 0) {
-        cy.contains('button', 'Abrir Caja').click();
-        cy.get('p-dialog').within(() => {
-          cy.get('input[formControlName="saldoInicial"]').type('5000000');
-        });
-        cy.get('p-dialog').contains('button', 'Confirmar').click();
-      }
-    });
-
-    it('el botón "Registrar Gasto" es visible', () => {
-      cy.contains('button', 'Registrar Gasto').should('exist');
-    });
-
-    it('al hacer clic abre el modal de gasto', () => {
-      cy.contains('button', 'Registrar Gasto').click();
-      cy.contains('Registrar Gasto').should('be.visible');
-    });
-
-    it('el modal tiene campo de monto', () => {
-      cy.contains('button', 'Registrar Gasto').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('input[formControlName="monto"]').should('exist');
-      });
-    });
-
-    it('el modal tiene dropdown de categoría', () => {
-      cy.contains('button', 'Registrar Gasto').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('p-dropdown').should('exist');
-      });
-    });
-
-    it('el dropdown de categoría tiene la opción "Insumos"', () => {
-      cy.contains('button', 'Registrar Gasto').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('p-dropdown').click();
-        cy.get('.p-dropdown-item').contains('Insumos').should('exist');
-      });
-    });
-
-    it('el campo de descripción existe', () => {
-      cy.contains('button', 'Registrar Gasto').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('textarea[formControlName="descripcion"]').should('exist');
-      });
-    });
-
-    it('el botón "Guardar" está deshabilitado sin datos', () => {
-      cy.contains('button', 'Registrar Gasto').click();
-      cy.get('p-dialog').within(() => {
-        cy.contains('button', 'Guardar').should(
-          'have.attr',
-          'ng-reflect-disabled',
-          'true',
-        );
-      });
-    });
-
-    it('completa todos los campos y registra el gasto exitosamente', () => {
-      cy.contains('button', 'Registrar Gasto').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('input[formControlName="monto"]').type('150000');
-        cy.get('p-dropdown').click();
-        cy.get('.p-dropdown-item').contains('Insumos').click();
-        cy.get('textarea[formControlName="descripcion"]').type('Compra de papelería');
-      });
-      cy.get('p-dialog').contains('button', 'Guardar').click();
-      cy.get('p-dialog[ng-reflect-visible="true"]').should('not.exist');
-    });
-
-    it('tras registrar gasto genera toast de éxito', () => {
-      cy.contains('button', 'Registrar Gasto').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('input[formControlName="monto"]').type('50000');
-        cy.get('p-dropdown').click();
-        cy.get('.p-dropdown-item').contains('Insumos').click();
-        cy.get('textarea[formControlName="descripcion"]').type('Materiales de oficina');
-      });
-      cy.get('p-dialog').contains('button', 'Guardar').click();
-      cy.get('.p-toast').should('contain', 'éxito');
-    });
-
-    it('el gasto registrado aparece en la tabla de movimientos', () => {
-      cy.contains('button', 'Registrar Gasto').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('input[formControlName="monto"]').type('75000');
-        cy.get('p-dropdown').click();
-        cy.get('.p-dropdown-item').contains('Insumos').click();
-        cy.get('textarea[formControlName="descripcion"]').type('Utensilios');
-      });
-      cy.get('p-dialog').contains('button', 'Guardar').click();
-      cy.get('p-table').should('contain', 'Insumos');
-    });
-
-    it('el botón Cancelar cierra el modal sin registrar', () => {
-      cy.contains('button', 'Registrar Gasto').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('input[formControlName="monto"]').type('10000');
-        cy.get('p-dropdown').click();
-        cy.get('.p-dropdown-item').contains('Insumos').click();
-        cy.contains('button', 'Cancelar').click();
-      });
-      cy.get('p-dialog[ng-reflect-visible="true"]').should('not.exist');
-    });
-  });
-
-  // ── Cierre de Caja ────────────────────────────────────────────────────
-  describe('Cierre de Caja', () => {
-    it('el botón "Cerrar Caja" es visible', () => {
-      cy.contains('button', 'Cerrar Caja').should('exist');
-    });
-
-    it('al hacer clic abre el modal de cierre', () => {
-      cy.contains('button', 'Cerrar Caja').click();
-      cy.contains('Cerrar Caja').should('be.visible');
-    });
-
-    it('el modal muestra el saldo actual', () => {
-      cy.contains('button', 'Cerrar Caja').click();
-      cy.get('p-dialog').within(() => {
-        cy.get('[data-cy="saldo-actual"]').should('exist');
-      });
-    });
-
-    it('el botón "Confirmar Cierre" está disponible', () => {
-      cy.contains('button', 'Cerrar Caja').click();
-      cy.get('p-dialog').within(() => {
-        cy.contains('button', 'Confirmar Cierre').should('exist');
-      });
-    });
-
-    it('cierra la caja exitosamente', () => {
-      cy.contains('button', 'Cerrar Caja').click();
-      cy.get('p-dialog').contains('button', 'Confirmar Cierre').click();
-      cy.get('p-dialog[ng-reflect-visible="true"]').should('not.exist');
-    });
-
-    it('tras cerrar, el estado cambia a "Cerrada"', () => {
-      cy.contains('button', 'Cerrar Caja').click();
-      cy.get('p-dialog').contains('button', 'Confirmar Cierre').click();
-      cy.get('[data-cy="estado-caja"]').should('contain', 'Cerrada');
-    });
-
-    it('tras cerrar, el botón "Abrir Caja" vuelve a estar disponible', () => {
-      cy.contains('button', 'Cerrar Caja').click();
-      cy.get('p-dialog').contains('button', 'Confirmar Cierre').click();
-      cy.contains('button', 'Abrir Caja').should('exist');
-    });
-  });
-
-  // ── Validación: Gasto con Caja Cerrada (Negative Path) ───────────────────
-  describe('Validación: Gasto con Caja Cerrada', () => {
-    it('si la caja está cerrada, el botón "Registrar Gasto" está deshabilitado', () => {
-      cy.contains('button', 'Registrar Gasto').should(
-        'have.attr',
-        'disabled',
-      );
-    });
-
-    it('intentar acceder al modal de gasto muestra error', () => {
-      cy.contains('button', 'Registrar Gasto').click({ force: true });
-      cy.get('.p-toast').should('exist');
-    });
-
-    it('mensaje de error indica que la caja está cerrada', () => {
-      cy.contains('button', 'Registrar Gasto').click({ force: true });
-      cy.contains('caja').should('exist');
-    });
+    cy.wait('@closeCash');
+    cy.get('[data-cy="admin-cash-register-detail-modal"]', { timeout: 12000 }).should('exist');
+    cy.contains('Detalle de cierre').should('be.visible');
   });
 });

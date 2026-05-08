@@ -1,113 +1,120 @@
-<div class="p-6 space-y-6 bg-gray-50 min-h-screen">
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-    <h1 class="text-2xl font-bold text-gray-800">Operaciones</h1>
-
-    <div class="flex flex-wrap items-center gap-3">
-      <p-button
-        label="Nueva Operación"
-        icon="pi pi-plus"
-        severity="primary"
-        styleClass="h-11 px-5 rounded-xl shadow-sm"
-        routerLink="./new"
-      />
-
-      <p-dialog
-        [(visible)]="showNewOperationModal"
-        [modal]="true"
-        [maximizable]="true"
-        [draggable]="false"
-        [resizable]="false"
-        [style]="{ width: '90vw', maxWidth: '1100px' }"
-        [breakpoints]="{ '1199px': '95vw', '575px': '100vw' }"
-        header="Registrar Nueva Operación"
-        styleClass="rounded-2xl overflow-hidden"
-        contentStyleClass="bg-gray-50/50 p-0"
-        headerStyleClass="border-b border-gray-100 bg-white"
-      >
-      </p-dialog>
-
-      <p-dropdown
-        [options]="statusOptions"
-        [(ngModel)]="selectedStatus"
-        placeholder="Estado"
-        styleClass="w-full md:w-44 h-11 rounded-xl border-gray-200 flex items-center"
-      />
-
-      <p-iconField iconPosition="left">
-        <p-inputIcon styleClass="pi pi-search text-gray-400 z-10" />
-        <input
-          pInputText
-          type="text"
-          placeholder="Buscar..."
-          [(ngModel)]="searchTerm"
-          class="w-full md:w-64 h-11 pl-10 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+<div class="p-6">
+  <div class="ff-panel">
+    <div class="ff-list-header">
+      <span class="ff-list-header__title">Operaciones</span>
+      <div class="ff-list-header__actions">
+        <p-button
+          label="Nueva Operación"
+          icon="pi pi-plus"
+          severity="primary"
+          styleClass="h-11 px-5 rounded-xl shadow-sm"
+          routerLink="./new"
         />
-      </p-iconField>
+
+        <p-dialog
+          [(visible)]="showNewOperationModal"
+          [modal]="true"
+          [maximizable]="true"
+          [draggable]="false"
+          [resizable]="false"
+          [style]="{ width: '90vw', maxWidth: '1100px' }"
+          [breakpoints]="{ '1199px': '95vw', '575px': '100vw' }"
+          header="Registrar Nueva Operación"
+        >
+        </p-dialog>
+
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="selectedStatus"
+          placeholder="Estado"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="h-11"
+        />
+
+        <p-iconField iconPosition="left">
+          <p-inputIcon
+            styleClass="pi pi-search z-10"
+            style="color: var(--ff-text-muted)"
+          />
+          <input
+            pInputText
+            type="text"
+            placeholder="Buscar por cliente o DNI"
+            [(ngModel)]="searchTerm"
+            class="h-11 pl-10 w-full md:w-64"
+          />
+        </p-iconField>
+      </div>
     </div>
-  </div>
 
-  <div
-    class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-  >
-    <p-table
-      [value]="filteredOperations"
-      styleClass="p-datatable-sm"
-      [responsiveLayout]="'scroll'"
-    >
-      <ng-template pTemplate="header">
-        <tr
-          class="bg-gray-50/50 text-gray-400 text-xs uppercase tracking-wider"
-        >
-          <th class="p-4 font-semibold text-left">Fecha</th>
-          <th class="p-4 font-semibold text-left">Cliente</th>
-          <th class="p-4 font-semibold text-left">Tipo</th>
-          <th class="p-4 font-semibold text-left">Monto</th>
-          <th class="p-4 font-semibold text-left">Cuotas</th>
-          <th class="p-4 font-semibold text-center">Estado</th>
-          <th class="p-4 font-semibold text-center">Acciones</th>
-        </tr>
-      </ng-template>
+    @if (loading) {
+      <div class="p-6 text-sm" style="color: var(--ff-text-secondary)">
+        Cargando operaciones...
+      </div>
+    } @else if (filteredOperations.length === 0) {
+      <div class="p-6 text-sm" style="color: var(--ff-text-secondary)">
+        No hay operaciones para mostrar.
+      </div>
+    } @else {
+      <p-table
+        [value]="filteredOperations"
+        styleClass="p-datatable-sm"
+        [responsiveLayout]="'scroll'"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Cuotas</th>
+            <th class="text-center">Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </ng-template>
 
-      <ng-template pTemplate="body" let-op>
-        <tr
-          class="border-b border-gray-50 hover:bg-gray-50/30 transition-colors"
-        >
-          <td class="p-4 text-sm text-gray-500">{{ op.date }}</td>
-          <td class="p-4 font-bold text-gray-800">{{ op.client }}</td>
-          <td class="p-4">
-            <span
-              class="text-xs font-bold {{
-                op.type === 'VENTA' ? 'text-blue-500' : 'text-purple-500'
-              }}"
-            >
-              {{ op.type }}
-            </span>
-          </td>
-          <td class="p-4 font-bold text-gray-900">
-            {{ op.amount | currencyArs }}
-          </td>
-          <td class="p-4 text-gray-600">{{ op.installments }}</td>
-          <td class="p-4 text-center">
-            <p-tag
-              [value]="op.status"
-              [severity]="getStatusSeverity(op.status)"
-              [style]="{
-                'border-radius': '999px',
-                padding: '0.25rem 0.75rem',
-                'font-size': '0.65rem',
-              }"
-            />
-          </td>
-          <td class="p-4 text-center">
-            <p-button
-              label="Ver"
-              [text]="true"
-              size="small"
-              styleClass="bg-blue-50 text-blue-600 font-bold px-3 rounded-lg hover:bg-blue-100"
-            />
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+        <ng-template pTemplate="body" let-op>
+          <tr>
+            <td style="color: var(--ff-text-secondary)">{{ op.createdAt | date: 'dd-MM' }}</td>
+            <td>
+              <div class="font-bold">{{ op.customerName }}</div>
+              <div class="ff-mono text-xs" style="color: var(--ff-text-muted)">
+                {{ op.customerDni }}
+              </div>
+            </td>
+            <td>
+              <span
+                class="text-xs font-bold"
+                [style.color]="op.type === 'SALE' ? 'var(--ff-accent)' : '#A78BFA'"
+              >{{ getTypeLabel(op.type) }}</span>
+            </td>
+            <td class="ff-mono font-bold">
+              {{ op.totalAmount | currencyArs }}
+            </td>
+            <td style="color: var(--ff-text-secondary)">{{ op.installmentsCount }}</td>
+            <td class="text-center">
+              <span
+                class="ff-badge"
+                [class.ff-badge--activo]="getStatusSeverity(op.status) === 'success'"
+                [class.ff-badge--pendiente]="getStatusSeverity(op.status) === 'warning'"
+                [class.ff-badge--vencido]="getStatusSeverity(op.status) === 'danger'"
+                [class.ff-badge--pagado]="getStatusSeverity(op.status) === 'secondary'"
+              >{{ getStatusLabel(op.status) }}</span>
+            </td>
+            <td class="text-center">
+              <p-button
+                label="Ver"
+                icon="pi pi-eye"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="$event.stopPropagation(); navigateToDetail(op.id)"
+              />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
   </div>
 </div>

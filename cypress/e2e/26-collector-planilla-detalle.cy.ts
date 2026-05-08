@@ -12,40 +12,51 @@
 
 const SHEET_MOCK = {
   id: 'sheet-001',
-  sheetDate: '2026-04-28T00:00:00Z',
-  collectorName: 'Juan Pedraza',
-  generatedByName: 'Carlos López',
-  filterUsed: 'ALL',
+  collector_id: 'usr-003',
+  collector_name: 'Juan Pedraza',
+  sheet_date: '2026-04-28T00:00:00Z',
+  filter_used: 'ALL',
+  total_items: 2,
+  generated_by_name: 'Carlos López',
+  created_at: '2026-04-28T08:00:00Z',
   items: [
     {
-      installmentId: 'inst-001',
-      installmentNumber: 3,
-      customerName: 'Ana García',
-      customerPhone: '3811234567',
-      customerAddress: 'Av. Principal 100',
-      dueDate: '2026-04-30T00:00:00Z',
-      amountDue: 13000,
-      plannedAmount: 13000,
-      installmentStatus: 'PENDING',
-      hasPendingPayment: false,
+      order_number: 1,
+      planned_amount: 13000,
+      installment_id: 'inst-001',
+      installment_number: 3,
+      due_date: '2026-04-30T00:00:00Z',
+      amount_due: 13000,
+      amount_paid: 0,
+      penalty_amount: 0,
+      installment_status: 'PENDING',
+      credit_id: 'cred-001',
+      credit_type: 'SALE',
+      customer_name: 'Ana García',
+      customer_phone: '3811234567',
+      customer_address: 'Av. Principal 100',
     },
     {
-      installmentId: 'inst-002',
-      installmentNumber: 2,
-      customerName: 'Pedro Gómez',
-      customerPhone: '3819876543',
-      customerAddress: 'Calle Sur 50',
-      dueDate: '2026-04-20T00:00:00Z',
-      amountDue: 8500,
-      plannedAmount: 8500,
-      installmentStatus: 'OVERDUE',
-      hasPendingPayment: false,
+      order_number: 2,
+      planned_amount: 8500,
+      installment_id: 'inst-002',
+      installment_number: 2,
+      due_date: '2026-04-20T00:00:00Z',
+      amount_due: 8500,
+      amount_paid: 0,
+      penalty_amount: 0,
+      installment_status: 'OVERDUE',
+      credit_id: 'cred-002',
+      credit_type: 'LOAN',
+      customer_name: 'Pedro Gómez',
+      customer_phone: '3819876543',
+      customer_address: 'Calle Sur 50',
     },
   ],
 };
 
 function stubSheet() {
-  cy.intercept('GET', /\/api\/collection-sheets\/sheet-001/, {
+  cy.intercept('GET', /\/api\/collections\/sheet-001$/, {
     statusCode: 200,
     body: { ok: true, data: SHEET_MOCK },
   }).as('sheetDetail');
@@ -61,7 +72,7 @@ describe('Collector — Detalle de Planilla', () => {
 
   it('muestra el título con la fecha de la planilla', () => {
     cy.contains('Planilla').should('be.visible');
-    cy.contains('28/04/2026').should('exist');
+    cy.contains(/\d{2}\/\d{2}\/2026/).should('exist');
   });
 
   it('muestra el nombre del cobrador', () => {
@@ -102,7 +113,7 @@ describe('Collector — Detalle de Planilla', () => {
 
 describe('Collector — Detalle de Planilla — Estado carga/error', () => {
   it('muestra loading state mientras carga', () => {
-    cy.intercept('GET', /\/api\/collection-sheets\/sheet-slow/, (req) => {
+    cy.intercept('GET', /\/api\/collections\/sheet-slow$/, (req) => {
       req.reply({ delay: 3000, statusCode: 200, body: { ok: true, data: null } });
     }).as('slowSheet');
     cy.loginAs('COLLECTOR', '/collector/route/sheet-slow');
@@ -110,7 +121,7 @@ describe('Collector — Detalle de Planilla — Estado carga/error', () => {
   });
 
   it('muestra error state si falla el endpoint', () => {
-    cy.intercept('GET', /\/api\/collection-sheets\/sheet-404/, {
+    cy.intercept('GET', /\/api\/collections\/sheet-404$/, {
       statusCode: 404,
       body: { ok: false, message: 'Not found' },
     }).as('notFound');

@@ -63,10 +63,14 @@ export class ProductEditComponent implements OnInit {
     return this.route.snapshot.paramMap.get('id')!;
   }
 
+  /**
+   * Inicializa breadcrumbs, catálogos de apoyo y carga inicial del producto a editar.
+   */
   ngOnInit(): void {
     this.header.set([
-      { label: 'Productos', route: AppRoutes.SELLER_PRODUCTS },
-      { label: 'Editar producto' },
+      { label: 'Productos', route: `/${this.routePrefix}/products` },
+      { label: 'Producto', route: `/${this.routePrefix}/products/${this.productId}` },
+      { label: 'Editar' },
     ]);
 
     this.categoriesService.getAll().subscribe({
@@ -88,13 +92,20 @@ export class ProductEditComponent implements OnInit {
     this.load();
   }
 
-    // TODO: agregar documentacion de las funciones
-
+  /**
+   * Indica si un control está inválido y fue interactuado para mostrar errores de validación.
+   * @param field - Nombre del control dentro del formulario reactivo.
+   */
   isInvalid(field: string): boolean {
     const camp = this.form?.get(field);
     return !!(camp && camp.invalid && (camp.dirty || camp.touched));
   }
 
+  /**
+   * Devuelve el mensaje de error legible para el campo solicitado.
+   * @param field - Nombre del control del formulario.
+   * @returns Mensaje de error listo para renderizar o cadena vacía.
+   */
   getError(field: string): string {
     const camp = this.form?.get(field);
     if (!camp?.errors) return '';
@@ -107,6 +118,9 @@ export class ProductEditComponent implements OnInit {
     return 'Campo inválido.';
   }
 
+  /**
+   * Envía la actualización del producto con los campos editables permitidos por el dominio.
+   */
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -134,7 +148,7 @@ export class ProductEditComponent implements OnInit {
           });
           setTimeout(
             () =>
-              this.router.navigate([AppRoutes.SELLER_PRODUCTS, this.productId]),
+              this.router.navigate([`/${this.routePrefix}/products`, this.productId]),
             1000,
           );
         },
@@ -154,10 +168,23 @@ export class ProductEditComponent implements OnInit {
       });
   }
 
+  /**
+   * Regresa al detalle del producto sin persistir cambios.
+   */
   cancel(): void {
-    this.router.navigate([AppRoutes.SELLER_PRODUCTS, this.productId]);
+    this.router.navigate([`/${this.routePrefix}/products`, this.productId]);
   }
 
+  /**
+   * Obtiene el prefijo de ruta según el contexto actual (admin o vendedor).
+   */
+  private get routePrefix(): string {
+    return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
+  }
+
+  /**
+   * Carga el detalle del producto y construye el formulario, incluyendo el stock solo lectura.
+   */
   private load(): void {
     this.loading = true;
     this.error = null;
@@ -175,12 +202,14 @@ export class ProductEditComponent implements OnInit {
           ],
           description: [data.description ?? '', [Validators.maxLength(500)]],
           model: [data.model ?? '', [Validators.maxLength(100)]],
+          stock: [data.availableCount],
           brandId: [data.brandId ?? null],
           categoryId: [data.categoryId ?? null],
         });
         this.header.set([
-          { label: 'Productos', route: AppRoutes.SELLER_PRODUCTS },
-          { label: `Editar: ${data.title}` },
+          { label: 'Productos', route: `/${this.routePrefix}/products` },
+          { label: data.title, route: `/${this.routePrefix}/products/${this.productId}` },
+          { label: 'Editar' },
         ]);
         this.loading = false;
       },

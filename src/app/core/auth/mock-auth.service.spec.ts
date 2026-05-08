@@ -26,12 +26,13 @@ describe('MockAuthService', () => {
   });
 
   it('deberÃ­a autenticar con DNI vÃ¡lido y persistir en localStorage', fakeAsync(() => {
-    const admin = MOCK_USERS[0]; // dni: '12345678'
+    const admin = MOCK_USERS[0]!; // dni: '12345678'
+    const adminDni = '12345678';
     let result: any;
 
     (service as any)['NETWORK_LATENCY_MS'] = 0;
     service
-      .login({ dni: admin.dni, password: 'cualquiera' })
+      .login({ dni: adminDni, password: 'cualquiera' })
       .subscribe((user) => (result = user));
 
     tick(0);

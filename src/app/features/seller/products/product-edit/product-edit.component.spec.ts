@@ -28,6 +28,10 @@ const mockProduct = {
 
 describe('ProductEditComponent — validadores de formulario', () => {
   let component: ProductEditComponent;
+  let productsServiceMock: {
+    getById: jasmine.Spy;
+    update: jasmine.Spy;
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -41,10 +45,10 @@ describe('ProductEditComponent — validadores de formulario', () => {
         },
         {
           provide: ProductsService,
-          useValue: {
-            getById: () => of(mockProduct),
-            update: jasmine.createSpy(),
-          },
+          useValue: (productsServiceMock = {
+            getById: jasmine.createSpy().and.returnValue(of(mockProduct)),
+            update: jasmine.createSpy().and.returnValue(of(mockProduct)),
+          }),
         },
         {
           provide: ProductCategoriesService,
@@ -64,6 +68,10 @@ describe('ProductEditComponent — validadores de formulario', () => {
     const fixture = TestBed.createComponent(ProductEditComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  it('inicializa el campo stock con availableCount y no permite edición directa', () => {
+    expect(component.form.get('stock')?.value).toBe(0);
   });
 
   it('descripción con 501 caracteres → formulario inválido con error maxlength', () => {
@@ -88,5 +96,24 @@ describe('ProductEditComponent — validadores de formulario', () => {
     component.form.get('model')!.setValue('m'.repeat(100));
 
     expect(component.form.valid).toBeTrue();
+  });
+
+  it('al guardar no envía stock en el payload de actualización', () => {
+    component.form.patchValue({
+      title: 'Producto editado',
+      description: 'Descripción',
+      model: 'Modelo X',
+      stock: 999,
+    });
+
+    component.onSubmit();
+
+    expect(productsServiceMock.update).toHaveBeenCalledWith('prod-1', {
+      title: 'Producto editado',
+      description: 'Descripción',
+      model: 'Modelo X',
+      brandId: undefined,
+      categoryId: undefined,
+    });
   });
 });

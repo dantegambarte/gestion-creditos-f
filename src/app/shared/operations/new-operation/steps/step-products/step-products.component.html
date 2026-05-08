@@ -1,118 +1,255 @@
 <div class="flex flex-col gap-6">
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50/80 p-5 rounded-2xl border border-gray-100">
+  <!-- Tipo de operación + buscador -->
+  <div
+    class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 rounded-xl"
+    style="background: var(--ff-secondary); border: 1px solid var(--ff-border)"
+  >
     <div class="flex flex-col gap-2">
-      <label class="text-sm font-bold text-gray-700">Tipo de Operación</label>
+      <label
+        class="text-xs font-bold uppercase tracking-wider"
+        style="color: var(--ff-text-muted)"
+        >Tipo de Operación</label
+      >
       <p-dropdown
         [options]="form.operationTypes"
         [ngModel]="form.selectedType()"
         (ngModelChange)="changeOperationType($event)"
-        styleClass="w-full h-11 rounded-xl border-gray-200 flex items-center bg-white"
+        styleClass="w-full h-11"
         data-cy="dropdown-tipo-operacion"
       />
     </div>
     @if (usesProducts) {
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-bold text-gray-700">Buscar Producto</label>
-      <p-iconField iconPosition="left">
-        <p-inputIcon styleClass="pi pi-search text-gray-400 z-10" />
-        <input
-          pInputText
-          type="text"
-          placeholder="Nombre o código del producto..."
-          [ngModel]="form.searchProduct()"
-          (ngModelChange)="form.searchProduct.set($event)"
-          class="w-full h-11 pl-10 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-blue-500"
-          data-cy="input-buscar-producto"
-        />
-      </p-iconField>
-    </div>
+      <div class="flex flex-col gap-2">
+        <label
+          class="text-xs font-bold uppercase tracking-wider"
+          style="color: var(--ff-text-muted)"
+          >Buscar Unidad</label
+        >
+        <p-iconField iconPosition="left">
+          <p-inputIcon
+            styleClass="pi pi-search z-10"
+            style="color: var(--ff-text-muted)"
+          />
+          <input
+            pInputText
+            type="text"
+            placeholder="Nombre de producto o código de unidad..."
+            [ngModel]="form.searchProduct()"
+            (ngModelChange)="form.searchProduct.set($event)"
+            class="w-full h-11 pl-10"
+            data-cy="input-buscar-producto"
+          />
+        </p-iconField>
+      </div>
     }
   </div>
 
-  @if (usesProducts) {
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-    <div class="lg:col-span-7 flex flex-col gap-4">
-      <div class="flex justify-between items-center px-1">
-        <h2 class="text-base font-bold text-gray-800">Productos Disponibles</h2>
-        <span class="text-xs text-gray-500 font-medium">Click en (+) para agregar</span>
-      </div>
-
-      <div class="border border-gray-200 rounded-xl bg-white shadow-sm h-[420px] overflow-y-auto custom-scrollbar">
-        @for (prod of form.filteredAvailableProducts(); track prod.id) {
-          <div class="flex items-center justify-between p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors group">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-blue-50 transition-colors">
-                <i class="pi pi-box text-gray-400 group-hover:text-blue-500 text-xl"></i>
-              </div>
-              <div class="flex flex-col">
-                <span class="text-sm font-bold text-gray-900">{{ prod.name }}</span>
-                <span class="text-[11px] text-gray-500 uppercase tracking-tight">Stock: {{ prod.stock }} unidades</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-5">
-              <span class="text-sm font-black text-blue-600">{{ prod.price | currencyArs }}</span>
-              <p-button
-                icon="pi pi-plus"
-                [rounded]="true"
-                severity="primary"
-                size="small"
-                styleClass="w-8 h-8"
-                (onClick)="addProduct(prod)"
-              />
-            </div>
-          </div>
-        }
+  @if (!usesProducts) {
+    <div
+      class="rounded-xl p-5"
+      style="background: var(--ff-secondary); border: 1px solid var(--ff-border)"
+    >
+      <div class="flex flex-col gap-2 max-w-md">
+        <label
+          class="text-xs font-bold uppercase tracking-wider"
+          style="color: var(--ff-text-muted)"
+          >Monto total (total_amount)</label
+        >
+        <p-inputNumber
+          [ngModel]="form.loanCapital()"
+          (ngModelChange)="form.loanCapital.set($event ?? 0)"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [min]="1"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11"
+          data-cy="input-loan-total-amount"
+        />
       </div>
     </div>
+  }
 
-    <div class="lg:col-span-5 flex flex-col gap-4">
-      <h2 class="text-base font-bold text-gray-800">Productos Seleccionados</h2>
+  @if (usesProducts) {
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <!-- Productos disponibles -->
+      <div class="lg:col-span-7 flex flex-col gap-4">
+        <div class="flex justify-between items-center px-1">
+          <h2 class="text-base font-bold" style="color: var(--ff-text-primary)">
+            Unidades Disponibles
+          </h2>
+          <span class="text-xs font-medium" style="color: var(--ff-text-muted)">
+            Click en (+) para agregar
+          </span>
+        </div>
 
-      <div class="border border-gray-200 rounded-xl bg-gray-50/40 flex flex-col h-[420px] relative">
-        <div class="flex-1 overflow-y-auto p-3 space-y-2">
-          @if (form.selectedProducts().length > 0) {
-            @for (item of form.selectedProducts(); track item.id) {
-              <div class="bg-white border border-gray-100 p-3 rounded-xl shadow-sm flex items-center justify-between animate-fadein">
-                <div class="flex flex-col min-w-0">
-                  <span class="text-xs font-bold text-gray-900 truncate pr-2">{{ item.name }}</span>
-                  <span class="text-[10px] text-gray-500">Valor Unit: {{ item.price | currencyArs }}</span>
+        <div
+          class="rounded-xl h-[420px] overflow-y-auto"
+          style="
+            border: 1px solid var(--ff-border);
+            background: var(--ff-secondary);
+          "
+        >
+          @for (prod of form.filteredAvailableProducts(); track prod.id) {
+            <div
+              class="flex items-center justify-between p-4 transition-colors"
+              style="border-bottom: 1px solid var(--ff-border)"
+            >
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
+                  style="background: rgba(79, 110, 247, 0.08)"
+                >
+                  <i
+                    class="pi pi-box text-xl"
+                    style="color: var(--ff-accent)"
+                  ></i>
                 </div>
-                <div class="flex items-center gap-3">
-                  <span class="text-sm font-bold text-gray-800">{{ item.price | currencyArs }}</span>
-                  <p-button
-                    icon="pi pi-trash"
-                    [text]="true"
-                    severity="danger"
-                    styleClass="w-8 h-8 p-0"
-                    (onClick)="removeProduct(item)"
+                <div class="flex flex-col">
+                  <span
+                    class="text-sm font-bold"
+                    style="color: var(--ff-text-primary)"
+                    >{{ prod.name }}</span
+                  >
+                  <span
+                    class="text-[11px] uppercase tracking-tight"
+                    style="color: var(--ff-text-muted)"
+                    >Unidad: {{ prod.unitCode || "—" }}</span
+                  >
+                  <span class="text-[11px]" style="color: var(--ff-text-muted)">
+                    Disponibles: {{ prod.stock }}
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center gap-5">
+                <span
+                  class="text-sm font-black ff-mono"
+                  style="color: var(--ff-accent)"
+                >
+                  {{ prod.price | currencyArs }}
+                </span>
+                <p-button
+                  [icon]="isProductSelected(prod.id) ? 'pi pi-check' : 'pi pi-plus'"
+                    [rounded]="true"
+                    [severity]="isProductSelected(prod.id) ? 'secondary' : 'primary'"
+                    size="small"
+                    styleClass="w-8 h-8"
+                    [disabled]="isProductSelected(prod.id) || prod.stock <= 0"
+                    (onClick)="addProduct(prod)"
                   />
                 </div>
               </div>
-            }
-          } @else {
-            <div class="h-full flex flex-col items-center justify-center text-center p-8">
-              <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-gray-100">
-                <i class="pi pi-shopping-cart text-gray-300 text-2xl"></i>
-              </div>
-              <p class="text-sm font-bold text-gray-400">No hay productos seleccionados</p>
-              <p class="text-[11px] text-gray-400 mt-1">Buscá un producto a la izquierda y agregalo para continuar.</p>
-            </div>
           }
         </div>
+      </div>
 
-        <div class="p-5 bg-white border-t border-gray-200 rounded-b-xl shadow-[0_-4px_10px_rgba(0,0,0,0.03)]">
-          <div class="flex justify-between items-center">
-            <div class="flex flex-col">
-              <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Total Capital</span>
-              <span class="text-2xl font-black text-blue-700 leading-none">
-                {{ form.capital() | currencyArs }}
+      <!-- Productos seleccionados -->
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        <h2 class="text-base font-bold" style="color: var(--ff-text-primary)">
+          Unidades Seleccionadas
+        </h2>
+
+        <div
+          class="rounded-xl flex flex-col h-[420px] relative"
+          style="
+            border: 1px solid var(--ff-border);
+            background: var(--ff-secondary);
+          "
+        >
+          <div class="flex-1 overflow-y-auto p-3 space-y-2">
+            @if (form.selectedProducts().length > 0) {
+              @for (item of form.selectedProducts(); track item.id) {
+                <div
+                  class="ff-panel p-3 flex items-center justify-between animate-fadein"
+                >
+                  <div class="flex flex-col min-w-0">
+                    <span
+                      class="text-xs font-bold truncate pr-2"
+                      style="color: var(--ff-text-primary)"
+                      >{{ item.name }}</span
+                    >
+                    <span
+                      class="text-[10px] ff-mono"
+                      style="color: var(--ff-text-muted)"
+                      >Código: {{ item.unitCode || "—" }} · Valor Unit:
+                      {{ (item.historicalPrice ?? item.price) | currencyArs }}</span
+                    >
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span
+                      class="text-sm font-bold ff-mono"
+                      style="color: var(--ff-text-primary)"
+                    >
+                      {{ (item.historicalPrice ?? item.price) | currencyArs }}
+                    </span>
+                    <p-button
+                      icon="pi pi-trash"
+                      [text]="true"
+                      severity="danger"
+                      styleClass="w-8 h-8 p-0"
+                      (onClick)="removeProduct(item)"
+                    />
+                  </div>
+                </div>
+              }
+            } @else {
+              <div
+                class="h-full flex flex-col items-center justify-center text-center p-8"
+              >
+                <div
+                  class="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+                  style="
+                    background: var(--ff-panel);
+                    border: 1px solid var(--ff-border);
+                  "
+                >
+                  <i
+                    class="pi pi-shopping-cart text-2xl"
+                    style="color: var(--ff-text-muted)"
+                  ></i>
+                </div>
+                <p
+                  class="text-sm font-bold"
+                  style="color: var(--ff-text-muted)"
+                >
+                  No hay unidades seleccionadas
+                </p>
+                <p class="text-[11px] mt-1" style="color: var(--ff-text-muted)">
+                  Buscá una unidad a la izquierda y agregala para continuar.
+                </p>
+              </div>
+            }
+          </div>
+
+          <!-- Footer total -->
+          <div
+            class="p-5 rounded-b-xl"
+            style="
+              background: var(--ff-panel);
+              border-top: 1px solid var(--ff-border);
+            "
+          >
+            <div class="flex justify-between items-center">
+              <div class="flex flex-col">
+                <span
+                  class="text-[10px] uppercase font-bold tracking-wider"
+                  style="color: var(--ff-text-muted)"
+                  >Total Capital</span
+                >
+                <span
+                  class="text-2xl font-black ff-mono leading-none"
+                  style="color: var(--ff-accent)"
+                >
+                  {{ form.capital() | currencyArs }}
+                </span>
+              </div>
+              <span class="ff-badge ff-badge--activo">
+                {{ form.selectedProducts().length }} unidades
               </span>
             </div>
-            <p-tag severity="info" [value]="form.selectedProducts().length + ' items'" styleClass="px-3" />
           </div>
         </div>
       </div>
     </div>
-  </div>
   }
 </div>

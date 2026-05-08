@@ -213,12 +213,12 @@ describe('ReportsService', () => {
       apiSpy.get.and.returnValue(of(mockProductsRaw));
       service.getProductsReport().subscribe((rows) => {
         expect(rows.length).toBe(2);
-        expect(rows[0].currentPrice).toBe(15000);
-        expect(rows[0].availableStock).toBe(10);
+        expect(rows[0].maxPrice).toBe(15000);
+        expect(rows[0].availableCount).toBe(10);
         expect(rows[0].timesSold).toBe(25);
         expect(rows[0].totalRevenue).toBe(450000);
         expect(rows[1].timesSold).toBe(0);
-        expect(rows[1].availableStock).toBe(0);
+        expect(rows[1].availableCount).toBe(0);
         done();
       });
     });

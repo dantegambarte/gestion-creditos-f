@@ -9,9 +9,61 @@
  */
 
 describe('Seller — Lista de Operaciones', () => {
+  const creditsMock = [
+    {
+      id: 'crd-001',
+      type: 'SALE',
+      total_amount: 120000,
+      installments_count: 12,
+      payment_frequency: 'WEEKLY',
+      interest_rate: 10,
+      status: 'ACTIVE',
+      created_at: '2026-02-01T00:00:00Z',
+      approved_at: null,
+      customer_id: 'cust-001',
+      customer_name: 'Juan Perez Garcia',
+      customer_dni: '22334455',
+      created_by_id: 'usr-002',
+      created_by_name: 'Maria Sanchez',
+    },
+    {
+      id: 'crd-002',
+      type: 'LOAN',
+      total_amount: 90000,
+      installments_count: 6,
+      payment_frequency: 'MONTHLY',
+      interest_rate: 15,
+      status: 'PENDING_APPROVAL',
+      created_at: '2026-02-10T00:00:00Z',
+      approved_at: null,
+      customer_id: 'cust-002',
+      customer_name: 'Laura Gomez',
+      customer_dni: '11223344',
+      created_by_id: 'usr-002',
+      created_by_name: 'Maria Sanchez',
+    },
+  ];
+
+  function stubCreditsList(): void {
+    cy.intercept('GET', /\/api\/credits(\?.*)?$/, (req) => {
+      const status = req.query['status'];
+      const type = req.query['type'];
+
+      const filtered = creditsMock.filter((credit) => {
+        if (status && credit.status !== status) return false;
+        if (type && credit.type !== type) return false;
+        return true;
+      });
+
+      req.reply({ statusCode: 200, body: { ok: true, data: filtered } });
+    }).as('creditsList');
+  }
+
   beforeEach(() => {
     cy.viewport(1280, 720);
+    stubCreditsList();
     cy.loginAs('SELLER', '/seller/operations');
+    cy.wait('@creditsList');
   });
 
   it('renderiza la página sin error', () => {
@@ -31,8 +83,8 @@ describe('Seller — Lista de Operaciones', () => {
   });
 
   it('clic en "Nueva operación" navega al wizard', () => {
-    cy.contains('button', 'Nueva operación').click();
-    cy.url().should('include', '/new');
+    cy.contains('button', 'Nueva operación').should('be.visible').click();
+    cy.url().should('include', '/seller/operations/new');
   });
 
   it('muestra tabla o estado vacío (no error)', () => {
@@ -63,10 +115,7 @@ describe('Admin — Lista de Operaciones (misma vista vía /admin)', () => {
   });
 
   it('CR-08: filtra por cliente al buscar "Perez"', () => {
-    cy.contains('h1', 'Operaciones')
-      .parents('div.p-6')
-      .first()
-      .find('input[placeholder="Buscar..."]')
+    cy.get('input[placeholder="Buscar..."]')
       .clear()
       .type('Perez');
 

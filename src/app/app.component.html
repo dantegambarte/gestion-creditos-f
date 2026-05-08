@@ -1,9 +1,12 @@
 @if (!isPortalRoute() && (auth.currentUser$ | async)) {
-  <div class="flex h-dvh w-full overflow-hidden bg-gray-50">
+  <div
+    class="flex h-dvh w-full overflow-hidden"
+    style="background: var(--ff-bg)"
+  >
     <sidebar />
     <div class="flex flex-col flex-1 overflow-hidden">
       <app-header />
-      <main class="flex-1 overflow-y-auto">
+      <main class="flex-1 overflow-y-auto" style="background: var(--ff-bg)">
         <router-outlet />
       </main>
     </div>

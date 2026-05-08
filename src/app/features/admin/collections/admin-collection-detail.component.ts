@@ -1,4 +1,4 @@
-import { DatePipe, Location } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -34,7 +34,6 @@ import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 export class AdminCollectionDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly collectionsService = inject(CollectionsService);
-  private readonly location = inject(Location);
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
 
@@ -58,7 +57,7 @@ export class AdminCollectionDetailComponent implements OnInit {
    * Navega a la página anterior en el historial del navegador.
    */
   goBack(): void {
-    this.location.back();
+    this.router.navigate([AppRoutes.ADMIN, AppRoutes.ADMIN_COLLECTIONS]);
   }
 
   /**

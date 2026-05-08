@@ -11,15 +11,20 @@
 
 const CUSTOMER_MOCK = {
   id: 'cust-001',
-  fullName: 'Ana García',
+  full_name: 'Ana García',
   dni: '12345678',
   phone: '3811234567',
   email: 'ana@mail.com',
   address: 'Av. Principal 100',
   status: 'ACTIVE',
-  collectorId: null,
-  collectorName: null,
-  createdAt: '2024-01-15T00:00:00Z',
+  collector_id: null,
+  collector_name: null,
+  portal_enabled: false,
+  portal_is_temp_password: false,
+  portal_failed_attempts: 0,
+  portal_locked_at: null,
+  created_at: '2024-01-15T00:00:00Z',
+  updated_at: '2024-01-15T00:00:00Z',
 };
 
 function stubCustomer(role: 'ADMIN' | 'SELLER') {
@@ -32,6 +37,11 @@ function stubCustomer(role: 'ADMIN' | 'SELLER') {
     statusCode: 200,
     body: { ok: true, data: [] },
   }).as('customerCredits');
+
+  cy.intercept('GET', '**/api/users*', {
+    statusCode: 200,
+    body: { ok: true, data: [] },
+  }).as('collectorsList');
 
   cy.loginAs(role, '/seller/clients/12345678');
 }
@@ -52,32 +62,32 @@ describe('Detalle de Cliente — Admin', () => {
   });
 
   it('Admin ve el botón Editar', () => {
-    cy.contains('button', 'Editar').should('exist');
+    cy.get('[data-cy="seller-client-detail-edit-action"]').should('exist');
   });
 
   it('Admin ve el botón Desactivar', () => {
-    cy.contains('button', 'Desactivar').should('exist');
+    cy.get('[data-cy="seller-client-detail-status-action"]').contains('Desactivar').should('exist');
   });
 
   it('botón Volver navega a la lista', () => {
-    cy.contains('button', 'Volver').click();
+    cy.get('[data-cy="seller-client-detail-back-action"]').click();
     cy.url().should('not.match', /\/12345678$/);
   });
 
   it('clic en Editar activa el modo edición', () => {
-    cy.contains('button', 'Editar').click();
-    cy.contains('button', 'Guardar').should('exist');
+    cy.get('[data-cy="seller-client-detail-edit-action"] button').click();
+    cy.get('[data-cy="seller-client-detail-save-action"]').should('be.visible');
   });
 
   it('en modo edición: campo fullName visible y prellenado', () => {
-    cy.contains('button', 'Editar').click();
-    cy.get('input[id="fullName"]').should('have.value', 'Ana García');
+    cy.get('[data-cy="seller-client-detail-edit-action"] button').click();
+    cy.get('[data-cy="seller-client-detail-edit-fullname-input"]').should('have.value', 'Ana García');
   });
 
   it('Cancelar edición vuelve a la vista read-only', () => {
-    cy.contains('button', 'Editar').click();
-    cy.contains('button', 'Cancelar').click();
-    cy.contains('button', 'Editar').should('exist');
+    cy.get('[data-cy="seller-client-detail-edit-action"] button').click();
+    cy.get('[data-cy="seller-client-detail-cancel-edit-action"] button').click();
+    cy.get('[data-cy="seller-client-detail-edit-action"]').should('exist');
   });
 });
 
@@ -93,11 +103,11 @@ describe('Detalle de Cliente — Seller', () => {
   });
 
   it('Seller NO ve el botón Desactivar', () => {
-    cy.contains('button', 'Desactivar').should('not.exist');
+    cy.get('[data-cy="seller-client-detail-status-action"]').should('not.exist');
   });
 
   it('botón Volver existe', () => {
-    cy.contains('button', 'Volver').should('exist');
+    cy.get('[data-cy="seller-client-detail-back-action"]').should('exist');
   });
 });
 

@@ -2,216 +2,288 @@
 <p-confirmDialog />
 
 <div class="p-4">
-  <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-    <div class="flex items-center gap-3 flex-wrap">
-      <p-button
-        label="Volver"
-        icon="pi pi-arrow-left"
-        severity="secondary"
-        [outlined]="true"
-        (onClick)="goBack()"
-      />
-      <h2 class="text-xl font-semibold">
-        Unidades{{ productName ? " — " + productName : ""
-        }}{{ variantLabel ? " / " + variantLabel : "" }}
-      </h2>
-    </div>
-    @if (isAdmin) {
-      <div class="flex gap-2">
-        <p-button
-          label="Alta de unidad"
-          icon="pi pi-plus"
-          (onClick)="openCreate()"
-        />
-        <p-button
-          label="Alta masiva"
-          icon="pi pi-upload"
-          severity="secondary"
-          [outlined]="true"
-          (onClick)="openBulk()"
-        />
-      </div>
-    }
-  </div>
-
-  <div class="mb-4 flex items-center gap-2">
-    <label class="text-sm font-medium">Filtrar por estado:</label>
-    <p-dropdown
-      [options]="statusOptions"
-      [(ngModel)]="statusFilter"
-      optionLabel="label"
-      optionValue="value"
-      styleClass="w-48"
-    />
-  </div>
-
-  @if (loading) {
-    <app-loading-state />
-  } @else if (error) {
-    <app-error-state />
-  } @else {
-    <p-table
-      [value]="filteredUnits"
-      styleClass="p-datatable-sm"
-      responsiveLayout="scroll"
+  <!-- Header -->
+  <div class="flex items-center gap-3 mb-4 flex-wrap">
+    <a
+      class="prod-action-link flex items-center gap-1"
+      (click)="goBack()"
+      style="cursor: pointer"
     >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Código de unidad</th>
-          <th class="text-center">Estado</th>
-          <th>Notas</th>
-          <th>Fecha de alta</th>
-          <th></th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-u>
-        <tr>
-          <td class="font-mono font-semibold">{{ u.unitCode }}</td>
-          <td class="text-center">
-            <p-tag
-              [value]="statusLabel(u.status)"
-              [severity]="statusSeverity(u.status)"
-            />
-          </td>
-          <td class="text-sm text-gray-600">{{ u.notes ?? "—" }}</td>
-          <td>{{ u.createdAt | date: "dd/MM/yyyy" }}</td>
-          <td>
-            @if (isAdmin) {
-              <div class="flex gap-1 justify-end">
-                @if (u.status === "AVAILABLE") {
-                  <p-button
-                    icon="pi pi-pencil"
-                    severity="secondary"
-                    [outlined]="true"
-                    size="small"
-                    (onClick)="openEdit(u)"
-                  />
-                  <p-button
-                    icon="pi pi-ban"
-                    severity="danger"
-                    [outlined]="true"
-                    size="small"
-                    (onClick)="confirmDeactivate(u)"
-                  />
-                }
-              </div>
-            }
-          </td>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="5" class="text-center text-gray-400 py-6">
-            Sin unidades registradas.
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  }
-</div>
+      <i class="pi pi-arrow-left text-sm"></i> Volver a variantes
+    </a>
+    <span style="color: var(--ff-text-muted)">/</span>
+    <h1 class="font-bold text-base" style="color: var(--ff-text-primary)">
+      Unidades
+    </h1>
+  </div>
 
-<!-- Single unit dialog -->
-<p-dialog
-  [(visible)]="showSingleDialog"
-  [header]="editingUnit ? 'Editar unidad' : 'Alta de unidad'"
-  [modal]="true"
-  [style]="{ width: '400px' }"
-  [draggable]="false"
->
-  <form [formGroup]="singleForm" (ngSubmit)="saveSingle()">
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1"
-        >Código de unidad (IMEI / serial) *</label
-      >
-      <input
-        pInputText
-        formControlName="unitCode"
-        class="w-full"
-        placeholder="Ej: 354789012345678"
-        [class.ng-invalid]="isInvalid('unitCode')"
-      />
-      @if (isInvalid("unitCode")) {
-        <small class="text-red-500"
-          >Código requerido (máx. 100 caracteres).</small
-        >
+  <!-- Info bar -->
+  <div class="flex items-center gap-3 flex-wrap mb-5">
+    <span class="font-bold" style="color: var(--ff-text-primary)">{{
+      productName
+    }}</span>
+    @if (variantLabel) {
+      <span class="text-sm ff-mono" style="color: var(--ff-text-secondary)">{{
+        variantLabel
+      }}</span>
+    }
+    <!-- Counter pills -->
+    <span
+      class="ff-badge"
+      style="
+        background: rgba(100, 116, 139, 0.15);
+        color: var(--ff-text-secondary);
+      "
+    >
+      {{ units.length }} UNIDADES TOTALES
+    </span>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="flex items-center gap-1 mb-4 flex-wrap">
+    <button
+      class="units-filter-tab"
+      [class.units-filter-tab--active]="statusFilter === ''"
+      (click)="statusFilter = ''"
+    >
+      Todas ({{ units.length }})
+    </button>
+    <button
+      class="units-filter-tab"
+      [class.units-filter-tab--active]="statusFilter === 'AVAILABLE'"
+      (click)="statusFilter = 'AVAILABLE'"
+    >
+      Disponibles
+    </button>
+    <button
+      class="units-filter-tab"
+      [class.units-filter-tab--active]="statusFilter === 'RESERVED'"
+      (click)="statusFilter = 'RESERVED'"
+    >
+      Reservadas
+    </button>
+    <button
+      class="units-filter-tab"
+      [class.units-filter-tab--active]="statusFilter === 'SOLD'"
+      (click)="statusFilter = 'SOLD'"
+    >
+      Vendidas
+    </button>
+    <button
+      class="units-filter-tab"
+      [class.units-filter-tab--active]="statusFilter === 'INACTIVE'"
+      (click)="statusFilter = 'INACTIVE'"
+    >
+      Inactivas
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <!-- ── LEFT: table ── -->
+    <div [class]="isAdmin ? 'lg:col-span-7' : 'lg:col-span-12'">
+      @if (loading) {
+        <app-loading-state />
+      } @else if (error) {
+        <app-error-state />
+      } @else {
+        <div class="ff-panel overflow-hidden">
+          <p-table [value]="filteredUnits" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>CÓDIGO DE UNIDAD</th>
+                <th class="text-center">ESTADO</th>
+                <th>NOTAS</th>
+                <th>ALTA</th>
+                <th>ACCIONES</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-u>
+              <tr>
+                <td
+                  class="ff-mono font-semibold"
+                  style="color: var(--ff-text-primary)"
+                >
+                  {{ u.unitCode }}
+                </td>
+                <td class="text-center">
+                  <span
+                    class="ff-badge"
+                    [class.ff-badge--activo]="u.status === 'AVAILABLE'"
+                    [class.ff-badge--pendiente]="u.status === 'RESERVED'"
+                    [class.ff-badge--inactivo]="
+                      u.status === 'SOLD' || u.status === 'INACTIVE'
+                    "
+                    >{{ statusLabel(u.status) }}</span
+                  >
+                </td>
+                <td class="text-sm" style="color: var(--ff-text-muted)">
+                  {{ u.notes ?? "—" }}
+                </td>
+                <td class="text-sm ff-mono" style="color: var(--ff-text-muted)">
+                  {{ u.createdAt | date: "dd/MM/yy" }}
+                </td>
+                <td>
+                  @if (isAdmin && u.status === "AVAILABLE") {
+                    <div class="flex items-center gap-3">
+                      <a
+                        class="prod-action-link text-xs"
+                        (click)="openEdit(u)"
+                        style="cursor: pointer"
+                        >Editar</a
+                      >
+                      <a
+                        class="prod-action-link text-xs"
+                        style="color: var(--ff-danger); cursor: pointer"
+                        (click)="confirmDeactivate(u)"
+                        >Dar de baja</a
+                      >
+                    </div>
+                  } @else {
+                    <span class="text-xs" style="color: var(--ff-text-muted)"
+                      >—</span
+                    >
+                  }
+                </td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td
+                  colspan="5"
+                  class="text-center py-8"
+                  style="color: var(--ff-text-muted)"
+                >
+                  Sin unidades en este estado.
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
       }
     </div>
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1">Notas</label>
-      <textarea
-        pInputTextarea
-        formControlName="notes"
-        rows="3"
-        class="w-full"
-        placeholder="Observaciones opcionales"
-      ></textarea>
-    </div>
-    @if (dialogError) {
-      <p class="text-red-500 text-sm mb-3">{{ dialogError }}</p>
-    }
-    <div class="flex justify-end gap-2">
-      <p-button
-        label="Cancelar"
-        severity="secondary"
-        [outlined]="true"
-        type="button"
-        (onClick)="showSingleDialog = false"
-      />
-      <p-button
-        [label]="editingUnit ? 'Guardar' : 'Crear'"
-        type="submit"
-        [loading]="dialogSubmitting"
-      />
-    </div>
-  </form>
-</p-dialog>
 
-<!-- Bulk dialog -->
-<p-dialog
-  [(visible)]="showBulkDialog"
-  header="Alta masiva de unidades"
-  [modal]="true"
-  [style]="{ width: '480px' }"
-  [draggable]="false"
->
-  <form [formGroup]="bulkForm" (ngSubmit)="saveBulk()">
-    <div class="mb-4">
-      <label class="block text-sm font-medium mb-1"
-        >Códigos (uno por línea)</label
-      >
-      <textarea
-        pInputTextarea
-        formControlName="rawCodes"
-        rows="8"
-        class="w-full font-mono"
-        placeholder="354789012345678&#10;354789012345679&#10;354789012345680"
-        (input)="onBulkCodesChange()"
-      ></textarea>
-    </div>
+    <!-- ── RIGHT: inline panels (admin only) ── -->
+    @if (isAdmin) {
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        <!-- Alta individual -->
+        <div class="ff-panel p-5 space-y-4">
+          <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
+            {{ editingUnit ? "Editar unidad" : "Alta individual" }}
+          </h3>
+          <form [formGroup]="singleForm" (ngSubmit)="saveSingle()">
+            <div class="space-y-4">
+              <div class="flex flex-col gap-1">
+                <label
+                  class="text-xs font-bold uppercase tracking-wider"
+                  style="color: var(--ff-text-muted)"
+                >
+                  Código de unidad
+                </label>
+                <input
+                  pInputText
+                  formControlName="unitCode"
+                  placeholder="IMEI-353456789012345"
+                  class="w-full h-11 ff-mono"
+                  [class.ng-invalid]="isInvalid('unitCode')"
+                />
+                @if (isInvalid("unitCode")) {
+                  <small style="color: var(--ff-danger)"
+                    >Código requerido (2-100 chars, A-Z0-9-_).</small
+                  >
+                }
+              </div>
+              <div class="flex flex-col gap-1">
+                <label
+                  class="text-xs font-bold uppercase tracking-wider"
+                  style="color: var(--ff-text-muted)"
+                >
+                  Notas (opcional)
+                </label>
+                <textarea
+                  pInputTextarea
+                  formControlName="notes"
+                  rows="2"
+                  placeholder="Ej: Caja abierta, vidrio rayado..."
+                  class="w-full"
+                ></textarea>
+              </div>
 
-    @if (bulkPreview.length > 0) {
-      <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
-        Se darán de alta <strong>{{ bulkPreview.length }}</strong> unidades.
+              @if (dialogError) {
+                <p
+                  class="text-sm px-3 py-2 rounded-lg"
+                  style="
+                    color: var(--ff-danger);
+                    background: rgba(239, 68, 68, 0.1);
+                  "
+                >
+                  {{ dialogError }}
+                </p>
+              }
+
+              <p-button
+                type="submit"
+                [label]="editingUnit ? 'Guardar cambios' : 'Registrar unidad'"
+                severity="primary"
+                styleClass="w-full justify-center h-11 rounded-xl"
+                [loading]="dialogSubmitting"
+              />
+              @if (editingUnit) {
+                <p-button
+                  type="button"
+                  label="Cancelar edición"
+                  severity="secondary"
+                  [text]="true"
+                  styleClass="w-full justify-center h-9"
+                  (onClick)="openCreate()"
+                />
+              }
+            </div>
+          </form>
+        </div>
+
+        <!-- Alta masiva -->
+        <div class="ff-panel p-5 space-y-4">
+          <div class="flex items-center gap-2">
+            <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
+              Alta masiva
+            </h3>
+            <span
+              class="ff-badge"
+              style="
+                background: rgba(79, 110, 247, 0.18);
+                color: var(--ff-accent);
+              "
+            >
+              MÚLTIPLES UNIDADES
+            </span>
+          </div>
+          <form [formGroup]="bulkForm" (ngSubmit)="saveBulk()">
+            <div class="space-y-3">
+              <textarea
+                pInputTextarea
+                formControlName="rawCodes"
+                rows="5"
+                class="w-full ff-mono text-sm"
+                style="color: var(--ff-text-primary)"
+                placeholder="Ingresá un código por línea.&#10;IMEI-353456789012350&#10;IMEI-353456789012351&#10;IMEI-353456789012352"
+                (input)="onBulkCodesChange()"
+              ></textarea>
+              <p-button
+                type="submit"
+                [label]="
+                  bulkPreview.length > 0
+                    ? 'Registrar ' + bulkPreview.length + ' unidades...'
+                    : 'Registrar N unidades...'
+                "
+                severity="primary"
+                styleClass="w-full justify-center h-11 rounded-xl"
+                [loading]="dialogSubmitting"
+                [disabled]="bulkPreview.length === 0"
+              />
+            </div>
+          </form>
+        </div>
       </div>
     }
-
-    @if (dialogError) {
-      <p class="text-red-500 text-sm mb-3">{{ dialogError }}</p>
-    }
-    <div class="flex justify-end gap-2">
-      <p-button
-        label="Cancelar"
-        severity="secondary"
-        [outlined]="true"
-        type="button"
-        (onClick)="showBulkDialog = false"
-      />
-      <p-button
-        label="Dar de alta"
-        type="submit"
-        [loading]="dialogSubmitting"
-        [disabled]="bulkPreview.length === 0"
-      />
-    </div>
-  </form>
-</p-dialog>
+  </div>
+</div>

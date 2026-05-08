@@ -12,7 +12,8 @@ export interface ProductVariantSummary {
 export interface Product {
   id: string;
   title: string;
-  description: string;
+  // La descripción es opcional: el backend devuelve null cuando no fue ingresada
+  description: string | null;
   model: string | null;
   status: ProductStatus;
   createdAt: string;
@@ -64,7 +65,8 @@ export interface ProductVariantSummaryRaw {
 export interface ProductRaw {
   id: string;
   title: string;
-  description: string;
+  // Puede ser null cuando el producto fue creado sin descripción
+  description: string | null;
   model: string | null;
   status: ProductStatus;
   created_at: string;

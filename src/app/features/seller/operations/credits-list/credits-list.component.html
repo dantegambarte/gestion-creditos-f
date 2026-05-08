@@ -1,110 +1,132 @@
 <div class="p-4">
-  <div class="flex flex-wrap gap-3 mb-4 items-center justify-between">
-    <div class="flex flex-wrap gap-3 items-center">
-      <span class="p-input-icon-left">
-        <i class="pi pi-search"></i>
-        <input
-          pInputText
-          type="text"
-          placeholder="Buscar por cliente o DNI"
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="onSearchChange()"
-          class="w-64"
+  <div class="ff-panel">
+    <div class="ff-list-header">
+      <div class="ff-list-header__actions" style="flex: 1; flex-wrap: wrap">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search" style="color: var(--ff-text-muted)"></i>
+          <input
+            pInputText
+            type="text"
+            placeholder="Buscar por cliente o DNI"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange()"
+            class="h-11 w-64"
+          />
+        </span>
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="selectedStatus"
+          (onChange)="applyFilters()"
+          placeholder="Estado"
+          [showClear]="true"
+          optionLabel="label"
+          optionValue="value"
         />
-      </span>
-      <p-dropdown
-        [options]="statusOptions"
-        [(ngModel)]="selectedStatus"
-        (onChange)="applyFilters()"
-        placeholder="Estado"
-        [showClear]="true"
-        optionLabel="label"
-        optionValue="value"
-      />
-      <p-dropdown
-        [options]="typeOptions"
-        [(ngModel)]="selectedType"
-        (onChange)="applyFilters()"
-        placeholder="Tipo"
-        [showClear]="true"
-        optionLabel="label"
-        optionValue="value"
-      />
+        <p-dropdown
+          [options]="typeOptions"
+          [(ngModel)]="selectedType"
+          (onChange)="applyFilters()"
+          placeholder="Tipo"
+          [showClear]="true"
+          optionLabel="label"
+          optionValue="value"
+        />
+      </div>
+      @if (canCreate) {
+        <p-button
+          label="Nueva operación"
+          icon="pi pi-plus"
+          severity="primary"
+          styleClass="h-11 px-5 rounded-xl shadow-sm"
+          (onClick)="navigateToCreate()"
+        />
+      }
     </div>
-    @if (canCreate) {
-      <p-button
-        label="Nueva operación"
-        icon="pi pi-plus"
-        (onClick)="navigateToCreate()"
-      />
+
+    @if (loading) {
+      <app-loading-state />
+    } @else if (error) {
+      <app-error-state />
+    } @else if (filteredCredits.length === 0) {
+      <app-empty-state />
+    } @else {
+      <p-table
+        [value]="filteredCredits"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Tipo</th>
+            <th>Cliente</th>
+            <th>Monto total</th>
+            <th>Cuotas</th>
+            <th>Estado</th>
+            <th>Fecha de alta</th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-credit>
+          <tr class="cursor-pointer" (click)="navigateToDetail(credit.id)">
+            <td>
+              <span
+                class="ff-badge"
+                [class.ff-badge--activo]="credit.type === 'SALE'"
+                [class.ff-badge--pagado]="credit.type !== 'SALE'"
+                >{{ credit.type === "SALE" ? "Venta" : "Préstamo" }}</span
+              >
+            </td>
+            <td>
+              <div class="font-medium">{{ credit.customerName }}</div>
+              <div class="ff-mono text-xs" style="color: var(--ff-text-muted)">
+                {{ credit.customerDni }}
+              </div>
+            </td>
+            <td class="ff-mono font-semibold" style="color: var(--ff-accent)">
+              {{ credit.totalAmount | currencyArs: 2 }}
+            </td>
+            <td style="color: var(--ff-text-secondary)">
+              {{ credit.installmentsCount }} cuotas
+              {{ frequencyLabel(credit.paymentFrequency) }}s
+            </td>
+            <td>
+              <span
+                class="ff-badge"
+                [class.ff-badge--activo]="
+                  statusSeverity(credit.status) === 'success'
+                "
+                [class.ff-badge--pendiente]="
+                  statusSeverity(credit.status) === 'warning'
+                "
+                [class.ff-badge--vencido]="
+                  statusSeverity(credit.status) === 'danger'
+                "
+                [class.ff-badge--pagado]="
+                  statusSeverity(credit.status) === 'secondary'
+                "
+                >{{ statusLabel(credit.status) }}</span
+              >
+            </td>
+            <td style="color: var(--ff-text-secondary)">
+              {{ credit.createdAt | date: "dd/MM/yyyy" }}
+            </td>
+            <td>
+              <p-button
+                label="Ver"
+                icon="pi pi-eye"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="
+                  $event.stopPropagation(); navigateToDetail(credit.id)
+                "
+              />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
     }
   </div>
-
-  @if (loading) {
-    <app-loading-state />
-  } @else if (error) {
-    <app-error-state />
-  } @else if (filteredCredits.length === 0) {
-    <app-empty-state />
-  } @else {
-    <p-table
-      [value]="filteredCredits"
-      [paginator]="true"
-      [rows]="10"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      styleClass="p-datatable-sm"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Tipo</th>
-          <th>Cliente</th>
-          <th>Monto total</th>
-          <th>Cuotas</th>
-          <th>Estado</th>
-          <th>Fecha de alta</th>
-          <th></th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-credit>
-        <tr class="cursor-pointer" (click)="navigateToDetail(credit.id)">
-          <td>
-            <p-tag
-              [value]="credit.type === 'SALE' ? 'Venta' : 'Préstamo'"
-              [severity]="credit.type === 'SALE' ? 'info' : 'secondary'"
-            />
-          </td>
-          <td>
-            <div>{{ credit.customerName }}</div>
-            <div class="text-xs text-gray-500">{{ credit.customerDni }}</div>
-          </td>
-          <td>
-            {{
-              credit.totalAmount | currencyArs: 2
-            }}
-          </td>
-          <td>
-            {{ credit.installmentsCount }} cuotas
-            {{ frequencyLabel(credit.paymentFrequency) }}s
-          </td>
-          <td>
-            <p-tag
-              [value]="statusLabel(credit.status)"
-              [severity]="statusSeverity(credit.status)"
-            />
-          </td>
-          <td>{{ credit.createdAt | date: "dd/MM/yyyy" }}</td>
-          <td>
-            <p-button
-              label="Ver"
-              icon="pi pi-eye"
-              severity="secondary"
-              [outlined]="true"
-              size="small"
-              (onClick)="$event.stopPropagation(); navigateToDetail(credit.id)"
-            />
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  }
 </div>

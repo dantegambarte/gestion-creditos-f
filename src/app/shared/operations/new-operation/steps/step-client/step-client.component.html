@@ -1,133 +1,237 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  <!-- Columna izquierda: buscador + lista -->
   <div class="flex flex-col gap-4">
     <div class="flex justify-between items-center">
-      <h2 class="text-base font-bold text-gray-800">Buscar Cliente</h2>
+      <h2 class="text-base font-bold" style="color: var(--ff-text-primary)">
+        Buscar Cliente
+      </h2>
       <span
-        class="bg-blue-50 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full"
+        class="text-xs font-semibold px-3 py-1 rounded-full"
+        style="background: rgba(79, 110, 247, 0.12); color: var(--ff-accent)"
       >
         {{ form.clients.length }} clientes
       </span>
     </div>
 
     <p-iconField iconPosition="left">
-      <p-inputIcon styleClass="pi pi-search text-gray-400 z-10" />
+      <p-inputIcon
+        styleClass="pi pi-search z-10"
+        style="color: var(--ff-text-muted)"
+      />
       <input
         pInputText
         type="text"
-        placeholder="Buscar por nombre, cédula o teléfono..."
+        placeholder="Buscar por nombre o DNI..."
         [ngModel]="form.searchClient()"
         (ngModelChange)="form.searchClient.set($event)"
-        class="w-full h-11 pl-10 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 shadow-sm"
+        class="w-full h-11 pl-10"
         data-cy="input-buscar-cliente-wizard"
       />
     </p-iconField>
 
     <div
-      class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm flex flex-col h-[380px] overflow-y-auto"
+      class="rounded-xl overflow-hidden flex flex-col h-[380px] overflow-y-auto"
+      style="
+        border: 1px solid var(--ff-border);
+        background: var(--ff-secondary);
+      "
     >
-      @for (client of form.clients; track client.id) {
+      @for (client of form.filteredClients(); track client.id) {
         <div
-          class="flex items-center justify-between p-4 border-b border-gray-100 cursor-pointer transition-colors hover:bg-gray-50"
-          [class.bg-blue-50]="form.selectedClient()?.id === client.id"
+          class="flex items-center justify-between p-4 cursor-pointer transition-colors"
+          [style.background]="
+            form.selectedClient()?.id === client.id
+              ? 'rgba(79,110,247,0.15)'
+              : 'transparent'
+          "
+          [style.borderLeft]="
+            form.selectedClient()?.id === client.id
+              ? '2px solid var(--ff-accent)'
+              : '2px solid transparent'
+          "
+          style="border-bottom: 1px solid var(--ff-border)"
+          [class.opacity-70]="client.status !== 'ACTIVE'"
           [attr.data-cy]="'cliente-item-' + client.dni"
-          (click)="form.selectedClient.set(client)"
+          (click)="selectClient(client)"
         >
           <div class="flex items-center gap-4">
             <div
               class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 transition-colors"
-              [class.bg-blue-600]="form.selectedClient()?.id === client.id"
-              [class.bg-slate-500]="form.selectedClient()?.id !== client.id"
+              [style.background]="
+                form.selectedClient()?.id === client.id
+                  ? 'var(--ff-accent)'
+                  : 'rgba(100,116,139,0.4)'
+              "
             >
               {{ initials(client.name) }}
             </div>
             <div class="flex flex-col">
-              <span
-                class="text-sm font-bold"
-                [class.text-blue-900]="form.selectedClient()?.id === client.id"
-                [class.text-gray-900]="form.selectedClient()?.id !== client.id"
-              >
-                {{ client.name }}
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-sm font-bold"
+                  [style.color]="
+                    form.selectedClient()?.id === client.id
+                      ? 'var(--ff-text-primary)'
+                      : 'var(--ff-text-secondary)'
+                  "
+                >
+                  {{ client.name }}
+                </span>
+                @if (client.status !== 'ACTIVE') {
+                  <span class="ff-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--ff-danger)">
+                    Inactivo
+                  </span>
+                }
+              </div>
+              <span class="text-xs ff-mono" style="color: var(--ff-text-muted)">
+                CC {{ client.dni }} · Tel: {{ client.phone }}
               </span>
-              <span class="text-xs text-gray-500 mt-0.5"
-                >CC {{ client.dni }} · Tel: {{ client.phone }}</span
-              >
             </div>
           </div>
 
           @if (form.selectedClient()?.id === client.id) {
             <i
-              class="pi pi-check-circle text-blue-600 text-xl animate-fadein"
+              class="pi pi-check-circle text-xl animate-fadein"
+              style="color: var(--ff-accent)"
             ></i>
+          } @else if (client.status !== 'ACTIVE') {
+            <i class="pi pi-lock" style="color: var(--ff-danger)"></i>
           }
         </div>
       }
     </div>
+
+    @if (form.selectedClient() && !form.isSelectedClientActive()) {
+      <small class="text-xs font-medium" style="color: var(--ff-danger)">
+        El cliente seleccionado está inactivo. Activá el cliente para continuar.
+      </small>
+    }
   </div>
 
+  <!-- Columna derecha: detalle del seleccionado -->
   <div class="flex flex-col gap-4">
-    <h2 class="text-base font-bold text-gray-800">Cliente Seleccionado</h2>
+    <h2 class="text-base font-bold" style="color: var(--ff-text-primary)">
+      Cliente Seleccionado
+    </h2>
 
     @if (form.selectedClient(); as client) {
-      <div
-        class="border border-gray-200 rounded-xl p-6 shadow-sm bg-white h-[380px] animate-fadein"
-      >
+      <div class="ff-panel p-6 h-[380px] animate-fadein">
         <div class="flex items-center gap-4 mb-6">
           <div
-            class="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md shrink-0"
+            class="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl shrink-0"
+            style="background: var(--ff-accent)"
           >
             {{ initials(client.name) }}
           </div>
           <div>
-            <h3 class="text-lg font-bold text-gray-900 leading-tight">
+            <h3
+              class="text-lg font-bold leading-tight"
+              style="color: var(--ff-text-primary)"
+            >
               {{ client.name }}
             </h3>
-            <p class="text-sm text-gray-500 mb-1.5">CC {{ client.dni }}</p>
-            <span
-              class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+            <p
+              class="text-sm ff-mono mb-1.5"
+              style="color: var(--ff-text-muted)"
             >
-              Cliente activo
-            </span>
+              CC {{ client.dni }}
+            </p>
+            @if (client.status === 'ACTIVE') {
+              <span class="ff-badge ff-badge--activo">Cliente activo</span>
+            } @else {
+              <span class="ff-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--ff-danger)">
+                Cliente inactivo
+              </span>
+            }
           </div>
         </div>
 
         <div class="space-y-3">
           <div
-            class="flex justify-between items-center py-2.5 border-b border-gray-50"
+            class="flex justify-between items-center py-2.5"
+            style="border-bottom: 1px solid var(--ff-border)"
           >
-            <span class="text-sm text-gray-500">Teléfono</span>
-            <span class="text-sm font-semibold text-gray-900">{{
-              client.phone
-            }}</span>
+            <span class="text-sm" style="color: var(--ff-text-secondary)"
+              >Teléfono</span
+            >
+            <span
+              class="text-sm font-semibold"
+              style="color: var(--ff-text-primary)"
+            >
+              {{ client.phone }}
+            </span>
           </div>
           <div
-            class="flex justify-between items-center py-2.5 border-b border-gray-50"
+            class="flex justify-between items-center py-2.5"
+            style="border-bottom: 1px solid var(--ff-border)"
           >
-            <span class="text-sm text-gray-500">Correo</span>
-            <span class="text-sm font-semibold text-gray-900">{{ client.email }}</span>
+            <span class="text-sm" style="color: var(--ff-text-secondary)"
+              >Correo</span
+            >
+            <span
+              class="text-sm font-semibold"
+              style="color: var(--ff-text-primary)"
+            >
+              {{ client.email }}
+            </span>
           </div>
           <div
-            class="flex justify-between items-center py-2.5 border-b border-gray-50"
+            class="flex justify-between items-center py-2.5"
+            style="border-bottom: 1px solid var(--ff-border)"
           >
-            <span class="text-sm text-gray-500">Créditos anteriores</span>
-            <span class="text-sm font-semibold text-green-600">{{ client.previousCredits }} crédito(s) · {{ client.delinquency }}</span>
+            <span class="text-sm" style="color: var(--ff-text-secondary)"
+              >Créditos anteriores</span
+            >
+            <span
+              class="text-sm font-semibold"
+              style="color: var(--ff-success)"
+            >
+              {{ client.previousCredits }} crédito(s) · {{ client.delinquency }}
+            </span>
           </div>
           <div class="flex justify-between items-center py-2.5">
-            <span class="text-sm text-gray-500">Capacidad de pago</span>
-            <span class="text-sm font-bold text-gray-900">{{ client.paymentCapacity | currency:'ARS':'symbol':'1.0-0' }} / mes</span>
+            <span class="text-sm" style="color: var(--ff-text-secondary)"
+              >Capacidad de pago</span
+            >
+            <span
+              class="text-sm font-bold ff-mono"
+              style="color: var(--ff-text-primary)"
+            >
+              {{
+                client.paymentCapacity | currency: "ARS" : "symbol" : "1.0-0"
+              }}
+              / mes
+            </span>
           </div>
         </div>
       </div>
     } @else {
       <div
-        class="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-center h-[380px] bg-gray-50/50 animate-fadein"
+        class="rounded-xl p-8 flex flex-col items-center justify-center text-center h-[380px] animate-fadein"
+        style="
+          border: 2px dashed var(--ff-border);
+          background: var(--ff-secondary);
+        "
       >
         <div
-          class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 mb-4"
+          class="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+          style="
+            background: var(--ff-panel);
+            border: 1px solid var(--ff-border);
+          "
         >
-          <i class="pi pi-user text-gray-400 text-2xl"></i>
+          <i
+            class="pi pi-user text-2xl"
+            style="color: var(--ff-text-muted)"
+          ></i>
         </div>
-        <p class="text-gray-600 font-semibold">Ningún cliente seleccionado</p>
-        <p class="text-sm text-gray-400 mt-1 max-w-[250px]">
+        <p class="font-semibold" style="color: var(--ff-text-secondary)">
+          Ningún cliente seleccionado
+        </p>
+        <p
+          class="text-sm mt-1 max-w-[250px]"
+          style="color: var(--ff-text-muted)"
+        >
           Buscá y seleccioná un cliente de la lista para ver sus detalles.
         </p>
       </div>

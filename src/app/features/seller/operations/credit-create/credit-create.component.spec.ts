@@ -105,6 +105,9 @@ describe('CreditCreateComponent', () => {
     fixture.detectChanges();
   });
 
+  /**
+   * Completa el formulario base de venta para reutilizarlo entre casos.
+   */
   function completeCommonSaleForm() {
     component.form.patchValue({
       type: 'SALE',
@@ -121,6 +124,7 @@ describe('CreditCreateComponent', () => {
         productName: 'Moto X',
         variantLabel: 'Rojo',
         price: 1000,
+        variantId: 'var-1',
       },
     ];
   }
@@ -155,7 +159,7 @@ describe('CreditCreateComponent', () => {
         units: [{ unitId: 'unit-1' }],
       }),
     );
-    const payload = creditsServiceSpy.create.calls.mostRecent().args[0] as Record<
+    const payload = creditsServiceSpy.create.calls.mostRecent().args[0] as unknown as Record<
       string,
       unknown
     >;

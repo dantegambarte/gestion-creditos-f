@@ -72,13 +72,25 @@ export class ProductDetailComponent implements OnInit {
   }
 
   navigateToEdit(): void {
-    this.router.navigate([
-      AppRoutes.SELLER_PRODUCTS_EDIT.replace(':id', this.productId),
-    ]);
+    this.router.navigate([`/${this.routePrefix}/products/${this.productId}/edit`]);
   }
 
   navigateToVariants(): void {
-    this.router.navigate(['/seller/products', this.productId, 'variants']);
+    this.router.navigate([`/${this.routePrefix}/products`, this.productId, 'variants']);
+  }
+
+  navigateToUnits(variantId: string): void {
+    this.router.navigate([
+      `/${this.routePrefix}/products`,
+      this.productId,
+      'variants',
+      variantId,
+      'units',
+    ]);
+  }
+
+  private get routePrefix(): string {
+    return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
   }
 
   confirmDeactivate(): void {
@@ -133,7 +145,7 @@ export class ProductDetailComponent implements OnInit {
       next: (data) => {
         this.product = data;
         this.header.set([
-          { label: 'Productos', route: '/seller/products' },
+          { label: 'Productos', route: `/${this.routePrefix}/products` },
           { label: data.title },
         ]);
         this.loading = false;
@@ -150,7 +162,7 @@ export class ProductDetailComponent implements OnInit {
       next: (data) => {
         this.product = data;
         this.header.set([
-          { label: 'Productos', route: '/seller/products' },
+          { label: 'Productos', route: `/${this.routePrefix}/products` },
           { label: data.title },
         ]);
       },

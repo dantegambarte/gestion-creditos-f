@@ -13,7 +13,12 @@
 | **CR-05** | Configuración del Crédito | Click en "Siguiente" sin elegir "Fecha de primer pago". | Debería estar deshabilitado el botón "Siguiente". | Corregido / Validado |
 | **CR-06** | Operación Crédito - Declaraciones y Autorizaciones | Dejé sin marcar la casilla "Autorizo el desembolso inmediato". | Debería estar deshabilitado el botón "Siguiente" hasta marcar la casilla. | Corregido / Validado |
 | **CR-07** | Operación Crédito - Operaciones | Click en "Activo" para filtrar las operaciones. | Debería filtrar las operaciones. | Corregido / Validado |
-| **CR-08** | Operación Crédito - Operaciones | Escribí "Perez" en el buscador. | Debería filtrar los clientes. | Corregido / Validado |
+| **CR-08** | Operación Crédito - Operaciones - Admin | Escribí "Perez" en el buscador. | Debería filtrar los clientes. | Error |
+| **CR-09** | Regresión en seleccion de unidad . | Si posee stock, la operación debería enviarse. | Error |
+| **CR-10** | Calendario de primer pago - Admin | Hice click en el calendario para poder elegir fecha. | El calendario se muestra cortado. | Error |
+| **CR-11 | Operación venta de un producto - Admin. | Se eligió un producto de la lista. | No está implementado el pago diario y quincenal y el interés no cambia. | Error |
+| **CR-12 | Operaciones pre-aprobadas y aprobadas - Admin. | Se realizó una operación para su aprobación. | No está implementado el detalle de las operaciones. | Error |
+| **CR-13 | Nueva Operacion - Seller. | Se hizo click en "Nueva Operación". | Las letras son del mismo color que el fondo. | Error |
 
 ## 🟢 2. Módulo: Cliente
 
@@ -22,6 +27,9 @@
 | **CL-01** | Crear Cliente | Se realizó la creación de un cliente. | Debería salir un mensaje que el cliente se guardó correctamente. | Corregido / Validado |
 | **CL-02** | Ver Cliente | Click en "Ver" en un cliente. | Debería mostrar los datos del cliente. | Corregido / Validado |
 | **CL-03** | Gestión de Clientes | Click en "Editar" en un cliente. | Los cambios deberían guardarse en la DB. | Corregido / Validado |
+| **CL-04** | Editar Clientes | Click en "Editar" en un cliente. | Debería salir un cartel que fue exitoso. | Error |
+| **CL-02** | Ver Cliente | Click en "Ver" en un cliente - Seller. | Debería mostrar los datos del cliente. | Error |
+
 
 
 
@@ -72,12 +80,15 @@
 - `cypress/e2e/35-product-success-toast-regression.cy.ts` → PR-05 toast de éxito: **passing**
 - `cypress/e2e/33-product-create-modal-regression.cy.ts` → PR-06 modal crear producto: **passing**
 
-## 🟢 
+## 🟢 Módulo: Planilla
 
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
+| **PL-01** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar el botón "Generar Planilla". | Corregido / Validado |
+| **PL-02** | Botones | Los botones no están correctamente ubicados. |Deberían seguir los patrones visuales. | Corregido / Validado |
 
-## 🟢 
+## 🟢 Módulo: Gastos
 
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
+| **GA-01** | Gastos | Se hizo click en desactivar gasto "Alquiler". | Debería poder activarlo nuevamente. | Corregido / Validado |

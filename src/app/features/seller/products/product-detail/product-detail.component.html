@@ -2,14 +2,21 @@
 <p-confirmDialog />
 
 <div class="p-4">
-  <div class="mb-4">
-    <p-button
-      label="Volver"
-      icon="pi pi-arrow-left"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="goBack()"
-    />
+  <!-- Back + breadcrumb -->
+  <div class="flex items-center gap-3 mb-5">
+    <a
+      class="prod-action-link flex items-center gap-1"
+      (click)="goBack()"
+      style="cursor: pointer"
+    >
+      <i class="pi pi-arrow-left text-sm"></i> Productos
+    </a>
+    @if (product) {
+      <span style="color: var(--ff-text-muted)">/</span>
+      <span class="font-bold text-sm" style="color: var(--ff-text-primary)">{{
+        product.title
+      }}</span>
+    }
   </div>
 
   @if (loading) {
@@ -17,148 +24,307 @@
   } @else if (error) {
     <app-error-state />
   } @else if (product) {
-    <div class="bg-white rounded-lg shadow p-6 space-y-6">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-        <div class="flex items-center gap-3 flex-wrap">
-          <h2 class="text-xl font-semibold">{{ product.title }}</h2>
-          <p-tag
-            [value]="product.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
-            [severity]="product.status === 'ACTIVE' ? 'success' : 'danger'"
-          />
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- ── LEFT PANEL ── -->
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        <!-- Identity card -->
+        <div class="ff-panel p-6 space-y-4">
+          <div class="flex flex-wrap gap-2">
+            @if (product.categoryName) {
+              <span
+                class="ff-badge"
+                style="
+                  background: rgba(79, 110, 247, 0.12);
+                  color: var(--ff-accent);
+                "
+              >
+                {{ product.categoryName }}
+              </span>
+            }
+            @if (product.brandName) {
+              <span
+                class="ff-badge"
+                style="
+                  background: rgba(100, 116, 139, 0.15);
+                  color: var(--ff-text-secondary);
+                "
+              >
+                {{ product.brandName }}
+              </span>
+            }
+          </div>
+
+          <h2 class="text-xl font-black" style="color: var(--ff-text-primary)">
+            {{ product.title }}
+          </h2>
+
+          @if (product.description) {
+            <p class="text-sm" style="color: var(--ff-text-muted)">
+              {{ product.description }}
+            </p>
+          }
+
+          @if (product.model) {
+            <div>
+              <span
+                class="text-xs font-bold uppercase tracking-wider"
+                style="color: var(--ff-text-muted)"
+                >Modelo</span
+              >
+              <p
+                class="ff-mono text-sm mt-0.5"
+                style="color: var(--ff-text-secondary)"
+              >
+                {{ product.model }}
+              </p>
+            </div>
+          }
+
+          <div class="flex items-center gap-3 flex-wrap">
+            <span
+              class="ff-badge"
+              [class.ff-badge--activo]="product.status === 'ACTIVE'"
+              [class.ff-badge--inactivo]="product.status !== 'ACTIVE'"
+              >{{ product.status === "ACTIVE" ? "Activo" : "Inactivo" }}</span
+            >
+            <span class="text-xs" style="color: var(--ff-text-muted)">
+              Alta: {{ product.createdAt | date: "dd/MM/yyyy HH:mm" }}
+            </span>
+          </div>
         </div>
 
-        <div class="flex gap-2 flex-wrap">
-          <p-button
-            label="Ver variantes"
-            icon="pi pi-th-large"
-            severity="secondary"
-            [outlined]="true"
-            (onClick)="navigateToVariants()"
-          />
+        <!-- Stock general -->
+        <div class="ff-panel p-6">
+          <p
+            class="text-xs font-bold uppercase tracking-widest mb-4"
+            style="color: var(--ff-text-muted)"
+          >
+            Stock General
+          </p>
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="flex flex-col">
+              <span
+                class="text-xs uppercase tracking-wider mb-1"
+                style="color: var(--ff-text-muted)"
+                >Disponibles</span
+              >
+              <span
+                class="text-3xl font-black ff-mono"
+                style="color: var(--ff-success)"
+                >{{ product.availableCount }}</span
+              >
+            </div>
+            <div class="flex flex-col">
+              <span
+                class="text-xs uppercase tracking-wider mb-1"
+                style="color: var(--ff-text-muted)"
+                >Reservadas</span
+              >
+              <span
+                class="text-3xl font-black ff-mono"
+                style="color: var(--ff-warning)"
+                >{{ product.reservedCount }}</span
+              >
+            </div>
+            <div class="flex flex-col">
+              <span
+                class="text-xs uppercase tracking-wider mb-1"
+                style="color: var(--ff-text-muted)"
+                >Vendidas</span
+              >
+              <span
+                class="text-3xl font-black ff-mono"
+                style="color: var(--ff-text-muted)"
+                >{{ product.soldCount }}</span
+              >
+            </div>
+          </div>
+          @if (
+            product.availableCount + product.reservedCount + product.soldCount >
+            0
+          ) {
+            <div
+              class="flex gap-0.5 h-2 rounded-full overflow-hidden"
+              style="background: var(--ff-secondary)"
+            >
+              @if (product.availableCount > 0) {
+                <div
+                  style="background: var(--ff-success)"
+                  [style.flex]="product.availableCount"
+                ></div>
+              }
+              @if (product.reservedCount > 0) {
+                <div
+                  style="background: var(--ff-warning)"
+                  [style.flex]="product.reservedCount"
+                ></div>
+              }
+              @if (product.soldCount > 0) {
+                <div
+                  style="background: rgba(100, 116, 139, 0.4)"
+                  [style.flex]="product.soldCount"
+                ></div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Actions -->
+        <div class="ff-panel p-4 flex flex-col gap-2">
           @if (isAdmin) {
-            <p-button
-              label="Editar"
-              icon="pi pi-pencil"
-              severity="secondary"
-              [outlined]="true"
-              (onClick)="navigateToEdit()"
-            />
+            <button class="prod-action-btn" (click)="navigateToEdit()">
+              <i class="pi pi-pencil"></i> Editar producto
+            </button>
+          }
+          <button
+            class="prod-action-btn prod-action-btn--accent"
+            (click)="navigateToVariants()"
+          >
+            <i class="pi pi-sitemap"></i> Ver variantes →
+          </button>
+          @if (isAdmin) {
             @if (product.status === "ACTIVE") {
-              <p-button
-                label="Desactivar"
-                icon="pi pi-ban"
-                severity="danger"
-                [outlined]="true"
-                (onClick)="confirmDeactivate()"
-              />
+              <button
+                class="prod-action-btn prod-action-btn--danger"
+                (click)="confirmDeactivate()"
+              >
+                <i class="pi pi-ban"></i> Desactivar producto
+              </button>
             } @else {
-              <p-button
-                label="Activar"
-                icon="pi pi-check-circle"
-                severity="secondary"
-                [outlined]="true"
-                (onClick)="confirmActivate()"
-              />
+              <button class="prod-action-btn" (click)="confirmActivate()">
+                <i class="pi pi-check-circle"></i> Activar producto
+              </button>
             }
           }
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        @if (product.description) {
-          <div class="md:col-span-2">
-            <span class="text-sm text-gray-500">Descripción comercial</span>
-            <p class="font-medium">{{ product.description }}</p>
+      <!-- ── RIGHT PANEL: variants table ── -->
+      <div class="lg:col-span-7">
+        <div class="ff-panel overflow-hidden">
+          <div class="flex items-center justify-between px-5 pt-5 pb-3">
+            <div class="flex items-center gap-3">
+              <span class="font-bold" style="color: var(--ff-text-primary)"
+                >Variantes</span
+              >
+              @if (product.variants.length > 0) {
+                <span
+                  class="ff-badge"
+                  style="
+                    background: rgba(79, 110, 247, 0.18);
+                    color: var(--ff-accent);
+                  "
+                >
+                  {{ product.variants.length }} VARIANTES
+                </span>
+              }
+            </div>
+            @if (isAdmin) {
+              <p-button
+                label="Nueva variante"
+                icon="pi pi-plus"
+                severity="primary"
+                styleClass="h-9 px-4 rounded-xl"
+                (onClick)="navigateToVariants()"
+              />
+            }
           </div>
-        }
 
-        @if (product.model) {
-          <div>
-            <span class="text-sm text-gray-500">Modelo</span>
-            <p class="font-medium">{{ product.model }}</p>
-          </div>
-        }
-
-        @if (product.brandName) {
-          <div>
-            <span class="text-sm text-gray-500">Marca</span>
-            <p class="font-medium">{{ product.brandName }}</p>
-          </div>
-        }
-
-        @if (product.categoryName) {
-          <div>
-            <span class="text-sm text-gray-500">Categoría</span>
-            <p class="font-medium">{{ product.categoryName }}</p>
-          </div>
-        }
-
-        <div>
-          <span class="text-sm text-gray-500">Unidades</span>
-          <p class="font-medium text-sm">
-            Disponibles:
-            <strong>{{ product.availableCount }}</strong> &nbsp;|&nbsp;
-            Reservadas:
-            <strong>{{ product.reservedCount }}</strong> &nbsp;|&nbsp; Vendidas:
-            <strong>{{ product.soldCount }}</strong>
-          </p>
+          @if (product.variants.length > 0) {
+            <p-table [value]="product.variants" styleClass="p-datatable-sm">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th>COLOR</th>
+                  <th>TALLE</th>
+                  <th>CAPACIDAD</th>
+                  <th class="text-right">PRECIO</th>
+                  <th class="text-center">DISP.</th>
+                  <th class="text-center">RES.</th>
+                  <th class="text-center">ESTADO</th>
+                  <th></th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-v>
+                <tr>
+                  <td class="font-medium" style="color: var(--ff-text-primary)">
+                    {{ v.color ?? "—" }}
+                  </td>
+                  <td style="color: var(--ff-text-secondary)">
+                    {{ v.size ?? "—" }}
+                  </td>
+                  <td style="color: var(--ff-text-secondary)">
+                    {{ v.capacity ?? "—" }}
+                  </td>
+                  <td
+                    class="text-right ff-mono font-bold"
+                    style="color: var(--ff-accent)"
+                  >
+                    {{ v.currentPrice | currencyArs: 2 }}
+                  </td>
+                  <td
+                    class="text-center font-bold ff-mono"
+                    style="color: var(--ff-success)"
+                  >
+                    {{ v.availableCount ?? "—" }}
+                  </td>
+                  <td
+                    class="text-center ff-mono"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    {{ v.reservedCount ?? "—" }}
+                  </td>
+                  <td class="text-center">
+                    <span
+                      class="ff-badge"
+                      [class.ff-badge--activo]="v.status === 'ACTIVE'"
+                      [class.ff-badge--inactivo]="v.status !== 'ACTIVE'"
+                      >{{ v.status === "ACTIVE" ? "Activa" : "Inactiva" }}</span
+                    >
+                  </td>
+                  <td>
+                    <a
+                      class="prod-action-link text-xs"
+                      (click)="navigateToUnits(v.id)"
+                      style="cursor: pointer"
+                    >
+                      Ver unidades
+                    </a>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+            @if (product.variants.length > 0) {
+              <div
+                class="px-5 py-3"
+                style="border-top: 1px solid var(--ff-border)"
+              >
+                <span
+                  class="text-xs ff-mono"
+                  style="color: var(--ff-text-muted)"
+                >
+                  Rango de precio:&nbsp;
+                  <span style="color: var(--ff-accent)">
+                    {{ product.variants[0].currentPrice | currencyArs: 2 }}
+                    @if (product.variants.length > 1) {
+                      —
+                      {{
+                        product.variants[product.variants.length - 1]
+                          .currentPrice | currencyArs: 2
+                      }}
+                    }
+                  </span>
+                </span>
+              </div>
+            }
+          } @else {
+            <div class="p-8 text-center">
+              <p class="text-sm" style="color: var(--ff-text-muted)">
+                Sin variantes registradas.
+              </p>
+            </div>
+          }
         </div>
-
-        <div>
-          <span class="text-sm text-gray-500">Fecha de alta</span>
-          <p class="font-medium">
-            {{ product.createdAt | date: "dd/MM/yyyy HH:mm" }}
-          </p>
-        </div>
-
-        @if (product.updatedAt) {
-          <div>
-            <span class="text-sm text-gray-500">Última modificación</span>
-            <p class="font-medium">
-              {{ product.updatedAt | date: "dd/MM/yyyy HH:mm" }}
-            </p>
-          </div>
-        }
       </div>
-
-      @if (product.variants.length > 0) {
-        <div>
-          <h3 class="text-sm font-semibold text-gray-700 mb-2">Variantes</h3>
-          <p-table
-            [value]="product.variants"
-            styleClass="p-datatable-sm"
-            responsiveLayout="scroll"
-          >
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Color</th>
-                <th>Talle</th>
-                <th>Capacidad</th>
-                <th class="text-right">Precio</th>
-                <th class="text-center">Estado</th>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-v>
-              <tr>
-                <td>{{ v.color ?? "—" }}</td>
-                <td>{{ v.size ?? "—" }}</td>
-                <td>{{ v.capacity ?? "—" }}</td>
-                <td class="text-right font-mono">
-                  {{ v.currentPrice | currencyArs: 2 }}
-                </td>
-                <td class="text-center">
-                  <p-tag
-                    [value]="v.status === 'ACTIVE' ? 'Activa' : 'Inactiva'"
-                    [severity]="v.status === 'ACTIVE' ? 'success' : 'secondary'"
-                  />
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </div>
-      } @else {
-        <p class="text-sm text-gray-400">Sin variantes registradas.</p>
-      }
     </div>
   }
 </div>

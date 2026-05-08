@@ -1,18 +1,25 @@
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+  <!-- Formulario de condiciones -->
   <div class="lg:col-span-7 space-y-6">
     <div class="flex items-center gap-3 mb-2">
-      <i class="pi pi-cog text-blue-600 bg-blue-50 p-2 rounded-lg"></i>
-      <h2 class="text-lg font-bold text-gray-800">
+      <i
+        class="pi pi-cog p-2 rounded-lg"
+        style="color: var(--ff-accent); background: rgba(79, 110, 247, 0.12)"
+      ></i>
+      <h2 class="text-lg font-bold" style="color: var(--ff-text-primary)">
         Configuración del
-        {{ form.selectedType() === "VENTA" ? "Crédito" : "Préstamo" }}
+        {{ form.selectedType() === "SALE" ? "Crédito" : "Préstamo" }}
       </h2>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-      @if (form.selectedType() === "VENTA") {
+      <!-- ── Campos exclusivos VENTA ── -->
+      @if (form.selectedType() === "SALE") {
         <div class="flex flex-col gap-2">
-          <label class="text-xs font-bold text-gray-500 uppercase"
-            >Capital a Financiar</label
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
+            >Total Carrito</label
           >
           <p-inputNumber
             [ngModel]="form.capital()"
@@ -21,22 +28,65 @@
             locale="es-AR"
             [readonly]="true"
             styleClass="w-full"
-            inputStyleClass="w-full h-12 rounded-xl font-bold bg-gray-100 border-gray-200 text-gray-500"
+            inputStyleClass="w-full h-12 rounded-xl font-bold"
           />
         </div>
         <div class="flex flex-col gap-2 field-dark-border">
-          <label class="text-xs font-bold text-gray-500 uppercase"
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
+            >Enganche / Anticipo</label
+          >
+          <p-inputNumber
+            [ngModel]="form.downPayment()"
+            (ngModelChange)="form.downPayment.set($event ?? 0)"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-12 rounded-xl"
+            data-cy="input-downpayment"
+          />
+          @if (!form.isDownPaymentValid()) {
+            <small class="text-xs font-medium" style="color: var(--ff-danger)">
+              El enganche no puede superar el total del carrito.
+            </small>
+          }
+        </div>
+        <div class="flex flex-col gap-2">
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
+            >Capital Financiado</label
+          >
+          <p-inputNumber
+            [ngModel]="form.financedCapital()"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [readonly]="true"
+            styleClass="w-full"
+            inputStyleClass="w-full h-12 rounded-xl font-bold"
+          />
+        </div>
+        <div class="flex flex-col gap-2 field-dark-border">
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
             >Cantidad de Cuotas</label
           >
           <p-dropdown
             [options]="form.installmentsOptions"
             [ngModel]="form.selectedInstallments()"
             (ngModelChange)="form.selectedInstallments.set($event)"
-            styleClass="w-full h-12 rounded-xl border-gray-200 flex items-center bg-white"
+            styleClass="w-full h-12"
           />
         </div>
         <div class="flex flex-col gap-2 field-dark-border">
-          <label class="text-xs font-bold text-gray-500 uppercase"
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
             >Recargo Fijo (%)</label
           >
           <p-inputNumber
@@ -44,14 +94,17 @@
             (ngModelChange)="form.interestRate.set($event)"
             suffix=" %"
             styleClass="w-full"
-            inputStyleClass="w-full h-12 rounded-xl border-gray-200"
+            inputStyleClass="w-full h-12 rounded-xl"
           />
         </div>
       }
 
-      @if (form.selectedType() === "PRESTAMO") {
+      <!-- ── Campos exclusivos PRESTAMO ── -->
+      @if (form.selectedType() === "LOAN") {
         <div class="flex flex-col gap-2">
-          <label class="text-xs font-bold text-gray-500 uppercase"
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
             >Efectivo a Entregar</label
           >
           <p-inputNumber
@@ -61,11 +114,13 @@
             currency="ARS"
             locale="es-AR"
             styleClass="w-full"
-            inputStyleClass="w-full h-12 rounded-xl font-bold border-gray-200"
+            inputStyleClass="w-full h-12 rounded-xl font-bold"
           />
         </div>
         <div class="flex flex-col gap-2">
-          <label class="text-xs font-bold text-gray-500 uppercase"
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
             >Frecuencia de Cobro</label
           >
           <p-dropdown
@@ -73,31 +128,26 @@
             [ngModel]="form.selectedFrequency()"
             (ngModelChange)="form.selectedFrequency.set($event)"
             optionLabel="label"
-            styleClass="w-full h-12 rounded-xl border-gray-200 flex items-center bg-white"
+            styleClass="w-full h-12"
           />
         </div>
-        <div class="flex flex-col gap-2">
-          <label class="text-xs font-bold text-gray-500 uppercase"
-            >Plazo (Meses)</label
+        <div class="flex flex-col gap-2 field-dark-border">
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
+            >Cantidad de Cuotas</label
           >
-          <p-inputNumber
-            [ngModel]="form.loanMonths()"
-            (ngModelChange)="form.loanMonths.set($event)"
-            [showButtons]="true"
-            buttonLayout="horizontal"
-            spinnerMode="horizontal"
-            [min]="1"
-            [max]="48"
-            decrementButtonClass="p-button-secondary"
-            incrementButtonClass="p-button-secondary"
-            incrementButtonIcon="pi pi-plus"
-            decrementButtonIcon="pi pi-minus"
-            inputStyleClass="w-full h-12 text-center font-bold"
-            styleClass="w-full rounded-xl overflow-hidden border-gray-200"
+          <p-dropdown
+            [options]="form.installmentsOptions"
+            [ngModel]="form.selectedInstallments()"
+            (ngModelChange)="form.selectedInstallments.set($event)"
+            styleClass="w-full h-12"
           />
         </div>
         <div class="flex flex-col gap-2">
-          <label class="text-xs font-bold text-gray-500 uppercase"
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
             >Tasa Mensual (%)</label
           >
           <p-inputNumber
@@ -106,29 +156,38 @@
             suffix=" %"
             [min]="0"
             styleClass="w-full"
-            inputStyleClass="w-full h-12 rounded-xl font-bold border-gray-200"
+            inputStyleClass="w-full h-12 rounded-xl font-bold"
           />
         </div>
       }
 
+      <!-- ── Fecha primer pago (ambos tipos) ── -->
       <div
         class="flex flex-col gap-2 field-dark-border"
-        [class.md:col-span-2]="form.selectedType() === 'PRESTAMO'"
+        [class.md:col-span-2]="form.selectedType() === 'LOAN'"
       >
-        <label class="text-xs font-bold text-gray-500 uppercase"
+        <label
+          class="text-xs font-bold uppercase tracking-wider"
+          style="color: var(--ff-text-muted)"
           >Fecha del Primer Pago</label
         >
         <p-calendar
-          [(ngModel)]="firstDueDate"
+          [ngModel]="form.firstDueDate()"
+          (ngModelChange)="onFirstDueDateChange($event)"
           [minDate]="minFirstDueDate"
           dateFormat="dd/mm/yy"
           [showIcon]="true"
+          [readonlyInput]="false"
           styleClass="op-calendar"
           inputId="first-due-date"
           data-cy="input-first-due-date"
         />
         @if (hasInvalidFirstDueDate) {
-          <small class="text-red-600 text-xs font-medium" data-cy="first-due-date-error">
+          <small
+            class="text-xs font-medium"
+            style="color: var(--ff-danger)"
+            data-cy="first-due-date-error"
+          >
             La fecha del primer pago no puede ser anterior a hoy.
           </small>
         }
@@ -136,40 +195,78 @@
     </div>
   </div>
 
+  <!-- Panel de resumen lateral -->
   <div class="lg:col-span-5">
-    <div
-      class="bg-blue-900 text-white rounded-2xl p-6 shadow-xl space-y-6 sticky top-0"
-    >
-      <h3 class="text-sm font-bold uppercase tracking-widest opacity-70">
+    <div class="ff-panel p-6 space-y-6 sticky top-0">
+      <h3
+        class="text-xs font-bold uppercase tracking-widest"
+        style="color: var(--ff-text-muted)"
+      >
         Resumen del Plan
       </h3>
 
       <div class="space-y-4">
         <div
-          class="flex justify-between items-end border-b border-blue-800 pb-4"
+          class="flex justify-between items-end pb-4"
+          style="border-bottom: 1px solid var(--ff-border)"
         >
-          <span class="text-sm opacity-80">Total a devolver</span>
-          <span class="text-2xl font-black">{{
-            form.totalToPay() | currencyArs
-          }}</span>
+          <span class="text-sm" style="color: var(--ff-text-secondary)">
+            Total a devolver
+          </span>
+          <span
+            class="text-2xl font-black ff-mono"
+            style="color: var(--ff-text-primary)"
+          >
+            {{ form.totalToPay() | currencyArs }}
+          </span>
         </div>
         <div class="flex justify-between items-center">
-          <span class="text-sm opacity-80">Pagos totales</span>
-          <span class="text-lg font-bold"
-            >{{ form.installmentsCount() }} cuotas</span
-          >
+          <span class="text-sm" style="color: var(--ff-text-secondary)">
+            Pagos totales
+          </span>
+          <span class="text-lg font-bold" style="color: var(--ff-text-primary)">
+            {{ form.installmentsCount() }} cuotas
+          </span>
+        </div>
+        @if (form.selectedType() === 'SALE') {
+          <div class="flex justify-between items-center">
+            <span class="text-sm" style="color: var(--ff-text-secondary)">
+              Enganche
+            </span>
+            <span class="text-lg font-bold ff-mono" style="color: var(--ff-text-primary)">
+              {{ form.downPayment() | currencyArs }}
+            </span>
+          </div>
+        }
+        <div class="flex justify-between items-center">
+          <span class="text-sm" style="color: var(--ff-text-secondary)">
+            Capital financiado
+          </span>
+          <span class="text-lg font-bold ff-mono" style="color: var(--ff-text-primary)">
+            {{ form.financedCapital() | currencyArs }}
+          </span>
         </div>
       </div>
 
-      <div class="bg-white/10 rounded-xl p-5 border border-white/10">
-        <p class="text-xs font-bold uppercase opacity-70 mb-1">
+      <div
+        class="rounded-xl p-5"
+        style="
+          background: rgba(79, 110, 247, 0.08);
+          border: 1px solid rgba(79, 110, 247, 0.2);
+        "
+      >
+        <p
+          class="text-xs font-bold uppercase tracking-wider mb-1"
+          style="color: var(--ff-text-muted)"
+        >
           Valor de cada cuota
         </p>
-        <div class="flex items-baseline gap-2">
-          <span class="text-4xl font-black text-white">
-            {{ form.installmentValue() | currencyArs }}
-          </span>
-        </div>
+        <span
+          class="text-4xl font-black ff-mono"
+          style="color: var(--ff-accent)"
+        >
+          {{ form.installmentValue() | currencyArs }}
+        </span>
       </div>
     </div>
   </div>

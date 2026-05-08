@@ -10,8 +10,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--ff-panel);
+  border-bottom: 1px solid var(--ff-border);
   gap: 1rem;
 }
 
@@ -31,13 +31,14 @@
   color: #fff;
   font-weight: 700;
   font-size: 1.1rem;
+  font-family: var(--ff-font-mono);
   flex-shrink: 0;
 }
 
 .client-name {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--ff-text-primary);
   margin: 0 0 0.2rem;
 }
 
@@ -46,11 +47,11 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.78rem;
-  color: #6b7280;
+  color: var(--ff-text-secondary);
 }
 
 .meta-sep {
-  color: #d1d5db;
+  color: var(--ff-border);
 }
 
 .client-stats {
@@ -68,23 +69,24 @@
 .stat-value {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #111827;
+  font-family: var(--ff-font-mono);
+  color: var(--ff-text-primary);
 
   &.danger {
-    color: #dc2626;
+    color: var(--ff-danger);
   }
 }
 
 .stat-label {
   font-size: 0.7rem;
-  color: #9ca3af;
+  color: var(--ff-text-muted);
   margin-top: 0.05rem;
 }
 
 .stat-divider {
   width: 1px;
   height: 2rem;
-  background: #e5e7eb;
+  background: var(--ff-border);
 }
 
 // ─── Tabs ─────────────────────────────────────────────────
@@ -92,8 +94,8 @@
   display: flex;
   gap: 0;
   padding: 0 1.5rem;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--ff-panel);
+  border-bottom: 1px solid var(--ff-border);
 }
 
 .tab-btn {
@@ -103,7 +105,7 @@
   padding: 0.75rem 1rem;
   font-size: 0.85rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--ff-text-secondary);
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
@@ -113,12 +115,12 @@
     border-color 0.15s;
 
   &:hover {
-    color: #111827;
+    color: var(--ff-text-primary);
   }
 
   &.active {
-    color: #2563eb;
-    border-bottom-color: #2563eb;
+    color: var(--ff-accent);
+    border-bottom-color: var(--ff-accent);
     font-weight: 600;
   }
 }
@@ -130,8 +132,8 @@
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 999px;
-  background: #dbeafe;
-  color: #2563eb;
+  background: rgba(79, 110, 247, 0.15);
+  color: var(--ff-accent);
   font-size: 0.65rem;
   font-weight: 700;
 }

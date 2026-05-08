@@ -89,7 +89,7 @@
     }
   </div>
 } @else if (notFound) {
-  <div class="p-6 text-center text-gray-500">
+  <div class="p-6 text-center" style="color: var(--ff-text-muted)">
     <p>Cliente no encontrado.</p>
     <p-button
       label="Volver"
@@ -101,5 +101,7 @@
     />
   </div>
 } @else {
-  <app-error-state [message]="errorMessage || 'Ocurrió un error al cargar el cliente.'" />
+  <app-error-state
+    [message]="errorMessage || 'Ocurrió un error al cargar el cliente.'"
+  />
 }

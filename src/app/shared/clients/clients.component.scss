@@ -3,40 +3,40 @@
   height: 2.75rem;
   padding: 0.5rem 0.875rem;
   font-size: 0.9375rem;
-  border: 1.5px solid #d1d5db;
+  border: 1.5px solid var(--ff-border);
   border-radius: 0.75rem;
-  background: #ffffff;
-  color: #111827;
+  background: var(--ff-secondary);
+  color: var(--ff-text-primary);
   outline: none;
   transition: border-color 0.15s;
 
   &::placeholder {
-    color: #9ca3af;
+    color: var(--ff-text-muted);
   }
 
   &:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--ff-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.15);
   }
 
   &--error {
-    border-color: #ef4444;
+    border-color: var(--ff-danger);
 
     &:focus {
-      border-color: #ef4444;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+      border-color: var(--ff-danger);
+      box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15);
     }
   }
 
   &--readonly {
-    background: #f0fdf4;
-    border-color: #86efac;
-    color: #16a34a;
+    background: rgba(52, 211, 153, 0.08);
+    border-color: rgba(52, 211, 153, 0.25);
+    color: var(--ff-success);
     font-weight: 600;
     cursor: default;
 
     &:focus {
-      border-color: #86efac;
+      border-color: rgba(52, 211, 153, 0.25);
       box-shadow: none;
     }
   }

@@ -1,106 +1,213 @@
 <p-toast />
 
-<div class="space-y-4">
-  <div class="flex items-center justify-between">
-    <h2 class="text-base font-semibold text-gray-700">
-      Categorías de productos
-    </h2>
+<div class="p-4">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <div>
+      <h1 class="text-base font-bold" style="color: var(--ff-text-primary)">
+        Categorías de productos
+      </h1>
+      <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
+        Organizá el catálogo por tipo de producto
+      </p>
+    </div>
     <p-button
       label="Nueva categoría"
       icon="pi pi-plus"
+      severity="primary"
+      styleClass="h-10 px-4 rounded-xl"
       (onClick)="openCreate()"
     />
   </div>
 
-  @if (loading) {
-    <div class="space-y-2">
-      @for (_ of [1, 2, 3]; track $index) {
-        <p-skeleton height="2.5rem" />
-      }
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <!-- ── LEFT: table ── -->
+    <div class="lg:col-span-7">
+      <div class="ff-panel overflow-hidden">
+        @if (loading) {
+          <div class="p-6 space-y-3">
+            @for (_ of [1, 2, 3]; track $index) {
+              <p-skeleton height="2.5rem" />
+            }
+          </div>
+        } @else if (rows.length === 0) {
+          <div class="p-8 text-center">
+            <p class="text-sm" style="color: var(--ff-text-muted)">
+              Sin categorías registradas.
+            </p>
+          </div>
+        } @else {
+          <p-table [value]="rows" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>NOMBRE</th>
+                <th class="text-center">PRODUCTOS</th>
+                <th class="text-center">ESTADO</th>
+                <th>ALTA</th>
+                <th>ACCIONES</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-cat>
+              <tr [class.opacity-50]="!cat.active">
+                <td class="font-medium" style="color: var(--ff-text-primary)">
+                  {{ cat.name }}
+                </td>
+                <td class="text-center">
+                  @if (cat.productCount != null) {
+                    <span
+                      class="ff-badge"
+                      style="
+                        background: rgba(79, 110, 247, 0.18);
+                        color: var(--ff-accent);
+                      "
+                    >
+                      {{ cat.productCount }}
+                    </span>
+                  } @else {
+                    <span class="text-xs" style="color: var(--ff-text-muted)"
+                      >—</span
+                    >
+                  }
+                </td>
+                <td class="text-center">
+                  <span
+                    class="ff-badge"
+                    [class.ff-badge--activo]="cat.active"
+                    [class.ff-badge--inactivo]="!cat.active"
+                    >{{ cat.active ? "ACTIVA" : "INACTIVA" }}</span
+                  >
+                </td>
+                <td class="text-xs ff-mono" style="color: var(--ff-text-muted)">
+                  —
+                </td>
+                <td>
+                  <a
+                    class="prod-action-link text-xs"
+                    [style.color]="
+                      cat.active ? 'var(--ff-danger)' : 'var(--ff-accent)'
+                    "
+                    (click)="toggle(cat)"
+                    style="cursor: pointer"
+                    >{{ cat.active ? "Desactivar" : "Activar" }}</a
+                  >
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        }
+      </div>
     </div>
-  } @else if (rows.length === 0) {
-    <p class="text-sm text-gray-400 text-center py-8">
-      Sin categorías registradas.
-    </p>
-  } @else {
-    <div
-      class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
-    >
-      <p-table
-        [value]="rows"
-        styleClass="p-datatable-sm p-datatable-hoverable-rows"
-        responsiveLayout="scroll"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Nombre</th>
-            <th class="text-center">Estado</th>
-            <th class="text-center">Acciones</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-cat>
-          <tr>
-            <td class="font-medium">{{ cat.name }}</td>
-            <td class="text-center">
-              <p-tag
-                [value]="cat.active ? 'Activa' : 'Inactiva'"
-                [severity]="cat.active ? 'success' : 'secondary'"
-              />
-            </td>
-            <td class="text-center">
-              <p-button
-                [label]="cat.active ? 'Desactivar' : 'Activar'"
-                [severity]="cat.active ? 'danger' : 'secondary'"
-                [outlined]="true"
-                size="small"
-                (onClick)="toggle(cat)"
-              />
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
-  }
-</div>
 
-<p-dialog
-  [(visible)]="showDialog"
-  [modal]="true"
-  [style]="{ width: '400px' }"
-  header="Nueva categoría"
-  [closable]="!saving"
->
-  <div class="space-y-4 py-1">
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Nombre *</label>
-      <input
-        pInputText
-        [(ngModel)]="newName"
-        maxlength="100"
-        class="w-full h-11"
-        placeholder="Nombre de la categoría..."
-      />
+    <!-- ── RIGHT: form + stats ── -->
+    <div class="lg:col-span-5 flex flex-col gap-4">
+      <!-- Nueva categoría form -->
+      <div class="ff-panel p-5 space-y-4">
+        <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
+          Nueva categoría
+        </h3>
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
+          >
+            Nombre de la categoría
+          </label>
+          <input
+            pInputText
+            [(ngModel)]="newName"
+            maxlength="100"
+            class="w-full h-11"
+            placeholder="Ej: Smartphones, Electrónica..."
+          />
+          <small class="text-xs" style="color: var(--ff-text-muted)">
+            El nombre debe ser único. No se puede modificar una vez creado.
+          </small>
+        </div>
+        @if (dialogError) {
+          <p
+            class="text-sm px-3 py-2 rounded-lg"
+            style="color: var(--ff-danger); background: rgba(239, 68, 68, 0.1)"
+          >
+            {{ dialogError }}
+          </p>
+        }
+        <p-button
+          label="Crear categoría"
+          severity="primary"
+          styleClass="w-full justify-center h-11 rounded-xl"
+          [loading]="saving"
+          [disabled]="!newName.trim() || saving"
+          (onClick)="submitCreate()"
+        />
+      </div>
+
+      <!-- Stats -->
+      <div class="ff-panel p-5">
+        <p
+          class="text-xs font-bold uppercase tracking-widest mb-4"
+          style="color: var(--ff-text-muted)"
+        >
+          Estadísticas
+        </p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="ff-panel p-4">
+            <p
+              class="text-xs uppercase tracking-wider mb-1"
+              style="color: var(--ff-text-muted)"
+            >
+              Total
+            </p>
+            <p
+              class="text-2xl font-black ff-mono"
+              style="color: var(--ff-text-primary)"
+            >
+              {{ rows.length }}
+            </p>
+          </div>
+          <div class="ff-panel p-4">
+            <p
+              class="text-xs uppercase tracking-wider mb-1"
+              style="color: var(--ff-text-muted)"
+            >
+              Activas
+            </p>
+            <p
+              class="text-2xl font-black ff-mono"
+              style="color: var(--ff-success)"
+            >
+              —
+            </p>
+          </div>
+          <div class="ff-panel p-4">
+            <p
+              class="text-xs uppercase tracking-wider mb-1"
+              style="color: var(--ff-text-muted)"
+            >
+              Inactivas
+            </p>
+            <p
+              class="text-2xl font-black ff-mono"
+              style="color: var(--ff-danger)"
+            >
+              —
+            </p>
+          </div>
+          <div class="ff-panel p-4">
+            <p
+              class="text-xs uppercase tracking-wider mb-1"
+              style="color: var(--ff-text-muted)"
+            >
+              Con productos
+            </p>
+            <p
+              class="text-2xl font-black ff-mono"
+              style="color: var(--ff-accent)"
+            >
+              —
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
-    @if (dialogError) {
-      <p class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
-        {{ dialogError }}
-      </p>
-    }
   </div>
-  <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [text]="true"
-      (onClick)="showDialog = false"
-      [disabled]="saving"
-    />
-    <p-button
-      label="Crear"
-      icon="pi pi-check"
-      (onClick)="submitCreate()"
-      [loading]="saving"
-      [disabled]="!newName.trim()"
-    />
-  </ng-template>
-</p-dialog>
+</div>

@@ -10,7 +10,38 @@
 describe('Admin — Planillas de Cobro', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
+
+    cy.intercept('GET', '**/api/users*', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: [
+          {
+            id: 'collector-1',
+            full_name: 'Cobrador Demo',
+            dni: '30111222',
+            email: 'collector@example.com',
+            address: 'Calle 123',
+            role: 'COLLECTOR',
+            status: 'ACTIVE',
+            is_temp_password: false,
+            failed_attempts: 0,
+            locked_at: null,
+            last_login_at: null,
+            created_at: '2026-05-05T10:00:00.000Z',
+          },
+        ],
+      },
+    }).as('collectionsUsers');
+
+    cy.intercept('GET', '**/api/collections*', {
+      statusCode: 200,
+      body: { ok: true, data: [] },
+    }).as('collectionsList');
+
     cy.loginAs('ADMIN', '/admin/collections');
+    cy.wait('@collectionsUsers');
+    cy.wait('@collectionsList');
   });
 
   it('muestra el título "Planillas de cobro"', () => {
@@ -42,7 +73,30 @@ describe('Admin — Planillas de Cobro', () => {
 describe('Admin — Gastos', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
+
+    cy.intercept('GET', '**/api/expense-categories*', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: [
+          {
+            id: 'cat-1',
+            name: 'Insumos',
+            active: true,
+            created_at: '2026-05-05T10:00:00.000Z',
+          },
+        ],
+      },
+    }).as('expenseCategories');
+
+    cy.intercept('GET', '**/api/expenses*', {
+      statusCode: 200,
+      body: { ok: true, data: { rows: [], total: 0 } },
+    }).as('expensesList');
+
     cy.loginAs('ADMIN', '/admin/expenses');
+    cy.wait('@expenseCategories');
+    cy.wait('@expensesList');
   });
 
   it('muestra el título "Gastos"', () => {
@@ -62,12 +116,12 @@ describe('Admin — Gastos', () => {
   });
 
   it('al hacer clic en "Gestionar categorías" muestra el panel', () => {
-    cy.contains('button', /categoría/i).first().click();
+    cy.contains('button', 'Gestionar categorías').click();
     cy.contains('Categorías de gastos').should('be.visible');
   });
 
   it('el panel de categorías tiene botón "Nueva categoría"', () => {
-    cy.contains('button', /categoría/i).first().click();
+    cy.contains('button', 'Gestionar categorías').click();
     cy.contains('button', 'Nueva categoría').should('exist');
   });
 });
@@ -75,7 +129,38 @@ describe('Admin — Gastos', () => {
 describe('Admin — Cobros (Payments)', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
+
+    cy.intercept('GET', '**/api/users*', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: [
+          {
+            id: 'collector-1',
+            full_name: 'Cobrador Demo',
+            dni: '30111222',
+            email: 'collector@example.com',
+            address: 'Calle 123',
+            role: 'COLLECTOR',
+            status: 'ACTIVE',
+            is_temp_password: false,
+            failed_attempts: 0,
+            locked_at: null,
+            last_login_at: null,
+            created_at: '2026-05-05T10:00:00.000Z',
+          },
+        ],
+      },
+    }).as('paymentsUsers');
+
+    cy.intercept('GET', '**/api/payments*', {
+      statusCode: 200,
+      body: { ok: true, data: [] },
+    }).as('paymentsList');
+
     cy.loginAs('ADMIN', '/admin/payments');
+    cy.wait('@paymentsUsers');
+    cy.wait('@paymentsList');
   });
 
   it('muestra el título "Cobros"', () => {
@@ -87,7 +172,7 @@ describe('Admin — Cobros (Payments)', () => {
   });
 
   it('tiene dropdowns de filtro', () => {
-    cy.get('p-dropdown').should('have.length.gte', 2);
+    cy.get('p-dropdown', { timeout: 12000 }).should('have.length.at.least', 2);
   });
 
   it('renderiza sin error', () => {

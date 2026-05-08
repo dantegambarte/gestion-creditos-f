@@ -1,31 +1,36 @@
 /**
- * SUITE: Admin — Modal crear producto (/admin/products)
+ * SUITE: Admin — Crear producto (/admin/products/new)
  *
  * Cubre:
- *  - Apertura del modal desde gestión compartida de productos
- *  - Botón "Guardar Producto" deshabilitado con formulario incompleto
- *  - Botón habilitado al completar los campos requeridos
+ *  - Navegación desde listado a pantalla de alta
+ *  - Botón "Crear producto" deshabilitado con formulario incompleto
+ *  - Botón habilitado al completar el campo requerido (título)
  */
 
-describe('Admin — Modal crear producto', () => {
+describe('Admin — Crear producto', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-    cy.loginAs('ADMIN', '/admin/products');
+
+    cy.intercept('GET', /\/api\/product-brands/, {
+      statusCode: 200,
+      body: { ok: true, data: [{ id: 'b-033', name: 'Samsung', active: true }] },
+    }).as('brands');
+
+    cy.intercept('GET', /\/api\/product-categories/, {
+      statusCode: 200,
+      body: { ok: true, data: [{ id: 'c-033', name: 'Electrónica', active: true }] },
+    }).as('categories');
+
+    cy.loginAs('ADMIN', '/admin/products/new');
+    cy.wait('@brands');
+    cy.wait('@categories');
   });
 
-  it('mantiene Guardar Producto deshabilitado hasta completar los campos requeridos', () => {
-    cy.contains('button', 'Nuevo Producto').click();
+  it('mantiene Crear producto deshabilitado hasta completar los campos requeridos', () => {
+    cy.contains('button', 'Crear producto').should('be.disabled');
 
-    cy.contains('button', 'Guardar Producto').should('be.disabled');
+    cy.get('input[formcontrolname="title"]').type('PRD-006 Samsung A16');
 
-    cy.get('input[formcontrolname="codigo"]').type('PRD-006');
-    cy.get('[formcontrolname="categoria"]').click();
-    cy.contains('.p-dropdown-item', 'Electrónica').click();
-    cy.get('input[formcontrolname="stockInicial"]').clear().type('5').blur();
-
-    cy.get('p-inputnumber[formcontrolname="precioCompra"] input').type('1000').blur();
-    cy.get('p-inputnumber[formcontrolname="precioVenta"] input').type('1500').blur();
-
-    cy.contains('button', 'Guardar Producto').should('not.be.disabled');
+    cy.contains('button', 'Crear producto').should('not.be.disabled');
   });
 });

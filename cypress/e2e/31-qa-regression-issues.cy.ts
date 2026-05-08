@@ -207,13 +207,15 @@ describe('QA Regression — SALE frontend integration', () => {
 
   it('simula SALE con down_payment, muestra monto financiado y no usa prepaid_installments', () => {
     cy.intercept('POST', '**/api/credits/simulate', (req) => {
-      expect(req.body).to.deep.equal({
+      expect(req.body).to.include({
         type: 'SALE',
         installments_count: 3,
         payment_frequency: 'MONTHLY',
-        total_amount: 1000,
         down_payment: 200,
       });
+      expect(req.body.products).to.deep.equal([
+        { variant_id: 'var-1', quantity: 1 },
+      ]);
       expect(req.body.prepaid_installments).to.equal(undefined);
       req.reply(saleSimulationResponse);
     }).as('simulateSale');

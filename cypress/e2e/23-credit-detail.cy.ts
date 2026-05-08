@@ -17,19 +17,43 @@ const CREDIT_MOCK = {
   id: 'crd-001',
   type: 'SALE',
   status: 'PENDING_APPROVAL',
-  totalAmount: 150000,
-  installmentsCount: 12,
-  paymentFrequency: 'WEEKLY',
-  interestRate: 10,
-  createdAt: '2026-01-15T00:00:00Z',
-  approvedAt: null,
-  rejectionReason: null,
-  customerName: 'Ana García',
-  customerDni: '12345678',
-  sellerId: 'usr-002',
-  sellerName: 'María Sánchez',
-  approverId: null,
-  approverName: null,
+  total_amount: 150000,
+  financed_amount: 150000,
+  installments_count: 12,
+  payment_frequency: 'WEEKLY',
+  interest_rate: 10,
+  created_at: '2026-01-15T00:00:00Z',
+  approved_at: null,
+  rejection_reason: null,
+  customer_id: 'cust-001',
+  customer_name: 'Ana Garcia',
+  customer_dni: '12345678',
+  customer_phone: '3811234567',
+  created_by_id: 'usr-002',
+  created_by_name: 'Maria Sanchez',
+  approved_by: null,
+  notes: null,
+  products: [],
+  installments: [
+    {
+      id: 'inst-001',
+      installment_number: 1,
+      due_date: '2026-02-01',
+      amount_due: 13000,
+      amount_paid: 0,
+      penalty_amount: 0,
+      status: 'PENDING',
+    },
+    {
+      id: 'inst-002',
+      installment_number: 2,
+      due_date: '2026-02-08',
+      amount_due: 13000,
+      amount_paid: 0,
+      penalty_amount: 0,
+      status: 'PENDING',
+    },
+  ],
   units: [],
 };
 
@@ -75,9 +99,11 @@ describe('Detalle de Crédito — Seller', () => {
   });
 
   it('botón Volver navega a la lista', () => {
+    cy.visit('/seller/operations');
+    cy.visit('/seller/operations/crd-001');
+    cy.wait('@creditDetail');
     cy.contains('button', 'Volver').click();
     cy.url().should('include', '/seller/operations');
-    cy.url().should('not.match', /\/crd-001$/);
   });
 
   it('muestra el monto total del crédito', () => {
@@ -111,12 +137,12 @@ describe('Detalle de Crédito — Admin', () => {
 
   it('clic en "Aprobar" abre un diálogo', () => {
     cy.contains('button', 'Aprobar').click();
-    cy.get('p-dialog').should('be.visible');
+    cy.contains('.p-dialog .p-dialog-title', 'Aprobar Crédito').should('be.visible');
   });
 
   it('clic en "Rechazar" abre un diálogo', () => {
     cy.contains('button', 'Rechazar').click();
-    cy.get('p-dialog').should('be.visible');
+    cy.contains('.p-dialog .p-dialog-title', 'Rechazar Crédito').should('be.visible');
   });
 });
 

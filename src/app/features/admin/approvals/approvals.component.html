@@ -1,12 +1,15 @@
 <p-toast />
 
 <div class="p-6">
-  <div class="flex items-center justify-between mb-6">
+  <div
+    class="ff-list-header mb-6"
+    style="border-radius: 6px 6px 0 0; border-bottom: none"
+  >
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">
+      <h1 class="text-xl font-bold" style="color: var(--ff-text-primary)">
         Aprobación de Operaciones
       </h1>
-      <p class="text-sm text-gray-500">
+      <p class="text-sm" style="color: var(--ff-text-muted)">
         Revisa y valida las solicitudes entrantes.
       </p>
     </div>
@@ -15,39 +18,45 @@
     }
   </div>
 
-  <p-card styleClass="shadow-sm border-none">
-    <div class="flex flex-wrap gap-3 items-center mb-4">
-      <p-iconField iconPosition="left">
-        <p-inputIcon styleClass="pi pi-search text-gray-400 z-10" />
-        <input
-          pInputText
-          type="text"
-          [(ngModel)]="searchTerm"
-          placeholder="Buscar por cliente o vendedor..."
-          class="h-11 pl-10 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all w-full md:w-72"
+  <div class="ff-panel">
+    <div class="ff-list-header">
+      <div class="ff-list-header__actions" style="flex: 1; flex-wrap: wrap">
+        <p-iconField iconPosition="left">
+          <p-inputIcon
+            styleClass="pi pi-search z-10"
+            style="color: var(--ff-text-muted)"
+          />
+          <input
+            pInputText
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Buscar por cliente o vendedor..."
+            class="h-11 pl-10 w-full md:w-72"
+          />
+        </p-iconField>
+
+        <p-dropdown
+          [options]="TYPE_OPTIONS"
+          [(ngModel)]="filterType"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todos"
+          [showClear]="!!filterType"
+          styleClass="h-11 w-full md:w-52"
+          appendTo="body"
         />
-      </p-iconField>
 
-      <p-dropdown
-        [options]="TYPE_OPTIONS"
-        [(ngModel)]="filterType"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Todos"
-        [showClear]="!!filterType"
-        styleClass="h-11 rounded-xl border-gray-200 flex items-center w-full md:w-52 bg-gray-50"
-        appendTo="body"
-      />
-
-      <p-button
-        icon="pi pi-refresh"
-        severity="info"
-        pTooltip="Actualizar"
-        tooltipPosition="top"
-        [loading]="loading"
-        (onClick)="refresh()"
-        styleClass="h-11 w-11 rounded-xl !bg-blue-500 !border-blue-500 hover:!bg-blue-600"
-      />
+        <p-button
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          pTooltip="Actualizar"
+          tooltipPosition="top"
+          [loading]="loading"
+          (onClick)="refresh()"
+          styleClass="h-11 w-11 rounded-xl"
+        />
+      </div>
     </div>
 
     @if (loading) {
@@ -116,21 +125,24 @@
             <td>{{ app.createdAt | date: "short" }}</td>
             <td class="font-medium">
               {{ app.customerName }}
-              <span class="text-xs text-gray-400 ml-1">{{
-                app.customerDni
-              }}</span>
+              <span
+                class="ff-mono text-xs ml-1"
+                style="color: var(--ff-text-muted)"
+                >{{ app.customerDni }}</span
+              >
             </td>
             <td>{{ app.type === "SALE" ? "Venta" : "Préstamo" }}</td>
-            <td class="text-right font-bold text-blue-600">
-              {{
-                app.totalAmount | currencyArs: 2
-              }}
+            <td
+              class="text-right ff-mono font-bold"
+              style="color: var(--ff-accent)"
+            >
+              {{ app.totalAmount | currencyArs: 2 }}
             </td>
-            <td class="text-sm text-gray-500">
+            <td style="color: var(--ff-text-secondary)">
               {{ app.createdByName ?? "—" }}
             </td>
             <td class="text-center">
-              <p-tag value="PENDIENTE" severity="warning" [rounded]="true" />
+              <span class="ff-badge ff-badge--pendiente">PENDIENTE</span>
             </td>
             <td class="text-center">
               <div class="flex justify-center gap-2">
@@ -138,7 +150,6 @@
                   icon="pi pi-check"
                   severity="success"
                   [rounded]="true"
-                  styleClass="!bg-green-500 !border-green-500 hover:!bg-green-600"
                   (onClick)="onApprove(app)"
                   pTooltip="Aprobar"
                 />
@@ -146,7 +157,6 @@
                   icon="pi pi-times"
                   severity="danger"
                   [rounded]="true"
-                  styleClass="!bg-red-500 !border-red-500 hover:!bg-red-600"
                   (onClick)="onReject(app)"
                   pTooltip="Rechazar"
                 />
@@ -156,9 +166,10 @@
         </ng-template>
       </p-table>
     }
-  </p-card>
+  </div>
 </div>
 
+<!-- Dialog: Aprobar -->
 <p-dialog
   [(visible)]="showApproveDialog"
   header="Aprobar Operación"
@@ -168,30 +179,35 @@
   [resizable]="false"
 >
   <div class="flex flex-col gap-4 py-2">
-    <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
-      <p class="text-sm font-medium text-gray-700">
+    <div
+      class="rounded-lg p-3"
+      style="
+        background: var(--ff-secondary);
+        border: 1px solid var(--ff-border);
+      "
+    >
+      <p class="text-sm font-medium" style="color: var(--ff-text-primary)">
         {{ approvingRow?.customerName }} · {{ approvingRow?.customerDni }} ·
         {{ approvingRow?.type === "SALE" ? "Venta" : "Préstamo" }}
       </p>
-      <p class="text-base font-bold text-green-600 mt-1">
-        Monto:
-        {{
-          approvingRow?.totalAmount
-            | currencyArs: 2
-        }}
+      <p class="text-base font-bold mt-1" style="color: var(--ff-success)">
+        Monto: {{ approvingRow?.totalAmount | currencyArs: 2 }}
       </p>
     </div>
 
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">
-        Cantidad de cuotas (puede ajustarse)
-      </label>
+      <label class="auth-label">Cantidad de cuotas (puede ajustarse)</label>
       <input
         type="number"
         [(ngModel)]="approveInstallmentsCount"
         min="1"
         max="120"
-        class="w-full rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        class="w-full rounded-xl p-3 text-sm outline-none"
+        style="
+          border: 1px solid var(--ff-border);
+          background: var(--ff-secondary);
+          color: var(--ff-text-primary);
+        "
       />
     </div>
 
@@ -202,7 +218,11 @@
           [binary]="true"
           inputId="checkDoc"
         />
-        <label for="checkDoc" class="text-sm text-gray-700 cursor-pointer">
+        <label
+          for="checkDoc"
+          class="text-sm cursor-pointer"
+          style="color: var(--ff-text-primary)"
+        >
           Revisar documentación adjunta
         </label>
       </div>
@@ -212,7 +232,11 @@
           [binary]="true"
           inputId="checkClient"
         />
-        <label for="checkClient" class="text-sm text-gray-700 cursor-pointer">
+        <label
+          for="checkClient"
+          class="text-sm cursor-pointer"
+          style="color: var(--ff-text-primary)"
+        >
           Validar cliente (sin reportes negativos)
         </label>
       </div>
@@ -230,7 +254,7 @@
       <p-button
         label="Confirmar Aprobación"
         severity="success"
-        styleClass="h-11 rounded-xl shadow-sm !bg-green-600 !border-green-600 hover:!bg-green-700 !text-white w-full"
+        styleClass="h-11 rounded-xl w-full"
         (onClick)="confirmApprove()"
         [loading]="processingApprove"
       />
@@ -238,6 +262,7 @@
   </ng-template>
 </p-dialog>
 
+<!-- Dialog: Rechazar -->
 <p-dialog
   [(visible)]="showRejectDialog"
   header="Rechazar Operación"
@@ -247,33 +272,50 @@
   [resizable]="false"
 >
   <div class="flex flex-col gap-4 py-2">
-    <p class="text-sm font-medium text-gray-700">
+    <p class="text-sm font-medium" style="color: var(--ff-text-primary)">
       {{ rejectingRow?.customerName }} · {{ rejectingRow?.customerDni }}
     </p>
 
     <div
-      class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 p-3"
+      class="auth-warning-banner"
+      style="
+        border-color: rgba(248, 113, 113, 0.3);
+        background: rgba(248, 113, 113, 0.08);
+        color: var(--ff-danger);
+      "
     >
-      <i class="pi pi-exclamation-triangle text-red-500 mt-0.5"></i>
-      <p class="text-sm font-semibold text-red-700">
+      <i class="pi pi-exclamation-triangle shrink-0"></i>
+      <p class="text-sm font-semibold">
         ADVERTENCIA: Esta acción es irreversible y no se podrá deshacer.
       </p>
     </div>
 
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">
-        Motivo de rechazo (obligatorio, mín. 5 caracteres)
-      </label>
+      <label class="auth-label"
+        >Motivo de rechazo (obligatorio, mín. 5 caracteres)</label
+      >
       <textarea
         [(ngModel)]="rejectReason"
         rows="4"
         maxlength="500"
-        class="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        class="w-full resize-none rounded-xl p-3 text-sm outline-none"
+        style="
+          border: 1px solid var(--ff-border);
+          background: var(--ff-secondary);
+          color: var(--ff-text-primary);
+        "
         placeholder="Describe el motivo del rechazo..."
       ></textarea>
-      <div class="flex justify-between text-xs text-gray-400 mt-1">
+      <div
+        class="flex justify-between text-xs mt-1"
+        style="color: var(--ff-text-muted)"
+      >
         <span
-          [class.text-red-500]="rejectCharCount() < 5 && rejectCharCount() > 0"
+          [style.color]="
+            rejectCharCount() < 5 && rejectCharCount() > 0
+              ? 'var(--ff-danger)'
+              : ''
+          "
         >
           Mínimo 5 caracteres
         </span>
@@ -293,7 +335,7 @@
       <p-button
         label="Rechazar Operación"
         severity="danger"
-        styleClass="h-11 rounded-xl shadow-sm !bg-red-600 !border-red-600 hover:!bg-red-700 !text-white w-full"
+        styleClass="h-11 rounded-xl w-full"
         (onClick)="confirmReject()"
         [loading]="processingReject"
         [disabled]="rejectCharCount() < 5"

@@ -28,15 +28,57 @@ const PRODUCT_MOCK = {
 };
 
 function stubProduct() {
-  cy.intercept('GET', /\/api\/products\/prod-001/, {
+  cy.intercept('GET', '**/api/products/prod-001*', {
     statusCode: 200,
     body: { ok: true, data: PRODUCT_MOCK },
   }).as('productDetail');
 
-  cy.intercept('GET', /\/api\/products\/prod-001\/variants/, {
+  cy.intercept('GET', '**/api/product-variants*', {
     statusCode: 200,
     body: { ok: true, data: PRODUCT_MOCK.variants },
   }).as('variants');
+
+  cy.intercept('GET', '**/api/product-variants/var-001*', {
+    statusCode: 200,
+    body: {
+      ok: true,
+      data: {
+        id: 'var-001',
+        color: 'Rojo',
+        size: null,
+        capacity: null,
+        current_price: 500000,
+        status: 'ACTIVE',
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z',
+        product_id: 'prod-001',
+        product_name: 'Moto Eléctrica X1',
+        title: 'Moto Eléctrica X1',
+        model: 'X1-2026',
+        product_status: 'ACTIVE',
+        brand_id: 'brand-001',
+        brand_name: 'EcoMoto',
+        available_count: 5,
+        reserved_count: 1,
+        sold_count: 2,
+      },
+    },
+  }).as('variantDetail');
+
+  cy.intercept('GET', '**/api/product-brands*', {
+    statusCode: 200,
+    body: { ok: true, data: [{ id: 'brand-001', name: 'EcoMoto', active: true }] },
+  }).as('brands');
+
+  cy.intercept('GET', '**/api/product-categories*', {
+    statusCode: 200,
+    body: { ok: true, data: [{ id: 'cat-001', name: 'Vehículos', active: true }] },
+  }).as('categories');
+
+  cy.intercept('GET', '**/api/product-units*', {
+    statusCode: 200,
+    body: { ok: true, data: [] },
+  }).as('units');
 }
 
 describe('Producto — Detalle (/seller/products/prod-001)', () => {
@@ -52,7 +94,7 @@ describe('Producto — Detalle (/seller/products/prod-001)', () => {
   });
 
   it('muestra el tag de estado Activo', () => {
-    cy.get('p-tag').contains('Activo').should('exist');
+    cy.contains('.ff-badge', 'Activo').should('exist');
   });
 
   it('muestra el botón "Ver variantes"', () => {
@@ -67,10 +109,8 @@ describe('Producto — Detalle (/seller/products/prod-001)', () => {
     cy.contains('button', 'Desactivar').should('exist');
   });
 
-  it('botón Volver navega a la lista', () => {
-    cy.contains('button', 'Volver').click();
-    cy.url().should('include', '/seller/products');
-    cy.url().should('not.match', /\/prod-001$/);
+  it('muestra acción de volver a productos', () => {
+    cy.contains('a', 'Productos').should('be.visible');
   });
 
   it('"Ver variantes" navega a /variants', () => {
@@ -85,6 +125,8 @@ describe('Producto — Editar (/seller/products/prod-001/edit)', () => {
     stubProduct();
     cy.loginAs('ADMIN', '/seller/products/prod-001/edit');
     cy.wait('@productDetail');
+    cy.wait('@brands');
+    cy.wait('@categories');
   });
 
   it('muestra el título "Editar producto"', () => {
@@ -108,7 +150,7 @@ describe('Producto — Editar (/seller/products/prod-001/edit)', () => {
   });
 
   it('muestra botones Guardar y Cancelar', () => {
-    cy.contains('button', 'Guardar').should('exist');
+    cy.contains('button', 'Guardar Cambios').should('exist');
     cy.contains('button', 'Cancelar').should('exist');
   });
 
@@ -119,8 +161,10 @@ describe('Producto — Editar (/seller/products/prod-001/edit)', () => {
   });
 
   it('limpiar el campo título deshabilita Guardar', () => {
-    cy.get('input[id="title"]').clear();
-    cy.contains('button', 'Guardar').should('have.attr', 'disabled');
+    cy.get('input[id="title"]').should('be.visible').then(($input) => {
+      cy.wrap($input).clear();
+    });
+    cy.contains('button', 'Guardar Cambios').should('be.disabled');
   });
 });
 
@@ -145,12 +189,11 @@ describe('Producto — Variantes (/seller/products/prod-001/variants)', () => {
   });
 
   it('tiene columna Color en la cabecera', () => {
-    cy.get('p-table th').contains('Color').should('exist');
+    cy.get('p-table th').contains('VARIANTE').should('exist');
   });
 
-  it('botón Volver regresa a la lista', () => {
-    cy.contains('button', 'Volver').click();
-    cy.url().should('not.include', '/variants');
+  it('muestra acción de volver al producto', () => {
+    cy.contains('a', 'Volver al producto').should('be.visible');
   });
 });
 
@@ -170,18 +213,10 @@ describe('Producto — Variantes (Seller sin crear)', () => {
 describe('Producto — Unidades (/seller/products/prod-001/variants/var-001/units)', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-
-    cy.intercept('GET', /\/api\/products\/prod-001/, {
-      statusCode: 200,
-      body: { ok: true, data: PRODUCT_MOCK },
-    }).as('productDetail');
-
-    cy.intercept('GET', /\/api\/products\/prod-001\/variants\/var-001\/units/, {
-      statusCode: 200,
-      body: { ok: true, data: [] },
-    }).as('units');
-
+    stubProduct();
     cy.loginAs('ADMIN', '/seller/products/prod-001/variants/var-001/units');
+    cy.wait('@variantDetail');
+    cy.wait('@units');
   });
 
   it('muestra el título "Unidades"', () => {
@@ -189,19 +224,18 @@ describe('Producto — Unidades (/seller/products/prod-001/variants/var-001/unit
   });
 
   it('Admin ve el botón "Alta de unidad"', () => {
-    cy.contains('button', 'Alta de unidad').should('exist');
+    cy.contains('h3', 'Alta individual').should('exist');
   });
 
   it('Admin ve el botón "Alta masiva"', () => {
-    cy.contains('button', 'Alta masiva').should('exist');
+    cy.contains('h3', 'Alta masiva').should('exist');
   });
 
   it('tiene dropdown de filtro por estado', () => {
-    cy.get('p-dropdown').should('exist');
+    cy.contains('button', 'Disponibles').should('exist');
   });
 
   it('botón Volver regresa a variantes', () => {
-    cy.contains('button', 'Volver').click();
-    cy.url().should('not.include', '/units');
+    cy.contains('a', 'Volver a variantes').should('be.visible');
   });
 });

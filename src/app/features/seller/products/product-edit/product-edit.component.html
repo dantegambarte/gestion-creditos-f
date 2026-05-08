@@ -61,6 +61,20 @@
         }
       </div>
 
+      <div class="flex flex-col gap-1">
+        <label for="stock" class="text-sm font-medium">Stock disponible</label>
+        <input
+          id="stock"
+          pInputText
+          formControlName="stock"
+          class="w-full h-11"
+          readonly
+        />
+        <small class="text-gray-500"
+          >El stock se gestiona desde unidades/variantes, no desde edición del producto.</small
+        >
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="flex flex-col gap-1">
           <label class="text-sm font-medium">Marca</label>
@@ -90,18 +104,21 @@
 
       <div class="flex gap-3 pt-2">
         <p-button
-          type="submit"
-          label="Guardar cambios"
-          icon="pi pi-check"
-          [loading]="submitting"
-          [disabled]="form.invalid || submitting"
-        />
-        <p-button
           type="button"
           label="Cancelar"
           severity="secondary"
           [outlined]="true"
+          styleClass="h-11 px-5 rounded-xl"
           (onClick)="cancel()"
+        />
+        <p-button
+          type="submit"
+          label="Guardar Cambios"
+          icon="pi pi-check"
+          severity="primary"
+          styleClass="h-11 px-5 rounded-xl"
+          [loading]="submitting"
+          [disabled]="form.invalid || submitting"
         />
       </div>
     </form>

@@ -7,6 +7,7 @@ import { CreditsService } from '../../../features/seller/operations/credits.serv
 import { OperationFormService } from './operation-form.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
 import { ProductsService } from '../../../features/seller/products/products.service';
+import { ProductUnitsService } from '../../../features/seller/products/product-units.service';
 import { MessageService } from 'primeng/api';
 import { ProductOperation } from '../../models/interface/product';
 import { ClientOperation } from '../../models/interface/client';
@@ -17,6 +18,7 @@ const mockClient: ClientOperation = {
   dni: '12345678',
   phone: '',
   email: '',
+  status: 'ACTIVE',
   previousCredits: 0,
   delinquency: 'sin mora',
   paymentCapacity: 0,
@@ -47,6 +49,9 @@ describe('NewOperationComponent', () => {
     const productsServiceStub = {
       list: () => of([]),
     };
+    const productUnitsServiceStub = {
+      getAll: () => of([]),
+    };
 
     await TestBed.configureTestingModule({
       imports: [NewOperationComponent],
@@ -55,6 +60,7 @@ describe('NewOperationComponent', () => {
         { provide: CreditsService, useValue: creditsServiceSpy },
         { provide: CustomersService, useValue: customersServiceStub },
         { provide: ProductsService, useValue: productsServiceStub },
+        { provide: ProductUnitsService, useValue: productUnitsServiceStub },
       ],
     }).compileComponents();
 
@@ -72,7 +78,7 @@ describe('NewOperationComponent', () => {
     it('envía al builder las unidades seleccionadas, no un array vacío', () => {
       // Arrange
       formService.selectedClient.set(mockClient);
-      formService.selectedType.set('VENTA');
+      formService.selectedType.set('SALE');
       formService.selectedProducts.set([mockUnit]);
 
       // Act
@@ -93,7 +99,7 @@ describe('NewOperationComponent', () => {
     it('bloquea el envío, muestra error inline y no llama al API', () => {
       // Arrange
       formService.selectedClient.set(mockClient);
-      formService.selectedType.set('VENTA');
+      formService.selectedType.set('SALE');
       formService.selectedProducts.set([]);
 
       // Act
@@ -111,10 +117,10 @@ describe('NewOperationComponent', () => {
   describe('finish() — LOAN sin productos (CR-03)', () => {
     it('permite enviar préstamo personal sin exigir unidades/productos', () => {
       formService.selectedClient.set(mockClient);
-      formService.selectedType.set('PRESTAMO');
+      formService.selectedType.set('LOAN');
       formService.selectedProducts.set([]);
       formService.loanCapital.set(250000);
-      formService.loanMonths.set(6);
+      formService.selectedInstallments.set(6);
 
       component.finish();
 

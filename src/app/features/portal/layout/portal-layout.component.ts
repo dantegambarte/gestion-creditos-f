@@ -1,26 +1,39 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { PortalAuthService } from '../auth/portal-auth.service';
 
 @Component({
   selector: 'app-portal-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, ButtonModule, MessageModule],
+  imports: [CommonModule, RouterOutlet, RouterLink],
   templateUrl: './portal-layout.component.html',
 })
 export class PortalLayoutComponent {
   private readonly auth = inject(PortalAuthService);
   private readonly router = inject(Router);
 
+  readonly changePasswordRoute = AppRoutes.PORTAL_CHANGE_PASSWORD;
+
   /**
    * Devuelve el cliente autenticado actualmente, o null si no hay ninguno.
    */
   get customer() {
     return this.auth.snapshot;
+  }
+
+  /**
+   * Devuelve las iniciales del nombre completo del cliente (máximo 2 caracteres).
+   */
+  get initials(): string {
+    const name = this.customer?.fullName ?? '';
+    return name
+      .split(' ')
+      .slice(0, 2)
+      .map((n) => n[0] ?? '')
+      .join('')
+      .toUpperCase();
   }
 
   /**

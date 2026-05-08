@@ -6,9 +6,10 @@
   (closed)="onTempPasswordClosed()"
 />
 
-<div class="p-4">
+<div class="p-4" data-cy="seller-client-detail-page">
   <div class="mb-4">
     <p-button
+      data-cy="seller-client-detail-back-action"
       label="Volver"
       icon="pi pi-arrow-left"
       severity="secondary"
@@ -39,6 +40,7 @@
           @if (isAdmin) {
             <div class="flex gap-2 flex-wrap">
               <p-button
+                data-cy="seller-client-detail-edit-action"
                 label="Editar"
                 icon="pi pi-pencil"
                 severity="secondary"
@@ -47,6 +49,7 @@
               />
               @if (customer.status === "ACTIVE") {
                 <p-button
+                  data-cy="seller-client-detail-status-action"
                   label="Desactivar"
                   icon="pi pi-ban"
                   severity="danger"
@@ -55,6 +58,7 @@
                 />
               } @else {
                 <p-button
+                  data-cy="seller-client-detail-status-action"
                   label="Activar"
                   icon="pi pi-check-circle"
                   severity="secondary"
@@ -189,6 +193,7 @@
         <h3 class="text-lg font-semibold mb-4">Editar cliente</h3>
 
         <form
+          data-cy="seller-client-detail-edit-form"
           [formGroup]="editForm"
           (ngSubmit)="onEditSubmit()"
           class="space-y-4"
@@ -216,6 +221,7 @@
               >Nombre completo *</label
             >
             <input
+              data-cy="seller-client-detail-edit-fullname-input"
               id="editFullName"
               pInputText
               formControlName="fullName"
@@ -251,6 +257,7 @@
           <div class="flex flex-col gap-1">
             <label for="editEmail" class="text-sm font-medium">Email</label>
             <input
+              data-cy="seller-client-detail-edit-email-input"
               id="editEmail"
               pInputText
               formControlName="email"
@@ -293,6 +300,7 @@
 
           <div class="flex gap-3 pt-2">
             <p-button
+              data-cy="seller-client-detail-save-action"
               type="submit"
               label="Guardar cambios"
               icon="pi pi-check"
@@ -300,6 +308,7 @@
               [disabled]="editForm.invalid || saving"
             />
             <p-button
+              data-cy="seller-client-detail-cancel-edit-action"
               type="button"
               label="Cancelar"
               severity="secondary"

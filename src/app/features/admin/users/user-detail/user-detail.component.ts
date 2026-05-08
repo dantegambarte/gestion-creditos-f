@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -23,6 +23,7 @@ import { LoadingStateComponent } from '../../../../shared/states/loading-state/l
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { TempPasswordDialogComponent } from '../../../../shared/components/temp-password-dialog/temp-password-dialog.component';
 import { AppError } from '../../../../core/models/app-error';
+import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'Administrador',
@@ -61,7 +62,7 @@ const ROLE_SEVERITY: Record<string, string> = {
 export class UserDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly usersService = inject(UsersService);
-  private readonly location = inject(Location);
+  private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
@@ -128,7 +129,7 @@ export class UserDetailComponent implements OnInit {
    * Navega a la página anterior.
    */
   goBack(): void {
-    this.location.back();
+    this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS]);
   }
 
   private load(): void {

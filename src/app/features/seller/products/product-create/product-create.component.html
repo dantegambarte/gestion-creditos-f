@@ -1,103 +1,277 @@
 <p-toast />
-<div class="p-4 max-w-2xl mx-auto">
-  <h2 class="text-xl font-semibold mb-6">Nuevo producto</h2>
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
-    <div class="flex flex-col gap-1">
-      <label for="title" class="text-sm font-medium"
-        >Título (nombre corto) *</label
+<div class="p-4">
+  <!-- Header -->
+  <div class="flex items-center gap-3 mb-6">
+    <a
+      class="prod-action-link flex items-center gap-1"
+      (click)="cancel()"
+      style="cursor: pointer"
+    >
+      <i class="pi pi-arrow-left text-sm"></i> Volver
+    </a>
+    <span style="color: var(--ff-text-muted)">/</span>
+    <h1 class="font-bold text-base" style="color: var(--ff-text-primary)">
+      Nuevo producto
+    </h1>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- ── FORM ── -->
+    <div class="lg:col-span-7">
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        class="ff-panel p-6 space-y-6"
       >
-      <input
-        id="title"
-        pInputText
-        formControlName="title"
-        placeholder="Título del producto"
-        class="w-full h-11"
-        [class.ng-invalid]="isInvalid('title')"
-        [class.ng-dirty]="isInvalid('title')"
-      />
-      @if (isInvalid("title")) {
-        <small class="text-red-500">{{ getError("title") }}</small>
-      }
+        <!-- Identificación -->
+        <div>
+          <p
+            class="text-xs font-bold uppercase tracking-widest mb-4"
+            style="color: var(--ff-text-muted)"
+          >
+            Identificación del producto
+          </p>
+          <div class="space-y-4">
+            <div class="flex flex-col gap-1">
+              <label
+                class="text-xs font-bold uppercase tracking-wider"
+                style="color: var(--ff-text-muted)"
+              >
+                Título *
+              </label>
+              <input
+                pInputText
+                formControlName="title"
+                placeholder="Ej: Samsung Galaxy A55"
+                class="w-full h-11"
+                [class.ng-invalid]="isInvalid('title')"
+                [class.ng-dirty]="isInvalid('title')"
+              />
+              <small class="text-xs" style="color: var(--ff-text-muted)"
+                >Nombre técnico/interno del producto.</small
+              >
+              @if (isInvalid("title")) {
+                <small style="color: var(--ff-danger)">{{
+                  getError("title")
+                }}</small>
+              }
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <label
+                class="text-xs font-bold uppercase tracking-wider"
+                style="color: var(--ff-text-muted)"
+              >
+                Descripción comercial
+              </label>
+              <textarea
+                pInputTextarea
+                formControlName="description"
+                rows="2"
+                placeholder="Ej: Samsung Galaxy A55 5G 128GB Dual SIM"
+                class="w-full"
+                [class.ng-invalid]="isInvalid('description')"
+              ></textarea>
+              <small class="text-xs" style="color: var(--ff-text-muted)"
+                >Nombre que verá el vendedor y el cliente.</small
+              >
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <label
+                class="text-xs font-bold uppercase tracking-wider"
+                style="color: var(--ff-text-muted)"
+              >
+                Modelo
+              </label>
+              <input
+                pInputText
+                formControlName="model"
+                placeholder="Ej: SM-A556B"
+                class="w-full h-11"
+              />
+              <small class="text-xs" style="color: var(--ff-text-muted)"
+                >Código técnico del fabricante (opcional).</small
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Clasificación -->
+        <div>
+          <p
+            class="text-xs font-bold uppercase tracking-widest mb-4"
+            style="color: var(--ff-text-muted)"
+          >
+            Clasificación
+          </p>
+          <div class="space-y-4">
+            <div class="flex flex-col gap-1">
+              <label
+                class="text-xs font-bold uppercase tracking-wider"
+                style="color: var(--ff-text-muted)"
+                >Marca</label
+              >
+              <p-dropdown
+                formControlName="brandId"
+                [options]="brandOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Seleccioná una marca..."
+                [showClear]="true"
+                styleClass="w-full"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label
+                class="text-xs font-bold uppercase tracking-wider"
+                style="color: var(--ff-text-muted)"
+                >Categoría</label
+              >
+              <p-dropdown
+                formControlName="categoryId"
+                [options]="categoryOptions"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Seleccioná una categoría..."
+                [showClear]="true"
+                styleClass="w-full"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-3 pt-2">
+          <p-button
+            type="submit"
+            label="Crear producto"
+            severity="primary"
+            styleClass="flex-1 justify-center h-11 rounded-xl"
+            [loading]="submitting"
+            [disabled]="form.invalid || submitting"
+          />
+          <p-button
+            type="button"
+            label="Cancelar"
+            severity="secondary"
+            [outlined]="true"
+            styleClass="h-11 px-5 rounded-xl"
+            (onClick)="cancel()"
+          />
+        </div>
+      </form>
     </div>
 
-    <div class="flex flex-col gap-1">
-      <label for="description" class="text-sm font-medium"
-        >Descripción comercial</label
+    <!-- ── PREVIEW ── -->
+    <div class="lg:col-span-5 flex flex-col gap-4">
+      <div class="ff-panel p-6">
+        <p
+          class="text-xs font-bold uppercase tracking-widest mb-4"
+          style="color: var(--ff-text-muted)"
+        >
+          Preview en vivo
+        </p>
+        <div class="flex flex-wrap gap-2 mb-3">
+          @if (form.get("categoryId")?.value) {
+            <span
+              class="ff-badge"
+              style="
+                background: rgba(79, 110, 247, 0.12);
+                color: var(--ff-accent);
+              "
+              >Categoría</span
+            >
+          } @else {
+            <span
+              class="ff-badge"
+              style="
+                background: rgba(100, 116, 139, 0.1);
+                color: var(--ff-text-muted);
+              "
+              >Categoría</span
+            >
+          }
+          @if (form.get("brandId")?.value) {
+            <span
+              class="ff-badge"
+              style="
+                background: rgba(100, 116, 139, 0.15);
+                color: var(--ff-text-secondary);
+              "
+              >Marca</span
+            >
+          } @else {
+            <span
+              class="ff-badge"
+              style="
+                background: rgba(100, 116, 139, 0.1);
+                color: var(--ff-text-muted);
+              "
+              >Marca</span
+            >
+          }
+        </div>
+        <p
+          class="text-lg font-black mb-1"
+          style="color: {{
+            form.get('title')?.value
+              ? 'var(--ff-text-primary)'
+              : 'var(--ff-text-muted)'
+          }}"
+        >
+          {{ form.get("title")?.value || "Título del producto" }}
+        </p>
+        <p class="text-sm" style="color: var(--ff-text-muted)">
+          {{ form.get("description")?.value || "Descripción comercial" }}
+        </p>
+      </div>
+
+      <div
+        class="ff-panel p-5"
+        style="border-left: 3px solid rgba(79, 110, 247, 0.4)"
       >
-      <textarea
-        pInputTextarea
-        id="description"
-        formControlName="description"
-        rows="3"
-        placeholder="Nombre comercial o descripción del producto"
-        [class.ng-invalid]="isInvalid('description')"
-        [class.ng-dirty]="isInvalid('description')"
-        class="w-full"
-      ></textarea>
-      @if (isInvalid("description")) {
-        <small class="text-red-500">{{ getError("description") }}</small>
-      }
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label for="model" class="text-sm font-medium">Modelo</label>
-      <input
-        id="model"
-        pInputText
-        formControlName="model"
-        placeholder="Modelo técnico (opcional)"
-        class="w-full h-11"
-        [class.ng-invalid]="isInvalid('model')"
-        [class.ng-dirty]="isInvalid('model')"
-      />
-      @if (isInvalid("model")) {
-        <small class="text-red-500">{{ getError("model") }}</small>
-      }
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium">Marca</label>
-        <p-dropdown
-          formControlName="brandId"
-          [options]="brandOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Seleccionar marca"
-          [showClear]="true"
-          styleClass="w-full"
-        />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium">Categoría</label>
-        <p-dropdown
-          formControlName="categoryId"
-          [options]="categoryOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Seleccionar categoría"
-          [showClear]="true"
-          styleClass="w-full"
-        />
+        <div class="flex items-start gap-3">
+          <i
+            class="pi pi-info-circle mt-0.5"
+            style="color: var(--ff-accent)"
+          ></i>
+          <p class="text-xs" style="color: var(--ff-text-secondary)">
+            Después de crear el producto, podrás agregar variantes (color,
+            talle, capacidad y precio) y unidades físicas con su código de serie
+            o IMEI.
+          </p>
+        </div>
+        <div class="flex items-center gap-2 mt-3">
+          <span
+            class="ff-badge"
+            style="
+              background: rgba(79, 110, 247, 0.18);
+              color: var(--ff-accent);
+            "
+            >Producto</span
+          >
+          <span style="color: var(--ff-text-muted)">→</span>
+          <span
+            class="ff-badge"
+            style="
+              background: rgba(79, 110, 247, 0.1);
+              color: var(--ff-text-muted);
+            "
+            >Variante</span
+          >
+          <span style="color: var(--ff-text-muted)">→</span>
+          <span
+            class="ff-badge"
+            style="
+              background: rgba(79, 110, 247, 0.1);
+              color: var(--ff-text-muted);
+            "
+            >Unidades</span
+          >
+        </div>
       </div>
     </div>
-
-    <div class="flex gap-3 pt-2">
-      <p-button
-        type="submit"
-        label="Registrar producto"
-        icon="pi pi-check"
-        [loading]="submitting"
-        [disabled]="form.invalid || submitting"
-      />
-      <p-button
-        type="button"
-        label="Cancelar"
-        severity="secondary"
-        [outlined]="true"
-        (onClick)="cancel()"
-      />
-    </div>
-  </form>
+  </div>
 </div>

@@ -18,8 +18,8 @@ describe('Sidebar y Guardias de Ruta', () => {
   // ── Admin — menú completo ────────────────────────────────────────────────────
   describe('Admin', () => {
     beforeEach(() => {
-      cy.loginAs('ADMIN');
-      cy.visit('/admin/dashboard');
+      cy.loginAs('ADMIN', '/admin/dashboard');
+      cy.get('aside').should('be.visible');
     });
 
     it('muestra grupos Principal, Gestión, Administración y Sistema', () => {
@@ -32,14 +32,15 @@ describe('Sidebar y Guardias de Ruta', () => {
 
     it('muestra items exclusivos de admin: Usuarios, Aprobaciones, Reportes, Configuración', () => {
       cy.contains('aside', 'Usuarios').should('be.visible');
-      cy.get('[data-testid="nav-aprobaciones"]').should('be.visible');
+      cy.contains('aside a.nav-item', 'Aprobaciones').should('be.visible');
       cy.contains('aside', 'Reportes').should('be.visible');
       cy.contains('aside', 'Configuración').should('be.visible');
     });
 
     it('el badge de Aprobaciones muestra el número 3', () => {
-      cy.get('[data-testid="nav-aprobaciones"]')
-        .find('.p-badge')
+      cy.contains('aside a.nav-item', 'Aprobaciones')
+        .scrollIntoView()
+        .find('.nav-item__badge')
         .should('contain.text', '3');
     });
 
@@ -49,14 +50,13 @@ describe('Sidebar y Guardias de Ruta', () => {
     });
 
     it('navega a /admin/approvals al hacer clic en Aprobaciones', () => {
-      cy.get('[data-testid="nav-aprobaciones"]').click();
+      cy.contains('aside a.nav-item', 'Aprobaciones').scrollIntoView().click();
       cy.url().should('include', '/admin/approvals');
     });
 
     it('el ítem activo tiene estilo de selección', () => {
       cy.contains('aside a', 'Dashboard')
-        .should('have.class', 'bg-blue-600/20')
-        .and('have.class', 'text-blue-400');
+        .should('have.class', 'nav-item--active');
     });
 
     it('muestra el nombre y rol del usuario en el sidebar', () => {
@@ -70,8 +70,8 @@ describe('Sidebar y Guardias de Ruta', () => {
   // ── Seller — menú restringido ────────────────────────────────────────────────
   describe('Seller', () => {
     beforeEach(() => {
-      cy.loginAs('SELLER');
-      cy.visit('/seller/operations');
+      cy.loginAs('SELLER', '/seller/operations');
+      cy.get('aside').should('be.visible');
     });
 
     it('muestra sección Gestión pero NO Administración ni Sistema', () => {
@@ -96,8 +96,8 @@ describe('Sidebar y Guardias de Ruta', () => {
   // ── Collector — menú restringido ─────────────────────────────────────────────
   describe('Collector', () => {
     beforeEach(() => {
-      cy.loginAs('COLLECTOR');
-      cy.visit('/collector/route');
+      cy.loginAs('COLLECTOR', '/collector/route');
+      cy.get('aside').should('be.visible');
     });
 
     it('muestra sección "Cobranza en campo" con Mi Ruta, Mis cobros, Mis comisiones', () => {

@@ -1,8 +1,11 @@
 export interface ProductOperation {
   id: string;
+  productId?: string;
   name: string;
   price: number;
   stock: number;
+  unitCode?: string;
+  historicalPrice?: number;
 }
 
 export interface Product {

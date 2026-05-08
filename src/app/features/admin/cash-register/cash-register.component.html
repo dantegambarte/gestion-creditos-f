@@ -1,12 +1,20 @@
 <p-toast />
 
-<div class="p-6 space-y-6">
+<div class="p-6 space-y-6" data-cy="admin-cash-register-page">
+  <!-- Page header -->
   <div class="flex items-center justify-between">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">Caja del día</h1>
+      <h1
+        class="text-xl font-bold"
+        style="color: var(--ff-text-primary)"
+        data-cy="admin-cash-register-title"
+      >
+        Caja del día
+      </h1>
       @if (closedToday) {
         <span
-          class="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full mt-1"
+          class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full mt-1"
+          style="color: var(--ff-warning); background: rgba(251, 176, 64, 0.12)"
         >
           <i class="pi pi-lock text-xs"></i> Caja cerrada hoy
         </span>
@@ -14,6 +22,7 @@
     </div>
     <div class="flex gap-2">
       <p-button
+        data-cy="admin-cash-register-refresh-action"
         icon="pi pi-refresh"
         severity="secondary"
         [outlined]="true"
@@ -22,6 +31,7 @@
       />
       @if (!closedToday) {
         <p-button
+          data-cy="admin-cash-register-close-day-cta"
           label="Cerrar caja del día"
           icon="pi pi-lock"
           severity="danger"
@@ -32,108 +42,118 @@
     </div>
   </div>
 
+  <!-- KPI Mini-cards -->
   @if (loadingDashboard && !dashboard) {
     <app-loading-state />
   } @else if (errorDashboard && !dashboard) {
     <app-error-state />
   } @else if (dashboard) {
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-      <div
-        class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-1"
-      >
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">
-          Efectivo
-        </p>
-        <p class="text-lg font-bold text-gray-800 font-mono">
+    <div
+      class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4"
+      data-cy="admin-cash-register-kpis"
+    >
+      <div class="cr-kpi">
+        <p class="cr-kpi__label">Efectivo</p>
+        <p class="cr-kpi__value ff-mono">
           {{ formatCurrency(dashboard.cashAmount) }}
         </p>
       </div>
-      <div
-        class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-1"
-      >
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">
-          Transferencia
-        </p>
-        <p class="text-lg font-bold text-gray-800 font-mono">
+      <div class="cr-kpi">
+        <p class="cr-kpi__label">Transferencia</p>
+        <p class="cr-kpi__value ff-mono">
           {{ formatCurrency(dashboard.transferAmount) }}
         </p>
       </div>
       <div
-        class="bg-green-50 border border-green-200 rounded-2xl shadow-sm p-4 space-y-1 md:col-span-2"
+        class="cr-kpi md:col-span-2"
+        style="
+          background: rgba(52, 211, 153, 0.08);
+          border-color: rgba(52, 211, 153, 0.2);
+        "
       >
-        <p class="text-xs font-medium text-green-600 uppercase tracking-wide">
+        <p class="cr-kpi__label" style="color: var(--ff-success)">
           Total recaudado
         </p>
-        <p class="text-2xl font-extrabold text-green-700 font-mono">
+        <p
+          class="cr-kpi__value ff-mono text-2xl font-extrabold"
+          style="color: var(--ff-success)"
+        >
           {{ formatCurrency(dashboard.totalCollected) }}
         </p>
       </div>
       <div
-        class="bg-red-50 border border-red-200 rounded-2xl shadow-sm p-4 space-y-1"
+        class="cr-kpi"
+        style="
+          background: rgba(248, 113, 113, 0.08);
+          border-color: rgba(248, 113, 113, 0.2);
+        "
       >
-        <p class="text-xs font-medium text-red-500 uppercase tracking-wide">
-          Egresos
-        </p>
-        <p class="text-lg font-bold text-red-600 font-mono">
+        <p class="cr-kpi__label" style="color: var(--ff-danger)">Egresos</p>
+        <p class="cr-kpi__value ff-mono" style="color: var(--ff-danger)">
           {{ formatCurrency(dashboard.totalOutflows) }}
         </p>
       </div>
       <div
-        class="rounded-2xl shadow-sm p-4 space-y-1"
-        [class]="
+        class="cr-kpi"
+        [style.background]="
           dashboard.netBalance >= 0
-            ? 'bg-teal-50 border border-teal-200'
-            : 'bg-red-50 border border-red-200'
+            ? 'rgba(52,211,153,0.08)'
+            : 'rgba(248,113,113,0.08)'
+        "
+        [style.borderColor]="
+          dashboard.netBalance >= 0
+            ? 'rgba(52,211,153,0.2)'
+            : 'rgba(248,113,113,0.2)'
         "
       >
         <p
-          class="text-xs font-medium uppercase tracking-wide"
-          [class]="dashboard.netBalance >= 0 ? 'text-teal-600' : 'text-red-500'"
+          class="cr-kpi__label"
+          [style.color]="
+            dashboard.netBalance >= 0 ? 'var(--ff-success)' : 'var(--ff-danger)'
+          "
         >
           Balance neto
         </p>
         <p
-          class="text-lg font-bold font-mono"
-          [class]="dashboard.netBalance >= 0 ? 'text-teal-700' : 'text-red-600'"
+          class="cr-kpi__value ff-mono"
+          [style.color]="
+            dashboard.netBalance >= 0 ? 'var(--ff-success)' : 'var(--ff-danger)'
+          "
         >
           {{ formatCurrency(dashboard.netBalance) }}
         </p>
       </div>
       <div
-        class="bg-orange-50 border border-orange-200 rounded-2xl shadow-sm p-4 space-y-1"
+        class="cr-kpi"
+        style="
+          background: rgba(251, 176, 64, 0.08);
+          border-color: rgba(251, 176, 64, 0.2);
+        "
       >
-        <p class="text-xs font-medium text-orange-500 uppercase tracking-wide">
+        <p class="cr-kpi__label" style="color: var(--ff-warning)">
           Cobros pend.
         </p>
-        <p class="text-lg font-bold text-orange-600 font-mono">
+        <p class="cr-kpi__value ff-mono" style="color: var(--ff-warning)">
           {{ formatCurrency(dashboard.pendingAmount) }}
         </p>
       </div>
-      <div
-        class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-1"
-      >
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">
-          Enganches hoy
-        </p>
-        <p class="text-lg font-bold text-gray-800 font-mono">
+      <div class="cr-kpi">
+        <p class="cr-kpi__label">Enganches hoy</p>
+        <p class="cr-kpi__value ff-mono">
           {{ formatCurrency(dashboard.downPaymentsTotal) }}
         </p>
-        <p class="text-xs text-gray-400">
+        <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
           {{ dashboard.downPaymentsCount }} operaciones
         </p>
       </div>
-      <div
-        class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-1"
-      >
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">
-          Cobros
-        </p>
-        <p class="text-sm font-bold text-gray-800">
-          <span class="text-green-600"
+      <div class="cr-kpi">
+        <p class="cr-kpi__label">Cobros</p>
+        <p class="text-sm font-bold mt-1">
+          <span style="color: var(--ff-success)"
             >{{ dashboard.approvedCount }} aprobados</span
           >
-          &nbsp;·&nbsp;
-          <span class="text-orange-500"
+          <span style="color: var(--ff-border)">&nbsp;·&nbsp;</span>
+          <span style="color: var(--ff-warning)"
             >{{ dashboard.pendingCount }} pendientes</span
           >
         </p>
@@ -141,39 +161,42 @@
     </div>
   }
 
-  <p-card styleClass="shadow-sm">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-base font-semibold text-gray-800">
-        Historial de cierres
-      </h2>
+  <!-- Historial de cierres -->
+  <div class="ff-panel" data-cy="admin-cash-register-history-section">
+    <div class="ff-list-header">
+      <span
+        class="ff-list-header__title"
+        data-cy="admin-cash-register-history-title"
+        >Historial de cierres</span
+      >
     </div>
 
-    <div class="flex flex-wrap gap-3 mb-4 items-end">
+    <div
+      class="flex flex-wrap gap-3 px-4 py-3 items-end"
+      style="border-bottom: 1px solid var(--ff-border)"
+    >
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-400 uppercase tracking-wide"
-          >Desde</label
-        >
+        <label class="auth-label">Desde</label>
         <input
+          data-cy="admin-cash-register-filter-from"
           type="date"
           [(ngModel)]="filterDateFrom"
-          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="native-date-input h-10"
         />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-400 uppercase tracking-wide"
-          >Hasta</label
-        >
+        <label class="auth-label">Hasta</label>
         <input
+          data-cy="admin-cash-register-filter-to"
           type="date"
           [(ngModel)]="filterDateTo"
-          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="native-date-input h-10"
         />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-400 uppercase tracking-wide"
-          >Estado</label
-        >
+        <label class="auth-label">Estado</label>
         <p-dropdown
+          data-cy="admin-cash-register-filter-status"
           [options]="differenceStatusOptions"
           [(ngModel)]="filterDifferenceStatus"
           optionLabel="label"
@@ -182,6 +205,7 @@
         />
       </div>
       <p-button
+        data-cy="admin-cash-register-filter-apply"
         label="Filtrar"
         icon="pi pi-search"
         severity="secondary"
@@ -190,6 +214,7 @@
       />
       @if (filterDateFrom || filterDateTo || filterDifferenceStatus) {
         <p-button
+          data-cy="admin-cash-register-filter-clear"
           label="Limpiar"
           icon="pi pi-times"
           severity="secondary"
@@ -204,11 +229,16 @@
     } @else if (errorHistory) {
       <app-error-state />
     } @else if (history.length === 0) {
-      <p class="text-sm text-gray-400 text-center py-10">
+      <div
+        class="ff-empty-state"
+        data-cy="admin-cash-register-history-empty-state"
+      >
+        <i class="pi pi-inbox"></i>
         Sin cierres registrados.
-      </p>
+      </div>
     } @else {
       <p-table
+        data-cy="admin-cash-register-history-table"
         [value]="history"
         [paginator]="true"
         [rows]="15"
@@ -228,23 +258,32 @@
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-reg>
-          <tr class="cursor-pointer" (click)="openDetail(reg)">
+          <tr
+            class="cursor-pointer"
+            (click)="openDetail(reg)"
+            data-cy="admin-cash-register-history-row"
+          >
             <td class="font-medium">{{ formatDate(reg.registerDate) }}</td>
-            <td class="text-right font-mono font-semibold text-blue-600">
+            <td
+              class="text-right ff-mono font-semibold"
+              style="color: var(--ff-accent)"
+            >
               {{ formatCurrency(reg.totalCollected) }}
             </td>
-            <td class="text-right font-mono">
+            <td class="text-right ff-mono">
               {{ formatCurrency(reg.cashAmount) }}
             </td>
-            <td class="text-right font-mono">
+            <td class="text-right ff-mono">
               {{ formatCurrency(reg.transferAmount) }}
             </td>
-            <td class="text-right font-mono">
+            <td class="text-right ff-mono">
               {{ formatCurrency(reg.declaredCash) }}
             </td>
             <td
-              class="text-right font-mono font-semibold"
-              [class]="reg.difference >= 0 ? 'text-green-600' : 'text-red-500'"
+              class="text-right ff-mono font-semibold"
+              [style.color]="
+                reg.difference >= 0 ? 'var(--ff-success)' : 'var(--ff-danger)'
+              "
             >
               {{ formatCurrency(reg.difference) }}
             </td>
@@ -254,16 +293,19 @@
                 [severity]="differenceSeverity(reg.differenceStatus)"
               />
             </td>
-            <td class="text-sm text-gray-600">{{ reg.closedByName }}</td>
+            <td style="color: var(--ff-text-secondary)">
+              {{ reg.closedByName }}
+            </td>
           </tr>
         </ng-template>
       </p-table>
     }
-  </p-card>
+  </div>
 </div>
 
 <!-- Dialog: Cerrar caja -->
 <p-dialog
+  data-cy="admin-cash-register-close-modal"
   [(visible)]="showCloseDialog"
   [modal]="true"
   [style]="{ width: '460px' }"
@@ -273,39 +315,44 @@
   @if (dashboard) {
     <div class="space-y-4">
       <div
-        class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-sm text-blue-700"
+        class="rounded-xl p-3 text-sm"
+        style="
+          background: rgba(79, 110, 247, 0.08);
+          border: 1px solid rgba(79, 110, 247, 0.2);
+          color: var(--ff-text-secondary);
+        "
       >
-        <i class="pi pi-info-circle mr-1.5"></i>
+        <i class="pi pi-info-circle mr-1.5" style="color: var(--ff-accent)"></i>
         Sistema registra
-        <strong>{{ formatCurrency(dashboard.cashAmount) }}</strong> en efectivo.
-        Ingresá el monto físico que tenés en caja.
+        <strong style="color: var(--ff-text-primary)">{{
+          formatCurrency(dashboard.cashAmount)
+        }}</strong>
+        en efectivo. Ingresá el monto físico que tenés en caja.
       </div>
 
       @if (closePendingError) {
-        <div
-          class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 space-y-2"
-        >
-          <div class="flex items-start gap-2">
-            <i class="pi pi-exclamation-triangle text-amber-500 mt-0.5"></i>
+        <div class="auth-warning-banner">
+          <i class="pi pi-exclamation-triangle shrink-0"></i>
+          <div class="space-y-2">
             <p>{{ closePendingError }}</p>
+            <p-button
+              data-cy="admin-cash-register-close-force-action"
+              label="Cerrar igualmente (force)"
+              icon="pi pi-lock"
+              severity="warning"
+              [outlined]="true"
+              size="small"
+              [loading]="closing"
+              (onClick)="confirmClose(true)"
+            />
           </div>
-          <p-button
-            label="Cerrar igualmente (force)"
-            icon="pi pi-lock"
-            severity="warning"
-            [outlined]="true"
-            size="small"
-            [loading]="closing"
-            (onClick)="confirmClose(true)"
-          />
         </div>
       }
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide"
-          >Efectivo físico contado (ARS)</label
-        >
+        <label class="auth-label">Efectivo físico contado (ARS)</label>
         <p-inputNumber
+          data-cy="admin-cash-register-declared-cash-input"
           [(ngModel)]="declaredCash"
           mode="currency"
           currency="ARS"
@@ -317,18 +364,17 @@
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide"
-          >Observaciones (opcional)</label
-        >
+        <label class="auth-label">Observaciones (opcional)</label>
         <textarea
+          data-cy="admin-cash-register-observations-input"
           pInputTextarea
           [(ngModel)]="observations"
           rows="3"
           maxlength="500"
           placeholder="Novedades, faltantes, aclaraciones..."
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full resize-none"
         ></textarea>
-        <span class="text-xs text-gray-400 text-right"
+        <span class="text-xs text-right" style="color: var(--ff-text-muted)"
           >{{ observations.length }}/500</span
         >
       </div>
@@ -336,6 +382,7 @@
   }
   <ng-template pTemplate="footer">
     <p-button
+      data-cy="admin-cash-register-close-cancel-action"
       label="Cancelar"
       severity="secondary"
       [outlined]="true"
@@ -343,6 +390,7 @@
       (onClick)="showCloseDialog = false"
     />
     <p-button
+      data-cy="admin-cash-register-close-confirm-action"
       label="Cerrar caja"
       icon="pi pi-lock"
       severity="danger"
@@ -353,7 +401,9 @@
   </ng-template>
 </p-dialog>
 
+<!-- Dialog: Detalle de cierre -->
 <p-dialog
+  data-cy="admin-cash-register-detail-modal"
   [(visible)]="showDetailDialog"
   [modal]="true"
   [style]="{ width: '500px' }"
@@ -362,78 +412,84 @@
   @if (selectedRegister) {
     <div class="space-y-3">
       <div class="grid grid-cols-2 gap-3">
-        <div class="bg-gray-50 rounded-xl p-3">
-          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">
-            Fecha
-          </p>
-          <p class="font-semibold">
+        <div class="cr-detail-cell">
+          <p class="ud-label">Fecha</p>
+          <p class="ud-value font-semibold">
             {{ formatDate(selectedRegister.registerDate) }}
           </p>
         </div>
-        <div class="bg-gray-50 rounded-xl p-3">
-          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">
-            Cerrado por
+        <div class="cr-detail-cell">
+          <p class="ud-label">Cerrado por</p>
+          <p class="ud-value font-semibold">
+            {{ selectedRegister.closedByName }}
           </p>
-          <p class="font-semibold">{{ selectedRegister.closedByName }}</p>
         </div>
-        <div class="bg-green-50 rounded-xl p-3">
-          <p class="text-xs text-green-600 uppercase tracking-wide mb-1">
+        <div
+          class="cr-detail-cell"
+          style="
+            background: rgba(52, 211, 153, 0.08);
+            border-color: rgba(52, 211, 153, 0.2);
+          "
+        >
+          <p class="ud-label" style="color: var(--ff-success)">
             Total recaudado
           </p>
-          <p class="font-bold text-green-700 font-mono">
+          <p
+            class="ud-value ff-mono font-bold"
+            style="color: var(--ff-success)"
+          >
             {{ formatCurrency(selectedRegister.totalCollected) }}
           </p>
         </div>
-        <div class="bg-gray-50 rounded-xl p-3">
-          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">
-            Efectivo sistema
-          </p>
-          <p class="font-semibold font-mono">
+        <div class="cr-detail-cell">
+          <p class="ud-label">Efectivo sistema</p>
+          <p class="ud-value ff-mono font-semibold">
             {{ formatCurrency(selectedRegister.cashAmount) }}
           </p>
         </div>
-        <div class="bg-gray-50 rounded-xl p-3">
-          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">
-            Transferencia
-          </p>
-          <p class="font-semibold font-mono">
+        <div class="cr-detail-cell">
+          <p class="ud-label">Transferencia</p>
+          <p class="ud-value ff-mono font-semibold">
             {{ formatCurrency(selectedRegister.transferAmount) }}
           </p>
         </div>
-        <div class="bg-gray-50 rounded-xl p-3">
-          <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">
-            Efectivo declarado
-          </p>
-          <p class="font-semibold font-mono">
+        <div class="cr-detail-cell">
+          <p class="ud-label">Efectivo declarado</p>
+          <p class="ud-value ff-mono font-semibold">
             {{ formatCurrency(selectedRegister.declaredCash) }}
           </p>
         </div>
         <div
-          class="col-span-2 rounded-xl p-3 border-2"
-          [class]="
+          class="col-span-2 cr-detail-cell border-2"
+          [style.background]="
             selectedRegister.difference >= 0
-              ? 'bg-green-50 border-green-200'
-              : 'bg-red-50 border-red-200'
+              ? 'rgba(52,211,153,0.08)'
+              : 'rgba(248,113,113,0.08)'
+          "
+          [style.borderColor]="
+            selectedRegister.difference >= 0
+              ? 'rgba(52,211,153,0.25)'
+              : 'rgba(248,113,113,0.25)'
           "
         >
           <div class="flex items-center justify-between">
             <div>
               <p
-                class="text-xs uppercase tracking-wide mb-1"
-                [class]="
+                class="ud-label"
+                [style.color]="
                   selectedRegister.difference >= 0
-                    ? 'text-green-600'
-                    : 'text-red-500'
+                    ? 'var(--ff-success)'
+                    : 'var(--ff-danger)'
                 "
               >
                 Diferencia
               </p>
               <p
-                class="font-bold text-xl font-mono"
-                [class]="
+                class="ud-value ff-mono font-bold text-xl"
+                [style.color]="
                   selectedRegister.difference >= 0
-                    ? 'text-green-700'
-                    : 'text-red-600'
+                    ? 'var(--ff-success)'
+                    : 'var(--ff-danger)'
                 "
               >
                 {{ formatCurrency(selectedRegister.difference) }}
@@ -448,11 +504,15 @@
         </div>
       </div>
       @if (selectedRegister.observations) {
-        <div class="bg-yellow-50 rounded-xl p-3">
-          <p class="text-xs text-yellow-700 uppercase tracking-wide mb-1">
-            Observaciones
-          </p>
-          <p class="text-sm text-yellow-800">
+        <div
+          class="cr-detail-cell"
+          style="
+            background: rgba(251, 176, 64, 0.08);
+            border-color: rgba(251, 176, 64, 0.2);
+          "
+        >
+          <p class="ud-label" style="color: var(--ff-warning)">Observaciones</p>
+          <p class="text-sm" style="color: var(--ff-text-primary)">
             {{ selectedRegister.observations }}
           </p>
         </div>
@@ -461,6 +521,7 @@
   }
   <ng-template pTemplate="footer">
     <p-button
+      data-cy="admin-cash-register-detail-close-action"
       label="Cerrar"
       severity="secondary"
       [outlined]="true"
