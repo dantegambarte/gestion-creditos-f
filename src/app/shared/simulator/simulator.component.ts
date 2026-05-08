@@ -4,11 +4,18 @@ import { map } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { SkeletonModule } from 'primeng/skeleton';
 import { ApiHttpService } from '../../core/http/api-http.service';
 import { CurrencyArsPipe } from '../../core/pipes/currency-ars.pipe';
 import { AppError } from '../../core/models/app-error';
 import { HeaderService } from '../../core/services/header.service';
 import { SimulateResult } from '../../features/seller/models/credit.model';
+
+const FREQUENCY_LABELS: Record<string, string> = {
+  MONTHLY:  'Mensual',
+  BIWEEKLY: 'Quincenal',
+  WEEKLY:   'Semanal',
+};
 
 function toResult(raw: Record<string, unknown>): SimulateResult {
   const items = Array.isArray(raw['items']) ? raw['items'] : [];
@@ -34,43 +41,80 @@ function toResult(raw: Record<string, unknown>): SimulateResult {
   };
 }
 
-interface FrequencyOption  { label: string; value: string; }
-interface InstallmentOption { label: string; value: number; }
+interface DropdownOption<T> { label: string; value: T; }
 
 @Component({
   selector: 'app-simulator',
   standalone: true,
-  imports: [FormsModule, ButtonModule, DropdownModule, InputNumberModule, CurrencyArsPipe],
+  imports: [FormsModule, ButtonModule, DropdownModule, InputNumberModule, SkeletonModule, CurrencyArsPipe],
   templateUrl: './simulator.component.html',
 })
 export class SimulatorComponent implements OnInit {
   private readonly api    = inject(ApiHttpService);
   private readonly header = inject(HeaderService);
 
-  ngOnInit(): void {
-    this.header.set([{ label: 'Simulador' }]);
-  }
+  // Estado de carga de opciones
+  loadingOptions = true;
+  optionsError = '';
 
+  // Mapa { MONTHLY: [6, 12, 24], WEEKLY: [4, 8], ... }
+  private optionsByFrequency: Record<string, number[]> = {};
+
+  frequencyOptions: DropdownOption<string>[]   = [];
+  installmentOptions: DropdownOption<number>[] = [];
+
+  // Valores del formulario
   amount: number | null = null;
-  installments = 12;
-  frequency = 'MONTHLY';
+  frequency = '';
+  installments = 0;
+
+  // Estado de simulación
   simulating = false;
   result: SimulateResult | null = null;
   error = '';
 
-  readonly frequencyOptions: FrequencyOption[] = [
-    { label: 'Mensual',   value: 'MONTHLY'  },
-    { label: 'Quincenal', value: 'BIWEEKLY' },
-    { label: 'Semanal',   value: 'WEEKLY'   },
-  ];
+  ngOnInit(): void {
+    this.header.set([{ label: 'Simulador' }]);
+    this.loadOptions();
+  }
 
-  readonly installmentOptions: InstallmentOption[] = [3, 6, 9, 12, 18, 24].map(n => ({
-    label: `${n} cuotas`,
-    value: n,
-  }));
+  private loadOptions(): void {
+    this.api
+      .get<Record<string, number[]>>('credits/simulate/options')
+      .subscribe({
+        next: (data) => {
+          this.optionsByFrequency = data;
+          this.frequencyOptions = Object.keys(data).map(f => ({
+            label: FREQUENCY_LABELS[f] ?? f,
+            value: f,
+          }));
+          if (this.frequencyOptions.length > 0) {
+            this.frequency = this.frequencyOptions[0].value;
+            this.updateInstallmentOptions();
+          }
+          this.loadingOptions = false;
+        },
+        error: () => {
+          this.optionsError = 'No se pudieron cargar las opciones de cuotas.';
+          this.loadingOptions = false;
+        },
+      });
+  }
+
+  onFrequencyChange(): void {
+    this.result = null;
+    this.error = '';
+    this.updateInstallmentOptions();
+  }
+
+  private updateInstallmentOptions(): void {
+    const counts = this.optionsByFrequency[this.frequency] ?? [];
+    this.installmentOptions = counts.map(n => ({ label: `${n} cuotas`, value: n }));
+    this.installments = counts[0] ?? 0;
+  }
 
   simulate(): void {
-    if (!this.amount || this.amount <= 0) return;
+    if (!this.amount || this.amount <= 0 || !this.frequency || !this.installments) return;
 
     this.simulating = true;
     this.result = null;
@@ -86,11 +130,11 @@ export class SimulatorComponent implements OnInit {
       .pipe(map(toResult))
       .subscribe({
         next: (res) => {
-          this.result    = res;
+          this.result     = res;
           this.simulating = false;
         },
         error: (err: AppError) => {
-          this.error     = err.message ?? 'No se pudo realizar la simulación.';
+          this.error      = err.message ?? 'No se pudo realizar la simulación.';
           this.simulating = false;
         },
       });
@@ -98,5 +142,9 @@ export class SimulatorComponent implements OnInit {
 
   get frequencyLabel(): string {
     return this.frequencyOptions.find(f => f.value === this.frequency)?.label ?? '';
+  }
+
+  get hasOptions(): boolean {
+    return this.frequencyOptions.length > 0;
   }
 }
