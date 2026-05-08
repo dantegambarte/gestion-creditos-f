@@ -49,39 +49,6 @@ http://localhost:3000/api/credits - POST
     "message": "Pre-operación registrada. Pendiente de aprobación."
 }
 ```
----
-
-**Módulo:** [Crédito]
-**ID de Prueba:** [CR-09]
-**Título / Descripción:** [Regresión en selección de unidad para operación SALE.]
-### 1. Contexto de la Prueba
-* **Acción Realizada:** [Hice click en "Enviar para Aprobación" luego de elegir un producto que informa unidades disponibles.]
-* **Resultado Esperado:** [Si el producto muestra stock disponible, la operación debería enviarse correctamente para aprobación.]
-* **Resultado Obtenido (Error):** [Cuando elijo un producto que dice que posee 5 unidades, la API responde que la unidad seleccionada no fue encontrada. **Pendiente de atacar**.]
-### 2. Evidencia Técnica
-**Payload Enviado (Request):**
-```json
-{
-    "customer_id": "9da1f6c7-8297-44c9-858e-a5d3918deccf",
-    "installments_count": 6,
-    "payment_frequency": "MONTHLY",
-    "type": "SALE",
-    "unit_ids": ["c8e8ef31-eec0-4e8f-a09c-d921a368d84d"]
-}
-```
-
-**Respuesta obtenida:**
-```json
-{
-    "ok": false,
-    "message": "Unidad c8e8ef31-eec0-4e8f-a09c-d921a368d84d no encontrada."
-}
-```
-
-**Línea de ataque sugerida:**
-- Verificar consistencia entre stock mostrado en UI y `unit_ids` reales devueltos por backend.
-- Revisar si el selector está enviando una unidad reservada/inactiva o un id stale.
-- Cubrir regresión con Cypress al confirmar stock visible vs unidad seleccionable.
 
 ---
 
@@ -127,20 +94,6 @@ http://localhost:3000/api/credits - POST
 * **Acción Realizada:** [Hice click en "Siguiente" sin elegir "Fecha del primer pago".]
 * **Resultado Esperado:** [Debería estar deshabilitado el botón "Siguiente" hasta elegir la "Fecha del primer pago".]
 * **Resultado Obtenido (Actual):** [Corregido. En paso Condiciones, `canNext` bloquea avanzar cuando `firstDueDate` está vacío o es inválido. Validado con `new-operation.component.spec.ts` (caso CR-05) y `cypress/e2e/07-negative-nueva-operacion.cy.ts`.]
----
-
-**Módulo:** [Crédito]
-**ID de Prueba:** [CR-10]
-**Título / Descripción:** [Calendario de primer pago no selecciona fecha con mouse.]
-### 1. Contexto de la Prueba
-* **Acción Realizada:** [Hice click para elegir la fecha del primer pago con el mouse desde el calendario.]
-* **Resultado Esperado:** [Debería poder elegir la fecha con click y reflejarla en el formulario.]
-* **Resultado Obtenido (Error):** [Al hacer click con el mouse sobre una fecha del calendario no hace nada; escribiendo la fecha manualmente sí permite seguir. **Pendiente de atacar**.]
-
-**Línea de ataque sugerida:**
-- Revisar binding del componente calendario y evento de selección (`onSelect` / `ngModel` / `formControl`).
-- Validar si hay overlay, z-index o elemento invisible bloqueando clicks.
-- Agregar prueba E2E específica para selección con mouse.
 
 ---
 
@@ -172,6 +125,93 @@ http://localhost:3000/api/credits - POST
 * **Resultado Esperado:** [Debería filtrar los clientes.]
 * **Resultado Obtenido (Actual):** [Corregido. El buscador ahora filtra por cliente ignorando mayúsculas/minúsculas y tildes (ej. "Perez" encuentra "Pérez"). Validado con `operations.component.spec.ts` (caso CR-08) y Cypress `14-seller-operaciones.cy.ts`.]
 
+* **Acción Realizada:** [Escribí "Perez" en el buscador en "Nueva Operación" - Admin.]
+* **Resultado Esperado:** [Debería filtrar los clientes.]
+* **Resultado Obtenido (Error):** [No filtra los resultados.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-09]
+**Título / Descripción:** [Regresión en selección de unidad para operación SALE.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Hice click en "Enviar para Aprobación" luego de elegir un producto que informa unidades disponibles.]
+* **Resultado Esperado:** [Si el producto muestra stock disponible, la operación debería enviarse correctamente para aprobación.]
+* **Resultado Obtenido (Error):** [Cuando elijo un producto que dice que posee 5 unidades, la API responde que la unidad seleccionada no fue encontrada. **Pendiente de atacar**.]
+### 2. Evidencia Técnica
+**Payload Enviado (Request):**
+```json
+{
+    "customer_id": "9da1f6c7-8297-44c9-858e-a5d3918deccf",
+    "installments_count": 6,
+    "payment_frequency": "MONTHLY",
+    "type": "SALE",
+    "unit_ids": ["c8e8ef31-eec0-4e8f-a09c-d921a368d84d"]
+}
+```
+
+**Respuesta obtenida:**
+```json
+{
+    "ok": false,
+    "message": "Unidad c8e8ef31-eec0-4e8f-a09c-d921a368d84d no encontrada."
+}
+```
+
+**Línea de ataque sugerida:**
+- Verificar consistencia entre stock mostrado en UI y `unit_ids` reales devueltos por backend.
+- Revisar si el selector está enviando una unidad reservada/inactiva o un id stale.
+- Cubrir regresión con Cypress al confirmar stock visible vs unidad seleccionable.
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-10]
+**Título / Descripción:** [Calendario de primer pago no selecciona fecha con mouse.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Hice click para elegir la fecha del primer pago con el mouse desde el calendario.]
+* **Resultado Esperado:** [Debería poder elegir la fecha con click y reflejarla en el formulario.]
+* **Resultado Obtenido (Error):** [Al hacer click con el mouse sobre una fecha del calendario no hace nada; escribiendo la fecha manualmente sí permite seguir. **Pendiente de atacar**.]
+
+**Línea de ataque sugerida:**
+- Revisar binding del componente calendario y evento de selección (`onSelect` / `ngModel` / `formControl`).
+- Validar si hay overlay, z-index o elemento invisible bloqueando clicks.
+- Agregar prueba E2E específica para selección con mouse.
+
+* **Acción Realizada:** [Hice click para elegir la fecha del primer pago con el mouse desde el calendario - Admin.]
+* **Resultado Esperado:** [Debería poder elegir una fecha del calendario.]
+* **Resultado Obtenido (Error):** [Al hacer click sobre el calendario sale cortado sin poder elegir las fechas que se encuentren por debajo.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-11]
+**Título / Descripción:** [Operacion venta de un producto - Admin.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se eligio un producto de la lista y la cantidad de cuotas.]
+* **Resultado Esperado:** [Debería cambiar el interés según el producto, la cantidad de cuotas y la frecuencia de pago.]
+* **Resultado Obtenido (Error):** [No está implementado el pago diario y quincenal, solo aparece el mensual, el interés figura siempre de 15% cuando debería cambiar según el plan que se elija.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-12]
+**Título / Descripción:** [Operaciones aprobadas y pre-aprobadas - Admin.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se realizó una operación para su aprobación y se aprobó una operación.]
+* **Resultado Esperado:** [Debería poder realizar una consulta de la misma donde nos indique si es venta o crédito, la cantidad de cuotas, que producto se vendió, etc.]
+* **Resultado Obtenido (Error):** [No está implementado el detalle de las operaciones, no hay un lugar donde estén visible los datos.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-13]
+**Título / Descripción:** [Nueva Operacion - Seller.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nueva Operación".]
+* **Resultado Esperado:** [Debería salir un modal para cargar los datos.]
+* **Resultado Obtenido (Error):** [Las letras son del mismo color que el fondo lo que hace ilegible la lectura.]
+
 ---
 
 Módulo Clientes
@@ -194,6 +234,10 @@ Módulo Clientes
 * **Resultado Esperado:** [Debe mostrar los datos del Cliente.]
 * **Resultado Obtenido (Actual):** [Corregido. El detalle ahora carga el cliente real por `id`; solo muestra “Cliente no encontrado.” cuando el backend responde 404. Validado con Cypress en `32-client-detail-regression.cy.ts`.]
 
+* **Acción Realizada:** [Se hizo click sobre el boton "Ver" en un cliente - Seller.]
+* **Resultado Esperado:** [Debe mostrar los datos del Cliente.]
+* **Resultado Obtenido (Error):** [No se distingue ya que el color de las letras es el mismo color que el fondo.]
+
 ---
 
 **Módulo:** [Clientes]
@@ -203,6 +247,17 @@ Módulo Clientes
 * **Acción Realizada:** [Se hizo click sobre el boton "Editar" en un cliente.]
 * **Resultado Esperado:** [Al modificar los datos deben guardarse en la DB.]
 * **Resultado Obtenido (Actual):** [Corregido. Los cambios persistidos actualmente (`full_name`, `phone`) se guardan y se mantienen tras refrescar. Los campos no soportados por el contrato real fueron retirados del modal para evitar UX engañosa. Validado con Cypress en `04-clientes.cy.ts`.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-04]
+**Título / Descripción:** [Editar Clientes]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click sobre el boton "Editar" en un cliente.]
+* **Resultado Esperado:** [Al modificar los datos deben debería salir un cartel "Modificación Exitosa".]
+* **Resultado Obtenido (Actual):** [El apretar "Guardar Cambios" no sale ningun cartel.]
+
 
 ---
 
@@ -337,6 +392,8 @@ Módulo Planilla
 * **Acción Realizada:** [Se hizo click en "Generar Planilla para todos" y se seleccionó un cobrador y se hizo click en "Generar Planilla".]
 * **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos" y dehabilitar el botón "Generar Planilla" cuando se selecciona un cobrador.]
 * **Resultado Obtenido (Actual):** [Corregido. Los handlers ahora bloquean reentrada (`generating` / `generatingAll`), los botones quedan deshabilitados durante la ejecución y backend serializa la generación por cobrador/fecha dentro de transacción para evitar reprocesos peligrosos. Validado con `sheet.component.spec.ts`.]
+
+---
 
 **Módulo:** [Planilla]
 **ID de Prueba:** [PL-02]

@@ -67,9 +67,9 @@ const PARAM_META: Record<string, ParamMeta> = {
   },
   jwt_expiry_internal_hs: {
     label: 'Expiración JWT interno (hs)',
-    range: '1 – 72',
-    hint: '',
-    min: 1,
+    range: '0.08 – 72',
+    hint: 'Ej: 0.25 = 15 min · 1 = 1 hs',
+    min: 0.08,
     max: 72,
   },
   jwt_expiry_portal_min: {

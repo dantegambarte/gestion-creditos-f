@@ -1,9 +1,17 @@
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  OnInit,
+  PLATFORM_ID,
+  inject,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SkeletonModule } from 'primeng/skeleton';
-import { AccountSummary, PortalCredit } from '../models/portal.models';
+import { AccountSummary, UpcomingInstallment } from '../models/portal.models';
 import { PortalAuthService } from '../auth/portal-auth.service';
 import { PortalService } from '../portal.service';
 
@@ -12,50 +20,37 @@ import { PortalService } from '../portal.service';
   standalone: true,
   imports: [CommonModule, CurrencyPipe, DatePipe, RouterLink, SkeletonModule],
   templateUrl: './portal-dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PortalDashboardComponent implements OnInit {
   private readonly portalService = inject(PortalService);
   private readonly authService = inject(PortalAuthService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   summary: AccountSummary | null = null;
-  credits: PortalCredit[] = [];
   loading = true;
   error = '';
 
-  get customerName(): string {
-    return this.authService.snapshot?.fullName ?? '';
-  }
-
   get firstName(): string {
-    return this.customerName.split(' ')[0] ?? this.customerName;
+    const name = this.authService.snapshot?.fullName ?? '';
+    return name.split(' ')[0] ?? name;
   }
 
-  get activeCredits(): PortalCredit[] {
-    return this.credits.filter((c) => c.status === 'ACTIVE');
-  }
-
-  get totalInstallments(): number {
-    return this.credits.reduce((acc, c) => acc + c.totalInstallments, 0);
-  }
-
-  get totalPaidInstallments(): number {
-    return this.credits.reduce((acc, c) => acc + c.paidInstallments, 0);
-  }
-
-  get nextDue(): PortalCredit | null {
-    return (
-      this.activeCredits
-        .filter((c) => c.nextDueDate)
-        .sort(
-          (a, b) =>
-            new Date(a.nextDueDate!).getTime() -
-            new Date(b.nextDueDate!).getTime(),
-        )[0] ?? null
+  /**
+   * Calcula el total de los próximos vencimientos.
+   */
+  get upcomingTotal(): number {
+    return (this.summary?.upcomingInstallments ?? []).reduce(
+      (sum, i) => sum + i.amountDue,
+      0,
     );
   }
 
   /**
-   * Calcula la cantidad de días restantes hasta una fecha dada (generalmente la próxima fecha de vencimiento de cuota). Si la fecha es nula, devuelve null. Si la fecha ya pasó, devuelve un número negativo indicando los días de atraso.
+   * Calcula la cantidad de días restantes hasta una fecha dada.
+   * Devuelve null si la fecha es nula, o negativo si ya venció.
    * @param dateStr
    * @returns
    */
@@ -66,50 +61,31 @@ export class PortalDashboardComponent implements OnInit {
   }
 
   /**
-   * Calcula el porcentaje de avance de un crédito basado en las cuotas pagadas. Si el crédito no tiene cuotas, devuelve 0 para evitar división por cero. El porcentaje se redondea al número entero más cercano.
-   * @param credit
+   * Devuelve la etiqueta del tipo de crédito para mostrar en la lista de próximos vencimientos.
+   * @param inst
    * @returns
    */
-  progressPercent(credit: PortalCredit): number {
-    if (!credit.totalInstallments) return 0;
-    return Math.round(
-      (credit.paidInstallments / credit.totalInstallments) * 100,
-    );
-  }
-
-  /**
-   * Devuelve la etiqueta correspondiente al tipo de crédito.
-   * @param credit
-   * @returns
-   */
-  creditLabel(credit: PortalCredit): string {
-    return credit.type === 'LOAN' ? 'Préstamo' : 'Venta a crédito';
-  }
-
-  /**
-   * Devuelve la referencia correspondiente al crédito.
-   * @param credit
-   * @returns
-   */
-  creditRef(credit: PortalCredit): string {
-    const year = new Date(credit.createdAt).getFullYear();
-    return `CR-${year}-${credit.id.substring(0, 4).toUpperCase()}`;
+  upcomingTypeLabel(inst: UpcomingInstallment): string {
+    return inst.creditType === 'SALE' ? 'VENTA' : 'PRÉSTAMO';
   }
 
   ngOnInit(): void {
-    forkJoin({
-      summary: this.portalService.getAccountSummary(),
-      credits: this.portalService.getCredits(),
-    }).subscribe({
-      next: ({ summary, credits }) => {
-        this.summary = summary;
-        this.credits = credits;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err?.message ?? 'Error al cargar el resumen.';
-      },
-    });
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    this.portalService
+      .getAccountSummary()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          this.summary = data;
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.loading = false;
+          this.error = err?.message ?? 'Error al cargar el resumen.';
+          this.cdr.markForCheck();
+        },
+      });
   }
 }
