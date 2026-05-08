@@ -1,16 +1,23 @@
-import { Component, inject } from '@angular/core';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
-import { SidebarComponent } from './shared/layout/sidebar/sidebar.component';
-import { HeaderComponent } from './shared/layout/header/header.component';
 import { AsyncPipe } from '@angular/common';
-import { MockAuthService } from './core/auth/mock-auth.service';
-import { filter, map } from 'rxjs/operators';
+import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { ToastModule } from 'primeng/toast';
+import { filter, map } from 'rxjs/operators';
+import { MockAuthService } from './core/auth/mock-auth.service';
+import { HeaderComponent } from './shared/layout/header/header.component';
+import { SidebarComponent } from './shared/layout/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, HeaderComponent, AsyncPipe],
+  imports: [
+    RouterOutlet,
+    SidebarComponent,
+    HeaderComponent,
+    AsyncPipe,
+    ToastModule,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
