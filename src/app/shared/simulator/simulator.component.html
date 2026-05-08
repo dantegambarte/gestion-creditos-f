@@ -1,0 +1,117 @@
+<div class="max-w-lg mx-auto space-y-4">
+
+  <!-- Cargando opciones -->
+  @if (loadingOptions) {
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+      <p-skeleton height="1.25rem" width="10rem" />
+      <p-skeleton height="2.5rem" />
+      <div class="grid grid-cols-2 gap-3">
+        <p-skeleton height="2.5rem" />
+        <p-skeleton height="2.5rem" />
+      </div>
+      <p-skeleton height="2.5rem" />
+    </div>
+  }
+
+  <!-- Sin tasas configuradas -->
+  @else if (optionsError || !hasOptions) {
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 flex flex-col items-center gap-3 text-center">
+      <i class="pi pi-exclamation-circle text-3xl" style="color: var(--ff-text-muted)"></i>
+      <p class="text-sm font-medium" style="color: var(--ff-text-secondary)">
+        {{ optionsError || 'No hay tasas de interés configuradas. Contactá al administrador.' }}
+      </p>
+    </div>
+  }
+
+  <!-- Formulario -->
+  @else {
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+      <h2 class="text-base font-semibold text-gray-800">Simular préstamo</h2>
+
+      <!-- Monto -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-gray-700">Monto solicitado</label>
+        <p-inputNumber
+          [(ngModel)]="amount"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [min]="1"
+          [useGrouping]="true"
+          placeholder="$ 0"
+          styleClass="w-full"
+        />
+      </div>
+
+      <!-- Cuotas y frecuencia -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Cuotas</label>
+          <p-dropdown
+            [(ngModel)]="installments"
+            [options]="installmentOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-gray-700">Frecuencia</label>
+          <p-dropdown
+            [(ngModel)]="frequency"
+            [options]="frequencyOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            (onChange)="onFrequencyChange()"
+          />
+        </div>
+      </div>
+
+      <!-- Error -->
+      @if (error) {
+        <p class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ error }}</p>
+      }
+
+      <!-- Botón -->
+      <p-button
+        label="Simular"
+        icon="pi pi-calculator"
+        styleClass="w-full"
+        [loading]="simulating"
+        [disabled]="!amount || amount <= 0"
+        (onClick)="simulate()"
+      />
+    </div>
+
+    <!-- Resultado -->
+    @if (result) {
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Resultado</h3>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-blue-50 rounded-xl p-4 col-span-2">
+            <p class="text-xs text-blue-500 font-medium mb-1">Cuota estimada</p>
+            <p class="text-2xl font-bold text-blue-700">{{ result.installmentAmount | currencyArs }}</p>
+            <p class="text-xs text-blue-400 mt-1">{{ result.installmentsCount }} cuotas · {{ frequencyLabel }}</p>
+          </div>
+
+          <div class="bg-gray-50 rounded-xl p-4">
+            <p class="text-xs text-gray-500 font-medium mb-1">Total a devolver</p>
+            <p class="text-lg font-semibold text-gray-800">{{ result.totalToReturn | currencyArs }}</p>
+          </div>
+
+          <div class="bg-gray-50 rounded-xl p-4">
+            <p class="text-xs text-gray-500 font-medium mb-1">Monto financiado</p>
+            <p class="text-lg font-semibold text-gray-800">{{ result.financedAmount | currencyArs }}</p>
+          </div>
+        </div>
+
+        @if (result.note) {
+          <p class="text-xs text-gray-400 italic">{{ result.note }}</p>
+        }
+      </div>
+    }
+  }
+
+</div>
