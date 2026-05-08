@@ -51,6 +51,14 @@ export const PORTAL_ROUTES: Routes = [
             (c) => c.PortalCreditDetailComponent,
           ),
       },
+      {
+        path: 'simulator',
+        canActivate: [portalTempPasswordGuard],
+        loadComponent: () =>
+          import('../../shared/simulator/simulator.component').then(
+            (c) => c.SimulatorComponent,
+          ),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },

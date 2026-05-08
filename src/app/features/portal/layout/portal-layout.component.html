@@ -30,6 +30,29 @@
     </div>
   </header>
 
+  <!-- Navegación -->
+  @if (!customer?.portalIsTempPassword) {
+    <nav style="background: var(--ff-sidebar); border-bottom: 1px solid var(--ff-border)">
+      <div class="max-w-5xl mx-auto px-3 sm:px-4 flex">
+        <a [routerLink]="dashboardRoute" routerLinkActive="active-tab"
+           class="portal-tab">
+          <i class="pi pi-th-large text-sm"></i>
+          <span>Inicio</span>
+        </a>
+        <a [routerLink]="creditsRoute" routerLinkActive="active-tab"
+           class="portal-tab">
+          <i class="pi pi-file-edit text-sm"></i>
+          <span>Mis créditos</span>
+        </a>
+        <a [routerLink]="simulatorRoute" routerLinkActive="active-tab"
+           class="portal-tab">
+          <i class="pi pi-calculator text-sm"></i>
+          <span>Simulador</span>
+        </a>
+      </div>
+    </nav>
+  }
+
   <!-- Aviso contraseña temporal -->
   @if (customer?.portalIsTempPassword) {
     <div class="px-4 py-2 text-sm" style="background: rgba(251,176,64,0.08); border-bottom: 1px solid rgba(251,176,64,0.25); color: var(--ff-warning)">
