@@ -1,44 +1,54 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { ClientOperation } from '../../../../models/interface/client';
-import { OperationFormService } from '../../operation-form.service';
 
 @Component({
   selector: 'app-step-client',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    ButtonModule,
-  ],
+  imports: [FormsModule, InputTextModule],
   templateUrl: './step-client.component.html',
 })
 export class StepClientComponent {
-  form = inject(OperationFormService);
+  @Input() clients: ClientOperation[] = [];
+  @Input() selectedClientId: string | null = null;
+  @Output() clientSelected = new EventEmitter<ClientOperation>();
+
+  searchText = '';
 
   /**
-   * Devuelve las iniciales de un cliente para renderizar su avatar.
-   * @param {string} name - Nombre completo del cliente.
-   * @returns {string} Dos caracteres iniciales del nombre.
+   * Devuelve los clientes filtrados por nombre o DNI según el texto de búsqueda local.
+   * La comparación ignora mayúsculas, minúsculas y tildes para evitar falsos negativos.
    */
-  initials(name: string): string {
-    const parts = name.split(' ');
-    return (parts[0]?.charAt(0) ?? '') + (parts[1]?.charAt(0) ?? '');
+  get filteredClients(): ClientOperation[] {
+    const term = this.normalizeText(this.searchText);
+    if (!term) return this.clients;
+    return this.clients.filter(
+      (c) =>
+        this.normalizeText(c.name).includes(term) ||
+        this.normalizeText(c.dni).includes(term),
+    );
   }
 
   /**
-   * Selecciona un cliente para mostrar su resumen y validar su estado en el wizard.
-   * @param {ClientOperation} client - Cliente elegido.
+   * Indica si el cliente seleccionado está activo para validar el avance del paso.
    */
-  selectClient(client: ClientOperation): void {
-    this.form.selectedClient.set(client);
+  get isSelectedClientInactive(): boolean {
+    if (!this.selectedClientId) return false;
+    const client = this.clients.find((c) => c.id === this.selectedClientId);
+    return client?.status !== 'ACTIVE';
+  }
+
+  /**
+   * Normaliza texto para búsquedas tolerantes a tildes y diferencias de casing.
+   * @param {string | null | undefined} value - Texto a normalizar.
+   * @returns {string} Texto normalizado listo para comparar.
+   */
+  private normalizeText(value: string | null | undefined): string {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 }

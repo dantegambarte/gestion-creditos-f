@@ -7,7 +7,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { Subject } from 'rxjs';
 import { catchError, of, takeUntil } from 'rxjs';
-import { MockAuthService } from '../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { DateService } from '../../../core/services/date.service';
 import { FormatService } from '../../../core/services/format.service';
 import { KpiCard } from '../models/interface/kpi-card';
@@ -58,7 +58,7 @@ function creditToOp(credit: Credit): RecentOperation {
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  private readonly auth = inject(MockAuthService);
+  private readonly auth = inject(AuthServiceBase);
   private readonly reportsSvc = inject(ReportsService);
   private readonly creditsSvc = inject(CreditsService);
   private readonly dateService = inject(DateService);

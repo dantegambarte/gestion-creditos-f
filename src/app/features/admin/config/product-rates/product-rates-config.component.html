@@ -1,6 +1,7 @@
 <p-toast />
 
 <div class="space-y-4">
+  <!-- Toolbar -->
   <div class="flex flex-wrap items-center gap-3 justify-between">
     <p-dropdown
       [options]="productFilterOptions"
@@ -8,161 +9,236 @@
       optionLabel="label"
       optionValue="value"
       placeholder="Todos los productos"
-      styleClass="text-sm"
+      styleClass="h-10 text-sm rounded-xl"
     />
     <p-button
-      label="Nueva tasa por producto"
-      icon="pi pi-plus"
+      label="+ Nueva tasa por producto"
       (onClick)="openCreate()"
-      styleClass="h-9 px-4 rounded-xl !bg-blue-500 !border-blue-500 hover:!bg-blue-600 text-sm"
+      styleClass="h-10 px-5 rounded-xl"
     />
   </div>
 
-  @if (loading) {
-    <div class="space-y-2">
-      @for (i of [1, 2, 3]; track i) {
-        <p-skeleton height="2.5rem" />
-      }
-    </div>
-  } @else {
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-gray-100">
-            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Frecuencia</th>
-            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Cuotas</th>
-            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Tasa</th>
-            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Estado</th>
-            <th class="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (groups.length === 0) {
-            <tr>
-              <td colspan="5" class="px-4 py-8 text-center text-gray-400">
-                Sin tasas para los filtros seleccionados.
-              </td>
+  <!-- Layout: tabla con panel lateral flotante -->
+  <div class="relative">
+    <!-- Tabla -->
+    @if (loading) {
+      <div class="space-y-2">
+        @for (i of [1, 2, 3]; track i) {
+          <p-skeleton height="2.5rem" styleClass="rounded-xl" />
+        }
+      </div>
+    } @else {
+      <div
+        class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"
+      >
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-800">
+              <th
+                class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              >
+                Frecuencia
+              </th>
+              <th
+                class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              >
+                Cuotas
+              </th>
+              <th
+                class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              >
+                Tasa
+              </th>
+              <th
+                class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              >
+                Estado
+              </th>
+              <th
+                class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              >
+                Acciones
+              </th>
             </tr>
-          }
-          @for (group of groups; track group.productId) {
-            <tr class="bg-blue-50 border-y border-blue-100">
-              <td colspan="5" class="px-4 py-1.5 text-xs font-bold text-blue-700 uppercase tracking-wide">
-                {{ group.productName }}
-              </td>
-            </tr>
-            @for (rate of group.rates; track rate.id) {
-              <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                <td class="px-4 py-2.5 text-gray-600">{{ freqLabel(rate.paymentFrequency) }}</td>
-                <td class="px-4 py-2.5 font-medium text-gray-800">{{ rate.installmentsCount }}</td>
-                <td class="px-4 py-2.5 font-semibold text-gray-800">{{ rateDisplay(rate.rate) }}</td>
-                <td class="px-4 py-2.5">
-                  <p-tag
-                    [value]="rate.active ? 'Activa' : 'Inactiva'"
-                    [severity]="rate.active ? 'success' : 'secondary'"
-                  />
-                </td>
-                <td class="px-4 py-2.5">
-                  <div class="flex gap-2">
-                    <button
-                      (click)="openEdit(rate)"
-                      title="Editar tasa"
-                      class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-500 transition-colors"
-                    >
-                      <i class="pi pi-pencil text-xs"></i>
-                    </button>
-                    <button
-                      (click)="confirmToggle(rate)"
-                      [title]="rate.active ? 'Desactivar' : 'Activar'"
-                      [ngClass]="
-                        rate.active
-                          ? 'border-red-200 text-red-400 hover:border-red-400 hover:text-red-600'
-                          : 'border-green-200 text-green-500 hover:border-green-400 hover:text-green-700'
-                      "
-                      class="w-8 h-8 flex items-center justify-center rounded-lg border transition-colors"
-                    >
-                      <i [class]="rate.active ? 'pi pi-times text-xs' : 'pi pi-check text-xs'"></i>
-                    </button>
-                  </div>
+          </thead>
+          <tbody>
+            @if (groups.length === 0) {
+              <tr>
+                <td colspan="5" class="px-5 py-10 text-center text-slate-500">
+                  Sin tasas para los filtros seleccionados.
                 </td>
               </tr>
             }
-          }
-        </tbody>
-      </table>
-    </div>
-  }
-</div>
+            @for (group of groups; track group.productId) {
+              <!-- Separador de producto -->
+              <tr>
+                <td colspan="5" class="px-5 pt-4 pb-1">
+                  <div class="flex items-center gap-3">
+                    <span
+                      class="text-xs font-bold text-blue-400 uppercase tracking-widest whitespace-nowrap"
+                      >{{ group.productName }}</span
+                    >
+                    <div class="flex-1 h-px bg-slate-800"></div>
+                  </div>
+                </td>
+              </tr>
+              @for (rate of group.rates; track rate.id) {
+                <tr
+                  class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors"
+                >
+                  <td class="px-5 py-3 text-slate-400">
+                    {{ freqLabel(rate.paymentFrequency) }}
+                  </td>
+                  <td class="px-5 py-3 font-medium text-slate-200">
+                    {{ rate.installmentsCount }}
+                  </td>
+                  <td class="px-5 py-3 font-bold text-emerald-400">
+                    {{ rateDisplay(rate.rate) }}
+                  </td>
+                  <td class="px-5 py-3">
+                    <p-tag
+                      [value]="rate.active ? 'Activa' : 'Inactiva'"
+                      [severity]="rate.active ? 'success' : 'secondary'"
+                    />
+                  </td>
+                  <td class="px-5 py-3">
+                    <div class="flex gap-4">
+                      <button
+                        (click)="openEdit(rate)"
+                        class="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        (click)="confirmToggle(rate)"
+                        [class]="
+                          rate.active
+                            ? 'text-sm text-rose-400 hover:text-rose-300 transition-colors'
+                            : 'text-sm text-emerald-400 hover:text-emerald-300 transition-colors'
+                        "
+                      >
+                        {{ rate.active ? "Desactivar" : "Activar" }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
 
-<p-dialog
-  [(visible)]="showCreateDialog"
-  header="Nueva Tasa por Producto"
-  [modal]="true"
-  [style]="{ width: '28rem' }"
-  [closable]="!saving"
->
-  <div class="space-y-4 py-1">
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Producto</label>
-      <p-dropdown
-        [options]="activeProductOptions"
-        [(ngModel)]="createForm.productId"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Seleccionar producto activo..."
-        [filter]="true"
-        filterBy="label"
-        styleClass="w-full"
-      />
-    </div>
+    <!-- Panel lateral: Nueva tasa por producto (flotante) -->
+    @if (showCreateDialog) {
+      <div
+        class="absolute top-0 right-0 w-[380px] bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xl z-10"
+      >
+        <h3
+          class="text-sm font-semibold text-slate-100 uppercase tracking-wide"
+        >
+          Nueva tasa por producto
+        </h3>
 
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Frecuencia de pago</label>
-      <p-dropdown
-        [options]="freqOptions"
-        [(ngModel)]="createForm.paymentFrequency"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Seleccionar..."
-        styleClass="w-full"
-      />
-    </div>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Producto</label
+          >
+          <p-dropdown
+            [options]="activeProductOptions"
+            [(ngModel)]="createForm.productId"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccionar producto..."
+            [filter]="true"
+            filterBy="label"
+            styleClass="w-full h-11 rounded-xl"
+            appendTo="body"
+          />
+        </div>
 
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Cantidad de cuotas</label>
-      <p-inputNumber
-        [(ngModel)]="createForm.installmentsCount"
-        [min]="1"
-        [max]="120"
-        [useGrouping]="false"
-        styleClass="w-full"
-        placeholder="Ej: 12"
-      />
-    </div>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Frecuencia de pago</label
+          >
+          <p-dropdown
+            [options]="freqOptions"
+            [(ngModel)]="createForm.paymentFrequency"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccionar..."
+            styleClass="w-full h-11 rounded-xl"
+          />
+        </div>
 
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Tasa (%)</label>
-      <p-inputNumber
-        [(ngModel)]="createForm.ratePercent"
-        [min]="0"
-        [max]="100"
-        [minFractionDigits]="2"
-        [maxFractionDigits]="4"
-        styleClass="w-full"
-        placeholder="Ej: 8 = 8%"
-      />
-      <span class="text-xs text-gray-400">Ingresá el valor como porcentaje (ej: 8 = 8%)</span>
-    </div>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Cantidad de cuotas</label
+          >
+          <p-inputNumber
+            [(ngModel)]="createForm.installmentsCount"
+            [min]="1"
+            [max]="120"
+            [useGrouping]="false"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500"
+            placeholder="Ej: 12"
+          />
+        </div>
 
-    @if (createError) {
-      <p class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{{ createError }}</p>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Tasa (%)</label
+          >
+          <p-inputNumber
+            [(ngModel)]="createForm.ratePercent"
+            [min]="0"
+            [max]="100"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="4"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500"
+            placeholder="Ej: 8 = 8%"
+          />
+          <span class="text-xs text-slate-500"
+            >Ingresá el valor como porcentaje (ej: 8 = 8%).</span
+          >
+        </div>
+
+        @if (createError) {
+          <p
+            class="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2"
+          >
+            {{ createError }}
+          </p>
+        }
+
+        <div class="flex flex-col gap-2 pt-1">
+          <p-button
+            label="Crear tasa"
+            styleClass="w-full justify-center h-11 rounded-xl"
+            (onClick)="submitCreate()"
+            [loading]="saving"
+          />
+          <p-button
+            label="Cancelar"
+            severity="secondary"
+            [text]="true"
+            styleClass="w-full justify-center h-11 rounded-xl"
+            (onClick)="showCreateDialog = false"
+            [disabled]="saving"
+          />
+        </div>
+      </div>
     }
   </div>
-  <ng-template pTemplate="footer">
-    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showCreateDialog = false" [disabled]="saving" />
-    <p-button label="Crear" icon="pi pi-check" (onClick)="submitCreate()" [loading]="saving" />
-  </ng-template>
-</p-dialog>
+</div>
 
+<!-- Dialog: Editar tasa -->
 <p-dialog
   [(visible)]="showEditDialog"
   header="Editar Tasa"
@@ -172,11 +248,16 @@
 >
   @if (editingRate) {
     <div class="space-y-3 py-1">
-      <p class="text-sm text-gray-500">
-        {{ editingRate.productName }} · {{ freqLabel(editingRate.paymentFrequency) }} · {{ editingRate.installmentsCount }} cuotas
+      <p class="text-sm text-slate-400">
+        {{ editingRate.productName }} ·
+        {{ freqLabel(editingRate.paymentFrequency) }} ·
+        {{ editingRate.installmentsCount }} cuotas
       </p>
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700">Nueva tasa (%)</label>
+      <div class="flex flex-col gap-1.5">
+        <label
+          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+          >Nueva tasa (%)</label
+        >
         <p-inputNumber
           [(ngModel)]="editRatePercent"
           [min]="0"
@@ -184,27 +265,59 @@
           [minFractionDigits]="2"
           [maxFractionDigits]="4"
           styleClass="w-full"
+          inputStyleClass="w-full"
           placeholder="Ej: 8"
         />
-        <span class="text-xs text-gray-400">Ingresá el valor como porcentaje (ej: 8 = 8%)</span>
+        <span class="text-xs text-slate-500"
+          >Ingresá el valor como porcentaje (ej: 8 = 8%)</span
+        >
       </div>
     </div>
   }
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showEditDialog = false" [disabled]="saving" />
-    <p-button label="Guardar" icon="pi pi-check" (onClick)="submitEdit()" [loading]="saving" />
+    <div class="flex gap-3 justify-end pt-2">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-10 px-5 rounded-xl"
+        (onClick)="showEditDialog = false"
+        [disabled]="saving"
+      />
+      <p-button
+        label="Guardar"
+        icon="pi pi-check"
+        styleClass="h-10 px-5 rounded-xl"
+        (onClick)="submitEdit()"
+        [loading]="saving"
+      />
+    </div>
   </ng-template>
 </p-dialog>
 
+<!-- Dialog: Confirmar toggle -->
 <p-dialog
   [(visible)]="showConfirmDialog"
   header="Confirmar"
   [modal]="true"
   [style]="{ width: '20rem' }"
 >
-  <p class="text-sm text-gray-700 py-2">{{ confirmMessage }}</p>
+  <p class="text-sm py-2">{{ confirmMessage }}</p>
   <ng-template pTemplate="footer">
-    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="onCancelConfirm()" />
-    <p-button label="Confirmar" icon="pi pi-check" (onClick)="onConfirm()" />
+    <div class="flex gap-3 justify-end pt-2">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-10 px-5 rounded-xl"
+        (onClick)="onCancelConfirm()"
+      />
+      <p-button
+        label="Confirmar"
+        icon="pi pi-check"
+        styleClass="h-10 px-5 rounded-xl"
+        (onClick)="onConfirm()"
+      />
+    </div>
   </ng-template>
 </p-dialog>

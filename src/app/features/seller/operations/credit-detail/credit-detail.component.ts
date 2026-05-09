@@ -13,7 +13,7 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { MockAuthService } from '../../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { AppError } from '../../../../core/models/app-error';
 import { FormatService } from '../../../../core/services/format.service';
 import { HeaderService } from '../../../../core/services/header.service';
@@ -61,7 +61,7 @@ export class CreditDetailComponent implements OnInit {
   private readonly installmentsService = inject(InstallmentsService);
   private readonly location = inject(Location);
   private readonly header = inject(HeaderService);
-  readonly auth = inject(MockAuthService);
+  readonly auth = inject(AuthServiceBase);
   private readonly msg = inject(MessageService);
   private readonly fmt = inject(FormatService);
 

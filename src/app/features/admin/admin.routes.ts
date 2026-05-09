@@ -172,6 +172,51 @@ export const ADMIN_ROUTES: Routes = [
     path: AppRoutes.CONFIG,
     loadComponent: () =>
       import('./config/config.component').then((c) => c.ConfigComponent),
+    children: [
+      { path: '', redirectTo: 'company', pathMatch: 'full' },
+      {
+        path: 'company',
+        loadComponent: () =>
+          import('./config/company/company-config.component').then(
+            (c) => c.CompanyConfigComponent,
+          ),
+      },
+      {
+        path: 'rates',
+        loadComponent: () =>
+          import('./config/rates/interest-rates-config.component').then(
+            (c) => c.InterestRatesConfigComponent,
+          ),
+      },
+      {
+        path: 'product-rates',
+        loadComponent: () =>
+          import('./config/product-rates/product-rates-config.component').then(
+            (c) => c.ProductRatesConfigComponent,
+          ),
+      },
+      {
+        path: 'system-params',
+        loadComponent: () =>
+          import('./config/system-params/system-params-config.component').then(
+            (c) => c.SystemParamsConfigComponent,
+          ),
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./config/users/users-config.component').then(
+            (c) => c.UsersConfigComponent,
+          ),
+      },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./config/notifications/notifications-config.component').then(
+            (c) => c.NotificationsConfigComponent,
+          ),
+      },
+    ],
   },
   {
     path: AppRoutes.ADMIN_COLLECTIONS_NEW,

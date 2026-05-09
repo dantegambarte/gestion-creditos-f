@@ -1,240 +1,47 @@
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-  <!-- Columna izquierda: buscador + lista -->
-  <div class="flex flex-col gap-4">
-    <div class="flex justify-between items-center">
-      <h2 class="text-base font-bold" style="color: var(--ff-text-primary)">
-        Buscar Cliente
-      </h2>
-      <span
-        class="text-xs font-semibold px-3 py-1 rounded-full"
-        style="background: rgba(79, 110, 247, 0.12); color: var(--ff-accent)"
-      >
-        {{ form.clients.length }} clientes
-      </span>
-    </div>
+<section class="flex h-full flex-col gap-5">
+  <h2 class="text-lg font-semibold">Paso 1 · Cliente</h2>
 
-    <p-iconField iconPosition="left">
-      <p-inputIcon
-        styleClass="pi pi-search z-10"
-        style="color: var(--ff-text-muted)"
-      />
-      <input
-        pInputText
-        type="text"
-        placeholder="Buscar por nombre o DNI..."
-        [ngModel]="form.searchClient()"
-        (ngModelChange)="form.searchClient.set($event)"
-        class="w-full h-11 pl-10"
-        data-cy="input-buscar-cliente-wizard"
-      />
-    </p-iconField>
+  <div class="space-y-2">
+    <label class="text-sm font-medium text-slate-300">Buscar cliente</label>
+    <input
+      pInputText
+      [(ngModel)]="searchText"
+      class="h-11 w-full rounded-xl border border-slate-600 bg-slate-800 px-3 text-slate-100"
+      placeholder="DNI, nombre o apellido"
+      data-cy="input-search-client"
+    />
+  </div>
 
-    <div
-      class="rounded-xl overflow-hidden flex flex-col h-[380px] overflow-y-auto"
-      style="
-        border: 1px solid var(--ff-border);
-        background: var(--ff-secondary);
-      "
-    >
-      @for (client of form.filteredClients(); track client.id) {
-        <div
-          class="flex items-center justify-between p-4 cursor-pointer transition-colors"
-          [style.background]="
-            form.selectedClient()?.id === client.id
-              ? 'rgba(79,110,247,0.15)'
-              : 'transparent'
-          "
-          [style.borderLeft]="
-            form.selectedClient()?.id === client.id
-              ? '2px solid var(--ff-accent)'
-              : '2px solid transparent'
-          "
-          style="border-bottom: 1px solid var(--ff-border)"
-          [class.opacity-70]="client.status !== 'ACTIVE'"
-          [attr.data-cy]="'cliente-item-' + client.dni"
-          (click)="selectClient(client)"
+  <div class="min-h-0 flex-1 overflow-y-auto pr-1">
+    <div class="grid gap-3 md:grid-cols-2">
+      @for (client of filteredClients; track client.id) {
+        <button
+          type="button"
+          [class]="selectedClientId === client.id
+            ? 'rounded-xl border border-emerald-500 bg-emerald-900/30 p-4 text-left transition'
+            : 'rounded-xl border border-slate-700 bg-slate-800 p-4 text-left transition'"
+          (click)="clientSelected.emit(client)"
+          [attr.data-cy]="'client-card-' + client.id"
         >
-          <div class="flex items-center gap-4">
-            <div
-              class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 transition-colors"
-              [style.background]="
-                form.selectedClient()?.id === client.id
-                  ? 'var(--ff-accent)'
-                  : 'rgba(100,116,139,0.4)'
-              "
+          <div class="flex items-center justify-between">
+            <div class="font-medium">{{ client.name }}</div>
+            <span
+              [class]="client.status === 'ACTIVE'
+                ? 'rounded-full bg-emerald-500/20 px-2 py-1 text-xs text-emerald-300'
+                : 'rounded-full bg-red-500/20 px-2 py-1 text-xs text-red-300'"
             >
-              {{ initials(client.name) }}
-            </div>
-            <div class="flex flex-col">
-              <div class="flex items-center gap-2">
-                <span
-                  class="text-sm font-bold"
-                  [style.color]="
-                    form.selectedClient()?.id === client.id
-                      ? 'var(--ff-text-primary)'
-                      : 'var(--ff-text-secondary)'
-                  "
-                >
-                  {{ client.name }}
-                </span>
-                @if (client.status !== 'ACTIVE') {
-                  <span class="ff-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--ff-danger)">
-                    Inactivo
-                  </span>
-                }
-              </div>
-              <span class="text-xs ff-mono" style="color: var(--ff-text-muted)">
-                CC {{ client.dni }} · Tel: {{ client.phone }}
-              </span>
-            </div>
+              {{ client.status === 'ACTIVE' ? 'ACTIVO' : 'INACTIVO' }}
+            </span>
           </div>
-
-          @if (form.selectedClient()?.id === client.id) {
-            <i
-              class="pi pi-check-circle text-xl animate-fadein"
-              style="color: var(--ff-accent)"
-            ></i>
-          } @else if (client.status !== 'ACTIVE') {
-            <i class="pi pi-lock" style="color: var(--ff-danger)"></i>
-          }
-        </div>
+          <div class="mt-2 text-sm text-slate-400">DNI: {{ client.dni }}</div>
+        </button>
       }
     </div>
-
-    @if (form.selectedClient() && !form.isSelectedClientActive()) {
-      <small class="text-xs font-medium" style="color: var(--ff-danger)">
-        El cliente seleccionado está inactivo. Activá el cliente para continuar.
-      </small>
-    }
   </div>
 
-  <!-- Columna derecha: detalle del seleccionado -->
-  <div class="flex flex-col gap-4">
-    <h2 class="text-base font-bold" style="color: var(--ff-text-primary)">
-      Cliente Seleccionado
-    </h2>
-
-    @if (form.selectedClient(); as client) {
-      <div class="ff-panel p-6 h-[380px] animate-fadein">
-        <div class="flex items-center gap-4 mb-6">
-          <div
-            class="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl shrink-0"
-            style="background: var(--ff-accent)"
-          >
-            {{ initials(client.name) }}
-          </div>
-          <div>
-            <h3
-              class="text-lg font-bold leading-tight"
-              style="color: var(--ff-text-primary)"
-            >
-              {{ client.name }}
-            </h3>
-            <p
-              class="text-sm ff-mono mb-1.5"
-              style="color: var(--ff-text-muted)"
-            >
-              CC {{ client.dni }}
-            </p>
-            @if (client.status === 'ACTIVE') {
-              <span class="ff-badge ff-badge--activo">Cliente activo</span>
-            } @else {
-              <span class="ff-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--ff-danger)">
-                Cliente inactivo
-              </span>
-            }
-          </div>
-        </div>
-
-        <div class="space-y-3">
-          <div
-            class="flex justify-between items-center py-2.5"
-            style="border-bottom: 1px solid var(--ff-border)"
-          >
-            <span class="text-sm" style="color: var(--ff-text-secondary)"
-              >Teléfono</span
-            >
-            <span
-              class="text-sm font-semibold"
-              style="color: var(--ff-text-primary)"
-            >
-              {{ client.phone }}
-            </span>
-          </div>
-          <div
-            class="flex justify-between items-center py-2.5"
-            style="border-bottom: 1px solid var(--ff-border)"
-          >
-            <span class="text-sm" style="color: var(--ff-text-secondary)"
-              >Correo</span
-            >
-            <span
-              class="text-sm font-semibold"
-              style="color: var(--ff-text-primary)"
-            >
-              {{ client.email }}
-            </span>
-          </div>
-          <div
-            class="flex justify-between items-center py-2.5"
-            style="border-bottom: 1px solid var(--ff-border)"
-          >
-            <span class="text-sm" style="color: var(--ff-text-secondary)"
-              >Créditos anteriores</span
-            >
-            <span
-              class="text-sm font-semibold"
-              style="color: var(--ff-success)"
-            >
-              {{ client.previousCredits }} crédito(s) · {{ client.delinquency }}
-            </span>
-          </div>
-          <div class="flex justify-between items-center py-2.5">
-            <span class="text-sm" style="color: var(--ff-text-secondary)"
-              >Capacidad de pago</span
-            >
-            <span
-              class="text-sm font-bold ff-mono"
-              style="color: var(--ff-text-primary)"
-            >
-              {{
-                client.paymentCapacity | currency: "ARS" : "symbol" : "1.0-0"
-              }}
-              / mes
-            </span>
-          </div>
-        </div>
-      </div>
-    } @else {
-      <div
-        class="rounded-xl p-8 flex flex-col items-center justify-center text-center h-[380px] animate-fadein"
-        style="
-          border: 2px dashed var(--ff-border);
-          background: var(--ff-secondary);
-        "
-      >
-        <div
-          class="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-          style="
-            background: var(--ff-panel);
-            border: 1px solid var(--ff-border);
-          "
-        >
-          <i
-            class="pi pi-user text-2xl"
-            style="color: var(--ff-text-muted)"
-          ></i>
-        </div>
-        <p class="font-semibold" style="color: var(--ff-text-secondary)">
-          Ningún cliente seleccionado
-        </p>
-        <p
-          class="text-sm mt-1 max-w-[250px]"
-          style="color: var(--ff-text-muted)"
-        >
-          Buscá y seleccioná un cliente de la lista para ver sus detalles.
-        </p>
-      </div>
-    }
-  </div>
-</div>
+  @if (isSelectedClientInactive) {
+    <p class="text-sm text-red-400">
+      El cliente seleccionado está inactivo. No podés avanzar.
+    </p>
+  }
+</section>

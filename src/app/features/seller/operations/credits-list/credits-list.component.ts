@@ -8,7 +8,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { MockAuthService } from '../../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { AppError } from '../../../../core/models/app-error';
 import { UserRoleEnum } from '../../../../core/models/types/user-role';
 import { HeaderService } from '../../../../core/services/header.service';
@@ -44,7 +44,7 @@ import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
 })
 export class CreditsListComponent implements OnInit {
   private readonly creditsService = inject(CreditsService);
-  private readonly auth = inject(MockAuthService);
+  private readonly auth = inject(AuthServiceBase);
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
 
