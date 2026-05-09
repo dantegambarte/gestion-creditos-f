@@ -1,75 +1,61 @@
-import { DecimalPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
-import { TagModule } from 'primeng/tag';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
-import { ProductOperation } from '../../../../models/interface/product';
-import { OperationFormService } from '../../operation-form.service';
+import { CartLine, CatalogProduct } from '../../operation-form.service';
 
 @Component({
   selector: 'app-step-products',
   standalone: true,
   imports: [
-    CurrencyArsPipe,
+    ReactiveFormsModule,
     FormsModule,
-    DecimalPipe,
-    InputTextModule,
-    IconFieldModule,
-    InputIconModule,
-    InputNumberModule,
     ButtonModule,
     DropdownModule,
-    TagModule,
+    InputNumberModule,
+    InputTextModule,
+    CurrencyArsPipe,
   ],
   templateUrl: './step-products.component.html',
 })
 export class StepProductsComponent {
-  form = inject(OperationFormService);
+  @Input() form!: FormGroup;
+  @Input() operationTypeOptions: { label: string; value: string }[] = [];
+  @Input() catalogProducts: CatalogProduct[] = [];
+  @Input() cartLines: CartLine[] = [];
+  @Input() totalCarrito = 0;
+  @Input() prestamoTotal = 0;
+  @Input() loadingLoanData = false;
+  @Input() loadingSaleData = false;
+  @Input() loadingProductRatesByCatalogId: Record<string, boolean> = {};
+
+  @Output() productAdded = new EventEmitter<CatalogProduct>();
+  @Output() productRemoved = new EventEmitter<string>();
+  @Output() quantityIncreased = new EventEmitter<string>();
+  @Output() quantityDecreased = new EventEmitter<string>();
+  @Output() cartCleared = new EventEmitter<void>();
+
+  catalogSearchText = '';
 
   /**
-   * Devuelve si la operación actual usa productos (solo venta a crédito).
-   * @returns {boolean} true cuando corresponde mostrar y habilitar productos.
+   * Catálogo filtrado por la búsqueda local del paso 2.
    */
-  get usesProducts(): boolean {
-    return this.form.selectedType() === 'SALE';
+  get filteredCatalogProducts(): CatalogProduct[] {
+    const term = this.catalogSearchText.trim().toLowerCase();
+    if (!term) return this.catalogProducts;
+    return this.catalogProducts.filter((p) => p.nombre.toLowerCase().includes(term));
   }
 
   /**
-   * Cambia el tipo de operación delegando la limpieza de estado al servicio.
-   * @param {'SALE' | 'LOAN'} type - Tipo elegido por el usuario.
+   * Indica si un producto del catálogo ya alcanzó todo su stock en el carrito.
+   * @param {CatalogProduct} product - Producto agrupado del catálogo.
    */
-  changeOperationType(type: 'SALE' | 'LOAN') {
-    this.form.setOperationType(type);
-  }
-
-  /**
-   * Indica si la unidad ya está seleccionada para evitar duplicados en la venta.
-   * @param {string} productId - ID real de la unidad seleccionable.
-   * @returns {boolean} true cuando la unidad ya fue agregada.
-   */
-  isProductSelected(productId: string): boolean {
-    return this.form.isProductSelected(productId);
-  }
-
-  /**
-   * Agrega una unidad al listado seleccionado del flujo de venta.
-   * @param {ProductOperation} prod - Unidad elegida.
-   */
-  addProduct(prod: ProductOperation) {
-    this.form.addProduct(prod);
-  }
-
-  /**
-   * Quita una unidad del listado seleccionado del flujo de venta.
-   * @param {ProductOperation} prod - Unidad a remover.
-   */
-  removeProduct(prod: ProductOperation) {
-    this.form.removeProduct(prod);
+  isCatalogProductOutOfStock(product: CatalogProduct): boolean {
+    const existing = this.cartLines.find((line) => line.productoId === product.productoId);
+    return (existing?.cantidad ?? 0) >= product.stockDisponible;
   }
 }

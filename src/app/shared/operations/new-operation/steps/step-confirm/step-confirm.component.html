@@ -1,217 +1,96 @@
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-  <!-- Resumen de la operación -->
-  <div class="ff-panel p-6">
-    <h3 class="text-base font-bold mb-6" style="color: var(--ff-text-primary)">
-      Resumen de la Operación
-    </h3>
+<section class="space-y-5" [formGroup]="form">
+  <h2 class="text-lg font-semibold">Paso 4 · Confirmación</h2>
 
-    <!-- Cliente -->
-    <div class="mb-5 pb-5" style="border-bottom: 1px solid var(--ff-border)">
-      <span
-        class="text-[10px] font-bold uppercase tracking-wider mb-3 block"
-        style="color: var(--ff-text-muted)"
-        >Cliente</span
-      >
-      <div class="flex items-center gap-3">
-        <div
-          class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-          style="background: var(--ff-accent)"
-        >
-          {{ initials(form.selectedClient()?.name) }}
-        </div>
-        <div>
-          <p class="font-bold text-sm" style="color: var(--ff-text-primary)">
-            {{ form.selectedClient()?.name || "No seleccionado" }}
-          </p>
-          <p class="text-xs ff-mono" style="color: var(--ff-text-muted)">
-            CC {{ form.selectedClient()?.dni }}
-          </p>
-        </div>
-      </div>
-    </div>
+  <div class="grid gap-4 lg:grid-cols-2">
+    <!-- Resumen de la operación -->
+    <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
+      <h3 class="mb-4 text-base font-semibold">Resumen de la Operación</h3>
 
-    <!-- Tipo de operación -->
-    <div class="mb-5 pb-5" style="border-bottom: 1px solid var(--ff-border)">
-      <span
-        class="text-[10px] font-bold uppercase tracking-wider mb-3 block"
-        style="color: var(--ff-text-muted)"
-        >Operación</span
-      >
-      <p class="text-sm font-semibold" style="color: var(--ff-text-primary)">
-        {{ operationTypeLabel() }}
-        @if (form.selectedType() === "SALE") {
-          - {{ form.selectedProducts().length }} unidad(es)
-        }
-      </p>
-    </div>
-
-    <!-- Condiciones financieras -->
-    <div>
-      <span
-        class="text-[10px] font-bold uppercase tracking-wider mb-4 block"
-        style="color: var(--ff-text-muted)"
-        >Condiciones Financieras</span
-      >
-      <div class="space-y-3">
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Total base</span>
-          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
-            {{ form.capital() | currencyArs }}
+      <div class="space-y-3 text-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Cliente</span>
+          <span class="font-semibold text-slate-100">
+            {{ selectedClient?.name || 'Sin cliente' }}
           </span>
         </div>
-        @if (form.selectedType() === "SALE") {
-          <div class="flex justify-between items-center text-sm">
-            <span style="color: var(--ff-text-secondary)">Enganche</span>
-            <span
-              class="font-bold ff-mono"
-              style="color: var(--ff-text-primary)"
-            >
-              {{ form.downPayment() | currencyArs }}
-            </span>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">DNI</span>
+          <span class="font-semibold text-slate-100">{{ selectedClient?.dni || '-' }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Tipo de operación</span>
+          <span class="font-semibold text-slate-100">
+            {{ form.controls['operationType'].value === 'SALE' ? 'Venta' : 'Préstamo' }}
+          </span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Capital financiado</span>
+          <span class="font-semibold text-slate-100">{{ capitalAFinanciar | currencyArs }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Enganche</span>
+          <span class="font-semibold text-slate-100">
+            {{ (form.controls['operationType'].value === 'SALE' ? validatedDownPayment : 0) | currencyArs }}
+          </span>
+        </div>
+        @if (form.controls['operationType'].value === 'SALE') {
+          <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Plan por producto</p>
+            <div class="space-y-1 text-xs">
+              @for (line of cartLines; track line.productoId) {
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-slate-300">{{ line.nombre }}</span>
+                  <span class="font-semibold text-slate-100">{{ line.selectedInstallments ?? 0 }} cuotas</span>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="flex items-center justify-between">
+            <span class="text-slate-400">Cantidad de cuotas</span>
+            <span class="font-semibold text-slate-100">{{ installmentsCount ?? 0 }}</span>
           </div>
         }
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Capital financiado</span>
-          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
-            {{ form.financedCapital() | currencyArs }}
-          </span>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Valor de cuota</span>
+          <span class="font-semibold text-slate-100">{{ valorCuota | currencyArs }}</span>
         </div>
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Plan de cuotas</span>
-          <span class="font-bold" style="color: var(--ff-text-primary)">
-            {{ installmentsLabel() }}
-          </span>
-        </div>
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Fecha primer pago</span>
-          <span class="font-bold" style="color: var(--ff-text-primary)">
-            {{ (form.firstDueDate() | date: "dd/MM/yyyy") || "No definida" }}
-          </span>
-        </div>
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Valor cuota</span>
-          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
-            {{ form.installmentValue() | currencyArs }}
-          </span>
-        </div>
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Total a devolver</span>
-          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
-            {{ form.totalToPay() | currencyArs }}
-          </span>
-        </div>
-        <div
-          class="flex justify-between items-center text-sm pt-2"
-          style="border-top: 1px solid var(--ff-border)"
-        >
-          <span style="color: var(--ff-text-secondary)">Tipo de tasa</span>
-          <span
-            class="font-bold"
-            style="color: var(--ff-text-primary)"
-          >
-            {{
-              form.selectedType() === "LOAN"
-                ? form.loanInterest() + "% mensual"
-                : form.interestRate() + "% fijo"
-            }}
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Declaraciones + advertencia -->
-  <div class="flex flex-col gap-4">
-    <div class="ff-panel p-6">
-      <h3
-        class="text-base font-bold mb-6"
-        style="color: var(--ff-text-primary)"
-      >
-        Declaraciones y Autorizaciones
-      </h3>
-      <div class="flex flex-col gap-5">
-        <div class="flex items-start gap-3">
-          <p-checkbox
-            [ngModel]="form.checks().identity"
-            (ngModelChange)="updateCheck('identity', $event)"
-            [binary]="true"
-            inputId="chk1"
-            data-cy="chk-identity"
-            class="mt-0.5"
-          />
-          <label
-            for="chk1"
-            class="text-sm leading-snug cursor-pointer select-none"
-            style="color: var(--ff-text-primary)"
-          >
-            Confirmo que la información del cliente es correcta y he verificado
-            su identidad.
-          </label>
-        </div>
-        <div class="flex items-start gap-3">
-          <p-checkbox
-            [ngModel]="form.checks().conditions"
-            (ngModelChange)="updateCheck('conditions', $event)"
-            [binary]="true"
-            inputId="chk2"
-            data-cy="chk-conditions"
-            class="mt-0.5"
-          />
-          <label
-            for="chk2"
-            class="text-sm leading-snug cursor-pointer select-none"
-            style="color: var(--ff-text-primary)"
-          >
-            El cliente ha sido informado de las condiciones financieras y ha
-            dado su consentimiento.
-          </label>
-        </div>
-        <div class="flex items-start gap-3">
-          <p-checkbox
-            [ngModel]="form.checks().disbursement"
-            (ngModelChange)="updateCheck('disbursement', $event)"
-            [binary]="true"
-            inputId="chk3"
-            data-cy="chk-disbursement"
-            class="mt-0.5"
-          />
-          <label
-            for="chk3"
-            class="text-sm leading-snug cursor-pointer select-none"
-            style="color: var(--ff-text-primary)"
-          >
-            Autorizo el desembolso inmediato al finalizar la aprobación del
-            crédito.
-          </label>
-        </div>
-        <div class="flex items-start gap-3">
-          <p-checkbox
-            [ngModel]="form.checks().capacity"
-            (ngModelChange)="updateCheck('capacity', $event)"
-            [binary]="true"
-            inputId="chk4"
-            data-cy="chk-capacity"
-            class="mt-0.5"
-          />
-          <label
-            for="chk4"
-            class="text-sm leading-snug cursor-pointer select-none"
-            style="color: var(--ff-text-primary)"
-          >
-            He revisado el plan de pagos y confirmo que las cuotas están dentro
-            de la capacidad del cliente.
-          </label>
+        <div class="flex items-center justify-between border-t border-slate-700 pt-3">
+          <span class="text-slate-300">Total a devolver</span>
+          <span class="text-lg font-bold text-emerald-300">{{ totalADevolver | currencyArs }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Advertencia -->
-    <div class="auth-warning-banner">
-      <i class="pi pi-exclamation-triangle shrink-0"></i>
-      <p class="text-sm font-medium leading-relaxed">
-        Esta operación será enviada a revisión del supervisor antes de ser
-        desembolsada. El cliente será notificado por correo y SMS.
-      </p>
+    <!-- Declaraciones -->
+    <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
+      <h3 class="mb-4 text-base font-semibold">Declaraciones y Autorizaciones</h3>
+
+      <div class="space-y-3">
+        <div class="flex items-center gap-3">
+          <p-checkbox formControlName="chkIdentity" [binary]="true" data-cy="chk-identity" />
+          <label class="text-sm text-slate-200">Verifiqué la identidad del cliente.</label>
+        </div>
+        <div class="flex items-center gap-3">
+          <p-checkbox formControlName="chkConditions" [binary]="true" data-cy="chk-conditions" />
+          <label class="text-sm text-slate-200">Expliqué condiciones y costos del plan.</label>
+        </div>
+        <div class="flex items-center gap-3">
+          <p-checkbox formControlName="chkDisbursement" [binary]="true" data-cy="chk-disbursement" />
+          <label class="text-sm text-slate-200">Informé que el desembolso requiere aprobación.</label>
+        </div>
+        <div class="flex items-center gap-3">
+          <p-checkbox formControlName="chkCapacity" [binary]="true" data-cy="chk-capacity" />
+          <label class="text-sm text-slate-200">Validé capacidad de pago del cliente.</label>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <p-message
+          severity="warn"
+          text="Esta operación será enviada a revisión del supervisor antes de ser desembolsada..."
+        />
+      </div>
     </div>
   </div>
-</div>
+</section>

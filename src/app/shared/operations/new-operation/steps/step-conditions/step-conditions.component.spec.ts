@@ -1,73 +1,69 @@
-import { TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { StepConditionsComponent } from './step-conditions.component';
-import { OperationFormService } from '../../operation-form.service';
 
 describe('StepConditionsComponent', () => {
-  const firstDueDate = signal<Date | undefined>(undefined);
-  const todayStart = new Date(2026, 4, 5);
-
-  const formMock = {
-    firstDueDate,
-    selectedType: signal<'SALE' | 'LOAN'>('SALE'),
-    getTodayStart: () => todayStart,
-    normalizeToLocalDayStart: (date: Date) =>
-      new Date(date.getFullYear(), date.getMonth(), date.getDate()),
-    isFirstDueDateValid: () => {
-      const due = firstDueDate();
-      if (!due) return false;
-      const normalized = new Date(
-        due.getFullYear(),
-        due.getMonth(),
-        due.getDate(),
-      );
-      return normalized >= todayStart;
-    },
-  };
-
   let component: StepConditionsComponent;
+  let fixture: ComponentFixture<StepConditionsComponent>;
 
   beforeEach(async () => {
-    firstDueDate.set(undefined);
-
     await TestBed.configureTestingModule({
       imports: [StepConditionsComponent],
-      providers: [{ provide: OperationFormService, useValue: formMock }],
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(StepConditionsComponent);
+    fixture = TestBed.createComponent(StepConditionsComponent);
     component = fixture.componentInstance;
+
+    const fb = TestBed.inject(FormBuilder);
+    component.form = fb.group({
+      operationType: ['SALE'],
+      paymentFrequency: [null],
+      installmentsCount: [null],
+      downPayment: [null],
+      firstPaymentDate: [null],
+    });
+    component.todayDate = new Date();
+    fixture.detectChanges();
   });
 
-  it('mantiene estable la fecha mínima para no romper selección con mouse', () => {
-    const minDateRef = component.minFirstDueDate;
-
-    component.onFirstDueDateChange(new Date(2026, 4, 10));
-
-    expect(component.minFirstDueDate).toBe(minDateRef);
+  it('should create', () => {
+    expect(component).toBeTruthy();
   });
 
-  it('limpia la fecha cuando se intenta ingresar un día anterior a hoy', () => {
-    component.onFirstDueDateChange(new Date(2026, 4, 4));
+  describe('getInstallmentsOptionsForLine', () => {
+    it('devuelve lista vacía si la línea no tiene tasas', () => {
+      const result = component.getInstallmentsOptionsForLine({
+        productoId: 'p1', nombre: 'Prod', cantidad: 1, precio: 1000,
+        subtotal: 1000, stockDisponible: 5, unitIds: [], productIds: [],
+        rates: [], selectedInstallments: null,
+      });
+      expect(result).toEqual([]);
+    });
 
-    expect(firstDueDate()).toBeUndefined();
+    it('filtra por frecuencia seleccionada en el formulario', () => {
+      component.form.controls['paymentFrequency'].setValue('MONTHLY');
+      const result = component.getInstallmentsOptionsForLine({
+        productoId: 'p1', nombre: 'Prod', cantidad: 1, precio: 1000,
+        subtotal: 1000, stockDisponible: 5, unitIds: [], productIds: [],
+        rates: [
+          { installmentsCount: 3, paymentFrequency: 'MONTHLY', rate: 0.1, active: true } as any,
+          { installmentsCount: 2, paymentFrequency: 'WEEKLY', rate: 0.08, active: true } as any,
+        ],
+        selectedInstallments: null,
+      });
+      expect(result.length).toBe(1);
+      expect(result[0].value).toBe(3);
+    });
   });
 
-  it('acepta hoy como fecha válida', () => {
-    component.onFirstDueDateChange(new Date(2026, 4, 5));
-
-    expect(firstDueDate()).toEqual(new Date(2026, 4, 5));
-  });
-
-  it('bloquea fechas pasadas ingresadas por tipeo manual', () => {
-    component.onFirstDueDateChange('04/05/2026');
-
-    expect(firstDueDate()).toBeUndefined();
-  });
-
-  it('acepta hoy cuando se ingresa por tipeo manual', () => {
-    component.onFirstDueDateChange('05/05/2026');
-
-    expect(firstDueDate()).toEqual(new Date(2026, 4, 5));
+  describe('getLineInstallmentValue', () => {
+    it('devuelve 0 si no hay cuotas seleccionadas', () => {
+      const result = component.getLineInstallmentValue({
+        productoId: 'p1', nombre: 'Prod', cantidad: 1, precio: 10000,
+        subtotal: 10000, stockDisponible: 5, unitIds: [], productIds: [],
+        rates: [], selectedInstallments: null,
+      });
+      expect(result).toBe(0);
+    });
   });
 });

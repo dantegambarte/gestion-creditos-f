@@ -1,273 +1,186 @@
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-  <!-- Formulario de condiciones -->
-  <div class="lg:col-span-7 space-y-6">
-    <div class="flex items-center gap-3 mb-2">
-      <i
-        class="pi pi-cog p-2 rounded-lg"
-        style="color: var(--ff-accent); background: rgba(79, 110, 247, 0.12)"
-      ></i>
-      <h2 class="text-lg font-bold" style="color: var(--ff-text-primary)">
-        Configuración del
-        {{ form.selectedType() === "SALE" ? "Crédito" : "Préstamo" }}
-      </h2>
-    </div>
+<section class="flex h-full min-h-0 flex-col gap-5 pb-2 pr-1" [formGroup]="form">
+  <h2 class="text-lg font-semibold">Paso 3 · Condiciones Financieras</h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-      <!-- ── Campos exclusivos VENTA ── -->
-      @if (form.selectedType() === "SALE") {
-        <div class="flex flex-col gap-2">
-          <label
-            class="text-xs font-bold uppercase tracking-wider"
-            style="color: var(--ff-text-muted)"
-            >Total Carrito</label
-          >
-          <p-inputNumber
-            [ngModel]="form.capital()"
-            mode="currency"
-            currency="ARS"
-            locale="es-AR"
-            [readonly]="true"
-            styleClass="w-full"
-            inputStyleClass="w-full h-12 rounded-xl font-bold"
-          />
-        </div>
-        <div class="flex flex-col gap-2 field-dark-border">
-          <label
-            class="text-xs font-bold uppercase tracking-wider"
-            style="color: var(--ff-text-muted)"
-            >Enganche / Anticipo</label
-          >
-          <p-inputNumber
-            [ngModel]="form.downPayment()"
-            (ngModelChange)="form.downPayment.set($event ?? 0)"
-            mode="currency"
-            currency="ARS"
-            locale="es-AR"
-            [min]="0"
-            styleClass="w-full"
-            inputStyleClass="w-full h-12 rounded-xl"
-            data-cy="input-downpayment"
-          />
-          @if (!form.isDownPaymentValid()) {
-            <small class="text-xs font-medium" style="color: var(--ff-danger)">
-              El enganche no puede superar el total del carrito.
-            </small>
+  <div class="grid min-h-0 flex-1 gap-4 pt-1 lg:grid-cols-2">
+    <!-- Panel izquierdo: controles -->
+    <div class="flex min-h-0 flex-col gap-4 overflow-hidden rounded-xl border border-slate-700 bg-slate-800 p-4">
+      <div class="rounded-lg border border-slate-700 bg-slate-900/40 p-3">
+        <div class="grid gap-3 md:grid-cols-2">
+          @if (form.controls['operationType'].value === 'SALE') {
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-slate-300">Anticipo / Enganche</label>
+              <p-inputNumber
+                formControlName="downPayment"
+                mode="currency"
+                currency="ARS"
+                locale="es-AR"
+                [allowEmpty]="true"
+                placeholder="Ingresar anticipo"
+                [min]="0"
+                [max]="capitalBase"
+                styleClass="w-full"
+                inputStyleClass="h-11 w-full rounded-xl px-3"
+              />
+            </div>
           }
-        </div>
-        <div class="flex flex-col gap-2">
-          <label
-            class="text-xs font-bold uppercase tracking-wider"
-            style="color: var(--ff-text-muted)"
-            >Capital Financiado</label
-          >
-          <p-inputNumber
-            [ngModel]="form.financedCapital()"
-            mode="currency"
-            currency="ARS"
-            locale="es-AR"
-            [readonly]="true"
-            styleClass="w-full"
-            inputStyleClass="w-full h-12 rounded-xl font-bold"
-          />
-        </div>
-        <div class="flex flex-col gap-2 field-dark-border">
-          <label
-            class="text-xs font-bold uppercase tracking-wider"
-            style="color: var(--ff-text-muted)"
-            >Cantidad de Cuotas</label
-          >
-          <p-dropdown
-            [options]="form.installmentsOptions"
-            [ngModel]="form.selectedInstallments()"
-            (ngModelChange)="form.selectedInstallments.set($event)"
-            styleClass="w-full h-12"
-          />
-        </div>
-        <div class="flex flex-col gap-2 field-dark-border">
-          <label
-            class="text-xs font-bold uppercase tracking-wider"
-            style="color: var(--ff-text-muted)"
-            >Recargo Fijo (%)</label
-          >
-          <p-inputNumber
-            [ngModel]="form.interestRate()"
-            (ngModelChange)="form.interestRate.set($event)"
-            suffix=" %"
-            styleClass="w-full"
-            inputStyleClass="w-full h-12 rounded-xl"
-          />
-        </div>
-      }
 
-      <!-- ── Campos exclusivos PRESTAMO ── -->
-      @if (form.selectedType() === "LOAN") {
-        <div class="flex flex-col gap-2">
-          <label
-            class="text-xs font-bold uppercase tracking-wider"
-            style="color: var(--ff-text-muted)"
-            >Efectivo a Entregar</label
-          >
-          <p-inputNumber
-            [ngModel]="form.loanCapital()"
-            (ngModelChange)="form.loanCapital.set($event)"
-            mode="currency"
-            currency="ARS"
-            locale="es-AR"
-            styleClass="w-full"
-            inputStyleClass="w-full h-12 rounded-xl font-bold"
-          />
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-slate-300">Frecuencia de pago</label>
+            <p-dropdown
+              [options]="paymentFrequencyOptions"
+              optionLabel="label"
+              optionValue="value"
+              formControlName="paymentFrequency"
+              placeholder="Seleccionar frecuencia"
+              styleClass="w-full"
+            />
+          </div>
         </div>
-        <div class="flex flex-col gap-2">
-          <label
-            class="text-xs font-bold uppercase tracking-wider"
-            style="color: var(--ff-text-muted)"
-            >Frecuencia de Cobro</label
-          >
-          <p-dropdown
-            [options]="form.paymentFrequencies"
-            [ngModel]="form.selectedFrequency()"
-            (ngModelChange)="form.selectedFrequency.set($event)"
-            optionLabel="label"
-            styleClass="w-full h-12"
-          />
-        </div>
-        <div class="flex flex-col gap-2 field-dark-border">
-          <label
-            class="text-xs font-bold uppercase tracking-wider"
-            style="color: var(--ff-text-muted)"
-            >Cantidad de Cuotas</label
-          >
-          <p-dropdown
-            [options]="form.installmentsOptions"
-            [ngModel]="form.selectedInstallments()"
-            (ngModelChange)="form.selectedInstallments.set($event)"
-            styleClass="w-full h-12"
-          />
-        </div>
-        <div class="flex flex-col gap-2">
-          <label
-            class="text-xs font-bold uppercase tracking-wider"
-            style="color: var(--ff-text-muted)"
-            >Tasa Mensual (%)</label
-          >
-          <p-inputNumber
-            [ngModel]="form.loanInterest()"
-            (ngModelChange)="form.loanInterest.set($event)"
-            suffix=" %"
-            [min]="0"
-            styleClass="w-full"
-            inputStyleClass="w-full h-12 rounded-xl font-bold"
-          />
-        </div>
-      }
 
-      <!-- ── Fecha primer pago (ambos tipos) ── -->
-      <div
-        class="flex flex-col gap-2 field-dark-border"
-        [class.md:col-span-2]="form.selectedType() === 'LOAN'"
-      >
-        <label
-          class="text-xs font-bold uppercase tracking-wider"
-          style="color: var(--ff-text-muted)"
-          >Fecha del Primer Pago</label
-        >
-        <p-calendar
-          [ngModel]="form.firstDueDate()"
-          (ngModelChange)="onFirstDueDateChange($event)"
-          [minDate]="minFirstDueDate"
-          dateFormat="dd/mm/yy"
-          [showIcon]="true"
-          [readonlyInput]="false"
-          styleClass="op-calendar"
-          inputId="first-due-date"
-          data-cy="input-first-due-date"
-        />
-        @if (hasInvalidFirstDueDate) {
-          <small
-            class="text-xs font-medium"
-            style="color: var(--ff-danger)"
-            data-cy="first-due-date-error"
-          >
-            La fecha del primer pago no puede ser anterior a hoy.
-          </small>
-        }
-      </div>
-    </div>
-  </div>
-
-  <!-- Panel de resumen lateral -->
-  <div class="lg:col-span-5">
-    <div class="ff-panel p-6 space-y-6 sticky top-0">
-      <h3
-        class="text-xs font-bold uppercase tracking-widest"
-        style="color: var(--ff-text-muted)"
-      >
-        Resumen del Plan
-      </h3>
-
-      <div class="space-y-4">
-        <div
-          class="flex justify-between items-end pb-4"
-          style="border-bottom: 1px solid var(--ff-border)"
-        >
-          <span class="text-sm" style="color: var(--ff-text-secondary)">
-            Total a devolver
-          </span>
-          <span
-            class="text-2xl font-black ff-mono"
-            style="color: var(--ff-text-primary)"
-          >
-            {{ form.totalToPay() | currencyArs }}
-          </span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-sm" style="color: var(--ff-text-secondary)">
-            Pagos totales
-          </span>
-          <span class="text-lg font-bold" style="color: var(--ff-text-primary)">
-            {{ form.installmentsCount() }} cuotas
-          </span>
-        </div>
-        @if (form.selectedType() === 'SALE') {
-          <div class="flex justify-between items-center">
-            <span class="text-sm" style="color: var(--ff-text-secondary)">
-              Enganche
-            </span>
-            <span class="text-lg font-bold ff-mono" style="color: var(--ff-text-primary)">
-              {{ form.downPayment() | currencyArs }}
-            </span>
+        @if (paymentFrequencyOptions.length === 0) {
+          <div class="mt-2">
+            <p-message
+              severity="warn"
+              text="No hay frecuencias disponibles para esta operación. Revisá la configuración de tasas."
+            />
           </div>
         }
-        <div class="flex justify-between items-center">
-          <span class="text-sm" style="color: var(--ff-text-secondary)">
-            Capital financiado
-          </span>
-          <span class="text-lg font-bold ff-mono" style="color: var(--ff-text-primary)">
-            {{ form.financedCapital() | currencyArs }}
-          </span>
-        </div>
       </div>
 
-      <div
-        class="rounded-xl p-5"
-        style="
-          background: rgba(79, 110, 247, 0.08);
-          border: 1px solid rgba(79, 110, 247, 0.2);
-        "
-      >
-        <p
-          class="text-xs font-bold uppercase tracking-wider mb-1"
-          style="color: var(--ff-text-muted)"
-        >
-          Valor de cada cuota
-        </p>
-        <span
-          class="text-4xl font-black ff-mono"
-          style="color: var(--ff-accent)"
-        >
-          {{ form.installmentValue() | currencyArs }}
-        </span>
+      @if (form.controls['operationType'].value === 'SALE') {
+        <div class="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-3">
+          <p class="text-sm font-semibold text-slate-200">Cuotas por producto</p>
+          @for (line of cartLines; track line.productoId) {
+            <div class="space-y-2 rounded-lg border border-slate-700 bg-slate-800 p-3">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-sm font-medium text-slate-100">{{ line.nombre }}</p>
+                  <p class="text-xs text-slate-400">{{ getLinePlanSubtitle(line) }}</p>
+                </div>
+                <p class="text-sm font-semibold text-emerald-300">{{ getLineInstallmentValue(line) | currencyArs }} / cuota</p>
+              </div>
+
+              <p-dropdown
+                [options]="getInstallmentsOptionsForLine(line)"
+                optionLabel="label"
+                optionValue="value"
+                [ngModel]="line.selectedInstallments"
+                (ngModelChange)="saleInstallmentsChanged.emit({ productoId: line.productoId, installments: $event })"
+                [ngModelOptions]="{ standalone: true }"
+                appendTo="body"
+                [scrollHeight]="'180px'"
+                placeholder="Seleccionar cuotas para este producto"
+                styleClass="w-full"
+              />
+
+              @if (getInstallmentsOptionsForLine(line).length === 0) {
+                <p-message
+                  severity="warn"
+                  text="Este producto no tiene cuotas para la frecuencia elegida."
+                />
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-slate-300">Cantidad de cuotas</label>
+          <div data-cy="ddl-installments">
+            <p-dropdown
+              [options]="installmentsOptions"
+              optionLabel="label"
+              optionValue="value"
+              formControlName="installmentsCount"
+              placeholder="Seleccionar cuotas"
+              [styleClass]="installmentsDropdownClass"
+            />
+          </div>
+
+          @if (isInstallmentsRefreshing) {
+            <p class="text-xs text-blue-300">
+              Las cuotas se actualizaron según la frecuencia seleccionada.
+            </p>
+          }
+
+          @if (installmentsOptions.length === 0) {
+            <p-message
+              severity="warn"
+              text="No hay cuotas disponibles para esta combinación. Revisá la configuración de tasas antes de continuar."
+            />
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Panel derecho: resumen del plan -->
+    <div class="flex flex-col self-start rounded-xl border border-slate-700 bg-slate-800 p-4">
+      <h3 class="mb-4 text-base font-semibold">Resumen del Plan</h3>
+
+      <div class="flex flex-col gap-3 text-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Capital base</span>
+          <span class="font-semibold text-slate-100">{{ capitalBase | currencyArs }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Anticipo</span>
+          <span class="font-semibold text-slate-100">
+            {{ (form.controls['operationType'].value === 'SALE' ? validatedDownPayment : 0) | currencyArs }}
+          </span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Capital a financiar</span>
+          <span class="font-semibold text-slate-100">{{ capitalAFinanciar | currencyArs }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Tasa de interés</span>
+          <span class="font-semibold text-slate-100">{{ interestRate * 100 }}%</span>
+        </div>
+        @if (form.controls['operationType'].value === 'SALE') {
+          <div class="max-h-28 space-y-2 overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-3 pr-2 xl:max-h-36">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Detalle de cuotas por producto</p>
+            @for (line of cartLines; track line.productoId) {
+              <div class="flex items-center justify-between text-xs">
+                <div class="min-w-0 pr-2">
+                  <p class="truncate text-slate-300">{{ line.nombre }}</p>
+                  <div class="mt-0.5 flex items-center gap-2">
+                    <span class="text-slate-400">{{ line.selectedInstallments ?? 0 }} cuotas</span>
+                    <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                      {{ getLineRatePercent(line) }}%
+                    </span>
+                  </div>
+                </div>
+                <span class="font-semibold text-slate-100">{{ getLineInstallmentValue(line) | currencyArs }}</span>
+              </div>
+            }
+          </div>
+        }
+        <div class="flex items-center justify-between border-t border-slate-700 pt-3">
+          <span class="text-slate-300">
+            {{ form.controls['operationType'].value === 'SALE' ? 'Valor total de la cuota mensual' : 'Valor de cada cuota' }}
+          </span>
+          <span class="text-lg font-bold text-emerald-300">{{ valorCuota | currencyArs }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-300">Total a devolver</span>
+          <span class="text-lg font-bold text-emerald-300">{{ totalADevolver | currencyArs }}</span>
+        </div>
+
+        <div class="space-y-2 border-t border-slate-700 pt-3">
+          <label class="text-sm font-medium text-slate-300">Fecha del primer pago</label>
+          <p-calendar
+            formControlName="firstPaymentDate"
+            dateFormat="dd/mm/yy"
+            [minDate]="todayDate"
+            [showIcon]="true"
+            appendTo="body"
+            styleClass="w-full"
+            inputStyleClass="h-11 w-full rounded-xl"
+          />
+          @if (form.controls['firstPaymentDate'].touched && form.controls['firstPaymentDate'].errors?.['pastDate']) {
+            <p class="text-xs text-red-400">La fecha del primer pago no puede ser anterior a hoy.</p>
+          }
+        </div>
       </div>
     </div>
   </div>
-</div>
+</section>
