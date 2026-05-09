@@ -33,6 +33,7 @@
                   [ngModelOptions]="{ standalone: true }"
                   class="h-11 w-full rounded-xl border border-slate-600 bg-slate-800 px-3 text-slate-100"
                   placeholder="DNI, nombre o apellido"
+                  data-cy="input-search-client"
                 />
               </div>
 
@@ -45,6 +46,7 @@
                         ? 'rounded-xl border border-emerald-500 bg-emerald-900/30 p-4 text-left transition'
                         : 'rounded-xl border border-slate-700 bg-slate-800 p-4 text-left transition'"
                       (click)="selectClient(client)"
+                      [attr.data-cy]="'client-card-' + client.id"
                     >
                       <div class="flex items-center justify-between">
                         <div class="font-medium">{{ client.name }}</div>
@@ -74,7 +76,7 @@
             <section class="flex h-full min-h-0 flex-col gap-5">
               <h2 class="text-lg font-semibold">Paso 2 · Tipo y Producto</h2>
 
-              <div class="space-y-2">
+              <div class="space-y-2" data-cy="dropdown-operation-type">
                 <label class="text-sm font-medium text-slate-300">Tipo de Operación</label>
                 <p-dropdown
                   [options]="operationTypeOptions"
@@ -155,6 +157,7 @@
                                 [loading]="loadingProductRatesByCatalogId[item.productoId] === true"
                                 (onClick)="addProduct(item)"
                                 styleClass="h-9 px-3 rounded-lg"
+                                data-cy="btn-add-product"
                               />
                             </div>
                           }
@@ -548,6 +551,7 @@
               [outlined]="true"
               routerLink="../"
               styleClass="h-11 px-5 rounded-xl"
+              data-cy="btn-cancelar"
             />
           } @else {
             <p-button
@@ -557,6 +561,7 @@
               [outlined]="true"
               (onClick)="prevStep()"
               styleClass="h-11 px-5 rounded-xl"
+              data-cy="btn-anterior"
             />
           }
 
@@ -569,6 +574,7 @@
               [disabled]="!canNext"
               (onClick)="nextStep()"
               styleClass="h-11 px-6 rounded-xl"
+              data-cy="btn-siguiente"
             />
           } @else {
             <p-button
