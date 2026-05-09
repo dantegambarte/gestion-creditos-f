@@ -206,5 +206,12 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () =>
       import('./expenses/expenses.component').then((c) => c.ExpensesComponent),
   },
+  {
+    path: AppRoutes.SIMULATOR,
+    loadComponent: () =>
+      import('../../shared/simulator/simulator.component').then(
+        (c) => c.SimulatorComponent,
+      ),
+  },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 ];
