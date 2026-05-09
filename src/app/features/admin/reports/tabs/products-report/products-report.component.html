@@ -1,0 +1,121 @@
+<div class="space-y-6">
+  <!-- Filtro inline -->
+  <div class="flex flex-wrap items-center gap-4">
+    <div class="flex items-center gap-2">
+      <span class="text-sm text-gray-400">Stock ≤</span>
+      <p-inputNumber
+        [(ngModel)]="stockThreshold"
+        [min]="0"
+        [useGrouping]="false"
+        styleClass="w-28"
+        inputStyleClass="bg-gray-800 border-gray-600 text-white text-sm h-9 rounded-lg px-3"
+        placeholder="sin filtro"
+      />
+    </div>
+    <p-button
+      label="Filtrar"
+      icon="pi pi-search"
+      [loading]="loading"
+      (onClick)="consultProducts()"
+    />
+    <div class="flex items-center gap-2 ml-2">
+      <p-inputSwitch [(ngModel)]="onlyWithSales" />
+      <span class="text-sm text-gray-400">Solo con ventas</span>
+    </div>
+  </div>
+
+  @if (loading) {
+    <app-loading-state />
+  } @else if (error) {
+    <app-error-state />
+  } @else if (filteredProductRows.length === 0) {
+    <p class="text-sm text-gray-500 text-center py-10">Sin productos.</p>
+  } @else {
+    <div class="bg-gray-800 rounded-2xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-700">
+            <th
+              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Producto
+            </th>
+            <th
+              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Precio
+            </th>
+            <th
+              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Stock
+            </th>
+            <th
+              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Veces vendido
+            </th>
+            <th
+              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Prom. venta
+            </th>
+            <th
+              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Ingresos
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of filteredProductRows; track row.id) {
+            <tr
+              class="border-t border-gray-700/50 hover:bg-gray-700/20 transition-colors"
+            >
+              <td class="px-5 py-3 font-semibold text-white">
+                {{ row.title }}
+              </td>
+              <td class="px-5 py-3 text-right font-mono text-gray-300">
+                @if (row.minPrice === row.maxPrice) {
+                  {{ formatCurrency(row.minPrice) }}
+                } @else {
+                  {{ formatCurrency(row.minPrice) }} —
+                  {{ formatCurrency(row.maxPrice) }}
+                }
+              </td>
+              <td class="px-5 py-3 text-right">
+                @if (row.availableCount === 0) {
+                  <span
+                    class="px-2 py-0.5 rounded text-xs font-bold bg-red-900/60 text-red-400 uppercase tracking-wide"
+                    >Sin stock</span
+                  >
+                } @else if (
+                  stockThreshold != null && row.availableCount <= stockThreshold
+                ) {
+                  <span
+                    class="px-2 py-0.5 rounded text-xs font-bold bg-orange-900/60 text-orange-400 uppercase tracking-wide"
+                  >
+                    Stock bajo ({{ row.availableCount }})
+                  </span>
+                } @else {
+                  <span class="text-gray-300">{{ row.availableCount }}</span>
+                }
+              </td>
+              <td class="px-5 py-3 text-right text-gray-300">
+                {{ row.timesSold }}
+              </td>
+              <td class="px-5 py-3 text-right font-mono text-gray-400">
+                {{ formatCurrency(row.avgSellingPrice) }}
+              </td>
+              <td
+                class="px-5 py-3 text-right font-mono font-semibold text-green-400"
+              >
+                {{ formatCurrency(row.totalRevenue) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

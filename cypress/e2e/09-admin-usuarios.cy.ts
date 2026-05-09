@@ -98,8 +98,9 @@ describe('Admin — Gestión de Usuarios', () => {
   it('valida email en el formulario modal', () => {
     cy.get('[data-cy="admin-users-create-cta"]').click();
     cy.get('.p-dialog').within(() => {
-      cy.get('input[id="email"]').type('email-invalido');
-      cy.contains('small', 'Formato de email inválido').should('be.visible');
+      cy.get('input[id="email"]').clear().type('email-invalido');
+      cy.get('input[id="fullName"]').click();
+      cy.contains('small', 'Formato de email inválido.').should('be.visible');
     });
   });
 

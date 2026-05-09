@@ -71,6 +71,12 @@
             obligatoria
           </small>
         }
+        @if (submitted && formControls["password"].hasError("minlength")) {
+          <small class="auth-error" data-testid="password-minlength-error">
+            <i class="pi pi-exclamation-circle text-xs"></i> La contraseña debe
+            tener al menos 6 caracteres
+          </small>
+        }
       </div>
 
       <!-- Recuérdame + olvidé -->

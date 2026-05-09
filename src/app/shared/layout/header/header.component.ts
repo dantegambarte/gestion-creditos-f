@@ -7,7 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
-import { MockAuthService } from '../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 
@@ -32,7 +32,7 @@ export class HeaderComponent {
   today: string;
 
   constructor(
-    public auth: MockAuthService,
+    public auth: AuthServiceBase,
     private dateService: DateService,
     public headerService: HeaderService,
     private router: Router,

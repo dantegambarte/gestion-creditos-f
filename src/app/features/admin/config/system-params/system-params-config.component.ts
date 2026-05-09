@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
@@ -89,14 +90,14 @@ const PARAM_META: Record<string, ParamMeta> = {
   commission_week_close_day: {
     label: 'Día cierre semana comisiones',
     range: '1 – 7',
-    hint: 'ISO: 1=Lun … 7=Dom',
+    hint: '',
     min: 1,
     max: 7,
   },
   commission_pay_day: {
     label: 'Día de pago de comisiones',
     range: '1 – 7',
-    hint: 'ISO: 1=Lun … 7=Dom',
+    hint: '',
     min: 1,
     max: 7,
   },
@@ -114,6 +115,7 @@ export interface ParamRow extends SystemConfigParam {
     FormsModule,
     ButtonModule,
     DialogModule,
+    DropdownModule,
     InputNumberModule,
     SkeletonModule,
     TableModule,
@@ -134,6 +136,21 @@ export class SystemParamsConfigComponent implements OnInit {
   editingRow: ParamRow | null = null;
   editValue: number | null = null;
   editError = '';
+
+  readonly dayOptions = [
+    { label: 'Lunes', value: 1 },
+    { label: 'Martes', value: 2 },
+    { label: 'Miércoles', value: 3 },
+    { label: 'Jueves', value: 4 },
+    { label: 'Viernes', value: 5 },
+    { label: 'Sábado', value: 6 },
+    { label: 'Domingo', value: 7 },
+  ];
+
+  readonly DAY_PARAMS = new Set([
+    'commission_week_close_day',
+    'commission_pay_day',
+  ]);
 
   showConfirmDialog = false;
   confirmMessage = '';
@@ -171,6 +188,46 @@ export class SystemParamsConfigComponent implements OnInit {
         });
       },
     });
+  }
+
+  /**
+   * Formatea el valor crudo del parámetro en un string legible para el usuario.
+   */
+  formatValue(row: ParamRow): string {
+    const v = parseFloat(row.value);
+    const DAYS = [
+      '',
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo',
+    ];
+    switch (row.key) {
+      case 'commission_rate':
+      case 'penalty_rate_daily':
+      case 'penalty_max_rate':
+        return (v * 100).toFixed(2).replace(/\.00$/, '') + '%';
+      case 'penalty_grace_days':
+      case 'credit_expiry_days':
+        return `${v} días`;
+      case 'min_credit_amount':
+      case 'max_credit_amount':
+        return '$' + v.toLocaleString('es-AR');
+      case 'jwt_expiry_internal_hs':
+        return `${v} hs`;
+      case 'jwt_expiry_portal_min':
+        return `${v} min`;
+      case 'login_max_attempts':
+        return `${v} intentos`;
+      case 'commission_week_close_day':
+      case 'commission_pay_day':
+        return `${DAYS[v] ?? v} (${v})`;
+      default:
+        return row.value;
+    }
   }
 
   /**

@@ -1,255 +1,171 @@
-<div class="flex flex-col gap-6">
-  <!-- Tipo de operación + buscador -->
-  <div
-    class="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 rounded-xl"
-    style="background: var(--ff-secondary); border: 1px solid var(--ff-border)"
-  >
-    <div class="flex flex-col gap-2">
-      <label
-        class="text-xs font-bold uppercase tracking-wider"
-        style="color: var(--ff-text-muted)"
-        >Tipo de Operación</label
-      >
-      <p-dropdown
-        [options]="form.operationTypes"
-        [ngModel]="form.selectedType()"
-        (ngModelChange)="changeOperationType($event)"
-        styleClass="w-full h-11"
-        data-cy="dropdown-tipo-operacion"
-      />
-    </div>
-    @if (usesProducts) {
-      <div class="flex flex-col gap-2">
-        <label
-          class="text-xs font-bold uppercase tracking-wider"
-          style="color: var(--ff-text-muted)"
-          >Buscar Unidad</label
-        >
-        <p-iconField iconPosition="left">
-          <p-inputIcon
-            styleClass="pi pi-search z-10"
-            style="color: var(--ff-text-muted)"
-          />
-          <input
-            pInputText
-            type="text"
-            placeholder="Nombre de producto o código de unidad..."
-            [ngModel]="form.searchProduct()"
-            (ngModelChange)="form.searchProduct.set($event)"
-            class="w-full h-11 pl-10"
-            data-cy="input-buscar-producto"
-          />
-        </p-iconField>
-      </div>
-    }
+<section class="flex h-full min-h-0 flex-col gap-5" [formGroup]="form">
+  <h2 class="text-lg font-semibold">Paso 2 · Tipo y Producto</h2>
+
+  <div class="space-y-2" data-cy="dropdown-operation-type">
+    <label class="text-sm font-medium text-slate-300">Tipo de Operación</label>
+    <p-dropdown
+      [options]="operationTypeOptions"
+      optionLabel="label"
+      optionValue="value"
+      [showClear]="true"
+      formControlName="operationType"
+      styleClass="w-full"
+    />
   </div>
 
-  @if (!usesProducts) {
-    <div
-      class="rounded-xl p-5"
-      style="background: var(--ff-secondary); border: 1px solid var(--ff-border)"
-    >
-      <div class="flex flex-col gap-2 max-w-md">
-        <label
-          class="text-xs font-bold uppercase tracking-wider"
-          style="color: var(--ff-text-muted)"
-          >Monto total (total_amount)</label
-        >
+  @if (form.controls['operationType'].value === 'LOAN') {
+    @if (loadingLoanData) {
+      <div class="space-y-2 rounded-xl border border-slate-700 bg-slate-800 p-4">
+        <div class="h-4 w-40 animate-pulse rounded bg-slate-700"></div>
+        <div class="h-11 w-full animate-pulse rounded-xl bg-slate-700"></div>
+      </div>
+    } @else {
+      <div class="mt-2 flex flex-col gap-2">
+        <label class="block text-sm font-medium text-slate-300">Monto total</label>
         <p-inputNumber
-          [ngModel]="form.loanCapital()"
-          (ngModelChange)="form.loanCapital.set($event ?? 0)"
+          formControlName="totalAmount"
           mode="currency"
           currency="ARS"
           locale="es-AR"
           [min]="1"
-          styleClass="w-full"
-          inputStyleClass="w-full h-11"
-          data-cy="input-loan-total-amount"
+          styleClass="block w-full max-w-sm"
+          inputStyleClass="h-11 w-full rounded-xl px-3"
         />
       </div>
-    </div>
+    }
   }
 
-  @if (usesProducts) {
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      <!-- Productos disponibles -->
-      <div class="lg:col-span-7 flex flex-col gap-4">
-        <div class="flex justify-between items-center px-1">
-          <h2 class="text-base font-bold" style="color: var(--ff-text-primary)">
-            Unidades Disponibles
-          </h2>
-          <span class="text-xs font-medium" style="color: var(--ff-text-muted)">
-            Click en (+) para agregar
-          </span>
-        </div>
-
-        <div
-          class="rounded-xl h-[420px] overflow-y-auto"
-          style="
-            border: 1px solid var(--ff-border);
-            background: var(--ff-secondary);
-          "
-        >
-          @for (prod of form.filteredAvailableProducts(); track prod.id) {
-            <div
-              class="flex items-center justify-between p-4 transition-colors"
-              style="border-bottom: 1px solid var(--ff-border)"
-            >
-              <div class="flex items-center gap-4">
-                <div
-                  class="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
-                  style="background: rgba(79, 110, 247, 0.08)"
-                >
-                  <i
-                    class="pi pi-box text-xl"
-                    style="color: var(--ff-accent)"
-                  ></i>
-                </div>
-                <div class="flex flex-col">
-                  <span
-                    class="text-sm font-bold"
-                    style="color: var(--ff-text-primary)"
-                    >{{ prod.name }}</span
-                  >
-                  <span
-                    class="text-[11px] uppercase tracking-tight"
-                    style="color: var(--ff-text-muted)"
-                    >Unidad: {{ prod.unitCode || "—" }}</span
-                  >
-                  <span class="text-[11px]" style="color: var(--ff-text-muted)">
-                    Disponibles: {{ prod.stock }}
-                  </span>
-                </div>
-              </div>
-              <div class="flex items-center gap-5">
-                <span
-                  class="text-sm font-black ff-mono"
-                  style="color: var(--ff-accent)"
-                >
-                  {{ prod.price | currencyArs }}
-                </span>
-                <p-button
-                  [icon]="isProductSelected(prod.id) ? 'pi pi-check' : 'pi pi-plus'"
-                    [rounded]="true"
-                    [severity]="isProductSelected(prod.id) ? 'secondary' : 'primary'"
-                    size="small"
-                    styleClass="w-8 h-8"
-                    [disabled]="isProductSelected(prod.id) || prod.stock <= 0"
-                    (onClick)="addProduct(prod)"
-                  />
-                </div>
-              </div>
-          }
+  @if (form.controls['operationType'].value === 'SALE') {
+    @if (loadingSaleData) {
+      <div class="rounded-xl border border-slate-700 bg-slate-800 p-3">
+        <div class="grid gap-3 md:grid-cols-2">
+          <div class="space-y-2 rounded-lg border border-slate-700 p-3">
+            <div class="h-4 w-32 animate-pulse rounded bg-slate-700"></div>
+            <div class="h-14 w-full animate-pulse rounded bg-slate-700"></div>
+            <div class="h-14 w-full animate-pulse rounded bg-slate-700"></div>
+          </div>
+          <div class="space-y-2 rounded-lg border border-slate-700 p-3">
+            <div class="h-4 w-24 animate-pulse rounded bg-slate-700"></div>
+            <div class="h-14 w-full animate-pulse rounded bg-slate-700"></div>
+          </div>
         </div>
       </div>
-
-      <!-- Productos seleccionados -->
-      <div class="lg:col-span-5 flex flex-col gap-4">
-        <h2 class="text-base font-bold" style="color: var(--ff-text-primary)">
-          Unidades Seleccionadas
-        </h2>
-
-        <div
-          class="rounded-xl flex flex-col h-[420px] relative"
-          style="
-            border: 1px solid var(--ff-border);
-            background: var(--ff-secondary);
-          "
-        >
-          <div class="flex-1 overflow-y-auto p-3 space-y-2">
-            @if (form.selectedProducts().length > 0) {
-              @for (item of form.selectedProducts(); track item.id) {
-                <div
-                  class="ff-panel p-3 flex items-center justify-between animate-fadein"
-                >
-                  <div class="flex flex-col min-w-0">
-                    <span
-                      class="text-xs font-bold truncate pr-2"
-                      style="color: var(--ff-text-primary)"
-                      >{{ item.name }}</span
-                    >
-                    <span
-                      class="text-[10px] ff-mono"
-                      style="color: var(--ff-text-muted)"
-                      >Código: {{ item.unitCode || "—" }} · Valor Unit:
-                      {{ (item.historicalPrice ?? item.price) | currencyArs }}</span
-                    >
+    } @else {
+      <div class="min-h-0 flex-1 rounded-xl border border-slate-700 bg-slate-800 p-3">
+        <div class="grid h-full min-h-0 gap-3 md:grid-cols-2 md:items-stretch">
+          <!-- Catálogo -->
+          <div class="flex min-h-0 flex-col rounded-lg border border-slate-700 p-3">
+            <p class="mb-2 text-sm font-semibold text-slate-300">Catálogo</p>
+            <div class="relative mb-2">
+              <i class="pi pi-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input
+                pInputText
+                [(ngModel)]="catalogSearchText"
+                [ngModelOptions]="{ standalone: true }"
+                class="h-11 w-full rounded-xl border border-slate-600 bg-slate-800 px-3 pl-10 text-slate-100"
+                placeholder="Buscar producto por nombre"
+              />
+            </div>
+            <div class="min-h-0 flex-1 space-y-2 overflow-y-auto pb-4 pr-1 pt-1">
+              @for (item of filteredCatalogProducts; track item.productoId) {
+                <div class="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900 p-2">
+                  <div>
+                    <div class="text-sm font-medium">{{ item.nombre }}</div>
+                    <div class="text-xs text-slate-400">Stock: {{ item.stockDisponible }}</div>
+                    <div class="text-xs text-slate-400">{{ item.precio | currencyArs }}</div>
                   </div>
-                  <div class="flex items-center gap-3">
-                    <span
-                      class="text-sm font-bold ff-mono"
-                      style="color: var(--ff-text-primary)"
-                    >
-                      {{ (item.historicalPrice ?? item.price) | currencyArs }}
-                    </span>
+                  <p-button
+                    [label]="isCatalogProductOutOfStock(item) ? 'Sin stock' : 'Agregar'"
+                    [icon]="isCatalogProductOutOfStock(item) ? 'pi pi-exclamation-circle' : 'pi pi-plus'"
+                    [severity]="isCatalogProductOutOfStock(item) ? 'secondary' : 'primary'"
+                    [loading]="loadingProductRatesByCatalogId[item.productoId] === true"
+                    (onClick)="productAdded.emit(item)"
+                    styleClass="h-9 px-3 rounded-lg"
+                    data-cy="btn-add-product"
+                  />
+                </div>
+              }
+              @if (filteredCatalogProducts.length === 0) {
+                <div class="rounded-lg border border-dashed border-slate-600 p-4 text-center text-sm text-slate-400">
+                  No hay productos que coincidan con la búsqueda.
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Carrito -->
+          <div class="flex min-h-0 flex-col rounded-lg border border-slate-700 p-3">
+            <div class="mb-2 flex items-center justify-between">
+              <p class="text-sm font-semibold text-slate-300">Carrito</p>
+              <p-button
+                label="Vaciar carrito"
+                icon="pi pi-trash"
+                severity="secondary"
+                [text]="true"
+                [disabled]="cartLines.length === 0"
+                (onClick)="cartCleared.emit()"
+              />
+            </div>
+            <div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+              @for (line of cartLines; track line.productoId) {
+                <div class="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900 p-2">
+                  <div>
+                    <div class="text-sm font-medium">{{ line.nombre }}</div>
+                    <div class="text-xs text-slate-400">
+                      {{ line.precio | currencyArs }} × {{ line.cantidad }} = {{ line.subtotal | currencyArs }}
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1">
                     <p-button
-                      icon="pi pi-trash"
-                      [text]="true"
+                      icon="pi pi-minus"
+                      severity="secondary"
+                      [outlined]="true"
+                      (onClick)="quantityDecreased.emit(line.productoId)"
+                      styleClass="h-8 w-8"
+                    />
+                    <span class="w-6 text-center text-sm">{{ line.cantidad }}</span>
+                    <p-button
+                      icon="pi pi-plus"
+                      severity="secondary"
+                      [outlined]="true"
+                      [disabled]="line.cantidad >= line.stockDisponible"
+                      (onClick)="quantityIncreased.emit(line.productoId)"
+                      styleClass="h-8 w-8"
+                    />
+                    <p-button
+                      icon="pi pi-times"
                       severity="danger"
-                      styleClass="w-8 h-8 p-0"
-                      (onClick)="removeProduct(item)"
+                      [text]="true"
+                      (onClick)="productRemoved.emit(line.productoId)"
                     />
                   </div>
                 </div>
               }
-            } @else {
-              <div
-                class="h-full flex flex-col items-center justify-center text-center p-8"
-              >
-                <div
-                  class="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                  style="
-                    background: var(--ff-panel);
-                    border: 1px solid var(--ff-border);
-                  "
-                >
-                  <i
-                    class="pi pi-shopping-cart text-2xl"
-                    style="color: var(--ff-text-muted)"
-                  ></i>
+              @if (cartLines.length === 0) {
+                <div class="rounded-lg border border-dashed border-slate-600 p-4 text-center text-sm text-slate-400">
+                  Todavía no agregaste productos al carrito.
                 </div>
-                <p
-                  class="text-sm font-bold"
-                  style="color: var(--ff-text-muted)"
-                >
-                  No hay unidades seleccionadas
-                </p>
-                <p class="text-[11px] mt-1" style="color: var(--ff-text-muted)">
-                  Buscá una unidad a la izquierda y agregala para continuar.
-                </p>
-              </div>
-            }
-          </div>
+              }
+            </div>
 
-          <!-- Footer total -->
-          <div
-            class="p-5 rounded-b-xl"
-            style="
-              background: var(--ff-panel);
-              border-top: 1px solid var(--ff-border);
-            "
-          >
-            <div class="flex justify-between items-center">
-              <div class="flex flex-col">
-                <span
-                  class="text-[10px] uppercase font-bold tracking-wider"
-                  style="color: var(--ff-text-muted)"
-                  >Total Capital</span
-                >
-                <span
-                  class="text-2xl font-black ff-mono leading-none"
-                  style="color: var(--ff-accent)"
-                >
-                  {{ form.capital() | currencyArs }}
-                </span>
-              </div>
-              <span class="ff-badge ff-badge--activo">
-                {{ form.selectedProducts().length }} unidades
-              </span>
+            <div class="mt-4 rounded-lg border border-slate-700 bg-slate-900 px-3 py-4">
+              <p class="text-xs text-slate-400">Total carrito</p>
+              <p class="mt-1 text-lg font-bold text-emerald-300">{{ totalCarrito | currencyArs }}</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    }
   }
-</div>
+
+  <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
+    <p class="text-sm text-slate-400">Capital base</p>
+    <p class="mt-1 text-2xl font-bold text-emerald-300">
+      @if (form.controls['operationType'].value === 'LOAN') {
+        {{ prestamoTotal | currencyArs }}
+      } @else {
+        {{ totalCarrito | currencyArs }}
+      }
+    </p>
+  </div>
+</section>

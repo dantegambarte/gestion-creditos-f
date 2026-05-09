@@ -19,7 +19,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
 import { Subject, takeUntil } from 'rxjs';
-import { MockAuthService } from '../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { UserRoleEnum } from './../../../core/models/types/user-role';
 import { AuthUser } from '../../../core/models/interface/auth-user';
@@ -66,7 +66,7 @@ export class LoginComponent implements OnDestroy {
 
   constructor(
     private fb: FormBuilder,
-    private auth: MockAuthService,
+    private auth: AuthServiceBase,
     private router: Router,
   ) {
     this.form = this.fb.group({

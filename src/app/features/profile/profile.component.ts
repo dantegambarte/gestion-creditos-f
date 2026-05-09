@@ -22,7 +22,7 @@ import { PasswordModule } from 'primeng/password';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 
-import { MockAuthService } from '../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../core/auth/auth-service.base';
 import { AuthUser } from '../../core/models/interface/auth-user';
 
 @Component({
@@ -67,7 +67,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   loadingPrefs = false;
 
   constructor(
-    private auth: MockAuthService,
+    private auth: AuthServiceBase,
     private fb: FormBuilder,
     private messageService: MessageService,
   ) {}

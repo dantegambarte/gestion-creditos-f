@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { MockAuthService } from './mock-auth.service';
 import { AuthService } from './auth.service';
+import { AuthServiceBase } from './auth-service.base';
 
 /**
  * Registra el servicio de autenticación en el contenedor DI.
@@ -11,23 +12,24 @@ import { AuthService } from './auth.service';
  *   - useMocks = true  → MockAuthService (datos locales, sin HTTP)
  *   - useMocks = false → AuthService (llama al backend real)
  *
- * TODOS los inyectores que pidan `MockAuthService` recibirán la implementación
- * activa, sin cambiar guards, interceptors ni componentes que ya inyectan
- * MockAuthService por clase.
+ * El token de inyección es `AuthServiceBase` — toda la app depende de la
+ * abstracción. Para cambiar la implementación basta modificar este archivo.
  *
  * APP_INITIALIZER garantiza que la sesión esté restaurada antes de que
  * Angular active cualquier ruta (necesario para que authGuard vea el usuario).
  */
 export function provideAuth(): EnvironmentProviders {
+  const impl = environment.useMocks ? MockAuthService : AuthService;
+
   return makeEnvironmentProviders([
     {
-      provide: MockAuthService,
-      useClass: environment.useMocks ? MockAuthService : AuthService,
+      provide: AuthServiceBase,
+      useClass: impl,
     },
     {
       provide: APP_INITIALIZER,
-      useFactory: (auth: MockAuthService) => () => firstValueFrom(auth.restoreSession()),
-      deps: [MockAuthService],
+      useFactory: (auth: AuthServiceBase) => () => firstValueFrom(auth.restoreSession()),
+      deps: [AuthServiceBase],
       multi: true,
     },
   ]);

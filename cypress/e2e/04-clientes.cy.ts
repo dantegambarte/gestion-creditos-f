@@ -147,7 +147,7 @@ describe('Gestión de Clientes — Admin', () => {
         .clear()
         .type('300-999-8888')
         .blur();
-      cy.contains('button', 'Guardar Cambios').should('not.be.disabled');
+      cy.get('p-button[label="Guardar Cambios"] button').should('not.be.disabled');
     });
     cy.get('p-dialog').find('p-button[label="Guardar Cambios"]').click();
     cy.wait('@updateCustomerPhone');

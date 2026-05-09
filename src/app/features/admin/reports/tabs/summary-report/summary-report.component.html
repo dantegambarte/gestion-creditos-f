@@ -1,0 +1,186 @@
+<div class="space-y-6">
+  @if (loading) {
+    <app-loading-state />
+  } @else if (error) {
+    <app-error-state />
+  } @else if (summaryReport) {
+    <!-- Fila 1: 4 KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <!-- Recaudado hoy -->
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-2">
+        <p class="text-xs text-gray-400 uppercase tracking-widest">
+          Recaudado hoy
+        </p>
+        <p class="text-3xl font-extrabold text-white font-mono">
+          {{ formatCurrency(summaryReport.todayCollected) }}
+        </p>
+        <p class="text-xs text-gray-400">
+          Efectivo {{ formatCurrency(summaryReport.todayCash) }} &nbsp;·&nbsp;
+          Transf. {{ formatCurrency(summaryReport.todayTransfer) }}
+        </p>
+        @if (summaryReport.todayCollected > 0) {
+          <div class="flex h-1.5 rounded-full overflow-hidden gap-0.5 mt-1">
+            <div
+              class="bg-green-400 rounded-full"
+              [style.width.%]="
+                (summaryReport.todayCash / summaryReport.todayCollected) * 100
+              "
+            ></div>
+            <div
+              class="bg-blue-400 rounded-full"
+              [style.width.%]="
+                (summaryReport.todayTransfer / summaryReport.todayCollected) *
+                100
+              "
+            ></div>
+          </div>
+          <div class="flex justify-between text-[10px] text-gray-500">
+            <span
+              >Efectivo
+              {{
+                summaryReport.todayCollected > 0
+                  ? ((summaryReport.todayCash / summaryReport.todayCollected) *
+                      100 | number: "1.0-0")
+                  : 0
+              }}%</span
+            >
+            <span
+              >Transf.
+              {{
+                summaryReport.todayCollected > 0
+                  ? ((summaryReport.todayTransfer /
+                      summaryReport.todayCollected) *
+                      100 | number: "1.0-0")
+                  : 0
+              }}%</span
+            >
+          </div>
+        }
+      </div>
+
+      <!-- Enganches del día -->
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-2">
+        <p class="text-xs text-gray-400 uppercase tracking-widest">
+          Enganches del día
+        </p>
+        <p class="text-3xl font-extrabold text-white font-mono">
+          {{ formatCurrency(summaryReport.todayDownPayments) }}
+        </p>
+        <p class="text-xs text-gray-500">
+          {{ summaryReport.todayDownPaymentsCount }} operaciones
+        </p>
+        <p class="text-xs text-gray-600 italic">No incluido en recaudación</p>
+      </div>
+
+      <!-- Ingreso total -->
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-2">
+        <p class="text-xs text-gray-400 uppercase tracking-widest">
+          Ingreso total
+        </p>
+        <p class="text-3xl font-extrabold text-white font-mono">
+          {{ formatCurrency(summaryReport.todayTotal) }}
+        </p>
+        <p class="text-xs text-gray-500">Cobros + enganches del día</p>
+      </div>
+
+      <!-- Cobros pendientes -->
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-2">
+        <p class="text-xs text-gray-400 uppercase tracking-widest">
+          Cobros pendientes
+        </p>
+        <p class="text-4xl font-extrabold text-yellow-400">
+          {{ summaryReport.pendingPaymentsCount }}
+        </p>
+        @if (summaryReport.pendingCreditsCount > 0) {
+          <p class="text-xs text-gray-400">
+            {{ summaryReport.pendingCreditsCount }} crédito(s) por aprobar
+          </p>
+        }
+      </div>
+    </div>
+
+    <!-- Fila 2: 3 paneles -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <!-- Estado del portafolio -->
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-4">
+        <p class="text-sm font-semibold text-white">Estado del portafolio</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-700/60 rounded-xl p-3 space-y-1">
+            <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+              Cartera activa
+            </p>
+            <p class="text-lg font-extrabold text-white font-mono">
+              {{ formatCurrency(summaryReport.activePortfolioBalance) }}
+            </p>
+          </div>
+          <div class="bg-gray-700/60 rounded-xl p-3 space-y-1">
+            <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+              Cobros hoy
+            </p>
+            <p class="text-lg font-extrabold text-white">
+              {{ summaryReport.todayPaymentsCount }}
+            </p>
+          </div>
+          <div class="bg-gray-700/60 rounded-xl p-3 space-y-1">
+            <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+              En mora
+            </p>
+            <p class="text-lg font-extrabold text-red-400">
+              {{ summaryReport.overdueCount }} cuotas
+            </p>
+          </div>
+          <div class="bg-gray-700/60 rounded-xl p-3 space-y-1">
+            <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+              Próximos 7D
+            </p>
+            <p class="text-lg font-extrabold text-orange-400">
+              {{ summaryReport.upcoming7dCount }} cuotas
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Créditos pendientes de aprobación -->
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-3">
+        <p class="text-sm font-semibold text-white">Créditos pendientes</p>
+        <div class="flex items-baseline gap-3">
+          <p class="text-5xl font-extrabold text-yellow-400">
+            {{ summaryReport.pendingCreditsCount }}
+          </p>
+          <p class="text-xs text-gray-400 leading-tight">
+            crédito(s)<br />por aprobar
+          </p>
+        </div>
+        @if (summaryReport.pendingCreditsCount === 0) {
+          <p class="text-xs text-gray-500 italic">
+            Sin créditos pendientes de aprobación.
+          </p>
+        }
+      </div>
+
+      <!-- Próximos vencimientos -->
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-3">
+        <p class="text-sm font-semibold text-white">
+          Próximos vencimientos (7 días)
+        </p>
+        <div class="flex items-baseline gap-2">
+          <p class="text-3xl font-extrabold text-white">
+            {{ summaryReport.upcoming7dCount }}
+          </p>
+          <p class="text-xs text-gray-400">cuotas</p>
+        </div>
+        <p class="text-xs text-gray-400 font-mono">
+          {{ formatCurrency(summaryReport.upcoming7dAmount) }} esperado
+        </p>
+        <div class="pt-2">
+          <button
+            (click)="goToUpcoming()"
+            class="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            Ver detalle por día →
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

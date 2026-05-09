@@ -15,8 +15,8 @@ export const SELLER_ROUTES: Routes = [
     canActivate: [roleGuard],
     data: { roles: ['ADMIN', 'SELLER', 'SELLER_COLLECTOR'] },
     loadComponent: () =>
-      import('./operations/credit-create/credit-create.component').then(
-        (c) => c.CreditCreateComponent,
+      import('../../shared/operations/new-operation/new-operation.component').then(
+        (c) => c.NewOperationComponent,
       ),
   },
   {

@@ -28,19 +28,39 @@ const PORTAL_CREDITS_MOCK = [
     id: 'crd-p01',
     type: 'SALE',
     status: 'ACTIVE',
-    totalAmount: 120000,
-    installmentsCount: 10,
-    paymentFrequency: 'WEEKLY',
-    createdAt: '2026-01-10T00:00:00Z',
+    total_amount: 120000,
+    total_to_return: 132000,
+    installments_count: 10,
+    installment_amount: 13200,
+    payment_frequency: 'WEEKLY',
+    created_at: '2026-01-10T00:00:00Z',
+    approved_at: '2026-01-11T00:00:00Z',
+    settled_at: null,
+    total_installments: 10,
+    paid_installments: 4,
+    next_due_date: '2026-02-15T00:00:00Z',
+    next_due_amount: 13200,
+    pending_penalty: 0,
+    has_overdue: false,
   },
   {
     id: 'crd-p02',
     type: 'LOAN',
     status: 'SETTLED',
-    totalAmount: 50000,
-    installmentsCount: 6,
-    paymentFrequency: 'MONTHLY',
-    createdAt: '2025-06-01T00:00:00Z',
+    total_amount: 50000,
+    total_to_return: 58000,
+    installments_count: 6,
+    installment_amount: 9667,
+    payment_frequency: 'MONTHLY',
+    created_at: '2025-06-01T00:00:00Z',
+    approved_at: '2025-06-02T00:00:00Z',
+    settled_at: '2025-12-15T00:00:00Z',
+    total_installments: 6,
+    paid_installments: 6,
+    next_due_date: null,
+    next_due_amount: null,
+    pending_penalty: 0,
+    has_overdue: false,
   },
 ];
 
@@ -48,13 +68,27 @@ const PORTAL_CREDIT_DETAIL_MOCK = {
   id: 'crd-p01',
   type: 'SALE',
   status: 'ACTIVE',
-  totalAmount: 120000,
-  installmentsCount: 10,
-  paymentFrequency: 'WEEKLY',
-  createdAt: '2026-01-10T00:00:00Z',
+  total_amount: 120000,
+  total_to_return: 132000,
+  installments_count: 10,
+  installment_amount: 13200,
+  payment_frequency: 'WEEKLY',
+  created_at: '2026-01-10T00:00:00Z',
+  approved_at: '2026-01-11T00:00:00Z',
+  settled_at: null,
+  total_installments: 10,
+  paid_installments: 4,
+  next_due_date: '2026-02-15T00:00:00Z',
+  next_due_amount: 13200,
+  pending_penalty: 0,
+  has_overdue: false,
+  down_payment: 0,
+  down_payment_method: null,
+  prepaid_installments: 0,
+  interest_rate: 0.1,
   installments: [
-    { id: 'inst-p01', installmentNumber: 1, dueDate: '2026-01-17T00:00:00Z', amountDue: 12000, status: 'PAID', paidAt: '2026-01-17T10:00:00Z', paidAmount: 12000 },
-    { id: 'inst-p02', installmentNumber: 2, dueDate: '2026-01-24T00:00:00Z', amountDue: 12000, status: 'PENDING', paidAt: null, paidAmount: null },
+    { id: 'inst-p01', installment_number: 1, due_date: '2026-01-17T00:00:00Z', amount_due: 12000, amount_paid: 12000, penalty_amount: 0, status: 'PAID' },
+    { id: 'inst-p02', installment_number: 2, due_date: '2026-01-24T00:00:00Z', amount_due: 12000, amount_paid: 0, penalty_amount: 0, status: 'PENDING' },
   ],
 };
 
@@ -81,6 +115,10 @@ describe('Portal — Lista de Créditos (/portal/credits)', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
     setupPortalSession();
+    cy.intercept('GET', /\/api\/portal\/credits\/crd-p01/, {
+      statusCode: 200,
+      body: { ok: true, data: PORTAL_CREDIT_DETAIL_MOCK },
+    }).as('portalCreditDetail');
 
     cy.loginPortalAs('/portal/credits', PORTAL_SESSION);
   });
@@ -94,20 +132,21 @@ describe('Portal — Lista de Créditos (/portal/credits)', () => {
   });
 
   it('muestra crédito tipo Venta en cuotas', () => {
-    cy.contains('Venta en cuotas').should('exist');
+    cy.contains('[data-cy="portal-credits-card"]', 'VENTA').should('exist');
   });
 
   it('muestra crédito tipo Préstamo', () => {
-    cy.contains('Préstamo').should('exist');
+    cy.contains('[data-cy="portal-credits-card"]', 'PRÉSTAMO').should('exist');
   });
 
   it('muestra tags de estado', () => {
-    cy.get('p-tag').should('have.length.gte', 1);
+    cy.contains('[data-cy="portal-credits-card"]', 'ACTIVO').should('exist');
   });
 
   it('clic en un crédito navega al detalle', () => {
     cy.get('[data-cy="portal-credits-card"]').first().click();
-    cy.url().should('include', '/portal/credits/');
+    cy.wait('@portalCreditDetail');
+    cy.url().should('include', '/portal/credits/crd-p01');
   });
 });
 
@@ -137,7 +176,8 @@ describe('Portal — Detalle de Crédito (/portal/credits/:id)', () => {
   });
 
   it('muestra el tipo de crédito', () => {
-    cy.contains('Venta en cuotas').should('exist');
+    cy.contains('Tipo de crédito').should('exist');
+    cy.contains('Venta a crédito').should('exist');
   });
 
   it('muestra el monto total', () => {
@@ -149,7 +189,7 @@ describe('Portal — Detalle de Crédito (/portal/credits/:id)', () => {
   });
 
   it('muestra el tag de estado', () => {
-    cy.get('p-tag').should('exist');
+    cy.contains('ACTIVO').should('exist');
   });
 
   it('muestra la tabla de cuotas', () => {

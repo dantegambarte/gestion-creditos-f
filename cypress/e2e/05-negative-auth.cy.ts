@@ -21,10 +21,11 @@ describe('Autenticación — Unhappy Paths', () => {
 
   // ── Logout limpia estado ─────────────────────────────────────────────────────
   it('logout limpia localStorage y redirige a /login', () => {
-    cy.loginAs('ADMIN');
-    // loginAs ya visitó /admin/dashboard — sidebar visible, no need to revisit
-
-    cy.get('[data-testid="logout-btn"]').click();
+    cy.loginAs('ADMIN', '/admin/dashboard');
+    cy.url().should('include', '/admin/dashboard');
+    cy.get('[data-testid="logout-btn"]', { timeout: 12000 })
+      .should('be.visible')
+      .click();
 
     cy.url().should('include', '/login');
     cy.window().then((win) => {

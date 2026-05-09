@@ -1,104 +1,150 @@
-import { Component, inject } from '@angular/core';
-import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
-import { FormsModule } from '@angular/forms';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { OperationFormService } from '../../operation-form.service';
+import { MessageModule } from 'primeng/message';
+import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
+import { ProductRate } from '../../../../../features/admin/config/models/interfaces/product';
+import { CartLine, SaleInstallmentOption } from '../../operation-form.service';
 
 @Component({
   selector: 'app-step-conditions',
   standalone: true,
   imports: [
-    CurrencyArsPipe,
+    ReactiveFormsModule,
     FormsModule,
-    InputNumberModule,
     CalendarModule,
     DropdownModule,
+    InputNumberModule,
+    MessageModule,
+    CurrencyArsPipe,
   ],
   templateUrl: './step-conditions.component.html',
 })
 export class StepConditionsComponent {
-  form = inject(OperationFormService);
+  @Input() form!: FormGroup;
+  @Input() cartLines: CartLine[] = [];
+  @Input() paymentFrequencyOptions: {
+    label: string;
+    value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+  }[] = [];
+  @Input() installmentsOptions: {
+    label: string;
+    value: number;
+    frequency: string;
+  }[] = [];
+  @Input() isInstallmentsRefreshing = false;
+  @Input() capitalBase = 0;
+  @Input() capitalAFinanciar = 0;
+  @Input() interestRate = 0;
+  @Input() valorCuota = 0;
+  @Input() totalADevolver = 0;
+  @Input() todayDate!: Date;
+  @Input() installmentsDropdownClass = 'w-full';
+  @Input() validatedDownPayment = 0;
+
+  @Output() saleInstallmentsChanged = new EventEmitter<{
+    productoId: string;
+    installments: number | null;
+  }>();
 
   /**
-   * Fecha mínima permitida para el primer pago (hoy en zona horaria local).
+   * Opciones de cuotas para una línea del carrito según la frecuencia seleccionada.
+   * @param {CartLine} line - Línea del carrito a evaluar.
    */
-  readonly minFirstDueDate: Date = this.form.getTodayStart();
-
-  /**
-   * Informa si la fecha seleccionada quedó en estado inválido.
-   * @returns {boolean} true si existe fecha y es anterior a hoy.
-   */
-  get hasInvalidFirstDueDate(): boolean {
-    const selectedDate = this.form.firstDueDate();
-    if (!selectedDate) return false;
-    return !this.form.isFirstDueDateValid();
-  }
-
-  /**
-   * Aplica la fecha recibida desde el calendario y bloquea valores anteriores a hoy.
-   * Cubre tanto selección con mouse como tipeo manual en el input de PrimeNG.
-   * @param {Date | string | null | undefined} value - Valor emitido por el `p-calendar`.
-   */
-  onFirstDueDateChange(value: Date | string | null | undefined): void {
-    const parsedDate = this.parseCalendarValue(value);
-
-    if (!parsedDate || this.form.normalizeToLocalDayStart(parsedDate) < this.minFirstDueDate) {
-      this.form.firstDueDate.set(undefined);
-      return;
-    }
-
-    this.form.firstDueDate.set(parsedDate);
-  }
-
-  /**
-   * Convierte el valor del calendario a `Date` válida en zona local.
-   * @param {Date | string | null | undefined} value - Valor crudo emitido por PrimeNG.
-   * @returns {Date | undefined} Fecha válida o `undefined` si no se puede interpretar.
-   */
-  private parseCalendarValue(
-    value: Date | string | null | undefined,
-  ): Date | undefined {
-    if (value instanceof Date && !Number.isNaN(value.getTime())) {
-      return value;
-    }
-
-    if (typeof value === 'string') {
-      const typedDate = this.parseTypedDate(value);
-      if (typedDate) {
-        return typedDate;
-      }
-
-      const parsed = new Date(value);
-      if (!Number.isNaN(parsed.getTime())) {
-        return parsed;
+  getInstallmentsOptionsForLine(line: CartLine): SaleInstallmentOption[] {
+    const selectedFrequency = this.form.controls['paymentFrequency']?.value as
+      | string
+      | null;
+    const formatFrequency = (f: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY') => {
+      if (f === 'MONTHLY') return 'Mensual';
+      if (f === 'BIWEEKLY') return 'Quincenal';
+      return 'Semanal';
+    };
+    const unique = new Map<string, SaleInstallmentOption>();
+    for (const rate of line.rates.filter(
+      (r) => !selectedFrequency || r.paymentFrequency === selectedFrequency,
+    )) {
+      const key = `${rate.installmentsCount}-${rate.paymentFrequency}`;
+      if (!unique.has(key)) {
+        unique.set(key, {
+          label: `${rate.installmentsCount} cuota${rate.installmentsCount > 1 ? 's' : ''} (${formatFrequency(rate.paymentFrequency)})`,
+          value: rate.installmentsCount,
+          frequency: rate.paymentFrequency,
+        });
       }
     }
-
-    return undefined;
+    return Array.from(unique.values()).sort((a, b) => a.value - b.value);
   }
 
   /**
-   * Intenta parsear fechas tipeadas en formato `dd/mm/yy` o `dd/mm/yyyy`.
-   * @param {string} value - Fecha escrita manualmente en el input.
-   * @returns {Date | undefined} Fecha local válida o `undefined` si el formato no coincide.
+   * Tasa seleccionada para una línea del carrito según cuotas y frecuencia del formulario.
+   * @param {CartLine} line - Línea del carrito a evaluar.
    */
-  private parseTypedDate(value: string): Date | undefined {
-    const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
-    if (!match) return undefined;
+  private getSelectedRateForLine(line: CartLine): ProductRate | undefined {
+    const selectedFrequency = this.form.controls['paymentFrequency']?.value as
+      | string
+      | null;
+    if (!line.selectedInstallments || !selectedFrequency) return undefined;
+    return line.rates.find(
+      (rate) =>
+        rate.installmentsCount === line.selectedInstallments &&
+        rate.paymentFrequency === selectedFrequency,
+    );
+  }
 
-    const day = Number(match[1]);
-    const month = Number(match[2]);
-    const year =
-      match[3].length === 2 ? 2000 + Number(match[3]) : Number(match[3]);
+  private getLineDownPayment(line: CartLine): number {
+    const totalCarrito = this.cartLines.reduce(
+      (acc, l) => acc + l.precio * l.cantidad,
+      0,
+    );
+    if (this.validatedDownPayment <= 0 || totalCarrito <= 0) return 0;
+    return (line.subtotal / totalCarrito) * this.validatedDownPayment;
+  }
 
-    const parsed = new Date(year, month - 1, day);
-    const isValidDate =
-      parsed.getFullYear() === year &&
-      parsed.getMonth() === month - 1 &&
-      parsed.getDate() === day;
+  private getLineFinancedCapital(line: CartLine): number {
+    return Math.max(0, line.subtotal - this.getLineDownPayment(line));
+  }
 
-    return isValidDate ? parsed : undefined;
+  /**
+   * Valor de cuota de una línea con la fórmula oficial (redondeado al millar).
+   * @param {CartLine} line - Línea del carrito a calcular.
+   */
+  getLineInstallmentValue(line: CartLine): number {
+    const installments = line.selectedInstallments ?? 0;
+    const rate = this.getSelectedRateForLine(line)?.rate ?? 0;
+    if (installments <= 0) return 0;
+    return (
+      Math.ceil(
+        (this.getLineFinancedCapital(line) * (1 + rate)) / installments / 1000,
+      ) * 1000
+    );
+  }
+
+  /**
+   * Descripción corta del plan de cuotas por producto.
+   * @param {CartLine} line - Línea del carrito en evaluación.
+   */
+  getLinePlanSubtitle(line: CartLine): string {
+    const installments = line.selectedInstallments ?? 0;
+    const money = (value: number) =>
+      new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency: 'ARS',
+        maximumFractionDigits: 0,
+      }).format(value);
+    if (installments <= 0)
+      return `${line.cantidad} u. · ${money(line.subtotal)} total`;
+    return `${line.cantidad} u. · ${installments} cuota${installments > 1 ? 's' : ''} de ${money(this.getLineInstallmentValue(line))}`;
+  }
+
+  /**
+   * Porcentaje de interés aplicado en una línea del carrito.
+   * @param {CartLine} line - Línea del carrito a consultar.
+   */
+  getLineRatePercent(line: CartLine): number {
+    const rate = this.getSelectedRateForLine(line)?.rate ?? 0;
+    return Math.round(rate * 10000) / 100;
   }
 }

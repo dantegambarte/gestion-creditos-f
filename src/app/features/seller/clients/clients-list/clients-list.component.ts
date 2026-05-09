@@ -9,7 +9,7 @@ import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
-import { MockAuthService } from '../../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { HeaderService } from '../../../../core/services/header.service';
 import { CustomersService } from '../customers.service';
 import {
@@ -43,7 +43,7 @@ import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
 })
 export class ClientsListComponent implements OnInit, OnDestroy {
   private readonly customersService = inject(CustomersService);
-  private readonly auth = inject(MockAuthService);
+  private readonly auth = inject(AuthServiceBase);
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
 

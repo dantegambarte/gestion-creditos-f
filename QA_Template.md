@@ -127,7 +127,7 @@ http://localhost:3000/api/credits - POST
 
 * **Acción Realizada:** [Escribí "Perez" en el buscador en "Nueva Operación" - Admin.]
 * **Resultado Esperado:** [Debería filtrar los clientes.]
-* **Resultado Obtenido (Error):** [No filtra los resultados.]
+* **Resultado Obtenido (Actual):** [Corregido. El buscador del paso Cliente en `Nueva Operación` ahora también ignora tildes y diferencias de mayúsculas/minúsculas, por lo que `Perez` encuentra `Pérez`. Validado con `step-client.component.spec.ts`.]
 
 ---
 
@@ -137,7 +137,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Hice click en "Enviar para Aprobación" luego de elegir un producto que informa unidades disponibles.]
 * **Resultado Esperado:** [Si el producto muestra stock disponible, la operación debería enviarse correctamente para aprobación.]
-* **Resultado Obtenido (Error):** [Cuando elijo un producto que dice que posee 5 unidades, la API responde que la unidad seleccionada no fue encontrada. **Pendiente de atacar**.]
+* **Resultado Obtenido (Actual):** [Corregido / validado. El flujo SALE ya no mezcla unidades entre productos distintos al agrupar el catálogo; la operación se registró correctamente y el stock visible bajó de 5 a 4 tras el envío. Validado manualmente contra backend real y cubierto con `operation-form.service.spec.ts`.]
 ### 2. Evidencia Técnica
 **Payload Enviado (Request):**
 ```json
@@ -150,18 +150,13 @@ http://localhost:3000/api/credits - POST
 }
 ```
 
-**Respuesta obtenida:**
+**Respuesta obtenida actual:**
 ```json
 {
-    "ok": false,
-    "message": "Unidad c8e8ef31-eec0-4e8f-a09c-d921a368d84d no encontrada."
+    "ok": true,
+    "message": "Pre-operación registrada. Pendiente de aprobación."
 }
 ```
-
-**Línea de ataque sugerida:**
-- Verificar consistencia entre stock mostrado en UI y `unit_ids` reales devueltos por backend.
-- Revisar si el selector está enviando una unidad reservada/inactiva o un id stale.
-- Cubrir regresión con Cypress al confirmar stock visible vs unidad seleccionable.
 
 ---
 
@@ -171,7 +166,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Hice click para elegir la fecha del primer pago con el mouse desde el calendario.]
 * **Resultado Esperado:** [Debería poder elegir la fecha con click y reflejarla en el formulario.]
-* **Resultado Obtenido (Error):** [Al hacer click con el mouse sobre una fecha del calendario no hace nada; escribiendo la fecha manualmente sí permite seguir. **Pendiente de atacar**.]
+* **Resultado Obtenido (Actual):** [Corregido / validado. El calendario ahora responde al click del mouse, carga la fecha elegida en el input y mantiene un overlay estable sobre el layout del wizard. Validado manualmente en admin y cubierto con `step-conditions.component.spec.ts` para la configuración del calendario.]
 
 **Línea de ataque sugerida:**
 - Revisar binding del componente calendario y evento de selección (`onSelect` / `ngModel` / `formControl`).
@@ -180,7 +175,7 @@ http://localhost:3000/api/credits - POST
 
 * **Acción Realizada:** [Hice click para elegir la fecha del primer pago con el mouse desde el calendario - Admin.]
 * **Resultado Esperado:** [Debería poder elegir una fecha del calendario.]
-* **Resultado Obtenido (Error):** [Al hacer click sobre el calendario sale cortado sin poder elegir las fechas que se encuentren por debajo.]
+* **Resultado Obtenido (Actual):** [Corregido / validado. El calendario se muestra completo, sin quedar cortado, y permite elegir fechas futuras correctamente. Validado manualmente en admin.]
 
 ---
 
@@ -210,7 +205,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Nueva Operación".]
 * **Resultado Esperado:** [Debería salir un modal para cargar los datos.]
-* **Resultado Obtenido (Error):** [Las letras son del mismo color que el fondo lo que hace ilegible la lectura.]
+* **Resultado Obtenido (Actual):** [Corregido / validado. Seller ahora reutiliza el wizard compartido `NewOperationComponent`, por lo que la pantalla de `Nueva Operación` muestra el mismo layout oscuro con contraste correcto que admin. Validado manualmente iniciando sesión como seller y entrando a `/seller/operations/new`.]
 
 ---
 
@@ -256,7 +251,7 @@ Módulo Clientes
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click sobre el boton "Editar" en un cliente.]
 * **Resultado Esperado:** [Al modificar los datos deben debería salir un cartel "Modificación Exitosa".]
-* **Resultado Obtenido (Actual):** [El apretar "Guardar Cambios" no sale ningun cartel.]
+* **Resultado Obtenido (Actual):** [Corregido. Al guardar cambios en la edición ahora se muestra feedback visible con toast `Modificación Exitosa.` y luego se refresca la grilla. Validado con `clients.component.spec.ts`.]
 
 
 ---
