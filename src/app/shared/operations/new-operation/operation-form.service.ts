@@ -472,6 +472,9 @@ export class OperationFormService {
 
     this.operationForm.controls.totalAmount.valueChanges.subscribe(() => {
       this.calculateDynamicRate();
+
+      this.ensureValidFrequencySelection();
+      this.ensureValidInstallmentsSelection();
     });
 
     this.operationForm.controls.installmentsCount.valueChanges.subscribe(() => {
