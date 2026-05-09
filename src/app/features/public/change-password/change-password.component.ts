@@ -13,7 +13,7 @@ import { PasswordModule } from 'primeng/password';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { Subject, takeUntil } from 'rxjs';
-import { MockAuthService } from '../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AppError } from '../../../core/models/app-error';
 import { UserRoleEnum } from '../../../core/models/types/user-role';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
@@ -51,7 +51,7 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
 
   constructor(
     private fb: FormBuilder,
-    readonly auth: MockAuthService,
+    readonly auth: AuthServiceBase,
     private router: Router,
   ) {
     this.form = this.fb.group({

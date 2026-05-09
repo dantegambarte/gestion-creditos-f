@@ -143,7 +143,7 @@ function selectOperationType(label: 'Venta' | 'Préstamo'): void {
  * El dropdown puede estar ya auto-seleccionado; si hay opciones, elige la primera.
  */
 function selectFirstFrequencyIfNeeded(): void {
-  cy.get('p-dropdown[formControlName="paymentFrequency"]').then(($el) => {
+  cy.get('p-dropdown[formControlName="paymentFrequency"] .p-dropdown').then(($el) => {
     const hasValue = $el.find('.p-dropdown-label:not(.p-placeholder)').length > 0;
     if (!hasValue) {
       cy.wrap($el).click();
@@ -312,10 +312,12 @@ describe('Wizard — Nueva Operación de Crédito', () => {
 
       cy.contains('Monto total').should('be.visible');
 
-      // p-inputNumber renderiza un input nativo con clase p-inputnumber-input
+      // .blur() fuerza a PrimeNG a confirmar el valor al FormControl antes de avanzar,
+      // lo que dispara totalAmount.valueChanges → habilita las opciones de cuotas
       cy.get('p-inputNumber[formControlName="totalAmount"] input')
         .clear()
-        .type('50000');
+        .type('50000')
+        .blur();
 
       cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
       cy.contains('Paso 3 de 4').should('be.visible');
@@ -324,18 +326,22 @@ describe('Wizard — Nueva Operación de Crédito', () => {
 
       cy.contains('Condiciones Financieras').should('be.visible');
 
-      selectFirstFrequencyIfNeeded();
+      // Seleccionamos la frecuencia explícitamente para asegurar que
+      // paymentFrequency.valueChanges dispare ensureValidInstallmentsSelection
+      cy.get('p-dropdown[formControlName="paymentFrequency"] .p-dropdown').click();
+      cy.get('.p-dropdown-panel .p-dropdown-item').first().click();
 
-      // Para préstamo: dropdown de cantidad de cuotas
-      cy.get('[data-cy="ddl-installments"]').should('be.visible');
-      // Las cuotas se auto-seleccionan; si no, elegimos la primera
-      cy.get('[data-cy="ddl-installments"] .p-dropdown').then(($dd) => {
-        const label = $dd.find('.p-dropdown-label').text().trim();
-        if (!label || label === 'Seleccionar cuotas') {
-          cy.wrap($dd).click();
-          cy.get('.p-dropdown-panel .p-dropdown-item').first().click();
-        }
-      });
+      // El dropdown de cuotas debe estar habilitado — el blur anterior garantizó
+      // que totalAmount se comprometió y las tasas se filtraron correctamente
+      cy.get('[data-cy="ddl-installments"] .p-dropdown')
+        .should('not.have.class', 'p-disabled')
+        .then(($dd) => {
+          const label = $dd.find('.p-dropdown-label').text().trim();
+          if (!label || label === 'Seleccionar cuotas') {
+            cy.wrap($dd).click();
+            cy.get('.p-dropdown-panel .p-dropdown-item').first().click();
+          }
+        });
 
       cy.contains('Total a devolver').should('be.visible');
       cy.contains('Capital base').should('be.visible');

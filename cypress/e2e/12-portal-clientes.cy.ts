@@ -60,10 +60,10 @@ describe('Portal Cliente — Dashboard y Créditos', () => {
 
   it('muestra dashboard real con saludo y saldo total', () => {
     cy.loginPortalAs('/portal/dashboard', PORTAL_SESSION);
-    cy.wait('@portalCredits');
+    cy.wait('@portalSummary');
 
     cy.contains('Hola, Ana').should('be.visible');
-    cy.contains('Saldo total de créditos').should('be.visible');
+    cy.contains('Deuda total vigente').should('be.visible');
     cy.contains('Créditos activos').should('be.visible');
   });
 
@@ -95,7 +95,8 @@ describe('Portal Cliente — Dashboard y Créditos', () => {
     cy.get('[data-cy="portal-credits-card"]').first().click();
     cy.url().should('include', '/portal/credits/cred-1');
     cy.wait('@portalCreditDetail');
-    cy.contains('h2', 'Detalle del crédito').should('be.visible');
+    cy.get('[data-cy="portal-credit-detail-page"]').should('be.visible');
+    cy.get('[data-cy="portal-credit-detail-title"]').should('be.visible');
   });
 
   it('muestra vista real de /portal/credits como tarjetas', () => {
@@ -103,7 +104,8 @@ describe('Portal Cliente — Dashboard y Créditos', () => {
     cy.wait('@portalCredits');
 
     cy.contains('h2', 'Mis créditos').should('be.visible');
-    cy.contains('Venta en cuotas').should('be.visible');
-    cy.get('p-tag').should('contain', 'Activo');
+    cy.get('[data-cy="portal-credits-card"]').should('have.length.at.least', 1);
+    cy.contains('[data-cy="portal-credits-card"]', 'VENTA').should('be.visible');
+    cy.contains('[data-cy="portal-credits-card"]', 'ACTIVO').should('be.visible');
   });
 });

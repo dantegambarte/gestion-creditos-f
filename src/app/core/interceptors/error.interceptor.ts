@@ -12,7 +12,7 @@ import {
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
-import { MockAuthService } from '../auth/mock-auth.service';
+import { AuthServiceBase } from '../auth/auth-service.base';
 import { TokenRefreshService } from '../auth/token-refresh.service';
 
 // Estado de refresh a nivel de módulo para serializar llamadas concurrentes.
@@ -22,7 +22,7 @@ const tokenSubject = new BehaviorSubject<string | null>(null);
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const auth = inject(MockAuthService);
+  const auth = inject(AuthServiceBase);
   const tokenRefresh = inject(TokenRefreshService);
   const messages = inject(MessageService);
 
@@ -100,7 +100,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 function _handleHttpError(
   err: HttpErrorResponse,
   router: Router,
-  auth: MockAuthService,
+  auth: AuthServiceBase,
   messages: MessageService,
   isPortal: boolean,
 ): void {
@@ -157,7 +157,7 @@ function _handleHttpError(
  */
 function _redirectToLogin(
   router: Router,
-  auth: MockAuthService,
+  auth: AuthServiceBase,
   messages: MessageService,
   isPortal: boolean,
 ): void {

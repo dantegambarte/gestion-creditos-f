@@ -1,10 +1,10 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { MockAuthService } from './mock-auth.service';
+import { AuthServiceBase } from './auth-service.base';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
 
 export const tempPasswordGuard: CanActivateFn = () => {
-  const auth = inject(MockAuthService);
+  const auth = inject(AuthServiceBase);
   const router = inject(Router);
 
   const user = auth.snapshot;

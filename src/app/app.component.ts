@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { filter, map } from 'rxjs/operators';
-import { MockAuthService } from './core/auth/mock-auth.service';
+import { AuthServiceBase } from './core/auth/auth-service.base';
 import { HeaderComponent } from './shared/layout/header/header.component';
 import { SidebarComponent } from './shared/layout/sidebar/sidebar.component';
 
@@ -24,7 +24,7 @@ import { SidebarComponent } from './shared/layout/sidebar/sidebar.component';
 export class AppComponent {
   title = 'gestion-creditos-f';
 
-  auth = inject(MockAuthService);
+  auth = inject(AuthServiceBase);
   private router = inject(Router);
 
   private noLayoutRoutes = ['/portal', '/change-password'];

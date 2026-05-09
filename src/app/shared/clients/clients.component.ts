@@ -22,7 +22,7 @@ import { ToastModule } from 'primeng/toast';
 
 import { CustomersService } from '../../features/seller/clients/customers.service';
 import { Customer } from '../../features/seller/models/customer.model';
-import { MockAuthService } from '../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../core/auth/auth-service.base';
 import { UserRoleEnum } from '../../core/models/types/user-role';
 import { FormatService } from '../../core/services/format.service';
 import { Client } from '../models/interface/client';
@@ -80,7 +80,7 @@ function toClient(c: Customer): Client {
 })
 export class ClientsComponent implements OnInit {
   private readonly customersService = inject(CustomersService);
-  private readonly auth = inject(MockAuthService);
+  private readonly auth = inject(AuthServiceBase);
   private readonly messageService = inject(MessageService);
 
   clients: Client[] = [];

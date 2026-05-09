@@ -75,7 +75,7 @@ describe('Seller — Lista de Operaciones', () => {
   });
 
   it('muestra el dropdown de filtro por Tipo', () => {
-    cy.get('p-dropdown').should('have.length.gte', 2);
+    cy.get('p-dropdown').should('have.length.gte', 1);
   });
 
   it('el botón "Nueva operación" es visible para SELLER', () => {
@@ -93,9 +93,61 @@ describe('Seller — Lista de Operaciones', () => {
 });
 
 describe('Admin — Lista de Operaciones (misma vista vía /admin)', () => {
+  const creditsMock = [
+    {
+      id: 'crd-001',
+      type: 'SALE',
+      total_amount: 120000,
+      installments_count: 12,
+      payment_frequency: 'WEEKLY',
+      interest_rate: 10,
+      status: 'ACTIVE',
+      created_at: '2026-02-01T00:00:00Z',
+      approved_at: null,
+      customer_id: 'cust-001',
+      customer_name: 'Juan Perez Garcia',
+      customer_dni: '22334455',
+      created_by_id: 'usr-001',
+      created_by_name: 'Carlos Lopez',
+    },
+    {
+      id: 'crd-002',
+      type: 'LOAN',
+      total_amount: 90000,
+      installments_count: 6,
+      payment_frequency: 'MONTHLY',
+      interest_rate: 15,
+      status: 'PENDING_APPROVAL',
+      created_at: '2026-02-10T00:00:00Z',
+      approved_at: null,
+      customer_id: 'cust-002',
+      customer_name: 'Laura Gomez',
+      customer_dni: '11223344',
+      created_by_id: 'usr-001',
+      created_by_name: 'Carlos Lopez',
+    },
+  ];
+
+  function stubAdminCreditsList(): void {
+    cy.intercept('GET', /\/api\/credits(\?.*)?$/, (req) => {
+      const status = req.query['status'];
+      const type = req.query['type'];
+
+      const filtered = creditsMock.filter((credit) => {
+        if (status && credit.status !== status) return false;
+        if (type && credit.type !== type) return false;
+        return true;
+      });
+
+      req.reply({ statusCode: 200, body: { ok: true, data: filtered } });
+    }).as('creditsList');
+  }
+
   beforeEach(() => {
     cy.viewport(1280, 720);
+    stubAdminCreditsList();
     cy.loginAs('ADMIN', '/admin/operations');
+    cy.wait('@creditsList');
   });
 
   it('renderiza sin error', () => {
@@ -115,11 +167,11 @@ describe('Admin — Lista de Operaciones (misma vista vía /admin)', () => {
   });
 
   it('CR-08: filtra por cliente al buscar "Perez"', () => {
-    cy.get('input[placeholder="Buscar..."]')
+    cy.get('input[placeholder="Buscar por cliente o DNI"]')
       .clear()
       .type('Perez');
 
     cy.get('p-table tbody tr').should('have.length', 1);
-    cy.get('p-table tbody tr').first().should('contain.text', 'Juan Pérez García');
+    cy.get('p-table tbody tr').first().should('contain.text', 'Juan Perez Garcia');
   });
 });

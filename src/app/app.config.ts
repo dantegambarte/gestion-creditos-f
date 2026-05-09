@@ -5,17 +5,18 @@ import {
 } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withPreloading } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { routes } from './app.routes';
 import { provideAuth } from './core/auth/auth.provider';
+import { RoleBasedPreloadingStrategy } from './core/routing/role-based-preloading.strategy';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { jwtInterceptor } from './core/interceptors/jwt.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideRouter(routes),
+    provideRouter(routes, withPreloading(RoleBasedPreloadingStrategy)),
     provideAnimations(),
     MessageService,
     // Orden: jwt (adjunta token) → loading (spinner) → error (maneja 401/403)
