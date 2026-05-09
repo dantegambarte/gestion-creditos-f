@@ -1,9 +1,10 @@
 <div class="flex flex-col gap-5" data-cy="portal-credit-detail-page">
   <!-- Volver -->
-  <a [routerLink]="['/portal/credits']" class="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-75 w-fit"
+  <button type="button" (click)="goBack()"
+     class="inline-flex items-center gap-1.5 text-sm transition-opacity hover:opacity-75 w-fit bg-transparent border-0 p-0 cursor-pointer"
      style="color: var(--ff-accent)" data-cy="portal-credit-detail-back-action">
-    <i class="pi pi-arrow-left text-xs"></i> Volver a mis créditos
-  </a>
+    <i class="pi pi-arrow-left text-xs"></i> Volver
+  </button>
 
   @if (loading) {
     <p-skeleton height="10rem" borderRadius="0.75rem" />
@@ -212,7 +213,14 @@
                   [class.inst-paid]="inst.status === 'PAID'">
                   <td class="text-center" style="color: var(--ff-text-secondary)">{{ inst.installmentNumber }}</td>
                   <td style="color: var(--ff-text-secondary)">{{ inst.dueDate | date:'dd/MM/yyyy' }}</td>
-                  <td class="text-right ff-mono">{{ inst.amountDue | currency:'ARS':'symbol':'1.0-0' }}</td>
+                  <td class="text-right ff-mono">
+                    {{ inst.amountDue | currency:'ARS':'symbol':'1.0-0' }}
+                    @if (inst.penaltyAmount > 0) {
+                      <span class="sm:hidden block text-xs font-semibold" style="color: #f87171">
+                        +{{ inst.penaltyAmount | currency:'ARS':'symbol':'1.0-0' }} mora
+                      </span>
+                    }
+                  </td>
                   <td class="text-right ff-mono hidden sm:table-cell" style="color: var(--ff-text-secondary)">
                     {{ inst.amountPaid > 0 ? (inst.amountPaid | currency:'ARS':'symbol':'1.0-0') : '—' }}
                   </td>

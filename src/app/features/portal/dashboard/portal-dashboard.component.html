@@ -126,16 +126,19 @@
                   {{ inst.status === 'OVERDUE' ? 'VENCIDA' : 'PENDIENTE' }}
                 </span>
               </div>
-              <!-- Fila 2: fecha + monto -->
-              <div class="flex items-center justify-between">
-                <p class="text-xs" style="color: var(--ff-text-muted)">
-                  Vence el {{ inst.dueDate | date:'dd/MM/yyyy' }}
+              <!-- Fila 2: fecha + días + monto -->
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                  <p class="text-xs flex-shrink-0" style="color: var(--ff-text-muted)">
+                    Vence el {{ inst.dueDate | date:'dd/MM/yyyy' }}
+                  </p>
                   @if (daysUntil(inst.dueDate); as days) {
-                    <span class="hidden sm:inline" [style.color]="days < 0 ? '#f87171' : 'var(--ff-text-muted)'">
-                      · {{ days < 0 ? (-days) + ' días atrás' : days + ' días' }}
+                    <span class="text-xs font-medium"
+                      [style.color]="days < 0 ? '#f87171' : 'var(--ff-text-muted)'">
+                      · {{ days < 0 ? (-days) + ' días de atraso' : 'en ' + days + ' días' }}
                     </span>
                   }
-                </p>
+                </div>
                 <p class="text-sm font-bold font-mono flex-shrink-0" style="color: var(--ff-text-primary)">
                   {{ inst.amountDue | currency:'ARS':'symbol':'1.0-0' }}
                 </p>

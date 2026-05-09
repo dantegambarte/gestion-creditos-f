@@ -36,6 +36,7 @@ function toResult(raw: Record<string, unknown>): SimulateResult {
     financedAmount:     (raw['financed_amount'] as number) ?? (raw['total_amount'] as number),
     downPayment:        (raw['down_payment'] as number) ?? 0,
     note:               (raw['note'] as string) ?? '',
+    rate:               raw['rate'] as number | undefined,
     items:              items.map((i: Record<string, unknown>) => ({
       productId:               i['product_id'] as string,
       productName:             i['product_name'] as string,
@@ -111,6 +112,8 @@ export class SimulatorComponent implements OnInit, OnDestroy {
   simulatedAmount: number | null = null;
   simulatedProductTitle = '';
   simulatedVariantLabel = '';
+
+  // Pantalla 1 — SALE: búsqueda
 
   // Pantalla 2
   calculating = false;

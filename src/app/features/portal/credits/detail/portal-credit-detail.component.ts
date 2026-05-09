@@ -1,4 +1,4 @@
-import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, Location } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -26,10 +26,11 @@ import { PortalService } from '../../portal.service';
 })
 export class PortalCreditDetailComponent implements OnInit {
   private readonly portalService = inject(PortalService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly platformId = inject(PLATFORM_ID);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly route         = inject(ActivatedRoute);
+  private readonly location      = inject(Location);
+  private readonly platformId    = inject(PLATFORM_ID);
+  private readonly destroyRef    = inject(DestroyRef);
+  private readonly cdr           = inject(ChangeDetectorRef);
 
   credit: PortalCreditDetail | null = null;
   loading = true;
@@ -171,5 +172,12 @@ export class PortalCreditDetailComponent implements OnInit {
       case 'PARTIAL': return 'PARCIAL';
       case 'PAID':    return 'PAGADO';
     }
+  }
+
+  /**
+   * Vuelve a la pantalla anterior respetando el historial de navegación.
+   */
+  goBack(): void {
+    this.location.back();
   }
 }
