@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
 import { ClientsComponent } from './clients.component';
+import { AuthServiceBase } from '../../core/auth/auth-service.base';
 import { MockAuthService } from '../../core/auth/mock-auth.service';
 import { CustomersService } from '../../features/seller/clients/customers.service';
 import { FormatService } from '../../core/services/format.service';
@@ -60,7 +61,7 @@ describe('ClientsComponent', () => {
       imports: [ClientsComponent],
       providers: [
         { provide: Router, useValue: routerSpy },
-        { provide: MockAuthService, useValue: authSpy },
+        { provide: AuthServiceBase, useValue: authSpy },
         { provide: CustomersService, useValue: customersServiceSpy },
         { provide: FormatService, useValue: { currency: (n: number) => `$${n}` } },
         MessageService,
@@ -141,6 +142,19 @@ describe('ClientsComponent', () => {
 
       expect(component.showEditModal).toBeFalse();
       expect((component as any).loadClients).toHaveBeenCalled();
+    });
+
+    it('T2.1 - en caso de éxito debería mostrar toast de modificación exitosa', () => {
+      customersServiceSpy.update.and.returnValue(of(MOCK_CUSTOMER_DETAIL as any));
+
+      component.saveEdit();
+
+      expect((component as any).messageService.add).toHaveBeenCalledWith({
+        severity: 'success',
+        summary: 'Éxito',
+        detail: 'Modificación Exitosa.',
+        life: 4500,
+      });
     });
 
     it('T3 - error de API debería mostrar mensaje, mantener modal abierto y NO llamar a loadClients', () => {

@@ -274,6 +274,7 @@ export class ClientsComponent implements OnInit {
     };
     this.customersService.update(id, payload).subscribe({
       next: () => {
+        this.handleEditSuccess();
         this.showEditModal = false;
         this.selectedClient = null;
         this.loadClients();
@@ -282,9 +283,22 @@ export class ClientsComponent implements OnInit {
         if (err?.status === 403) {
           this.editError = 'No tenés permisos para editar clientes';
         } else {
-          this.editError = 'Ocurrió un error al guardar los cambios. Intentá de nuevo.';
+          this.editError =
+            'Ocurrió un error al guardar los cambios. Intentá de nuevo.';
         }
       },
+    });
+  }
+
+  /**
+   * Muestra feedback visible cuando la edición del cliente se guardó correctamente.
+   */
+  private handleEditSuccess(): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Modificación Exitosa.',
+      life: 4500,
     });
   }
 

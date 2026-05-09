@@ -18,14 +18,15 @@ export class StepClientComponent {
 
   /**
    * Devuelve los clientes filtrados por nombre o DNI según el texto de búsqueda local.
+   * La comparación ignora mayúsculas, minúsculas y tildes para evitar falsos negativos.
    */
   get filteredClients(): ClientOperation[] {
-    const term = this.searchText.trim().toLowerCase();
+    const term = this.normalizeText(this.searchText);
     if (!term) return this.clients;
     return this.clients.filter(
       (c) =>
-        c.name.toLowerCase().includes(term) ||
-        c.dni.toLowerCase().includes(term),
+        this.normalizeText(c.name).includes(term) ||
+        this.normalizeText(c.dni).includes(term),
     );
   }
 
@@ -36,5 +37,18 @@ export class StepClientComponent {
     if (!this.selectedClientId) return false;
     const client = this.clients.find((c) => c.id === this.selectedClientId);
     return client?.status !== 'ACTIVE';
+  }
+
+  /**
+   * Normaliza texto para búsquedas tolerantes a tildes y diferencias de casing.
+   * @param {string | null | undefined} value - Texto a normalizar.
+   * @returns {string} Texto normalizado listo para comparar.
+   */
+  private normalizeText(value: string | null | undefined): string {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 }

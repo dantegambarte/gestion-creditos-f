@@ -127,7 +127,7 @@ http://localhost:3000/api/credits - POST
 
 * **Acción Realizada:** [Escribí "Perez" en el buscador en "Nueva Operación" - Admin.]
 * **Resultado Esperado:** [Debería filtrar los clientes.]
-* **Resultado Obtenido (Error):** [No filtra los resultados.]
+* **Resultado Obtenido (Actual):** [Corregido. El buscador del paso Cliente en `Nueva Operación` ahora también ignora tildes y diferencias de mayúsculas/minúsculas, por lo que `Perez` encuentra `Pérez`. Validado con `step-client.component.spec.ts`.]
 
 ---
 
@@ -256,7 +256,7 @@ Módulo Clientes
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click sobre el boton "Editar" en un cliente.]
 * **Resultado Esperado:** [Al modificar los datos deben debería salir un cartel "Modificación Exitosa".]
-* **Resultado Obtenido (Actual):** [El apretar "Guardar Cambios" no sale ningun cartel.]
+* **Resultado Obtenido (Actual):** [Corregido. Al guardar cambios en la edición ahora se muestra feedback visible con toast `Modificación Exitosa.` y luego se refresca la grilla. Validado con `clients.component.spec.ts`.]
 
 
 ---
