@@ -66,7 +66,7 @@ describe('Gestión de Clientes — Unhappy Paths', () => {
   // ── Crear: campos requeridos vacíos ─────────────────────────────────────────
   it('crear cliente con campos vacíos muestra errores de validación', () => {
     cy.get('[data-cy="btn-nuevo-cliente"]').click();
-    cy.contains('Crear Cliente').should('be.visible');
+    cy.get('p-dialog input[formControlName="nombres"]').should('be.visible');
 
     // Forzar touched sin completar → disparar validadores
     cy.get('p-dialog input[formControlName="nombres"]').click().blur();

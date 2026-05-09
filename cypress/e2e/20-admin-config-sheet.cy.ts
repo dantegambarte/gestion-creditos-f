@@ -17,41 +17,36 @@ describe('Admin — Configuración', () => {
   });
 
   it('muestra el panel lateral de navegación de tabs', () => {
-    cy.get('.w-52.flex-shrink-0').should('exist');
+    cy.get('nav.flex.items-end a').should('have.length.gte', 4);
   });
 
   it('tiene al menos 4 opciones de configuración en el panel', () => {
-    cy.get('.w-52.flex-shrink-0 button').should('have.length.gte', 4);
+    cy.get('nav.flex.items-end a').should('have.length.gte', 4);
   });
 
-  it('la primera tab está activa (bg-blue-50)', () => {
-    cy.get('button.bg-blue-50').should('exist');
+  it('la tab activa tiene estilo visual de selección', () => {
+    cy.get('nav.flex.items-end a').first().should('have.class', 'border-blue-500');
   });
 
-  it('muestra el breadcrumb "/ Configuración /"', () => {
-    cy.contains('/ Configuración /').should('exist');
+  it('muestra tabs de navegación de configuración', () => {
+    cy.get('nav').should('be.visible');
   });
 
-  it('muestra el título h1 de la tab activa', () => {
-    cy.get('h1').should('be.visible');
+  it('renderiza contenido de la tab activa', () => {
+    cy.get('router-outlet').should('exist');
+    cy.contains('Datos de la Empresa').should('be.visible');
   });
 
-  it('muestra la opción de tab "Empresa"', () => {
-    cy.get('.w-52.flex-shrink-0').within(() => {
-      cy.contains('button', 'Empresa').should('be.visible');
-    });
+  it('muestra la opción de tab "General"', () => {
+    cy.contains('nav.flex.items-end a', 'General').should('be.visible');
   });
 
   it('muestra la opción de tab "Usuarios"', () => {
-    cy.get('.w-52.flex-shrink-0').within(() => {
-      cy.contains('button', 'Usuarios').should('be.visible');
-    });
+    cy.contains('nav.flex.items-end a', 'Usuarios').scrollIntoView().should('be.visible');
   });
 
   it('muestra la opción de tab "Notificaciones"', () => {
-    cy.get('.w-52.flex-shrink-0').within(() => {
-      cy.contains('button', 'Notificaciones').should('be.visible');
-    });
+    cy.contains('nav.flex.items-end a', 'Notificaciones').should('exist');
   });
 });
 

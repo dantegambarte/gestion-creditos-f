@@ -116,9 +116,8 @@ describe('Autenticación', () => {
 
   // ── noAuthGuard ──────────────────────────────────────────────────────────────
   it('redirige a /admin/dashboard si el usuario ya está autenticado como Admin', () => {
-    cy.loginAs('ADMIN');
-    cy.visit('/login');
-    cy.url().should('include', '/admin');
+    cy.loginAs('ADMIN', '/login');
+    cy.url({ timeout: 12000 }).should('include', '/admin/dashboard');
   });
 
   // ── Logout ───────────────────────────────────────────────────────────────────

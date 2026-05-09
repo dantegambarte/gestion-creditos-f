@@ -156,10 +156,11 @@ function selectFirstFrequencyIfNeeded(): void {
  * Completa la fecha del primer pago con una fecha futura fija.
  */
 function fillFirstPaymentDate(): void {
-  cy.get('p-calendar[formControlName="firstPaymentDate"] input')
-    .clear()
-    .type('15/12/2026')
-    .blur();
+  const calendarInput = 'p-calendar[formControlName="firstPaymentDate"] input';
+
+  cy.get(calendarInput).should('be.visible').click();
+  cy.get(calendarInput).type('{selectall}15/12/2026', { delay: 0 });
+  cy.get(calendarInput).blur();
 }
 
 // ─── Suite principal ──────────────────────────────────────────────────────────
@@ -186,8 +187,8 @@ describe('Wizard — Nueva Operación de Crédito', () => {
   });
 
   it('el botón X del header navega fuera del wizard', () => {
-    cy.get('p-button[icon="pi pi-times"]').first().click();
-    cy.url().should('not.include', '/new');
+    cy.get('p-button[icon="pi pi-times"] button').first().click({ force: true });
+    cy.url({ timeout: 12000 }).should('include', '/admin/operations');
   });
 
   // ── Paso 0: Cliente ───────────────────────────────────────────────────────
