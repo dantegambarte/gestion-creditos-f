@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LowerCasePipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
+import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ApiHttpService } from '../../core/http/api-http.service';
@@ -45,6 +46,21 @@ function toResult(raw: Record<string, unknown>): SimulateResult {
   };
 }
 
+export interface SimulateProductVariant {
+  id: string;
+  color: string | null;
+  size: string | null;
+  capacity: string | null;
+  currentPrice: number;
+  label: string;
+}
+
+export interface SimulateProduct {
+  id: string;
+  title: string;
+  variants: SimulateProductVariant[];
+}
+
 export interface SimulateOption {
   frequency: string;
   frequencyLabel: string;
@@ -61,7 +77,7 @@ export interface FrequencyGroup {
 @Component({
   selector: 'app-simulator',
   standalone: true,
-  imports: [FormsModule, LowerCasePipe, ButtonModule, InputNumberModule, SkeletonModule, CurrencyArsPipe],
+  imports: [FormsModule, LowerCasePipe, ButtonModule, DropdownModule, InputNumberModule, SkeletonModule, CurrencyArsPipe],
   templateUrl: './simulator.component.html',
 })
 export class SimulatorComponent implements OnInit {
@@ -74,8 +90,22 @@ export class SimulatorComponent implements OnInit {
 
   step: 1 | 2 | 3 = 1;
 
-  // Pantalla 1
+  // Pantalla 1 — tipo de operación
+  operationType: 'LOAN' | 'SALE' = 'LOAN';
+
+  // Pantalla 1 — LOAN
   amount: number | null = null;
+
+  // Pantalla 1 — SALE
+  loadingProducts = false;
+  products: SimulateProduct[] = [];
+  selectedProduct: SimulateProduct | null = null;
+  selectedVariant: SimulateProductVariant | null = null;
+
+  // Contexto que se preserva al avanzar a pantalla 2/3
+  simulatedAmount: number | null = null;
+  simulatedProductTitle = '';
+  simulatedVariantLabel = '';
 
   // Pantalla 2
   calculating = false;
@@ -106,12 +136,93 @@ export class SimulatorComponent implements OnInit {
       });
   }
 
+  private loadProducts(): void {
+    this.loadingProducts = true;
+    this.api
+      .get<Record<string, unknown>[]>('credits/simulate/products')
+      .subscribe({
+        next: (data) => {
+          this.products = data.map(p => ({
+            id:       p['id'] as string,
+            title:    p['title'] as string,
+            variants: (p['variants'] as Record<string, unknown>[]).map(v => {
+              const parts = [v['color'], v['size'], v['capacity']].filter(Boolean) as string[];
+              return {
+                id:           v['id'] as string,
+                color:        v['color'] as string | null,
+                size:         v['size'] as string | null,
+                capacity:     v['capacity'] as string | null,
+                currentPrice: v['current_price'] as number,
+                label:        parts.length > 0 ? parts.join(' / ') : 'Sin especificaciones',
+              };
+            }),
+          }));
+          this.loadingProducts = false;
+        },
+        error: () => { this.loadingProducts = false; },
+      });
+  }
+
   get hasOptions(): boolean {
     return Object.keys(this.optionsByFrequency).length > 0;
   }
 
+  get canContinue(): boolean {
+    if (this.operationType === 'LOAN') return !!this.amount && this.amount > 0;
+    return !!this.selectedVariant;
+  }
+
+  setOperationType(type: 'LOAN' | 'SALE'): void {
+    if (this.operationType === type) return;
+    this.operationType = type;
+    this.amount = null;
+    this.selectedProduct = null;
+    this.selectedVariant = null;
+    if (type === 'SALE' && this.products.length === 0 && !this.loadingProducts) {
+      this.loadProducts();
+    }
+  }
+
+  onProductChange(): void {
+    this.selectedVariant = null;
+  }
+
+  private buildGroups(results: Record<string, unknown>[]): void {
+    const grouped: Record<string, FrequencyGroup> = {};
+
+    for (const raw of results) {
+      const result = toResult(raw);
+      const frequency = result.paymentFrequency;
+      if (!grouped[frequency]) {
+        grouped[frequency] = {
+          frequency,
+          label: FREQUENCY_LABELS[frequency] ?? frequency,
+          options: [],
+        };
+      }
+      grouped[frequency].options.push({
+        frequency,
+        frequencyLabel: FREQUENCY_LABELS[frequency] ?? frequency,
+        installments:   result.installmentsCount,
+        result,
+      });
+    }
+
+    for (const g of Object.values(grouped)) {
+      g.options.sort((a, b) => a.installments - b.installments);
+    }
+
+    this.groups = Object.values(grouped)
+      .sort((a, b) => (FREQUENCY_ORDER[a.frequency] ?? 99) - (FREQUENCY_ORDER[b.frequency] ?? 99));
+    for (const g of this.groups) {
+      this.visibleCounts[g.frequency] = 3;
+    }
+    this.noResults = this.groups.length === 0;
+    this.calculating = false;
+  }
+
   continue(): void {
-    if (!this.amount || this.amount <= 0) return;
+    if (!this.canContinue) return;
 
     this.calculating = true;
     this.groups = [];
@@ -119,45 +230,24 @@ export class SimulatorComponent implements OnInit {
     this.visibleCounts = {};
     this.step = 2;
 
+    if (this.operationType === 'LOAN') {
+      this.simulatedAmount = this.amount;
+      this.simulatedProductTitle = '';
+      this.simulatedVariantLabel = '';
+    } else {
+      this.simulatedAmount = this.selectedVariant!.currentPrice;
+      this.simulatedProductTitle = this.selectedProduct!.title;
+      this.simulatedVariantLabel = this.selectedVariant!.label;
+    }
+
+    const payload = this.operationType === 'LOAN'
+      ? { type: 'LOAN', total_amount: this.amount }
+      : { type: 'SALE', products: [{ variant_id: this.selectedVariant!.id, quantity: 1 }] };
+
     this.api
-      .post<Record<string, unknown>[]>('credits/simulate/all', {
-        type:         'LOAN',
-        total_amount: this.amount,
-      })
+      .post<Record<string, unknown>[]>('credits/simulate/all', payload)
       .subscribe({
-        next: (results) => {
-          const grouped: Record<string, FrequencyGroup> = {};
-
-          for (const raw of results) {
-            const result = toResult(raw);
-            const frequency = result.paymentFrequency;
-            if (!grouped[frequency]) {
-              grouped[frequency] = {
-                frequency,
-                label: FREQUENCY_LABELS[frequency] ?? frequency,
-                options: [],
-              };
-            }
-            grouped[frequency].options.push({
-              frequency,
-              frequencyLabel: FREQUENCY_LABELS[frequency] ?? frequency,
-              installments:   result.installmentsCount,
-              result,
-            });
-          }
-
-          for (const g of Object.values(grouped)) {
-            g.options.sort((a, b) => a.installments - b.installments);
-          }
-
-          this.groups = Object.values(grouped)
-            .sort((a, b) => (FREQUENCY_ORDER[a.frequency] ?? 99) - (FREQUENCY_ORDER[b.frequency] ?? 99));
-          for (const g of this.groups) {
-            this.visibleCounts[g.frequency] = 3;
-          }
-          this.noResults = this.groups.length === 0;
-          this.calculating = false;
-        },
+        next: (results) => this.buildGroups(results),
         error: () => {
           this.noResults = true;
           this.calculating = false;
@@ -193,5 +283,8 @@ export class SimulatorComponent implements OnInit {
     this.groups = [];
     this.noResults = false;
     this.visibleCounts = {};
+    this.simulatedAmount = null;
+    this.simulatedProductTitle = '';
+    this.simulatedVariantLabel = '';
   }
 }
