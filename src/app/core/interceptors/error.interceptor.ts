@@ -1,21 +1,18 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, throwError, switchMap, filter, take, catchError } from 'rxjs';
+import { throwError, switchMap, filter, take, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
 import { AuthServiceBase } from '../auth/auth-service.base';
 import { TokenRefreshService } from '../auth/token-refresh.service';
-
-// Estado de refresh a nivel de módulo para serializar llamadas concurrentes.
-// Si dos requests reciben TOKEN_EXPIRED al mismo tiempo, solo se hace un refresh.
-let isRefreshing = false;
-const tokenSubject = new BehaviorSubject<string | null>(null);
+import { TokenRefreshStateService } from '../auth/token-refresh-state.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const router       = inject(Router);
-  const auth         = inject(AuthServiceBase);
-  const tokenRefresh = inject(TokenRefreshService);
+  const router        = inject(Router);
+  const auth          = inject(AuthServiceBase);
+  const tokenRefresh  = inject(TokenRefreshService);
+  const refreshState  = inject(TokenRefreshStateService);
 
   return next(req).pipe(
     catchError((err) => {
@@ -29,9 +26,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       // Token expirado → refresh automático + reintento de la request original
       if (isTokenExpired && !isRefreshUrl) {
-        if (!isRefreshing) {
-          isRefreshing = true;
-          tokenSubject.next(null);
+        if (!refreshState.isRefreshing) {
+          refreshState.isRefreshing = true;
+          refreshState.tokenSubject.next(null);
 
           const refresh$ = isPortal
             ? tokenRefresh.refreshPortal()
@@ -39,8 +36,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
           return refresh$.pipe(
             switchMap((newToken) => {
-              isRefreshing = false;
-              tokenSubject.next(newToken);
+              refreshState.isRefreshing = false;
+              refreshState.tokenSubject.next(newToken);
               const tokenKey = isPortal ? environment.portalTokenKey : environment.tokenKey;
               if (typeof localStorage !== 'undefined') {
                 localStorage.setItem(tokenKey, newToken);
@@ -50,15 +47,15 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
               );
             }),
             catchError((refreshErr) => {
-              isRefreshing = false;
-              tokenSubject.next(null);
+              refreshState.isRefreshing = false;
+              refreshState.tokenSubject.next(null);
               _redirectToLogin(router, auth, isPortal);
               return throwError(() => refreshErr);
             }),
           );
         } else {
           // Refresh en curso — encolar y reintentar con el nuevo token cuando llegue
-          return tokenSubject.pipe(
+          return refreshState.tokenSubject.pipe(
             filter((t): t is string => t !== null),
             take(1),
             switchMap((newToken) =>

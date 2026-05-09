@@ -83,6 +83,7 @@
             [minLength]="2"
             [forceSelection]="true"
             placeholder="Escribí al menos 2 letras..."
+            emptyMessage="Sin resultados para esa búsqueda"
             styleClass="w-full"
             (completeMethod)="searchProducts($event)"
             (onSelect)="onProductSelect()"

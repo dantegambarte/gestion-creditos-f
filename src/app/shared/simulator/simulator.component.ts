@@ -327,5 +327,9 @@ export class SimulatorComponent implements OnInit, OnDestroy {
     this.simulatedAmount       = null;
     this.simulatedProductTitle = '';
     this.simulatedVariantLabel = '';
+    this.amount                = null;
+    this.selectedProduct       = null;
+    this.selectedVariant       = null;
+    this.productSuggestions    = [];
   }
 }
