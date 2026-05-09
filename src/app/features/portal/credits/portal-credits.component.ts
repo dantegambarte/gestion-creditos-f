@@ -102,8 +102,11 @@ export class PortalCreditsComponent implements OnInit {
    */
   daysUntil(dateStr: string | null): number | null {
     if (!dateStr) return null;
-    const diff = new Date(dateStr).getTime() - Date.now();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
+    const due   = new Date(y, m - 1, d);   // medianoche local de la fecha de vencimiento
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);             // medianoche local de hoy
+    return Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   }
 
   /**
