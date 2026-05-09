@@ -8,7 +8,7 @@ import {
   PLATFORM_ID,
   inject,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
@@ -20,7 +20,7 @@ import { PortalService } from '../../portal.service';
 @Component({
   selector: 'app-portal-credit-detail',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, RouterLink, SkeletonModule],
+  imports: [CommonModule, CurrencyPipe, DatePipe, SkeletonModule],
   templateUrl: './portal-credit-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
