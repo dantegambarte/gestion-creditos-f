@@ -8,6 +8,8 @@
  *  - Login exitoso como Seller → redirige a /seller/operations
  *  - Login exitoso como Collector → redirige a /collector/route
  *  - Login fallido (DNI no registrado) → muestra mensaje de error
+ *  - Login bloqueado por backend → muestra mensaje de cuenta bloqueada
+ *  - Login con contraseña temporal → redirige a /change-password
  *  - noAuthGuard: usuario autenticado no puede acceder a /login
  *  - Logout desde sidebar → redirige a /login
  */
@@ -112,6 +114,55 @@ describe('Autenticación', () => {
       .should('be.visible')
       .and('contain.text', 'Credenciales incorrectas');
     cy.url().should('include', '/login');
+  });
+
+  it('muestra mensaje de cuenta bloqueada cuando el backend la rechaza por seguridad', () => {
+    cy.intercept('POST', '**/auth/login', {
+      statusCode: 401,
+      body: {
+        ok: false,
+        message:
+          'Tu cuenta fue bloqueada por seguridad. Comunicarte con el administrador del sistema para reactivarla.',
+      },
+    }).as('loginBlocked');
+
+    cy.get('[data-testid="input-dni"]').type('12345678');
+    cy.get('[data-testid="input-password"] input').type('mock123');
+    cy.get('[data-testid="btn-login"]').click();
+    cy.wait('@loginBlocked');
+
+    cy.get('[data-testid="login-error"]')
+      .should('be.visible')
+      .and('contain.text', 'Tu cuenta fue bloqueada por seguridad');
+    cy.url().should('include', '/login');
+  });
+
+  it('redirige a /change-password cuando el login devuelve contraseña temporal', () => {
+    cy.intercept('POST', '**/auth/login', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          user: {
+            id: 'usr-temp-001',
+            full_name: 'Usuario Temporal',
+            dni: '44556677',
+            role: 'SELLER',
+            is_temp_password: true,
+          },
+          token:
+            'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3ItdGVtcC0wMDEiLCJyb2xlIjoiU0VMTEVSIiwiYXVkIjoic2lzdGVtYS1pbnRlcm5vIn0.mock_temp',
+        },
+      },
+    }).as('loginTempPassword');
+
+    cy.get('[data-testid="input-dni"]').type('44556677');
+    cy.get('[data-testid="input-password"] input').type('mock123');
+    cy.get('[data-testid="btn-login"]').click();
+
+    cy.wait('@loginTempPassword');
+    cy.url().should('include', '/change-password');
+    cy.contains('Tu contraseña es temporal').should('be.visible');
   });
 
   // ── noAuthGuard ──────────────────────────────────────────────────────────────
