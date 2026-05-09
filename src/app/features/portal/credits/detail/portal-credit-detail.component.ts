@@ -1,4 +1,4 @@
-import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, Location } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -8,7 +8,7 @@ import {
   PLATFORM_ID,
   inject,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
@@ -20,16 +20,17 @@ import { PortalService } from '../../portal.service';
 @Component({
   selector: 'app-portal-credit-detail',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, RouterLink, SkeletonModule],
+  imports: [CommonModule, CurrencyPipe, DatePipe, SkeletonModule],
   templateUrl: './portal-credit-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PortalCreditDetailComponent implements OnInit {
   private readonly portalService = inject(PortalService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly platformId = inject(PLATFORM_ID);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly route         = inject(ActivatedRoute);
+  private readonly location      = inject(Location);
+  private readonly platformId    = inject(PLATFORM_ID);
+  private readonly destroyRef    = inject(DestroyRef);
+  private readonly cdr           = inject(ChangeDetectorRef);
 
   credit: PortalCreditDetail | null = null;
   loading = true;
@@ -84,13 +85,27 @@ export class PortalCreditDetailComponent implements OnInit {
   }
 
   /**
-   * Devuelve la etiqueta de la tasa de interés.
-   * Para créditos de venta se muestra "Por producto"; para préstamos, el porcentaje.
+   * Devuelve la etiqueta de la tasa de interés incluyendo el período.
+   * Para créditos de venta se muestra "Por producto"; para préstamos, porcentaje + período.
    */
   get interestRateLabel(): string {
     if (this.credit?.type === 'SALE') return 'Por producto';
     if (this.credit?.interestRate == null) return 'Sin tasa';
-    return (this.credit.interestRate * 100).toFixed(2) + '%';
+    return `${(this.credit.interestRate * 100).toFixed(2)}% ${this.frequencyLabel.toLowerCase()}`;
+  }
+
+  /**
+   * Primera cuota no pagada (siguiente a abonar o ya vencida).
+   */
+  get nextInstallment(): PortalInstallment | null {
+    return (this.credit?.installments ?? []).find((i) => i.status !== 'PAID') ?? null;
+  }
+
+  /**
+   * Indica si el crédito está completamente liquidado.
+   */
+  get isSettled(): boolean {
+    return this.credit?.status === 'SETTLED';
   }
 
   /**
@@ -171,5 +186,12 @@ export class PortalCreditDetailComponent implements OnInit {
       case 'PARTIAL': return 'PARCIAL';
       case 'PAID':    return 'PAGADO';
     }
+  }
+
+  /**
+   * Vuelve a la pantalla anterior respetando el historial de navegación.
+   */
+  goBack(): void {
+    this.location.back();
   }
 }

@@ -1215,6 +1215,23 @@ table.ff-table {
   padding-top: 1rem;
 }
 
+// ─── p-autocomplete — input y panel responsivos ──────────────────────────────
+// El inner <input> debe ser full-width para que el panel calcule correctamente
+// su ancho desde getBoundingClientRect del input, no del wrapper host.
+.p-autocomplete .p-inputtext {
+  width: 100%;
+}
+
+// En mobile el posicionamiento JS (left + width inline) puede desbordar
+// el viewport. Se sobreescribe con !important para ganar sobre estilos inline.
+@media (max-width: 639px) {
+  .p-autocomplete-panel {
+    left: 1rem !important;
+    max-width: calc(100vw - 2rem) !important;
+    box-sizing: border-box !important;
+  }
+}
+
 // ─── portal-tab — navegación del portal del cliente ──────────────────────────
 .portal-tab {
   display: inline-flex;
