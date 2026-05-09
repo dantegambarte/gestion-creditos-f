@@ -1,8 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LowerCasePipe } from '@angular/common';
+import { Subject, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, takeUntil } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
-import { DropdownModule } from 'primeng/dropdown';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ApiHttpService } from '../../core/http/api-http.service';
@@ -77,32 +79,35 @@ export interface FrequencyGroup {
 @Component({
   selector: 'app-simulator',
   standalone: true,
-  imports: [FormsModule, LowerCasePipe, ButtonModule, DropdownModule, InputNumberModule, SkeletonModule, CurrencyArsPipe],
+  imports: [FormsModule, LowerCasePipe, AutoCompleteModule, ButtonModule, InputNumberModule, SkeletonModule, CurrencyArsPipe],
   templateUrl: './simulator.component.html',
 })
-export class SimulatorComponent implements OnInit {
-  private readonly api    = inject(ApiHttpService);
-  private readonly header = inject(HeaderService);
+export class SimulatorComponent implements OnInit, OnDestroy {
+  private readonly api      = inject(ApiHttpService);
+  private readonly header   = inject(HeaderService);
+  private readonly destroy$ = new Subject<void>();
+  private readonly search$  = new Subject<string>();
 
+  // Estado de opciones de cuotas (LOAN)
   loadingOptions = true;
   optionsError = '';
   private optionsByFrequency: Record<string, number[]> = {};
 
+  // Flujo
   step: 1 | 2 | 3 = 1;
 
-  // Pantalla 1 — tipo de operación
+  // Pantalla 1 — tipo
   operationType: 'LOAN' | 'SALE' = 'LOAN';
 
   // Pantalla 1 — LOAN
   amount: number | null = null;
 
-  // Pantalla 1 — SALE
-  loadingProducts = false;
-  products: SimulateProduct[] = [];
+  // Pantalla 1 — SALE: autocomplete
+  productSuggestions: SimulateProduct[] = [];
   selectedProduct: SimulateProduct | null = null;
   selectedVariant: SimulateProductVariant | null = null;
 
-  // Contexto que se preserva al avanzar a pantalla 2/3
+  // Contexto snapshot al avanzar a pantalla 2/3
   simulatedAmount: number | null = null;
   simulatedProductTitle = '';
   simulatedVariantLabel = '';
@@ -119,8 +124,32 @@ export class SimulatorComponent implements OnInit {
   ngOnInit(): void {
     this.header.set([{ label: 'Simulador' }]);
     this.loadOptions();
+
+    // Búsqueda de productos: debounce 300 ms, cancela requests anteriores con switchMap
+    this.search$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q =>
+          this.api
+            .get<Record<string, unknown>[]>(
+              `credits/simulate/products?search=${encodeURIComponent(q)}&limit=10`
+            )
+            .pipe(catchError(() => of([])))
+        ),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(data => {
+        this.productSuggestions = data.map(p => this.mapProduct(p));
+      });
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ── Opciones de cuotas ───────────────────────────────────────
   private loadOptions(): void {
     this.api
       .get<Record<string, number[]>>('credits/simulate/options')
@@ -136,62 +165,108 @@ export class SimulatorComponent implements OnInit {
       });
   }
 
-  private loadProducts(): void {
-    this.loadingProducts = true;
-    this.api
-      .get<Record<string, unknown>[]>('credits/simulate/products')
-      .subscribe({
-        next: (data) => {
-          this.products = data.map(p => ({
-            id:       p['id'] as string,
-            title:    p['title'] as string,
-            variants: (p['variants'] as Record<string, unknown>[]).map(v => {
-              const parts = [v['color'], v['size'], v['capacity']].filter(Boolean) as string[];
-              return {
-                id:           v['id'] as string,
-                color:        v['color'] as string | null,
-                size:         v['size'] as string | null,
-                capacity:     v['capacity'] as string | null,
-                currentPrice: v['current_price'] as number,
-                label:        parts.length > 0 ? parts.join(' / ') : 'Sin especificaciones',
-              };
-            }),
-          }));
-          this.loadingProducts = false;
-        },
-        error: () => { this.loadingProducts = false; },
-      });
-  }
-
   get hasOptions(): boolean {
     return Object.keys(this.optionsByFrequency).length > 0;
   }
 
-  get canContinue(): boolean {
-    if (this.operationType === 'LOAN') return !!this.amount && this.amount > 0;
-    return !!this.selectedVariant;
-  }
-
+  // ── Tipo de operación ────────────────────────────────────────
   setOperationType(type: 'LOAN' | 'SALE'): void {
     if (this.operationType === type) return;
     this.operationType = type;
     this.amount = null;
     this.selectedProduct = null;
     this.selectedVariant = null;
-    if (type === 'SALE' && this.products.length === 0 && !this.loadingProducts) {
-      this.loadProducts();
+    this.productSuggestions = [];
+  }
+
+  // ── Búsqueda de productos (autocomplete) ─────────────────────
+  searchProducts(event: { query: string }): void {
+    this.search$.next(event.query ?? '');
+  }
+
+  onProductSelect(): void {
+    this.selectedVariant = null;
+    // Auto-seleccionar si solo hay una variante
+    if (this.selectedProduct?.variants.length === 1) {
+      this.selectedVariant = this.selectedProduct.variants[0];
     }
   }
 
-  onProductChange(): void {
+  onProductClear(): void {
+    this.selectedProduct = null;
     this.selectedVariant = null;
+  }
+
+  selectVariant(v: SimulateProductVariant): void {
+    this.selectedVariant = v;
+  }
+
+  // ── Helpers de mapeo ─────────────────────────────────────────
+  private mapProduct(p: Record<string, unknown>): SimulateProduct {
+    return {
+      id:       p['id'] as string,
+      title:    p['title'] as string,
+      variants: ((p['variants'] ?? []) as Record<string, unknown>[]).map(v => this.mapVariant(v)),
+    };
+  }
+
+  private mapVariant(v: Record<string, unknown>): SimulateProductVariant {
+    const parts = [v['color'], v['size'], v['capacity']].filter(Boolean) as string[];
+    return {
+      id:           v['id'] as string,
+      color:        v['color'] as string | null,
+      size:         v['size'] as string | null,
+      capacity:     v['capacity'] as string | null,
+      currentPrice: v['current_price'] as number,
+      label:        parts.length > 0 ? parts.join(' / ') : 'Sin especificaciones',
+    };
+  }
+
+  // ── Flujo principal ──────────────────────────────────────────
+  get canContinue(): boolean {
+    if (this.operationType === 'LOAN') return !!this.amount && this.amount > 0;
+    return !!this.selectedVariant;
+  }
+
+  continue(): void {
+    if (!this.canContinue) return;
+
+    this.calculating = true;
+    this.groups = [];
+    this.noResults = false;
+    this.visibleCounts = {};
+    this.step = 2;
+
+    if (this.operationType === 'LOAN') {
+      this.simulatedAmount       = this.amount;
+      this.simulatedProductTitle = '';
+      this.simulatedVariantLabel = '';
+    } else {
+      this.simulatedAmount       = this.selectedVariant!.currentPrice;
+      this.simulatedProductTitle = this.selectedProduct!.title;
+      this.simulatedVariantLabel = this.selectedVariant!.label;
+    }
+
+    const payload = this.operationType === 'LOAN'
+      ? { type: 'LOAN', total_amount: this.amount }
+      : { type: 'SALE', products: [{ variant_id: this.selectedVariant!.id, quantity: 1 }] };
+
+    this.api
+      .post<Record<string, unknown>[]>('credits/simulate/all', payload)
+      .subscribe({
+        next: (results) => this.buildGroups(results),
+        error: () => {
+          this.noResults    = true;
+          this.calculating  = false;
+        },
+      });
   }
 
   private buildGroups(results: Record<string, unknown>[]): void {
     const grouped: Record<string, FrequencyGroup> = {};
 
     for (const raw of results) {
-      const result = toResult(raw);
+      const result    = toResult(raw);
       const frequency = result.paymentFrequency;
       if (!grouped[frequency]) {
         grouped[frequency] = {
@@ -217,42 +292,8 @@ export class SimulatorComponent implements OnInit {
     for (const g of this.groups) {
       this.visibleCounts[g.frequency] = 3;
     }
-    this.noResults = this.groups.length === 0;
+    this.noResults   = this.groups.length === 0;
     this.calculating = false;
-  }
-
-  continue(): void {
-    if (!this.canContinue) return;
-
-    this.calculating = true;
-    this.groups = [];
-    this.noResults = false;
-    this.visibleCounts = {};
-    this.step = 2;
-
-    if (this.operationType === 'LOAN') {
-      this.simulatedAmount = this.amount;
-      this.simulatedProductTitle = '';
-      this.simulatedVariantLabel = '';
-    } else {
-      this.simulatedAmount = this.selectedVariant!.currentPrice;
-      this.simulatedProductTitle = this.selectedProduct!.title;
-      this.simulatedVariantLabel = this.selectedVariant!.label;
-    }
-
-    const payload = this.operationType === 'LOAN'
-      ? { type: 'LOAN', total_amount: this.amount }
-      : { type: 'SALE', products: [{ variant_id: this.selectedVariant!.id, quantity: 1 }] };
-
-    this.api
-      .post<Record<string, unknown>[]>('credits/simulate/all', payload)
-      .subscribe({
-        next: (results) => this.buildGroups(results),
-        error: () => {
-          this.noResults = true;
-          this.calculating = false;
-        },
-      });
   }
 
   visibleOptions(group: FrequencyGroup): SimulateOption[] {
@@ -269,21 +310,21 @@ export class SimulatorComponent implements OnInit {
 
   select(option: SimulateOption): void {
     this.selected = option;
-    this.step = 3;
+    this.step     = 3;
   }
 
   back(): void {
-    this.step = 2;
+    this.step    = 2;
     this.selected = null;
   }
 
   restart(): void {
-    this.step = 1;
-    this.selected = null;
-    this.groups = [];
-    this.noResults = false;
-    this.visibleCounts = {};
-    this.simulatedAmount = null;
+    this.step                  = 1;
+    this.selected              = null;
+    this.groups                = [];
+    this.noResults             = false;
+    this.visibleCounts         = {};
+    this.simulatedAmount       = null;
     this.simulatedProductTitle = '';
     this.simulatedVariantLabel = '';
   }
