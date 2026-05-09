@@ -1,5 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { FormBuilder, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
+import {
+  FormBuilder,
+  Validators,
+  ValidatorFn,
+  AbstractControl,
+  ValidationErrors,
+} from '@angular/forms';
 import { Observable, map, finalize } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { CreditsService } from '../../../features/seller/operations/credits.service';
@@ -12,6 +18,14 @@ import { ProductRate } from '../../../features/admin/config/models/interfaces/pr
 import { ClientOperation } from '../../models/interface/client';
 import { ProductOperation } from '../../models/interface/product';
 import { PaymentFrequency } from '../../../features/seller/models/credit.model';
+import {
+  calculateInstallmentValue,
+  calculateTotalToPay,
+  calculateFinancedCapital,
+  findLoanInterestRate,
+  findProductRate,
+  rateToPercent,
+} from '../../utils/financial-calculator.util';
 
 export type CatalogProduct = {
   productoId: string;
@@ -54,11 +68,18 @@ export class OperationFormService {
   // ── Form ──────────────────────────────────────────────────────────────────
   readonly operationForm = this.fb.group({
     customerId: this.fb.control<string | null>(null, [Validators.required]),
-    operationType: this.fb.control<'SALE' | 'LOAN' | null>(null, [Validators.required]),
+    operationType: this.fb.control<'SALE' | 'LOAN' | null>(null, [
+      Validators.required,
+    ]),
     totalAmount: this.fb.control<number | null>(null),
     downPayment: this.fb.control<number | null>(null, [Validators.min(0)]),
-    paymentFrequency: this.fb.control<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null>(null, [Validators.required]),
-    installmentsCount: this.fb.control<number | null>(null, [Validators.required]),
+    paymentFrequency: this.fb.control<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null>(
+      null,
+      [Validators.required],
+    ),
+    installmentsCount: this.fb.control<number | null>(null, [
+      Validators.required,
+    ]),
     firstPaymentDate: this.fb.control<Date | null>(null, [
       Validators.required,
       this.notPastDateValidator(),
@@ -106,7 +127,10 @@ export class OperationFormService {
    * Total del carrito para ventas, sumando precio × cantidad de cada línea.
    */
   get totalCarrito(): number {
-    return this.cartLines.reduce((acc, line) => acc + line.precio * line.cantidad, 0);
+    return this.cartLines.reduce(
+      (acc, line) => acc + line.precio * line.cantidad,
+      0,
+    );
   }
 
   /**
@@ -146,7 +170,7 @@ export class OperationFormService {
       this.operationForm.controls.operationType.value === 'SALE'
         ? this.getValidatedDownPayment()
         : 0;
-    return Math.max(0, this.capitalBase - downPayment);
+    return calculateFinancedCapital(this.capitalBase, downPayment);
   }
 
   /**
@@ -154,11 +178,17 @@ export class OperationFormService {
    */
   get valorCuota(): number {
     if (this.operationForm.controls.operationType.value === 'SALE') {
-      return this.cartLines.reduce((acc, line) => acc + this.getLineInstallmentValue(line), 0);
+      return this.cartLines.reduce(
+        (acc, line) => acc + this.getLineInstallmentValue(line),
+        0,
+      );
     }
     const cuotas = this.operationForm.controls.installmentsCount.value ?? 0;
-    if (cuotas <= 0) return 0;
-    return Math.ceil((this.capitalAFinanciar * (1 + this.interestRate)) / cuotas / 1000) * 1000;
+    return calculateInstallmentValue(
+      this.capitalAFinanciar,
+      this.interestRate,
+      cuotas,
+    );
   }
 
   /**
@@ -172,7 +202,7 @@ export class OperationFormService {
       }, 0);
     }
     const cuotas = this.operationForm.controls.installmentsCount.value ?? 0;
-    return this.valorCuota * cuotas;
+    return calculateTotalToPay(this.valorCuota, cuotas);
   }
 
   /**
@@ -185,27 +215,38 @@ export class OperationFormService {
   /**
    * Opciones de frecuencia de pago habilitadas según tipo y datos cargados.
    */
-  get paymentFrequencyOptions(): { label: string; value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' }[] {
+  get paymentFrequencyOptions(): {
+    label: string;
+    value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+  }[] {
     const type = this.operationForm.controls.operationType.value;
     const baseFrequencies =
       type === 'LOAN'
         ? this.interestRates.map((r) => r.paymentFrequency)
-        : this.cartLines.flatMap((line) => line.rates.map((r) => r.paymentFrequency));
+        : this.cartLines.flatMap((line) =>
+            line.rates.map((r) => r.paymentFrequency),
+          );
     const unique = Array.from(new Set(baseFrequencies));
-    const labelByFrequency: Record<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY', string> = {
-      WEEKLY: 'Semanal',
-      BIWEEKLY: 'Quincenal',
-      MONTHLY: 'Mensual',
-    };
+    const labelByFrequency: Record<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY', string> =
+      {
+        WEEKLY: 'Semanal',
+        BIWEEKLY: 'Quincenal',
+        MONTHLY: 'Mensual',
+      };
     return unique.map((f) => ({ label: labelByFrequency[f], value: f }));
   }
 
   /**
    * Opciones dinámicas de cuotas para el paso 3 según tipo y frecuencia.
    */
-  get installmentsOptions(): { label: string; value: number; frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY' }[] {
+  get installmentsOptions(): {
+    label: string;
+    value: number;
+    frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY';
+  }[] {
     const type = this.operationForm.controls.operationType.value;
-    const selectedFrequency = this.operationForm.controls.paymentFrequency.value;
+    const selectedFrequency =
+      this.operationForm.controls.paymentFrequency.value;
     const formatFrequency = (f: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY') => {
       if (f === 'MONTHLY') return 'Mensual';
       if (f === 'BIWEEKLY') return 'Quincenal';
@@ -217,10 +258,18 @@ export class OperationFormService {
       const matchingRates = this.interestRates.filter((r) => {
         const minOk = amount >= r.minAmount;
         const maxOk = r.maxAmount == null || amount <= r.maxAmount;
-        const freqOk = !selectedFrequency || r.paymentFrequency === selectedFrequency;
+        const freqOk =
+          !selectedFrequency || r.paymentFrequency === selectedFrequency;
         return minOk && maxOk && freqOk;
       });
-      const unique = new Map<string, { label: string; value: number; frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY' }>();
+      const unique = new Map<
+        string,
+        {
+          label: string;
+          value: number;
+          frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY';
+        }
+      >();
       for (const r of matchingRates) {
         const key = `${r.installmentsCount}-${r.paymentFrequency}`;
         if (!unique.has(key)) {
@@ -235,10 +284,20 @@ export class OperationFormService {
     }
 
     if (type === 'SALE') {
-      const unique = new Map<string, { label: string; value: number; frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY' }>();
+      const unique = new Map<
+        string,
+        {
+          label: string;
+          value: number;
+          frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY';
+        }
+      >();
       for (const r of this.cartLines
         .flatMap((line) => line.rates)
-        .filter((rate) => !selectedFrequency || rate.paymentFrequency === selectedFrequency)) {
+        .filter(
+          (rate) =>
+            !selectedFrequency || rate.paymentFrequency === selectedFrequency,
+        )) {
         const key = `${r.installmentsCount}-${r.paymentFrequency}`;
         if (!unique.has(key)) {
           unique.set(key, {
@@ -280,7 +339,9 @@ export class OperationFormService {
    * Indica si el envío final está habilitado.
    */
   get canSubmitOperation(): boolean {
-    return this.operationForm.valid && this.declarationsAccepted && !this.submitting;
+    return (
+      this.operationForm.valid && this.declarationsAccepted && !this.submitting
+    );
   }
 
   /**
@@ -300,7 +361,8 @@ export class OperationFormService {
       const downPayment = this.operationForm.controls.downPayment.value ?? 0;
       const downPaymentValid = !isSale || downPayment <= this.capitalBase;
       const saleInstallmentsValid =
-        !isSale || this.cartLines.every((line) => (line.selectedInstallments ?? 0) > 0);
+        !isSale ||
+        this.cartLines.every((line) => (line.selectedInstallments ?? 0) > 0);
       return (
         this.operationForm.controls.paymentFrequency.valid &&
         (isSale || this.operationForm.controls.installmentsCount.valid) &&
@@ -318,7 +380,8 @@ export class OperationFormService {
    * Opciones de cuotas para una línea del carrito según la frecuencia seleccionada.
    */
   getInstallmentsOptionsForLine(line: CartLine): SaleInstallmentOption[] {
-    const selectedFrequency = this.operationForm.controls.paymentFrequency.value;
+    const selectedFrequency =
+      this.operationForm.controls.paymentFrequency.value;
     const formatFrequency = (f: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY') => {
       if (f === 'MONTHLY') return 'Mensual';
       if (f === 'BIWEEKLY') return 'Quincenal';
@@ -344,12 +407,13 @@ export class OperationFormService {
    * Tasa seleccionada para una línea del carrito según cuotas y frecuencia.
    */
   getSelectedRateForLine(line: CartLine): ProductRate | undefined {
-    const selectedFrequency = this.operationForm.controls.paymentFrequency.value;
+    const selectedFrequency =
+      this.operationForm.controls.paymentFrequency.value;
     if (!line.selectedInstallments || !selectedFrequency) return undefined;
-    return line.rates.find(
-      (rate) =>
-        rate.installmentsCount === line.selectedInstallments &&
-        rate.paymentFrequency === selectedFrequency,
+    return findProductRate(
+      line.rates,
+      line.selectedInstallments,
+      selectedFrequency,
     );
   }
 
@@ -359,8 +423,11 @@ export class OperationFormService {
   getLineInstallmentValue(line: CartLine): number {
     const installments = line.selectedInstallments ?? 0;
     const rate = this.getSelectedRateForLine(line)?.rate ?? 0;
-    if (installments <= 0) return 0;
-    return Math.ceil((this.getLineFinancedCapital(line) * (1 + rate)) / installments / 1000) * 1000;
+    return calculateInstallmentValue(
+      this.getLineFinancedCapital(line),
+      rate,
+      installments,
+    );
   }
 
   /**
@@ -384,7 +451,10 @@ export class OperationFormService {
    * Capital financiado de una línea descontando el anticipo prorrateado.
    */
   getLineFinancedCapital(line: CartLine): number {
-    return Math.max(0, line.subtotal - this.getLineDownPayment(line));
+    return calculateFinancedCapital(
+      line.subtotal,
+      this.getLineDownPayment(line),
+    );
   }
 
   /**
@@ -409,7 +479,7 @@ export class OperationFormService {
    */
   getLineRatePercent(line: CartLine): number {
     const rate = this.getSelectedRateForLine(line)?.rate ?? 0;
-    return Math.round(rate * 10000) / 100;
+    return rateToPercent(rate);
   }
 
   // ── Initialization ────────────────────────────────────────────────────────
@@ -442,7 +512,10 @@ export class OperationFormService {
       if (type) this.setOperationType(type);
 
       if (type === 'LOAN') {
-        totalAmountControl.setValidators([Validators.required, Validators.min(1)]);
+        totalAmountControl.setValidators([
+          Validators.required,
+          Validators.min(1),
+        ]);
         installmentsControl.setValidators([Validators.required]);
         this.clearCart();
         this.operationForm.controls.downPayment.setValue(null);
@@ -463,7 +536,9 @@ export class OperationFormService {
     });
 
     this.operationForm.controls.paymentFrequency.valueChanges.subscribe(() => {
-      this.operationForm.controls.installmentsCount.setValue(null, { emitEvent: false });
+      this.operationForm.controls.installmentsCount.setValue(null, {
+        emitEvent: false,
+      });
       this.ensureValidSaleLineInstallments();
       this.ensureValidInstallmentsSelection();
       this.refreshInstallmentsUX();
@@ -559,7 +634,9 @@ export class OperationFormService {
   addProduct(product: CatalogProduct): void {
     if (this.loadingProductRatesByCatalogId[product.productoId]) return;
 
-    const existing = this.cartLines.find((line) => line.productoId === product.productoId);
+    const existing = this.cartLines.find(
+      (line) => line.productoId === product.productoId,
+    );
     const hasRates = (existing?.rates.length ?? 0) > 0;
 
     if (existing && existing.cantidad >= existing.stockDisponible) {
@@ -580,7 +657,11 @@ export class OperationFormService {
     }
 
     this.loadProductRatesByProductId(firstProductId)
-      .pipe(finalize(() => { this.loadingProductRatesByCatalogId[product.productoId] = false; }))
+      .pipe(
+        finalize(() => {
+          this.loadingProductRatesByCatalogId[product.productoId] = false;
+        }),
+      )
       .subscribe((rates) => {
         this.upsertCartLine(product, rates);
       });
@@ -592,7 +673,9 @@ export class OperationFormService {
    * @param {ProductRate[]} rates - Tasas activas asociadas al producto.
    */
   upsertCartLine(product: CatalogProduct, rates: ProductRate[]): void {
-    const existing = this.cartLines.find((line) => line.productoId === product.productoId);
+    const existing = this.cartLines.find(
+      (line) => line.productoId === product.productoId,
+    );
 
     if (!existing) {
       const draftLine: CartLine = {
@@ -620,7 +703,9 @@ export class OperationFormService {
               subtotal: (line.cantidad + 1) * line.precio,
               selectedInstallments:
                 line.selectedInstallments ??
-                (this.getInstallmentsOptionsForLine({ ...line, rates })[0]?.value ?? null),
+                this.getInstallmentsOptionsForLine({ ...line, rates })[0]
+                  ?.value ??
+                null,
             }
           : line,
       );
@@ -639,7 +724,11 @@ export class OperationFormService {
    */
   increaseQuantity(productoId: string): void {
     this.cartLines = this.cartLines.map((line) => {
-      if (line.productoId !== productoId || line.cantidad >= line.stockDisponible) return line;
+      if (
+        line.productoId !== productoId ||
+        line.cantidad >= line.stockDisponible
+      )
+        return line;
       const nextQty = line.cantidad + 1;
       return { ...line, cantidad: nextQty, subtotal: nextQty * line.precio };
     });
@@ -674,7 +763,9 @@ export class OperationFormService {
    * @param {string} productoId - ID del producto agrupado.
    */
   removeFromCart(productoId: string): void {
-    this.cartLines = this.cartLines.filter((line) => line.productoId !== productoId);
+    this.cartLines = this.cartLines.filter(
+      (line) => line.productoId !== productoId,
+    );
     this.syncSelectedProductsFromCart();
     this.ensureValidSaleLineInstallments();
     this.ensureValidFrequencySelection();
@@ -699,9 +790,14 @@ export class OperationFormService {
    * @param {string} productoId - ID de línea agrupada en el carrito.
    * @param {number | null} installments - Cantidad de cuotas elegida.
    */
-  onSaleInstallmentsChange(productoId: string, installments: number | null): void {
+  onSaleInstallmentsChange(
+    productoId: string,
+    installments: number | null,
+  ): void {
     this.cartLines = this.cartLines.map((line) =>
-      line.productoId === productoId ? { ...line, selectedInstallments: installments } : line,
+      line.productoId === productoId
+        ? { ...line, selectedInstallments: installments }
+        : line,
     );
     this.calculateDynamicRate();
   }
@@ -747,7 +843,11 @@ export class OperationFormService {
     if (type === 'LOAN' && !this.loanRatesLoaded) {
       this.loadingLoanData = true;
       this.loadLoanRates()
-        .pipe(finalize(() => { this.loadingLoanData = false; }))
+        .pipe(
+          finalize(() => {
+            this.loadingLoanData = false;
+          }),
+        )
         .subscribe(() => {
           this.loanRatesLoaded = true;
           this.ensureValidFrequencySelection();
@@ -760,7 +860,11 @@ export class OperationFormService {
     if (type === 'SALE' && !this.saleDataLoaded) {
       this.loadingSaleData = true;
       this.loadSaleData()
-        .pipe(finalize(() => { this.loadingSaleData = false; }))
+        .pipe(
+          finalize(() => {
+            this.loadingSaleData = false;
+          }),
+        )
         .subscribe(() => {
           this.saleDataLoaded = true;
           this.catalogProducts = this.buildCatalogProducts();
@@ -856,8 +960,12 @@ export class OperationFormService {
     this.cartLines = this.cartLines.map((line) => {
       const options = this.getInstallmentsOptionsForLine(line);
       if (options.length === 0) return { ...line, selectedInstallments: null };
-      const isValid = options.some((opt) => opt.value === line.selectedInstallments);
-      return isValid ? line : { ...line, selectedInstallments: options[0]?.value ?? null };
+      const isValid = options.some(
+        (opt) => opt.value === line.selectedInstallments,
+      );
+      return isValid
+        ? line
+        : { ...line, selectedInstallments: options[0]?.value ?? null };
     });
   }
 
@@ -868,16 +976,13 @@ export class OperationFormService {
     const type = this.operationForm.controls.operationType.value;
 
     if (type === 'LOAN') {
-      const installments = this.operationForm.controls.installmentsCount.value ?? 0;
-      if (installments <= 0) { this.dynamicRate = 0; return; }
-      const capitalBase = this.prestamoTotal;
-      const match = this.interestRates.find((rate) => {
-        const sameInstallments = rate.installmentsCount === installments;
-        const minOk = capitalBase >= rate.minAmount;
-        const maxOk = rate.maxAmount == null || capitalBase <= rate.maxAmount;
-        return sameInstallments && minOk && maxOk;
-      });
-      this.dynamicRate = match?.rate ?? 0;
+      const installments =
+        this.operationForm.controls.installmentsCount.value ?? 0;
+      this.dynamicRate = findLoanInterestRate(
+        this.interestRates,
+        installments,
+        this.prestamoTotal,
+      );
       return;
     }
 
@@ -896,7 +1001,9 @@ export class OperationFormService {
    * Sincroniza el carrito agrupado con la lista de unidades requerida por el payload.
    */
   syncSelectedProductsFromCart(): void {
-    const unitById = new Map(this.availableProducts.map((unit) => [unit.id, unit]));
+    const unitById = new Map(
+      this.availableProducts.map((unit) => [unit.id, unit]),
+    );
     const selectedUnits: ProductOperation[] = [];
     for (const line of this.cartLines) {
       const selectedIds = line.unitIds.slice(0, line.cantidad);
@@ -914,10 +1021,14 @@ export class OperationFormService {
   refreshInstallmentsUX(): void {
     this.isInstallmentsRefreshing = true;
     setTimeout(() => {
-      const dropdown = document.querySelector('[data-cy="ddl-installments"] .p-dropdown') as HTMLElement | null;
+      const dropdown = document.querySelector(
+        '[data-cy="ddl-installments"] .p-dropdown',
+      ) as HTMLElement | null;
       dropdown?.focus();
     }, 0);
-    setTimeout(() => { this.isInstallmentsRefreshing = false; }, 600);
+    setTimeout(() => {
+      this.isInstallmentsRefreshing = false;
+    }, 600);
   }
 
   /**
@@ -943,9 +1054,11 @@ export class OperationFormService {
   submit(): Observable<unknown> {
     const client = this.selectedClient();
     const type = this.operationForm.controls.operationType.value;
-    const installmentsCount = this.operationForm.controls.installmentsCount.value;
+    const installmentsCount =
+      this.operationForm.controls.installmentsCount.value;
     const firstPaymentDate = this.operationForm.controls.firstPaymentDate.value;
-    const freq = this.operationForm.controls.paymentFrequency.value as PaymentFrequency;
+    const freq = this.operationForm.controls.paymentFrequency
+      .value as PaymentFrequency;
 
     const selectedUnits = this.selectedProducts();
 
@@ -964,11 +1077,16 @@ export class OperationFormService {
               installmentsCount: line.selectedInstallments,
               interestRate: this.getSelectedRateForLine(line)?.rate ?? 0,
               installmentValue: this.getLineInstallmentValue(line),
-              totalToPay: this.getLineInstallmentValue(line) * (line.selectedInstallments ?? 0),
+              totalToPay:
+                this.getLineInstallmentValue(line) *
+                (line.selectedInstallments ?? 0),
             })),
             units: selectedUnits.map((p) => ({ unitId: p.id })),
             downPayment: this.getValidatedDownPayment(),
-            installmentsCount: Math.max(1, ...this.cartLines.map((line) => line.selectedInstallments ?? 1)),
+            installmentsCount: Math.max(
+              1,
+              ...this.cartLines.map((line) => line.selectedInstallments ?? 1),
+            ),
             interestRate: this.interestRate,
             totalInstallmentValue: this.valorCuota,
             totalToPay: this.totalADevolver,
@@ -1001,7 +1119,11 @@ export class OperationFormService {
       if (!value) return null;
       const date = value instanceof Date ? value : new Date(value);
       if (Number.isNaN(date.getTime())) return { invalidDate: true };
-      const selectedDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const selectedDay = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+      );
       const today = this.getTodayStart();
       return selectedDay < today ? { pastDate: true } : null;
     };
