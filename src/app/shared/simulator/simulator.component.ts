@@ -1,8 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LowerCasePipe } from '@angular/common';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -121,66 +119,50 @@ export class SimulatorComponent implements OnInit {
     this.visibleCounts = {};
     this.step = 2;
 
-    const calls: Array<{ frequency: string; installments: number }> = [];
-    for (const [frequency, counts] of Object.entries(this.optionsByFrequency)) {
-      for (const installments of counts) {
-        calls.push({ frequency, installments });
-      }
-    }
+    this.api
+      .post<Record<string, unknown>[]>('credits/simulate/all', {
+        type:         'LOAN',
+        total_amount: this.amount,
+      })
+      .subscribe({
+        next: (results) => {
+          const grouped: Record<string, FrequencyGroup> = {};
 
-    if (calls.length === 0) {
-      this.calculating = false;
-      this.noResults = true;
-      return;
-    }
+          for (const raw of results) {
+            const result = toResult(raw);
+            const frequency = result.paymentFrequency;
+            if (!grouped[frequency]) {
+              grouped[frequency] = {
+                frequency,
+                label: FREQUENCY_LABELS[frequency] ?? frequency,
+                options: [],
+              };
+            }
+            grouped[frequency].options.push({
+              frequency,
+              frequencyLabel: FREQUENCY_LABELS[frequency] ?? frequency,
+              installments:   result.installmentsCount,
+              result,
+            });
+          }
 
-    const requests = calls.map(({ frequency, installments }) =>
-      this.api
-        .post<Record<string, unknown>>('credits/simulate', {
-          type:               'LOAN',
-          total_amount:       this.amount,
-          installments_count: installments,
-          payment_frequency:  frequency,
-        })
-        .pipe(
-          map(raw => ({ frequency, installments, result: toResult(raw) })),
-          catchError(() => of(null)),
-        ),
-    );
+          for (const g of Object.values(grouped)) {
+            g.options.sort((a, b) => a.installments - b.installments);
+          }
 
-    forkJoin(requests).subscribe(results => {
-      const grouped: Record<string, FrequencyGroup> = {};
-
-      for (const res of results) {
-        if (!res) continue;
-        const { frequency, installments, result } = res;
-        if (!grouped[frequency]) {
-          grouped[frequency] = {
-            frequency,
-            label: FREQUENCY_LABELS[frequency] ?? frequency,
-            options: [],
-          };
-        }
-        grouped[frequency].options.push({
-          frequency,
-          frequencyLabel: FREQUENCY_LABELS[frequency] ?? frequency,
-          installments,
-          result,
-        });
-      }
-
-      for (const g of Object.values(grouped)) {
-        g.options.sort((a, b) => a.installments - b.installments);
-      }
-
-      this.groups = Object.values(grouped)
-        .sort((a, b) => (FREQUENCY_ORDER[a.frequency] ?? 99) - (FREQUENCY_ORDER[b.frequency] ?? 99));
-      for (const g of this.groups) {
-        this.visibleCounts[g.frequency] = 3;
-      }
-      this.noResults = this.groups.length === 0;
-      this.calculating = false;
-    });
+          this.groups = Object.values(grouped)
+            .sort((a, b) => (FREQUENCY_ORDER[a.frequency] ?? 99) - (FREQUENCY_ORDER[b.frequency] ?? 99));
+          for (const g of this.groups) {
+            this.visibleCounts[g.frequency] = 3;
+          }
+          this.noResults = this.groups.length === 0;
+          this.calculating = false;
+        },
+        error: () => {
+          this.noResults = true;
+          this.calculating = false;
+        },
+      });
   }
 
   visibleOptions(group: FrequencyGroup): SimulateOption[] {
