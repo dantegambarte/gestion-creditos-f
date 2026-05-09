@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, throwError, switchMap, filter, take, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
-import { MockAuthService } from '../auth/mock-auth.service';
+import { AuthServiceBase } from '../auth/auth-service.base';
 import { TokenRefreshService } from '../auth/token-refresh.service';
 
 // Estado de refresh a nivel de módulo para serializar llamadas concurrentes.
@@ -14,7 +14,7 @@ const tokenSubject = new BehaviorSubject<string | null>(null);
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router       = inject(Router);
-  const auth         = inject(MockAuthService);
+  const auth         = inject(AuthServiceBase);
   const tokenRefresh = inject(TokenRefreshService);
 
   return next(req).pipe(
@@ -73,7 +73,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       if (err?.status === 403) {
-        router.navigate([AppRoutes.CHANGE_PASSWORD]);
+        // Un 403 en contexto portal significa contraseña temporal → cambio de contraseña del portal.
+        // En contexto interno redirige al cambio de contraseña interno.
+        router.navigate([isPortal ? AppRoutes.PORTAL_CHANGE_PASSWORD : AppRoutes.CHANGE_PASSWORD]);
       }
 
       return throwError(() => err);
@@ -81,7 +83,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   );
 };
 
-function _redirectToLogin(router: Router, auth: MockAuthService, isPortal: boolean): void {
+function _redirectToLogin(router: Router, auth: AuthServiceBase, isPortal: boolean): void {
   if (isPortal) {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(environment.portalTokenKey);
