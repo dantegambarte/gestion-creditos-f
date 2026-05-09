@@ -1,11 +1,14 @@
 @if (loading) {
   <div class="flex flex-col gap-4">
     <p-skeleton height="2rem" width="16rem" borderRadius="0.5rem" />
-    <p-skeleton height="10rem" borderRadius="0.75rem" />
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <p-skeleton height="14rem" borderRadius="0.75rem" styleClass="md:col-span-2" />
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <p-skeleton height="11rem" borderRadius="0.75rem" />
+      <p-skeleton height="11rem" borderRadius="0.75rem" />
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <p-skeleton height="16rem" borderRadius="0.75rem" styleClass="lg:col-span-2" />
       <div class="flex flex-col gap-4">
-        <p-skeleton height="6rem" borderRadius="0.75rem" />
+        <p-skeleton height="7rem" borderRadius="0.75rem" />
         <p-skeleton height="7rem" borderRadius="0.75rem" />
       </div>
     </div>
@@ -16,8 +19,9 @@
     {{ error }}
   </div>
 } @else if (summary) {
+
   <!-- Saludo -->
-  <div class="mb-6">
+  <div class="mb-5">
     <h1 class="text-xl sm:text-2xl font-bold" style="color: var(--ff-text-primary)">
       Hola, {{ firstName }} 👋
     </h1>
@@ -26,15 +30,88 @@
     </p>
   </div>
 
-  <!-- Tarjeta resumen principal -->
-  <div class="rounded-xl p-5 mb-5" style="background: var(--ff-panel); border: 1px solid var(--ff-border)" data-cy="portal-dashboard-summary-card">
-    <div class="flex flex-col md:flex-row gap-6 items-start">
-      <!-- Indicador circular -->
-      <div class="flex flex-col items-center gap-1.5 flex-shrink-0">
-        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center"
-          [style.border]="summary.statusIndicator === 'GREEN' ? '4px solid #34d399' :
-                          summary.statusIndicator === 'YELLOW' ? '4px solid #fbb040' : '4px solid #f87171'">
-          <i class="pi text-2xl"
+  <!-- Banner mora (solo cuando hay cuotas vencidas) -->
+  @if (summary.overdueCount > 0) {
+    <div class="rounded-xl p-4 mb-5 flex items-start gap-3"
+         style="background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3)"
+         data-cy="portal-dashboard-overdue-banner">
+      <i class="pi pi-exclamation-triangle text-xl flex-shrink-0 mt-0.5" style="color: #f87171"></i>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-sm" style="color: #f87171">
+          Tenés {{ summary.overdueCount }} cuota{{ summary.overdueCount !== 1 ? 's' : '' }} vencida{{ summary.overdueCount !== 1 ? 's' : '' }}
+        </p>
+        @if (summary.pendingPenaltyAmount > 0) {
+          <p class="text-xs mt-0.5" style="color: var(--ff-text-secondary)">
+            Mora acumulada:
+            <span class="font-semibold font-mono" style="color: #f87171">
+              {{ summary.pendingPenaltyAmount | currency:'ARS':'symbol':'1.0-0' }}
+            </span>
+          </p>
+        }
+        <p class="text-xs mt-1" style="color: var(--ff-text-muted)">
+          Contactá a tu cobrador para regularizar el pago.
+        </p>
+      </div>
+    </div>
+  }
+
+  <!-- Hero: próxima cuota + estado de cuenta -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+
+    <!-- Próxima cuota -->
+    <div class="rounded-xl p-5" style="background: var(--ff-panel); border: 1px solid var(--ff-border)"
+         data-cy="portal-dashboard-next-installment-card">
+      <p class="text-xs font-semibold uppercase tracking-wider mb-3" style="color: var(--ff-text-muted)">
+        Próxima cuota
+      </p>
+      @if (nextPendingInstallment; as next) {
+        <p class="text-2xl sm:text-3xl font-bold font-mono mb-1"
+           style="color: var(--ff-accent); letter-spacing: -0.02em">
+          {{ next.amountDue | currency:'ARS':'symbol':'1.0-0' }}
+        </p>
+        <div class="flex items-baseline gap-1.5 flex-wrap mb-1">
+          <p class="text-sm font-medium" style="color: var(--ff-text-primary)">
+            {{ next.dueDate | date:'dd/MM/yyyy' }}
+          </p>
+          @if (daysUntil(next.dueDate); as days) {
+            @if (days === 0) {
+              <span class="text-xs font-semibold" style="color: #fbb040">· Vence hoy</span>
+            } @else if (days > 0) {
+              <span class="text-xs" style="color: var(--ff-text-muted)">· en {{ days }} día{{ days !== 1 ? 's' : '' }}</span>
+            }
+          }
+        </div>
+        <p class="text-xs mb-4" style="color: var(--ff-text-secondary)">
+          {{ next.creditName ?? (next.creditType === 'SALE' ? 'Venta' : 'Préstamo') }}
+          · Cuota {{ next.installmentNumber }} de {{ next.creditInstallmentsCount }}
+        </p>
+        <a [routerLink]="['/portal/credits', next.creditId]"
+           class="inline-flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-75"
+           style="color: var(--ff-accent)">
+          Ver detalle <i class="pi pi-arrow-right text-xs"></i>
+        </a>
+      } @else {
+        <div class="flex flex-col items-center py-4 text-center gap-2">
+          <i class="pi pi-check-circle text-3xl" style="color: #34d399"></i>
+          <p class="text-sm font-semibold" style="color: var(--ff-text-primary)">Sin vencimientos próximos</p>
+          <p class="text-xs" style="color: var(--ff-text-muted)">Estás al día con tus pagos.</p>
+        </div>
+      }
+    </div>
+
+    <!-- Estado de cuenta -->
+    <div class="rounded-xl p-5" style="background: var(--ff-panel); border: 1px solid var(--ff-border)"
+         data-cy="portal-dashboard-summary-card">
+      <p class="text-xs font-semibold uppercase tracking-wider mb-3" style="color: var(--ff-text-muted)">
+        Estado de cuenta
+      </p>
+
+      <!-- Indicador -->
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+          [style.border]="summary.statusIndicator === 'GREEN' ? '3px solid #34d399' :
+                          summary.statusIndicator === 'YELLOW' ? '3px solid #fbb040' : '3px solid #f87171'">
+          <i class="pi text-base"
             [class.pi-check]="summary.statusIndicator === 'GREEN'"
             [class.pi-exclamation-triangle]="summary.statusIndicator === 'YELLOW'"
             [class.pi-times]="summary.statusIndicator === 'RED'"
@@ -42,88 +119,87 @@
                             summary.statusIndicator === 'YELLOW' ? '#fbb040' : '#f87171'">
           </i>
         </div>
-        <span class="text-xs font-semibold"
-          [style.color]="summary.statusIndicator === 'GREEN' ? '#34d399' :
-                          summary.statusIndicator === 'YELLOW' ? '#fbb040' : '#f87171'">
-          {{ summary.statusIndicator === 'GREEN' ? 'Al día' :
-             summary.statusIndicator === 'YELLOW' ? 'Cuotas vencidas' : 'En mora' }}
-        </span>
-      </div>
-
-      <!-- KPIs -->
-      <div class="flex-1 grid grid-cols-2 md:grid-cols-2 gap-4">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color: var(--ff-text-muted)">Deuda total vigente</p>
-          <p class="text-lg sm:text-2xl font-bold font-mono" style="color: #34d399; letter-spacing: -0.02em">
-            {{ summary.totalOwed | currency:'ARS':'symbol':'1.0-0' }}
+          <p class="font-semibold text-sm"
+            [style.color]="summary.statusIndicator === 'GREEN' ? '#34d399' :
+                            summary.statusIndicator === 'YELLOW' ? '#fbb040' : '#f87171'">
+            {{ summary.statusIndicator === 'GREEN' ? 'Al día' :
+               summary.statusIndicator === 'YELLOW' ? 'Atención' : 'En mora' }}
           </p>
-        </div>
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color: var(--ff-text-muted)">Cuotas pagadas</p>
-          <p class="text-2xl sm:text-3xl font-bold font-mono" style="color: var(--ff-text-primary); letter-spacing: -0.02em">{{ summary.paidCount }}</p>
-        </div>
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color: var(--ff-text-muted)">Cuotas pendientes</p>
-          <p class="text-2xl sm:text-3xl font-bold font-mono" style="color: var(--ff-text-primary); letter-spacing: -0.02em">{{ summary.pendingCount }}</p>
-        </div>
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-wider mb-1" style="color: var(--ff-text-muted)">Cuotas vencidas</p>
-          <p class="text-2xl sm:text-3xl font-bold font-mono" style="letter-spacing: -0.02em"
-            [style.color]="summary.overdueCount > 0 ? '#f87171' : 'var(--ff-text-primary)'">
-            {{ summary.overdueCount }}
+          <p class="text-xs" style="color: var(--ff-text-muted)">
+            {{ summary.overdueCount === 0 ? 'Sin cuotas vencidas' :
+               summary.overdueCount === 1 ? '1 cuota vencida' :
+               summary.overdueCount + ' cuotas vencidas' }}
           </p>
         </div>
       </div>
-    </div>
 
-    <!-- Leyenda -->
-    <div class="mt-4 pt-3 text-xs flex flex-wrap gap-3" style="border-top: 1px solid var(--ff-border); color: var(--ff-text-muted)">
-      <span><span style="color: #34d399">●</span> Al día — sin cuotas vencidas</span>
-      <span class="hidden sm:inline">|</span>
-      <span><span style="color: #fbb040">●</span> Atención — 1 o 2 cuotas vencidas</span>
-      <span class="hidden sm:inline">|</span>
-      <span><span style="color: #f87171">●</span> En mora — 3 o más vencidas</span>
+      <!-- Deuda vigente -->
+      <div class="mb-4">
+        <p class="text-xs mb-0.5" style="color: var(--ff-text-muted)">Deuda vigente</p>
+        <p class="text-xl font-bold font-mono" style="color: var(--ff-text-primary); letter-spacing: -0.02em">
+          {{ summary.totalOwed | currency:'ARS':'symbol':'1.0-0' }}
+        </p>
+      </div>
+
+      <!-- Progreso global -->
+      @if (summary.totalInstallmentsCount > 0) {
+        <div>
+          <div class="flex justify-between text-xs mb-1.5" style="color: var(--ff-text-muted)">
+            <span>Progreso total</span>
+            <span class="font-semibold" style="color: var(--ff-text-secondary)">
+              {{ summary.paidCount }}/{{ summary.totalInstallmentsCount }} cuotas · {{ progressPercent }}%
+            </span>
+          </div>
+          <div class="h-1.5 rounded-full overflow-hidden" style="background: var(--ff-secondary)">
+            <div class="h-1.5 rounded-full transition-all"
+              [style.width.%]="progressPercent"
+              [style.background]="summary.statusIndicator === 'GREEN' ? '#34d399' :
+                                   summary.statusIndicator === 'YELLOW' ? '#fbb040' : '#f87171'">
+            </div>
+          </div>
+        </div>
+      }
     </div>
   </div>
 
-  <!-- Sección inferior: dos columnas -->
+  <!-- Sección inferior: vencimientos + sidebar -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-    <!-- Próximos vencimientos (col ancha) -->
-    <div class="lg:col-span-2 rounded-xl overflow-hidden" style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
-      <div class="px-4 py-3 flex items-center justify-between flex-wrap gap-2" style="border-bottom: 1px solid var(--ff-border)">
+
+    <!-- Próximos vencimientos (solo PENDING / PARTIAL) -->
+    <div class="lg:col-span-2 rounded-xl overflow-hidden"
+         style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
+      <div class="px-4 py-3 flex items-center justify-between flex-wrap gap-2"
+           style="border-bottom: 1px solid var(--ff-border)">
         <div class="flex items-center gap-2">
           <span class="text-sm font-semibold" style="color: var(--ff-text-primary)">Próximos vencimientos</span>
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background: rgba(79,110,247,0.15); color: var(--ff-accent)">30 DÍAS</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                style="background: rgba(79,110,247,0.15); color: var(--ff-accent)">30 DÍAS</span>
         </div>
-        <a [routerLink]="['/portal/credits']" class="text-xs font-medium transition-opacity hover:opacity-75" style="color: var(--ff-accent)">
+        <a [routerLink]="['/portal/credits']"
+           class="text-xs font-medium transition-opacity hover:opacity-75"
+           style="color: var(--ff-accent)">
           Ver mis créditos →
         </a>
       </div>
 
-      @if (summary.upcomingInstallments.length === 0) {
+      @if (pendingInstallments.length === 0) {
         <div class="py-10 text-center text-sm" style="color: var(--ff-text-muted)">
           <i class="pi pi-check-circle text-2xl mb-2 block" style="color: #34d399"></i>
           Sin vencimientos en los próximos 30 días.
         </div>
       } @else {
         <div>
-          @for (inst of summary.upcomingInstallments; track inst.id; let isFirst = $first) {
+          @for (inst of pendingInstallments; track inst.id; let isFirst = $first) {
             <div class="px-4 py-3"
                  [style.border-top]="isFirst ? 'none' : '1px solid var(--ff-border)'">
-              <!-- Fila 1: badge tipo + cuota info + estado -->
+              <!-- Fila 1: nombre del crédito + número de cuota -->
               <div class="flex items-center gap-2 mb-1.5">
-                <span class="text-xs font-bold px-2 py-0.5 rounded flex-shrink-0"
-                  [style.background]="inst.creditType === 'SALE' ? 'rgba(79,110,247,0.15)' : 'rgba(251,176,64,0.15)'"
-                  [style.color]="inst.creditType === 'SALE' ? 'var(--ff-accent)' : 'var(--ff-warning)'">
-                  {{ upcomingTypeLabel(inst) }}
-                </span>
                 <p class="text-sm font-medium flex-1 min-w-0 truncate" style="color: var(--ff-text-primary)">
-                  Cuota {{ inst.installmentNumber }} de {{ inst.creditInstallmentsCount }}
+                  {{ inst.creditName ?? (inst.creditType === 'SALE' ? 'Venta' : 'Préstamo') }}
                 </p>
-                <span class="text-xs font-semibold px-2 py-0.5 rounded flex-shrink-0"
-                  [style.background]="inst.status === 'OVERDUE' ? 'rgba(248,113,113,0.12)' : 'rgba(139,151,184,0.15)'"
-                  [style.color]="inst.status === 'OVERDUE' ? '#f87171' : 'var(--ff-text-secondary)'">
-                  {{ inst.status === 'OVERDUE' ? 'VENCIDA' : 'PENDIENTE' }}
+                <span class="text-xs flex-shrink-0" style="color: var(--ff-text-muted)">
+                  Cuota {{ inst.installmentNumber }}/{{ inst.creditInstallmentsCount }}
                 </span>
               </div>
               <!-- Fila 2: fecha + días + monto -->
@@ -133,10 +209,13 @@
                     Vence el {{ inst.dueDate | date:'dd/MM/yyyy' }}
                   </p>
                   @if (daysUntil(inst.dueDate); as days) {
-                    <span class="text-xs font-medium"
-                      [style.color]="days < 0 ? '#f87171' : 'var(--ff-text-muted)'">
-                      · {{ days < 0 ? (-days) + ' días de atraso' : 'en ' + days + ' días' }}
-                    </span>
+                    @if (days === 0) {
+                      <span class="text-xs font-semibold" style="color: #fbb040">· Hoy</span>
+                    } @else if (days > 0 && days <= 5) {
+                      <span class="text-xs font-medium" style="color: #fbb040">· en {{ days }} día{{ days !== 1 ? 's' : '' }}</span>
+                    } @else if (days > 5) {
+                      <span class="text-xs" style="color: var(--ff-text-muted)">· en {{ days }} días</span>
+                    }
                   }
                 </div>
                 <p class="text-sm font-bold font-mono flex-shrink-0" style="color: var(--ff-text-primary)">
@@ -148,54 +227,49 @@
         </div>
         <!-- Footer -->
         <div class="px-4 py-3 text-xs" style="border-top: 1px solid var(--ff-border); color: var(--ff-text-muted)">
-          {{ summary.upcomingInstallments.length }} cuota{{ summary.upcomingInstallments.length !== 1 ? 's' : '' }} próxima{{ summary.upcomingInstallments.length !== 1 ? 's' : '' }} · Total {{ upcomingTotal | currency:'ARS':'symbol':'1.0-0' }}
+          {{ pendingInstallments.length }} cuota{{ pendingInstallments.length !== 1 ? 's' : '' }} próxima{{ pendingInstallments.length !== 1 ? 's' : '' }}
+          · Total {{ pendingUpcomingTotal | currency:'ARS':'symbol':'1.0-0' }}
         </div>
       }
     </div>
 
     <!-- Columna derecha -->
     <div class="flex flex-col gap-4">
-      <!-- Mora acumulada -->
-      <div class="rounded-xl p-4" style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
-        <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--ff-text-muted)">Mora acumulada</p>
-        <p class="text-2xl sm:text-3xl font-bold font-mono mb-2"
-          [style.color]="summary.pendingPenaltyAmount > 0 ? '#f87171' : '#34d399'"
-          style="letter-spacing: -0.02em">
-          {{ summary.pendingPenaltyAmount | currency:'ARS':'symbol':'1.0-0' }}
-        </p>
-        @if (summary.pendingPenaltyAmount === 0) {
-          <span class="text-xs font-semibold px-2 py-0.5 rounded" style="background: rgba(52,211,153,0.12); color: #34d399">
-            ✓ SIN MORA ACUMULADA
-          </span>
-        } @else {
-          <span class="text-xs font-semibold px-2 py-0.5 rounded" style="background: rgba(248,113,113,0.12); color: #f87171">
-            CON MORA ACUMULADA
-          </span>
-        }
-      </div>
 
-      <!-- Resumen total -->
+      <!-- Total pagado -->
       <div class="rounded-xl p-4" style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
-        <p class="text-xs font-semibold uppercase tracking-wider mb-3" style="color: var(--ff-text-muted)">Resumen total</p>
-        <p class="text-xs uppercase tracking-wider mb-0.5" style="color: var(--ff-text-muted)">Total pagado históricamente</p>
-        <p class="text-xl sm:text-2xl font-bold font-mono mb-3" style="color: #34d399; letter-spacing: -0.02em">
+        <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--ff-text-muted)">
+          Total pagado
+        </p>
+        <p class="text-2xl font-bold font-mono mb-1"
+           style="color: #34d399; letter-spacing: -0.02em">
           {{ summary.totalPaidAmount | currency:'ARS':'symbol':'1.0-0' }}
         </p>
-        <div class="flex flex-col gap-1.5 text-sm" style="border-top: 1px solid var(--ff-border); padding-top: 12px">
+        <p class="text-xs" style="color: var(--ff-text-muted)">a lo largo de todos tus créditos</p>
+      </div>
+
+      <!-- Mis créditos -->
+      <div class="rounded-xl p-4" style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
+        <p class="text-xs font-semibold uppercase tracking-wider mb-3" style="color: var(--ff-text-muted)">
+          Mis créditos
+        </p>
+        <div class="flex flex-col gap-2 text-sm">
           <div class="flex justify-between">
-            <span style="color: var(--ff-text-secondary)">Créditos activos</span>
+            <span style="color: var(--ff-text-secondary)">Activos</span>
             <span class="font-semibold font-mono" style="color: var(--ff-text-primary)">{{ summary.activeCredits }}</span>
           </div>
           <div class="flex justify-between">
-            <span style="color: var(--ff-text-secondary)">Créditos liquidados</span>
+            <span style="color: var(--ff-text-secondary)">Liquidados</span>
             <span class="font-semibold font-mono" style="color: var(--ff-text-primary)">{{ summary.settledCredits }}</span>
           </div>
-          <div class="flex justify-between">
-            <span style="color: var(--ff-text-secondary)">Total cuotas</span>
-            <span class="font-semibold font-mono" style="color: var(--ff-text-primary)">{{ summary.totalInstallmentsCount }}</span>
-          </div>
         </div>
+        <a [routerLink]="['/portal/credits']"
+           class="mt-3 pt-3 flex items-center justify-between text-xs font-semibold transition-opacity hover:opacity-75"
+           style="border-top: 1px solid var(--ff-border); color: var(--ff-accent)">
+          Ver todos mis créditos <i class="pi pi-arrow-right text-xs"></i>
+        </a>
       </div>
+
     </div>
   </div>
 }

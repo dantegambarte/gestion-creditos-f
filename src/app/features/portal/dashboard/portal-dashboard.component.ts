@@ -39,13 +39,41 @@ export class PortalDashboardComponent implements OnInit {
   }
 
   /**
-   * Calcula el total de los próximos vencimientos.
+   * Cuotas con estado OVERDUE dentro de los próximos vencimientos.
    */
-  get upcomingTotal(): number {
-    return (this.summary?.upcomingInstallments ?? []).reduce(
-      (sum, i) => sum + i.amountDue,
-      0,
-    );
+  get overdueInstallments() {
+    return (this.summary?.upcomingInstallments ?? []).filter(i => i.status === 'OVERDUE');
+  }
+
+  /**
+   * Cuotas PENDING o PARTIAL (no vencidas) dentro de los próximos 30 días.
+   */
+  get pendingInstallments() {
+    return (this.summary?.upcomingInstallments ?? []).filter(i => i.status !== 'OVERDUE');
+  }
+
+  /**
+   * Primera cuota pendiente (no vencida) más próxima a vencer.
+   * Es el dato más accionable para el usuario.
+   */
+  get nextPendingInstallment() {
+    return this.pendingInstallments[0] ?? null;
+  }
+
+  /**
+   * Porcentaje de progreso global de pago sobre el total de cuotas.
+   */
+  get progressPercent(): number {
+    const total = this.summary?.totalInstallmentsCount ?? 0;
+    if (!total) return 0;
+    return Math.round((this.summary!.paidCount / total) * 100);
+  }
+
+  /**
+   * Total en pesos de las cuotas pendientes (no vencidas) próximas a vencer.
+   */
+  get pendingUpcomingTotal(): number {
+    return this.pendingInstallments.reduce((sum, i) => sum + i.amountDue, 0);
   }
 
   /**

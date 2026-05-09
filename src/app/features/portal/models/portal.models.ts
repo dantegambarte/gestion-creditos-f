@@ -26,6 +26,7 @@ export interface UpcomingInstallment {
   creditId: string;
   creditType: 'SALE' | 'LOAN';
   creditInstallmentsCount: number;
+  creditName: string | null;
 }
 
 export interface AccountSummary {

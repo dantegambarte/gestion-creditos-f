@@ -91,6 +91,7 @@ function mapUpcomingInstallment(
     creditId:                raw['credit_id'] as string,
     creditType:              raw['credit_type'] as 'SALE' | 'LOAN',
     creditInstallmentsCount: raw['credit_installments_count'] as number,
+    creditName:              (raw['credit_name'] as string | null) ?? null,
   };
 }
 
