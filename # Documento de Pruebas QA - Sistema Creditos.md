@@ -15,7 +15,7 @@
 | **CR-07** | Operación Crédito - Operaciones | Click en "Activo" para filtrar las operaciones. | Debería filtrar las operaciones. | Corregido / Validado |
 | **CR-08** | Operación Crédito - Operaciones - Admin | Escribí "Perez" en el buscador. | Debería filtrar los clientes. | Corregido / Validado |
 | **CR-09** | Regresión en seleccion de unidad . | Si posee stock, la operación debería enviarse. | Corregido / Validado |
-| **CR-10** | Calendario de primer pago - Admin | Hice click en el calendario para poder elegir fecha. | El calendario se muestra cortado. | Error |
+| **CR-10** | Calendario de primer pago - Admin | Hice click en el calendario para poder elegir fecha. | El calendario se muestra cortado. | Corregido / Validado |
 | **CR-11 | Operación venta de un producto - Admin. | Se eligió un producto de la lista. | No está implementado el pago diario y quincenal y el interés no cambia. | Error |
 | **CR-12 | Operaciones pre-aprobadas y aprobadas - Admin. | Se realizó una operación para su aprobación. | No está implementado el detalle de las operaciones. | Error |
 | **CR-13 | Nueva Operacion - Seller. | Se hizo click en "Nueva Operación". | Las letras son del mismo color que el fondo. | Error |
@@ -72,6 +72,7 @@
 - `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → CR-03 préstamo personal se envía sin exigir productos/unidades: **passing**
 - `src/app/shared/operations/new-operation/steps/step-client/step-client.component.spec.ts` → CR-08 buscador de cliente en nueva operación filtra ignorando tildes (`Perez` -> `Pérez`): **passing**
 - `src/app/shared/operations/new-operation/operation-form.service.spec.ts` → CR-09 catálogo SALE no mezcla stock entre productos distintos y envía `unitId` reales: **passing**
+- `src/app/shared/operations/new-operation/steps/step-conditions/step-conditions.component.spec.ts` → CR-10 calendario usa trigger sobre input y overlay estable para selección visual: **passing**
 - `cypress/e2e/07-negative-nueva-operacion.cy.ts` → CR-02/CR-05 navegación bloqueada sin fecha primer pago y CR-06 desembolso obligatorio: **passing**
 - `src/app/shared/clients/clients.component.spec.ts` → CL-01 toast de éxito al crear cliente: **passing**
 - `src/app/shared/clients/clients.component.spec.ts` → CL-04 edición de cliente muestra toast de éxito: **passing**

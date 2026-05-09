@@ -172,8 +172,11 @@
             dateFormat="dd/mm/yy"
             [minDate]="todayDate"
             [showIcon]="true"
+            iconDisplay="input"
+            [readonlyInput]="true"
+            [baseZIndex]="1200"
             appendTo="body"
-            styleClass="w-full"
+            styleClass="w-full op-calendar"
             inputStyleClass="h-11 w-full rounded-xl"
           />
           @if (form.controls['firstPaymentDate'].touched && form.controls['firstPaymentDate'].errors?.['pastDate']) {

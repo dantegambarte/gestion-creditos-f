@@ -166,7 +166,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Hice click para elegir la fecha del primer pago con el mouse desde el calendario.]
 * **Resultado Esperado:** [Debería poder elegir la fecha con click y reflejarla en el formulario.]
-* **Resultado Obtenido (Error):** [Al hacer click con el mouse sobre una fecha del calendario no hace nada; escribiendo la fecha manualmente sí permite seguir. **Pendiente de atacar**.]
+* **Resultado Obtenido (Actual):** [Corregido / validado. El calendario ahora responde al click del mouse, carga la fecha elegida en el input y mantiene un overlay estable sobre el layout del wizard. Validado manualmente en admin y cubierto con `step-conditions.component.spec.ts` para la configuración del calendario.]
 
 **Línea de ataque sugerida:**
 - Revisar binding del componente calendario y evento de selección (`onSelect` / `ngModel` / `formControl`).
@@ -175,7 +175,7 @@ http://localhost:3000/api/credits - POST
 
 * **Acción Realizada:** [Hice click para elegir la fecha del primer pago con el mouse desde el calendario - Admin.]
 * **Resultado Esperado:** [Debería poder elegir una fecha del calendario.]
-* **Resultado Obtenido (Error):** [Al hacer click sobre el calendario sale cortado sin poder elegir las fechas que se encuentren por debajo.]
+* **Resultado Obtenido (Actual):** [Corregido / validado. El calendario se muestra completo, sin quedar cortado, y permite elegir fechas futuras correctamente. Validado manualmente en admin.]
 
 ---
 

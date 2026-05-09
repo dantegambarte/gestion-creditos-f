@@ -30,6 +30,14 @@ describe('StepConditionsComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('configura el calendario para selección desde input y overlay sobre el layout', () => {
+    const calendar = fixture.nativeElement.querySelector('p-calendar');
+
+    expect(calendar.getAttribute('iconDisplay')).toBe('input');
+    expect(calendar.getAttribute('styleClass')).toContain('op-calendar');
+    expect(calendar.getAttribute('appendTo')).toBe('body');
+  });
+
   describe('getInstallmentsOptionsForLine', () => {
     it('devuelve lista vacía si la línea no tiene tasas', () => {
       const result = component.getInstallmentsOptionsForLine({
