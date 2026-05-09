@@ -137,7 +137,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Hice click en "Enviar para Aprobación" luego de elegir un producto que informa unidades disponibles.]
 * **Resultado Esperado:** [Si el producto muestra stock disponible, la operación debería enviarse correctamente para aprobación.]
-* **Resultado Obtenido (Error):** [Cuando elijo un producto que dice que posee 5 unidades, la API responde que la unidad seleccionada no fue encontrada. **Pendiente de atacar**.]
+* **Resultado Obtenido (Actual):** [Corregido / validado. El flujo SALE ya no mezcla unidades entre productos distintos al agrupar el catálogo; la operación se registró correctamente y el stock visible bajó de 5 a 4 tras el envío. Validado manualmente contra backend real y cubierto con `operation-form.service.spec.ts`.]
 ### 2. Evidencia Técnica
 **Payload Enviado (Request):**
 ```json
@@ -150,18 +150,13 @@ http://localhost:3000/api/credits - POST
 }
 ```
 
-**Respuesta obtenida:**
+**Respuesta obtenida actual:**
 ```json
 {
-    "ok": false,
-    "message": "Unidad c8e8ef31-eec0-4e8f-a09c-d921a368d84d no encontrada."
+    "ok": true,
+    "message": "Pre-operación registrada. Pendiente de aprobación."
 }
 ```
-
-**Línea de ataque sugerida:**
-- Verificar consistencia entre stock mostrado en UI y `unit_ids` reales devueltos por backend.
-- Revisar si el selector está enviando una unidad reservada/inactiva o un id stale.
-- Cubrir regresión con Cypress al confirmar stock visible vs unidad seleccionable.
 
 ---
 

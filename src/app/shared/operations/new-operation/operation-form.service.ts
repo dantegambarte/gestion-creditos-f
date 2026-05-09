@@ -882,7 +882,7 @@ export class OperationFormService {
     const groups = new Map<string, CatalogProduct>();
     for (const unit of this.availableProducts) {
       const price = unit.historicalPrice ?? unit.price ?? 0;
-      const key = `${unit.name}__${price}`;
+      const key = this.getCatalogGroupKey(unit, price);
       const existing = groups.get(key);
       if (existing) {
         existing.stockDisponible += 1;
@@ -892,7 +892,7 @@ export class OperationFormService {
         }
       } else {
         groups.set(key, {
-          productoId: key,
+          productoId: unit.productId || key,
           nombre: unit.name,
           precio: price,
           stockDisponible: 1,
@@ -902,6 +902,17 @@ export class OperationFormService {
       }
     }
     return Array.from(groups.values());
+  }
+
+  /**
+   * Define la clave de agrupación del catálogo priorizando el `productId` real.
+   * Evita mezclar stock de productos distintos que comparten nombre y precio visible.
+   * @param {ProductOperation} unit - Unidad disponible devuelta por backend.
+   * @param {number} price - Precio histórico/actual usado en el catálogo.
+   * @returns {string} Clave estable para agrupar unidades compatibles.
+   */
+  private getCatalogGroupKey(unit: ProductOperation, price: number): string {
+    return unit.productId || `${unit.name}__${price}`;
   }
 
   // ── Reactive consistency helpers ──────────────────────────────────────────
@@ -1068,7 +1079,7 @@ export class OperationFormService {
             customerId: client!.id,
             type,
             items: this.cartLines.map((line) => ({
-              productId: line.productoId,
+              productId: line.productIds[0] ?? line.productoId,
               quantity: line.cantidad,
               unitPrice: line.precio,
               subtotal: line.subtotal,
