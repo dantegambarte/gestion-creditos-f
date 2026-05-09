@@ -133,5 +133,12 @@ export const SELLER_ROUTES: Routes = [
         (c) => c.SellerCommissionsComponent,
       ),
   },
+  {
+    path: AppRoutes.SIMULATOR,
+    loadComponent: () =>
+      import('../../shared/simulator/simulator.component').then(
+        (c) => c.SimulatorComponent,
+      ),
+  },
   { path: '', redirectTo: 'operations', pathMatch: 'full' },
 ];

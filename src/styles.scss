@@ -1215,6 +1215,30 @@ table.ff-table {
   padding-top: 1rem;
 }
 
+// ─── portal-tab — navegación del portal del cliente ──────────────────────────
+.portal-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ff-text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--ff-text-primary);
+  }
+
+  &.active-tab {
+    color: var(--ff-accent);
+    border-bottom-color: var(--ff-accent);
+  }
+}
+
 // ─── movement-detail-dialog scrollbar (override específico — no tocar) ───────
 .movement-detail-dialog .p-dialog-content {
   &::-webkit-scrollbar {

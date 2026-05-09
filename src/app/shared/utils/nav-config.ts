@@ -42,6 +42,12 @@ export const NAV_CONFIG: NavItem[] = [
     route: (role) => `/${sellerPrefix(role)}/${AppRoutes.PRODUCTS}`,
     requiredRoles: ['ADMIN', 'SELLER', 'SELLER_COLLECTOR'],
   },
+  {
+    label: 'Simulador',
+    icon: 'pi pi-calculator',
+    route: (role) => `/${sellerPrefix(role)}/${AppRoutes.SIMULATOR}`,
+    requiredRoles: ['ADMIN', 'SELLER', 'SELLER_COLLECTOR'],
+  },
 
   {
     label: 'Administración',
@@ -154,5 +160,11 @@ export const NAV_CONFIG: NavItem[] = [
     icon: 'pi pi-percentage',
     route: AppRoutes.COLLECTOR_COMMISSIONS,
     requiredRoles: ['COLLECTOR', 'SELLER_COLLECTOR'],
+  },
+  {
+    label: 'Simulador',
+    icon: 'pi pi-calculator',
+    route: `/collector/${AppRoutes.SIMULATOR}`,
+    requiredRoles: ['COLLECTOR'],
   },
 ];

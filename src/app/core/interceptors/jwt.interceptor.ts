@@ -7,7 +7,7 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  if (req.url.endsWith('/credits/simulate')) {
+  if (req.url.includes('/credits/simulate')) {
     return next(req);
   }
 

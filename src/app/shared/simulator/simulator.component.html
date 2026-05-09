@@ -1,0 +1,200 @@
+<div class="max-w-lg mx-auto space-y-4">
+
+  <!-- Cargando opciones -->
+  @if (loadingOptions) {
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+      <p-skeleton height="1.25rem" width="10rem" />
+      <p-skeleton height="2.5rem" />
+      <p-skeleton height="2.5rem" />
+    </div>
+  }
+
+  <!-- Sin tasas configuradas -->
+  @else if (optionsError || !hasOptions) {
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 flex flex-col items-center gap-3 text-center">
+      <i class="pi pi-exclamation-circle text-3xl text-gray-400"></i>
+      <p class="text-sm font-medium text-gray-500">
+        {{ optionsError || 'No hay tasas de interés configuradas. Contactá al administrador.' }}
+      </p>
+    </div>
+  }
+
+  <!-- Pantalla 1: Ingreso de monto -->
+  @else if (step === 1) {
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+      <div>
+        <h2 class="text-base font-semibold text-gray-800">Simular préstamo</h2>
+        <p class="text-sm text-gray-500 mt-1">Ingresá el monto que necesitás y calculamos todas las opciones.</p>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-sm font-medium text-gray-700">¿Cuánto necesitás?</label>
+        <p-inputNumber
+          [(ngModel)]="amount"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [min]="1"
+          [useGrouping]="true"
+          placeholder="$ 0"
+          styleClass="w-full"
+        />
+      </div>
+
+      <p-button
+        label="Ver opciones de financiamiento"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        styleClass="w-full"
+        [disabled]="!amount || amount <= 0"
+        (onClick)="continue()"
+      />
+    </div>
+  }
+
+  <!-- Pantalla 2: Opciones de cuotas -->
+  @else if (step === 2) {
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+      <!-- Header con monto y botón de cambio -->
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Monto solicitado</p>
+          <p class="text-xl font-bold text-gray-800">{{ amount | currencyArs }}</p>
+        </div>
+        <button
+          type="button"
+          (click)="restart()"
+          class="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors"
+        >
+          Cambiar monto
+        </button>
+      </div>
+
+      <!-- Calculando -->
+      @if (calculating) {
+        <div class="p-6 space-y-3">
+          <p class="text-sm text-center text-gray-400">Calculando opciones...</p>
+          @for (_ of [1, 2, 3, 4]; track $index) {
+            <p-skeleton height="4.5rem" borderRadius="12px" />
+          }
+        </div>
+      }
+
+      <!-- Sin resultados -->
+      @else if (noResults) {
+        <div class="p-8 flex flex-col items-center gap-3 text-center">
+          <i class="pi pi-exclamation-circle text-3xl text-gray-400"></i>
+          <p class="text-sm text-gray-500">No se encontraron opciones de financiamiento para este monto.</p>
+          <p-button label="Intentar con otro monto" styleClass="mt-1" (onClick)="restart()" />
+        </div>
+      }
+
+      <!-- Grupos de opciones -->
+      @else {
+        <div class="p-4 space-y-5">
+          @for (group of groups; track group.frequency) {
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2 px-1">
+                {{ group.label }}
+              </p>
+              <div class="space-y-2">
+                @for (opt of visibleOptions(group); track opt.installments) {
+                  <button
+                    type="button"
+                    (click)="select(opt)"
+                    class="w-full text-left rounded-xl border border-gray-100 bg-gray-50 p-4 hover:border-blue-300 hover:bg-blue-50 transition-all group"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-baseline gap-2">
+                        <span class="text-sm font-medium text-gray-600">{{ opt.installments }} cuotas de</span>
+                        <span class="text-xl font-bold text-blue-600">{{ opt.result.installmentAmount | currencyArs }}</span>
+                      </div>
+                      <i class="pi pi-chevron-right text-gray-300 group-hover:text-blue-400 transition-colors"></i>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1">
+                      Total a devolver: {{ opt.result.totalToReturn | currencyArs }}
+                    </p>
+                  </button>
+                }
+                @if (hasMore(group)) {
+                  <button
+                    type="button"
+                    (click)="showMore(group.frequency)"
+                    class="w-full py-2.5 rounded-xl border border-dashed border-gray-200 text-sm font-medium text-gray-400 hover:text-blue-500 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                  >
+                    <i class="pi pi-plus-circle mr-1.5 text-xs"></i>Ver más opciones de financiación
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+  }
+
+  <!-- Pantalla 3: Resumen -->
+  @else if (step === 3 && selected) {
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-100">
+        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Resumen de simulación</p>
+        <p class="text-sm text-gray-500">{{ selected.frequencyLabel }} · {{ selected.installments }} cuotas</p>
+      </div>
+
+      <div class="p-6 space-y-4">
+
+        <!-- Cuota destacada -->
+        <div class="rounded-xl bg-blue-50 border border-blue-100 p-5 text-center">
+          <p class="text-xs font-medium text-blue-500 mb-2">Cuota estimada</p>
+          <p class="text-4xl font-bold text-blue-700">{{ selected.result.installmentAmount | currencyArs }}</p>
+          <p class="text-xs text-blue-400 mt-1.5">
+            {{ selected.installments }} cuotas {{ selected.frequencyLabel | lowercase }}s
+          </p>
+        </div>
+
+        <!-- Detalle de montos -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
+            <p class="text-xs font-medium text-gray-500 mb-1">Monto solicitado</p>
+            <p class="text-base font-semibold text-gray-800">{{ selected.result.totalAmount | currencyArs }}</p>
+          </div>
+          <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
+            <p class="text-xs font-medium text-gray-500 mb-1">Monto financiado</p>
+            <p class="text-base font-semibold text-gray-800">{{ selected.result.financedAmount | currencyArs }}</p>
+          </div>
+          <div class="rounded-xl bg-gray-50 border border-gray-100 p-4 col-span-2">
+            <p class="text-xs font-medium text-gray-500 mb-1">Total a devolver</p>
+            <p class="text-lg font-bold text-gray-800">{{ selected.result.totalToReturn | currencyArs }}</p>
+          </div>
+        </div>
+
+        @if (selected.result.note) {
+          <p class="text-xs text-gray-400 italic">{{ selected.result.note }}</p>
+        }
+
+      </div>
+
+      <!-- Acciones -->
+      <div class="px-6 pb-6 flex gap-3">
+        <button
+          type="button"
+          (click)="back()"
+          class="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors"
+        >
+          <i class="pi pi-arrow-left mr-2 text-xs"></i>Volver
+        </button>
+        <p-button
+          label="Finalizar simulación"
+          styleClass="flex-1"
+          (onClick)="restart()"
+        />
+      </div>
+
+    </div>
+  }
+
+</div>
