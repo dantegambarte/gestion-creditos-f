@@ -270,6 +270,34 @@
         </a>
       </div>
 
+      <!-- Simulador -->
+      <div class="rounded-xl p-4" style="background: var(--ff-panel); border: 1px solid var(--ff-border)">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+               style="background: rgba(79,110,247,0.12)">
+            <i class="pi pi-calculator text-xs" style="color: var(--ff-accent)"></i>
+          </div>
+          <p class="text-xs font-semibold uppercase tracking-wider" style="color: var(--ff-text-muted)">Simulador</p>
+        </div>
+        <p class="text-sm font-semibold mb-1" style="color: var(--ff-text-primary)">¿Necesitás simular un crédito?</p>
+        <p class="text-xs mb-3" style="color: var(--ff-text-muted)">Calculá cuotas y opciones de financiamiento en segundos.</p>
+        <a [routerLink]="['/portal/simulator']"
+           class="inline-flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-75"
+           style="color: var(--ff-accent)">
+          Ir al simulador <i class="pi pi-arrow-right text-xs"></i>
+        </a>
+      </div>
+
     </div>
+  </div>
+
+  <!-- Strip de ayuda -->
+  <div class="mt-4 rounded-xl px-4 py-3 flex items-start gap-2.5 text-xs"
+       style="background: var(--ff-panel); border: 1px solid var(--ff-border); color: var(--ff-text-muted)">
+    <i class="pi pi-info-circle flex-shrink-0 mt-0.5"></i>
+    <span>
+      Los cobros son registrados por tu cobrador y aprobados por el negocio.
+      Para consultas sobre tus pagos o cuotas, <strong style="color: var(--ff-text-secondary)">contactá directamente a tu cobrador.</strong>
+    </span>
   </div>
 }
