@@ -118,8 +118,9 @@ function mapPortalCredit(raw: Record<string, unknown>): PortalCredit {
     paidInstallments:  raw['paid_installments'] as number,
     nextDueDate:       (raw['next_due_date'] as string | null) ?? null,
     nextDueAmount:     (raw['next_due_amount'] as number | null) ?? null,
-    pendingPenalty:    raw['pending_penalty'] as number,
-    hasOverdue:        raw['has_overdue'] as boolean,
+    pendingPenalty:            raw['pending_penalty'] as number,
+    hasOverdue:                raw['has_overdue'] as boolean,
+    overdueInstallmentsCount:  raw['overdue_installments'] as number,
   };
 }
 

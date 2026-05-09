@@ -85,13 +85,27 @@ export class PortalCreditDetailComponent implements OnInit {
   }
 
   /**
-   * Devuelve la etiqueta de la tasa de interés.
-   * Para créditos de venta se muestra "Por producto"; para préstamos, el porcentaje.
+   * Devuelve la etiqueta de la tasa de interés incluyendo el período.
+   * Para créditos de venta se muestra "Por producto"; para préstamos, porcentaje + período.
    */
   get interestRateLabel(): string {
     if (this.credit?.type === 'SALE') return 'Por producto';
     if (this.credit?.interestRate == null) return 'Sin tasa';
-    return (this.credit.interestRate * 100).toFixed(2) + '%';
+    return `${(this.credit.interestRate * 100).toFixed(2)}% ${this.frequencyLabel.toLowerCase()}`;
+  }
+
+  /**
+   * Primera cuota no pagada (siguiente a abonar o ya vencida).
+   */
+  get nextInstallment(): PortalInstallment | null {
+    return (this.credit?.installments ?? []).find((i) => i.status !== 'PAID') ?? null;
+  }
+
+  /**
+   * Indica si el crédito está completamente liquidado.
+   */
+  get isSettled(): boolean {
+    return this.credit?.status === 'SETTLED';
   }
 
   /**

@@ -62,6 +62,7 @@ export interface PortalCredit {
   nextDueAmount: number | null;
   pendingPenalty: number;
   hasOverdue: boolean;
+  overdueInstallmentsCount: number;
 }
 
 export interface PortalInstallment {
