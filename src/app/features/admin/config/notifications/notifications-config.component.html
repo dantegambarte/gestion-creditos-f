@@ -1,35 +1,179 @@
-<div class="space-y-6">
+<div class="flex gap-5 items-start">
+  <!-- Izquierda: notificaciones -->
+  <div class="flex-1 space-y-4">
+    <div class="space-y-1">
+      <h2 class="text-base font-semibold text-slate-100">
+        Configuración de notificaciones
+      </h2>
+      <p class="text-sm text-slate-500">
+        Controlá qué alertas reciben los administradores del sistema.
+      </p>
+    </div>
 
-  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-    <h2 class="text-base font-semibold text-gray-800">Preferencias de Notificaciones</h2>
-    <p class="text-sm text-gray-400">Activá o desactivá las notificaciones del sistema según tus preferencias.</p>
-
-    <div class="divide-y divide-gray-100">
+    <div class="space-y-2">
       @for (setting of settings; track setting.id) {
-        <div class="flex items-center justify-between py-4">
-          <div class="flex items-start gap-3">
-            <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <i [class]="setting.icon + ' text-blue-500 text-sm'"></i>
+        <div
+          [class]="
+            'flex items-center justify-between px-4 py-3.5 rounded-2xl border transition-colors ' +
+            (setting.enabled
+              ? 'bg-slate-800/60 border-slate-700'
+              : 'bg-slate-900/40 border-slate-800')
+          "
+        >
+          <div class="flex items-center gap-3">
+            <div
+              [class]="
+                'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ' +
+                (setting.enabled ? 'bg-blue-500/20' : 'bg-slate-700/50')
+              "
+            >
+              <i
+                [class]="
+                  setting.icon +
+                  ' text-sm ' +
+                  (setting.enabled ? 'text-blue-400' : 'text-slate-500')
+                "
+              ></i>
             </div>
             <div>
-              <p class="text-sm font-medium text-gray-800">{{ setting.label }}</p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ setting.description }}</p>
+              <p
+                [class]="
+                  'text-sm font-medium ' +
+                  (setting.enabled ? 'text-slate-100' : 'text-slate-500')
+                "
+              >
+                {{ setting.label }}
+              </p>
+              <p
+                [class]="
+                  'text-xs mt-0.5 ' +
+                  (setting.enabled ? 'text-slate-400' : 'text-slate-600')
+                "
+              >
+                {{ setting.description }}
+              </p>
             </div>
           </div>
           <p-inputSwitch [(ngModel)]="setting.enabled" />
         </div>
       }
     </div>
-  </div>
 
-  <div>
     <p-button
-      label="Guardar cambios"
-      icon="pi pi-save"
-      iconPos="left"
-      styleClass="h-11 px-5 rounded-xl !bg-blue-500 !border-blue-500 hover:!bg-blue-600"
+      label="Guardar preferencias"
+      styleClass="h-10 px-5 rounded-xl mt-2"
       (onClick)="save()"
     />
   </div>
 
+  <!-- Derecha: paneles informativos -->
+  <div class="w-[300px] flex-shrink-0 space-y-3">
+    <!-- Canales -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+        Canales de notificación
+      </h3>
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-envelope text-slate-400 text-xs"></i>
+            <span class="text-sm text-slate-300">Email</span>
+          </div>
+          <span
+            class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full"
+            >Configurado</span
+          >
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-whatsapp text-slate-400 text-xs"></i>
+            <span class="text-sm text-slate-300">WhatsApp</span>
+          </div>
+          <div class="flex flex-col items-end gap-0.5">
+            <span
+              class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full whitespace-nowrap"
+              >No configurado</span
+            >
+            <button
+              class="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              Configurar →
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-bell text-slate-400 text-xs"></i>
+            <span class="text-sm text-slate-300">Push in-app</span>
+          </div>
+          <span
+            class="text-xs font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full"
+            >Activo</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Frecuencia -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+        Frecuencia de envío
+      </h3>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-sm text-slate-400 shrink-0">Alertas de mora</span>
+          <span class="text-xs text-slate-300 whitespace-nowrap"
+            >Inmediata</span
+          >
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-sm text-slate-400 shrink-0"
+            >Vencimiento de cuotas</span
+          >
+          <span class="text-xs text-blue-400 whitespace-nowrap"
+            >Diaria (3 días antes)</span
+          >
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-sm text-slate-400 shrink-0">Resumen semanal</span>
+          <span class="text-xs text-slate-300 whitespace-nowrap"
+            >Lunes 08:00 hs</span
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Historial -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+        Historial de alertas
+      </h3>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-sm text-slate-300 truncate"
+            >Alerta mora — Carlos R.</span
+          >
+          <span class="text-xs text-slate-500 whitespace-nowrap"
+            >hace 2 horas</span
+          >
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-sm text-slate-300 truncate"
+            >Aprobación pendiente</span
+          >
+          <span class="text-xs text-slate-500 whitespace-nowrap"
+            >hace 4 horas</span
+          >
+        </div>
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-sm text-slate-300 truncate"
+            >Vencimiento mañana — 8 cuotas</span
+          >
+          <span class="text-xs text-slate-500 whitespace-nowrap"
+            >ayer 08:00</span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
