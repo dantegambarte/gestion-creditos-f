@@ -2,20 +2,18 @@ import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { StepsModule } from 'primeng/steps';
 import { ToastModule } from 'primeng/toast';
 import { OperationFormService } from './operation-form.service';
 import { StepClientComponent } from './steps/step-client/step-client.component';
-import { StepProductsComponent } from './steps/step-products/step-products.component';
 import { StepConditionsComponent } from './steps/step-conditions/step-conditions.component';
 import { StepConfirmComponent } from './steps/step-confirm/step-confirm.component';
+import { StepProductsComponent } from './steps/step-products/step-products.component';
 
 @Component({
   selector: 'app-new-operation',
   standalone: true,
   imports: [
     RouterLink,
-    StepsModule,
     ButtonModule,
     ToastModule,
     StepClientComponent,
@@ -44,14 +42,19 @@ export class NewOperationComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    const clientDni = this.route.snapshot.queryParamMap.get('clientDni') ?? undefined;
+    const clientDni =
+      this.route.snapshot.queryParamMap.get('clientDni') ?? undefined;
     this.state.initialize(clientDni).subscribe((preselected) => {
       if (preselected) this.activeIndex = 1;
     });
   }
 
-  nextStep(): void { if (this.activeIndex < 3) this.activeIndex++; }
-  prevStep(): void { if (this.activeIndex > 0) this.activeIndex--; }
+  nextStep(): void {
+    if (this.activeIndex < 3) this.activeIndex++;
+  }
+  prevStep(): void {
+    if (this.activeIndex > 0) this.activeIndex--;
+  }
 
   /**
    * Envía la operación para aprobación y maneja navegación posterior al resultado.
@@ -73,11 +76,18 @@ export class NewOperationComponent implements OnInit {
       error: (err: unknown) => {
         this.state.submitting = false;
         const detail =
-          typeof err === 'object' && err !== null && 'message' in err &&
+          typeof err === 'object' &&
+          err !== null &&
+          'message' in err &&
           typeof (err as { message?: unknown }).message === 'string'
             ? (err as { message: string }).message
             : 'No se pudo registrar la operación.';
-        this.messageService.add({ severity: 'error', summary: 'Error', detail, life: 5000 });
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail,
+          life: 5000,
+        });
       },
     });
   }

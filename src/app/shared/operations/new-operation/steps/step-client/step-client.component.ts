@@ -1,13 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ClientOperation } from '../../../../models/interface/client';
 
 @Component({
   selector: 'app-step-client',
   standalone: true,
-  imports: [FormsModule, InputTextModule, ButtonModule],
+  imports: [FormsModule, InputTextModule],
   templateUrl: './step-client.component.html',
 })
 export class StepClientComponent {
@@ -24,7 +23,9 @@ export class StepClientComponent {
     const term = this.searchText.trim().toLowerCase();
     if (!term) return this.clients;
     return this.clients.filter(
-      (c) => c.name.toLowerCase().includes(term) || c.dni.toLowerCase().includes(term),
+      (c) =>
+        c.name.toLowerCase().includes(term) ||
+        c.dni.toLowerCase().includes(term),
     );
   }
 

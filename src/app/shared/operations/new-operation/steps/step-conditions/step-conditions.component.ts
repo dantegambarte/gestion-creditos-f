@@ -1,14 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
+import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
-import { CartLine, SaleInstallmentOption } from '../../operation-form.service';
 import { ProductRate } from '../../../../../features/admin/config/models/interfaces/product';
+import { CartLine, SaleInstallmentOption } from '../../operation-form.service';
 
 @Component({
   selector: 'app-step-conditions',
@@ -16,7 +14,6 @@ import { ProductRate } from '../../../../../features/admin/config/models/interfa
   imports: [
     ReactiveFormsModule,
     FormsModule,
-    ButtonModule,
     CalendarModule,
     DropdownModule,
     InputNumberModule,
@@ -28,8 +25,15 @@ import { ProductRate } from '../../../../../features/admin/config/models/interfa
 export class StepConditionsComponent {
   @Input() form!: FormGroup;
   @Input() cartLines: CartLine[] = [];
-  @Input() paymentFrequencyOptions: { label: string; value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' }[] = [];
-  @Input() installmentsOptions: { label: string; value: number; frequency: string }[] = [];
+  @Input() paymentFrequencyOptions: {
+    label: string;
+    value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+  }[] = [];
+  @Input() installmentsOptions: {
+    label: string;
+    value: number;
+    frequency: string;
+  }[] = [];
   @Input() isInstallmentsRefreshing = false;
   @Input() capitalBase = 0;
   @Input() capitalAFinanciar = 0;
@@ -40,14 +44,19 @@ export class StepConditionsComponent {
   @Input() installmentsDropdownClass = 'w-full';
   @Input() validatedDownPayment = 0;
 
-  @Output() saleInstallmentsChanged = new EventEmitter<{ productoId: string; installments: number | null }>();
+  @Output() saleInstallmentsChanged = new EventEmitter<{
+    productoId: string;
+    installments: number | null;
+  }>();
 
   /**
    * Opciones de cuotas para una línea del carrito según la frecuencia seleccionada.
    * @param {CartLine} line - Línea del carrito a evaluar.
    */
   getInstallmentsOptionsForLine(line: CartLine): SaleInstallmentOption[] {
-    const selectedFrequency = this.form.controls['paymentFrequency']?.value as string | null;
+    const selectedFrequency = this.form.controls['paymentFrequency']?.value as
+      | string
+      | null;
     const formatFrequency = (f: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY') => {
       if (f === 'MONTHLY') return 'Mensual';
       if (f === 'BIWEEKLY') return 'Quincenal';
@@ -74,7 +83,9 @@ export class StepConditionsComponent {
    * @param {CartLine} line - Línea del carrito a evaluar.
    */
   private getSelectedRateForLine(line: CartLine): ProductRate | undefined {
-    const selectedFrequency = this.form.controls['paymentFrequency']?.value as string | null;
+    const selectedFrequency = this.form.controls['paymentFrequency']?.value as
+      | string
+      | null;
     if (!line.selectedInstallments || !selectedFrequency) return undefined;
     return line.rates.find(
       (rate) =>
@@ -84,7 +95,10 @@ export class StepConditionsComponent {
   }
 
   private getLineDownPayment(line: CartLine): number {
-    const totalCarrito = this.cartLines.reduce((acc, l) => acc + l.precio * l.cantidad, 0);
+    const totalCarrito = this.cartLines.reduce(
+      (acc, l) => acc + l.precio * l.cantidad,
+      0,
+    );
     if (this.validatedDownPayment <= 0 || totalCarrito <= 0) return 0;
     return (line.subtotal / totalCarrito) * this.validatedDownPayment;
   }
@@ -101,7 +115,11 @@ export class StepConditionsComponent {
     const installments = line.selectedInstallments ?? 0;
     const rate = this.getSelectedRateForLine(line)?.rate ?? 0;
     if (installments <= 0) return 0;
-    return Math.ceil((this.getLineFinancedCapital(line) * (1 + rate)) / installments / 1000) * 1000;
+    return (
+      Math.ceil(
+        (this.getLineFinancedCapital(line) * (1 + rate)) / installments / 1000,
+      ) * 1000
+    );
   }
 
   /**
@@ -116,7 +134,8 @@ export class StepConditionsComponent {
         currency: 'ARS',
         maximumFractionDigits: 0,
       }).format(value);
-    if (installments <= 0) return `${line.cantidad} u. · ${money(line.subtotal)} total`;
+    if (installments <= 0)
+      return `${line.cantidad} u. · ${money(line.subtotal)} total`;
     return `${line.cantidad} u. · ${installments} cuota${installments > 1 ? 's' : ''} de ${money(this.getLineInstallmentValue(line))}`;
   }
 

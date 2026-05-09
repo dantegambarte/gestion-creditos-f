@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
@@ -10,7 +9,12 @@ import { CartLine } from '../../operation-form.service';
 @Component({
   selector: 'app-step-confirm',
   standalone: true,
-  imports: [ReactiveFormsModule, ButtonModule, CheckboxModule, MessageModule, CurrencyArsPipe],
+  imports: [
+    ReactiveFormsModule,
+    CheckboxModule,
+    MessageModule,
+    CurrencyArsPipe,
+  ],
   templateUrl: './step-confirm.component.html',
 })
 export class StepConfirmComponent {
