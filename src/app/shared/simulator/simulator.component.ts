@@ -17,6 +17,12 @@ const FREQUENCY_LABELS: Record<string, string> = {
   WEEKLY:   'Semanal',
 };
 
+const FREQUENCY_ORDER: Record<string, number> = {
+  WEEKLY:   0,
+  BIWEEKLY: 1,
+  MONTHLY:  2,
+};
+
 function toResult(raw: Record<string, unknown>): SimulateResult {
   const items = Array.isArray(raw['items']) ? raw['items'] : [];
   return {
@@ -167,7 +173,8 @@ export class SimulatorComponent implements OnInit {
         g.options.sort((a, b) => a.installments - b.installments);
       }
 
-      this.groups = Object.values(grouped);
+      this.groups = Object.values(grouped)
+        .sort((a, b) => (FREQUENCY_ORDER[a.frequency] ?? 99) - (FREQUENCY_ORDER[b.frequency] ?? 99));
       for (const g of this.groups) {
         this.visibleCounts[g.frequency] = 3;
       }
