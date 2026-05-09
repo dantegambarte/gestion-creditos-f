@@ -77,6 +77,7 @@ export class SimulatorComponent implements OnInit {
   calculating = false;
   groups: FrequencyGroup[] = [];
   noResults = false;
+  visibleCounts: Record<string, number> = {};
 
   // Pantalla 3
   selected: SimulateOption | null = null;
@@ -111,6 +112,7 @@ export class SimulatorComponent implements OnInit {
     this.calculating = true;
     this.groups = [];
     this.noResults = false;
+    this.visibleCounts = {};
     this.step = 2;
 
     const calls: Array<{ frequency: string; installments: number }> = [];
@@ -166,9 +168,24 @@ export class SimulatorComponent implements OnInit {
       }
 
       this.groups = Object.values(grouped);
+      for (const g of this.groups) {
+        this.visibleCounts[g.frequency] = 3;
+      }
       this.noResults = this.groups.length === 0;
       this.calculating = false;
     });
+  }
+
+  visibleOptions(group: FrequencyGroup): SimulateOption[] {
+    return group.options.slice(0, this.visibleCounts[group.frequency] ?? 3);
+  }
+
+  hasMore(group: FrequencyGroup): boolean {
+    return (this.visibleCounts[group.frequency] ?? 3) < group.options.length;
+  }
+
+  showMore(frequency: string): void {
+    this.visibleCounts[frequency] = (this.visibleCounts[frequency] ?? 3) + 3;
   }
 
   select(option: SimulateOption): void {
@@ -186,5 +203,6 @@ export class SimulatorComponent implements OnInit {
     this.selected = null;
     this.groups = [];
     this.noResults = false;
+    this.visibleCounts = {};
   }
 }

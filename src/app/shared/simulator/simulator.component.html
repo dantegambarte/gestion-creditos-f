@@ -99,7 +99,7 @@
                 {{ group.label }}
               </p>
               <div class="space-y-2">
-                @for (opt of group.options; track opt.installments) {
+                @for (opt of visibleOptions(group); track opt.installments) {
                   <button
                     type="button"
                     (click)="select(opt)"
@@ -115,6 +115,15 @@
                     <p class="text-xs text-gray-400 mt-1">
                       Total a devolver: {{ opt.result.totalToReturn | currencyArs }}
                     </p>
+                  </button>
+                }
+                @if (hasMore(group)) {
+                  <button
+                    type="button"
+                    (click)="showMore(group.frequency)"
+                    class="w-full py-2.5 rounded-xl border border-dashed border-gray-200 text-sm font-medium text-gray-400 hover:text-blue-500 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                  >
+                    <i class="pi pi-plus-circle mr-1.5 text-xs"></i>Ver más opciones de financiación
                   </button>
                 }
               </div>
