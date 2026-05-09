@@ -205,7 +205,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Nueva Operación".]
 * **Resultado Esperado:** [Debería salir un modal para cargar los datos.]
-* **Resultado Obtenido (Error):** [Las letras son del mismo color que el fondo lo que hace ilegible la lectura.]
+* **Resultado Obtenido (Actual):** [Corregido / validado. Seller ahora reutiliza el wizard compartido `NewOperationComponent`, por lo que la pantalla de `Nueva Operación` muestra el mismo layout oscuro con contraste correcto que admin. Validado manualmente iniciando sesión como seller y entrando a `/seller/operations/new`.]
 
 ---
 
