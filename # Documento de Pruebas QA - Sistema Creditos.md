@@ -108,6 +108,8 @@
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
 | **GA-01** | Gastos | Se hizo click en desactivar gasto "Alquiler". | Debería poder activarlo nuevamente. | Corregido / Validado |
+| **GA-01** | Gastos | Se hizo click en "Registrar Gasto" - Admin. | Debería poder seleccionar el método de pago. | Error |
+
 
 ## 🟢 Módulo: Usuarios
 

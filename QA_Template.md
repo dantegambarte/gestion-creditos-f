@@ -540,6 +540,16 @@ Módulo Gastos
 
 ---
 
+**Módulo:** [Gastos]
+**ID de Prueba:** [GA-02]
+**Título / Descripción:** [Gastos]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Registrar Gasto" - Admin.]
+* **Resultado Esperado:** [Deberia poder seleccionar el tipo de pago, Efectivo o Transferencia.]
+* **Resultado Obtenido (Actual):** [No funciona el menú desplegable en el tipo de pago.]
+
+---
+
 Módulo Usuarios
 
 **Módulo:** [Usuarios]
