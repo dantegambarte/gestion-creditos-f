@@ -234,6 +234,25 @@ http://localhost:3000/api/credits - POST
 * **Resultado Esperado:** [Debería poder verse las tildes en los casilleros.]
 * **Resultado Obtenido (Error):** [La tilde en los casilleros debería ser de otro color diferente que negro ya que no queda visible.]
 
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-16]
+**Título / Descripción:** [Nueva Operacion - Seller.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Operación".]
+* **Resultado Esperado:** [Debería poder vender cualquier variante de un producto.]
+* **Resultado Obtenido (Error):** [No es posible poder elegir la variante de un producto.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-17]
+**Título / Descripción:** [Operaciones - Seller.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en 10 en la paginación.]
+* **Resultado Esperado:** [Deberían verse las siguientes 10 operaciones.]
+* **Resultado Obtenido (Error):** [Al apretar el botón no muestra las 10 siguientes operaciones.]
 
 ---
 
@@ -291,6 +310,45 @@ Módulo Clientes
 * **Resultado Esperado:** [Debería poder elegir el período.]
 * **Resultado Obtenido (Error):** [Los calendarios salen cortados, no se muetran todos los datos.]
 
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-06]
+**Título / Descripción:** [Nuevo Cliente - Seller]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click sobre el boton "Nuevo Cliente".]
+* **Resultado Esperado:** [Debería salir un modal para poder resigtrar un nuevo cliente.]
+* **Resultado Obtenido (Error):** [Me lleva a una pantalla para cambiar la contraseña.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-08]
+**Título / Descripción:** [Clientes - Seller / Seller-Collector]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en 10 en la paginación de clientes.]
+* **Resultado Esperado:** [Debería poder mostrar los 10 siguientes clientes.]
+* **Resultado Obtenido (Error):** [No funciona el botón de paginación, no muestra los 10 siguientes clientes.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-09]
+**Título / Descripción:** [Clientes - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en el filtro de riesgo.]
+* **Resultado Esperado:** [Debería poder cambiar los riesgos.]
+* **Resultado Obtenido (Error):** [Al elegir un riesgo y querer cambiar a otro sale cortado el menú desplegable.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-10]
+**Título / Descripción:** [Clientes - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Clientes".]
+* **Resultado Esperado:** [Debería poder ver la cantidad de créditos que posee al cliente.]
+* **Resultado Obtenido (Error):** [Muestra en 0 (cero) por mas que el cliente tenga créditos.]
 
 ---
 
@@ -491,6 +549,46 @@ Módulo Usuarios
 * **Acción Realizada:** [Se hizo click en "Nuevo Usuario".]
 * **Resultado Esperado:** [Deberia poder elegir el Rol.]
 * **Resultado Obtenido (Error):** [El menú desplegable del Rol sale cortado con dificultad para elegir el mismo.]
+
+---
+
+**Módulo:** [Usuarios]
+**ID de Prueba:** [US-02]
+**Título / Descripción:** [Usuarios - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en el buscador en "Usuarios".]
+* **Resultado Esperado:** [Deberia filtrar por Rol.]
+* **Resultado Obtenido (Error):** [El menú desplegable sale cortado cuando elijo un Rol.]
+
+---
+
+Módulo Caja
+
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-01]
+**Título / Descripción:** [Cierre de caja]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cierre de caja".]
+* **Resultado Esperado:** [Debería poder realizar el cierre de caja.]
+* **Resultado Obtenido (Error):** [Al poner un monto de efectivo y querer realizar el cierre de caja me muestra un mensaje de error interno del servidor.]
+
+### 2. Evidencia Técnica
+**Payload Enviado (Request):**
+```json
+  
+{
+    declared_cash: 200000
+}
+
+```
+
+**Respuesta obtenida:**
+```json
+{
+    "ok": false,
+    "message": "Error interno del servidor. Intentá nuevamente más tarde."
+}
+```
 
 ---
 

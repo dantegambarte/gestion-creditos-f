@@ -21,6 +21,8 @@
 | **CR-13 | Nueva Operacion - Seller. | Se hizo click en "Nueva Operación". | Las letras son del mismo color que el fondo. | Error |
 | **CR-14 | Operaciones - Admin. | Se hizo click en "Operaciones" y se uso el filtro. | Al desplegar el filtro estando en "Pendiente" sale con errores de despliegue. | Error |
 | **CR-15 | Operación Crédito - Declaraciones y Autorizaciones. | Se hizo click en "Nuevo Crédito". | La tilde en los casilleros debería ser de otro color diferente que negro ya que no queda visible. | Error |
+| **CR-16 | Nueva Operación - Seller. | Se hizo click en "Nueva Operación". | No es posible vender una variante de un producto. | Error |
+| **CR-17 | Operaciones - Seller. | Se hizo click en 10 en la paginación. | No muestra las 10 siguientes operaciones. | Error |
 
 ## 🟢 2. Módulo: Cliente
 
@@ -32,6 +34,12 @@
 | **CL-04** | Editar Clientes | Click en "Editar" en un cliente. | Debería salir un cartel que fue exitoso. | Error |
 | **CL-02** | Ver Cliente | Click en "Ver" en un cliente - Seller. | Debería mostrar los datos del cliente. | Error |
 | **CL-05** | Ver Cliente | Click en "Ver" en un cliente - Admin. | Debería poder elegir el período pero sale cortado el calendario. | Error |
+| **CL-06** | Nuevo Cliente - Seller | Click en "Nuevo Cliente" en - Seller. | Me conduce a una pantalla para cambiar la contraseña. | Error |
+| **CL-07** | Nuevo Cliente - Seller-Collector | Click en "Nuevo Cliente" en - Seller-Collector. | Me conduce a una pantalla para cambiar la contraseña. | Error |
+| **CL-08** | Clientes - Seller / Seller-Collector. | Se hizo click en 10 en la paginación. | No muestra los 10 siguientes clientes. | Error |
+| **CL-09** | Clientes - Admin. | Se hizo click en filtro de riesgo. | No funciona el menú desplegable cuando elijo un riesgo. | Error |
+| **CL-10** | Clientes - Admin. | Se hizo click "Clientes". | Muestra en 0 (cero) los créditos por mas que el cliente tenga. | Error |
+
 
 
 
@@ -106,3 +114,11 @@
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
 | **US-01** | Rol Usuario | Se hizo click en "Nuevo Usuario". | Debería poder elegir el Rol. | Error |
+| **US-02** | Usuarios - Admin | Se hizo click en "Usuarios". | No funciona el filtro para seleccionar por Rol, sale cortado cuando selecciono un Rol. | Error |
+
+## 🟢 Módulo: Caja
+
+| ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
+| :--- | :--- | :--- | :--- | :--- |
+| **CA-01** | Cierre de caja | Se hizo click en "Cierre de caja del día". | Me muestra un error interno del servidor. | Error |
+
