@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
@@ -31,8 +31,9 @@ import {
   ],
   templateUrl: './step-conditions.component.html',
 })
-export class StepConditionsComponent {
+export class StepConditionsComponent implements OnChanges {
   simulationVisible = false;
+  private hadResolvedSimulation = false;
 
   readonly allPaymentFrequencies: {
     label: string;
@@ -66,6 +67,7 @@ export class StepConditionsComponent {
   @Input() simulationResult: SimulateResult | null = null;
   @Input() simulationLoading = false;
   @Input() simulationError: string | null = null;
+  @Input() canContinueWithPlan = false;
 
   @Output() saleInstallmentsChanged = new EventEmitter<{
     productoId: string;
@@ -73,6 +75,20 @@ export class StepConditionsComponent {
   }>();
   @Output() continueFromSimulationRequested = new EventEmitter<void>();
   @Output() simulationRequested = new EventEmitter<void>();
+
+  /**
+   * Cierra la vista de simulación cuando cambian datos base y el resultado previo ya fue invalidado.
+   * @param {SimpleChanges} changes - Cambios detectados por Angular en los inputs del paso.
+   */
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['simulationResult'] || changes['simulationError'] || changes['simulationLoading']) {
+      const hasResolvedSimulation = !!this.simulationResult || !!this.simulationError;
+      if (this.hadResolvedSimulation && !hasResolvedSimulation && !this.simulationLoading) {
+        this.simulationVisible = false;
+      }
+      this.hadResolvedSimulation = hasResolvedSimulation;
+    }
+  }
 
   /**
    * Determina si el modo de fecha activa la fecha derivada desde aprobación.
@@ -164,7 +180,10 @@ export class StepConditionsComponent {
    */
   getSimulationStatusLabel(): string {
     if (!this.canShowSimulation()) return 'Completá los datos para simular';
-    return this.simulationVisible ? 'Simulación actualizada' : 'Lista para simular';
+    if (this.simulationLoading) return 'Calculando simulación';
+    if (this.simulationError) return 'Simulación no disponible';
+    if (this.hasRealSimulation()) return 'Simulación actualizada';
+    return 'Lista para simular';
   }
 
   /**

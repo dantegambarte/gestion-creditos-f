@@ -462,7 +462,11 @@
 
           <button
             type="button"
-            class="mt-5 w-full rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/10 px-3 py-2.5 text-sm font-semibold text-[#93C5FD] transition-colors hover:bg-[#3B82F6]/20"
+            class="mt-5 w-full rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors"
+            [class]="canContinueWithPlan
+              ? 'mt-5 w-full rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/10 px-3 py-2.5 text-sm font-semibold text-[#93C5FD] transition-colors hover:bg-[#3B82F6]/20'
+              : 'mt-5 w-full rounded-xl border border-[#2A3145] bg-[#151A27] px-3 py-2.5 text-sm font-semibold text-[#5E6A82] opacity-60 cursor-not-allowed'"
+            [disabled]="!canContinueWithPlan"
             (click)="continueFromSimulation()"
           >
             Continuar con este plan
