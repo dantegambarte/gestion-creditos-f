@@ -12,24 +12,28 @@ import { AuthServiceBase } from './auth-service.base';
  *   - useMocks = true  → MockAuthService (datos locales, sin HTTP)
  *   - useMocks = false → AuthService (llama al backend real)
  *
- * El token de inyección es `AuthServiceBase` — toda la app depende de la
- * abstracción. Para cambiar la implementación basta modificar este archivo.
+ * Se registran dos tokens:
+ *   - MockAuthService: token legacy usado por guards y componentes existentes.
+ *   - AuthServiceBase: token semántico para interceptors y código nuevo;
+ *     siempre apunta a la misma instancia que MockAuthService.
  *
  * APP_INITIALIZER garantiza que la sesión esté restaurada antes de que
  * Angular active cualquier ruta (necesario para que authGuard vea el usuario).
  */
 export function provideAuth(): EnvironmentProviders {
-  const impl = environment.useMocks ? MockAuthService : AuthService;
-
   return makeEnvironmentProviders([
     {
+      provide: MockAuthService,
+      useClass: environment.useMocks ? MockAuthService : AuthService,
+    },
+    {
       provide: AuthServiceBase,
-      useClass: impl,
+      useExisting: MockAuthService,
     },
     {
       provide: APP_INITIALIZER,
-      useFactory: (auth: AuthServiceBase) => () => firstValueFrom(auth.restoreSession()),
-      deps: [AuthServiceBase],
+      useFactory: (auth: MockAuthService) => () => firstValueFrom(auth.restoreSession()),
+      deps: [MockAuthService],
       multi: true,
     },
   ]);

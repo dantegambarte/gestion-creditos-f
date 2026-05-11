@@ -13,12 +13,16 @@
 | **CR-05** | Configuración del Crédito | Click en "Siguiente" sin elegir "Fecha de primer pago". | Debería estar deshabilitado el botón "Siguiente". | Corregido / Validado |
 | **CR-06** | Operación Crédito - Declaraciones y Autorizaciones | Dejé sin marcar la casilla "Autorizo el desembolso inmediato". | Debería estar deshabilitado el botón "Siguiente" hasta marcar la casilla. | Corregido / Validado |
 | **CR-07** | Operación Crédito - Operaciones | Click en "Activo" para filtrar las operaciones. | Debería filtrar las operaciones. | Corregido / Validado |
-| **CR-08** | Operación Crédito - Operaciones - Admin | Escribí "Perez" en el buscador. | Debería filtrar los clientes. | Corregido / Validado |
-| **CR-09** | Regresión en seleccion de unidad . | Si posee stock, la operación debería enviarse. | Corregido / Validado |
-| **CR-10** | Calendario de primer pago - Admin | Hice click en el calendario para poder elegir fecha. | El calendario se muestra cortado. | Corregido / Validado |
+| **CR-08** | Operación Crédito - Operaciones - Admin | Escribí "Perez" en el buscador. | Debería filtrar los clientes. | Error |
+| **CR-09** | Regresión en seleccion de unidad . | Si posee stock, la operación debería enviarse. | Error |
+| **CR-10** | Calendario de primer pago - Admin | Hice click en el calendario para poder elegir fecha. | El calendario se muestra cortado. | Error |
 | **CR-11 | Operación venta de un producto - Admin. | Se eligió un producto de la lista. | No está implementado el pago diario y quincenal y el interés no cambia. | Error |
 | **CR-12 | Operaciones pre-aprobadas y aprobadas - Admin. | Se realizó una operación para su aprobación. | No está implementado el detalle de las operaciones. | Error |
-| **CR-13 | Nueva Operacion - Seller. | Se hizo click en "Nueva Operación". | Las letras son del mismo color que el fondo. | Corregido / Validado |
+| **CR-13 | Nueva Operacion - Seller. | Se hizo click en "Nueva Operación". | Las letras son del mismo color que el fondo. | Error |
+| **CR-14 | Operaciones - Admin. | Se hizo click en "Operaciones" y se uso el filtro. | Al desplegar el filtro estando en "Pendiente" sale con errores de despliegue. | Error |
+| **CR-15 | Operación Crédito - Declaraciones y Autorizaciones. | Se hizo click en "Nuevo Crédito". | La tilde en los casilleros debería ser de otro color diferente que negro ya que no queda visible. | Error |
+| **CR-16 | Nueva Operación - Seller. | Se hizo click en "Nueva Operación". | No es posible vender una variante de un producto. | Error |
+| **CR-17 | Operaciones - Seller. | Se hizo click en 10 en la paginación. | No muestra las 10 siguientes operaciones. | Error |
 
 ## 🟢 2. Módulo: Cliente
 
@@ -27,8 +31,15 @@
 | **CL-01** | Crear Cliente | Se realizó la creación de un cliente. | Debería salir un mensaje que el cliente se guardó correctamente. | Corregido / Validado |
 | **CL-02** | Ver Cliente | Click en "Ver" en un cliente. | Debería mostrar los datos del cliente. | Corregido / Validado |
 | **CL-03** | Gestión de Clientes | Click en "Editar" en un cliente. | Los cambios deberían guardarse en la DB. | Corregido / Validado |
-| **CL-04** | Editar Clientes | Click en "Editar" en un cliente. | Debería salir un cartel que fue exitoso. | Corregido / Validado |
+| **CL-04** | Editar Clientes | Click en "Editar" en un cliente. | Debería salir un cartel que fue exitoso. | Error |
 | **CL-02** | Ver Cliente | Click en "Ver" en un cliente - Seller. | Debería mostrar los datos del cliente. | Error |
+| **CL-05** | Ver Cliente | Click en "Ver" en un cliente - Admin. | Debería poder elegir el período pero sale cortado el calendario. | Error |
+| **CL-06** | Nuevo Cliente - Seller | Click en "Nuevo Cliente" en - Seller. | Me conduce a una pantalla para cambiar la contraseña. | Error |
+| **CL-07** | Nuevo Cliente - Seller-Collector | Click en "Nuevo Cliente" en - Seller-Collector. | Me conduce a una pantalla para cambiar la contraseña. | Error |
+| **CL-08** | Clientes - Seller / Seller-Collector. | Se hizo click en 10 en la paginación. | No muestra los 10 siguientes clientes. | Error |
+| **CL-09** | Clientes - Admin. | Se hizo click en filtro de riesgo. | No funciona el menú desplegable cuando elijo un riesgo. | Error |
+| **CL-10** | Clientes - Admin. | Se hizo click "Clientes". | Muestra en 0 (cero) los créditos por mas que el cliente tenga. | Error |
+
 
 
 
@@ -43,6 +54,10 @@
 | **PR-04** | Crear Producto | Se hizo click en "Crear Producto". | Los productos deberían mostrarse luego de confirmar la creación. | Corregido / Validado |
 | **PR-05** | Crear Producto | Se hizo click en confirmar al "Crear Producto". | Debería salir un cartel que el producto fué creado exitosamente. | Corregido / Validado |
 | **PR-06** | Crear Producto | Se hizo click en "Crear Producto". | Debería estar deshabilitado el botón "Guardar producto" hasta completar los campos obligatorios. | Corregido / Validado |
+| **PR-07** | Desactivar Categoría - Admin | Se hizo click en "Desactivar Categoría". | Debería salir un cartel y poder activarla de nuevo. | Error |
+| **PR-08** | Desactivar Marca - Admin | Se hizo click en "Desactivar Categoría". | Error |
+| **PR-09** | Editar Producto- Admin | Se hizo click en "Editar Producto", mejorar el estilo. | Error |
+
 
 ## ✅ Correcciones validadas recientemente
 
@@ -70,13 +85,8 @@
 - `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → CR-06 confirmación exige desembolso inmediato: **passing**
 - `src/app/shared/operations/new-operation/steps/step-products/step-products.component.spec.ts` → CR-03 ocultar productos + limpieza de estado al pasar a préstamo personal: **passing**
 - `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → CR-03 préstamo personal se envía sin exigir productos/unidades: **passing**
-- `src/app/shared/operations/new-operation/steps/step-client/step-client.component.spec.ts` → CR-08 buscador de cliente en nueva operación filtra ignorando tildes (`Perez` -> `Pérez`): **passing**
-- `src/app/shared/operations/new-operation/operation-form.service.spec.ts` → CR-09 catálogo SALE no mezcla stock entre productos distintos y envía `unitId` reales: **passing**
-- `src/app/shared/operations/new-operation/steps/step-conditions/step-conditions.component.spec.ts` → CR-10 calendario usa trigger sobre input y overlay estable para selección visual: **passing**
-- `src/app/features/seller/seller.routes.spec.ts` → CR-13 seller usa el wizard compartido `NewOperationComponent`: **passing**
 - `cypress/e2e/07-negative-nueva-operacion.cy.ts` → CR-02/CR-05 navegación bloqueada sin fecha primer pago y CR-06 desembolso obligatorio: **passing**
 - `src/app/shared/clients/clients.component.spec.ts` → CL-01 toast de éxito al crear cliente: **passing**
-- `src/app/shared/clients/clients.component.spec.ts` → CL-04 edición de cliente muestra toast de éxito: **passing**
 - `cypress/e2e/32-client-detail-regression.cy.ts` → CL-02 detalle cliente: **passing**
 - `cypress/e2e/04-clientes.cy.ts` → módulo clientes / CL-03 persistencia: **passing**
 - `cypress/e2e/30-producto-crear.cy.ts` → PR-01 crear producto: **passing**
@@ -91,9 +101,26 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **PL-01** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar el botón "Generar Planilla". | Corregido / Validado |
 | **PL-02** | Botones | Los botones no están correctamente ubicados. |Deberían seguir los patrones visuales. | Corregido / Validado |
+| **PL-01** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar el botón "Generar Planilla". | Error |
 
 ## 🟢 Módulo: Gastos
 
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
 | **GA-01** | Gastos | Se hizo click en desactivar gasto "Alquiler". | Debería poder activarlo nuevamente. | Corregido / Validado |
+| **GA-01** | Gastos | Se hizo click en "Registrar Gasto" - Admin. | Debería poder seleccionar el método de pago. | Error |
+
+
+## 🟢 Módulo: Usuarios
+
+| ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
+| :--- | :--- | :--- | :--- | :--- |
+| **US-01** | Rol Usuario | Se hizo click en "Nuevo Usuario". | Debería poder elegir el Rol. | Error |
+| **US-02** | Usuarios - Admin | Se hizo click en "Usuarios". | No funciona el filtro para seleccionar por Rol, sale cortado cuando selecciono un Rol. | Error |
+
+## 🟢 Módulo: Caja
+
+| ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
+| :--- | :--- | :--- | :--- | :--- |
+| **CA-01** | Cierre de caja | Se hizo click en "Cierre de caja del día". | Me muestra un error interno del servidor. | Error |
+

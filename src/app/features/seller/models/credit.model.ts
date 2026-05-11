@@ -108,6 +108,7 @@ export interface SimulateResult {
   installmentAmount: number;
   totalToReturn: number;
   note: string;
+  rate?: number;
   items?: SimulateResultItem[];
   downPayment?: number;
   financedAmount?: number;

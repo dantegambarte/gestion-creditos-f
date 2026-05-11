@@ -18,6 +18,8 @@
 ```
 
 ---
+
+
 Modulo Crédito
 
 **Módulo:** [Crédito]
@@ -127,7 +129,7 @@ http://localhost:3000/api/credits - POST
 
 * **Acción Realizada:** [Escribí "Perez" en el buscador en "Nueva Operación" - Admin.]
 * **Resultado Esperado:** [Debería filtrar los clientes.]
-* **Resultado Obtenido (Actual):** [Corregido. El buscador del paso Cliente en `Nueva Operación` ahora también ignora tildes y diferencias de mayúsculas/minúsculas, por lo que `Perez` encuentra `Pérez`. Validado con `step-client.component.spec.ts`.]
+* **Resultado Obtenido (Error):** [No filtra los resultados.]
 
 ---
 
@@ -137,7 +139,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Hice click en "Enviar para Aprobación" luego de elegir un producto que informa unidades disponibles.]
 * **Resultado Esperado:** [Si el producto muestra stock disponible, la operación debería enviarse correctamente para aprobación.]
-* **Resultado Obtenido (Actual):** [Corregido / validado. El flujo SALE ya no mezcla unidades entre productos distintos al agrupar el catálogo; la operación se registró correctamente y el stock visible bajó de 5 a 4 tras el envío. Validado manualmente contra backend real y cubierto con `operation-form.service.spec.ts`.]
+* **Resultado Obtenido (Error):** [Cuando elijo un producto que dice que posee 5 unidades, la API responde que la unidad seleccionada no fue encontrada. **Pendiente de atacar**.]
 ### 2. Evidencia Técnica
 **Payload Enviado (Request):**
 ```json
@@ -150,13 +152,18 @@ http://localhost:3000/api/credits - POST
 }
 ```
 
-**Respuesta obtenida actual:**
+**Respuesta obtenida:**
 ```json
 {
-    "ok": true,
-    "message": "Pre-operación registrada. Pendiente de aprobación."
+    "ok": false,
+    "message": "Unidad c8e8ef31-eec0-4e8f-a09c-d921a368d84d no encontrada."
 }
 ```
+
+**Línea de ataque sugerida:**
+- Verificar consistencia entre stock mostrado en UI y `unit_ids` reales devueltos por backend.
+- Revisar si el selector está enviando una unidad reservada/inactiva o un id stale.
+- Cubrir regresión con Cypress al confirmar stock visible vs unidad seleccionable.
 
 ---
 
@@ -166,7 +173,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Hice click para elegir la fecha del primer pago con el mouse desde el calendario.]
 * **Resultado Esperado:** [Debería poder elegir la fecha con click y reflejarla en el formulario.]
-* **Resultado Obtenido (Actual):** [Corregido / validado. El calendario ahora responde al click del mouse, carga la fecha elegida en el input y mantiene un overlay estable sobre el layout del wizard. Validado manualmente en admin y cubierto con `step-conditions.component.spec.ts` para la configuración del calendario.]
+* **Resultado Obtenido (Error):** [Al hacer click con el mouse sobre una fecha del calendario no hace nada; escribiendo la fecha manualmente sí permite seguir. **Pendiente de atacar**.]
 
 **Línea de ataque sugerida:**
 - Revisar binding del componente calendario y evento de selección (`onSelect` / `ngModel` / `formControl`).
@@ -175,7 +182,7 @@ http://localhost:3000/api/credits - POST
 
 * **Acción Realizada:** [Hice click para elegir la fecha del primer pago con el mouse desde el calendario - Admin.]
 * **Resultado Esperado:** [Debería poder elegir una fecha del calendario.]
-* **Resultado Obtenido (Actual):** [Corregido / validado. El calendario se muestra completo, sin quedar cortado, y permite elegir fechas futuras correctamente. Validado manualmente en admin.]
+* **Resultado Obtenido (Error):** [Al hacer click sobre el calendario sale cortado sin poder elegir las fechas que se encuentren por debajo.]
 
 ---
 
@@ -205,7 +212,47 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Nueva Operación".]
 * **Resultado Esperado:** [Debería salir un modal para cargar los datos.]
-* **Resultado Obtenido (Actual):** [Corregido / validado. Seller ahora reutiliza el wizard compartido `NewOperationComponent`, por lo que la pantalla de `Nueva Operación` muestra el mismo layout oscuro con contraste correcto que admin. Validado manualmente iniciando sesión como seller y entrando a `/seller/operations/new`.]
+* **Resultado Obtenido (Error):** [Las letras son del mismo color que el fondo lo que hace ilegible la lectura.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-14]
+**Título / Descripción:** [Operaciones - Admin.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Operaciones".]
+* **Resultado Esperado:** [Se hizo click en el filtro, deberían poder verse los estados.]
+* **Resultado Obtenido (Error):** [Al elegir un estado por ej. "Pendientes de Aprobacion" si apreto de nuevo para que se despliegue el filtro salen cortados los mismos.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-15]
+**Título / Descripción:** [Operación Crédito - Declaraciones y Autorizaciones.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Crédito".]
+* **Resultado Esperado:** [Debería poder verse las tildes en los casilleros.]
+* **Resultado Obtenido (Error):** [La tilde en los casilleros debería ser de otro color diferente que negro ya que no queda visible.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-16]
+**Título / Descripción:** [Nueva Operacion - Seller.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Operación".]
+* **Resultado Esperado:** [Debería poder vender cualquier variante de un producto.]
+* **Resultado Obtenido (Error):** [No es posible poder elegir la variante de un producto.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-17]
+**Título / Descripción:** [Operaciones - Seller.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en 10 en la paginación.]
+* **Resultado Esperado:** [Deberían verse las siguientes 10 operaciones.]
+* **Resultado Obtenido (Error):** [Al apretar el botón no muestra las 10 siguientes operaciones.]
 
 ---
 
@@ -251,8 +298,57 @@ Módulo Clientes
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click sobre el boton "Editar" en un cliente.]
 * **Resultado Esperado:** [Al modificar los datos deben debería salir un cartel "Modificación Exitosa".]
-* **Resultado Obtenido (Actual):** [Corregido. Al guardar cambios en la edición ahora se muestra feedback visible con toast `Modificación Exitosa.` y luego se refresca la grilla. Validado con `clients.component.spec.ts`.]
+* **Resultado Obtenido (Actual):** [El apretar "Guardar Cambios" no sale ningun cartel.]
 
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-05]
+**Título / Descripción:** [Ver Cliente - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click sobre el boton "Ver" y seleccionar "Historial" en un cliente.]
+* **Resultado Esperado:** [Debería poder elegir el período.]
+* **Resultado Obtenido (Error):** [Los calendarios salen cortados, no se muetran todos los datos.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-06]
+**Título / Descripción:** [Nuevo Cliente - Seller]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click sobre el boton "Nuevo Cliente".]
+* **Resultado Esperado:** [Debería salir un modal para poder resigtrar un nuevo cliente.]
+* **Resultado Obtenido (Error):** [Me lleva a una pantalla para cambiar la contraseña.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-08]
+**Título / Descripción:** [Clientes - Seller / Seller-Collector]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en 10 en la paginación de clientes.]
+* **Resultado Esperado:** [Debería poder mostrar los 10 siguientes clientes.]
+* **Resultado Obtenido (Error):** [No funciona el botón de paginación, no muestra los 10 siguientes clientes.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-09]
+**Título / Descripción:** [Clientes - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en el filtro de riesgo.]
+* **Resultado Esperado:** [Debería poder cambiar los riesgos.]
+* **Resultado Obtenido (Error):** [Al elegir un riesgo y querer cambiar a otro sale cortado el menú desplegable.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-10]
+**Título / Descripción:** [Clientes - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Clientes".]
+* **Resultado Esperado:** [Debería poder ver la cantidad de créditos que posee al cliente.]
+* **Resultado Obtenido (Error):** [Muestra en 0 (cero) por mas que el cliente tenga créditos.]
 
 ---
 
@@ -378,6 +474,36 @@ http://localhost:3000/api/products - POST
 
 ---
 
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-07]
+**Título / Descripción:** [Desactivar Categoría - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Desactivar Categoría".]
+* **Resultado Esperado:** [Debería salir un cartel indicando si realmene desea desactivarla y una opción para poder activarla nuevamente.]
+* **Resultado Obtenido (Error):** [No sale cartel de validación para desactivar la Categoría y no tengo opción de activarla nuevamente.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-08]
+**Título / Descripción:** [Desactivar Marca - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Desactivar Marca".]
+* **Resultado Esperado:** [Debería salir un cartel indicando si realmene desea desactivarla y una opción para poder activarla nuevamente.]
+* **Resultado Obtenido (error):** [No sale cartel de validación para desactivar la Categoría y no tengo opción de activarla nuevamente.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-09]
+**Título / Descripción:** [Editar Producto - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Editar Producto".]
+* **Resultado Esperado:** [Debería salir un modal o una caja contenedora.]
+* **Resultado Obtenido (error):** [Se pierde el "Editar Producto" con el fondo.]
+
+---
+
 Módulo Planilla
 
 **Módulo:** [Planilla]
@@ -387,6 +513,10 @@ Módulo Planilla
 * **Acción Realizada:** [Se hizo click en "Generar Planilla para todos" y se seleccionó un cobrador y se hizo click en "Generar Planilla".]
 * **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos" y dehabilitar el botón "Generar Planilla" cuando se selecciona un cobrador.]
 * **Resultado Obtenido (Actual):** [Corregido. Los handlers ahora bloquean reentrada (`generating` / `generatingAll`), los botones quedan deshabilitados durante la ejecución y backend serializa la generación por cobrador/fecha dentro de transacción para evitar reprocesos peligrosos. Validado con `sheet.component.spec.ts`.]
+
+* **Acción Realizada:** [Se hizo click en "Generar Planilla para todos" y se seleccionó un cobrador y se hizo click en "Generar Planilla".]
+* **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos" y dehabilitar el botón "Generar Planilla" cuando se selecciona un cobrador.]
+* **Resultado Obtenido (Error):** [Me permite apretar varias veces el botón "Generar Planilla" ya sea para todos o para un cobrador en particular.]
 
 ---
 
@@ -407,6 +537,68 @@ Módulo Gastos
 * **Acción Realizada:** [Se hizo click en desactivar gasto "Alquiler".]
 * **Resultado Esperado:** [Deberia poder activarlo de nuevo si quisiera.]
 * **Resultado Obtenido (Actual):** [Corregido. El panel de categorías ahora consulta activas e inactivas (`include_inactive=true`), por lo que una categoría desactivada sigue visible y puede volver a activarse desde la misma UI. Validado con `expense-categories.service.spec.ts` y `expenses.service.spec.ts`.]
+
+---
+
+**Módulo:** [Gastos]
+**ID de Prueba:** [GA-02]
+**Título / Descripción:** [Gastos]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Registrar Gasto" - Admin.]
+* **Resultado Esperado:** [Deberia poder seleccionar el tipo de pago, Efectivo o Transferencia.]
+* **Resultado Obtenido (Actual):** [No funciona el menú desplegable en el tipo de pago.]
+
+---
+
+Módulo Usuarios
+
+**Módulo:** [Usuarios]
+**ID de Prueba:** [US-01]
+**Título / Descripción:** [Rol Usuario]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Usuario".]
+* **Resultado Esperado:** [Deberia poder elegir el Rol.]
+* **Resultado Obtenido (Error):** [El menú desplegable del Rol sale cortado con dificultad para elegir el mismo.]
+
+---
+
+**Módulo:** [Usuarios]
+**ID de Prueba:** [US-02]
+**Título / Descripción:** [Usuarios - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en el buscador en "Usuarios".]
+* **Resultado Esperado:** [Deberia filtrar por Rol.]
+* **Resultado Obtenido (Error):** [El menú desplegable sale cortado cuando elijo un Rol.]
+
+---
+
+Módulo Caja
+
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-01]
+**Título / Descripción:** [Cierre de caja]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cierre de caja".]
+* **Resultado Esperado:** [Debería poder realizar el cierre de caja.]
+* **Resultado Obtenido (Error):** [Al poner un monto de efectivo y querer realizar el cierre de caja me muestra un mensaje de error interno del servidor.]
+
+### 2. Evidencia Técnica
+**Payload Enviado (Request):**
+```json
+  
+{
+    declared_cash: 200000
+}
+
+```
+
+**Respuesta obtenida:**
+```json
+{
+    "ok": false,
+    "message": "Error interno del servidor. Intentá nuevamente más tarde."
+}
+```
 
 ---
 
