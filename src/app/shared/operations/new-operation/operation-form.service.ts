@@ -414,9 +414,15 @@ export class OperationFormService {
     }
     if (step === 2) {
       const isSale = this.operationForm.controls.operationType.value === 'SALE';
+      const firstPaymentDateMode = this.operationForm.controls.firstPaymentDateMode.value;
+      const firstPaymentDateControl = this.operationForm.controls.firstPaymentDate;
       const saleInstallmentsValid =
         !isSale ||
         this.cartLines.every((line) => (line.selectedInstallments ?? 0) > 0);
+      const firstPaymentDateValid =
+        firstPaymentDateMode === 'APPROVAL_DATE'
+          ? !!firstPaymentDateControl.value && this.operationForm.controls.paymentFrequency.valid
+          : firstPaymentDateControl.valid;
 
       let initialPaymentValid = true;
       if (isSale) {
@@ -436,7 +442,7 @@ export class OperationFormService {
         this.operationForm.controls.paymentFrequency.valid &&
         (isSale || this.operationForm.controls.installmentsCount.valid) &&
         saleInstallmentsValid &&
-        this.operationForm.controls.firstPaymentDate.valid &&
+        firstPaymentDateValid &&
         initialPaymentValid
       );
     }

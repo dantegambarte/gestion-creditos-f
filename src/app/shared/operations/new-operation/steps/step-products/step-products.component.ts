@@ -170,6 +170,25 @@ export class StepProductsComponent implements OnChanges {
   }
 
   /**
+   * Calcula cuántas unidades reales quedan disponibles para seguir agregando.
+   * @param {CatalogVariant} variant - Variante concreta dentro del producto activo.
+   * @returns {number} Cantidad restante sin reservar en el carrito.
+   */
+  getVariantRemainingStock(variant: CatalogVariant): number {
+    if (!this.selectedProduct) return 0;
+    const existing = this.findCartLine(this.selectedProduct.productoId, variant.variantId);
+    return Math.max(variant.stockDisponible - (existing?.cantidad ?? 0), 0);
+  }
+
+  /**
+   * Indica si la variante quedó completamente reservada dentro del carrito actual.
+   * @param {CatalogVariant} variant - Variante concreta a evaluar.
+   */
+  isVariantFullyReserved(variant: CatalogVariant): boolean {
+    return this.getVariantRemainingStock(variant) === 0;
+  }
+
+  /**
    * Indica si una unidad serializada de la variante activa ya quedó tomada por el carrito.
    * @param {number} index - Posición de la unidad dentro del stock visible.
    */

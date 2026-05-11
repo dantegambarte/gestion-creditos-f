@@ -314,15 +314,16 @@
             </div>
           </div>
 
-          @if (selectedVariant && isVariantOutOfStock(selectedVariant)) {
-            <div class="rounded-2xl border border-[#6A3941] bg-[#2B1E25] px-4 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+          @if (selectedVariant && isVariantFullyReserved(selectedVariant)) {
+            <div class="rounded-2xl border border-[#2F4D84] bg-[#1B2335] px-4 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
               <div class="flex items-start gap-3">
-                <i class="pi pi-exclamation-triangle mt-0.5 text-sm text-[#FF7A7A]"></i>
+                <i class="pi pi-info-circle mt-0.5 text-sm text-[#8CB4FF]"></i>
                 <div>
-                  <p class="text-sm font-semibold text-[#FF7A7A]">Error de stock</p>
-                  <p class="mt-2 text-xs leading-5 text-[#D7AAB1]">
-                    Stock insuficiente. Disponible: <span class="font-semibold text-[#FF938F]">0 unidades</span> para
+                  <p class="text-sm font-semibold text-[#BFD3FF]">Todas las unidades ya están agregadas</p>
+                  <p class="mt-2 text-xs leading-5 text-[#AFC0E9]">
+                    Ya reservaste en el carrito las <span class="font-semibold text-white">{{ selectedVariant.stockDisponible }} unidades</span> disponibles para
                     <span class="font-semibold text-white">{{ selectedProduct?.nombre }} — {{ selectedVariant.label }}</span>.
+                    Si querés cambiar la selección, podés quitar unidades desde el carrito.
                   </p>
                 </div>
               </div>

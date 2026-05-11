@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { SimpleChange } from '@angular/core';
 import { StepConditionsComponent } from './step-conditions.component';
 
 describe('StepConditionsComponent', () => {
@@ -83,5 +84,30 @@ describe('StepConditionsComponent', () => {
       });
       expect(result).toBe(0);
     });
+  });
+
+  it('cierra la simulación visible cuando el resultado previo queda invalidado por cambios del plan', () => {
+    component.simulationVisible = true;
+    component.simulationResult = { installmentsCount: 4, installmentAmount: 1000 } as any;
+
+    component.ngOnChanges({
+      simulationResult: new SimpleChange(null, component.simulationResult, true),
+    });
+
+    component.simulationResult = null;
+    component.simulationLoading = false;
+    component.ngOnChanges({
+      simulationResult: new SimpleChange({ installmentsCount: 4, installmentAmount: 1000 } as any, null, false),
+    });
+
+    expect(component.simulationVisible).toBeFalse();
+  });
+
+  it('marca la simulación como lista para simular cuando ya no hay resultado real vigente', () => {
+    component.simulationResult = null;
+    component.simulationLoading = false;
+    component.simulationError = null;
+
+    expect(component.getSimulationStatusLabel()).toBe('Lista para simular');
   });
 });
