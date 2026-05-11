@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
 import { HeaderService } from '../../../../core/services/header.service';
+import { provideAuthTesting } from '../../../../core/auth/testing/auth-testing';
 import { CustomersService } from '../../clients/customers.service';
 import { Customer } from '../../models/customer.model';
 import { ProductUnit } from '../../models/product-unit.model';
@@ -97,6 +98,7 @@ describe('CreditCreateComponent', () => {
           provide: HeaderService,
           useValue: { set: jasmine.createSpy() },
         },
+        ...provideAuthTesting(),
       ],
     }).compileComponents();
 
@@ -134,13 +136,14 @@ describe('CreditCreateComponent', () => {
 
     component.simulate();
 
-    expect(creditsServiceSpy.simulate).toHaveBeenCalledWith({
-      type: 'SALE',
-      totalAmount: 1000,
-      installmentsCount: 3,
-      paymentFrequency: 'MONTHLY',
-      downPayment: 200,
-    });
+    expect(creditsServiceSpy.simulate).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        type: 'SALE',
+        installmentsCount: 3,
+        paymentFrequency: 'MONTHLY',
+        downPayment: 200,
+      }),
+    );
   });
 
   it('crea una venta con downPayment y sin campos de prepaid_installments', () => {

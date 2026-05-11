@@ -74,6 +74,13 @@ describe('ProductEditComponent — validadores de formulario', () => {
     expect(component.form.get('stock')?.value).toBe(0);
   });
 
+  it('tiene wrapper ff-panel para distinguir el formulario del fondo — PR-09', () => {
+    const fixture = TestBed.createComponent(ProductEditComponent);
+    fixture.detectChanges();
+    const panel = fixture.nativeElement.querySelector('.ff-panel');
+    expect(panel).not.toBeNull();
+  });
+
   it('descripción con 501 caracteres → formulario inválido con error maxlength', () => {
     component.form.get('title')!.setValue('Producto existente');
     component.form.get('description')!.setValue('a'.repeat(501));

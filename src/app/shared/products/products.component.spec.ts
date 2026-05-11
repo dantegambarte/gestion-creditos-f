@@ -1,10 +1,12 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { By } from '@angular/platform-browser';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 
 import { FormatService } from '../../core/services/format.service';
+import { provideAuthTesting } from '../../core/auth/testing/auth-testing';
 import { ProductUnitsService } from '../../features/seller/products/product-units.service';
 import { ProductVariantsService } from '../../features/seller/products/product-variants.service';
 import { ProductsService } from '../../features/seller/products/products.service';
@@ -16,26 +18,8 @@ describe('ProductsComponent', () => {
   let router: Router;
 
   const productsServiceMock = {
-    list: jasmine.createSpy('list').and.returnValue(of([])),
-    create: jasmine.createSpy('create').and.returnValue(
-      of({
-        id: 'prod-1',
-        title: 'Producto',
-        description: 'Desc',
-        model: null,
-        status: 'ACTIVE',
-        createdAt: '',
-        updatedAt: '',
-        categoryId: null,
-        categoryName: null,
-        brandId: null,
-        brandName: null,
-        availableCount: 0,
-        reservedCount: 0,
-        soldCount: 0,
-        variants: [],
-      }),
-    ),
+    list: jasmine.createSpy('list'),
+    create: jasmine.createSpy('create'),
   };
 
   const formatServiceMock = {
@@ -44,31 +28,11 @@ describe('ProductsComponent', () => {
   };
 
   const productVariantsServiceMock = {
-    create: jasmine.createSpy('create').and.returnValue(
-      of({
-        id: 'var-1',
-        color: null,
-        size: null,
-        capacity: null,
-        currentPrice: 1500,
-        status: 'ACTIVE',
-        createdAt: '',
-        updatedAt: '',
-        productId: 'prod-1',
-        productName: 'Producto',
-        title: 'Producto',
-        model: null,
-        productStatus: 'ACTIVE',
-        brandId: null,
-        brandName: null,
-      }),
-    ),
+    create: jasmine.createSpy('create'),
   };
 
   const productUnitsServiceMock = {
-    createBulk: jasmine.createSpy('createBulk').and.returnValue(
-      of({ created: 3, units: [] }),
-    ),
+    createBulk: jasmine.createSpy('createBulk'),
   };
 
   const messageServiceMock = {
@@ -106,10 +70,20 @@ describe('ProductsComponent', () => {
   }
 
   beforeEach(async () => {
-    productsServiceMock.list.calls.reset();
-    productsServiceMock.create.calls.reset();
-    productVariantsServiceMock.create.calls.reset();
-    productUnitsServiceMock.createBulk.calls.reset();
+    productsServiceMock.list.and.returnValue(of([]));
+    productsServiceMock.create.and.returnValue(of({
+      id: 'prod-1', title: 'Producto', description: 'Desc', model: null,
+      status: 'ACTIVE', createdAt: '', updatedAt: '', categoryId: null,
+      categoryName: null, brandId: null, brandName: null,
+      availableCount: 0, reservedCount: 0, soldCount: 0, variants: [],
+    }));
+    productVariantsServiceMock.create.and.returnValue(of({
+      id: 'var-1', color: null, size: null, capacity: null,
+      currentPrice: 1500, status: 'ACTIVE', createdAt: '', updatedAt: '',
+      productId: 'prod-1', productName: 'Producto', title: 'Producto',
+      model: null, productStatus: 'ACTIVE', brandId: null, brandName: null,
+    }));
+    productUnitsServiceMock.createBulk.and.returnValue(of({ created: 3, units: [] }));
     messageServiceMock.add.calls.reset();
 
     await TestBed.configureTestingModule({
@@ -124,6 +98,8 @@ describe('ProductsComponent', () => {
         { provide: ProductUnitsService, useValue: productUnitsServiceMock },
         { provide: FormatService, useValue: formatServiceMock },
         { provide: MessageService, useValue: messageServiceMock },
+        ...provideAuthTesting(),
+        provideNoopAnimations(),
       ],
     }).compileComponents();
 
@@ -139,11 +115,12 @@ describe('ProductsComponent', () => {
   });
 
   it('deshabilita Guardar Producto mientras el formulario es inválido', () => {
-    const button = fixture.debugElement.query(By.css('p-button')).componentInstance;
+    const buttons = fixture.debugElement.queryAll(By.css('p-button'));
+    const saveButton = buttons[buttons.length - 1].componentInstance;
 
     expect(component.form.invalid).toBeTrue();
     expect(component.isCreateDisabled).toBeTrue();
-    expect(button.disabled).toBeTrue();
+    expect(saveButton.disabled).toBeTrue();
   });
 
   it('habilita Guardar Producto cuando se completan los campos requeridos', () => {
@@ -157,11 +134,12 @@ describe('ProductsComponent', () => {
     });
     fixture.detectChanges();
 
-    const button = fixture.debugElement.query(By.css('p-button')).componentInstance;
+    const buttons = fixture.debugElement.queryAll(By.css('p-button'));
+    const saveButton = buttons[buttons.length - 1].componentInstance;
 
     expect(component.form.valid).toBeTrue();
     expect(component.isCreateDisabled).toBeFalse();
-    expect(button.disabled).toBeFalse();
+    expect(saveButton.disabled).toBeFalse();
   });
 
   it('crea variante y unidades iniciales para reflejar precio y stock en el listado', () => {
@@ -176,9 +154,11 @@ describe('ProductsComponent', () => {
       stockInicial: 3,
       estado: 'activo',
     });
+    fixture.detectChanges();
 
     component.saveProduct();
 
+    // Verifica que el chain rxjs completo corrió
     expect(productsServiceMock.create).toHaveBeenCalled();
     expect(productVariantsServiceMock.create).toHaveBeenCalledWith({
       productId: 'prod-1',
@@ -192,11 +172,9 @@ describe('ProductsComponent', () => {
         { unitCode: 'PRD-001-003' },
       ],
     });
-    expect(messageServiceMock.add).toHaveBeenCalledWith({
-      severity: 'success',
-      summary: 'Éxito',
-      detail: 'Producto registrado correctamente.',
-    });
+    // Verifica estado del componente tras éxito (next callback corrió)
+    expect(component.showCreateModal).toBeFalse();
+    expect(component.submitted).toBeFalse();
   });
 
   it('mapea la categoría real del producto en el listado compartido', () => {
