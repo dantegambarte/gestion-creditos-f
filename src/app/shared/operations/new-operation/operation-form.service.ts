@@ -17,7 +17,12 @@ import { InterestRate } from '../../../features/admin/config/models/interfaces/i
 import { ProductRate } from '../../../features/admin/config/models/interfaces/product';
 import { ClientOperation } from '../../models/interface/client';
 import { ProductOperation } from '../../models/interface/product';
-import { PaymentFrequency } from '../../../features/seller/models/credit.model';
+import {
+  PaymentFrequency,
+  SimulatePayload,
+  SimulateResult,
+} from '../../../features/seller/models/credit.model';
+import { CustomerCreatePayload } from '../../../features/seller/models/customer.model';
 import {
   calculateInstallmentValue,
   calculateTotalToPay,
@@ -34,6 +39,20 @@ export type CatalogProduct = {
   stockDisponible: number;
   unitIds: string[];
   productIds: string[];
+  variants: CatalogVariant[];
+};
+
+export type CatalogVariant = {
+  variantId: string;
+  label: string;
+  precio: number;
+  stockDisponible: number;
+  unitIds: string[];
+  productIds: string[];
+  unitCodes: string[];
+  color?: string | null;
+  size?: string | null;
+  capacity?: string | null;
 };
 
 export type SaleInstallmentOption = {
@@ -45,15 +64,25 @@ export type SaleInstallmentOption = {
 export type CartLine = {
   productoId: string;
   nombre: string;
+  variantId: string;
+  variantLabel: string;
   cantidad: number;
   precio: number;
   subtotal: number;
   stockDisponible: number;
   unitIds: string[];
+  unitCodes: string[];
   productIds: string[];
   rates: ProductRate[];
   selectedInstallments: number | null;
 };
+
+export type CartLineRef = {
+  productoId: string;
+  variantId: string;
+};
+
+export type FirstPaymentDateMode = 'APPROVAL_DATE' | 'CUSTOM_DATE';
 
 @Injectable()
 export class OperationFormService {
@@ -72,12 +101,21 @@ export class OperationFormService {
       Validators.required,
     ]),
     totalAmount: this.fb.control<number | null>(null),
+    initialPaymentType: this.fb.control<'NONE' | 'DOWN_PAYMENT' | 'ADVANCED_INSTALLMENTS'>('NONE'),
     downPayment: this.fb.control<number | null>(null, [Validators.min(0)]),
+    downPaymentMethod: this.fb.control<'CASH' | 'TRANSFER' | null>(null),
+    downPaymentTransferReference: this.fb.control<string | null>(null),
+    advancedInstallmentsCount: this.fb.control<number | null>(null, [Validators.min(1)]),
+    advancedInstallmentsMethod: this.fb.control<'CASH' | 'TRANSFER' | null>(null),
+    advancedInstallmentsTransferReference: this.fb.control<string | null>(null),
     paymentFrequency: this.fb.control<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null>(
       null,
       [Validators.required],
     ),
     installmentsCount: this.fb.control<number | null>(null, [
+      Validators.required,
+    ]),
+    firstPaymentDateMode: this.fb.control<FirstPaymentDateMode>('APPROVAL_DATE', [
       Validators.required,
     ]),
     firstPaymentDate: this.fb.control<Date | null>(null, [
@@ -106,10 +144,16 @@ export class OperationFormService {
   loadingLoanData = false;
   loadingSaleData = false;
   isInstallmentsRefreshing = false;
+  loadingSelectedClientSummary = false;
+  creatingQuickClient = false;
+  showQuickClientForm = false;
+  simulationLoading = false;
+  simulationError: string | null = null;
   todayDate = this.getTodayStart();
   dynamicRate = 0;
   private loanRatesLoaded = false;
   private saleDataLoaded = false;
+  simulationResult: SimulateResult | null = null;
 
   // ── Signals (still needed for selectedClient/selectedProducts) ────────────
   readonly selectedClient = signal<ClientOperation | null>(null);
@@ -166,6 +210,12 @@ export class OperationFormService {
    * Capital sobre el cual se financia luego de descontar anticipo.
    */
   get capitalAFinanciar(): number {
+    if (this.simulationResult?.summary?.financedAmount !== undefined) {
+      return this.simulationResult.summary.financedAmount;
+    }
+    if (this.simulationResult?.financedAmount !== undefined) {
+      return this.simulationResult.financedAmount;
+    }
     const downPayment =
       this.operationForm.controls.operationType.value === 'SALE'
         ? this.getValidatedDownPayment()
@@ -177,6 +227,9 @@ export class OperationFormService {
    * Valor unitario de cuota usando la fórmula exacta del backend (redondeada al millar).
    */
   get valorCuota(): number {
+    if (this.simulationResult?.installmentAmount !== undefined) {
+      return this.simulationResult.installmentAmount;
+    }
     if (this.operationForm.controls.operationType.value === 'SALE') {
       return this.cartLines.reduce(
         (acc, line) => acc + this.getLineInstallmentValue(line),
@@ -195,6 +248,9 @@ export class OperationFormService {
    * Total final a devolver en todo el plan de pagos.
    */
   get totalADevolver(): number {
+    if (this.simulationResult?.totalToReturn !== undefined) {
+      return this.simulationResult.totalToReturn;
+    }
     if (this.operationForm.controls.operationType.value === 'SALE') {
       return this.cartLines.reduce((acc, line) => {
         const installments = line.selectedInstallments ?? 0;
@@ -358,17 +414,30 @@ export class OperationFormService {
     }
     if (step === 2) {
       const isSale = this.operationForm.controls.operationType.value === 'SALE';
-      const downPayment = this.operationForm.controls.downPayment.value ?? 0;
-      const downPaymentValid = !isSale || downPayment <= this.capitalBase;
       const saleInstallmentsValid =
         !isSale ||
         this.cartLines.every((line) => (line.selectedInstallments ?? 0) > 0);
+
+      let initialPaymentValid = true;
+      if (isSale) {
+        const payType = this.operationForm.controls.initialPaymentType.value;
+        if (payType === 'DOWN_PAYMENT') {
+          const dp = this.operationForm.controls.downPayment.value ?? 0;
+          const method = this.operationForm.controls.downPaymentMethod.value;
+          initialPaymentValid = dp > 0 && dp < this.capitalBase && !!method;
+        } else if (payType === 'ADVANCED_INSTALLMENTS') {
+          const count = this.operationForm.controls.advancedInstallmentsCount.value ?? 0;
+          const method = this.operationForm.controls.advancedInstallmentsMethod.value;
+          initialPaymentValid = count > 0 && !!method;
+        }
+      }
+
       return (
         this.operationForm.controls.paymentFrequency.valid &&
         (isSale || this.operationForm.controls.installmentsCount.valid) &&
         saleInstallmentsValid &&
         this.operationForm.controls.firstPaymentDate.valid &&
-        downPaymentValid
+        initialPaymentValid
       );
     }
     return true;
@@ -441,8 +510,10 @@ export class OperationFormService {
 
   /**
    * Normaliza y acota el anticipo para evitar valores inválidos.
+   * Retorna 0 si el tipo de pago inicial no es enganche.
    */
   getValidatedDownPayment(): number {
+    if (this.operationForm.controls.initialPaymentType.value !== 'DOWN_PAYMENT') return 0;
     const raw = this.operationForm.controls.downPayment.value ?? 0;
     return Math.min(Math.max(raw, 0), this.capitalBase);
   }
@@ -491,6 +562,7 @@ export class OperationFormService {
    */
   initialize(clientDni?: string): Observable<boolean> {
     this._setupFormSubscriptions();
+    this.syncFirstPaymentDateWithMode();
     return this.loadClients().pipe(
       map(() => {
         if (clientDni) {
@@ -507,6 +579,7 @@ export class OperationFormService {
 
   private _setupFormSubscriptions(): void {
     this.operationForm.controls.operationType.valueChanges.subscribe((type) => {
+      this.resetSimulationResult();
       const totalAmountControl = this.operationForm.controls.totalAmount;
       const installmentsControl = this.operationForm.controls.installmentsCount;
       if (type) this.setOperationType(type);
@@ -518,7 +591,13 @@ export class OperationFormService {
         ]);
         installmentsControl.setValidators([Validators.required]);
         this.clearCart();
+        this.operationForm.controls.initialPaymentType.setValue('NONE');
         this.operationForm.controls.downPayment.setValue(null);
+        this.operationForm.controls.downPaymentMethod.setValue(null);
+        this.operationForm.controls.downPaymentTransferReference.setValue(null);
+        this.operationForm.controls.advancedInstallmentsCount.setValue(null);
+        this.operationForm.controls.advancedInstallmentsMethod.setValue(null);
+        this.operationForm.controls.advancedInstallmentsTransferReference.setValue(null);
       } else {
         totalAmountControl.clearValidators();
         totalAmountControl.setValue(null);
@@ -527,6 +606,12 @@ export class OperationFormService {
       }
       this.operationForm.controls.paymentFrequency.setValue(null);
       this.operationForm.controls.installmentsCount.setValue(null);
+      this.operationForm.controls.firstPaymentDateMode.setValue('APPROVAL_DATE', {
+        emitEvent: false,
+      });
+      this.operationForm.controls.firstPaymentDate.setValue(null, {
+        emitEvent: false,
+      });
       totalAmountControl.updateValueAndValidity({ emitEvent: false });
       installmentsControl.updateValueAndValidity({ emitEvent: false });
       this.loadTypeDataOnDemand(type);
@@ -536,6 +621,7 @@ export class OperationFormService {
     });
 
     this.operationForm.controls.paymentFrequency.valueChanges.subscribe(() => {
+      this.resetSimulationResult();
       this.operationForm.controls.installmentsCount.setValue(null, {
         emitEvent: false,
       });
@@ -543,9 +629,16 @@ export class OperationFormService {
       this.ensureValidInstallmentsSelection();
       this.refreshInstallmentsUX();
       this.calculateDynamicRate();
+      this.syncFirstPaymentDateWithMode();
+    });
+
+    this.operationForm.controls.firstPaymentDateMode.valueChanges.subscribe(() => {
+      this.resetSimulationResult();
+      this.syncFirstPaymentDateWithMode();
     });
 
     this.operationForm.controls.totalAmount.valueChanges.subscribe(() => {
+      this.resetSimulationResult();
       this.calculateDynamicRate();
 
       this.ensureValidFrequencySelection();
@@ -553,7 +646,20 @@ export class OperationFormService {
     });
 
     this.operationForm.controls.installmentsCount.valueChanges.subscribe(() => {
+      this.resetSimulationResult();
       this.calculateDynamicRate();
+    });
+
+    this.operationForm.controls.firstPaymentDate.valueChanges.subscribe(() => {
+      this.resetSimulationResult();
+    });
+
+    this.operationForm.controls.downPayment.valueChanges.subscribe(() => {
+      this.resetSimulationResult();
+    });
+
+    this.operationForm.controls.initialPaymentType.valueChanges.subscribe(() => {
+      this.resetSimulationResult();
     });
   }
 
@@ -563,7 +669,7 @@ export class OperationFormService {
    * Carga únicamente clientes para el paso 1 del wizard.
    */
   loadClients(): Observable<void> {
-    return this.customersService.list().pipe(
+    return this.customersService.list({ includeSummary: true }).pipe(
       map((customers) => {
         this.clients = customers.map((c) => ({
           id: c.id,
@@ -572,9 +678,12 @@ export class OperationFormService {
           phone: c.phone ?? '',
           email: c.email ?? '',
           status: c.status,
-          previousCredits: 0,
-          delinquency: 'sin mora',
-          paymentCapacity: 0,
+          previousCredits: c.activeCredits ?? 0,
+          delinquency: c.delinquency ?? 'sin mora',
+          paymentCapacity: c.paymentCapacity ?? 0,
+          address: c.address ?? '',
+          collectorName: c.collectorName ?? '',
+          createdAt: c.createdAt,
         }));
       }),
     );
@@ -600,11 +709,15 @@ export class OperationFormService {
         this.availableProducts = units.map((u) => ({
           id: u.id,
           productId: u.productId,
+          variantId: u.variantId,
           name: u.productName,
           price: u.currentPrice,
           stock: 1,
           unitCode: u.unitCode,
           historicalPrice: u.currentPrice,
+          color: u.color,
+          size: u.size,
+          capacity: u.capacity,
         }));
       }),
     );
@@ -628,29 +741,30 @@ export class OperationFormService {
   // ── Cart management ───────────────────────────────────────────────────────
 
   /**
-   * Agrega un producto al carrito o incrementa su cantidad. Carga tasas on-demand.
-   * @param {CatalogProduct} product - Producto del catálogo agrupado.
+   * Agrega al carrito una variante específica del producto preservando stock y tasas.
+   * @param {CatalogProduct} product - Producto agrupado del catálogo.
+   * @param {string} variantId - Variante concreta seleccionada por el usuario.
    */
-  addProduct(product: CatalogProduct): void {
-    if (this.loadingProductRatesByCatalogId[product.productoId]) return;
+  addProductVariant(product: CatalogProduct, variantId: string): void {
+    const variant = product.variants.find((item) => item.variantId === variantId);
+    if (!variant || this.loadingProductRatesByCatalogId[product.productoId]) return;
 
-    const existing = this.cartLines.find(
-      (line) => line.productoId === product.productoId,
-    );
+    const cartKey = this.getCartLineKey(product.productoId, variant.variantId);
+    const existing = this.cartLines.find((line) => this.getCartLineKey(line.productoId, line.variantId) === cartKey);
     const hasRates = (existing?.rates.length ?? 0) > 0;
 
     if (existing && existing.cantidad >= existing.stockDisponible) {
-      this.notifyProductOutOfStock(product.nombre);
+      this.notifyProductOutOfStock(`${product.nombre} — ${variant.label}`);
       return;
     }
 
     if (hasRates) {
-      this.upsertCartLine(product, existing?.rates ?? []);
+      this.upsertCartLine(product, variant, existing?.rates ?? []);
       return;
     }
 
     this.loadingProductRatesByCatalogId[product.productoId] = true;
-    const firstProductId = product.productIds[0];
+    const firstProductId = variant.productIds[0] ?? product.productIds[0];
     if (!firstProductId) {
       this.loadingProductRatesByCatalogId[product.productoId] = false;
       return;
@@ -663,30 +777,52 @@ export class OperationFormService {
         }),
       )
       .subscribe((rates) => {
-        this.upsertCartLine(product, rates);
+        this.upsertCartLine(product, variant, rates);
       });
+  }
+
+  /**
+   * Agrega un producto al carrito o incrementa su cantidad. Carga tasas on-demand.
+   * @param {CatalogProduct} product - Producto del catálogo agrupado.
+   */
+  addProduct(product: CatalogProduct): void {
+    if (this.loadingProductRatesByCatalogId[product.productoId]) return;
+    const defaultVariant = this.getDefaultVariant(product);
+    if (!defaultVariant) return;
+    this.addProductVariant(product, defaultVariant.variantId);
   }
 
   /**
    * Inserta o incrementa una línea del carrito preservando tasas.
    * @param {CatalogProduct} product - Producto agrupado del catálogo.
+   * @param {CatalogVariant} variant - Variante puntual seleccionada.
    * @param {ProductRate[]} rates - Tasas activas asociadas al producto.
    */
-  upsertCartLine(product: CatalogProduct, rates: ProductRate[]): void {
+  upsertCartLine(
+    product: CatalogProduct,
+    variant: CatalogVariant,
+    rates: ProductRate[],
+  ): void {
+    this.resetSimulationResult();
     const existing = this.cartLines.find(
-      (line) => line.productoId === product.productoId,
+      (line) =>
+        this.getCartLineKey(line.productoId, line.variantId) ===
+        this.getCartLineKey(product.productoId, variant.variantId),
     );
 
     if (!existing) {
       const draftLine: CartLine = {
         productoId: product.productoId,
         nombre: product.nombre,
+        variantId: variant.variantId,
+        variantLabel: variant.label,
         cantidad: 1,
-        precio: product.precio,
-        subtotal: product.precio,
-        stockDisponible: product.stockDisponible,
-        unitIds: product.unitIds,
-        productIds: product.productIds,
+        precio: variant.precio,
+        subtotal: variant.precio,
+        stockDisponible: variant.stockDisponible,
+        unitIds: variant.unitIds,
+        unitCodes: variant.unitCodes,
+        productIds: variant.productIds,
         rates,
         selectedInstallments: null,
       };
@@ -695,7 +831,8 @@ export class OperationFormService {
       this.cartLines = [...this.cartLines, draftLine];
     } else if (existing.cantidad < existing.stockDisponible) {
       this.cartLines = this.cartLines.map((line) =>
-        line.productoId === product.productoId
+        this.getCartLineKey(line.productoId, line.variantId) ===
+        this.getCartLineKey(product.productoId, variant.variantId)
           ? {
               ...line,
               rates,
@@ -722,12 +859,10 @@ export class OperationFormService {
    * Incrementa una línea del carrito respetando el stock disponible.
    * @param {string} productoId - ID del producto agrupado.
    */
-  increaseQuantity(productoId: string): void {
+  increaseQuantity(target: string | CartLineRef): void {
+    this.resetSimulationResult();
     this.cartLines = this.cartLines.map((line) => {
-      if (
-        line.productoId !== productoId ||
-        line.cantidad >= line.stockDisponible
-      )
+      if (!this.matchesCartLine(line, target) || line.cantidad >= line.stockDisponible)
         return line;
       const nextQty = line.cantidad + 1;
       return { ...line, cantidad: nextQty, subtotal: nextQty * line.precio };
@@ -743,10 +878,11 @@ export class OperationFormService {
    * Disminuye una línea del carrito; si llega a cero la elimina.
    * @param {string} productoId - ID del producto agrupado.
    */
-  decreaseQuantity(productoId: string): void {
+  decreaseQuantity(target: string | CartLineRef): void {
+    this.resetSimulationResult();
     this.cartLines = this.cartLines
       .map((line) => {
-        if (line.productoId !== productoId) return line;
+        if (!this.matchesCartLine(line, target)) return line;
         const nextQty = line.cantidad - 1;
         return { ...line, cantidad: nextQty, subtotal: nextQty * line.precio };
       })
@@ -762,9 +898,10 @@ export class OperationFormService {
    * Elimina una línea completa del carrito.
    * @param {string} productoId - ID del producto agrupado.
    */
-  removeFromCart(productoId: string): void {
+  removeFromCart(target: string | CartLineRef): void {
+    this.resetSimulationResult();
     this.cartLines = this.cartLines.filter(
-      (line) => line.productoId !== productoId,
+      (line) => !this.matchesCartLine(line, target),
     );
     this.syncSelectedProductsFromCart();
     this.ensureValidSaleLineInstallments();
@@ -777,6 +914,7 @@ export class OperationFormService {
    * Vacía todo el carrito de venta.
    */
   clearCart(): void {
+    this.resetSimulationResult();
     this.cartLines = [];
     this.loadingProductRatesByCatalogId = {};
     this.selectedProducts.set([]);
@@ -794,12 +932,180 @@ export class OperationFormService {
     productoId: string,
     installments: number | null,
   ): void {
+    this.resetSimulationResult();
     this.cartLines = this.cartLines.map((line) =>
       line.productoId === productoId
         ? { ...line, selectedInstallments: installments }
         : line,
     );
     this.calculateDynamicRate();
+  }
+
+  /**
+   * Limpia el resultado de simulación cuando cambian datos base del plan.
+   */
+  resetSimulationResult(): void {
+    this.simulationResult = null;
+    this.simulationError = null;
+  }
+
+  /**
+   * Solicita al backend una simulación financiera real para el paso de condiciones.
+   */
+  requestFinancialSimulation(): void {
+    const payload = this.buildSimulationPayload();
+    if (!payload) return;
+
+    this.simulationLoading = true;
+    this.simulationError = null;
+    this.creditsService
+      .simulate(payload)
+      .pipe(
+        finalize(() => {
+          this.simulationLoading = false;
+        }),
+      )
+      .subscribe({
+        next: (result) => {
+          this.simulationResult = result;
+        },
+        error: (err: unknown) => {
+          const detail =
+            typeof err === 'object' &&
+            err !== null &&
+            'message' in err &&
+            typeof (err as { message?: unknown }).message === 'string'
+              ? (err as { message: string }).message
+              : 'No se pudo calcular la simulación.';
+
+          this.simulationError = detail;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Simulación no disponible',
+            detail,
+            life: 5000,
+          });
+        },
+      });
+  }
+
+  /**
+   * Construye el payload real de simulación según el estado actual del wizard.
+   * @returns {SimulatePayload | null} Payload listo para API o null si faltan datos.
+   */
+  buildSimulationPayload(): SimulatePayload | null {
+    const type = this.operationForm.controls.operationType.value;
+    const paymentFrequency = this.operationForm.controls.paymentFrequency
+      .value as PaymentFrequency | null;
+    const firstPaymentDate = this.operationForm.controls.firstPaymentDate.value;
+
+    if (!type || !paymentFrequency || !firstPaymentDate) return null;
+
+    if (type === 'SALE') {
+      if (this.cartLines.length === 0) return null;
+      return {
+        type,
+        paymentFrequency,
+        installmentsCount: Math.max(
+          1,
+          ...this.cartLines.map((line) => line.selectedInstallments ?? 1),
+        ),
+        downPayment: this.getValidatedDownPayment(),
+        firstPaymentDate: this.toApiDate(firstPaymentDate),
+        products: this.cartLines.map((line) => ({
+          variantId: line.variantId,
+          quantity: line.cantidad,
+          installmentsCount: line.selectedInstallments ?? undefined,
+        })),
+      };
+    }
+
+    const installmentsCount = this.operationForm.controls.installmentsCount.value;
+    if (!installmentsCount || !this.prestamoTotal) return null;
+
+    return {
+      type,
+      totalAmount: this.prestamoTotal,
+      installmentsCount,
+      paymentFrequency,
+      firstPaymentDate: this.toApiDate(firstPaymentDate),
+    };
+  }
+
+  /**
+   * Normaliza una fecha al formato ISO corto que espera el backend.
+   * @param {Date} date - Fecha seleccionada en el formulario.
+   * @returns {string} Fecha formateada como YYYY-MM-DD.
+   */
+  toApiDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * Sincroniza la primera fecha de pago según el modo elegido por el usuario.
+   * En modo aprobación deriva automáticamente la fecha desde hoy + frecuencia.
+   */
+  syncFirstPaymentDateWithMode(): void {
+    const mode = this.operationForm.controls.firstPaymentDateMode.value;
+    const firstPaymentDateControl = this.operationForm.controls.firstPaymentDate;
+
+    if (mode !== 'APPROVAL_DATE') {
+      if (firstPaymentDateControl.disabled) {
+        firstPaymentDateControl.enable({ emitEvent: false });
+      }
+      return;
+    }
+
+    if (firstPaymentDateControl.enabled) {
+      firstPaymentDateControl.disable({ emitEvent: false });
+    }
+
+    const frequency = this.operationForm.controls.paymentFrequency.value;
+    if (!frequency) {
+      firstPaymentDateControl.setValue(null, {
+        emitEvent: false,
+      });
+      return;
+    }
+
+    const derivedDate = this.getFirstPaymentDateFromApprovalRule(
+      this.getTodayStart(),
+      frequency,
+    );
+
+    firstPaymentDateControl.setValue(derivedDate, {
+      emitEvent: false,
+    });
+  }
+
+  /**
+   * Calcula la primera cuota aplicando la regla de aprobación confirmada por negocio.
+   * @param {Date} approvalDate - Fecha base de aprobación de la operación.
+   * @param {'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'} frequency - Frecuencia elegida del plan.
+   * @returns {Date} Primera fecha de vencimiento resultante.
+   */
+  getFirstPaymentDateFromApprovalRule(
+    approvalDate: Date,
+    frequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY',
+  ): Date {
+    const dueDate = new Date(approvalDate);
+    dueDate.setHours(0, 0, 0, 0);
+
+    if (frequency === 'WEEKLY') {
+      dueDate.setDate(dueDate.getDate() + 7);
+      return dueDate;
+    }
+
+    if (frequency === 'BIWEEKLY') {
+      dueDate.setDate(dueDate.getDate() + 14);
+      return dueDate;
+    }
+
+    dueDate.setMonth(dueDate.getMonth() + 1);
+    return dueDate;
   }
 
   // ── Client helpers ────────────────────────────────────────────────────────
@@ -809,8 +1115,43 @@ export class OperationFormService {
    * @param {ClientOperation} client - Cliente elegido en el paso 1.
    */
   selectClient(client: ClientOperation): void {
+    this.showQuickClientForm = false;
     this.operationForm.controls.customerId.setValue(client.id);
     this.selectedClient.set(client);
+
+    this.loadingSelectedClientSummary = true;
+    this.customersService.getWizardSummary(client.id).pipe(
+      finalize(() => {
+        this.loadingSelectedClientSummary = false;
+      }),
+    ).subscribe({
+      next: (summary) => {
+        const enrichedClient: ClientOperation = {
+          ...client,
+          phone: summary.phone ?? client.phone,
+          email: summary.email ?? client.email,
+          status: summary.status,
+          previousCredits: summary.activeCredits,
+          delinquency: summary.delinquency,
+          paymentCapacity: summary.paymentCapacity,
+          address: summary.address ?? '',
+          collectorName: summary.collectorName ?? '',
+          createdAt: summary.createdAt,
+          paidInstallments: summary.paidInstallments,
+          pendingInstallments: summary.pendingInstallments,
+          overdueInstallments: summary.overdueInstallments,
+          creditsSummary: summary.credits,
+        };
+
+        this.selectedClient.set(enrichedClient);
+        this.clients = this.clients.map((current) =>
+          current.id === enrichedClient.id ? enrichedClient : current,
+        );
+      },
+      error: () => {
+        this.selectedClient.set(client);
+      },
+    });
   }
 
   /**
@@ -821,6 +1162,67 @@ export class OperationFormService {
     if (!clientId) return false;
     const client = this.clients.find((c) => c.id === clientId);
     return client?.status === 'ACTIVE';
+  }
+
+  /**
+   * Muestra el panel de registro rápido dentro del paso cliente.
+   */
+  openQuickClientForm(): void {
+    this.showQuickClientForm = true;
+  }
+
+  /**
+   * Oculta el panel de registro rápido sin alterar el resto del wizard.
+   */
+  closeQuickClientForm(): void {
+    this.showQuickClientForm = false;
+  }
+
+  /**
+   * Crea un cliente mínimo, lo agrega al listado local y lo deja seleccionado para continuar.
+   * @param {CustomerCreatePayload} payload - Datos mínimos necesarios para el alta rápida.
+   * @returns {Observable<ClientOperation>} Cliente creado y adaptado al modelo del wizard.
+   */
+  createQuickClient(payload: CustomerCreatePayload): Observable<ClientOperation> {
+    this.creatingQuickClient = true;
+    return this.customersService.create(payload).pipe(
+      map((customer) => {
+        const quickClient: ClientOperation = {
+          id: customer.id,
+          name: customer.fullName,
+          dni: customer.dni,
+          phone: customer.phone ?? '',
+          email: customer.email ?? '',
+          status: customer.status,
+          previousCredits: 0,
+          delinquency: 'sin mora',
+          paymentCapacity: 0,
+          address: customer.address ?? '',
+          collectorName: customer.collectorName ?? '',
+          createdAt: customer.createdAt,
+          paidInstallments: 0,
+          pendingInstallments: 0,
+          overdueInstallments: 0,
+          creditsSummary: [],
+        };
+
+        this.clients = [
+          quickClient,
+          ...this.clients.filter((current) => current.id !== quickClient.id),
+        ];
+        this.selectClient(quickClient);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Cliente registrado',
+          detail: 'Se creó el cliente y quedó seleccionado para esta operación.',
+          life: 3000,
+        });
+        return quickClient;
+      }),
+      finalize(() => {
+        this.creatingQuickClient = false;
+      }),
+    );
   }
 
   // ── Type / data loaders ───────────────────────────────────────────────────
@@ -876,6 +1278,26 @@ export class OperationFormService {
   }
 
   /**
+   * Recarga el catálogo de unidades disponibles tras un error de "unidad no encontrada".
+   * Limpia el carrito para forzar al usuario a re-seleccionar con datos frescos.
+   * CR-09: race condition — la unidad fue reservada entre carga y envío.
+   */
+  reloadCatalogAfterUnitError(): void {
+    this.clearCart();
+    this.saleDataLoaded = false;
+    this.loadSaleData()
+      .pipe(
+        finalize(() => {
+          this.loadingSaleData = false;
+        }),
+      )
+      .subscribe(() => {
+        this.saleDataLoaded = true;
+        this.catalogProducts = this.buildCatalogProducts();
+      });
+  }
+
+  /**
    * Agrupa unidades disponibles por producto para construir el catálogo del paso 2.
    */
   buildCatalogProducts(): CatalogProduct[] {
@@ -890,15 +1312,19 @@ export class OperationFormService {
         if (unit.productId && !existing.productIds.includes(unit.productId)) {
           existing.productIds.push(unit.productId);
         }
+        this.upsertCatalogVariant(existing, unit, price);
       } else {
-        groups.set(key, {
+        const nextProduct: CatalogProduct = {
           productoId: unit.productId || key,
           nombre: unit.name,
           precio: price,
           stockDisponible: 1,
           unitIds: [unit.id],
           productIds: unit.productId ? [unit.productId] : [],
-        });
+          variants: [],
+        };
+        this.upsertCatalogVariant(nextProduct, unit, price);
+        groups.set(key, nextProduct);
       }
     }
     return Array.from(groups.values());
@@ -913,6 +1339,85 @@ export class OperationFormService {
    */
   private getCatalogGroupKey(unit: ProductOperation, price: number): string {
     return unit.productId || `${unit.name}__${price}`;
+  }
+
+  /**
+   * Verifica si una línea del carrito coincide con el identificador recibido.
+   * @param {CartLine} line - Línea del carrito evaluada.
+   * @param {string | CartLineRef} target - Identificador simple legado o referencia completa.
+   * @returns {boolean} true si refiere a la misma línea lógica del carrito.
+   */
+  private matchesCartLine(line: CartLine, target: string | CartLineRef): boolean {
+    if (typeof target === 'string') return line.productoId === target;
+    return line.productoId === target.productoId && line.variantId === target.variantId;
+  }
+
+  /**
+   * Construye una clave estable para separar líneas del carrito por variante.
+   * @param {string} productoId - Producto base del catálogo.
+   * @param {string} variantId - Variante concreta dentro del producto.
+   * @returns {string} Clave única para el carrito.
+   */
+  private getCartLineKey(productoId: string, variantId: string): string {
+    return `${productoId}::${variantId}`;
+  }
+
+  /**
+   * Devuelve la variante por defecto de un producto para mantener compatibilidad con el flujo actual.
+   * @param {CatalogProduct} product - Producto agrupado del catálogo.
+   * @returns {CatalogVariant | undefined} Variante inicial elegible.
+   */
+  private getDefaultVariant(product: CatalogProduct): CatalogVariant | undefined {
+    return [...product.variants].sort((a, b) => b.stockDisponible - a.stockDisponible)[0];
+  }
+
+  /**
+   * Inserta o actualiza una variante dentro del producto agrupado del catálogo.
+   * @param {CatalogProduct} product - Grupo principal del catálogo.
+   * @param {ProductOperation} unit - Unidad concreta recibida del backend.
+   * @param {number} price - Precio visible asociado a la unidad.
+   */
+  private upsertCatalogVariant(
+    product: CatalogProduct,
+    unit: ProductOperation,
+    price: number,
+  ): void {
+    const variantId = unit.variantId || `${product.productoId}__default`;
+    const existing = product.variants.find((item) => item.variantId === variantId);
+    if (existing) {
+      existing.stockDisponible += 1;
+      existing.unitIds.push(unit.id);
+      existing.unitCodes.push(unit.unitCode ?? unit.id);
+      if (unit.productId && !existing.productIds.includes(unit.productId)) {
+        existing.productIds.push(unit.productId);
+      }
+      return;
+    }
+
+    product.variants.push({
+      variantId,
+      label: this.buildVariantLabel(unit),
+      precio: price,
+      stockDisponible: 1,
+      unitIds: [unit.id],
+      unitCodes: [unit.unitCode ?? unit.id],
+      productIds: unit.productId ? [unit.productId] : [],
+      color: unit.color,
+      size: unit.size,
+      capacity: unit.capacity,
+    });
+  }
+
+  /**
+   * Arma una etiqueta humana para una variante a partir de color, tamaño o capacidad.
+   * @param {ProductOperation} unit - Unidad concreta con sus atributos de variante.
+   * @returns {string} Nombre corto para la variante.
+   */
+  private buildVariantLabel(unit: ProductOperation): string {
+    const parts = [unit.color, unit.size, unit.capacity]
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value));
+    return parts.length > 0 ? parts.join(' · ') : 'Variante estándar';
   }
 
   // ── Reactive consistency helpers ──────────────────────────────────────────
@@ -1093,7 +1598,13 @@ export class OperationFormService {
                 (line.selectedInstallments ?? 0),
             })),
             units: selectedUnits.map((p) => ({ unitId: p.id })),
+            initialPaymentType: this.operationForm.controls.initialPaymentType.value,
             downPayment: this.getValidatedDownPayment(),
+            downPaymentMethod: this.operationForm.controls.downPaymentMethod.value,
+            downPaymentTransferReference: this.operationForm.controls.downPaymentTransferReference.value,
+            advancedInstallmentsCount: this.operationForm.controls.advancedInstallmentsCount.value,
+            advancedInstallmentsMethod: this.operationForm.controls.advancedInstallmentsMethod.value,
+            advancedInstallmentsTransferReference: this.operationForm.controls.advancedInstallmentsTransferReference.value,
             installmentsCount: Math.max(
               1,
               ...this.cartLines.map((line) => line.selectedInstallments ?? 1),

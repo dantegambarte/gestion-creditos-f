@@ -8,8 +8,8 @@ describe('StepProductsComponent', () => {
   let fixture: ComponentFixture<StepProductsComponent>;
 
   const mockCatalog: CatalogProduct[] = [
-    { productoId: 'p1', nombre: 'Heladera', precio: 1000, stockDisponible: 3, unitIds: ['u1', 'u2', 'u3'], productIds: ['prod1'] },
-    { productoId: 'p2', nombre: 'Televisor', precio: 2000, stockDisponible: 1, unitIds: ['u4'], productIds: ['prod2'] },
+    { productoId: 'p1', nombre: 'Heladera', precio: 1000, stockDisponible: 3, unitIds: ['u1', 'u2', 'u3'], productIds: ['prod1'], variants: [] },
+    { productoId: 'p2', nombre: 'Televisor', precio: 2000, stockDisponible: 1, unitIds: ['u4'], productIds: ['prod2'], variants: [] },
   ];
 
   beforeEach(async () => {
@@ -61,8 +61,9 @@ describe('StepProductsComponent', () => {
 
     it('devuelve true cuando la cantidad en carrito alcanza el stock', () => {
       component.cartLines = [{
-        productoId: 'p1', nombre: 'Heladera', cantidad: 3, precio: 1000,
-        subtotal: 3000, stockDisponible: 3, unitIds: [], productIds: [], rates: [], selectedInstallments: null,
+        productoId: 'p1', nombre: 'Heladera', variantId: 'v1', variantLabel: 'Std',
+        cantidad: 3, precio: 1000, subtotal: 3000, stockDisponible: 3,
+        unitIds: [], unitCodes: [], productIds: [], rates: [], selectedInstallments: null,
       }];
       expect(component.isCatalogProductOutOfStock(mockCatalog[0])).toBeTrue();
     });

@@ -8,6 +8,8 @@ import { StepClientComponent } from './steps/step-client/step-client.component';
 import { StepConditionsComponent } from './steps/step-conditions/step-conditions.component';
 import { StepConfirmComponent } from './steps/step-confirm/step-confirm.component';
 import { StepProductsComponent } from './steps/step-products/step-products.component';
+import { StepTypeComponent } from './steps/step-type/step-type.component';
+import { CustomerCreatePayload } from '../../../features/seller/models/customer.model';
 
 @Component({
   selector: 'app-new-operation',
@@ -16,6 +18,7 @@ import { StepProductsComponent } from './steps/step-products/step-products.compo
     RouterLink,
     ButtonModule,
     ToastModule,
+    StepTypeComponent,
     StepClientComponent,
     StepProductsComponent,
     StepConditionsComponent,
@@ -35,25 +38,108 @@ export class NewOperationComponent implements OnInit {
 
   activeIndex = 0;
   readonly steps: MenuItem[] = [
+    { label: 'Tipo de Operación' },
     { label: 'Cliente' },
     { label: 'Tipo y Producto' },
     { label: 'Condiciones' },
     { label: 'Confirmación' },
   ];
 
+  /**
+   * Inicializa el wizard y preselecciona cliente si llega por query param.
+   */
   ngOnInit(): void {
     const clientDni =
       this.route.snapshot.queryParamMap.get('clientDni') ?? undefined;
-    this.state.initialize(clientDni).subscribe((preselected) => {
-      if (preselected) this.activeIndex = 1;
+    this.state.initialize(clientDni).subscribe({
+      next: (preselected) => {
+        if (preselected) this.activeIndex = 1;
+      },
+      // CR-08: sin error handler, un fallo en loadClients dejaba clients=[] sin feedback
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al cargar clientes',
+          detail: 'No se pudo cargar la lista de clientes. Recargá la página.',
+          life: 6000,
+        });
+      },
     });
   }
 
+  /**
+   * Avanza al siguiente paso visible del wizard.
+   */
   nextStep(): void {
-    if (this.activeIndex < 3) this.activeIndex++;
+    if (this.activeIndex < 4) this.activeIndex++;
   }
+
+  /**
+   * Retrocede al paso anterior visible del wizard.
+   */
   prevStep(): void {
     if (this.activeIndex > 0) this.activeIndex--;
+  }
+
+  /**
+   * Define el tipo de operación en el formulario y avanza automáticamente.
+   * @param {'SALE' | 'LOAN'} type - Tipo elegido en el paso inicial.
+   */
+  onTypeSelected(type: 'SALE' | 'LOAN'): void {
+    this.state.operationForm.controls.operationType.setValue(type);
+    this.nextStep();
+  }
+
+  /**
+   * Muestra el alta rápida inline cuando el cliente no existe todavía.
+   */
+  openNewClient(): void {
+    this.state.openQuickClientForm();
+  }
+
+  /**
+   * Cierra el panel de alta rápida sin tocar el resto del flujo.
+   */
+  cancelQuickClient(): void {
+    this.state.closeQuickClientForm();
+  }
+
+  /**
+   * Crea un cliente mínimo desde el wizard y continúa automáticamente al siguiente paso.
+   * @param {CustomerCreatePayload} payload - Datos mínimos del nuevo cliente.
+   */
+  createQuickClient(payload: CustomerCreatePayload): void {
+    this.state.createQuickClient(payload).subscribe({
+      next: () => {
+        this.nextStep();
+      },
+      error: (err: unknown) => {
+        const detail =
+          typeof err === 'object' &&
+          err !== null &&
+          'message' in err &&
+          typeof (err as { message?: unknown }).message === 'string'
+            ? (err as { message: string }).message
+            : 'No se pudo registrar el cliente.';
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al registrar cliente',
+          detail,
+          life: 5000,
+        });
+      },
+    });
+  }
+
+  /**
+   * Traduce el índice visual al índice de validación del servicio.
+   */
+  canGoNext(): boolean {
+    if (this.activeIndex === 0)
+      return this.state.operationForm.controls.operationType.valid;
+    if (this.activeIndex === 4) return false;
+    return this.state.canNext(this.activeIndex - 1);
   }
 
   /**
@@ -75,19 +161,33 @@ export class NewOperationComponent implements OnInit {
       },
       error: (err: unknown) => {
         this.state.submitting = false;
-        const detail =
+        const apiMessage =
           typeof err === 'object' &&
           err !== null &&
           'message' in err &&
           typeof (err as { message?: unknown }).message === 'string'
             ? (err as { message: string }).message
-            : 'No se pudo registrar la operación.';
+            : '';
+
+        // CR-09: unidad stale — la unidad fue reservada entre carga y envío
+        const isUnitNotFound =
+          apiMessage.toLowerCase().includes('no encontrada') ||
+          apiMessage.toLowerCase().includes('not found');
+
+        const detail = isUnitNotFound
+          ? 'Una unidad seleccionada ya no está disponible. Recargá el catálogo y elegí otra.'
+          : apiMessage || 'No se pudo registrar la operación.';
+
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
+          summary: isUnitNotFound ? 'Unidad no disponible' : 'Error',
           detail,
-          life: 5000,
+          life: 6000,
         });
+
+        if (isUnitNotFound) {
+          this.state.reloadCatalogAfterUnitError();
+        }
       },
     });
   }

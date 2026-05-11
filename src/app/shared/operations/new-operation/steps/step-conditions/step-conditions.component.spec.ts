@@ -19,8 +19,15 @@ describe('StepConditionsComponent', () => {
       operationType: ['SALE'],
       paymentFrequency: [null],
       installmentsCount: [null],
+      firstPaymentDateMode: ['APPROVAL_DATE'],
       downPayment: [null],
       firstPaymentDate: [null],
+      initialPaymentType: ['NONE'],
+      downPaymentMethod: [null],
+      downPaymentTransferReference: [null],
+      advancedInstallmentsCount: [null],
+      advancedInstallmentsMethod: [null],
+      advancedInstallmentsTransferReference: [null],
     });
     component.todayDate = new Date();
     fixture.detectChanges();
@@ -30,20 +37,22 @@ describe('StepConditionsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('configura el calendario para selección desde input y overlay sobre el layout', () => {
+  it('configura el calendario con appendTo body y autoZIndex para evitar clipping — CR-10', () => {
     const calendar = fixture.nativeElement.querySelector('p-calendar');
 
-    expect(calendar.getAttribute('iconDisplay')).toBe('input');
+    // iconDisplay="input" fue removido: click en fechas no funcionaba con readonlyInput=true
+    expect(calendar.getAttribute('iconDisplay')).toBeNull();
     expect(calendar.getAttribute('styleClass')).toContain('op-calendar');
     expect(calendar.getAttribute('appendTo')).toBe('body');
+    expect(calendar.getAttribute('ng-reflect-auto-z-index')).not.toBeNull();
   });
 
   describe('getInstallmentsOptionsForLine', () => {
     it('devuelve lista vacía si la línea no tiene tasas', () => {
       const result = component.getInstallmentsOptionsForLine({
-        productoId: 'p1', nombre: 'Prod', cantidad: 1, precio: 1000,
-        subtotal: 1000, stockDisponible: 5, unitIds: [], productIds: [],
-        rates: [], selectedInstallments: null,
+        productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
+        cantidad: 1, precio: 1000, subtotal: 1000, stockDisponible: 5,
+        unitIds: [], unitCodes: [], productIds: [], rates: [], selectedInstallments: null,
       });
       expect(result).toEqual([]);
     });
@@ -51,8 +60,9 @@ describe('StepConditionsComponent', () => {
     it('filtra por frecuencia seleccionada en el formulario', () => {
       component.form.controls['paymentFrequency'].setValue('MONTHLY');
       const result = component.getInstallmentsOptionsForLine({
-        productoId: 'p1', nombre: 'Prod', cantidad: 1, precio: 1000,
-        subtotal: 1000, stockDisponible: 5, unitIds: [], productIds: [],
+        productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
+        cantidad: 1, precio: 1000, subtotal: 1000, stockDisponible: 5,
+        unitIds: [], unitCodes: [], productIds: [],
         rates: [
           { installmentsCount: 3, paymentFrequency: 'MONTHLY', rate: 0.1, active: true } as any,
           { installmentsCount: 2, paymentFrequency: 'WEEKLY', rate: 0.08, active: true } as any,
@@ -67,9 +77,9 @@ describe('StepConditionsComponent', () => {
   describe('getLineInstallmentValue', () => {
     it('devuelve 0 si no hay cuotas seleccionadas', () => {
       const result = component.getLineInstallmentValue({
-        productoId: 'p1', nombre: 'Prod', cantidad: 1, precio: 10000,
-        subtotal: 10000, stockDisponible: 5, unitIds: [], productIds: [],
-        rates: [], selectedInstallments: null,
+        productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
+        cantidad: 1, precio: 10000, subtotal: 10000, stockDisponible: 5,
+        unitIds: [], unitCodes: [], productIds: [], rates: [], selectedInstallments: null,
       });
       expect(result).toBe(0);
     });

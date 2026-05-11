@@ -1,0 +1,34 @@
+<div class="w-[800px] max-w-full mx-auto mt-10">
+  <div class="text-center mb-10">
+    <h2 class="text-2xl font-semibold text-white mb-3">¿Qué tipo de operación deseas registrar?</h2>
+    <p class="text-[#848D9E] text-[15px]">Selecciona la modalidad para configurar el crédito y los planes de pago.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <button
+      type="button"
+      data-cy="btn-type-sale"
+      class="text-left bg-[#121520] border border-[#1A1D27] rounded-2xl p-8 hover:border-[#3B82F6] hover:bg-[#1A1D27]/50 transition-all group flex flex-col items-center"
+      (click)="selectType('SALE')"
+    >
+      <div class="w-16 h-16 rounded-full bg-[#3B82F6]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+        <i class="pi pi-shopping-cart text-[#3B82F6] text-2xl"></i>
+      </div>
+      <h3 class="text-lg font-semibold text-white mb-2">Venta de Productos</h3>
+      <p class="text-[#848D9E] text-[14px] text-center leading-relaxed">Financia artículos del inventario con sus respectivas tasas y condiciones.</p>
+    </button>
+
+    <button
+      type="button"
+      data-cy="btn-type-loan"
+      class="text-left bg-[#121520] border border-[#1A1D27] rounded-2xl p-8 hover:border-[#10B981] hover:bg-[#1A1D27]/50 transition-all group flex flex-col items-center"
+      (click)="selectType('LOAN')"
+    >
+      <div class="w-16 h-16 rounded-full bg-[#10B981]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+        <i class="pi pi-money-bill text-[#10B981] text-2xl"></i>
+      </div>
+      <h3 class="text-lg font-semibold text-white mb-2">Préstamo Efectivo</h3>
+      <p class="text-[#848D9E] text-[14px] text-center leading-relaxed">Otorgamiento de capital en efectivo directo con plan de cuotas.</p>
+    </button>
+  </div>
+</div>

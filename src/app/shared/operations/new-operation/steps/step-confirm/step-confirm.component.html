@@ -1,10 +1,10 @@
 <section class="space-y-5" [formGroup]="form">
-  <h2 class="text-lg font-semibold">Paso 4 · Confirmación</h2>
+  <h2 class="text-lg font-semibold text-white">Paso 4 · Confirmación</h2>
 
   <div class="grid gap-4 lg:grid-cols-2">
     <!-- Resumen de la operación -->
     <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
-      <h3 class="mb-4 text-base font-semibold">Resumen de la Operación</h3>
+      <h3 class="mb-4 text-base font-semibold text-white">Resumen de la Operación</h3>
 
       <div class="space-y-3 text-sm">
         <div class="flex items-center justify-between">
@@ -27,12 +27,33 @@
           <span class="text-slate-400">Capital financiado</span>
           <span class="font-semibold text-slate-100">{{ capitalAFinanciar | currencyArs }}</span>
         </div>
-        <div class="flex items-center justify-between">
-          <span class="text-slate-400">Enganche</span>
-          <span class="font-semibold text-slate-100">
-            {{ (form.controls['operationType'].value === 'SALE' ? validatedDownPayment : 0) | currencyArs }}
-          </span>
-        </div>
+        @if (form.controls['operationType'].value === 'SALE') {
+          @if (form.controls['initialPaymentType'].value === 'DOWN_PAYMENT') {
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Enganche</span>
+              <span class="font-semibold text-slate-100">{{ validatedDownPayment | currencyArs }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Método de enganche</span>
+              <span class="font-semibold text-slate-100">
+                {{ form.controls['downPaymentMethod'].value === 'CASH' ? 'Efectivo' : 'Transferencia' }}
+              </span>
+            </div>
+          } @else if (form.controls['initialPaymentType'].value === 'ADVANCED_INSTALLMENTS') {
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Cuotas adelantadas</span>
+              <span class="font-semibold text-slate-100">
+                {{ form.controls['advancedInstallmentsCount'].value ?? 0 }} cuota(s)
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400">Método de pago</span>
+              <span class="font-semibold text-slate-100">
+                {{ form.controls['advancedInstallmentsMethod'].value === 'CASH' ? 'Efectivo' : 'Transferencia' }}
+              </span>
+            </div>
+          }
+        }
         @if (form.controls['operationType'].value === 'SALE') {
           <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">
             <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Plan por producto</p>
@@ -64,7 +85,7 @@
 
     <!-- Declaraciones -->
     <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
-      <h3 class="mb-4 text-base font-semibold">Declaraciones y Autorizaciones</h3>
+      <h3 class="mb-4 text-base font-semibold text-white">Declaraciones y Autorizaciones</h3>
 
       <div class="space-y-3">
         <div class="flex items-center gap-3">

@@ -1,8 +1,8 @@
-<section class="flex h-full min-h-0 flex-col gap-5" [formGroup]="form">
-  <h2 class="text-lg font-semibold">Paso 2 · Tipo y Producto</h2>
-
-  <div class="space-y-2" data-cy="dropdown-operation-type">
-    <label class="text-sm font-medium text-slate-300">Tipo de Operación</label>
+<section class="flex h-full min-h-0 flex-col gap-5 overflow-hidden text-slate-100" [formGroup]="form">
+  <div class="shrink-0" data-cy="dropdown-operation-type">
+    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">
+      Tipo de operación
+    </label>
     <p-dropdown
       [options]="operationTypeOptions"
       optionLabel="label"
@@ -14,158 +14,330 @@
   </div>
 
   @if (form.controls['operationType'].value === 'LOAN') {
-    @if (loadingLoanData) {
-      <div class="space-y-2 rounded-xl border border-slate-700 bg-slate-800 p-4">
-        <div class="h-4 w-40 animate-pulse rounded bg-slate-700"></div>
-        <div class="h-11 w-full animate-pulse rounded-xl bg-slate-700"></div>
-      </div>
-    } @else {
-      <div class="mt-2 flex flex-col gap-2">
-        <label class="block text-sm font-medium text-slate-300">Monto total</label>
-        <p-inputNumber
-          formControlName="totalAmount"
-          mode="currency"
-          currency="ARS"
-          locale="es-AR"
-          [min]="1"
-          styleClass="block w-full max-w-sm"
-          inputStyleClass="h-11 w-full rounded-xl px-3"
-        />
-      </div>
-    }
+    <div class="flex min-h-0 flex-1 items-start justify-center">
+      @if (loadingLoanData) {
+        <div class="w-full max-w-[760px] rounded-2xl border border-[#1A1D27] bg-[#121520] p-6">
+          <div class="h-5 w-40 animate-pulse rounded bg-[#1A1D27]"></div>
+          <div class="mt-5 h-12 w-full animate-pulse rounded-xl bg-[#1A1D27]"></div>
+          <div class="mt-6 h-24 animate-pulse rounded-2xl bg-[#1A1D27]"></div>
+        </div>
+      } @else {
+        <div class="w-full max-w-[760px] rounded-2xl border border-[#1A1D27] bg-[#121520] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+          <h3 class="text-base font-semibold text-white">Capital del préstamo</h3>
+          <p class="mt-1 text-sm text-slate-400">Definí el monto total para continuar con la financiación.</p>
+
+          <div class="mt-6">
+            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">
+              Monto total
+            </label>
+            <p-inputNumber
+              formControlName="totalAmount"
+              mode="currency"
+              currency="ARS"
+              locale="es-AR"
+              [min]="1"
+              styleClass="block w-full"
+              inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all"
+            />
+          </div>
+
+          <div class="mt-6 rounded-2xl border border-[#1A1D27] bg-[#0B0D14] p-5">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Capital base</p>
+            <p class="mt-2 text-2xl font-semibold text-[#3B82F6]">{{ prestamoTotal | currencyArs }}</p>
+          </div>
+        </div>
+      }
+    </div>
   }
 
   @if (form.controls['operationType'].value === 'SALE') {
     @if (loadingSaleData) {
-      <div class="rounded-xl border border-slate-700 bg-slate-800 p-3">
-        <div class="grid gap-3 md:grid-cols-2">
-          <div class="space-y-2 rounded-lg border border-slate-700 p-3">
-            <div class="h-4 w-32 animate-pulse rounded bg-slate-700"></div>
-            <div class="h-14 w-full animate-pulse rounded bg-slate-700"></div>
-            <div class="h-14 w-full animate-pulse rounded bg-slate-700"></div>
+      <div class="grid min-h-0 flex-1 gap-4 xl:grid-cols-[380px_380px_minmax(0,1fr)]">
+        @for (col of [1, 2, 3]; track col) {
+          <div class="rounded-2xl border border-[#252A3A] bg-[#171B27] p-4">
+            <div class="h-6 w-32 animate-pulse rounded bg-[#232943]"></div>
+            <div class="mt-4 h-10 animate-pulse rounded-xl bg-[#232943]"></div>
+            <div class="mt-4 h-40 animate-pulse rounded-xl bg-[#232943]"></div>
           </div>
-          <div class="space-y-2 rounded-lg border border-slate-700 p-3">
-            <div class="h-4 w-24 animate-pulse rounded bg-slate-700"></div>
-            <div class="h-14 w-full animate-pulse rounded bg-slate-700"></div>
-          </div>
-        </div>
+        }
       </div>
     } @else {
-      <div class="min-h-0 flex-1 rounded-xl border border-slate-700 bg-slate-800 p-3">
-        <div class="grid h-full min-h-0 gap-3 md:grid-cols-2 md:items-stretch">
-          <!-- Catálogo -->
-          <div class="flex min-h-0 flex-col rounded-lg border border-slate-700 p-3">
-            <p class="mb-2 text-sm font-semibold text-slate-300">Catálogo</p>
-            <div class="relative mb-2">
-              <i class="pi pi-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+      <div class="grid h-full min-h-0 flex-1 gap-4 overflow-hidden xl:grid-cols-[376px_376px_minmax(0,1fr)]">
+        <div class="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#252A3A] bg-[#171B27] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+          <div class="flex items-center justify-between border-b border-[#252A3A] px-4 py-4">
+            <h3 class="text-base font-semibold text-white">Catálogo</h3>
+            <span class="rounded bg-[#3B82F6]/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7EA6FF]">
+              selección
+            </span>
+          </div>
+
+          <div class="border-b border-[#252A3A] bg-[#171B27] px-4 py-4">
+            <div class="relative">
+              <i class="pi pi-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#73809A]"></i>
               <input
                 pInputText
                 [(ngModel)]="catalogSearchText"
                 [ngModelOptions]="{ standalone: true }"
-                class="h-11 w-full rounded-xl border border-slate-600 bg-slate-800 px-3 pl-10 text-slate-100"
-                placeholder="Buscar producto por nombre"
+                class="h-11 w-full rounded-xl border border-[#31384B] bg-[#232943] pl-10 pr-4 text-sm text-white placeholder:text-[#73809A] focus:border-[#4F6BFF] focus:outline-none"
+                placeholder="Buscar por código, marca o descripción..."
               />
-            </div>
-            <div class="min-h-0 flex-1 space-y-2 overflow-y-auto pb-4 pr-1 pt-1">
-              @for (item of filteredCatalogProducts; track item.productoId) {
-                <div class="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900 p-2">
-                  <div>
-                    <div class="text-sm font-medium">{{ item.nombre }}</div>
-                    <div class="text-xs text-slate-400">Stock: {{ item.stockDisponible }}</div>
-                    <div class="text-xs text-slate-400">{{ item.precio | currencyArs }}</div>
-                  </div>
-                  <p-button
-                    [label]="isCatalogProductOutOfStock(item) ? 'Sin stock' : 'Agregar'"
-                    [icon]="isCatalogProductOutOfStock(item) ? 'pi pi-exclamation-circle' : 'pi pi-plus'"
-                    [severity]="isCatalogProductOutOfStock(item) ? 'secondary' : 'primary'"
-                    [loading]="loadingProductRatesByCatalogId[item.productoId] === true"
-                    (onClick)="productAdded.emit(item)"
-                    styleClass="h-9 px-3 rounded-lg"
-                    data-cy="btn-add-product"
-                  />
-                </div>
-              }
-              @if (filteredCatalogProducts.length === 0) {
-                <div class="rounded-lg border border-dashed border-slate-600 p-4 text-center text-sm text-slate-400">
-                  No hay productos que coincidan con la búsqueda.
-                </div>
-              }
             </div>
           </div>
 
-          <!-- Carrito -->
-          <div class="flex min-h-0 flex-col rounded-lg border border-slate-700 p-3">
-            <div class="mb-2 flex items-center justify-between">
-              <p class="text-sm font-semibold text-slate-300">Carrito</p>
-              <p-button
-                label="Vaciar carrito"
-                icon="pi pi-trash"
-                severity="secondary"
-                [text]="true"
-                [disabled]="cartLines.length === 0"
-                (onClick)="cartCleared.emit()"
-              />
-            </div>
-            <div class="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-              @for (line of cartLines; track line.productoId) {
-                <div class="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-900 p-2">
-                  <div>
-                    <div class="text-sm font-medium">{{ line.nombre }}</div>
-                    <div class="text-xs text-slate-400">
-                      {{ line.precio | currencyArs }} × {{ line.cantidad }} = {{ line.subtotal | currencyArs }}
+          <div #catalogScrollContainer class="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+            @if (filteredCatalogProducts.length === 0) {
+              <div class="rounded-xl border border-dashed border-[#31384B] bg-[#121520] px-4 py-10 text-center">
+                <p class="text-sm font-medium text-white">No encontramos productos</p>
+                <p class="mt-1 text-xs text-[#73809A]">Probá con otra búsqueda.</p>
+              </div>
+            } @else {
+              <div class="space-y-5">
+                <div #productSection>
+                  <p class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]">1. Elegí el producto</p>
+                  <div class="rounded-xl border border-[#252A3A] bg-[#1E2331] p-2 space-y-2">
+                    @for (product of filteredCatalogProducts; track product.productoId) {
+                      <button
+                        type="button"
+                        class="w-full rounded-xl border px-3 py-3 text-left transition-colors"
+                        [class]="selectedProductId === product.productoId
+                          ? 'border-[#4F6BFF] bg-[#232943] shadow-[0_0_0_1px_rgba(79,107,255,0.12)]'
+                          : 'border-transparent bg-[#232943] hover:border-[#3A445E]'"
+                        (click)="selectProduct(product)"
+                      >
+                        <div class="flex items-center justify-between gap-3">
+                          <div class="min-w-0">
+                            <p class="truncate text-[14px] font-semibold text-white">{{ product.nombre }}</p>
+                            <div class="mt-1 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-[#7C879A]">
+                              <span class="rounded bg-[#3553FF]/10 px-2 py-0.5 font-semibold text-[#8EA5FF]">Producto</span>
+                              <span>{{ getProductMeta(product) }}</span>
+                            </div>
+                          </div>
+                          <i class="pi pi-chevron-down shrink-0 text-[10px] text-[#73809A]"></i>
+                        </div>
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                @if (selectedProduct) {
+                  <div #variantSection>
+                    <div class="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[#2D3650] bg-[#202637] px-3 py-3">
+                      <div class="min-w-0">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7EA6FF]">Producto seleccionado</p>
+                        <p class="mt-1 truncate text-sm font-semibold text-white">{{ selectedProduct.nombre }}</p>
+                      </div>
+                      <button
+                        type="button"
+                        class="shrink-0 rounded-lg border border-[#3A4562] px-3 py-2 text-[11px] font-semibold text-[#AFC2FF] transition-colors hover:bg-[#2A334A] hover:text-white"
+                        (click)="resetSelection()"
+                      >
+                        Elegir otro producto
+                      </button>
+                    </div>
+                    <p class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]">2. Elegí la variante</p>
+                    <div class="space-y-2 rounded-xl border border-[#252A3A] bg-[#171B27] p-2">
+                      @for (variant of selectedProduct.variants; track variant.variantId) {
+                        <button
+                          type="button"
+                          class="flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left transition-colors"
+                          [class]="selectedVariantId === variant.variantId
+                            ? 'border-[#4F6BFF] bg-[#232943] shadow-[0_0_0_1px_rgba(79,107,255,0.12)]'
+                            : 'border-transparent bg-[#232943] hover:border-[#3A445E]'"
+                          (click)="selectVariant(variant.variantId)"
+                        >
+                          <div class="flex min-w-0 items-center gap-3 pr-3">
+                            <div class="flex h-4 w-4 items-center justify-center rounded-full border border-[#5F6B85]">
+                              @if (selectedVariantId === variant.variantId) {
+                                <div class="h-2 w-2 rounded-full bg-[#4F6BFF]"></div>
+                              }
+                            </div>
+                            <div class="min-w-0">
+                              <p class="truncate text-sm font-semibold text-white">{{ variant.label }}</p>
+                              <p class="mt-1 text-[10px] uppercase tracking-[0.12em] text-[#7C879A]">Variante disponible</p>
+                            </div>
+                          </div>
+                          <div class="flex shrink-0 items-center gap-4">
+                            <span class="text-sm font-semibold text-white">{{ variant.precio | currencyArs }}</span>
+                            <span class="text-[11px] font-semibold text-[#4CF1A5]">{{ variant.stockDisponible }} disp.</span>
+                          </div>
+                        </button>
+                      }
                     </div>
                   </div>
-                  <div class="flex items-center gap-1">
-                    <p-button
-                      icon="pi pi-minus"
-                      severity="secondary"
-                      [outlined]="true"
-                      (onClick)="quantityDecreased.emit(line.productoId)"
-                      styleClass="h-8 w-8"
-                    />
-                    <span class="w-6 text-center text-sm">{{ line.cantidad }}</span>
-                    <p-button
-                      icon="pi pi-plus"
-                      severity="secondary"
-                      [outlined]="true"
-                      [disabled]="line.cantidad >= line.stockDisponible"
-                      (onClick)="quantityIncreased.emit(line.productoId)"
-                      styleClass="h-8 w-8"
-                    />
-                    <p-button
-                      icon="pi pi-times"
-                      severity="danger"
-                      [text]="true"
-                      (onClick)="productRemoved.emit(line.productoId)"
-                    />
+                }
+
+                @if (selectedVariant) {
+                  <div #unitsSection>
+                    <p class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]">3. Seleccioná la unidad (IMEI / serial)</p>
+                    <div class="max-h-[260px] overflow-y-auto rounded-xl border border-[#252A3A] bg-[#1C2130]">
+                      @for (unitCode of selectedVariantUnitCodes; track unitCode; let i = $index) {
+                        <div class="flex items-center justify-between border-b border-[#252A3A] px-3 py-3 last:border-b-0">
+                          <span class="truncate pr-3 text-xs font-semibold text-white">{{ unitCode }}</span>
+                          @if (isUnitReserved(i)) {
+                            <span class="rounded-md bg-[#00D084]/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#4CF1A5]">
+                              agregado
+                            </span>
+                          } @else {
+                            <button
+                              type="button"
+                              class="rounded-md border border-[#3553FF]/40 bg-[#3553FF]/10 px-3 py-1 text-[11px] font-semibold text-[#8EA5FF] transition-colors hover:bg-[#3553FF]/20"
+                              [disabled]="isVariantOutOfStock(selectedVariant)"
+                              (click)="addSelectedVariant()"
+                            >
+                              + Agregar
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                    <p class="mt-2 text-[11px] text-[#5E6A82]">
+                      Mostrando {{ selectedVariantUnitCodes.length }} de {{ selectedVariant.stockDisponible }} unidades disponibles.
+                    </p>
                   </div>
-                </div>
-              }
-              @if (cartLines.length === 0) {
-                <div class="rounded-lg border border-dashed border-slate-600 p-4 text-center text-sm text-slate-400">
-                  Todavía no agregaste productos al carrito.
-                </div>
-              }
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[#252A3A] bg-[#171B27] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+          <div class="flex items-center justify-between border-b border-[#252A3A] px-4 py-4">
+            <h3 class="text-base font-semibold text-white">Carrito</h3>
+            <span class="rounded bg-[#3B82F6]/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7EA6FF]">
+              {{ cartItemsCount }} unidades
+            </span>
+          </div>
+
+          <div class="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+            @if (cartLines.length === 0) {
+              <div class="rounded-xl border border-dashed border-[#31384B] bg-[#121520] px-4 py-10 text-center">
+                <p class="text-sm font-medium text-white">Todavía no agregaste unidades</p>
+                <p class="mt-1 text-xs text-[#73809A]">Elegí producto, variante e IMEI para continuar.</p>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                @for (line of cartLines; track line.productoId + '::' + line.variantId) {
+                  <div class="rounded-xl border border-[#2C3347] bg-[#232943] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]">
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="truncate text-sm font-semibold text-white">{{ line.nombre }}</p>
+                        <p class="mt-1 truncate text-xs text-[#7C87A1]">{{ line.variantLabel }}</p>
+                        @if (line.unitCodes.length > 0) {
+                          <p class="mt-1 truncate text-[11px] text-[#657395]">
+                            IMEI: {{ line.unitCodes.slice(0, line.cantidad).join(', ') }}
+                          </p>
+                        }
+                      </div>
+                      <div class="flex shrink-0 items-center gap-3">
+                        <p class="text-sm font-semibold text-[#7EF7A9]">{{ line.precio | currencyArs }}</p>
+                        <button
+                          type="button"
+                          class="text-xs text-[#8A96B7] transition-colors hover:text-white"
+                          (click)="productRemoved.emit(getCartLineRef(line))"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="mt-3 flex items-center justify-between gap-3 rounded-lg border border-[#31384B] bg-[#1C2130] px-3 py-3">
+                      <div>
+                        <span class="mb-1 block text-[10px] uppercase tracking-[0.14em] text-[#5E6A82]">Cantidad</span>
+                        <span class="text-xs text-white">{{ line.cantidad }} unidad{{ line.cantidad === 1 ? '' : 'es' }}</span>
+                      </div>
+
+                      <div class="flex items-center gap-2">
+                        <button
+                          type="button"
+                          class="flex h-8 w-8 items-center justify-center rounded-md border border-[#31384B] bg-[#0F1320] text-[#AAB4CF] transition-colors hover:border-[#4A5674] hover:text-white"
+                          (click)="quantityDecreased.emit(getCartLineRef(line))"
+                        >
+                          <i class="pi pi-minus text-[10px]"></i>
+                        </button>
+                        <span class="w-4 text-center text-sm font-semibold text-white">{{ line.cantidad }}</span>
+                        <button
+                          type="button"
+                          class="flex h-8 w-8 items-center justify-center rounded-md border border-[#31384B] bg-[#0F1320] text-[#AAB4CF] transition-colors hover:border-[#4A5674] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                          [disabled]="line.cantidad >= line.stockDisponible"
+                          (click)="quantityIncreased.emit(getCartLineRef(line))"
+                        >
+                          <i class="pi pi-plus text-[10px]"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="border-t border-[#252A3A] px-4 py-4">
+            <div class="flex items-end justify-between gap-3 border-b border-[#252A3A] pb-3">
+              <div>
+                <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]">Subtotal ({{ cartItemsCount }} unidades)</p>
+                <p class="mt-2 text-[11px] text-[#5E6A82]">El stock no se descuenta hasta que el Admin apruebe la operación.</p>
+              </div>
+              <span class="text-[32px] font-semibold leading-none text-[#7EF7A9]">{{ totalCarrito | currencyArs }}</span>
             </div>
 
-            <div class="mt-4 rounded-lg border border-slate-700 bg-slate-900 px-3 py-4">
-              <p class="text-xs text-slate-400">Total carrito</p>
-              <p class="mt-1 text-lg font-bold text-emerald-300">{{ totalCarrito | currencyArs }}</p>
+          </div>
+        </div>
+
+        <div class="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+          <div class="overflow-hidden rounded-2xl border border-[#252A3A] bg-[#171B27] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+            <div class="border-b border-[#252A3A] px-4 py-4">
+              <h3 class="text-base font-semibold text-white">Operación en curso</h3>
             </div>
+
+            <div class="px-4 py-4 text-sm">
+              <div class="space-y-4 border-b border-[#252A3A] pb-4">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[#5E6A82]">Cliente</span>
+                  <span class="max-w-[60%] truncate text-right font-semibold text-white">Cliente seleccionado</span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[#5E6A82]">Tipo</span>
+                  <span class="font-semibold text-white">Pre-venta</span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[#5E6A82]">Unidades</span>
+                  <span class="font-semibold text-white">{{ cartItemsCount }}</span>
+                </div>
+              </div>
+
+              <div class="pt-4">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[#5E6A82]">Subtotal</span>
+                  <span class="text-[32px] font-semibold leading-none text-[#7EF7A9]">{{ activeOperationSubtotal | currencyArs }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          @if (selectedVariant && isVariantOutOfStock(selectedVariant)) {
+            <div class="rounded-2xl border border-[#6A3941] bg-[#2B1E25] px-4 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+              <div class="flex items-start gap-3">
+                <i class="pi pi-exclamation-triangle mt-0.5 text-sm text-[#FF7A7A]"></i>
+                <div>
+                  <p class="text-sm font-semibold text-[#FF7A7A]">Error de stock</p>
+                  <p class="mt-2 text-xs leading-5 text-[#D7AAB1]">
+                    Stock insuficiente. Disponible: <span class="font-semibold text-[#FF938F]">0 unidades</span> para
+                    <span class="font-semibold text-white">{{ selectedProduct?.nombre }} — {{ selectedVariant.label }}</span>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          }
+
+          <div class="rounded-2xl border border-[#252A3A] bg-[#171B27] px-4 py-4 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+            <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]">Tip</p>
+            <p class="mt-2 text-xs leading-5 text-[#A1ACBF]">
+              Si necesitás vender una unidad sin IMEI registrado, registrala primero desde
+              <span class="font-semibold text-white">Productos → Unidades</span>.
+            </p>
           </div>
         </div>
       </div>
     }
   }
-
-  <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
-    <p class="text-sm text-slate-400">Capital base</p>
-    <p class="mt-1 text-2xl font-bold text-emerald-300">
-      @if (form.controls['operationType'].value === 'LOAN') {
-        {{ prestamoTotal | currencyArs }}
-      } @else {
-        {{ totalCarrito | currencyArs }}
-      }
-    </p>
-  </div>
 </section>
