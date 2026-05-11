@@ -112,6 +112,7 @@
               [simulationResult]="state.simulationResult"
               [simulationLoading]="state.simulationLoading"
               [simulationError]="state.simulationError"
+              [canContinueWithPlan]="canGoNext()"
               (saleInstallmentsChanged)="
                 state.onSaleInstallmentsChange(
                   $event.productoId,

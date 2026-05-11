@@ -107,6 +107,11 @@ body {
   background-color: var(--ff-accent) !important;
 }
 
+// CR-15: ícono de tilde visible en fondo oscuro
+.p-checkbox.p-highlight .p-checkbox-box .p-checkbox-icon {
+  color: #ffffff !important;
+}
+
 // ─── p-inputtext ─────────────────────────────────────────────────────────────
 .p-inputtext {
   background-color: var(--ff-secondary) !important;

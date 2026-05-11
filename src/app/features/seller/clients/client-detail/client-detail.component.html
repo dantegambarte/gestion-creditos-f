@@ -25,7 +25,7 @@
   } @else if (customer) {
     <!-- ── READ-ONLY VIEW ── -->
     @if (!editMode) {
-      <div class="bg-white rounded-lg shadow p-6 space-y-6">
+      <div class="ff-panel rounded-lg p-6 space-y-6" style="background: var(--ff-panel); border: 1px solid var(--ff-border);">
         <!-- Header -->
         <div class="flex items-center justify-between flex-wrap gap-3">
           <div class="flex items-center gap-3">
@@ -73,40 +73,40 @@
         <!-- Data fields -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <span class="text-sm text-gray-500">DNI</span>
+            <span class="text-sm" style="color: var(--ff-text-muted)">DNI</span>
             <p class="font-medium">{{ customer.dni }}</p>
           </div>
 
           @if (customer.address != null) {
             <div>
-              <span class="text-sm text-gray-500">Dirección</span>
+              <span class="text-sm" style="color: var(--ff-text-muted)">Dirección</span>
               <p class="font-medium">{{ customer.address }}</p>
             </div>
           }
 
           @if (customer.phone) {
             <div>
-              <span class="text-sm text-gray-500">Teléfono</span>
+              <span class="text-sm" style="color: var(--ff-text-muted)">Teléfono</span>
               <p class="font-medium">{{ customer.phone }}</p>
             </div>
           }
 
           @if (customer.email) {
             <div>
-              <span class="text-sm text-gray-500">Email</span>
+              <span class="text-sm" style="color: var(--ff-text-muted)">Email</span>
               <p class="font-medium">{{ customer.email }}</p>
             </div>
           }
 
           @if (customer.collectorName) {
             <div>
-              <span class="text-sm text-gray-500">Cobrador asignado</span>
+              <span class="text-sm" style="color: var(--ff-text-muted)">Cobrador asignado</span>
               <p class="font-medium">{{ customer.collectorName }}</p>
             </div>
           }
 
           <div>
-            <span class="text-sm text-gray-500">Fecha de alta</span>
+            <span class="text-sm" style="color: var(--ff-text-muted)">Fecha de alta</span>
             <p class="font-medium">
               {{ customer.createdAt | date: "dd/MM/yyyy HH:mm" }}
             </p>
@@ -116,29 +116,29 @@
         <!-- Portal section — NOT rendered for non-admin -->
         @if (isAdmin) {
           <div class="border-t pt-4 space-y-3">
-            <h3 class="font-semibold text-gray-700">Portal del cliente</h3>
+            <h3 class="font-semibold" style="color: var(--ff-text-primary)">Portal del cliente</h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               <div>
-                <span class="text-gray-500">Estado</span>
+                <span style="color: var(--ff-text-muted)">Estado</span>
                 <p class="font-medium">
                   {{ customer.portalEnabled ? "Habilitado" : "Deshabilitado" }}
                 </p>
               </div>
               @if (customer.portalEnabled) {
                 <div>
-                  <span class="text-gray-500">Contraseña temporal</span>
+                  <span style="color: var(--ff-text-muted)">Contraseña temporal</span>
                   <p class="font-medium">
                     {{ customer.portalIsTempPassword ? "Sí" : "No" }}
                   </p>
                 </div>
                 <div>
-                  <span class="text-gray-500">Intentos fallidos</span>
+                  <span style="color: var(--ff-text-muted)">Intentos fallidos</span>
                   <p class="font-medium">{{ customer.portalFailedAttempts }}</p>
                 </div>
                 @if (customer.portalLockedAt) {
                   <div>
-                    <span class="text-gray-500">Bloqueado desde</span>
+                    <span style="color: var(--ff-text-muted)">Bloqueado desde</span>
                     <p class="font-medium text-red-600">
                       {{ customer.portalLockedAt | date: "dd/MM/yyyy HH:mm" }}
                     </p>
@@ -189,7 +189,7 @@
 
     <!-- ── EDIT FORM (inline, swap on editMode) ── -->
     @if (editMode && editForm) {
-      <div class="bg-white rounded-lg shadow p-6">
+      <div class="rounded-lg p-6" style="background: var(--ff-panel); border: 1px solid var(--ff-border);">
         <h3 class="text-lg font-semibold mb-4">Editar cliente</h3>
 
         <form
