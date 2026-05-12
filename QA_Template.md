@@ -256,6 +256,26 @@ http://localhost:3000/api/credits - POST
 
 ---
 
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-18]
+**Título / Descripción:** [Operaciones - Admin.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Ver" en una operación pendiente de aprobación.]
+* **Resultado Esperado:** [Deberían mostrarse la tasa de interés.]
+* **Resultado Obtenido (Error):** [Tasa de interés sale vacío.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-19]
+**Título / Descripción:** [Cancelación Anticipada - Admin.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cancelación Anticipada" en una operación aprobada.]
+* **Resultado Esperado:** [Deberían poder pagar cuotas adelantadas.]
+* **Resultado Obtenido (Error):** [Solo permite pagar el total del crédito.]
+
+---
+
 Módulo Clientes
 
 **Módulo:** [Clientes]
@@ -514,7 +534,7 @@ Módulo Planilla
 * **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos" y dehabilitar el botón "Generar Planilla" cuando se selecciona un cobrador.]
 * **Resultado Obtenido (Actual):** [Corregido. Los handlers ahora bloquean reentrada (`generating` / `generatingAll`), los botones quedan deshabilitados durante la ejecución y backend serializa la generación por cobrador/fecha dentro de transacción para evitar reprocesos peligrosos. Validado con `sheet.component.spec.ts`.]
 
-* **Acción Realizada:** [Se hizo click en "Generar Planilla para todos" y se seleccionó un cobrador y se hizo click en "Generar Planilla".]
+* **Acción Realizada:** [Se hizo click en "Generar Planilla para todos".]
 * **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos" y dehabilitar el botón "Generar Planilla" cuando se selecciona un cobrador.]
 * **Resultado Obtenido (Error):** [Me permite apretar varias veces el botón "Generar Planilla" ya sea para todos o para un cobrador en particular.]
 
@@ -525,6 +545,16 @@ Módulo Planilla
 **Título / Descripción:** [Botones]
 ### 1. Contexto de la Prueba
 * **Resultado Obtenido (Actual):** [Corregido. Las acciones de generar planilla se reordenaron y unificaron en el bloque inferior del formulario usando el patrón visual del proyecto para botones secundarios/primarios. Validado con Cypress `22-admin-generar-planilla.cy.ts`.]
+
+---
+
+**Módulo:** [Planilla]
+**ID de Prueba:** [PL-03]
+**Título / Descripción:** [Generar Planilla]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Generar Planilla para todos".]
+* **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos".]
+* **Resultado Obtenido (Error):**[Me permite apretar las veces que uno quiera "Generar Planilla para todos" y en "Planilla Generadas" aparecen todas la veces que apreté, una vez que se genere la planilla ya deberia deshabilitarse esa opción, en "Planillas Generadas" debería aparecer una sola vez una planilla.]
 
 ---
 
