@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ChangePasswordComponent } from './change-password.component';
 import { MockAuthService } from '../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AppError } from '../../../core/models/app-error';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -40,6 +41,7 @@ describe('ChangePasswordComponent', () => {
       ],
       providers: [
         { provide: MockAuthService, useValue: authSpy },
+        { provide: AuthServiceBase, useExisting: MockAuthService },
         { provide: Router, useValue: routerSpy },
       ],
     }).compileComponents();

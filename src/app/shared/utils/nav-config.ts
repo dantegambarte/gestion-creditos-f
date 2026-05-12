@@ -88,12 +88,6 @@ export const NAV_CONFIG: NavItem[] = [
     requiredRoles: ['ADMIN'],
   },
   {
-    label: 'Planilla',
-    icon: 'pi pi-list',
-    route: `/${AppRoutes.ADMIN}/${AppRoutes.SHEET}`,
-    requiredRoles: ['ADMIN'],
-  },
-  {
     label: 'Caja',
     icon: 'pi pi-wallet',
     route: `/${AppRoutes.ADMIN}/${AppRoutes.CASH_REGISTER}`,

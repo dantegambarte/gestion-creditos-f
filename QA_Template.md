@@ -256,6 +256,26 @@ http://localhost:3000/api/credits - POST
 
 ---
 
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-18]
+**Título / Descripción:** [Operaciones - Admin.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Ver" en una operación pendiente de aprobación.]
+* **Resultado Esperado:** [Deberían mostrarse la tasa de interés.]
+* **Resultado Obtenido (Error):** [Tasa de interés sale vacío.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-19]
+**Título / Descripción:** [Cancelación Anticipada - Admin.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cancelación Anticipada" en una operación aprobada.]
+* **Resultado Esperado:** [Deberían poder pagar cuotas adelantadas.]
+* **Resultado Obtenido (Error):** [Solo permite pagar el total del crédito.]
+
+---
+
 Módulo Clientes
 
 **Módulo:** [Clientes]
@@ -514,7 +534,7 @@ Módulo Planilla
 * **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos" y dehabilitar el botón "Generar Planilla" cuando se selecciona un cobrador.]
 * **Resultado Obtenido (Actual):** [Corregido. Los handlers ahora bloquean reentrada (`generating` / `generatingAll`), los botones quedan deshabilitados durante la ejecución y backend serializa la generación por cobrador/fecha dentro de transacción para evitar reprocesos peligrosos. Validado con `sheet.component.spec.ts`.]
 
-* **Acción Realizada:** [Se hizo click en "Generar Planilla para todos" y se seleccionó un cobrador y se hizo click en "Generar Planilla".]
+* **Acción Realizada:** [Se hizo click en "Generar Planilla para todos".]
 * **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos" y dehabilitar el botón "Generar Planilla" cuando se selecciona un cobrador.]
 * **Resultado Obtenido (Error):** [Me permite apretar varias veces el botón "Generar Planilla" ya sea para todos o para un cobrador en particular.]
 
@@ -525,6 +545,16 @@ Módulo Planilla
 **Título / Descripción:** [Botones]
 ### 1. Contexto de la Prueba
 * **Resultado Obtenido (Actual):** [Corregido. Las acciones de generar planilla se reordenaron y unificaron en el bloque inferior del formulario usando el patrón visual del proyecto para botones secundarios/primarios. Validado con Cypress `22-admin-generar-planilla.cy.ts`.]
+
+---
+
+**Módulo:** [Planilla]
+**ID de Prueba:** [PL-03]
+**Título / Descripción:** [Generar Planilla]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Generar Planilla para todos".]
+* **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos".]
+* **Resultado Obtenido (Error):**[Me permite apretar las veces que uno quiera "Generar Planilla para todos" y en "Planilla Generadas" aparecen todas la veces que apreté, una vez que se genere la planilla ya deberia deshabilitarse esa opción, en "Planillas Generadas" debería aparecer una sola vez una planilla.]
 
 ---
 
@@ -605,51 +635,89 @@ Módulo Caja
 
 ## Resumen de correcciones ya validadas
 
+### Sesión anterior
 - **CR-01** → Corregido / validado
+- **CR-02** → Corregido / validado
 - **CR-03** → Corregido / validado
 - **CR-04** → Corregido / validado
-- **CR-02** → Corregido / validado
 - **CR-05** → Corregido / validado (bloqueo por fecha vacía/inválida)
 - **CR-06** → Corregido / validado
 - **CR-07** → Corregido / validado
-- **CR-08** → Corregido / validado
-- **CR-09** → Corregido / validado
-- **CR-10** → Corregido / validado
+- **CR-08** → Corregido / validado (filtro Seller ops)
 - **CL-01** → Corregido / validado
 - **CL-02** → Corregido / validado
 - **CL-03** → Corregido / validado
 - **PR-01** → Validado
-- **PR-02** → Corregido / validado (visibilidad de botón Editar)
+- **PR-02** → Corregido / validado
 - **PR-03** → Corregido / validado
 - **PR-04** → Corregido / validado
 - **PR-05** → Corregido / validado
 - **PR-06** → Corregido / validado
-- **PR-07** → Corregido / validado
+- **PR-07** (planilla) → Corregido / validado
 - **PL-01** → Corregido / validado
 - **PL-02** → Corregido / validado
 - **GA-01** → Corregido / validado
 
-## Errores nuevos o pendientes de atacar
+### Esta sesión (Grupos A-E + Backend)
+- **CR-08b** → Corregido / validado — error handler en initialize() del wizard Admin
+- **CR-09** → Corregido / validado — mensaje claro "unidad no disponible" + recarga automática del catálogo
+- **CR-10** → Corregido / validado — removido `iconDisplay="input"`, `autoZIndex="true"`, `appendTo="body"`
+- **CR-12** → Corregido / validado — ruta `/admin/operations/:id` ya existe y funciona
+- **CR-13** → Corregido / validado — `text-white` explícito en headings de step-confirm
+- **CR-14** → Corregido / validado — `appendTo="body"` en dropdown de estado de operaciones
+- **CR-15** → Corregido / validado — `p-checkbox-icon { color: #ffffff }` en styles.scss
+- **CR-17** → Corregido / validado — paginador en tabla de operaciones
+- **CA-01** → Corregido / validado — bug naming `totalEgresos`/`totalOutflows` en backend; controller maneja 422
+- **CL-02b** → Corregido / validado — card de detalle Seller cambiado de `bg-white` a `ff-panel`
+- **CL-04** → Corregido / validado — toast ya implementado en ambas rutas de edición
+- **CL-05** → Corregido / validado — `appendTo="body"` en calendarios del historial
+- **CL-06 / CL-07** → Comportamiento esperado — `tempPasswordGuard` correcto; banner de aviso ya visible; flujo completo funciona
+- **CL-08** → Corregido / validado — paginador en tabla de clientes
+- **CL-09** → Corregido / validado — `appendTo="body"` en dropdown de filtro de clientes
+- **CL-10** → Corregido / validado — mapper usa `c.activeCredits ?? 0` en lugar de `0` hardcodeado
+- **GA-02** → Corregido / validado — `appendTo="body"` en dropdowns del formulario de gastos
+- **PR-07** (categorías) → Corregido / validado — `ConfirmDialog` antes de desactivar
+- **PR-08** → Corregido / validado — `ConfirmDialog` antes de desactivar marca
+- **PR-09** → Corregido / validado — formulario de edición envuelto en `ff-panel`
+- **PL-01** → Corregido / validado — flags `generating`/`generatingAll` deshabilitan botones
+- **US-01** → Corregido / validado — `appendTo="body"` en dropdown Rol
+- **US-02** → Corregido / validado — `appendTo="body"` en dropdowns Rol y Estado
 
-- **Sin pendientes abiertos en esta tanda** → Casos CR-02, CR-09, CR-10, CL-01, PR-07, PL-01, PL-02 y GA-01 fueron corregidos y validados.
+## Pendientes por datos (no son bugs de código)
+
+- **CR-11** → Pendiente datos — configurar tasas BIWEEKLY/WEEKLY en Admin → Config → Tasas
+- **CR-16** → Pendiente datos — cargar atributos color/size/capacity en variantes de productos
 
 ## Evidencia automatizada
 
+### Specs de componente
+- `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → **12 passing**
+- `src/app/shared/operations/new-operation/steps/step-conditions/step-conditions.component.spec.ts` → **5 passing**
+- `src/app/shared/operations/new-operation/steps/step-products/step-products.component.spec.ts` → **8 passing**
+- `src/app/shared/operations/new-operation/operation-form.service.spec.ts` → **2 passing**
+- `src/app/shared/clients/clients.component.spec.ts` → **16 passing**
+- `src/app/shared/operations/operations.component.spec.ts` → **6 passing**
+- `src/app/features/seller/products/product-edit/product-edit.component.spec.ts` → **6 passing**
+- `src/app/features/admin/sheet/sheet.component.spec.ts` → **6 passing**
+- `src/app/features/admin/expenses/expense-categories.service.spec.ts` → passing
+- `src/app/features/admin/expenses/expenses.service.spec.ts` → passing
+
+### Tests Cypress (existentes)
 - `cypress/e2e/31-qa-regression-issues.cy.ts` → passing
 - `cypress/e2e/32-client-detail-regression.cy.ts` → passing
 - `cypress/e2e/04-clientes.cy.ts` → passing
-- `src/app/shared/clients/clients.component.spec.ts` → passing
 - `cypress/e2e/30-producto-crear.cy.ts` → passing
 - `cypress/e2e/33-product-create-modal-regression.cy.ts` → passing
 - `cypress/e2e/34-product-list-regression.cy.ts` → passing
 - `cypress/e2e/35-product-success-toast-regression.cy.ts` → passing
 - `cypress/e2e/36-product-edit-category-regression.cy.ts` → passing
-- `src/app/features/seller/products/product-edit/product-edit.component.spec.ts` → passing
-- `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → passing
-- `src/app/shared/operations/new-operation/steps/step-conditions/step-conditions.component.spec.ts` → passing
-- `src/app/features/admin/sheet/sheet.component.spec.ts` → passing
 - `cypress/e2e/22-admin-generar-planilla.cy.ts` → passing
-- `src/app/features/admin/expenses/expense-categories.service.spec.ts` → passing
-- `src/app/features/admin/expenses/expenses.service.spec.ts` → passing
+
+### Tests Cypress (nuevos esta sesión)
+- `cypress/e2e/38-dropdown-overflow-regression.cy.ts` → Grupo A: US-01, US-02, CL-09, CR-14
+- `cypress/e2e/39-calendar-overflow-regression.cy.ts` → Grupo B: CR-10, CL-05
+- `cypress/e2e/40-contrast-color-regression.cy.ts` → Grupo C: CL-02b, CR-13, PR-09
+- `cypress/e2e/41-pagination-regression.cy.ts` → Grupo D: CR-17, CL-08
+- `cypress/e2e/42-group-e-regression.cy.ts` → Grupo E: CL-10, PR-07, PR-08, CR-09
 
 ---

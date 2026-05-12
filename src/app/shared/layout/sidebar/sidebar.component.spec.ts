@@ -4,9 +4,8 @@ import { BehaviorSubject } from 'rxjs';
 import { SidebarComponent } from './sidebar.component';
 import { NAV_CONFIG } from '../../utils/nav-config';
 import { NavItem } from '../../models/interface/nav-item';
-import {
-  MockAuthService,
-} from '../../../core/auth/mock-auth.service';
+import { MockAuthService } from '../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AuthUser } from '../../../core/models/interface/auth-user';
 
 // ── Helper: crea un usuario mock con roles específicos ────────────────────────
@@ -39,7 +38,10 @@ describe('SidebarComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SidebarComponent, RouterTestingModule],
-      providers: [{ provide: MockAuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: MockAuthService, useValue: mockAuthService },
+        { provide: AuthServiceBase, useValue: mockAuthService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SidebarComponent);
@@ -111,9 +113,9 @@ describe('SidebarComponent', () => {
   it('debería mostrar SOLO "Mi Ruta" para COLLECTOR (más grupo label)', () => {
     userSubject.next(makeUser(['COLLECTOR']));
     fixture.detectChanges();
-    // nav-config tiene 1 grupo label + 1 ruta para COLLECTOR
+    // COLLECTOR: Mi Ruta, Mis cobros, Mis comisiones, Simulador
     const routeItems = component.visibleItems.filter((i: NavItem) => !i.isGroupLabel);
-    expect(routeItems.length).toBe(1);
+    expect(routeItems.length).toBe(4);
     expect(routeItems[0].label).toBe('Mi Ruta');
   });
 

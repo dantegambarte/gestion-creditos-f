@@ -48,13 +48,24 @@ export class OperationsComponent implements OnInit {
 
   statusOptions = [
     { label: 'Todos', value: null },
-    { label: 'Pendiente de aprobación', value: 'PENDING_APPROVAL' as CreditStatus },
+    {
+      label: 'Pendiente de aprobación',
+      value: 'PENDING_APPROVAL' as CreditStatus,
+    },
     { label: 'Activo', value: 'ACTIVE' as CreditStatus },
     { label: 'Liquidado', value: 'SETTLED' as CreditStatus },
     { label: 'Rechazado', value: 'REJECTED' as CreditStatus },
   ];
 
+  typeOptions = [
+    { label: 'Todos', value: null },
+    { label: 'Venta', value: 'SALE' as CreditType },
+    { label: 'Préstamo', value: 'LOAN' as CreditType },
+  ];
+
   selectedStatus: CreditStatus | null = null;
+  selectedType: CreditType | null = null;
+  selectedSeller: string | null = null;
   searchTerm = '';
 
   showNewOperationModal = false;
@@ -68,7 +79,9 @@ export class OperationsComponent implements OnInit {
    * @param {CreditStatus} status - Estado recibido desde backend.
    * @returns {'warning' | 'success' | 'secondary' | 'danger'} Severidad visual del badge.
    */
-  getStatusSeverity(status: CreditStatus): 'warning' | 'success' | 'secondary' | 'danger' {
+  getStatusSeverity(
+    status: CreditStatus,
+  ): 'warning' | 'success' | 'secondary' | 'danger' {
     switch (status) {
       case 'PENDING_APPROVAL':
         return 'warning';
@@ -109,6 +122,37 @@ export class OperationsComponent implements OnInit {
   }
 
   /**
+   * Devuelve la frecuencia abreviada con el tono visual del diseño de listado.
+   * @param {Credit['paymentFrequency']} frequency - Frecuencia de pago del crédito.
+   * @returns {string} Etiqueta corta para la tabla.
+   */
+  getFrequencyShortLabel(frequency: Credit['paymentFrequency']): string {
+    if (frequency === 'MONTHLY') return 'Mens.';
+    if (frequency === 'BIWEEKLY') return 'Quinc.';
+    return 'Sem.';
+  }
+
+  /**
+   * Formatea la columna de cuotas con la frecuencia asociada.
+   * @param {Credit} credit - Operación a resumir.
+   * @returns {string} Texto combinado para la tabla principal.
+   */
+  getInstallmentsSummary(credit: Credit): string {
+    return `${credit.installmentsCount} × ${this.getFrequencyShortLabel(credit.paymentFrequency)}`;
+  }
+
+  /**
+   * Convierte la tasa decimal a porcentaje legible para la tabla.
+   * @param {number | null} rate - Tasa del backend en formato decimal.
+   * @returns {string} Porcentaje visible o N/A.
+   */
+  getInterestRateLabel(rate: number | null): string {
+    if (rate == null) return 'N/A';
+    const percent = rate * 100;
+    return `${Number.isInteger(percent) ? percent : percent.toFixed(1)}%`;
+  }
+
+  /**
    * Devuelve el listado visible aplicando filtro de estado y búsqueda por cliente o DNI.
    * La búsqueda ignora mayúsculas/minúsculas y tildes para evitar falsos negativos.
    */
@@ -118,9 +162,14 @@ export class OperationsComponent implements OnInit {
     return this.operations.filter((operation) => {
       const matchesStatus =
         !this.selectedStatus || operation.status === this.selectedStatus;
+      const matchesType =
+        !this.selectedType || operation.type === this.selectedType;
+      const matchesSeller =
+        !this.selectedSeller ||
+        (operation.createdByName ?? 'Sin asignar') === this.selectedSeller;
 
       if (!term) {
-        return matchesStatus;
+        return matchesStatus && matchesType && matchesSeller;
       }
 
       const normalizedClient = this.normalizeText(operation.customerName);
@@ -128,9 +177,48 @@ export class OperationsComponent implements OnInit {
 
       return (
         matchesStatus &&
+        matchesType &&
+        matchesSeller &&
         (normalizedClient.includes(term) || normalizedDni.includes(term))
       );
     });
+  }
+
+  /**
+   * Lista única de vendedores disponibles para el filtro visual del tablero.
+   * @returns {{label: string; value: string | null}[]} Opciones ordenadas alfabéticamente.
+   */
+  get sellerOptions(): { label: string; value: string | null }[] {
+    const sellers = Array.from(
+      new Set(
+        this.operations.map(
+          (operation) => operation.createdByName ?? 'Sin asignar',
+        ),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+
+    return [
+      { label: 'Todos', value: null },
+      ...sellers.map((seller) => ({ label: seller, value: seller })),
+    ];
+  }
+
+  /**
+   * Texto corto para mostrar cantidad total de operaciones cargadas.
+   * @returns {string} Resumen legible del volumen actual.
+   */
+  get operationsCountLabel(): string {
+    return `${this.operations.length.toLocaleString('es-AR')} operaciones`;
+  }
+
+  /**
+   * Limpia todos los filtros activos del listado.
+   */
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.selectedStatus = null;
+    this.selectedType = null;
+    this.selectedSeller = null;
   }
 
   /**

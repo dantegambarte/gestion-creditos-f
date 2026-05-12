@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { ClientDetailComponent } from './client-detail.component';
 import { HeaderService } from '../../../core/services/header.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
+import { provideAuthTesting } from '../../../core/auth/testing/auth-testing';
 
 function buildActivatedRoute(params: Record<string, string>) {
   return {
@@ -39,7 +40,7 @@ describe('ClientDetailComponent (shared/clients)', () => {
       updatedAt: '2026-01-01T00:00:00Z',
     }),
   ) {
-    const headerServiceSpy = jasmine.createSpyObj('HeaderService', [], {
+    const headerServiceSpy = jasmine.createSpyObj('HeaderService', ['reset'], {
       breadcrumbs: { set: jasmine.createSpy() },
       actions: { set: jasmine.createSpy() },
     });
@@ -54,6 +55,7 @@ describe('ClientDetailComponent (shared/clients)', () => {
         { provide: Router, useValue: routerSpy },
         { provide: HeaderService, useValue: headerServiceSpy },
         { provide: CustomersService, useValue: customersServiceSpy },
+        ...provideAuthTesting(),
       ],
     }).compileComponents();
 

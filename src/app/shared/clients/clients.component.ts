@@ -52,7 +52,7 @@ function toClient(c: Customer): Client {
     avatarColor: AVATAR_COLORS[colorIdx],
     name: c.fullName,
     phone: c.phone ?? '',
-    credits: 0,
+    credits: c.activeCredits ?? 0,
     risk: 'Al dia',
   };
 }

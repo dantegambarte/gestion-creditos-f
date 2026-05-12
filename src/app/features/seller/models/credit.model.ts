@@ -84,20 +84,42 @@ export interface CreditListFilters {
 export interface SimulatePayload {
   type: CreditType;
   totalAmount?: number;
-  products?: Array<{ variantId: string; quantity: number }>;
+  products?: Array<{
+    variantId: string;
+    quantity: number;
+    installmentsCount?: number;
+  }>;
   installmentsCount: number;
   paymentFrequency: PaymentFrequency;
   downPayment?: number;
+  firstPaymentDate?: string;
 }
 
 export interface SimulateResultItem {
   productId: string;
   productName: string;
+  variantId?: string;
   quantity: number;
   unitPrice: number;
   lineTotal: number;
   rate: number;
   installmentContribution: number;
+  installmentsCount?: number;
+}
+
+export interface SimulateScheduleRow {
+  installmentNumber: number;
+  dueDate: string;
+  amount: number;
+  capital?: number;
+  interest?: number;
+  remainingEstimated?: number;
+}
+
+export interface SimulateSummary {
+  financedAmount: number;
+  downPayment: number;
+  interestAmount: number;
 }
 
 export interface SimulateResult {
@@ -112,6 +134,9 @@ export interface SimulateResult {
   items?: SimulateResultItem[];
   downPayment?: number;
   financedAmount?: number;
+  interestAmount?: number;
+  schedule?: SimulateScheduleRow[];
+  summary?: SimulateSummary;
 }
 
 export interface SaleCreditPayload {

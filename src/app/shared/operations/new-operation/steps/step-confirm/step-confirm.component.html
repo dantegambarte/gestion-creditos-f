@@ -1,96 +1,454 @@
-<section class="space-y-5" [formGroup]="form">
-  <h2 class="text-lg font-semibold">Paso 4 · Confirmación</h2>
+<section class="mx-auto mt-4 max-w-[1180px] space-y-6" [formGroup]="form">
+  <div
+    class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.95fr)]"
+  >
+    <div class="space-y-6">
+      <article
+        class="overflow-hidden rounded-2xl border border-[#1A1D27] bg-[#121520] shadow-[0_12px_36px_rgba(0,0,0,0.22)]"
+      >
+        <div class="border-b border-[#1A1D27] px-5 py-4">
+          <h3 class="text-lg font-semibold text-white">
+            Simulación del plan de pagos
+          </h3>
+          <p class="mt-1 text-sm text-[#5E6A82]">
+            Los valores son orientativos. La operación queda sujeta a aprobación
+            del administrador.
+          </p>
+        </div>
 
-  <div class="grid gap-4 lg:grid-cols-2">
-    <!-- Resumen de la operación -->
-    <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
-      <h3 class="mb-4 text-base font-semibold">Resumen de la Operación</h3>
-
-      <div class="space-y-3 text-sm">
-        <div class="flex items-center justify-between">
-          <span class="text-slate-400">Cliente</span>
-          <span class="font-semibold text-slate-100">
-            {{ selectedClient?.name || 'Sin cliente' }}
-          </span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-slate-400">DNI</span>
-          <span class="font-semibold text-slate-100">{{ selectedClient?.dni || '-' }}</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-slate-400">Tipo de operación</span>
-          <span class="font-semibold text-slate-100">
-            {{ form.controls['operationType'].value === 'SALE' ? 'Venta' : 'Préstamo' }}
-          </span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-slate-400">Capital financiado</span>
-          <span class="font-semibold text-slate-100">{{ capitalAFinanciar | currencyArs }}</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-slate-400">Enganche</span>
-          <span class="font-semibold text-slate-100">
-            {{ (form.controls['operationType'].value === 'SALE' ? validatedDownPayment : 0) | currencyArs }}
-          </span>
-        </div>
-        @if (form.controls['operationType'].value === 'SALE') {
-          <div class="rounded-lg border border-slate-700 bg-slate-900 p-3">
-            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Plan por producto</p>
-            <div class="space-y-1 text-xs">
-              @for (line of cartLines; track line.productoId) {
-                <div class="flex items-center justify-between gap-3">
-                  <span class="text-slate-300">{{ line.nombre }}</span>
-                  <span class="font-semibold text-slate-100">{{ line.selectedInstallments ?? 0 }} cuotas</span>
+        <div class="space-y-5 px-5 py-5">
+          @if (operationType === "SALE" && cartLines.length) {
+            <div>
+              <p
+                class="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5E6A82]"
+              >
+                Contribución por producto
+              </p>
+              <div
+                class="overflow-hidden rounded-xl border border-[#252A3A] bg-[#1D2231]"
+              >
+                <div
+                  class="grid grid-cols-12 gap-3 border-b border-[#252A3A] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+                >
+                  <span class="col-span-4">Producto</span>
+                  <span class="col-span-3">Variante</span>
+                  <span class="col-span-2 text-right">Precio</span>
+                  <span class="col-span-1 text-right">Tasa</span>
+                  <span class="col-span-2 text-right">Cuota aportada</span>
                 </div>
+
+                @for (
+                  line of cartLines;
+                  track line.productoId + "-" + line.variantId
+                ) {
+                  <div
+                    class="grid grid-cols-12 gap-3 border-b border-[#252A3A] px-4 py-3 text-sm last:border-b-0"
+                  >
+                    <span class="col-span-4 font-semibold text-white">{{
+                      line.nombre
+                    }}</span>
+                    <span class="col-span-3 text-[#A1ACBF]">{{
+                      getVariantLabel(line)
+                    }}</span>
+                    <span
+                      class="col-span-2 text-right font-semibold text-white"
+                      >{{ line.subtotal | currencyArs }}</span
+                    >
+                    <span class="col-span-1 text-right text-[#93C5FD]"
+                      >{{ getLineRatePercent(line) }}%</span
+                    >
+                    <span
+                      class="col-span-2 text-right font-semibold text-[#37F0A4]"
+                      >{{ getCuotaPorLinea(line) | currencyArs }}</span
+                    >
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <div>
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5E6A82]"
+            >
+              Resultado del plan
+            </p>
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div
+                class="rounded-xl border border-[#314A43] bg-[#232A3F] px-4 py-3"
+              >
+                <p
+                  class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+                >
+                  {{ paymentFrequencyLabel }} total
+                </p>
+                <div class="mt-2 flex items-end gap-2">
+                  <span
+                    class="text-[34px] font-semibold leading-none text-[#37F0A4]"
+                    >{{ valorCuota | currencyArs }}</span
+                  >
+                  <span class="pb-1 text-xs text-[#5E6A82]"
+                    >/
+                    {{
+                      paymentFrequencyLabel.toLowerCase() === "-"
+                        ? "plan"
+                        : paymentFrequencyLabel.toLowerCase()
+                    }}</span
+                  >
+                </div>
+              </div>
+
+              <div
+                class="rounded-xl border border-[#252A3A] bg-[#232A3F] px-4 py-3"
+              >
+                <p
+                  class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+                >
+                  Total a devolver
+                </p>
+                <p
+                  class="mt-2 text-[32px] font-semibold leading-none text-white"
+                >
+                  {{ totalADevolver | currencyArs }}
+                </p>
+              </div>
+
+              <div
+                class="rounded-xl border border-[#252A3A] bg-[#232A3F] px-4 py-3"
+              >
+                <p
+                  class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+                >
+                  Inicio de pagos
+                </p>
+                <p
+                  class="mt-2 text-[28px] font-semibold leading-none text-[#AFC0E9]"
+                >
+                  {{ firstPaymentDateLabel }}
+                </p>
+              </div>
+
+              <div
+                class="rounded-xl border border-[#252A3A] bg-[#232A3F] px-4 py-3"
+              >
+                <p
+                  class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+                >
+                  Pago inicial
+                </p>
+                <p
+                  class="mt-2 text-[28px] font-semibold leading-none text-[#37F0A4]"
+                >
+                  {{ initialPaymentSummary }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="mb-2 flex items-center justify-between gap-3">
+              <p
+                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5E6A82]"
+              >
+                Cronograma (primeras 4 cuotas)
+              </p>
+              @if (summaryInstallmentsCount > 0) {
+                <p class="text-[10px] text-[#5E6A82]">
+                  {{ summaryInstallmentsCount }} cuotas totales
+                </p>
+              }
+            </div>
+
+            <div
+              class="rounded-xl border border-[#252A3A] bg-[#232A3F] px-4 py-4"
+            >
+              @if (schedulePreview.length) {
+                <div class="space-y-3">
+                  @for (item of schedulePreview; track item.label) {
+                    <div
+                      class="grid grid-cols-[72px_1fr_auto] items-center gap-3 text-sm"
+                    >
+                      <span class="text-[#5E6A82]">{{ item.label }}</span>
+                      <span class="font-semibold text-white">{{
+                        item.dueDate
+                      }}</span>
+                      <span class="font-semibold text-white">{{
+                        item.amount | currencyArs
+                      }}</span>
+                    </div>
+                  }
+                </div>
+
+                @if (hiddenInstallmentsCount > 0) {
+                  <p class="pt-3 text-center text-xs italic text-[#5E6A82]">
+                    ... {{ hiddenInstallmentsCount }} cuotas más hasta completar
+                    el plan.
+                  </p>
+                }
+              } @else {
+                <p class="text-sm text-[#7C879B]">
+                  Definí las condiciones para ver el cronograma resumido del
+                  plan.
+                </p>
               }
             </div>
           </div>
-        } @else {
-          <div class="flex items-center justify-between">
-            <span class="text-slate-400">Cantidad de cuotas</span>
-            <span class="font-semibold text-slate-100">{{ installmentsCount ?? 0 }}</span>
+        </div>
+      </article>
+
+      <article
+        class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-6 shadow-[0_12px_36px_rgba(0,0,0,0.2)]"
+      >
+        <h3 class="mb-5 text-xl font-semibold text-white">
+          Declaraciones y Autorizaciones
+        </h3>
+
+        <div class="space-y-4">
+          <label class="flex items-center gap-3">
+            <p-checkbox
+              formControlName="chkIdentity"
+              [binary]="true"
+              data-cy="chk-identity"
+            />
+            <span class="text-sm text-white"
+              >Verifiqué la identidad del cliente.</span
+            >
+          </label>
+          <label class="flex items-center gap-3">
+            <p-checkbox
+              formControlName="chkConditions"
+              [binary]="true"
+              data-cy="chk-conditions"
+            />
+            <span class="text-sm text-white"
+              >Expliqué condiciones y costos del plan.</span
+            >
+          </label>
+          <label class="flex items-center gap-3">
+            <p-checkbox
+              formControlName="chkDisbursement"
+              [binary]="true"
+              data-cy="chk-disbursement"
+            />
+            <span class="text-sm text-white"
+              >Informé que el desembolso requiere aprobación.</span
+            >
+          </label>
+          <label class="flex items-center gap-3">
+            <p-checkbox
+              formControlName="chkCapacity"
+              [binary]="true"
+              data-cy="chk-capacity"
+            />
+            <span class="text-sm text-white"
+              >Validé capacidad de pago del cliente.</span
+            >
+          </label>
+        </div>
+      </article>
+
+      <article
+        class="rounded-2xl border border-[#6D581D] bg-[#352A16] px-5 py-5 shadow-[0_12px_36px_rgba(0,0,0,0.18)]"
+      >
+        <div class="flex items-start gap-3">
+          <i class="pi pi-info-circle mt-1 text-[#F59E0B]"></i>
+          <p class="text-sm leading-7 text-[#F1D38A]">
+            Al confirmar, esta operación quedará en estado
+            <strong class="text-[#F7B733]">Pendiente de Aprobación</strong>
+            por parte de tesorería.
+          </p>
+        </div>
+      </article>
+    </div>
+
+    <aside class="space-y-6">
+      <article
+        class="overflow-hidden rounded-2xl border border-[#252A3A] bg-[#121520] shadow-[0_12px_36px_rgba(0,0,0,0.22)]"
+      >
+        <div
+          class="flex items-center justify-between border-b border-[#252A3A] px-4 py-4"
+        >
+          <h3 class="text-lg font-semibold text-white">Resumen final</h3>
+          <span
+            class="rounded-md bg-[#5B4411] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#F7B733]"
+          >
+            Pendiente
+          </span>
+        </div>
+
+        <div class="space-y-5 px-4 py-5 text-sm">
+          <div class="border-b border-dashed border-[#252A3A] pb-4">
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Tipo
+            </p>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-[#7C879B]">Operación</span>
+              <span class="font-semibold text-white">{{
+                operationTypeLabel
+              }}</span>
+            </div>
           </div>
-        }
-        <div class="flex items-center justify-between">
-          <span class="text-slate-400">Valor de cuota</span>
-          <span class="font-semibold text-slate-100">{{ valorCuota | currencyArs }}</span>
-        </div>
-        <div class="flex items-center justify-between border-t border-slate-700 pt-3">
-          <span class="text-slate-300">Total a devolver</span>
-          <span class="text-lg font-bold text-emerald-300">{{ totalADevolver | currencyArs }}</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- Declaraciones -->
-    <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
-      <h3 class="mb-4 text-base font-semibold">Declaraciones y Autorizaciones</h3>
+          <div class="border-b border-dashed border-[#252A3A] pb-4">
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Cliente
+            </p>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-[#7C879B]">Nombre</span>
+              <span class="font-semibold text-right text-white">{{
+                selectedClient?.name || "Sin cliente seleccionado"
+              }}</span>
+            </div>
+            <div class="mt-1 flex items-center justify-between gap-3">
+              <span class="text-[#7C879B]">DNI</span>
+              <span class="font-semibold text-white">{{
+                selectedClient?.dni || "-"
+              }}</span>
+            </div>
+          </div>
 
-      <div class="space-y-3">
-        <div class="flex items-center gap-3">
-          <p-checkbox formControlName="chkIdentity" [binary]="true" data-cy="chk-identity" />
-          <label class="text-sm text-slate-200">Verifiqué la identidad del cliente.</label>
-        </div>
-        <div class="flex items-center gap-3">
-          <p-checkbox formControlName="chkConditions" [binary]="true" data-cy="chk-conditions" />
-          <label class="text-sm text-slate-200">Expliqué condiciones y costos del plan.</label>
-        </div>
-        <div class="flex items-center gap-3">
-          <p-checkbox formControlName="chkDisbursement" [binary]="true" data-cy="chk-disbursement" />
-          <label class="text-sm text-slate-200">Informé que el desembolso requiere aprobación.</label>
-        </div>
-        <div class="flex items-center gap-3">
-          <p-checkbox formControlName="chkCapacity" [binary]="true" data-cy="chk-capacity" />
-          <label class="text-sm text-slate-200">Validé capacidad de pago del cliente.</label>
-        </div>
-      </div>
+          @if (operationType === "SALE") {
+            <div class="border-b border-dashed border-[#252A3A] pb-4">
+              <p
+                class="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+              >
+                Unidades ({{ totalUnitsCount }})
+              </p>
+              <div class="space-y-2">
+                @for (
+                  unit of selectedUnitsSummary;
+                  track unit.title + "-" + unit.unitCode
+                ) {
+                  <div class="rounded-lg bg-[#232A3F] px-3 py-3">
+                    <p class="text-sm font-semibold text-white">
+                      {{ unit.title }}
+                    </p>
+                    <p class="mt-1 text-[11px] text-[#5E6A82]">
+                      IMEI: {{ unit.unitCode }}
+                    </p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
 
-      <div class="mt-4">
-        <p-message
-          severity="warn"
-          text="Esta operación será enviada a revisión del supervisor antes de ser desembolsada..."
-        />
-      </div>
-    </div>
+          <div class="border-b border-dashed border-[#252A3A] pb-4">
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Financiación
+            </p>
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Frecuencia</span>
+                <span class="font-semibold text-white">{{
+                  paymentFrequencyLabel
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Cuotas</span>
+                <span class="font-semibold text-white">{{
+                  summaryInstallmentsCount
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Tasa prom.</span>
+                <span class="font-semibold text-white">{{
+                  averageRateLabel
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Primera cuota</span>
+                <span class="font-semibold text-white">{{
+                  firstPaymentDateLabel
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-b border-dashed border-[#252A3A] pb-4">
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Pago inicial
+            </p>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-[#7C879B]">{{
+                operationType === "SALE" ? "Enganche" : "Detalle"
+              }}</span>
+              <span class="font-semibold text-[#37F0A4]">{{
+                initialPaymentSummary
+              }}</span>
+            </div>
+          </div>
+
+          <div class="border-b border-dashed border-[#252A3A] pb-4">
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Montos
+            </p>
+            <div class="space-y-1.5">
+              @if (operationType === "SALE") {
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[#7C879B]">Subtotal</span>
+                  <span class="font-semibold text-white">{{
+                    subtotalProductos | currencyArs
+                  }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[#7C879B]">Enganche</span>
+                  <span class="font-semibold text-[#FFB347]"
+                    >- {{ validatedDownPayment | currencyArs }}</span
+                  >
+                </div>
+              }
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Financiado</span>
+                <span class="font-semibold text-white">{{
+                  capitalAFinanciar | currencyArs
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Total devol.</span>
+                <span class="font-semibold text-white">{{
+                  totalADevolver | currencyArs
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]"
+                  >Cuota
+                  {{
+                    paymentFrequencyLabel === "-"
+                      ? "estim."
+                      : paymentFrequencyLabel.toLowerCase().slice(0, 4) + "."
+                  }}</span
+                >
+                <span class="text-lg font-bold text-[#37F0A4]">{{
+                  valorCuota | currencyArs
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Notas internas (opcional)
+            </p>
+            <div
+              class="w-full rounded-lg border border-[#2B3145] bg-[#232A3F] px-3 py-3 text-sm text-[#6F7C95]"
+            >
+              Observaciones para el Admin...
+            </div>
+          </div>
+        </div>
+      </article>
+    </aside>
   </div>
 </section>

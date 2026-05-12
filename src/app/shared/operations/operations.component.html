@@ -1,116 +1,160 @@
-<div class="p-6">
-  <div class="ff-panel">
-    <div class="ff-list-header">
-      <span class="ff-list-header__title">Operaciones</span>
-      <div class="ff-list-header__actions">
-        <p-button
-          label="Nueva Operación"
-          icon="pi pi-plus"
-          severity="primary"
-          styleClass="h-11 px-5 rounded-xl shadow-sm"
-          routerLink="./new"
-        />
-
-        <p-dialog
-          [(visible)]="showNewOperationModal"
-          [modal]="true"
-          [maximizable]="true"
-          [draggable]="false"
-          [resizable]="false"
-          [style]="{ width: '90vw', maxWidth: '1100px' }"
-          [breakpoints]="{ '1199px': '95vw', '575px': '100vw' }"
-          header="Registrar Nueva Operación"
-        >
-        </p-dialog>
-
-        <p-dropdown
-          [options]="statusOptions"
-          [(ngModel)]="selectedStatus"
-          placeholder="Estado"
-          optionLabel="label"
-          optionValue="value"
-          styleClass="h-11"
-        />
-
-        <p-iconField iconPosition="left">
-          <p-inputIcon
-            styleClass="pi pi-search z-10"
-            style="color: var(--ff-text-muted)"
-          />
-          <input
-            pInputText
-            type="text"
-            placeholder="Buscar por cliente o DNI"
-            [(ngModel)]="searchTerm"
-            class="h-11 pl-10 w-full md:w-64"
-          />
-        </p-iconField>
+<div class="operations-page p-4 md:p-6">
+  <div class="operations-shell ff-panel">
+    <div class="operations-topbar">
+      <div>
+        <h1 class="operations-title">Operaciones</h1>
+        <p class="operations-subtitle">{{ operationsCountLabel }}</p>
       </div>
+
+      <p-button
+        label="Nueva operación"
+        icon="pi pi-plus"
+        severity="primary"
+        styleClass="operations-cta"
+        routerLink="./new"
+      />
+    </div>
+
+    <div class="operations-filters">
+      <input
+        pInputText
+        type="text"
+        placeholder="Buscar por cliente o DNI"
+        [(ngModel)]="searchTerm"
+        class="operations-search h-9 px-3 rounded-md text-sm"
+      />
+
+      <p-dropdown
+        [options]="statusOptions"
+        [(ngModel)]="selectedStatus"
+        placeholder="Todos"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="operations-filter-dropdown"
+        appendTo="body"
+      />
+
+      <p-dropdown
+        [options]="typeOptions"
+        [(ngModel)]="selectedType"
+        placeholder="Todos"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="operations-filter-dropdown"
+        appendTo="body"
+      />
+
+      <p-dropdown
+        [options]="sellerOptions"
+        [(ngModel)]="selectedSeller"
+        placeholder="Todos"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="operations-filter-dropdown"
+        appendTo="body"
+      />
+
+      <button type="button" class="operations-clear" (click)="clearFilters()">
+        Limpiar filtros
+      </button>
     </div>
 
     @if (loading) {
-      <div class="p-6 text-sm" style="color: var(--ff-text-secondary)">
-        Cargando operaciones...
-      </div>
+      <div class="operations-empty">Cargando operaciones...</div>
     } @else if (filteredOperations.length === 0) {
-      <div class="p-6 text-sm" style="color: var(--ff-text-secondary)">
-        No hay operaciones para mostrar.
-      </div>
+      <div class="operations-empty">No hay operaciones para mostrar.</div>
     } @else {
       <p-table
         [value]="filteredOperations"
-        styleClass="p-datatable-sm"
+        styleClass="operations-table"
         [responsiveLayout]="'scroll'"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first}-{last} de {totalRecords}"
       >
         <ng-template pTemplate="header">
           <tr>
-            <th>Fecha</th>
-            <th>Cliente</th>
             <th>Tipo</th>
+            <th>Cliente</th>
             <th>Monto</th>
-            <th>Cuotas</th>
-            <th class="text-center">Estado</th>
-            <th class="text-center">Acciones</th>
+            <th>Cuotas × Freq</th>
+            <th>Tasa</th>
+            <th>Estado</th>
+            <th>Vendedor</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="body" let-op>
-          <tr>
-            <td style="color: var(--ff-text-secondary)">{{ op.createdAt | date: 'dd-MM' }}</td>
+        <ng-template pTemplate="body" let-op let-rowIndex="rowIndex">
+          <tr
+            [class.operations-row--highlight]="rowIndex === 2 || rowIndex === 9"
+          >
             <td>
-              <div class="font-bold">{{ op.customerName }}</div>
-              <div class="ff-mono text-xs" style="color: var(--ff-text-muted)">
-                {{ op.customerDni }}
+              <span
+                class="operations-type-badge"
+                [class.operations-type-badge--sale]="op.type === 'SALE'"
+                [class.operations-type-badge--loan]="op.type === 'LOAN'"
+              >
+                {{ getTypeLabel(op.type) }}
+              </span>
+            </td>
+
+            <td>
+              <div class="operations-client">
+                <span class="operations-client__name">{{
+                  op.customerName
+                }}</span>
+                <span class="operations-client__dni">{{ op.customerDni }}</span>
               </div>
             </td>
+
+            <td class="operations-money">{{ op.totalAmount | currencyArs }}</td>
+
+            <td class="operations-muted">{{ getInstallmentsSummary(op) }}</td>
+
+            <td class="operations-muted">
+              {{ getInterestRateLabel(op.interestRate) }}
+            </td>
+
             <td>
               <span
-                class="text-xs font-bold"
-                [style.color]="op.type === 'SALE' ? 'var(--ff-accent)' : '#A78BFA'"
-              >{{ getTypeLabel(op.type) }}</span>
-            </td>
-            <td class="ff-mono font-bold">
-              {{ op.totalAmount | currencyArs }}
-            </td>
-            <td style="color: var(--ff-text-secondary)">{{ op.installmentsCount }}</td>
-            <td class="text-center">
-              <span
                 class="ff-badge"
-                [class.ff-badge--activo]="getStatusSeverity(op.status) === 'success'"
-                [class.ff-badge--pendiente]="getStatusSeverity(op.status) === 'warning'"
-                [class.ff-badge--vencido]="getStatusSeverity(op.status) === 'danger'"
-                [class.ff-badge--pagado]="getStatusSeverity(op.status) === 'secondary'"
-              >{{ getStatusLabel(op.status) }}</span>
+                [class.ff-badge--activo]="
+                  getStatusSeverity(op.status) === 'success'
+                "
+                [class.ff-badge--pendiente]="
+                  getStatusSeverity(op.status) === 'warning'
+                "
+                [class.ff-badge--vencido]="
+                  getStatusSeverity(op.status) === 'danger'
+                "
+                [class.ff-badge--pagado]="
+                  getStatusSeverity(op.status) === 'secondary'
+                "
+                >{{ getStatusLabel(op.status) }}</span
+              >
             </td>
-            <td class="text-center">
-              <p-button
-                label="Ver"
-                icon="pi pi-eye"
-                severity="secondary"
-                [outlined]="true"
-                size="small"
-                (onClick)="$event.stopPropagation(); navigateToDetail(op.id)"
-              />
+
+            <td class="operations-muted">
+              {{ op.createdByName || "Sin asignar" }}
+            </td>
+
+            <td class="operations-muted">
+              {{ op.createdAt | date: "dd/MM/yy" }}
+            </td>
+
+            <td>
+              <button
+                type="button"
+                class="operations-action"
+                (click)="$event.stopPropagation(); navigateToDetail(op.id)"
+                aria-label="Ver detalle"
+              >
+                <i class="pi pi-arrow-right"></i>
+              </button>
             </td>
           </tr>
         </ng-template>

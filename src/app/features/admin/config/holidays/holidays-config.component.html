@@ -1,0 +1,652 @@
+<p-toast />
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <h2 class="text-lg font-semibold text-slate-100">Feriados</h2>
+      <p class="text-sm text-slate-400">
+        Administrá los feriados que afectan la calendarización de vencimientos.
+      </p>
+      <p class="text-xs text-slate-500 mt-1">
+        La duplicación automática considera solo feriados activos marcados como
+        anuales repetibles.
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <input
+        pInputText
+        type="number"
+        [(ngModel)]="duplicateSourceYear"
+        class="w-32 h-11 px-3"
+        min="2000"
+        max="2999"
+        placeholder="Año"
+      />
+      <p-button
+        label="Ver duplicación"
+        icon="pi pi-copy"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="previewDuplicateToNextYear()"
+        [loading]="previewLoading"
+      />
+      <p-button
+        label="Nuevo feriado"
+        icon="pi pi-plus"
+        severity="primary"
+        styleClass="h-11 px-5 rounded-xl shadow-sm"
+        (onClick)="openCreateDialog()"
+      />
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="space-y-2">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <p-skeleton height="2.5rem" styleClass="rounded-xl" />
+      }
+    </div>
+  } @else {
+    <div
+      class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"
+    >
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-slate-800">
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
+              Fecha
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
+              Nombre
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
+              Tipo
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
+              Afecta vencimientos
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
+              Anual repetible
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
+              Estado
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
+              Acciones
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (holidays.length === 0) {
+            <tr>
+              <td colspan="7" class="px-5 py-10 text-center text-slate-500">
+                No hay feriados cargados.
+              </td>
+            </tr>
+          }
+          @for (holiday of holidays; track holiday.id) {
+            <tr
+              class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors"
+            >
+              <td class="px-5 py-3 text-slate-200">
+                {{ holiday.date | date: "dd/MM/yyyy" }}
+              </td>
+              <td class="px-5 py-3 text-slate-200 font-medium">
+                {{ holiday.name }}
+              </td>
+              <td class="px-5 py-3 text-slate-400">
+                {{ typeLabel(holiday.type) }}
+              </td>
+              <td class="px-5 py-3">
+                <p-tag
+                  [value]="holiday.affectsDueDates ? 'Sí' : 'No'"
+                  [severity]="holiday.affectsDueDates ? 'warning' : 'secondary'"
+                />
+              </td>
+              <td class="px-5 py-3">
+                <p-tag
+                  [value]="holiday.repeatsAnnually ? 'Sí' : 'No'"
+                  [severity]="holiday.repeatsAnnually ? 'info' : 'secondary'"
+                />
+              </td>
+              <td class="px-5 py-3">
+                <p-tag
+                  [value]="holiday.active ? 'Activo' : 'Inactivo'"
+                  [severity]="holiday.active ? 'success' : 'secondary'"
+                />
+              </td>
+              <td class="px-5 py-3">
+                <button
+                  class="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  (click)="openEditDialog(holiday)"
+                >
+                  Editar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<p-dialog
+  [(visible)]="showCreateDialog"
+  header="Nuevo feriado"
+  [modal]="true"
+  [style]="{ width: '34rem' }"
+  [closable]="!saving"
+>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+        >Fecha</label
+      >
+      <p-calendar
+        [(ngModel)]="createForm.date"
+        dateFormat="dd/mm/yy"
+        [showIcon]="true"
+        [showOnFocus]="false"
+        [readonlyInput]="true"
+        [baseZIndex]="1200"
+        [autoZIndex]="true"
+        appendTo="body"
+        styleClass="w-full op-calendar"
+        inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+        >Tipo</label
+      >
+      <p-dropdown
+        [options]="holidayTypeOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="createForm.type"
+        (onChange)="onTypeChanged(createForm)"
+        styleClass="w-full h-11 rounded-xl"
+        appendTo="body"
+      />
+    </div>
+
+    <div class="md:col-span-2 flex flex-col gap-1.5">
+      <label class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+        >Nombre</label
+      >
+      <input
+        pInputText
+        [(ngModel)]="createForm.name"
+        maxlength="150"
+        class="w-full h-11 px-3"
+        placeholder="Ej: Feriado puente regional"
+      />
+    </div>
+
+    <div
+      class="md:col-span-2 space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3"
+    >
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm text-slate-200">Afecta vencimientos</p>
+          <p class="text-xs text-slate-500">
+            Si está activo, mueve vencimientos al próximo día hábil.
+          </p>
+        </div>
+        <p-checkbox [(ngModel)]="createForm.affectsDueDates" [binary]="true" />
+      </div>
+
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm text-slate-200">Anual repetible</p>
+          <p class="text-xs text-slate-500">
+            Solo estos feriados se duplican automáticamente al próximo año.
+          </p>
+        </div>
+        <p-checkbox
+          [(ngModel)]="createForm.repeatsAnnually"
+          [binary]="true"
+          [disabled]="createForm.type === 'EXTRAORDINARY'"
+        />
+      </div>
+
+      @if (createForm.type === "EXTRAORDINARY") {
+        <p
+          class="text-xs text-amber-200/90 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2"
+        >
+          Los feriados extraordinarios se consideran casos puntuales y no se
+          duplican automáticamente.
+        </p>
+      }
+
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm text-slate-200">Activo</p>
+          <p class="text-xs text-slate-500">
+            Desactivalo para mantener el registro sin aplicar efectos.
+          </p>
+        </div>
+        <p-checkbox [(ngModel)]="createForm.active" [binary]="true" />
+      </div>
+
+      @if (shouldShowRecalculation(createForm)) {
+        <div
+          class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-sm font-medium text-amber-300">
+                Recalcular cuotas futuras
+              </p>
+              <p class="text-xs text-amber-200/90">
+                Acción sensible: al crear este feriado extraordinario se pueden
+                ajustar vencimientos futuros.
+              </p>
+            </div>
+            <p-checkbox
+              [(ngModel)]="createForm.recalculateFutureInstallments"
+              [binary]="true"
+            />
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (errorMessage) {
+      <p
+        class="md:col-span-2 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2"
+      >
+        {{ errorMessage }}
+      </p>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex gap-3 justify-end pt-2">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="closeDialogs()"
+        [disabled]="saving"
+      />
+      <p-button
+        label="Crear feriado"
+        icon="pi pi-check"
+        severity="primary"
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="submitCreate()"
+        [loading]="saving"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="showEditDialog"
+  header="Editar feriado"
+  [modal]="true"
+  [style]="{ width: '34rem' }"
+  [closable]="!saving"
+>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+        >Fecha (no editable)</label
+      >
+      <p-calendar
+        [(ngModel)]="editForm.date"
+        dateFormat="dd/mm/yy"
+        [showIcon]="true"
+        [showOnFocus]="false"
+        [readonlyInput]="true"
+        [disabled]="true"
+        [baseZIndex]="1200"
+        [autoZIndex]="true"
+        appendTo="body"
+        styleClass="w-full op-calendar"
+        inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+        >Tipo</label
+      >
+      <p-dropdown
+        [options]="holidayTypeOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="editForm.type"
+        (onChange)="onTypeChanged(editForm)"
+        styleClass="w-full h-11 rounded-xl"
+        appendTo="body"
+      />
+    </div>
+
+    <div class="md:col-span-2 flex flex-col gap-1.5">
+      <label class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+        >Nombre</label
+      >
+      <input
+        pInputText
+        [(ngModel)]="editForm.name"
+        maxlength="150"
+        class="w-full h-11 px-3"
+      />
+    </div>
+
+    <div
+      class="md:col-span-2 space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3"
+    >
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm text-slate-200">Afecta vencimientos</p>
+          <p class="text-xs text-slate-500">
+            Controla si este feriado debe intervenir en fechas de cuota.
+          </p>
+        </div>
+        <p-checkbox [(ngModel)]="editForm.affectsDueDates" [binary]="true" />
+      </div>
+
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm text-slate-200">Anual repetible</p>
+          <p class="text-xs text-slate-500">
+            Solo se duplica automáticamente si este flag está activo.
+          </p>
+        </div>
+        <p-checkbox
+          [(ngModel)]="editForm.repeatsAnnually"
+          [binary]="true"
+          [disabled]="editForm.type === 'EXTRAORDINARY'"
+        />
+      </div>
+
+      @if (editForm.type === "EXTRAORDINARY") {
+        <p
+          class="text-xs text-amber-200/90 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2"
+        >
+          Los extraordinarios quedan fuera de la duplicación automática salvo
+          cambio explícito.
+        </p>
+      }
+
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm text-slate-200">Activo</p>
+          <p class="text-xs text-slate-500">
+            Podés desactivarlo sin borrar histórico.
+          </p>
+        </div>
+        <p-checkbox [(ngModel)]="editForm.active" [binary]="true" />
+      </div>
+
+      @if (shouldShowRecalculation(editForm)) {
+        <div
+          class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-sm font-medium text-amber-300">
+                Recalcular cuotas futuras
+              </p>
+              <p class="text-xs text-amber-200/90">
+                Usalo solo si querés forzar un nuevo ajuste para cuotas futuras
+                impactadas por este feriado extraordinario.
+              </p>
+            </div>
+            <p-checkbox
+              [(ngModel)]="editForm.recalculateFutureInstallments"
+              [binary]="true"
+            />
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (errorMessage) {
+      <p
+        class="md:col-span-2 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2"
+      >
+        {{ errorMessage }}
+      </p>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex gap-3 justify-end pt-2">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="closeDialogs()"
+        [disabled]="saving"
+      />
+      <p-button
+        label="Guardar"
+        icon="pi pi-check"
+        severity="primary"
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="submitEdit()"
+        [loading]="saving"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="showDuplicatePreviewDialog"
+  header="Vista previa de duplicación anual"
+  [modal]="true"
+  [style]="{ width: '68rem' }"
+  [closable]="!duplicating"
+>
+  @if (duplicatePreview) {
+    <div class="space-y-4 py-2">
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
+        <div
+          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+        >
+          <p class="text-slate-500">Origen</p>
+          <p class="text-slate-200 font-semibold">
+            {{ duplicatePreview.sourceYear }}
+          </p>
+        </div>
+        <div
+          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+        >
+          <p class="text-slate-500">Destino</p>
+          <p class="text-slate-200 font-semibold">
+            {{ duplicatePreview.targetYear }}
+          </p>
+        </div>
+        <div
+          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+        >
+          <p class="text-slate-500">Activos evaluados</p>
+          <p class="text-slate-200 font-semibold">
+            {{ duplicatePreview.eligibleCount }}
+          </p>
+        </div>
+        <div
+          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+        >
+          <p class="text-slate-500">Se crearán</p>
+          <p class="text-emerald-300 font-semibold">
+            {{ duplicatePreview.toCreateCount }}
+          </p>
+        </div>
+        <div
+          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+        >
+          <p class="text-slate-500">No anuales</p>
+          <p class="text-amber-300 font-semibold">
+            {{ duplicatePreview.nonRecurringCount }}
+          </p>
+        </div>
+        <div
+          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+        >
+          <p class="text-slate-500">Conflictos</p>
+          <p class="text-rose-300 font-semibold">
+            {{ duplicatePreview.conflictsCount }}
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div
+          class="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden"
+        >
+          <div
+            class="px-4 py-3 border-b border-slate-800 text-sm text-slate-200 font-medium"
+          >
+            Se crearán
+          </div>
+          <table class="w-full text-sm">
+            <thead class="border-b border-slate-800">
+              <tr>
+                <th
+                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                >
+                  Origen
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                >
+                  Destino
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                >
+                  Nombre
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (duplicatePreview.toCreate.length === 0) {
+                <tr>
+                  <td colspan="3" class="px-4 py-4 text-slate-500">
+                    No hay feriados para crear.
+                  </td>
+                </tr>
+              }
+              @for (
+                item of duplicatePreview.toCreate;
+                track item.sourceDate + item.type
+              ) {
+                <tr class="border-b border-slate-800/50">
+                  <td class="px-4 py-2 text-slate-200">
+                    {{ item.sourceDate | date: "dd/MM/yyyy" }}
+                  </td>
+                  <td class="px-4 py-2 text-slate-300">
+                    {{ item.targetDate | date: "dd/MM/yyyy" }}
+                  </td>
+                  <td class="px-4 py-2 text-slate-300">{{ item.name }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div
+          class="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden"
+        >
+          <div
+            class="px-4 py-3 border-b border-slate-800 text-sm text-slate-200 font-medium"
+          >
+            Se omitirán
+          </div>
+          <table class="w-full text-sm">
+            <thead class="border-b border-slate-800">
+              <tr>
+                <th
+                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                >
+                  Fecha
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                >
+                  Nombre
+                </th>
+                <th
+                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                >
+                  Motivo
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (duplicatePreview.skipped.length === 0) {
+                <tr>
+                  <td colspan="3" class="px-4 py-4 text-slate-500">
+                    Sin omisiones.
+                  </td>
+                </tr>
+              }
+              @for (
+                item of duplicatePreview.skipped;
+                track item.sourceDate + item.type + item.reason
+              ) {
+                <tr class="border-b border-slate-800/50">
+                  <td class="px-4 py-2 text-slate-200">
+                    {{ item.sourceDate | date: "dd/MM/yyyy" }}
+                  </td>
+                  <td class="px-4 py-2 text-slate-300">
+                    {{ item.name || "-" }}
+                  </td>
+                  <td class="px-4 py-2 text-slate-400">
+                    {{ skippedReasonLabel(item.reason) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <div class="flex gap-3 justify-end pt-2">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="closeDialogs()"
+        [disabled]="duplicating"
+      />
+      <p-button
+        label="Confirmar duplicación"
+        icon="pi pi-check"
+        severity="primary"
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="confirmDuplicateToNextYear()"
+        [loading]="duplicating"
+        [disabled]="!duplicatePreview || duplicatePreview.toCreateCount === 0"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

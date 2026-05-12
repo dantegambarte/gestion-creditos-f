@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule, DatePipe, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableModule } from 'primeng/table';
@@ -32,12 +33,15 @@ import {
 } from '../../models/installment.model';
 import { CreditsService } from '../credits.service';
 import { InstallmentsService } from '../installments.service';
+import { CreditPayment } from '../../../collector/models/payment.model';
+import { PaymentsService } from '../../../collector/payments.service';
 
 @Component({
   selector: 'app-credit-detail',
   standalone: true,
   imports: [
     CurrencyArsPipe,
+    DatePipe,
     CommonModule,
     FormsModule,
     ButtonModule,
@@ -49,6 +53,7 @@ import { InstallmentsService } from '../installments.service';
     InputTextModule,
     InputNumberModule,
     InputTextareaModule,
+    TooltipModule,
     LoadingStateComponent,
     ErrorStateComponent,
   ],
@@ -59,6 +64,7 @@ export class CreditDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly creditsService = inject(CreditsService);
   private readonly installmentsService = inject(InstallmentsService);
+  private readonly paymentsService = inject(PaymentsService);
   private readonly location = inject(Location);
   private readonly header = inject(HeaderService);
   readonly auth = inject(AuthServiceBase);
@@ -71,6 +77,22 @@ export class CreditDetailComponent implements OnInit {
 
   selectedInstallment: CreditDetail['installments'][number] | null = null;
   activeTab: 'all' | 'paid' | 'pending' | 'overdue' = 'all';
+
+  // ── Panel principal: cronograma vs cobros ─────────────────────
+  mainTab: 'installments' | 'payments' = 'installments';
+  creditPayments: CreditPayment[] = [];
+  loadingPayments = false;
+  paymentsLoaded = false;
+
+  // ── Cobro directo desde cuota ──────────────────────────────────
+  showDirectDialog = false;
+  directInstallmentId = '';
+  directMaxAmount = 0;
+  directAmount: number | null = null;
+  directMethod: 'CASH' | 'TRANSFER' = 'CASH';
+  directTransferRef = '';
+  directNotes = '';
+  processingDirect = false;
 
   get paidCount(): number {
     return this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0;
@@ -561,6 +583,90 @@ export class CreditDetailComponent implements OnInit {
         inst.id === updated.id ? { ...inst, ...updated } : inst,
       ),
     };
+  }
+
+  /**
+   * Devuelve la etiqueta del método de pago.
+   */
+  paymentMethodLabel(method: 'CASH' | 'TRANSFER'): string {
+    return method === 'CASH' ? 'Efectivo' : 'Transferencia';
+  }
+
+  get directFormValid(): boolean {
+    return (
+      this.directInstallmentId.length > 0 &&
+      (this.directAmount ?? 0) > 0 &&
+      (this.directAmount ?? 0) <= this.directMaxAmount &&
+      (this.directMethod !== 'TRANSFER' || this.directTransferRef.trim().length > 0)
+    );
+  }
+
+  /**
+   * Abre el dialog de cobro directo pre-cargado con la cuota seleccionada.
+   * @param inst - Cuota sobre la que se va a cobrar.
+   */
+  openDirectDialog(inst: CreditDetail['installments'][number]): void {
+    this.directInstallmentId = inst.id;
+    this.directMaxAmount = inst.amountDue - inst.amountPaid;
+    this.directAmount = this.directMaxAmount;
+    this.directMethod = 'CASH';
+    this.directTransferRef = '';
+    this.directNotes = '';
+    this.showDirectDialog = true;
+  }
+
+  confirmDirect(): void {
+    if (!this.directFormValid) return;
+    this.processingDirect = true;
+    this.paymentsService
+      .adminDirect({
+        installmentId: this.directInstallmentId,
+        amountReceived: this.directAmount!,
+        paymentMethod: this.directMethod,
+        transferReference: this.directTransferRef || undefined,
+        notes: this.directNotes || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.processingDirect = false;
+          this.showDirectDialog = false;
+          this.paymentsLoaded = false; // fuerza recarga del tab de cobros
+          this.msg.add({
+            severity: 'success',
+            summary: 'Cobro registrado',
+            detail: 'El cobro fue registrado y aprobado correctamente.',
+            life: 5000,
+          });
+          this.load();
+        },
+        error: (err: AppError) => {
+          this.processingDirect = false;
+          this.msg.add({
+            severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
+            summary: err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
+            detail: err.message ?? 'No se pudo registrar el cobro.',
+          });
+        },
+      });
+  }
+
+  /**
+   * Cambia al tab de cobros y carga el historial si aún no fue cargado.
+   */
+  switchToPayments(): void {
+    this.mainTab = 'payments';
+    if (this.paymentsLoaded) return;
+    this.loadingPayments = true;
+    this.paymentsService.listByCredit(this.creditId).subscribe({
+      next: (data) => {
+        this.creditPayments = data;
+        this.loadingPayments = false;
+        this.paymentsLoaded = true;
+      },
+      error: () => {
+        this.loadingPayments = false;
+      },
+    });
   }
 
   /**

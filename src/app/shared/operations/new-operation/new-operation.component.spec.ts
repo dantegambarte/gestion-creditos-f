@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -26,7 +26,7 @@ describe('NewOperationComponent', () => {
       providers: [
         provideRouter([]),
         { provide: CreditsService, useValue: creditsServiceSpy },
-        { provide: CustomersService, useValue: { list: () => of([]) } },
+        { provide: CustomersService, useValue: { list: () => of([]), getWizardSummary: () => of({ phone: null, email: null, status: 'ACTIVE', address: null, collectorName: null, activeCredits: 0, delinquency: 'sin mora', paymentCapacity: 0, createdAt: '', paidInstallments: 0, pendingInstallments: 0, overdueInstallments: 0, credits: [] }) } },
         { provide: ProductUnitsService, useValue: { getAll: () => of([]) } },
         { provide: InterestRatesService, useValue: { getAll: () => of([]) } },
         { provide: ProductRatesService, useValue: { getAll: () => of([]) } },
@@ -63,7 +63,7 @@ describe('NewOperationComponent', () => {
     expect(component.activeIndex).toBe(0);
   });
 
-  describe('canNext — paso 0 (cliente)', () => {
+  describe('canNext â€” paso 0 (cliente)', () => {
     it('bloquea avanzar sin cliente seleccionado', () => {
       expect(formService.canNext(0)).toBeFalse();
     });
@@ -78,18 +78,18 @@ describe('NewOperationComponent', () => {
     });
   });
 
-  describe('canNext — paso 1 (tipo y producto)', () => {
-    it('bloquea avanzar sin tipo de operación seleccionado', () => {
+  describe('canNext â€” paso 1 (tipo y producto)', () => {
+    it('bloquea avanzar sin tipo de operaciÃ³n seleccionado', () => {
       expect(formService.canNext(1)).toBeFalse();
     });
 
-    it('permite avanzar en LOAN con monto válido', () => {
+    it('permite avanzar en LOAN con monto vÃ¡lido', () => {
       formService.operationForm.controls.operationType.setValue('LOAN');
       formService.operationForm.controls.totalAmount.setValue(50000);
       expect(formService.canNext(1)).toBeTrue();
     });
 
-    it('bloquea avanzar en SALE con carrito vacío', () => {
+    it('bloquea avanzar en SALE con carrito vacÃ­o', () => {
       formService.operationForm.controls.operationType.setValue('SALE');
       formService.cartLines = [];
       expect(formService.canNext(1)).toBeFalse();
@@ -102,7 +102,7 @@ describe('NewOperationComponent', () => {
       expect(formService.declarationsAccepted).toBeFalse();
     });
 
-    it('es true cuando todas las casillas están marcadas', () => {
+    it('es true cuando todas las casillas estÃ¡n marcadas', () => {
       formService.operationForm.controls.chkIdentity.setValue(true);
       formService.operationForm.controls.chkConditions.setValue(true);
       formService.operationForm.controls.chkDisbursement.setValue(true);
@@ -111,3 +111,5 @@ describe('NewOperationComponent', () => {
     });
   });
 });
+
+

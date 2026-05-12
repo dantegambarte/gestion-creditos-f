@@ -5,6 +5,9 @@
       [(ngModel)]="periodoDesde"
       dateFormat="dd/mm/yy"
       [showIcon]="true"
+      appendTo="body"
+      [baseZIndex]="1100"
+      [autoZIndex]="true"
       styleClass="hist-calendar"
     />
     <span class="hist-dash">—</span>
@@ -12,6 +15,9 @@
       [(ngModel)]="periodoHasta"
       dateFormat="dd/mm/yy"
       [showIcon]="true"
+      appendTo="body"
+      [baseZIndex]="1100"
+      [autoZIndex]="true"
       styleClass="hist-calendar"
     />
     <p-dropdown
@@ -19,6 +25,8 @@
       [(ngModel)]="selectedEvento"
       optionLabel="label"
       optionValue="value"
+      appendTo="body"
+      [baseZIndex]="1100"
       styleClass="hist-evento-select"
     />
   </div>

@@ -6,6 +6,7 @@ import {
 } from '@angular/common/http/testing';
 import { PortalAuthService } from './portal-auth.service';
 import { environment } from '../../../../environments/environment';
+import { provideAuthTesting } from '../../../core/auth/testing/auth-testing';
 
 // Minimal base64url-encoded JWT with exp in far future
 function makeJwt(payload: Record<string, unknown>): string {
@@ -29,6 +30,7 @@ describe('PortalAuthService', () => {
         PortalAuthService,
         provideHttpClient(),
         provideHttpClientTesting(),
+        ...provideAuthTesting(),
       ],
     });
 
@@ -125,7 +127,7 @@ describe('PortalAuthService', () => {
     // Re-create service to trigger bootstrap
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [PortalAuthService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [PortalAuthService, provideHttpClient(), provideHttpClientTesting(), ...provideAuthTesting()],
     });
     const freshService = TestBed.inject(PortalAuthService);
 
@@ -133,7 +135,10 @@ describe('PortalAuthService', () => {
     expect(freshService.snapshot?.fullName).toBe('Ana García');
   });
 
-  it('bootstrap clears storage if token is expired', () => {
+  it('bootstrap mantiene sesión activa con token expirado (refresh interceptor lo maneja)', () => {
+    // El servicio NO limpia tokens expirados en bootstrap — el error interceptor
+    // detecta TOKEN_EXPIRED en la primera llamada y hace el refresh.
+    // Si se limpiaría aquí, el refresh nunca ocurriría.
     const expiredJwt = btoa(JSON.stringify({ alg: 'HS256' })) + '.' +
       btoa(JSON.stringify({ sub: 'c-001', exp: Math.floor(Date.now() / 1000) - 60 })) + '.sig';
     localStorage.setItem(TOKEN_KEY, expiredJwt);
@@ -141,11 +146,11 @@ describe('PortalAuthService', () => {
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [PortalAuthService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [PortalAuthService, provideHttpClient(), provideHttpClientTesting(), ...provideAuthTesting()],
     });
     const freshService = TestBed.inject(PortalAuthService);
 
-    expect(freshService.isAuthenticated()).toBeFalse();
-    expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+    expect(freshService.isAuthenticated()).toBeTrue();
+    expect(freshService.snapshot?.fullName).toBe('Ana');
   });
 });

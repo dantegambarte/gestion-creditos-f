@@ -1,18 +1,42 @@
-<div class="p-6">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-800">Planillas de cobro</h1>
-      <p class="text-sm text-gray-500">Planillas generadas para cobradores.</p>
-    </div>
-    <p-button
-      label="Generar planilla"
-      icon="pi pi-plus"
-      (onClick)="goToNew()"
-    />
-  </div>
+<p-toast />
 
-  <p-card styleClass="shadow-sm">
-    <div class="flex flex-wrap gap-3 mb-4 items-center">
+<div class="flex h-full overflow-hidden">
+  <!-- LEFT PANEL: lista -->
+  <div
+    class="flex flex-col transition-all duration-300 overflow-hidden shrink-0"
+    [class.border-r]="!!selectedSheetMeta && !leftPanelCollapsed"
+    [style.width]="
+      !selectedSheetMeta ? '100%' : leftPanelCollapsed ? '0px' : '420px'
+    "
+    style="border-color: var(--ff-border)"
+  >
+    <!-- Header -->
+    <div
+      class="flex items-center justify-between px-4 py-3 shrink-0"
+      style="border-bottom: 1px solid var(--ff-border)"
+    >
+      <div>
+        <h1 class="text-base font-bold" style="color: var(--ff-text-primary)">
+          Planillas de cobro
+        </h1>
+        <p class="text-xs" style="color: var(--ff-text-muted)">
+          Planillas generadas para cobradores.
+        </p>
+      </div>
+      <p-button
+        label="Generar nueva planilla"
+        icon="pi pi-plus"
+        severity="primary"
+        styleClass="h-9 px-4 rounded-xl shadow-sm text-sm"
+        (onClick)="openGenerateDialog()"
+      />
+    </div>
+
+    <!-- Filtros -->
+    <div
+      class="flex flex-wrap gap-2 px-4 py-3 shrink-0"
+      style="border-bottom: 1px solid var(--ff-border)"
+    >
       <p-dropdown
         [options]="collectorOptions"
         [(ngModel)]="filterCollectorId"
@@ -20,7 +44,7 @@
         optionValue="value"
         placeholder="Todos los cobradores"
         [showClear]="!!filterCollectorId"
-        styleClass="w-52"
+        styleClass="w-44 text-sm"
         appendTo="body"
         (onChange)="applyFilters()"
       />
@@ -28,7 +52,7 @@
         type="date"
         [(ngModel)]="filterDate"
         (change)="applyFilters()"
-        class="h-10 px-3 rounded-xl border border-gray-200 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500"
+        class="native-date-input h-10"
       />
       @if (filterCollectorId || filterDate) {
         <p-button
@@ -41,57 +65,394 @@
       }
     </div>
 
-    @if (loading) {
-      <p-table [value]="[1, 2, 3, 4, 5]" styleClass="p-datatable-sm">
-        <ng-template pTemplate="body">
-          <tr>
-            <td><p-skeleton width="80%" /></td>
-            <td><p-skeleton width="70%" /></td>
-            <td><p-skeleton width="60%" /></td>
-            <td><p-skeleton width="40%" /></td>
-            <td><p-skeleton width="40%" /></td>
-          </tr>
-        </ng-template>
-      </p-table>
-    } @else if (error) {
-      <app-error-state />
-    } @else if (sheets.length === 0) {
-      <p class="text-sm text-gray-400 text-center py-10">
-        No hay planillas generadas.
-      </p>
-    } @else {
-      <p-table
-        [value]="sheets"
-        [paginator]="true"
-        [rows]="15"
-        styleClass="p-datatable-sm p-datatable-hoverable-rows"
-        responsiveLayout="scroll"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Fecha</th>
-            <th>Cobrador</th>
-            <th>Filtro</th>
-            <th class="text-center">Cuotas</th>
-            <th>Generada</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-sheet>
-          <tr class="cursor-pointer" (click)="goToDetail(sheet)">
-            <td class="font-medium">
-              {{ sheet.sheetDate | date: "dd/MM/yyyy" }}
-            </td>
-            <td>{{ sheet.collectorName }}</td>
-            <td>
-              <p-tag [value]="filterLabel(sheet.filterUsed)" severity="info" />
-            </td>
-            <td class="text-center font-semibold">{{ sheet.totalItems }}</td>
-            <td class="text-sm text-gray-500">
-              {{ sheet.createdAt | date: "dd/MM/yyyy HH:mm" }}
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    }
-  </p-card>
+    <!-- Tabla -->
+    <div class="flex-1 overflow-y-auto">
+      @if (loading) {
+        <div class="p-4 space-y-2">
+          @for (i of [1, 2, 3, 4, 5]; track i) {
+            <p-skeleton height="2.5rem" />
+          }
+        </div>
+      } @else if (error) {
+        <app-error-state />
+      } @else if (sheets.length === 0) {
+        <div
+          class="flex flex-col items-center justify-center h-40 gap-2"
+          style="color: var(--ff-text-muted)"
+        >
+          <i class="pi pi-inbox text-2xl"></i>
+          <span class="text-sm">No hay planillas generadas.</span>
+        </div>
+      } @else {
+        <p-table
+          [value]="sheets"
+          [paginator]="true"
+          [rows]="20"
+          styleClass="p-datatable-sm p-datatable-hoverable-rows"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Fecha</th>
+              <th>Cobrador</th>
+              <th>Filtro</th>
+              <th class="text-center">Cuotas</th>
+              <th class="text-center"></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-sheet>
+            <tr
+              class="cursor-pointer"
+              [style.background]="
+                selectedSheetMeta?.id === sheet.id
+                  ? 'var(--ff-accent-dim, rgba(59,130,246,0.15))'
+                  : ''
+              "
+              (click)="selectSheet(sheet)"
+            >
+              <td class="font-medium text-xs">
+                {{ sheet.sheetDate | date: "dd/MM/yyyy" }}
+              </td>
+              <td class="text-sm">{{ sheet.collectorName }}</td>
+              <td>
+                <p-tag
+                  [value]="filterLabel(sheet.filterUsed)"
+                  severity="info"
+                />
+              </td>
+              <td class="text-center font-semibold">{{ sheet.totalItems }}</td>
+              <td class="text-center">
+                <i
+                  class="pi pi-chevron-right text-xs"
+                  style="color: var(--ff-text-muted)"
+                ></i>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: detalle -->
+  @if (selectedSheetMeta || loadingDetail) {
+    <div class="flex-1 overflow-y-auto">
+      @if (loadingDetail) {
+        <app-loading-state />
+      } @else if (selectedSheet) {
+        <!-- Header detalle -->
+        <div
+          class="flex items-center gap-2 px-4 py-4 shrink-0"
+          style="border-bottom: 1px solid var(--ff-border)"
+        >
+          <!-- Cerrar detalle -->
+          <button
+            class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+            style="
+              border: 1px solid var(--ff-border);
+              color: var(--ff-text-muted);
+            "
+            pTooltip="Cerrar detalle"
+            tooltipPosition="right"
+            (click)="
+              selectedSheetMeta = null;
+              selectedSheet = null;
+              leftPanelCollapsed = false
+            "
+          >
+            <i class="pi pi-times text-xs"></i>
+          </button>
+          <!-- Colapsar/expandir lista -->
+          <button
+            class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+            style="
+              border: 1px solid var(--ff-border);
+              color: var(--ff-text-muted);
+            "
+            [pTooltip]="leftPanelCollapsed ? 'Mostrar lista' : 'Ocultar lista'"
+            tooltipPosition="right"
+            (click)="leftPanelCollapsed = !leftPanelCollapsed"
+          >
+            <i
+              class="pi text-xs"
+              [class.pi-chevron-right]="leftPanelCollapsed"
+              [class.pi-chevron-left]="!leftPanelCollapsed"
+            ></i>
+          </button>
+          <div class="flex-1 min-w-0">
+            <p
+              class="text-sm font-semibold truncate"
+              style="color: var(--ff-text-primary)"
+            >
+              {{ selectedSheet.collectorName }}
+              <span class="font-normal" style="color: var(--ff-text-muted)">
+                · {{ formatDate(selectedSheet.sheetDate) }} ·
+                {{ filterLabel(selectedSheet.filterUsed) }} · Generada por:
+                {{ selectedSheet.generatedByName }}
+              </span>
+            </p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span
+              class="text-xs font-bold px-2 py-1 rounded-full"
+              style="background: var(--ff-accent); color: #fff"
+            >
+              {{ selectedSheet.totalItems }} CUOTAS
+            </span>
+            <p-button
+              icon="pi pi-download"
+              pTooltip="Descargar PDF"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (onClick)="downloadPdf()"
+            />
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div
+          class="flex gap-1 px-5 pt-3 pb-0 shrink-0"
+          style="border-bottom: 1px solid var(--ff-border)"
+        >
+          @for (
+            tab of [
+              { key: "ALL", label: "Todas", count: selectedSheet.totalItems },
+              {
+                key: "PENDING",
+                label: "Pendiente",
+                count: countByStatus("PENDING"),
+              },
+              {
+                key: "OVERDUE",
+                label: "En mora",
+                count: countByStatus("OVERDUE"),
+              },
+              {
+                key: "PARTIAL",
+                label: "Cob. pend.",
+                count: countByStatus("PARTIAL"),
+              },
+              { key: "PAID", label: "Cobrado", count: countByStatus("PAID") },
+            ];
+            track tab.key
+          ) {
+            <button
+              class="px-3 pb-2 text-xs font-medium border-b-2 transition-colors"
+              [class.border-blue-500]="activeTab === tab.key"
+              [class.border-transparent]="activeTab !== tab.key"
+              [style.color]="
+                activeTab === tab.key
+                  ? 'var(--ff-accent)'
+                  : 'var(--ff-text-muted)'
+              "
+              (click)="activeTab = $any(tab.key)"
+            >
+              {{ tab.label }}
+              @if (tab.count > 0) {
+                <span class="ml-1 text-xs opacity-70">({{ tab.count }})</span>
+              }
+            </button>
+          }
+        </div>
+
+        <!-- Tabla de items -->
+        @if (filteredItems.length === 0) {
+          <div
+            class="flex items-center justify-center h-32"
+            style="color: var(--ff-text-muted)"
+          >
+            <span class="text-sm">Sin cuotas en esta categoría.</span>
+          </div>
+        } @else {
+          <p-table
+            [value]="filteredItems"
+            styleClass="p-datatable-sm p-datatable-hoverable-rows"
+            responsiveLayout="scroll"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th class="w-8">#</th>
+                <th>Cliente / Contacto</th>
+                <th>Tipo / Cuota</th>
+                <th>Vencimiento</th>
+                <th class="text-right">Monto</th>
+                <th class="text-right">Mora</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-item>
+              <tr>
+                <td class="text-xs" style="color: var(--ff-text-muted)">
+                  {{ item.orderNumber }}
+                </td>
+                <td>
+                  <p
+                    class="font-semibold text-sm"
+                    style="color: var(--ff-text-primary)"
+                  >
+                    {{ item.customerName }}
+                  </p>
+                  @if (item.customerPhone) {
+                    <p class="text-xs" style="color: var(--ff-text-muted)">
+                      <i class="pi pi-phone mr-1"></i>{{ item.customerPhone }}
+                    </p>
+                  }
+                  @if (item.customerAddress) {
+                    <p class="text-xs" style="color: var(--ff-text-muted)">
+                      <i class="pi pi-map-marker mr-1"></i
+                      >{{ item.customerAddress }}
+                    </p>
+                  }
+                </td>
+                <td>
+                  <p class="text-sm" style="color: var(--ff-text-secondary)">
+                    {{ item.creditType === "SALE" ? "Venta" : "Préstamo" }}
+                  </p>
+                  <p
+                    class="text-xs ff-mono"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Cuota {{ item.installmentNumber }}
+                  </p>
+                </td>
+                <td class="text-sm" style="color: var(--ff-text-secondary)">
+                  {{ item.dueDate | date: "dd/MM/yyyy" }}
+                </td>
+                <td class="text-right ff-mono font-semibold text-sm">
+                  @if (item.plannedAmount !== item.amountDue) {
+                    <span
+                      class="text-xs line-through mr-1"
+                      style="color: var(--ff-text-muted)"
+                      [pTooltip]="'Monto al generar'"
+                    >
+                      {{ item.plannedAmount | currencyArs: 2 }}
+                    </span>
+                  }
+                  <span style="color: var(--ff-accent)">{{
+                    item.amountDue | currencyArs: 2
+                  }}</span>
+                </td>
+                <td class="text-right ff-mono text-sm">
+                  @if (item.penaltyAmount > 0) {
+                    <span style="color: var(--ff-danger)">{{
+                      item.penaltyAmount | currencyArs: 2
+                    }}</span>
+                  } @else {
+                    <span style="color: var(--ff-text-muted)">—</span>
+                  }
+                </td>
+                <td>
+                  <p-tag
+                    [value]="installmentLabel(item.installmentStatus)"
+                    [severity]="installmentSeverity(item.installmentStatus)"
+                  />
+                </td>
+                <td>
+                  <p-button
+                    label="Ver crédito"
+                    icon="pi pi-external-link"
+                    severity="secondary"
+                    [text]="true"
+                    size="small"
+                    (onClick)="goToCredit(item.creditId)"
+                  />
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        }
+      }
+    </div>
+  }
 </div>
+
+<!-- DIALOG: Generar planilla -->
+<p-dialog
+  [(visible)]="showGenerateDialog"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  header="Generar planilla de cobro"
+>
+  <p class="text-sm mb-4" style="color: var(--ff-text-muted)">
+    Seleccioná un cobrador o generá para todos.
+  </p>
+
+  <div class="flex flex-wrap items-end gap-4">
+    <div class="flex flex-col gap-1.5">
+      <label class="auth-label">Cobrador</label>
+      <p-dropdown
+        [options]="collectorOptions"
+        [(ngModel)]="selectedCollectorId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Seleccioná un cobrador"
+        styleClass="w-56"
+        appendTo="body"
+        [showClear]="true"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="auth-label">Fecha</label>
+      <input
+        type="date"
+        [(ngModel)]="selectedDate"
+        class="native-date-input h-10"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="auth-label">Filtro de cuotas</label>
+      <p-dropdown
+        [options]="filterOptions"
+        [(ngModel)]="selectedFilter"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-48"
+        appendTo="body"
+      />
+    </div>
+  </div>
+
+  <div
+    class="flex items-center justify-end gap-3 pt-5 mt-2"
+    style="border-top: 1px solid var(--ff-border)"
+  >
+    <button
+      type="button"
+      class="h-11 px-5 rounded-xl text-sm font-medium transition-colors hover:opacity-80"
+      style="color: var(--ff-text-muted)"
+      (click)="showGenerateDialog = false"
+    >
+      Cancelar
+    </button>
+    <button
+      type="button"
+      class="h-11 px-5 rounded-xl text-sm font-medium flex items-center gap-2 border transition-colors hover:opacity-80"
+      style="
+        border-color: var(--ff-border);
+        color: var(--ff-text-secondary);
+        background: transparent;
+      "
+      [disabled]="generating || generatingAll"
+      (click)="generateForAll()"
+    >
+      @if (generatingAll) {
+        <i class="pi pi-spin pi-spinner text-xs"></i>
+      } @else {
+        <i class="pi pi-users text-xs"></i>
+      }
+      Generar para todos
+    </button>
+    <p-button
+      label="Generar planilla"
+      icon="pi pi-file-export"
+      severity="primary"
+      styleClass="h-11 px-5 rounded-xl"
+      [loading]="generating"
+      [disabled]="!selectedCollectorId || generating || generatingAll"
+      (onClick)="generatePlanilla()"
+    />
+  </div>
+</p-dialog>

@@ -5,7 +5,8 @@
   } @else if (error) {
     <app-error-state />
   } @else if (product && form) {
-    <h2 class="text-xl font-semibold mb-6">Editar producto</h2>
+    <div class="ff-panel rounded-xl p-6">
+    <h2 class="text-xl font-semibold mb-6" style="color: var(--ff-text-primary)">Editar producto</h2>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
       <div class="flex flex-col gap-1">
@@ -122,5 +123,6 @@
         />
       </div>
     </form>
+    </div>
   }
 </div>

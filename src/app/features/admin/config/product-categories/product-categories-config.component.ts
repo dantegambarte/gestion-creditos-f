@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -20,6 +21,7 @@ import { ProductCategoriesService } from '../services/product-categories.service
   imports: [
     FormsModule,
     ButtonModule,
+    ConfirmDialogModule,
     DialogModule,
     InputTextModule,
     SkeletonModule,
@@ -27,12 +29,13 @@ import { ProductCategoriesService } from '../services/product-categories.service
     TagModule,
     ToastModule,
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './product-categories-config.component.html',
 })
 export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
   private readonly svc = inject(ProductCategoriesService);
   private readonly msg = inject(MessageService);
+  private readonly confirm = inject(ConfirmationService);
   private destroy$ = new Subject<void>();
 
   rows: ProductCategory[] = [];
@@ -105,7 +108,28 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Solicita confirmación antes de cambiar el estado de la categoría.
+   * @param {ProductCategory} cat - Categoría a activar o desactivar.
+   */
   toggle(cat: ProductCategory): void {
+    const action = cat.active ? 'desactivar' : 'activar';
+    this.confirm.confirm({
+      message: `¿Confirmás que querés ${action} la categoría "${cat.name}"?`,
+      header: cat.active ? 'Desactivar categoría' : 'Activar categoría',
+      icon: cat.active ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
+      acceptLabel: cat.active ? 'Desactivar' : 'Activar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: cat.active ? 'p-button-danger' : 'p-button-primary',
+      accept: () => this.executeToggle(cat),
+    });
+  }
+
+  /**
+   * Ejecuta el cambio de estado de la categoría tras confirmación del usuario.
+   * @param {ProductCategory} cat - Categoría a activar o desactivar.
+   */
+  private executeToggle(cat: ProductCategory): void {
     const call = cat.active
       ? this.svc.deactivate(cat.id)
       : this.svc.activate(cat.id);

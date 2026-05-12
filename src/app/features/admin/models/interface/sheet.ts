@@ -1,6 +1,8 @@
 export interface PlanillaEntry {
   clientName: string;
-  clientDni: string; // TODO: customer_dni not returned by backend — using 'N/D'
+  clientDni: string;
+  clientPhone: string | null;
+  clientAddress: string | null;
   creditId: string;
   creditType: string;
   installmentNumber: number;

@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -20,6 +21,7 @@ import { ProductBrandsService } from '../services/product-brands.service';
   imports: [
     FormsModule,
     ButtonModule,
+    ConfirmDialogModule,
     DialogModule,
     InputTextModule,
     SkeletonModule,
@@ -27,12 +29,13 @@ import { ProductBrandsService } from '../services/product-brands.service';
     TagModule,
     ToastModule,
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './product-brands-config.component.html',
 })
 export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
   private readonly svc = inject(ProductBrandsService);
   private readonly msg = inject(MessageService);
+  private readonly confirm = inject(ConfirmationService);
   private destroy$ = new Subject<void>();
 
   rows: ProductBrand[] = [];
@@ -105,7 +108,28 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Solicita confirmación antes de cambiar el estado de la marca.
+   * @param {ProductBrand} brand - Marca a activar o desactivar.
+   */
   toggle(brand: ProductBrand): void {
+    const action = brand.active ? 'desactivar' : 'activar';
+    this.confirm.confirm({
+      message: `¿Confirmás que querés ${action} la marca "${brand.name}"?`,
+      header: brand.active ? 'Desactivar marca' : 'Activar marca',
+      icon: brand.active ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
+      acceptLabel: brand.active ? 'Desactivar' : 'Activar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: brand.active ? 'p-button-danger' : 'p-button-primary',
+      accept: () => this.executeToggle(brand),
+    });
+  }
+
+  /**
+   * Ejecuta el cambio de estado de la marca tras confirmación del usuario.
+   * @param {ProductBrand} brand - Marca a activar o desactivar.
+   */
+  private executeToggle(brand: ProductBrand): void {
     const call = brand.active
       ? this.svc.deactivate(brand.id)
       : this.svc.activate(brand.id);

@@ -23,6 +23,8 @@ import {
   SimulatePayload,
   SimulateResult,
   SimulateResultItem,
+  SimulateScheduleRow,
+  SimulateSummary,
 } from '../models/credit.model';
 
 /**
@@ -145,15 +147,55 @@ function toSimulateBody(p: SimulatePayload): Record<string, unknown> {
     body['products'] = p.products.map((pr) => ({
       variant_id: pr.variantId,
       quantity: pr.quantity,
+      installments_count: pr.installmentsCount,
     }));
   }
   if (p.totalAmount !== undefined) body['total_amount'] = p.totalAmount;
   if (p.downPayment !== undefined && p.downPayment > 0) {
     body['down_payment'] = p.downPayment;
   }
+  if (p.firstPaymentDate) {
+    body['first_payment_date'] = p.firstPaymentDate;
+  }
   return body;
 }
 
+/**
+ * Convierte una fila cruda del cronograma al formato consumido por la app.
+ * @param raw
+ * @returns
+ */
+function toSimulateScheduleRow(
+  raw: Record<string, unknown>,
+): SimulateScheduleRow {
+  return {
+    installmentNumber: raw['installment_number'] as number,
+    dueDate: raw['due_date'] as string,
+    amount: raw['amount'] as number,
+    capital: raw['capital'] as number | undefined,
+    interest: raw['interest'] as number | undefined,
+    remainingEstimated: raw['remaining_estimated'] as number | undefined,
+  };
+}
+
+/**
+ * Convierte el resumen crudo de simulación al formato interno.
+ * @param raw
+ * @returns
+ */
+function toSimulateSummary(raw: Record<string, unknown>): SimulateSummary {
+  return {
+    financedAmount: raw['financed_amount'] as number,
+    downPayment: raw['down_payment'] as number,
+    interestAmount: raw['interest_amount'] as number,
+  };
+}
+
+/**
+ * Convierte el resultado crudo de simulación al formato tipado del frontend.
+ * @param raw
+ * @returns
+ */
 function toSimulateResult(raw: Record<string, unknown>): SimulateResult {
   const result: SimulateResult = {
     type: raw['type'] as string,
@@ -166,15 +208,17 @@ function toSimulateResult(raw: Record<string, unknown>): SimulateResult {
   };
   if (Array.isArray(raw['items'])) {
     result.items = (raw['items'] as Record<string, unknown>[]).map(
-      (item): SimulateResultItem => ({
-        productId: item['product_id'] as string,
-        productName: item['product_name'] as string,
-        quantity: item['quantity'] as number,
-        unitPrice: item['unit_price'] as number,
-        lineTotal: item['line_total'] as number,
-        rate: item['rate'] as number,
-        installmentContribution: item['installment_contribution'] as number,
-      }),
+        (item): SimulateResultItem => ({
+          productId: item['product_id'] as string,
+          productName: item['product_name'] as string,
+          variantId: item['variant_id'] as string | undefined,
+          quantity: item['quantity'] as number,
+          unitPrice: item['unit_price'] as number,
+          lineTotal: item['line_total'] as number,
+          rate: item['rate'] as number,
+          installmentContribution: item['installment_contribution'] as number,
+          installmentsCount: item['installments_count'] as number | undefined,
+        }),
     );
   }
   if (raw['down_payment'] !== undefined) {
@@ -184,6 +228,17 @@ function toSimulateResult(raw: Record<string, unknown>): SimulateResult {
     result.financedAmount = raw['financed_amount'] as number;
   } else if (result.downPayment !== undefined) {
     result.financedAmount = Math.max(result.totalAmount - result.downPayment, 0);
+  }
+  if (raw['interest_amount'] !== undefined) {
+    result.interestAmount = raw['interest_amount'] as number;
+  }
+  if (Array.isArray(raw['schedule'])) {
+    result.schedule = (raw['schedule'] as Record<string, unknown>[]).map(
+      toSimulateScheduleRow,
+    );
+  }
+  if (raw['summary'] && typeof raw['summary'] === 'object') {
+    result.summary = toSimulateSummary(raw['summary'] as Record<string, unknown>);
   }
   return result;
 }

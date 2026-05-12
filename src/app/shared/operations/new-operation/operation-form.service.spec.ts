@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+﻿import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
 
@@ -24,7 +24,7 @@ describe('OperationFormService', () => {
         OperationFormService,
         MessageService,
         { provide: CreditsService, useValue: creditsServiceSpy },
-        { provide: CustomersService, useValue: { list: () => of([]) } },
+        { provide: CustomersService, useValue: { list: () => of([]), getWizardSummary: () => of({ phone: null, email: null, status: 'ACTIVE', address: null, collectorName: null, activeCredits: 0, delinquency: 'sin mora', paymentCapacity: 0, createdAt: '', paidInstallments: 0, pendingInstallments: 0, overdueInstallments: 0, credits: [] }) } },
         { provide: ProductUnitsService, useValue: { getAll: () => of([]) } },
         { provide: InterestRatesService, useValue: { getAll: () => of([]) } },
         { provide: ProductRatesService, useValue: { getAll: () => of([]) } },
@@ -34,7 +34,7 @@ describe('OperationFormService', () => {
     service = TestBed.inject(OperationFormService);
   });
 
-  it('agrupa el catálogo por productId real aunque coincidan nombre y precio', () => {
+  it('agrupa el catÃ¡logo por productId real aunque coincidan nombre y precio', () => {
     service.availableProducts = [
       {
         id: 'unit-1',
@@ -64,7 +64,7 @@ describe('OperationFormService', () => {
     expect(result[1].unitIds).toEqual(['unit-2']);
   });
 
-  it('envía unidades seleccionadas de SALE usando ids reales del carrito', () => {
+  it('envÃ­a unidades seleccionadas de SALE usando ids reales del carrito', () => {
     service.selectClient({
       id: 'client-1',
       name: 'Juan Perez',
@@ -83,11 +83,14 @@ describe('OperationFormService', () => {
       {
         productoId: 'prod-1',
         nombre: 'Heladera',
+        variantId: 'var-1',
+        variantLabel: 'Variante estÃ¡ndar',
         cantidad: 1,
         precio: 1000,
         subtotal: 1000,
         stockDisponible: 1,
         unitIds: ['unit-1'],
+        unitCodes: ['SN-001'],
         productIds: ['prod-1'],
         rates: [],
         selectedInstallments: 1,
@@ -115,4 +118,58 @@ describe('OperationFormService', () => {
       }),
     );
   });
+
+  it('permite avanzar en condiciones con fecha derivada cuando usa fecha de aprobaciÃ³n', () => {
+    service.operationForm.controls.operationType.setValue('SALE');
+    service.operationForm.controls.paymentFrequency.setValue('BIWEEKLY');
+    service.cartLines = [
+      {
+        productoId: 'prod-1',
+        nombre: 'Heladera',
+        variantId: 'var-1',
+        variantLabel: 'Variante estÃ¡ndar',
+        cantidad: 1,
+        precio: 1000,
+        subtotal: 1000,
+        stockDisponible: 1,
+        unitIds: ['unit-1'],
+        unitCodes: ['SN-001'],
+        productIds: ['prod-1'],
+        rates: [],
+        selectedInstallments: 1,
+      },
+    ];
+
+    service.syncFirstPaymentDateWithMode();
+
+    expect(service.operationForm.controls.firstPaymentDate.value).not.toBeNull();
+    expect(service.canNext(2)).toBeTrue();
+  });
+
+  it('bloquea avanzar en condiciones con fecha personalizada si falta elegir fecha', () => {
+    service.operationForm.controls.operationType.setValue('SALE');
+    service.operationForm.controls.paymentFrequency.setValue('BIWEEKLY');
+    service.operationForm.controls.firstPaymentDateMode.setValue('CUSTOM_DATE');
+    service.operationForm.controls.firstPaymentDate.setValue(null);
+    service.cartLines = [
+      {
+        productoId: 'prod-1',
+        nombre: 'Heladera',
+        variantId: 'var-1',
+        variantLabel: 'Variante estÃ¡ndar',
+        cantidad: 1,
+        precio: 1000,
+        subtotal: 1000,
+        stockDisponible: 1,
+        unitIds: ['unit-1'],
+        unitCodes: ['SN-001'],
+        productIds: ['prod-1'],
+        rates: [],
+        selectedInstallments: 1,
+      },
+    ];
+
+    expect(service.canNext(2)).toBeFalse();
+  });
 });
+

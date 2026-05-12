@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { MockAuthService } from '../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { DateService } from '../../../core/services/date.service';
 import { ReportsService } from '../reports/reports.service';
 import { CreditsService } from '../../seller/operations/credits.service';
@@ -62,6 +63,7 @@ describe('DashboardComponent', () => {
       imports: [DashboardComponent],
       providers: [
         { provide: MockAuthService, useValue: authSpy },
+        { provide: AuthServiceBase, useExisting: MockAuthService },
         { provide: ReportsService, useValue: reportsSpy },
         { provide: CreditsService, useValue: creditsSpy },
         { provide: DateService, useValue: { display: () => 'sábado 26 de abril, 2025' } },
