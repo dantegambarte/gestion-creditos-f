@@ -13,6 +13,7 @@
 
 /** Genera N operaciones de stub */
 function makeOperations(n: number) {
+  const frequencies = ['MONTHLY', 'WEEKLY', 'BIWEEKLY'];
   return Array.from({ length: n }, (_, i) => ({
     id: `op-${i + 1}`,
     customer_name: `Cliente ${i + 1}`,
@@ -20,6 +21,8 @@ function makeOperations(n: number) {
     type: i % 2 === 0 ? 'SALE' : 'LOAN',
     total_amount: 50000 + i * 1000,
     installments_count: 6,
+    payment_frequency: frequencies[i % 3],
+    interest_rate: 10,
     status: 'ACTIVE',
     created_at: '2026-05-01T10:00:00Z',
   }));
@@ -112,7 +115,8 @@ describe('CL-08 — Paginación de clientes (Seller)', () => {
 
   it('cambiar a 25 filas muestra todos los registros en una sola página', () => {
     cy.get('.p-paginator .p-dropdown').click();
-    cy.get('body > .p-dropdown-panel').contains('.p-dropdown-item', '25').click();
+    // El dropdown del paginator NO usa appendTo="body", el panel está en el DOM normal
+    cy.get('.p-dropdown-panel').contains('.p-dropdown-item', '25').click();
     cy.get('p-table tbody tr').should('have.length', 22);
   });
 });

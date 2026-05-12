@@ -63,6 +63,8 @@
         [paginator]="true"
         [rows]="10"
         [rowsPerPageOptions]="[10, 25, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first}–{last} de {totalRecords}"
         styleClass="p-datatable-sm"
       >
         <ng-template pTemplate="header">

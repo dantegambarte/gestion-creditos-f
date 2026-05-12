@@ -158,7 +158,8 @@ export class CreditsListComponent implements OnInit {
    * @param frequency
    * @returns
    */
-  frequencyLabel(frequency: string): string {
+  frequencyLabel(frequency: string | null | undefined): string {
+    if (!frequency) return '';
     const map: Record<string, string> = {
       WEEKLY: 'semanal',
       BIWEEKLY: 'quincenal',
