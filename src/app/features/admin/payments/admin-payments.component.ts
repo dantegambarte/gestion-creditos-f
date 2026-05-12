@@ -256,13 +256,39 @@ export class AdminPaymentsComponent implements OnInit {
   /**
    * Indica si el formulario de cobro directo es válido para enviar.
    */
+  private readonly UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   get directFormValid(): boolean {
     return (
-      this.directInstallmentId.trim().length > 0 &&
+      this.UUID_RE.test(this.directInstallmentId.trim()) &&
       (this.directAmount ?? 0) > 0 &&
       (this.directMethod !== 'TRANSFER' ||
         this.directTransferRef.trim().length > 0)
     );
+  }
+
+  get directInstallmentIdInvalid(): boolean {
+    return (
+      this.directInstallmentId.trim().length > 0 &&
+      !this.UUID_RE.test(this.directInstallmentId.trim())
+    );
+  }
+
+  /**
+   * Devuelve la etiqueta de tipo de cobro para mostrar en la lista.
+   */
+  paymentTypeLabel(p: Payment): string | null {
+    if (p.isReversal) return 'Reversión';
+    if (p.adminDirect) return 'Directo';
+    if (p.parentPaymentId) return 'Adelanto';
+    return null;
+  }
+
+  paymentTypeSeverity(p: Payment): 'danger' | 'info' | 'secondary' | null {
+    if (p.isReversal) return 'danger';
+    if (p.adminDirect) return 'info';
+    if (p.parentPaymentId) return 'secondary';
+    return null;
   }
 
   confirmDirect(): void {
