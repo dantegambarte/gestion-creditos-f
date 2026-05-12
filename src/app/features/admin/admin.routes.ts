@@ -153,8 +153,8 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: AppRoutes.SHEET,
-    loadComponent: () =>
-      import('./sheet/sheet.component').then((c) => c.SheetComponent),
+    redirectTo: AppRoutes.ADMIN_COLLECTIONS,
+    pathMatch: 'full',
   },
   {
     path: AppRoutes.ADMIN_COMMISSIONS,
@@ -214,6 +214,13 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () =>
           import('./config/notifications/notifications-config.component').then(
             (c) => c.NotificationsConfigComponent,
+          ),
+      },
+      {
+        path: 'holidays',
+        loadComponent: () =>
+          import('./config/holidays/holidays-config.component').then(
+            (c) => c.HolidaysConfigComponent,
           ),
       },
     ],

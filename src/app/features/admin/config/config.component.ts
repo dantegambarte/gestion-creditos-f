@@ -30,6 +30,7 @@ export class ConfigComponent {
       icon: 'pi pi-sliders-h',
       path: 'system-params',
     },
+    { label: 'Feriados', icon: 'pi pi-calendar-plus', path: 'holidays' },
     { label: 'Usuarios', icon: 'pi pi-users', path: 'users' },
     { label: 'Notificaciones', icon: 'pi pi-bell', path: 'notifications' },
   ];
