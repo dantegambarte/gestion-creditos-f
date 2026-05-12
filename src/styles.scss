@@ -89,6 +89,39 @@ body {
   color: #ffffff !important;
 }
 
+// ─── p-button success ────────────────────────────────────────────────────────
+.p-button.p-button-success {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+
+  &:hover:not(:disabled) {
+    background: #15803d !important;
+    border-color: #15803d !important;
+  }
+
+  &:active:not(:disabled) {
+    background: #166534 !important;
+    border-color: #166534 !important;
+  }
+
+  &:disabled,
+  &.p-disabled {
+    background: #14532d !important;
+    border-color: #14532d !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    opacity: 0.6;
+  }
+
+  .p-button-label {
+    color: #ffffff !important;
+  }
+
+  .p-button-icon {
+    color: #ffffff !important;
+  }
+}
+
 // ─── p-checkbox ──────────────────────────────────────────────────────────────
 .p-checkbox .p-checkbox-box {
   border: 2px solid var(--ff-border) !important;
