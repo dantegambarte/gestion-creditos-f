@@ -43,6 +43,9 @@ function toPayment(raw: PaymentRaw): Payment {
     customerName: raw.customer_name,
     customerDni: raw.customer_dni,
     collectorName: raw.collector_name,
+    isReversal: raw.is_reversal ?? false,
+    adminDirect: raw.admin_direct ?? false,
+    parentPaymentId: raw.parent_payment_id ?? null,
   };
 }
 

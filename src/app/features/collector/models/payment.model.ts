@@ -20,6 +20,9 @@ export interface Payment {
   customerName: string;
   customerDni: string;
   collectorName: string | null;
+  isReversal: boolean;
+  adminDirect: boolean;
+  parentPaymentId: string | null;
 }
 
 export interface PaymentDetail extends Payment {
@@ -116,6 +119,9 @@ export interface PaymentRaw {
   customer_name: string;
   customer_dni: string;
   collector_name: string | null;
+  is_reversal: boolean;
+  admin_direct: boolean;
+  parent_payment_id: string | null;
 }
 
 export interface PaymentDetailRaw extends PaymentRaw {
