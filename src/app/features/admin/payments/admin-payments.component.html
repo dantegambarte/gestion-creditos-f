@@ -8,13 +8,21 @@
         Pre-cargas de cobro registradas por cobradores.
       </p>
     </div>
-    <p-button
-      icon="pi pi-refresh"
-      severity="secondary"
-      [outlined]="true"
-      [loading]="loading"
-      (onClick)="refresh()"
-    />
+    <div class="flex gap-2">
+      <p-button
+        label="Cobro directo"
+        icon="pi pi-plus"
+        severity="primary"
+        (onClick)="openDirectDialog()"
+      />
+      <p-button
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="loading"
+        (onClick)="refresh()"
+      />
+    </div>
   </div>
 
   @if (loading) {
@@ -82,9 +90,7 @@
                 {{ p.collectorName ?? "—" }}
               </td>
               <td class="text-right font-semibold text-blue-600">
-                {{
-                  p.amountReceived | currencyArs: 2
-                }}
+                {{ p.amountReceived | currencyArs: 2 }}
               </td>
               <td>
                 {{ p.paymentMethod === "CASH" ? "Efectivo" : "Transferencia" }}
@@ -106,7 +112,7 @@
   }
 </div>
 
-<!-- Detail Dialog -->
+<!-- ── Detail Dialog ───────────────────────────────────────────── -->
 <p-dialog
   [(visible)]="showDetailDialog"
   header="Detalle del cobro"
@@ -157,19 +163,13 @@
         <div>
           <p class="text-gray-500">Monto de la cuota</p>
           <p class="font-semibold">
-            {{
-              selectedPayment.amountDue
-                | currencyArs: 2
-            }}
+            {{ selectedPayment.amountDue | currencyArs: 2 }}
           </p>
         </div>
         <div>
           <p class="text-gray-500">Monto cobrado</p>
           <p class="font-bold text-blue-600">
-            {{
-              selectedPayment.amountReceived
-                | currencyArs: 2
-            }}
+            {{ selectedPayment.amountReceived | currencyArs: 2 }}
           </p>
         </div>
         <div>
@@ -230,11 +230,24 @@
           />
         </div>
       }
+
+      @if (selectedPayment.status === "APPROVED") {
+        <div class="pt-3 border-t border-gray-100">
+          <p-button
+            label="Revertir cobro"
+            icon="pi pi-undo"
+            severity="danger"
+            [outlined]="true"
+            styleClass="w-full"
+            (onClick)="openReverseDialog()"
+          />
+        </div>
+      }
     </div>
   }
 </p-dialog>
 
-<!-- Reject Dialog -->
+<!-- ── Reject Dialog ───────────────────────────────────────────── -->
 <p-dialog
   [(visible)]="showRejectDialog"
   header="Rechazar cobro"
@@ -282,6 +295,167 @@
         (onClick)="confirmReject()"
         [loading]="processingReject"
         [disabled]="rejectCharCount() < 5"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ── Cobro Directo Dialog ────────────────────────────────────── -->
+<p-dialog
+  [(visible)]="showDirectDialog"
+  header="Registrar cobro directo"
+  [modal]="true"
+  [style]="{ width: '480px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    <div class="rounded-lg bg-blue-50 border border-blue-200 p-3">
+      <p class="text-xs text-blue-700">
+        <i class="pi pi-info-circle mr-1"></i>
+        El cobro se registra y aprueba en el mismo paso. La caja del día debe estar abierta.
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-gray-700">ID de cuota</label>
+      <input
+        pInputText
+        [(ngModel)]="directInstallmentId"
+        placeholder="UUID de la cuota"
+        class="w-full"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-gray-700">Monto cobrado</label>
+      <p-inputNumber
+        [(ngModel)]="directAmount"
+        mode="currency"
+        currency="ARS"
+        locale="es-AR"
+        [minFractionDigits]="2"
+        [min]="0.01"
+        styleClass="w-full"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-gray-700">Método de pago</label>
+      <p-dropdown
+        [options]="PAYMENT_METHOD_OPTIONS"
+        [(ngModel)]="directMethod"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full"
+        appendTo="body"
+      />
+    </div>
+
+    @if (directMethod === "TRANSFER") {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-gray-700">Referencia de transferencia</label>
+        <input
+          pInputText
+          [(ngModel)]="directTransferRef"
+          placeholder="N° de operación o referencia"
+          class="w-full"
+          maxlength="100"
+        />
+      </div>
+    }
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-gray-700">Notas (opcional)</label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="directNotes"
+        rows="2"
+        maxlength="500"
+        class="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        placeholder="Observaciones adicionales..."
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <button
+        type="button"
+        class="cancel-btn w-full"
+        (click)="showDirectDialog = false"
+      >
+        Cancelar
+      </button>
+      <p-button
+        label="Registrar cobro"
+        icon="pi pi-check"
+        severity="success"
+        styleClass="w-full"
+        (onClick)="confirmDirect()"
+        [loading]="processingDirect"
+        [disabled]="!directFormValid"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ── Reverse Dialog ─────────────────────────────────────────── -->
+<p-dialog
+  [(visible)]="showReverseDialog"
+  header="Revertir cobro"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    <div class="rounded-lg bg-red-50 border border-red-200 p-3">
+      <p class="text-xs text-red-700">
+        <i class="pi pi-exclamation-triangle mr-1"></i>
+        Se revertirán el cobro principal y todos los sub-pagos derivados (cuotas adelantadas).
+        Esta acción no se puede deshacer.
+      </p>
+    </div>
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-gray-700">
+        Motivo de la reversión (mín. 5, máx. 500 caracteres)
+      </label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="reverseReason"
+        rows="4"
+        maxlength="500"
+        class="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        placeholder="Describe el motivo..."
+      ></textarea>
+      <div class="flex justify-between text-xs text-gray-400 mt-1">
+        <span
+          [class.text-red-500]="reverseCharCount() > 0 && reverseCharCount() < 5"
+        >
+          Mínimo 5 caracteres
+        </span>
+        <span>{{ reverseCharCount() }}/500</span>
+      </div>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <button
+        type="button"
+        class="cancel-btn w-full"
+        (click)="showReverseDialog = false"
+      >
+        Cancelar
+      </button>
+      <p-button
+        label="Revertir cobro"
+        icon="pi pi-undo"
+        severity="danger"
+        styleClass="w-full"
+        (onClick)="confirmReverse()"
+        [loading]="processingReverse"
+        [disabled]="reverseCharCount() < 5"
       />
     </div>
   </ng-template>

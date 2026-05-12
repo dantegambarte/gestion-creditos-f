@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule, DatePipe, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
@@ -32,12 +32,15 @@ import {
 } from '../../models/installment.model';
 import { CreditsService } from '../credits.service';
 import { InstallmentsService } from '../installments.service';
+import { CreditPayment } from '../../../collector/models/payment.model';
+import { PaymentsService } from '../../../collector/payments.service';
 
 @Component({
   selector: 'app-credit-detail',
   standalone: true,
   imports: [
     CurrencyArsPipe,
+    DatePipe,
     CommonModule,
     FormsModule,
     ButtonModule,
@@ -59,6 +62,7 @@ export class CreditDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly creditsService = inject(CreditsService);
   private readonly installmentsService = inject(InstallmentsService);
+  private readonly paymentsService = inject(PaymentsService);
   private readonly location = inject(Location);
   private readonly header = inject(HeaderService);
   readonly auth = inject(AuthServiceBase);
@@ -71,6 +75,12 @@ export class CreditDetailComponent implements OnInit {
 
   selectedInstallment: CreditDetail['installments'][number] | null = null;
   activeTab: 'all' | 'paid' | 'pending' | 'overdue' = 'all';
+
+  // ── Panel principal: cronograma vs cobros ─────────────────────
+  mainTab: 'installments' | 'payments' = 'installments';
+  creditPayments: CreditPayment[] = [];
+  loadingPayments = false;
+  paymentsLoaded = false;
 
   get paidCount(): number {
     return this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0;
@@ -561,6 +571,32 @@ export class CreditDetailComponent implements OnInit {
         inst.id === updated.id ? { ...inst, ...updated } : inst,
       ),
     };
+  }
+
+  /**
+   * Devuelve la etiqueta del método de pago.
+   */
+  paymentMethodLabel(method: 'CASH' | 'TRANSFER'): string {
+    return method === 'CASH' ? 'Efectivo' : 'Transferencia';
+  }
+
+  /**
+   * Cambia al tab de cobros y carga el historial si aún no fue cargado.
+   */
+  switchToPayments(): void {
+    this.mainTab = 'payments';
+    if (this.paymentsLoaded) return;
+    this.loadingPayments = true;
+    this.paymentsService.listByCredit(this.creditId).subscribe({
+      next: (data) => {
+        this.creditPayments = data;
+        this.loadingPayments = false;
+        this.paymentsLoaded = true;
+      },
+      error: () => {
+        this.loadingPayments = false;
+      },
+    });
   }
 
   /**
