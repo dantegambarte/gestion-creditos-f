@@ -24,6 +24,8 @@
 | **CR-15** | Operación Crédito - Declaraciones y Autorizaciones. | La tilde en los casilleros debe ser visible. | Corregido / Validado — `.p-checkbox-icon { color: #ffffff !important }` en styles.scss |
 | **CR-16** | Nueva Operación - Seller. | Debería poder elegir la variante de un producto. | Pendiente datos — código frontend correcto; variantes aparecen cuando `product_variants` tiene atributos color/size/capacity en DB |
 | **CR-17** | Operaciones - Seller. | Click en paginación debe mostrar los siguientes registros. | Corregido / Validado — agregado `[paginator]="true" [rows]="10"` en `operations.component.html` |
+| **CR-18** | Operaciones - Admin. | Se hizo click en "Ver" en una operación pendiente de aprobación. | Debería mostrar la tasa de interés | Error
+| **CR-19** | Cancelación Anticipada - Admin. | Se hizo click en "Cancelación Anticipada" en una operación aprobada. | Debería poder adelantar cuotas. | Error
 
 
 ## 🟢 2. Módulo: Cliente
