@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableModule } from 'primeng/table';
@@ -52,6 +53,7 @@ import { PaymentsService } from '../../../collector/payments.service';
     InputTextModule,
     InputNumberModule,
     InputTextareaModule,
+    TooltipModule,
     LoadingStateComponent,
     ErrorStateComponent,
   ],
@@ -81,6 +83,16 @@ export class CreditDetailComponent implements OnInit {
   creditPayments: CreditPayment[] = [];
   loadingPayments = false;
   paymentsLoaded = false;
+
+  // ── Cobro directo desde cuota ──────────────────────────────────
+  showDirectDialog = false;
+  directInstallmentId = '';
+  directMaxAmount = 0;
+  directAmount: number | null = null;
+  directMethod: 'CASH' | 'TRANSFER' = 'CASH';
+  directTransferRef = '';
+  directNotes = '';
+  processingDirect = false;
 
   get paidCount(): number {
     return this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0;
@@ -578,6 +590,64 @@ export class CreditDetailComponent implements OnInit {
    */
   paymentMethodLabel(method: 'CASH' | 'TRANSFER'): string {
     return method === 'CASH' ? 'Efectivo' : 'Transferencia';
+  }
+
+  get directFormValid(): boolean {
+    return (
+      this.directInstallmentId.length > 0 &&
+      (this.directAmount ?? 0) > 0 &&
+      (this.directAmount ?? 0) <= this.directMaxAmount &&
+      (this.directMethod !== 'TRANSFER' || this.directTransferRef.trim().length > 0)
+    );
+  }
+
+  /**
+   * Abre el dialog de cobro directo pre-cargado con la cuota seleccionada.
+   * @param inst - Cuota sobre la que se va a cobrar.
+   */
+  openDirectDialog(inst: CreditDetail['installments'][number]): void {
+    this.directInstallmentId = inst.id;
+    this.directMaxAmount = inst.amountDue - inst.amountPaid;
+    this.directAmount = this.directMaxAmount;
+    this.directMethod = 'CASH';
+    this.directTransferRef = '';
+    this.directNotes = '';
+    this.showDirectDialog = true;
+  }
+
+  confirmDirect(): void {
+    if (!this.directFormValid) return;
+    this.processingDirect = true;
+    this.paymentsService
+      .adminDirect({
+        installmentId: this.directInstallmentId,
+        amountReceived: this.directAmount!,
+        paymentMethod: this.directMethod,
+        transferReference: this.directTransferRef || undefined,
+        notes: this.directNotes || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.processingDirect = false;
+          this.showDirectDialog = false;
+          this.paymentsLoaded = false; // fuerza recarga del tab de cobros
+          this.msg.add({
+            severity: 'success',
+            summary: 'Cobro registrado',
+            detail: 'El cobro fue registrado y aprobado correctamente.',
+            life: 5000,
+          });
+          this.load();
+        },
+        error: (err: AppError) => {
+          this.processingDirect = false;
+          this.msg.add({
+            severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
+            summary: err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
+            detail: err.message ?? 'No se pudo registrar el cobro.',
+          });
+        },
+      });
   }
 
   /**

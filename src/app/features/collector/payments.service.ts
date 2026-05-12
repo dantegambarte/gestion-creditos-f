@@ -58,6 +58,10 @@ function toPaymentDetail(raw: PaymentDetailRaw): PaymentDetail {
     penaltyAmount: raw.penalty_amount,
     customerId: raw.customer_id,
     collectorId: raw.collector_id,
+    isReversal: raw.is_reversal ?? false,
+    adminDirect: raw.admin_direct ?? false,
+    reversalReason: raw.reversal_reason ?? null,
+    reversalPaymentId: raw.reversal_payment_id ?? null,
   };
 }
 

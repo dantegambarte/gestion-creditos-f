@@ -392,6 +392,24 @@
                             pTooltip="Pago anticipado"
                             (onClick)="$event.stopPropagation(); openEarlyPayDialog(inst)"
                           />
+                          <p-button
+                            icon="pi pi-credit-card"
+                            severity="info"
+                            [text]="true"
+                            size="small"
+                            pTooltip="Cobro directo"
+                            (onClick)="$event.stopPropagation(); openDirectDialog(inst)"
+                          />
+                        }
+                        @if (inst.status === 'PARTIAL') {
+                          <p-button
+                            icon="pi pi-credit-card"
+                            severity="info"
+                            [text]="true"
+                            size="small"
+                            pTooltip="Cobro directo (saldo restante)"
+                            (onClick)="$event.stopPropagation(); openDirectDialog(inst)"
+                          />
                         }
                       </div>
                     </td>
@@ -747,6 +765,92 @@
         styleClass="w-full"
         (onClick)="confirmEarlyPay()"
         [loading]="processingEarlyPay"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog: Cobro directo -->
+<p-dialog
+  [(visible)]="showDirectDialog"
+  header="Cobro directo"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    <div class="rounded-lg bg-blue-50 border border-blue-200 p-3">
+      <p class="text-xs text-blue-700">
+        <i class="pi pi-info-circle mr-1"></i>
+        El cobro se registra y aprueba en el mismo paso. La caja del día debe estar abierta.
+        Saldo máximo: <strong>{{ directMaxAmount | currencyArs: 2 }}</strong>
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)">Monto cobrado</label>
+      <p-inputNumber
+        [(ngModel)]="directAmount"
+        mode="currency"
+        currency="ARS"
+        locale="es-AR"
+        [minFractionDigits]="2"
+        [min]="0.01"
+        [max]="directMaxAmount"
+        styleClass="w-full"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)">Método de pago</label>
+      <p-dropdown
+        [options]="PAYMENT_METHOD_OPTIONS"
+        [(ngModel)]="directMethod"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full"
+        appendTo="body"
+      />
+    </div>
+
+    @if (directMethod === "TRANSFER") {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium" style="color: var(--ff-text-primary)">Referencia de transferencia</label>
+        <input
+          pInputText
+          [(ngModel)]="directTransferRef"
+          placeholder="N° de operación o referencia"
+          class="w-full"
+          maxlength="100"
+        />
+      </div>
+    }
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)">Notas (opcional)</label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="directNotes"
+        rows="2"
+        maxlength="500"
+        class="w-full"
+        placeholder="Observaciones adicionales..."
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <button type="button" class="cancel-btn w-full" (click)="showDirectDialog = false">Cancelar</button>
+      <p-button
+        label="Registrar cobro"
+        icon="pi pi-check"
+        severity="success"
+        styleClass="w-full"
+        (onClick)="confirmDirect()"
+        [loading]="processingDirect"
+        [disabled]="!directFormValid"
       />
     </div>
   </ng-template>

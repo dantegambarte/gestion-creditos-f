@@ -27,6 +27,11 @@ export interface PaymentDetail extends Payment {
   penaltyAmount: number;
   customerId: string;
   collectorId: string | null;
+  isReversal: boolean;
+  adminDirect: boolean;
+  reversalReason: string | null;
+  /** ID del payment de reversión que anuló este cobro (null si no fue revertido). */
+  reversalPaymentId: string | null;
 }
 
 export interface PaymentListFilters {
@@ -118,6 +123,10 @@ export interface PaymentDetailRaw extends PaymentRaw {
   penalty_amount: number;
   customer_id: string;
   collector_id: string | null;
+  is_reversal: boolean;
+  admin_direct: boolean;
+  reversal_reason: string | null;
+  reversal_payment_id: string | null;
 }
 
 export interface PaymentCreateResultRaw {
