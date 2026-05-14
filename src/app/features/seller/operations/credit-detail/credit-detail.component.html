@@ -362,7 +362,7 @@
                   <th class="text-right">Pagado</th>
                   <th class="text-right">Mora</th>
                   <th>Estado</th>
-                  @if (isAdmin) { <th class="text-center">Acciones</th> }
+                  @if (canActOnInstallments) { <th class="text-center">Acciones</th> }
                 </tr>
               </ng-template>
               <ng-template pTemplate="body" let-inst>
@@ -397,7 +397,7 @@
                       [class.ff-badge--liquidado]="inst.status === 'WAIVED' || inst.status === 'SETTLED'"
                     >{{ installmentLabel(inst.status) }}</span>
                   </td>
-                  @if (isAdmin) {
+                  @if (canActOnInstallments) {
                     <td class="text-center">
                       <div class="flex justify-center gap-1">
                         @if (inst.status === 'OVERDUE') {
@@ -514,7 +514,7 @@
                 </div>
               </div>
 
-              @if (isAdmin) {
+              @if (canActOnInstallments) {
                 <div class="flex flex-col gap-2 px-4 py-3">
                   @if (selectedInstallment.status === 'PENDING' || selectedInstallment.status === 'OVERDUE') {
                     <p-button

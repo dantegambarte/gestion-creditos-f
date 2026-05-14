@@ -182,6 +182,13 @@ export class CreditDetailComponent implements OnInit {
     return this.auth.hasRole('ADMIN');
   }
 
+  /** Un crédito REFINANCED o SETTLED no acepta más acciones sobre sus cuotas. */
+  get canActOnInstallments(): boolean {
+    return this.isAdmin &&
+      this.credit?.status !== 'REFINANCED' &&
+      this.credit?.status !== 'SETTLED';
+  }
+
   /**
    * Devuelve el número de caracteres restantes para el campo de razón de rechazo.
    * @returns
