@@ -909,20 +909,6 @@
       </div>
     </div>
 
-    <ng-template pTemplate="footer">
-      <div class="grid grid-cols-2 gap-3 w-full">
-        <button type="button" class="cancel-btn w-full" (click)="showRefinanceDialog = false">Cancelar</button>
-        <p-button
-          label="Simular nuevo crédito"
-          icon="pi pi-arrow-right"
-          severity="warning"
-          styleClass="w-full"
-          (onClick)="goToRefinanceStep2()"
-          [loading]="refinanceSimulating"
-          [disabled]="!refinanceStep1Valid"
-        />
-      </div>
-    </ng-template>
   }
 
   <!-- ── Paso 2: simulación ────────────────────────────────── -->
@@ -993,7 +979,24 @@
       </p>
     </div>
 
-    <ng-template pTemplate="footer">
+  }
+
+  <ng-template pTemplate="footer">
+    @if (refinanceStep === 1) {
+      <div class="grid grid-cols-2 gap-3 w-full">
+        <button type="button" class="cancel-btn w-full" (click)="showRefinanceDialog = false">Cancelar</button>
+        <p-button
+          label="Simular nuevo crédito"
+          icon="pi pi-arrow-right"
+          severity="warning"
+          styleClass="w-full"
+          (onClick)="goToRefinanceStep2()"
+          [loading]="refinanceSimulating"
+          [disabled]="!refinanceStep1Valid"
+        />
+      </div>
+    }
+    @if (refinanceStep === 2) {
       <div class="grid grid-cols-3 gap-3 w-full">
         <button type="button" class="cancel-btn w-full" (click)="refinanceStep = 1">Volver</button>
         <button type="button" class="cancel-btn w-full" (click)="showRefinanceDialog = false">Cancelar</button>
@@ -1006,8 +1009,8 @@
           [loading]="processingRefinance"
         />
       </div>
-    </ng-template>
-  }
+    }
+  </ng-template>
 </p-dialog>
 
 <!-- Dialog: Cobro directo -->
