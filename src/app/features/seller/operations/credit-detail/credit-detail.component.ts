@@ -95,15 +95,24 @@ export class CreditDetailComponent implements OnInit {
   processingDirect = false;
 
   get paidCount(): number {
-    return this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0;
+    return (
+      this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0
+    );
   }
 
   get pendingCount(): number {
-    return this.credit?.installments.filter((i) => i.status === 'PENDING' || i.status === 'PARTIAL').length ?? 0;
+    return (
+      this.credit?.installments.filter(
+        (i) => i.status === 'PENDING' || i.status === 'PARTIAL',
+      ).length ?? 0
+    );
   }
 
   get overdueCount(): number {
-    return this.credit?.installments.filter((i) => i.status === 'OVERDUE').length ?? 0;
+    return (
+      this.credit?.installments.filter((i) => i.status === 'OVERDUE').length ??
+      0
+    );
   }
 
   get installmentAmount(): number | null {
@@ -115,7 +124,8 @@ export class CreditDetailComponent implements OnInit {
    * @param {CreditDetail['installments'][number]} inst - Cuota clickeada.
    */
   selectInstallment(inst: CreditDetail['installments'][number]): void {
-    this.selectedInstallment = this.selectedInstallment?.id === inst.id ? null : inst;
+    this.selectedInstallment =
+      this.selectedInstallment?.id === inst.id ? null : inst;
   }
 
   showApproveDialog = false;
@@ -208,6 +218,7 @@ export class CreditDetailComponent implements OnInit {
       ACTIVE: 'Activo',
       SETTLED: 'Liquidado',
       REJECTED: 'Rechazado',
+      EXPIRED: 'Vencido',
     };
     return map[status];
   }
@@ -228,6 +239,7 @@ export class CreditDetailComponent implements OnInit {
       ACTIVE: 'success',
       SETTLED: 'secondary',
       REJECTED: 'danger',
+      EXPIRED: 'danger',
     };
     return map[status];
   }
@@ -597,7 +609,8 @@ export class CreditDetailComponent implements OnInit {
       this.directInstallmentId.length > 0 &&
       (this.directAmount ?? 0) > 0 &&
       (this.directAmount ?? 0) <= this.directMaxAmount &&
-      (this.directMethod !== 'TRANSFER' || this.directTransferRef.trim().length > 0)
+      (this.directMethod !== 'TRANSFER' ||
+        this.directTransferRef.trim().length > 0)
     );
   }
 
@@ -642,8 +655,12 @@ export class CreditDetailComponent implements OnInit {
         error: (err: AppError) => {
           this.processingDirect = false;
           this.msg.add({
-            severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
-            summary: err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
+            severity:
+              err.status === 409 || err.status === 422 ? 'warn' : 'error',
+            summary:
+              err.status === 409 || err.status === 422
+                ? 'Advertencia'
+                : 'Error',
             detail: err.message ?? 'No se pudo registrar el cobro.',
           });
         },

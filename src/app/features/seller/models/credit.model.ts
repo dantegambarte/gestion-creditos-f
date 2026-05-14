@@ -2,7 +2,8 @@ export type CreditStatus =
   | 'PENDING_APPROVAL'
   | 'ACTIVE'
   | 'SETTLED'
-  | 'REJECTED';
+  | 'REJECTED'
+  | 'EXPIRED';
 export type CreditType = 'SALE' | 'LOAN';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 export type InstallmentStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'PARTIAL';

@@ -129,6 +129,7 @@ export class CreditsListComponent implements OnInit {
       ACTIVE: 'Activo',
       SETTLED: 'Liquidado',
       REJECTED: 'Rechazado',
+      EXPIRED: 'Vencido',
     };
     return map[status];
   }
@@ -149,6 +150,7 @@ export class CreditsListComponent implements OnInit {
       ACTIVE: 'success',
       SETTLED: 'secondary',
       REJECTED: 'danger',
+      EXPIRED: 'danger',
     };
     return map[status];
   }
