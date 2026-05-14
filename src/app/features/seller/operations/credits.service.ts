@@ -20,6 +20,9 @@ import {
   EarlySettlementPayload,
   EarlySettlementResult,
   RejectPayload,
+  RefinancePayload,
+  RefinanceResult,
+  RefinanceResultRaw,
   SimulatePayload,
   SimulateResult,
   SimulateResultItem,
@@ -355,6 +358,45 @@ export class CreditsService {
     return this.api.patch<void>(`credits/${id}/reject`, {
       rejection_reason: payload.rejectionReason,
     });
+  }
+
+  /**
+   * Inicia una refinanciación del crédito activo indicado.
+   * Crea un nuevo crédito LOAN en PENDING_APPROVAL con el saldo trasladado.
+   * @param id - ID del crédito a refinanciar.
+   * @param payload - Parámetros de la refinanciación.
+   * @returns Resultado con el nuevo crédito y el snapshot financiero.
+   */
+  refinance(id: string, payload: RefinancePayload): Observable<RefinanceResult> {
+    const body: Record<string, unknown> = {
+      installments_count: payload.installmentsCount,
+      payment_frequency: payload.paymentFrequency,
+      reason: payload.reason,
+    };
+    if (payload.extraCharges !== undefined && payload.extraCharges > 0)
+      body['extra_charges'] = payload.extraCharges;
+    if (payload.notes) body['notes'] = payload.notes;
+    return this.api
+      .post<RefinanceResultRaw>(`credits/${id}/refinance`, body)
+      .pipe(
+        map((raw): RefinanceResult => ({
+          originalCreditId: raw.original_credit_id,
+          newCredit: {
+            id: raw.new_credit.id,
+            type: raw.new_credit.type,
+            totalAmount: raw.new_credit.total_amount,
+            installmentsCount: raw.new_credit.installments_count,
+            paymentFrequency: raw.new_credit.payment_frequency,
+            status: raw.new_credit.status,
+            refinancedFromCreditId: raw.new_credit.refinanced_from_credit_id,
+            createdAt: raw.new_credit.created_at,
+          },
+          pendingBalance: raw.pending_balance,
+          extraCharges: raw.extra_charges,
+          totalTransferred: raw.total_transferred,
+          message: raw.message,
+        })),
+      );
   }
 
   /**

@@ -2,7 +2,8 @@ export type CreditStatus =
   | 'PENDING_APPROVAL'
   | 'ACTIVE'
   | 'SETTLED'
-  | 'REJECTED';
+  | 'REJECTED'
+  | 'REFINANCED';
 export type CreditType = 'SALE' | 'LOAN';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 export type InstallmentStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'PARTIAL';
@@ -247,6 +248,50 @@ export interface EarlySettlementResult {
   creditId: string;
   settlementAmount: number;
   paymentMethod: string;
+}
+
+export interface RefinancePayload {
+  installmentsCount: number;
+  paymentFrequency: PaymentFrequency;
+  reason: string;
+  extraCharges?: number;
+  notes?: string;
+}
+
+export interface RefinanceResult {
+  originalCreditId: string;
+  newCredit: {
+    id: string;
+    type: string;
+    totalAmount: number;
+    installmentsCount: number;
+    paymentFrequency: PaymentFrequency;
+    status: CreditStatus;
+    refinancedFromCreditId: string;
+    createdAt: string;
+  };
+  pendingBalance: number;
+  extraCharges: number;
+  totalTransferred: number;
+  message: string;
+}
+
+export interface RefinanceResultRaw {
+  original_credit_id: string;
+  new_credit: {
+    id: string;
+    type: string;
+    total_amount: number;
+    installments_count: number;
+    payment_frequency: PaymentFrequency;
+    status: CreditStatus;
+    refinanced_from_credit_id: string;
+    created_at: string;
+  };
+  pending_balance: number;
+  extra_charges: number;
+  total_transferred: number;
+  message: string;
 }
 
 export interface CartUnit {
