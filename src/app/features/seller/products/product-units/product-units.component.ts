@@ -243,7 +243,9 @@ export class ProductUnitsComponent implements OnInit {
       message: `¿Dar de baja la unidad <strong>${unit.unitCode}</strong>?`,
       acceptLabel: 'Dar de baja',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
+      acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.unitsService.deactivate(unit.id).subscribe({
           next: () => {

@@ -73,6 +73,7 @@
       class="products-nav__tab"
       [class.products-nav__tab--active]="activeTab === 'categories'"
       [routerLink]="categoriesLink"
+      [queryParams]="categoriesQueryParams"
     >
       <i class="pi pi-tag"></i>
       <span>Categorías</span>
@@ -82,6 +83,7 @@
       class="products-nav__tab"
       [class.products-nav__tab--active]="activeTab === 'brands'"
       [routerLink]="brandsLink"
+      [queryParams]="brandsQueryParams"
     >
       <i class="pi pi-bookmark"></i>
       <span>Marcas</span>

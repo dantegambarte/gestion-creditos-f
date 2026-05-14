@@ -1,4 +1,4 @@
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -39,7 +39,6 @@ export class ProductDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly productsService = inject(ProductsService);
   private readonly auth = inject(AuthServiceBase);
-  private readonly location = inject(Location);
   private readonly header = inject(HeaderService);
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
@@ -67,16 +66,25 @@ export class ProductDetailComponent implements OnInit {
 
   // TODO: agregar documentacion de las funciones
 
+  /**
+   * Navega de forma determinística al listado de productos para evitar loops de historial.
+   */
   goBack(): void {
-    this.location.back();
+    this.router.navigate([`/${this.routePrefix}/products`]);
   }
 
   navigateToEdit(): void {
-    this.router.navigate([`/${this.routePrefix}/products/${this.productId}/edit`]);
+    this.router.navigate([
+      `/${this.routePrefix}/products/${this.productId}/edit`,
+    ]);
   }
 
   navigateToVariants(): void {
-    this.router.navigate([`/${this.routePrefix}/products`, this.productId, 'variants']);
+    this.router.navigate([
+      `/${this.routePrefix}/products`,
+      this.productId,
+      'variants',
+    ]);
   }
 
   navigateToUnits(variantId: string): void {
@@ -96,13 +104,15 @@ export class ProductDetailComponent implements OnInit {
   confirmDeactivate(): void {
     this.confirmationService.confirm({
       header: 'Desactivar producto',
-      message: `¿Desactivar <strong>${this.product?.title}</strong>?`,
+      message: `¿Desactivar <strong>${this.product?.title}</strong>? Si el producto tiene unidades vendidas o reservadas se desactivará igualmente.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
+      acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
-        this.productsService.deactivate(this.productId).subscribe({
+        this.productsService.deactivate(this.productId, true).subscribe({
           next: () => {
             this.messageService.add({
               severity: 'success',
@@ -123,6 +133,9 @@ export class ProductDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Activar',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.productsService.activate(this.productId).subscribe({
           next: () => {
