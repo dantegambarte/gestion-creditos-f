@@ -82,15 +82,23 @@
                   —
                 </td>
                 <td>
-                  <a
-                    class="prod-action-link text-xs"
-                    [style.color]="
-                      cat.active ? 'var(--ff-danger)' : 'var(--ff-accent)'
-                    "
-                    (click)="toggle(cat)"
-                    style="cursor: pointer"
-                    >{{ cat.active ? "Desactivar" : "Activar" }}</a
-                  >
+                  <div class="flex items-center gap-2">
+                    <a
+                      class="prod-action-link text-xs"
+                      style="cursor: pointer; color: var(--ff-accent)"
+                      (click)="openEdit(cat)"
+                      >Editar</a
+                    >
+                    <a
+                      class="prod-action-link text-xs"
+                      [style.color]="
+                        cat.active ? 'var(--ff-danger)' : 'var(--ff-accent)'
+                      "
+                      (click)="toggle(cat)"
+                      style="cursor: pointer"
+                      >{{ cat.active ? "Desactivar" : "Activar" }}</a
+                    >
+                  </div>
                 </td>
               </tr>
             </ng-template>
@@ -212,3 +220,37 @@
     </div>
   </div>
 </div>
+
+<!-- Dialog: Editar categoría -->
+<p-dialog
+  [(visible)]="showEditDialog"
+  header="Editar categoría"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '380px' }"
+>
+  <div class="flex flex-col gap-4 py-2">
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)">Nombre</label>
+      <input
+        pInputText
+        [(ngModel)]="editName"
+        maxlength="100"
+        class="w-full h-11 px-3"
+        placeholder="Nombre de la categoría"
+      />
+    </div>
+    @if (editError) {
+      <p class="text-sm px-3 py-2 rounded-lg" style="color: var(--ff-danger); background: rgba(239,68,68,0.1)">
+        {{ editError }}
+      </p>
+    }
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="flex gap-3 justify-end">
+      <p-button label="Cancelar" severity="secondary" [outlined]="true" styleClass="h-11 px-5 rounded-xl" (onClick)="showEditDialog = false" />
+      <p-button label="Guardar" severity="primary" styleClass="h-11 px-5 rounded-xl" [loading]="saving" [disabled]="!editName.trim() || saving" (onClick)="submitEdit()" />
+    </div>
+  </ng-template>
+</p-dialog>
