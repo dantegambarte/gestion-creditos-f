@@ -24,8 +24,8 @@
 | **CR-15** | Operación Crédito - Declaraciones y Autorizaciones. | La tilde en los casilleros debe ser visible. | Corregido / Validado — `.p-checkbox-icon { color: #ffffff !important }` en styles.scss |
 | **CR-16** | Nueva Operación - Seller. | Debería poder elegir la variante de un producto. | Pendiente datos — código frontend correcto; variantes aparecen cuando `product_variants` tiene atributos color/size/capacity en DB |
 | **CR-17** | Operaciones - Seller. | Click en paginación debe mostrar los siguientes registros. | Corregido / Validado — agregado `[paginator]="true" [rows]="10"` en `operations.component.html` |
-| **CR-18** | Operaciones - Admin. | Se hizo click en "Ver" en una operación pendiente de aprobación. | Debería mostrar la tasa de interés | Error
-| **CR-19** | Cancelación Anticipada - Admin. | Se hizo click en "Cancelación Anticipada" en una operación aprobada. | Debería poder adelantar cuotas. | Error
+| **CR-18** | Operaciones - Admin. | Se hizo click en "Ver" en una operación pendiente de aprobación. | Debería mostrar la tasa de interés | Corregido / Validado — `!= null` para capturar `undefined`; tasa multiplicada ×100 para display como %; tipo SALE muestra "N/A (Venta)"; status EXPIRED agregado al tipo y mapas de label/severity |
+| **CR-19** | Cancelación Anticipada - Admin. | Se hizo click en "Cancelación Anticipada" en una operación aprobada. | Debería poder adelantar cuotas. | Corregido / Validado — botón renombrado a "Cancelación total anticipada"; diálogo explica que es pago total de todas las cuotas y menciona la opción de pago anticipado por cuota individual |
 
 
 ## 🟢 2. Módulo: Cliente
@@ -43,12 +43,12 @@
 | **CL-08** | Clientes - Seller / Seller-Collector. | Click en paginación debe mostrar los siguientes registros. | Corregido / Validado — agregado `[paginator]="true" [rows]="10"` en `clients.component.html` |
 | **CL-09** | Clientes - Admin. | El menú desplegable de riesgo no debe quedar cortado. | Corregido / Validado — `appendTo="body"` en dropdown de filtro de clientes |
 | **CL-10** | Clientes - Admin. | Muestra la cantidad real de créditos del cliente. | Corregido / Validado — mapper `toClient()` ahora usa `c.activeCredits ?? 0` en lugar de `0` hardcodeado |
-| **CL-11** | Nuevo Cliente - Admin | Se hizo click en "Nuevo Cliente". | No debería permitir poner números en el campo "Nombre" y "Apellido". | Error |
-| **CL-12** | Nuevo Cliente - Admin | Se hizo click en "Nuevo Cliente". | En el campo "DNI" debería poder solo escribir números. | Error |
-| **CL-13** | Nuevo Cliente - Admin | Click en "Nuevo Cliente". | Eliminar ingresos y permitir asignar un cobrador. | Error |
-| **CL-14** | Clientes | Click en el filtro de búsqueda. | Debería poder filtrar los estados. | Error |
-| **CL-15** | Ver Clientes | Click en "Ver Clientes". | Debería poder mostrar los datos. | Error |
-| **CL-16** | Editar Clientes | Click en "Editar" en un cliente. | Debería permitir editar todos los campos. | Error |
+| **CL-11** | Nuevo Cliente - Admin | Se hizo click en "Nuevo Cliente". | No debería permitir poner números en el campo "Nombre" y "Apellido". | Corregido / Validado — `Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/)` en nombres y apellidos; error inline visible al tipear |
+| **CL-12** | Nuevo Cliente - Admin | Se hizo click en "Nuevo Cliente". | En el campo "DNI" debería poder solo escribir números. | Corregido / Validado — `Validators.pattern(/^\d{7,8}$/)` + `inputmode="numeric"`; error inline con `isDniInvalid()` visible al tipear |
+| **CL-13** | Nuevo Cliente - Admin | Click en "Nuevo Cliente". | Eliminar ingresos y permitir asignar un cobrador. | Corregido / Validado — campos Ingresos y Capacidad de Pago eliminados del modal; dropdown Cobrador Asignado agregado |
+| **CL-14** | Clientes | Click en el filtro de búsqueda. | Debería poder filtrar los estados. | Corregido / Validado — `includeSummary: true` en llamada al listado; `toClient()` mapea `c.delinquency ?? 'Al dia'` en lugar de hardcodear "Al dia" |
+| **CL-15** | Ver Clientes | Click en "Ver Clientes". | Debería poder mostrar los datos. | Corregido / Validado — `CreditsService` inyectado en `client-detail`; créditos cargados desde API por `customerId` después de cargar el cliente |
+| **CL-16** | Editar Clientes | Click en "Editar" en un cliente. | Debería permitir editar todos los campos. | Corregido / Validado — modal editar expandido con Email, Dirección y Cobrador Asignado; pre-carga datos existentes del cliente; error visible si email inválido |
 
 
 ## 🟢 3. Módulo: Producto
@@ -64,11 +64,11 @@
 | **PR-07** | Desactivar Categoría - Admin | Se hizo click en "Desactivar Categoría". | Debería salir un cartel de confirmación y poder activarla de nuevo. | Corregido / Validado — `ConfirmDialog` antes de ejecutar; categorías inactivas muestran botón "Activar" |
 | **PR-08** | Desactivar Marca - Admin | Se hizo click en "Desactivar Marca". | Debería salir un cartel de confirmación y poder activarla de nuevo. | Corregido / Validado — ídem PR-07 para marcas |
 | **PR-09** | Editar Producto - Admin | Se hizo click en "Editar Producto". | El formulario debe ser distinguible del fondo. | Corregido / Validado — formulario envuelto en `ff-panel` con heading con color explícito |
-| **PR-10** | Editar Producto | Se hizo click en "Guardar Cambios". | No se hizo ninguna modificación y me permitió "Guardar Cambios". | Error |
-| **PR-11** | Desactivar Producto | Se hizo click en "Desactivar Producto". | Debería permitir desactivar productos por mas que tengan unidades vendidas. | Mensaje de Error "No se permite desactivar productos si posee unidades vendidas" |
-| **PR-12** | Variantes Productos | Se hizo click en "Editar Variantes". | Debería poder mostrar todos los campos en la tabla de la izquierda. | Error: Agregar mas |
-| **PR-13** | Múltiples Variantes Producto | Se hizo click en "Ingresar Múltiples Variantes". | Se ingresaron datos erróneos. | Error: el mensaje de error debería estar en el recuadro de "Múltiples Variantes" y además marcar donde está el error |
-| **PR-14** | Categoría y Marca | Categoría y Marca solo permite creación y no edición. | Error |
+| **PR-10** | Editar Producto | Se hizo click en "Guardar Cambios". | No se hizo ninguna modificación y me permitió "Guardar Cambios". | Corregido / Validado — `[disabled]="form.invalid \|\| !form.dirty \|\| submitting"` en botón Guardar Cambios |
+| **PR-11** | Desactivar Producto | Se hizo click en "Desactivar Producto". | Debería permitir desactivar productos por mas que tengan unidades vendidas. | Parcial — frontend envía `force: true`; backend devuelve error si tiene unidades reservadas/vendidas; requiere soporte en backend |
+| **PR-12** | Variantes Productos | Se hizo click en "Editar Variantes". | Debería poder mostrar todos los campos en la tabla de la izquierda. | Corregido / Validado — tabla con columnas COLOR, TALLE, CAPACIDAD dinámicas (ocultas si ninguna variante las usa); panel de formulario a demanda (click "Nueva variante" o "Editar"); acciones de texto horizontal |
+| **PR-13** | Múltiples Variantes Producto | Se hizo click en "Ingresar Múltiples Variantes". | Se ingresaron datos erróneos. | Pendiente — feature "Múltiples Variantes" no existe en el codebase actual; requiere implementación desde cero |
+| **PR-14** | Categoría y Marca | Categoría y Marca solo permite creación y no edición. | Corregido / Validado — botón "Editar" por fila en tablas de Categorías y Marcas; diálogo de edición con nombre pre-cargado |
 
 
 ## 🟢 Módulo: Planilla
@@ -93,10 +93,10 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **US-01** | Rol Usuario | Se hizo click en "Nuevo Usuario". | Debería poder elegir el Rol. | Corregido / Validado — `appendTo="body"` en dropdown de Rol en modal de creación |
 | **US-02** | Usuarios - Admin | Se hizo click en "Usuarios". | No funciona el filtro para seleccionar por Rol, sale cortado. | Corregido / Validado — `appendTo="body"` en dropdowns de Rol y Estado en listado |
-| **US-03** | Nuevo Usuario y Editar Usuario - Admin | Se hizo click en "Nuevo Usuario". | No debería permitir ingresar símbolos en "Nombre Completo" y un sólo número en DNI. | Error: arroja un mensaje de error pero no en donde está |
-| **US-04** | Editar Usuario - Admin | Se hizo click en "Editar Usuario". | El menú desplegable de "Rol" debería mostrarse completo. | El menú desplegable sale cortado |
-| **US-05** | Editar Usuario - Admin | Se hizo click en "Editar Usuario". | El botón de "Guardar Cambios" siempre activo. | Error: debería esta desactivado hasta que se modifique algún campo |
-| **US-06** | Crear Usuario - Admin | Se hizo click en "Crear Usuario". | Debería verse el password temporal. | Error: el password temporal sale con el mismo color del fondo al igual que el botón "Copiar" |
+| **US-03** | Nuevo Usuario y Editar Usuario - Admin | Se hizo click en "Nuevo Usuario". | No debería permitir ingresar símbolos en "Nombre Completo" y un sólo número en DNI. | Corregido / Validado — pattern validators en fullName (solo letras) y DNI (7-8 dígitos); errores inline visibles; `inputmode="numeric"` en DNI |
+| **US-04** | Editar Usuario - Admin | Se hizo click en "Editar Usuario". | El menú desplegable de "Rol" debería mostrarse completo. | Corregido / Validado — `appendTo="body"` en dropdown Rol del formulario de edición |
+| **US-05** | Editar Usuario - Admin | Se hizo click en "Editar Usuario". | El botón de "Guardar Cambios" siempre activo. | Corregido / Validado — `formHasChanges` getter compara snapshot original vs valores actuales; botón se deshabilita si se revierte al estado inicial |
+| **US-06** | Crear Usuario - Admin | Se hizo click en "Crear Usuario". | Debería verse el password temporal. | Corregido / Validado — dialog de contraseña usa CSS variables del tema (`var(--ff-secondary)`, `var(--ff-text-primary)`, `var(--ff-border)`) para visibilidad en modo oscuro |
 
 
 ## 🟢 Módulo: Caja
@@ -138,6 +138,41 @@
 
 ### Backend
 - **CA-01**: `totalEgresos` naming bug en `cashRegister.service.js`; `cashRegister.controller.js` maneja 422 y 400
+
+---
+
+---
+
+## ✅ Correcciones validadas en esta sesión (Batch 2 — QA Regression)
+
+### Módulo Crédito
+- **CR-18**: Tasa de interés — `!= null` captura `undefined`; decimal ×100 para %; SALE muestra "N/A (Venta)"; EXPIRED agregado al tipo y mapas
+- **CR-19**: Cancelación anticipada — renombrado a "Cancelación total anticipada"; diálogo explica diferencia entre cancelación total y pago anticipado por cuota
+
+### Módulo Cliente
+- **CL-11**: Nombres/Apellidos — `Validators.pattern` solo letras; error inline visible al tipear
+- **CL-12**: DNI — `Validators.pattern(/^\d{7,8}$/)` + `inputmode="numeric"`; error con `isDniInvalid()` al tipear
+- **CL-13**: Modal crear — eliminados Ingresos y Capacidad de Pago; agregado Cobrador Asignado
+- **CL-14**: Filtro de riesgo — `includeSummary: true` en listado; `c.delinquency` mapeado desde backend
+- **CL-15**: Ver Cliente — créditos cargados desde API (`CreditsService`) por `customerId`
+- **CL-16**: Editar Cliente — modal expandido con Email, Dirección, Cobrador; pre-carga datos; validación email
+
+### Módulo Producto
+- **PR-10**: Editar Producto — `!form.dirty` en botón Guardar Cambios
+- **PR-12**: Variantes — columnas COLOR/TALLE/CAPACIDAD dinámicas; panel formulario a demanda; acciones de texto horizontal
+- **PR-14**: Categorías y Marcas — botón Editar por fila; diálogo con nombre pre-cargado
+
+### Módulo Usuario
+- **US-03**: Crear/Editar Usuario — pattern validators fullName y DNI; errores inline
+- **US-04**: Dropdown Rol — `appendTo="body"` en formulario de edición
+- **US-05**: Guardar Cambios — `formHasChanges` por comparación de snapshot; se deshabilita al revertir
+- **US-06**: Contraseña temporal — CSS variables del tema para visibilidad en modo oscuro
+
+### Evidencia automatizada (nuevos tests)
+- `cypress/e2e/44-qa-regression-batch2.cy.ts` → 21 tests: CL-11/12/13/16, US-03/04/05, PR-10/12/14, CR-18/19
+- `src/app/features/admin/users/user-create/user-create.component.spec.ts` → validators US-03
+- `src/app/features/seller/products/product-edit/product-edit.component.spec.ts` → PR-10 dirty check
+- `src/app/shared/clients/clients.component.spec.ts` → CL-11/12/13/14 validators y riesgo
 
 ---
 
