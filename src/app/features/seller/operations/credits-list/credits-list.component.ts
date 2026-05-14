@@ -130,6 +130,7 @@ export class CreditsListComponent implements OnInit {
       SETTLED: 'Liquidado',
       REJECTED: 'Rechazado',
       EXPIRED: 'Vencido',
+      REFINANCED: 'Refinanciado',
     };
     return map[status];
   }
@@ -151,6 +152,7 @@ export class CreditsListComponent implements OnInit {
       SETTLED: 'secondary',
       REJECTED: 'danger',
       EXPIRED: 'danger',
+      REFINANCED: 'contrast',
     };
     return map[status];
   }
