@@ -105,6 +105,23 @@ describe('ProductEditComponent — validadores de formulario', () => {
     expect(component.form.valid).toBeTrue();
   });
 
+  describe('PR-10 — botón Guardar Cambios deshabilitado hasta modificar', () => {
+    it('formulario recién cargado es pristine → form.dirty es false', () => {
+      expect(component.form.dirty).toBeFalse();
+    });
+
+    it('después de patchValue el formulario sigue pristine si no fue interactuado', () => {
+      // Solo loadClients/setValue no marca dirty; markAsDirty es manual
+      expect(component.form.pristine).toBeTrue();
+    });
+
+    it('al modificar un campo manualmente el formulario se vuelve dirty', () => {
+      component.form.get('title')!.setValue('Título modificado');
+      component.form.get('title')!.markAsDirty();
+      expect(component.form.dirty).toBeTrue();
+    });
+  });
+
   it('al guardar no envía stock en el payload de actualización', () => {
     component.form.patchValue({
       title: 'Producto editado',

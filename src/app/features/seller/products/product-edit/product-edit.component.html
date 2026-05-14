@@ -119,7 +119,7 @@
           severity="primary"
           styleClass="h-11 px-5 rounded-xl"
           [loading]="submitting"
-          [disabled]="form.invalid || submitting"
+          [disabled]="form.invalid || !form.dirty || submitting"
         />
       </div>
     </form>
