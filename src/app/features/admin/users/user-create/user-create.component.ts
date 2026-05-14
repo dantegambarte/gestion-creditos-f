@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  inject,
+} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -15,8 +22,8 @@ import { ToastModule } from 'primeng/toast';
 import { AppError } from '../../../../core/models/app-error';
 import { HeaderService } from '../../../../core/services/header.service';
 import { TempPasswordDialogComponent } from '../../../../shared/components/temp-password-dialog/temp-password-dialog.component';
-import { UsersService } from '../users.service';
 import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
+import { UsersService } from '../users.service';
 
 @Component({
   selector: 'app-user-create',
@@ -72,9 +79,10 @@ export class UserCreateComponent implements OnInit {
           Validators.required,
           Validators.minLength(3),
           Validators.maxLength(150),
+          Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
         ],
       ],
-      dni: ['', [Validators.required]],
+      dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
       email: ['', [Validators.email]],
       address: ['', [Validators.maxLength(255)]],
       role: ['', [Validators.required]],
@@ -108,6 +116,11 @@ export class UserCreateComponent implements OnInit {
     if (c.errors['maxlength'])
       return `Máximo ${c.errors['maxlength'].requiredLength} caracteres.`;
     if (c.errors['email']) return 'Formato de email inválido.';
+    if (c.errors['pattern']) {
+      if (field === 'dni')
+        return 'El DNI debe contener entre 7 y 8 dígitos numéricos.';
+      return 'Solo se permiten letras y espacios.';
+    }
     return 'Campo inválido.';
   }
 
@@ -172,7 +185,12 @@ export class UserCreateComponent implements OnInit {
     if (this.isModal) {
       this.created.emit();
     } else {
-      this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS, this.createdUserId]);
+      this.router.navigate([
+        '/',
+        AppRoutes.ADMIN,
+        AppRoutes.USERS,
+        this.createdUserId,
+      ]);
     }
   }
 
