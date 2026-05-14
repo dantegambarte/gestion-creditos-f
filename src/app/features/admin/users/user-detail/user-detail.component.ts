@@ -1,29 +1,29 @@
-import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
 import {
-  ReactiveFormsModule,
   FormBuilder,
   FormGroup,
+  ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DropdownModule } from 'primeng/dropdown';
+import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { InputTextModule } from 'primeng/inputtext';
-import { DropdownModule } from 'primeng/dropdown';
 import { TooltipModule } from 'primeng/tooltip';
-import { MessageService, ConfirmationService } from 'primeng/api';
-import { UsersService } from '../users.service';
-import { UserDetail, UserUpdatePayload } from '../user.model';
+import { AppError } from '../../../../core/models/app-error';
 import { UserRole } from '../../../../core/models/types/user-role';
 import { HeaderService } from '../../../../core/services/header.service';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
-import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { TempPasswordDialogComponent } from '../../../../shared/components/temp-password-dialog/temp-password-dialog.component';
-import { AppError } from '../../../../core/models/app-error';
 import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
+import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
+import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
+import { UserDetail, UserUpdatePayload } from '../user.model';
+import { UsersService } from '../users.service';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'Administrador',
@@ -76,6 +76,7 @@ export class UserDetailComponent implements OnInit {
   saving = false;
   editForm!: FormGroup;
   private originalRole: UserRole | null = null;
+  private originalFormSnapshot: Record<string, unknown> = {};
 
   showTempPasswordDialog = false;
   tempPassword = '';
@@ -107,6 +108,18 @@ export class UserDetailComponent implements OnInit {
   get roleChanged(): boolean {
     return (
       !!this.editForm && this.editForm.get('role')?.value !== this.originalRole
+    );
+  }
+
+  /**
+   * True si el formulario tiene valores distintos al snapshot original.
+   * Reemplaza `editForm.dirty` que no revierte cuando el valor vuelve al original.
+   */
+  get formHasChanges(): boolean {
+    if (!this.editForm) return false;
+    const current = this.editForm.getRawValue();
+    return Object.keys(current).some(
+      (k) => current[k] !== this.originalFormSnapshot[k],
     );
   }
 
@@ -181,13 +194,18 @@ export class UserDetailComponent implements OnInit {
           Validators.required,
           Validators.minLength(3),
           Validators.maxLength(150),
+          Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
         ],
       ],
-      dni: [this.user.dni, [Validators.required]],
+      dni: [
+        this.user.dni,
+        [Validators.required, Validators.pattern(/^\d{7,8}$/)],
+      ],
       email: [this.user.email ?? '', [Validators.email]],
       address: [this.user.address ?? '', [Validators.maxLength(255)]],
       role: [this.user.role, [Validators.required]],
     });
+    this.originalFormSnapshot = this.editForm.getRawValue();
     this.editMode = true;
   }
 
@@ -291,6 +309,11 @@ export class UserDetailComponent implements OnInit {
     if (camp.errors['maxlength'])
       return `Máximo ${camp.errors['maxlength'].requiredLength} caracteres.`;
     if (camp.errors['email']) return 'Formato de email inválido.';
+    if (camp.errors['pattern']) {
+      if (field === 'dni')
+        return 'El DNI debe contener entre 7 y 8 dígitos numéricos.';
+      return 'Solo se permiten letras y espacios.';
+    }
     return 'Campo inválido.';
   }
 
@@ -304,7 +327,9 @@ export class UserDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
+      acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.usersService.deactivate(this.userId).subscribe({
           next: () => {
@@ -330,6 +355,9 @@ export class UserDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Activar',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.usersService.activate(this.userId).subscribe({
           next: () => {
@@ -355,6 +383,9 @@ export class UserDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Resetear',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.usersService.resetPassword(this.userId).subscribe({
           next: ({ tempPassword }) => {
@@ -376,6 +407,9 @@ export class UserDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desbloquear',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.usersService.unlock(this.userId).subscribe({
           next: () => {
