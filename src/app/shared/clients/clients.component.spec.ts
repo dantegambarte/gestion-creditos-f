@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
+import { of, throwError } from 'rxjs';
 
-import { ClientsComponent } from './clients.component';
 import { AuthServiceBase } from '../../core/auth/auth-service.base';
 import { MockAuthService } from '../../core/auth/mock-auth.service';
+import { UsersService } from '../../features/admin/users/users.service';
 import { CustomersService } from '../../features/seller/clients/customers.service';
-import { FormatService } from '../../core/services/format.service';
+import { ClientsComponent } from './clients.component';
 
 const MOCK_CUSTOMER_DETAIL = {
   id: 'uuid-001',
@@ -51,11 +51,21 @@ describe('ClientsComponent', () => {
   let authSpy: jasmine.SpyObj<MockAuthService>;
 
   beforeEach(async () => {
-    routerSpy = jasmine.createSpyObj('Router', ['navigate'], { url: '/admin/clients' });
-    customersServiceSpy = jasmine.createSpyObj('CustomersService', ['list', 'create', 'update']);
+    routerSpy = jasmine.createSpyObj('Router', ['navigate'], {
+      url: '/admin/clients',
+    });
+    customersServiceSpy = jasmine.createSpyObj('CustomersService', [
+      'list',
+      'create',
+      'update',
+    ]);
     authSpy = jasmine.createSpyObj('MockAuthService', ['hasRole']);
     customersServiceSpy.list.and.returnValue(of(MOCK_CUSTOMERS));
     authSpy.hasRole.and.returnValue(true);
+    const usersServiceSpy = jasmine.createSpyObj('UsersService', [
+      'listCollectors',
+    ]);
+    usersServiceSpy.listCollectors.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [ClientsComponent],
@@ -63,7 +73,7 @@ describe('ClientsComponent', () => {
         { provide: Router, useValue: routerSpy },
         { provide: AuthServiceBase, useValue: authSpy },
         { provide: CustomersService, useValue: customersServiceSpy },
-        { provide: FormatService, useValue: { currency: (n: number) => `$${n}` } },
+        { provide: UsersService, useValue: usersServiceSpy },
         MessageService,
       ],
     }).compileComponents();
@@ -115,15 +125,23 @@ describe('ClientsComponent', () => {
         nombre: 'Juan',
         apellido: 'Pérez',
         phone: '1123456789',
+        email: '',
+        direccion: '',
+        assignedCollectorId: '',
       });
     });
 
     it('T1 - debería llamar a customersService.update con el UUID y el payload correcto', () => {
-      customersServiceSpy.update.and.returnValue(of(MOCK_CUSTOMER_DETAIL as any));
+      customersServiceSpy.update.and.returnValue(
+        of(MOCK_CUSTOMER_DETAIL as any),
+      );
       component.editForm.setValue({
         nombre: 'Juan',
         apellido: 'Pérez',
         phone: '1123456789',
+        email: '',
+        direccion: '',
+        assignedCollectorId: '',
       });
 
       component.saveEdit();
@@ -131,11 +149,16 @@ describe('ClientsComponent', () => {
       expect(customersServiceSpy.update).toHaveBeenCalledWith('uuid-001', {
         fullName: 'Juan Pérez',
         phone: '1123456789',
+        email: undefined,
+        address: undefined,
+        assignedCollectorId: undefined,
       });
     });
 
     it('T2 - en caso de éxito debería recargar la lista y cerrar el modal', () => {
-      customersServiceSpy.update.and.returnValue(of(MOCK_CUSTOMER_DETAIL as any));
+      customersServiceSpy.update.and.returnValue(
+        of(MOCK_CUSTOMER_DETAIL as any),
+      );
       spyOn<any>(component, 'loadClients').and.callThrough();
 
       component.saveEdit();
@@ -145,7 +168,9 @@ describe('ClientsComponent', () => {
     });
 
     it('T2.1 - en caso de éxito debería mostrar toast de modificación exitosa', () => {
-      customersServiceSpy.update.and.returnValue(of(MOCK_CUSTOMER_DETAIL as any));
+      customersServiceSpy.update.and.returnValue(
+        of(MOCK_CUSTOMER_DETAIL as any),
+      );
 
       component.saveEdit();
 
@@ -158,7 +183,9 @@ describe('ClientsComponent', () => {
     });
 
     it('T3 - error de API debería mostrar mensaje, mantener modal abierto y NO llamar a loadClients', () => {
-      customersServiceSpy.update.and.returnValue(throwError(() => ({ status: 500 })));
+      customersServiceSpy.update.and.returnValue(
+        throwError(() => ({ status: 500 })),
+      );
       spyOn<any>(component, 'loadClients').and.callThrough();
 
       component.saveEdit();
@@ -169,7 +196,9 @@ describe('ClientsComponent', () => {
     });
 
     it('T4 - error 403 debería mostrar mensaje "sin permisos"', () => {
-      customersServiceSpy.update.and.returnValue(throwError(() => ({ status: 403 })));
+      customersServiceSpy.update.and.returnValue(
+        throwError(() => ({ status: 403 })),
+      );
 
       component.saveEdit();
 
@@ -180,8 +209,18 @@ describe('ClientsComponent', () => {
   describe('loadClients()', () => {
     it('T5 - debería cargar clientes con id y dni correctos desde el servicio', () => {
       const twoCustomers = [
-        { ...MOCK_CUSTOMERS[0], id: 'uuid-aaa', dni: '11111111', fullName: 'Ana Lopez' },
-        { ...MOCK_CUSTOMERS[0], id: 'uuid-bbb', dni: '22222222', fullName: 'Carlos Ruiz' },
+        {
+          ...MOCK_CUSTOMERS[0],
+          id: 'uuid-aaa',
+          dni: '11111111',
+          fullName: 'Ana Lopez',
+        },
+        {
+          ...MOCK_CUSTOMERS[0],
+          id: 'uuid-bbb',
+          dni: '22222222',
+          fullName: 'Carlos Ruiz',
+        },
       ];
       customersServiceSpy.list.and.returnValue(of(twoCustomers));
 
@@ -218,8 +257,18 @@ describe('ClientsComponent', () => {
   describe('CL-10 — créditos del cliente usa activeCredits, no 0', () => {
     it('toClient mapea activeCredits del backend al campo credits', () => {
       const twoCustomers = [
-        { ...MOCK_CUSTOMERS[0], id: 'cl-1', fullName: 'Ana García', activeCredits: 3 },
-        { ...MOCK_CUSTOMERS[0], id: 'cl-2', fullName: 'Carlos Ruiz', activeCredits: 0 },
+        {
+          ...MOCK_CUSTOMERS[0],
+          id: 'cl-1',
+          fullName: 'Ana García',
+          activeCredits: 3,
+        },
+        {
+          ...MOCK_CUSTOMERS[0],
+          id: 'cl-2',
+          fullName: 'Carlos Ruiz',
+          activeCredits: 0,
+        },
       ];
       customersServiceSpy.list.and.returnValue(of(twoCustomers));
       (component as any).loadClients();
@@ -229,7 +278,11 @@ describe('ClientsComponent', () => {
     });
 
     it('cuando activeCredits es undefined, usa 0 como fallback', () => {
-      const customer = { ...MOCK_CUSTOMERS[0], id: 'cl-3', activeCredits: undefined };
+      const customer = {
+        ...MOCK_CUSTOMERS[0],
+        id: 'cl-3',
+        activeCredits: undefined,
+      };
       customersServiceSpy.list.and.returnValue(of([customer]));
       (component as any).loadClients();
 
@@ -246,20 +299,24 @@ describe('ClientsComponent', () => {
   });
 
   describe('createClient()', () => {
+    const VALID_FORM = {
+      nombres: 'Laura',
+      apellidos: 'Gómez',
+      dni: '99887766',
+      telefonoPrincipal: '3101112222',
+      telefonoAlterno: '',
+      email: 'laura@test.com',
+      direccion: 'Calle 10',
+      assignedCollectorId: '',
+    };
+
     it('muestra toast de éxito al crear cliente correctamente', () => {
-      customersServiceSpy.create.and.returnValue(of(MOCK_CUSTOMER_DETAIL as any));
+      customersServiceSpy.create.and.returnValue(
+        of(MOCK_CUSTOMER_DETAIL as any),
+      );
       spyOn<any>(component, 'loadClients').and.callThrough();
       component.showCreateModal = true;
-      component.form.setValue({
-        nombres: 'Laura',
-        apellidos: 'Gómez',
-        dni: '99887766',
-        telefonoPrincipal: '3101112222',
-        telefonoAlterno: '',
-        email: 'laura@test.com',
-        direccion: 'Calle 10',
-        ingresos: '5000000',
-      });
+      component.form.setValue(VALID_FORM);
 
       component.createClient();
 
@@ -279,16 +336,7 @@ describe('ClientsComponent', () => {
         throwError(() => ({ status: 409 })),
       );
       component.showCreateModal = true;
-      component.form.setValue({
-        nombres: 'Laura',
-        apellidos: 'Gómez',
-        dni: '99887766',
-        telefonoPrincipal: '3101112222',
-        telefonoAlterno: '',
-        email: 'laura@test.com',
-        direccion: 'Calle 10',
-        ingresos: '5000000',
-      });
+      component.form.setValue(VALID_FORM);
 
       component.createClient();
 
@@ -300,6 +348,60 @@ describe('ClientsComponent', () => {
         detail: 'Ya existe un cliente con ese DNI.',
         life: 5000,
       });
+    });
+  });
+
+  describe('CL-11/CL-12 — Validadores de nombres y DNI', () => {
+    it('CL-11 — nombres acepta solo letras (no números)', () => {
+      const ctrl = component.form.get('nombres')!;
+      ctrl.setValue('Juan123');
+      ctrl.markAsTouched();
+      expect(ctrl.invalid).toBeTrue();
+      expect(ctrl.errors?.['pattern']).toBeTruthy();
+    });
+
+    it('CL-11 — apellidos acepta solo letras (no números)', () => {
+      const ctrl = component.form.get('apellidos')!;
+      ctrl.setValue('García99');
+      ctrl.markAsTouched();
+      expect(ctrl.invalid).toBeTrue();
+    });
+
+    it('CL-12 — DNI de 6 dígitos es inválido', () => {
+      const ctrl = component.form.get('dni')!;
+      ctrl.setValue('123456');
+      expect(ctrl.invalid).toBeTrue();
+    });
+
+    it('CL-12 — DNI de 8 dígitos numéricos es válido', () => {
+      const ctrl = component.form.get('dni')!;
+      ctrl.setValue('12345678');
+      expect(ctrl.valid).toBeTrue();
+    });
+
+    it('CL-12 — DNI con letras es inválido', () => {
+      const ctrl = component.form.get('dni')!;
+      ctrl.setValue('ABCD1234');
+      expect(ctrl.invalid).toBeTrue();
+    });
+  });
+
+  describe('CL-14 — Risk mapping usa delinquency del cliente', () => {
+    it('client con delinquency "Mora alta" tiene risk "Mora alta"', () => {
+      const customerWithMora = {
+        ...MOCK_CUSTOMERS[0],
+        delinquency: 'Mora alta',
+      };
+      customersServiceSpy.list.and.returnValue(of([customerWithMora]));
+      (component as any).loadClients();
+      expect(component.clients[0].risk).toBe('Mora alta');
+    });
+
+    it('client sin delinquency usa "Al dia" como fallback', () => {
+      const customerNoDelin = { ...MOCK_CUSTOMERS[0], delinquency: undefined };
+      customersServiceSpy.list.and.returnValue(of([customerNoDelin]));
+      (component as any).loadClients();
+      expect(component.clients[0].risk).toBe('Al dia');
     });
   });
 });

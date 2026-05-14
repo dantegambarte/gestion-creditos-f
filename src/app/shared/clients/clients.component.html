@@ -46,6 +46,7 @@
       [paginator]="true"
       [rows]="10"
       [rowsPerPageOptions]="[10, 25, 50]"
+      paginatorDropdownAppendTo="body"
       [showCurrentPageReport]="true"
       currentPageReportTemplate="{first}–{last} de {totalRecords}"
     >
@@ -212,10 +213,36 @@
       <label class="auth-label">Teléfono</label>
       <input pInputText formControlName="phone" class="client-input" />
     </div>
-    <p class="text-sm" style="color: var(--ff-text-muted)">
-      Solo podés editar nombre, apellido y teléfono desde esta vista porque son
-      los datos que hoy persisten en este flujo.
-    </p>
+    <div class="flex flex-col gap-1">
+      <label class="auth-label">Email</label>
+      <input
+        pInputText
+        formControlName="email"
+        placeholder="ejemplo@correo.com"
+        [class]="'client-input' + (isEditInvalid('email') ? ' client-input--error' : '')"
+      />
+      @if (isEditInvalid('email')) {
+        <span class="auth-error">{{ getEditError('email') }}</span>
+      }
+    </div>
+    <div class="flex flex-col gap-1">
+      <label class="auth-label">Dirección</label>
+      <input pInputText formControlName="direccion" placeholder="Ej: Av. Corrientes 1234" class="client-input" />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label class="auth-label">Cobrador asignado</label>
+      <p-dropdown
+        formControlName="assignedCollectorId"
+        [options]="collectorOptions"
+        optionLabel="label"
+        optionValue="value"
+        [placeholder]="collectorsLoading ? 'Cargando cobradores…' : 'Seleccionar cobrador'"
+        [disabled]="collectorsLoading"
+        [showClear]="true"
+        styleClass="w-full"
+        appendTo="body"
+      />
+    </div>
   </form>
   <ng-template pTemplate="footer">
     <div class="flex justify-end gap-3 pt-2">
@@ -282,12 +309,13 @@
       <input
         pInputText
         formControlName="dni"
+        inputmode="numeric"
         placeholder="12345678"
         [class]="
-          'client-input' + (isInvalid('dni') ? ' client-input--error' : '')
+          'client-input' + (isDniInvalid() ? ' client-input--error' : '')
         "
       />
-      @if (isInvalid("dni")) {
+      @if (isDniInvalid()) {
         <span class="auth-error">{{ getError("dni") }}</span>
       }
     </div>
@@ -356,31 +384,19 @@
       }
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Ingresos Mensuales</label>
-        <input
-          pInputText
-          formControlName="ingresos"
-          placeholder="$4.800.000"
-          [class]="
-            'client-input' +
-            (isInvalid('ingresos') ? ' client-input--error' : '')
-          "
-        />
-        @if (isInvalid("ingresos")) {
-          <span class="auth-error">{{ getError("ingresos") }}</span>
-        }
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Capacidad de Pago</label>
-        <input
-          pInputText
-          [value]="abilityToPay"
-          readonly
-          class="client-input client-input--readonly"
-        />
-      </div>
+    <div class="flex flex-col gap-1">
+      <label class="auth-label">Cobrador asignado</label>
+      <p-dropdown
+        formControlName="assignedCollectorId"
+        [options]="collectorOptions"
+        optionLabel="label"
+        optionValue="value"
+        [placeholder]="collectorsLoading ? 'Cargando cobradores…' : collectorOptions.length === 0 ? 'No hay cobradores activos' : 'Seleccionar cobrador'"
+        [disabled]="collectorsLoading"
+        [showClear]="true"
+        styleClass="w-full"
+        appendTo="body"
+      />
     </div>
   </form>
 
