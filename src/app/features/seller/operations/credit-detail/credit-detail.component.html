@@ -77,10 +77,11 @@
       }
       @if (isAdmin && credit.status === 'ACTIVE') {
         <p-button
-          label="Cancelación anticipada"
+          label="Cancelación total anticipada"
           severity="secondary"
           [outlined]="true"
           size="small"
+          pTooltip="Liquidar todas las cuotas pendientes en un solo pago"
           (onClick)="openSettlementDialog()"
         />
       }
@@ -119,10 +120,12 @@
           <div>
             <div class="ud-label">Tasa de interés</div>
             <div class="ud-value">
-              @if (credit.interestRate !== null) {
-                {{ credit.interestRate }}%
-              } @else {
+              @if (credit.interestRate != null) {
+                {{ (credit.interestRate * 100).toFixed(2) }}%
+              } @else if (credit.type === 'SALE') {
                 N/A (Venta)
+              } @else {
+                <span style="color: var(--ff-text-muted)">—</span>
               }
             </div>
           </div>
@@ -608,11 +611,15 @@
   [style]="{ width: '440px' }"
   [draggable]="false"
   [resizable]="false"
+  styleClass="early-settlement-dialog"
 >
   <div class="flex flex-col gap-4 py-2">
     <div class="auth-warning-banner">
       <i class="pi pi-info-circle shrink-0"></i>
-      <p class="text-sm">El monto de cancelación incluye todas las cuotas pendientes y moras acumuladas. Se calculará al confirmar.</p>
+      <div class="text-sm space-y-1">
+        <p><strong>Cancelación total anticipada del crédito.</strong> Liquida todas las cuotas pendientes y moras acumuladas en un solo pago.</p>
+        <p style="color: var(--ff-text-muted)">Para pagar cuotas individuales en adelanto, usá el botón <strong>Pago anticipado</strong> <i class="pi pi-dollar text-xs"></i> en cada cuota del cronograma.</p>
+      </div>
     </div>
     <div class="flex flex-col gap-1">
       <label class="auth-label">Método de pago</label>
@@ -641,8 +648,20 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button type="button" class="cancel-btn w-full" (click)="showSettlementDialog = false">Cancelar</button>
-      <p-button label="Confirmar" severity="warning" styleClass="w-full" (onClick)="confirmSettlement()" [loading]="processingSettlement" />
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl"
+        (onClick)="showSettlementDialog = false"
+      />
+      <p-button
+        label="Confirmar"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl"
+        (onClick)="confirmSettlement()"
+        [loading]="processingSettlement"
+      />
     </div>
   </ng-template>
 </p-dialog>
