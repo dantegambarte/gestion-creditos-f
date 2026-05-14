@@ -722,9 +722,11 @@ export class CreditDetailComponent implements OnInit {
     return this.credit?.refinancingChain?.successorId ?? null;
   }
 
-  /** Navega al crédito de la cadena indicado. */
+  /** Navega al crédito de la cadena preservando el contexto admin/seller. */
   navigateToChainCredit(id: string): void {
-    this.router.navigate(['/seller/operations', id]);
+    const segments = this.router.url.split('/');
+    const base = `/${segments[1]}/${segments[2]}`;
+    this.router.navigate([base, id]);
   }
 
   get refinanceStep1Valid(): boolean {
