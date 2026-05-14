@@ -1,0 +1,159 @@
+<div class="space-y-6">
+  <!-- Filtro inline -->
+  <div class="flex flex-wrap items-center gap-3">
+    <span class="text-sm text-gray-400">Desde</span>
+    <input
+      type="date"
+      [(ngModel)]="collectionDateFrom"
+      class="bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+    <span class="text-sm text-gray-400">hasta</span>
+    <input
+      type="date"
+      [(ngModel)]="collectionDateTo"
+      class="bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+    <p-button
+      label="Consultar"
+      icon="pi pi-search"
+      [disabled]="!rangeValid"
+      [loading]="loading"
+      (onClick)="consultCollection()"
+    />
+  </div>
+  @if (dateError) {
+    <p class="text-sm text-red-400 flex items-center gap-1.5">
+      <i class="pi pi-exclamation-circle"></i> {{ dateError }}
+    </p>
+  }
+
+  @if (loading) {
+    <app-loading-state />
+  } @else if (error) {
+    <app-error-state [message]="error.message" />
+  } @else if (collectionReport) {
+    <!-- 5 KPI cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div class="bg-gray-800 rounded-xl p-4 space-y-1 lg:col-span-1">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          Total recaudado
+        </p>
+        <p class="text-xl font-extrabold text-white font-mono">
+          {{ formatCurrency(collectionReport.summary.grandTotal) }}
+        </p>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-4 space-y-1">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          Efectivo
+        </p>
+        <p class="text-xl font-extrabold text-white font-mono">
+          {{ formatCurrency(collectionReport.summary.totalCash) }}
+        </p>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-4 space-y-1">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          Transferencia
+        </p>
+        <p class="text-xl font-extrabold text-white font-mono">
+          {{ formatCurrency(collectionReport.summary.totalTransfer) }}
+        </p>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-4 space-y-1">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          Cobros
+        </p>
+        <p class="text-xl font-extrabold text-white">
+          {{ collectionReport.summary.paymentsCount }}
+        </p>
+      </div>
+      <div class="bg-gray-800 rounded-xl p-4 space-y-1">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          Promedio/día
+        </p>
+        <p class="text-xl font-extrabold text-white font-mono">
+          {{ formatCurrency(collectionReport.summary.avgPayment) }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Tabla flat -->
+    @if (collectionReport.daily.length === 0) {
+      <p class="text-sm text-gray-500 text-center py-10">
+        Sin datos para el período seleccionado.
+      </p>
+    } @else {
+      <div class="bg-gray-800 rounded-xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-700">
+              <th
+                class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              >
+                Fecha
+              </th>
+              <th
+                class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              >
+                Total
+              </th>
+              <th
+                class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              >
+                Efectivo
+              </th>
+              <th
+                class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              >
+                Transferencia
+              </th>
+              <th
+                class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              >
+                Cobros
+              </th>
+              <th class="px-5 py-3 w-32"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of collectionReport.daily; track row.day) {
+              <tr
+                class="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors"
+              >
+                <td class="px-5 py-3 text-gray-300">
+                  {{ formatDate(row.day) }}
+                </td>
+                <td
+                  class="px-5 py-3 text-right font-mono font-semibold text-blue-400"
+                >
+                  {{ formatCurrency(row.total) }}
+                </td>
+                <td class="px-5 py-3 text-right font-mono text-gray-300">
+                  {{ formatCurrency(row.totalCash) }}
+                </td>
+                <td class="px-5 py-3 text-right font-mono text-gray-300">
+                  {{ formatCurrency(row.totalTransfer) }}
+                </td>
+                <td class="px-5 py-3 text-right text-gray-400">
+                  {{ row.paymentsCount }}
+                </td>
+                <td class="px-5 py-3">
+                  @if (collectionReport.summary.grandTotal > 0) {
+                    <div class="h-1 bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        class="h-full bg-blue-500 rounded-full"
+                        [style.width.%]="
+                          (row.total / collectionReport.summary.grandTotal) *
+                          100
+                        "
+                      ></div>
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

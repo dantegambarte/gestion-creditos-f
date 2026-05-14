@@ -4,29 +4,37 @@
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
-  [style]="{ width: '500px' }"
-  styleClass="rounded-2xl overflow-hidden"
+  [style]="{ width: '520px' }"
   [closable]="false"
 >
   <!-- Header -->
   <ng-template pTemplate="header">
     <div class="flex items-center justify-between w-full">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-          <i class="pi pi-user text-blue-500 text-base"></i>
+      @if (isEdit) {
+        <p class="font-semibold text-slate-100 text-base">
+          Editar usuario —
+          <span class="text-slate-300">{{ editRecord?.name }}</span>
+        </p>
+      } @else {
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center"
+          >
+            <i class="pi pi-user text-blue-400 text-base"></i>
+          </div>
+          <div>
+            <p class="font-semibold text-slate-100 text-base leading-tight">
+              Nuevo Usuario
+            </p>
+            <p class="text-xs text-slate-400 leading-tight">
+              Registra un nuevo usuario en el sistema
+            </p>
+          </div>
         </div>
-        <div>
-          <p class="font-semibold text-gray-800 text-base leading-tight">
-            {{ isEdit ? 'Editar Usuario' : 'Nuevo Usuario' }}
-          </p>
-          <p class="text-xs text-gray-400 leading-tight">
-            {{ isEdit ? 'Modifica los datos del usuario' : 'Registra un nuevo usuario en el sistema' }}
-          </p>
-        </div>
-      </div>
+      }
       <button
         (click)="close()"
-        class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
       >
         <i class="pi pi-times text-sm"></i>
       </button>
@@ -35,112 +43,270 @@
 
   <!-- Body -->
   <div class="flex flex-col gap-4 py-1">
+    @if (isEdit) {
+      <!-- EDIT LAYOUT -->
 
-    <!-- Nombre + DNI -->
-    <div class="grid grid-cols-2 gap-3">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-600">Nombre completo</label>
+      <!-- Nombre + Email -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Nombre completo</label
+          >
+          <input
+            pInputText
+            [(ngModel)]="form.name"
+            placeholder="Ej. Carlos Andrade"
+            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+          />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Email</label
+          >
+          <input
+            pInputText
+            [(ngModel)]="form.email"
+            placeholder="usuario@empresa.com"
+            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+          />
+        </div>
+      </div>
+
+      <!-- DNI + Teléfono -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >DNI</label
+          >
+          <input
+            pInputText
+            [(ngModel)]="form.dni"
+            placeholder="Ej. 30.123.456"
+            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+          />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Teléfono</label
+          >
+          <input
+            pInputText
+            [(ngModel)]="form.phone"
+            placeholder="+54 381 0000000"
+            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+          />
+        </div>
+      </div>
+
+      <!-- Rol + Sucursal -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Rol</label
+          >
+          <p-dropdown
+            [(ngModel)]="form.role"
+            [options]="roleOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccionar..."
+            styleClass="w-full h-11 rounded-xl"
+            appendTo="body"
+          />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Sucursal</label
+          >
+          <p-dropdown
+            [(ngModel)]="form.branch"
+            [options]="branchOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccionar..."
+            styleClass="w-full h-11 rounded-xl"
+            appendTo="body"
+          />
+        </div>
+      </div>
+
+      <!-- Estado -->
+      <div class="flex items-center gap-3">
+        <p-inputSwitch [(ngModel)]="form.active" />
+        <span class="text-sm text-slate-300">Estado activo</span>
+      </div>
+
+      <!-- Dirección -->
+      <div class="flex flex-col gap-1.5">
+        <label
+          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+          >Dirección</label
+        >
         <input
           pInputText
-          [(ngModel)]="form.name"
-          placeholder="Ej. Carlos Andrade"
-          class="w-full h-10 rounded-xl border border-gray-200 px-3 text-sm"
+          [(ngModel)]="form.address"
+          placeholder="Av. Principal 456"
+          class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
         />
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-600">DNI</label>
-        <div class="flex items-center gap-2 rounded-xl border border-gray-200 px-3 h-10 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400">
-          <i class="pi pi-id-card text-gray-400 text-sm"></i>
+    } @else {
+      <!-- NEW USER LAYOUT -->
+
+      <!-- Nombre + DNI -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Nombre completo</label
+          >
+          <input
+            pInputText
+            [(ngModel)]="form.name"
+            placeholder="Ej. Carlos Andrade"
+            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+          />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >DNI</label
+          >
           <input
             pInputText
             [(ngModel)]="form.dni"
             placeholder="Ej. 30123456"
-            class="border-0 outline-none shadow-none p-0 text-sm w-full bg-transparent"
+            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
           />
         </div>
       </div>
-    </div>
 
-    <!-- Email -->
-    <div class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-gray-600">Correo electrónico</label>
-      <div class="flex items-center gap-2 rounded-xl border border-gray-200 px-3 h-10 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400">
-        <i class="pi pi-envelope text-gray-400 text-sm"></i>
+      <!-- Email -->
+      <div class="flex flex-col gap-1.5">
+        <label
+          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+          >Correo electrónico</label
+        >
         <input
           pInputText
           [(ngModel)]="form.email"
-          placeholder="usuario@siscreditos.com"
-          class="border-0 outline-none shadow-none p-0 text-sm w-full bg-transparent"
+          placeholder="usuario@empresa.com"
+          class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
         />
       </div>
-    </div>
 
-    <!-- Rol + Sucursal -->
-    <div class="grid grid-cols-2 gap-3">
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-600">Rol</label>
-        <p-dropdown
-          [(ngModel)]="form.role"
-          [options]="roleOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Seleccionar..."
-          styleClass="w-full h-10 rounded-xl border-gray-200 text-sm"
-        />
+      <!-- Rol + Sucursal -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Rol</label
+          >
+          <p-dropdown
+            [(ngModel)]="form.role"
+            [options]="roleOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccionar..."
+            styleClass="w-full h-11 rounded-xl"
+            appendTo="body"
+          />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            >Sucursal</label
+          >
+          <p-dropdown
+            [(ngModel)]="form.branch"
+            [options]="branchOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccionar..."
+            styleClass="w-full h-11 rounded-xl"
+            appendTo="body"
+          />
+        </div>
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="text-xs font-medium text-gray-600">Sucursal</label>
-        <p-dropdown
-          [(ngModel)]="form.branch"
-          [options]="branchOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Seleccionar..."
-          styleClass="w-full h-10 rounded-xl border-gray-200 text-sm"
-        />
-      </div>
-    </div>
 
-    <!-- Contraseña -->
-    <div class="flex flex-col gap-1">
-      <label class="text-xs font-medium text-gray-600">
-        {{ isEdit ? 'Nueva contraseña (dejar vacío para no cambiar)' : 'Contraseña' }}
-      </label>
-      <div class="flex items-center gap-2 rounded-xl border border-gray-200 px-3 h-10 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400">
-        <i class="pi pi-lock text-gray-400 text-sm"></i>
+      <!-- Contraseña -->
+      <div class="flex flex-col gap-1.5">
+        <label
+          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+          >Contraseña</label
+        >
         <input
           type="password"
           pInputText
           [(ngModel)]="form.password"
-          [placeholder]="isEdit ? '••••••••' : 'Mínimo 8 caracteres'"
-          class="border-0 outline-none shadow-none p-0 text-sm w-full bg-transparent"
+          placeholder="Mínimo 8 caracteres"
+          class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
         />
       </div>
-    </div>
 
-    <!-- Estado -->
-    <div class="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3">
-      <div>
-        <p class="text-sm font-medium text-gray-700">Estado del usuario</p>
-        <p class="text-xs text-gray-400">{{ form.active ? 'El usuario puede iniciar sesión' : 'El usuario no puede iniciar sesión' }}</p>
+      <!-- Estado -->
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3"
+      >
+        <div>
+          <p class="text-sm font-medium text-slate-200">Estado del usuario</p>
+          <p class="text-xs text-slate-500">
+            {{
+              form.active
+                ? "El usuario puede iniciar sesión"
+                : "El usuario no puede iniciar sesión"
+            }}
+          </p>
+        </div>
+        <p-inputSwitch [(ngModel)]="form.active" />
       </div>
-      <p-inputSwitch [(ngModel)]="form.active" />
-    </div>
-
+    }
   </div>
 
   <!-- Footer -->
   <ng-template pTemplate="footer">
-    <div class="flex justify-between items-center pt-2">
-      <button type="button" class="cancel-btn" (click)="close()">Cancelar</button>
-      <p-button
-        [label]="isEdit ? 'Guardar Cambios' : 'Crear Usuario'"
-        icon="pi pi-save"
-        iconPos="left"
-        severity="primary"
-        styleClass="h-11 px-5 rounded-xl"
-        (onClick)="guardar()"
-      />
-    </div>
+    @if (isEdit) {
+      <div class="flex items-center justify-between pt-2">
+        <p-button
+          label="Guardar cambios"
+          icon="pi pi-check"
+          styleClass="h-11 px-5 rounded-xl"
+          (onClick)="guardar()"
+        />
+        <p-button
+          label="Cancelar"
+          severity="secondary"
+          [text]="true"
+          styleClass="h-11 px-4 rounded-xl"
+          (onClick)="close()"
+        />
+        <button
+          class="h-11 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-sm font-medium transition-colors"
+        >
+          Resetear contraseña
+        </button>
+      </div>
+    } @else {
+      <div class="flex gap-3 justify-end pt-2">
+        <p-button
+          label="Cancelar"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="h-11 px-5 rounded-xl"
+          (onClick)="close()"
+        />
+        <p-button
+          label="Crear Usuario"
+          icon="pi pi-save"
+          styleClass="h-11 px-5 rounded-xl"
+          (onClick)="guardar()"
+        />
+      </div>
+    }
   </ng-template>
 </p-dialog>

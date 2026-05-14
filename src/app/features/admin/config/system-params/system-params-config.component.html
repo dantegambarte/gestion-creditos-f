@@ -4,93 +4,105 @@
   @if (loading) {
     <div class="space-y-2">
       @for (i of [1, 2, 3, 4, 5]; track i) {
-        <p-skeleton height="2.5rem" />
+        <p-skeleton height="2.5rem" styleClass="rounded-xl" />
       }
     </div>
   } @else {
     <div
-      class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+      class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"
     >
-      <p-table
-        [value]="rows"
-        styleClass="p-datatable-sm"
-        responsiveLayout="scroll"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th class="text-xs font-semibold text-gray-500 uppercase">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-slate-800">
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
               Parámetro
             </th>
-            <th class="text-xs font-semibold text-gray-500 uppercase">
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
               Valor actual
             </th>
-            <th class="text-xs font-semibold text-gray-500 uppercase">
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
               Rango permitido
             </th>
-            <th class="text-xs font-semibold text-gray-500 uppercase">
-              Último cambio
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
+              Descripción
             </th>
-            <th class="text-xs font-semibold text-gray-500 uppercase">
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
+              Última actualización
+            </th>
+            <th
+              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+            >
               Acciones
             </th>
           </tr>
-        </ng-template>
-
-        <ng-template pTemplate="body" let-row>
-          <tr class="hover:bg-gray-50/50 transition-colors">
-            <td>
-              <p class="text-sm font-semibold text-gray-800">
-                {{ row.meta.label }}
-              </p>
-              @if (row.meta.hint) {
-                <p class="text-xs text-gray-400">{{ row.meta.hint }}</p>
-              }
-            </td>
-            <td class="text-sm font-bold text-gray-800">{{ row.value }}</td>
-            <td class="text-xs text-gray-500">Entre {{ row.meta.range }}</td>
-            <td class="text-xs text-gray-500">
-              @if (row.updatedAt) {
-                {{ row.updatedAt | date: "dd/MM/yyyy HH:mm" }}
-                @if (row.updatedBy) {
-                  · {{ row.updatedBy }}
+        </thead>
+        <tbody>
+          @if (rows.length === 0) {
+            <tr>
+              <td colspan="6" class="px-5 py-10 text-center text-slate-500">
+                Sin parámetros disponibles.
+              </td>
+            </tr>
+          }
+          @for (row of rows; track row.key) {
+            <tr
+              class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors"
+            >
+              <td class="px-5 py-3">
+                <p class="font-medium text-slate-200">{{ row.meta.label }}</p>
+              </td>
+              <td class="px-5 py-3 font-bold text-emerald-400">
+                {{ formatValue(row) }}
+              </td>
+              <td class="px-5 py-3 text-slate-400">{{ row.meta.range }}</td>
+              <td class="px-5 py-3 text-slate-500 text-xs">
+                {{ row.meta.hint || "—" }}
+              </td>
+              <td class="px-5 py-3 text-slate-500 text-xs">
+                @if (row.updatedAt) {
+                  {{ row.updatedAt | date: "dd/MM/yyyy" }}
+                  @if (row.updatedBy) {
+                    · {{ row.updatedBy }}
+                  }
+                } @else {
+                  —
                 }
-              } @else {
-                –
-              }
-            </td>
-            <td>
-              <div class="flex gap-2">
-                <button
-                  (click)="openEdit(row)"
-                  title="Editar"
-                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-blue-300 hover:text-blue-500 transition-colors"
-                >
-                  <i class="pi pi-pencil text-xs"></i>
-                </button>
-                <button
-                  (click)="confirmReset(row)"
-                  title="Restaurar valor por defecto"
-                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:border-orange-300 hover:text-orange-500 transition-colors"
-                >
-                  <i class="pi pi-refresh text-xs"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="5" class="text-center text-gray-400 py-6">
-              Sin parámetros disponibles.
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+              </td>
+              <td class="px-5 py-3">
+                <div class="flex gap-4">
+                  <button
+                    (click)="openEdit(row)"
+                    class="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    (click)="confirmReset(row)"
+                    class="text-sm text-amber-400 hover:text-amber-300 transition-colors"
+                  >
+                    Restaurar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   }
 </div>
 
+<!-- Dialog: Editar parámetro -->
 <p-dialog
   [(visible)]="showEditDialog"
   [header]="editingRow ? editingRow.meta.label : 'Editar'"
@@ -100,67 +112,93 @@
 >
   @if (editingRow) {
     <div class="space-y-3 py-1">
-      <p class="text-sm text-gray-500">
-        Rango válido: Entre {{ editingRow.meta.range }}
-      </p>
       @if (editingRow.meta.hint) {
-        <p class="text-xs text-gray-400">{{ editingRow.meta.hint }}</p>
+        <p class="text-xs text-slate-400">{{ editingRow.meta.hint }}</p>
       }
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700">Nuevo valor</label>
-        <p-inputNumber
-          [(ngModel)]="editValue"
-          [min]="editingRow.meta.min"
-          [max]="editingRow.meta.max"
-          [minFractionDigits]="0"
-          [maxFractionDigits]="6"
-          [useGrouping]="false"
-          styleClass="w-full"
-        />
+      <div class="flex flex-col gap-1.5">
+        <label
+          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+          >Valor actual</label
+        >
+        @if (DAY_PARAMS.has(editingRow.key)) {
+          <p-dropdown
+            [options]="dayOptions"
+            [(ngModel)]="editValue"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full h-11 rounded-xl"
+            appendTo="body"
+          />
+        } @else {
+          <p-inputNumber
+            [(ngModel)]="editValue"
+            [min]="editingRow.meta.min"
+            [max]="editingRow.meta.max"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="6"
+            [useGrouping]="false"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+          />
+        }
+        <span class="text-xs text-slate-500"
+          >Entre {{ editingRow.meta.range }}</span
+        >
       </div>
       @if (editError) {
-        <p class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+        <p
+          class="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2"
+        >
           {{ editError }}
         </p>
       }
     </div>
   }
   <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [text]="true"
-      (onClick)="showEditDialog = false"
-      [disabled]="saving"
-    />
-    <p-button
-      label="Guardar"
-      icon="pi pi-check"
-      (onClick)="submitEdit()"
-      [loading]="saving"
-    />
+    <div class="flex gap-3 justify-end pt-2">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-10 px-5 rounded-xl"
+        (onClick)="showEditDialog = false"
+        [disabled]="saving"
+      />
+      <p-button
+        label="Guardar cambio"
+        icon="pi pi-check"
+        styleClass="h-10 px-5 rounded-xl"
+        (onClick)="submitEdit()"
+        [loading]="saving"
+      />
+    </div>
   </ng-template>
 </p-dialog>
 
+<!-- Dialog: Confirmar restaurar -->
 <p-dialog
   [(visible)]="showConfirmDialog"
   header="Restaurar valor por defecto"
   [modal]="true"
   [style]="{ width: '22rem' }"
 >
-  <p class="text-sm text-gray-700 py-2">{{ confirmMessage }}</p>
+  <p class="text-sm py-2">{{ confirmMessage }}</p>
   <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [text]="true"
-      (onClick)="onCancelConfirm()"
-    />
-    <p-button
-      label="Restaurar"
-      icon="pi pi-refresh"
-      severity="warning"
-      (onClick)="onConfirm()"
-    />
+    <div class="flex gap-3 justify-end pt-2">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-10 px-5 rounded-xl"
+        (onClick)="onCancelConfirm()"
+      />
+      <p-button
+        label="Restaurar"
+        icon="pi pi-refresh"
+        severity="warning"
+        styleClass="h-10 px-5 rounded-xl"
+        (onClick)="onConfirm()"
+      />
+    </div>
   </ng-template>
 </p-dialog>

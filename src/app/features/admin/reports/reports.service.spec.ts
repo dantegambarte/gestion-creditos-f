@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ApiHttpService } from '../../../core/http/api-http.service';
 import { ReportsService } from './reports.service';
+import { provideAuthTesting } from '../../../core/auth/testing/auth-testing';
 
 const mockCollectionRaw = {
   summary: {
@@ -74,8 +75,8 @@ const mockProductsRaw = [
   {
     id: 'p1',
     name: 'Producto A',
-    current_price: 15000,
-    available_stock: 10,
+    max_price: 15000,
+    available_count: 10,
     status: 'ACTIVE',
     times_sold: 25,
     total_units_sold: 30,
@@ -84,8 +85,7 @@ const mockProductsRaw = [
   {
     id: 'p2',
     name: 'Producto B',
-    current_price: 8000,
-    available_stock: 0,
+    available_count: 0,
     status: 'ACTIVE',
     times_sold: 0,
     total_units_sold: 0,
@@ -100,7 +100,7 @@ describe('ReportsService', () => {
   beforeEach(() => {
     apiSpy = jasmine.createSpyObj('ApiHttpService', ['get']);
     TestBed.configureTestingModule({
-      providers: [ReportsService, { provide: ApiHttpService, useValue: apiSpy }],
+      providers: [ReportsService, { provide: ApiHttpService, useValue: apiSpy }, ...provideAuthTesting()],
     });
     service = TestBed.inject(ReportsService);
   });

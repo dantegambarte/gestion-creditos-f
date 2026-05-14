@@ -12,6 +12,9 @@ export interface Customer {
   createdAt: string;
   collectorId: string | null;
   collectorName: string | null;
+  activeCredits?: number;
+  delinquency?: string;
+  paymentCapacity?: number;
 }
 
 export interface CustomerDetail extends Customer {
@@ -21,10 +24,31 @@ export interface CustomerDetail extends Customer {
   updatedAt: string;
 }
 
+export interface CustomerWizardCreditSummary {
+  id: string;
+  type: 'SALE' | 'LOAN';
+  creditName: string | null;
+  totalAmount: number;
+  installmentsCount: number;
+  status: 'ACTIVE' | 'SETTLED';
+  referenceDate: string;
+}
+
+export interface CustomerWizardSummary extends Customer {
+  delinquency: string;
+  paymentCapacity: number;
+  activeCredits: number;
+  paidInstallments: number;
+  pendingInstallments: number;
+  overdueInstallments: number;
+  credits: CustomerWizardCreditSummary[];
+}
+
 export interface CustomerListFilters {
   status?: CustomerStatus;
   search?: string;
   collectorId?: string;
+  includeSummary?: boolean;
 }
 
 export interface CustomerCreatePayload {
@@ -56,6 +80,9 @@ export interface CustomerRaw {
   created_at: string;
   collector_id: string | null;
   collector_name: string | null;
+  active_credits?: number;
+  delinquency?: string;
+  payment_capacity?: number;
 }
 
 export interface CustomerDetailRaw extends CustomerRaw {
@@ -63,4 +90,24 @@ export interface CustomerDetailRaw extends CustomerRaw {
   portal_failed_attempts: number;
   portal_locked_at: string | null;
   updated_at: string;
+}
+
+export interface CustomerWizardCreditSummaryRaw {
+  id: string;
+  type: 'SALE' | 'LOAN';
+  credit_name: string | null;
+  total_amount: number;
+  installments_count: number;
+  status: 'ACTIVE' | 'SETTLED';
+  reference_date: string;
+}
+
+export interface CustomerWizardSummaryRaw extends CustomerRaw {
+  delinquency: string;
+  payment_capacity: number;
+  active_credits: number;
+  paid_installments: number;
+  pending_installments: number;
+  overdue_installments: number;
+  credits: CustomerWizardCreditSummaryRaw[];
 }

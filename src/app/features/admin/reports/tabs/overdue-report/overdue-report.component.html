@@ -1,0 +1,123 @@
+<div class="space-y-6">
+  @if (loading) {
+    <app-loading-state />
+  } @else if (error) {
+    <app-error-state />
+  } @else if (overdueReport) {
+    <!-- 4 KPIs oscuros -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-1">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          Cuotas en mora
+        </p>
+        <p class="text-3xl font-extrabold text-red-400">
+          {{ overdueReport.summary.overdueInstallments }}
+        </p>
+      </div>
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-1">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          Monto total
+        </p>
+        <p class="text-2xl font-extrabold text-red-400 font-mono">
+          {{ formatCurrency(overdueReport.summary.totalOverdueAmount) }}
+        </p>
+      </div>
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-1">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          Total penalidades
+        </p>
+        <p class="text-2xl font-extrabold text-orange-400 font-mono">
+          {{ formatCurrency(overdueReport.summary.totalPenalties) }}
+        </p>
+      </div>
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-1">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          Promedio días atraso
+        </p>
+        <p class="text-3xl font-extrabold text-white">
+          {{
+            overdueReport.summary.avgDaysOverdue != null
+              ? overdueReport.summary.avgDaysOverdue.toFixed(1) + "d"
+              : "—"
+          }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Tabla flat -->
+    @if (overdueReport.byCustomer.length === 0) {
+      <p class="text-sm text-gray-500 text-center py-10">
+        Sin clientes en mora.
+      </p>
+    } @else {
+      <div class="bg-gray-800 rounded-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-700">
+          <h2 class="text-sm font-semibold text-gray-300">Mora por cliente</h2>
+        </div>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-700">
+              <th
+                class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              >
+                Cliente
+              </th>
+              <th
+                class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              >
+                Teléfono
+              </th>
+              <th
+                class="text-center px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              >
+                Cuotas en mora
+              </th>
+              <th
+                class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              >
+                Monto total
+              </th>
+              <th
+                class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              >
+                Máx. días atraso
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of overdueReport.byCustomer; track row.customerId) {
+              <tr
+                class="border-t border-gray-700/50 hover:bg-gray-700/20 transition-colors"
+              >
+                <td class="px-5 py-3 font-semibold text-white">
+                  {{ row.customerName }}
+                </td>
+                <td class="px-5 py-3 text-gray-400">{{ row.phone ?? "—" }}</td>
+                <td class="px-5 py-3 text-center font-bold text-red-400">
+                  {{ row.overdueCount }}
+                </td>
+                <td
+                  class="px-5 py-3 text-right font-mono font-semibold text-orange-400"
+                >
+                  {{ formatCurrency(row.totalOverdue) }}
+                </td>
+                <td class="px-5 py-3 text-right">
+                  <span
+                    class="font-bold"
+                    [class]="
+                      row.maxDaysOverdue > 30
+                        ? 'text-red-400'
+                        : 'text-orange-400'
+                    "
+                  >
+                    {{ row.maxDaysOverdue }}d
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

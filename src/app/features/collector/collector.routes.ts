@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { AppRoutes } from '../../shared/models/enums/routes.enum';
 
 export const COLLECTOR_ROUTES: Routes = [
   {
@@ -25,6 +26,13 @@ export const COLLECTOR_ROUTES: Routes = [
     loadComponent: () =>
       import('./commissions/collector-commissions.component').then(
         (c) => c.CollectorCommissionsComponent,
+      ),
+  },
+  {
+    path: AppRoutes.SIMULATOR,
+    loadComponent: () =>
+      import('../../shared/simulator/simulator.component').then(
+        (c) => c.SimulatorComponent,
       ),
   },
   { path: '', redirectTo: 'route', pathMatch: 'full' },

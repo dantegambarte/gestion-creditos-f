@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
 import { ClientsComponent } from './clients.component';
+import { AuthServiceBase } from '../../core/auth/auth-service.base';
 import { MockAuthService } from '../../core/auth/mock-auth.service';
 import { CustomersService } from '../../features/seller/clients/customers.service';
 import { FormatService } from '../../core/services/format.service';
@@ -60,7 +61,7 @@ describe('ClientsComponent', () => {
       imports: [ClientsComponent],
       providers: [
         { provide: Router, useValue: routerSpy },
-        { provide: MockAuthService, useValue: authSpy },
+        { provide: AuthServiceBase, useValue: authSpy },
         { provide: CustomersService, useValue: customersServiceSpy },
         { provide: FormatService, useValue: { currency: (n: number) => `$${n}` } },
         MessageService,
@@ -143,6 +144,19 @@ describe('ClientsComponent', () => {
       expect((component as any).loadClients).toHaveBeenCalled();
     });
 
+    it('T2.1 - en caso de éxito debería mostrar toast de modificación exitosa', () => {
+      customersServiceSpy.update.and.returnValue(of(MOCK_CUSTOMER_DETAIL as any));
+
+      component.saveEdit();
+
+      expect((component as any).messageService.add).toHaveBeenCalledWith({
+        severity: 'success',
+        summary: 'Éxito',
+        detail: 'Modificación Exitosa.',
+        life: 4500,
+      });
+    });
+
     it('T3 - error de API debería mostrar mensaje, mantener modal abierto y NO llamar a loadClients', () => {
       customersServiceSpy.update.and.returnValue(throwError(() => ({ status: 500 })));
       spyOn<any>(component, 'loadClients').and.callThrough();
@@ -198,6 +212,36 @@ describe('ClientsComponent', () => {
       expect(component.showEditModal).toBeFalse();
       expect(component.editError).toContain('permisos');
       expect(customersServiceSpy.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('CL-10 — créditos del cliente usa activeCredits, no 0', () => {
+    it('toClient mapea activeCredits del backend al campo credits', () => {
+      const twoCustomers = [
+        { ...MOCK_CUSTOMERS[0], id: 'cl-1', fullName: 'Ana García', activeCredits: 3 },
+        { ...MOCK_CUSTOMERS[0], id: 'cl-2', fullName: 'Carlos Ruiz', activeCredits: 0 },
+      ];
+      customersServiceSpy.list.and.returnValue(of(twoCustomers));
+      (component as any).loadClients();
+
+      expect(component.clients[0].credits).toBe(3);
+      expect(component.clients[1].credits).toBe(0);
+    });
+
+    it('cuando activeCredits es undefined, usa 0 como fallback', () => {
+      const customer = { ...MOCK_CUSTOMERS[0], id: 'cl-3', activeCredits: undefined };
+      customersServiceSpy.list.and.returnValue(of([customer]));
+      (component as any).loadClients();
+
+      expect(component.clients[0].credits).toBe(0);
+    });
+  });
+
+  describe('paginación (CL-08)', () => {
+    it('la tabla tiene paginator=true con 10 filas por página', () => {
+      const table = fixture.nativeElement.querySelector('p-table');
+      expect(table.getAttribute('ng-reflect-paginator')).toBe('true');
+      expect(table.getAttribute('ng-reflect-rows')).toBe('10');
     });
   });
 

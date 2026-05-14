@@ -15,8 +15,8 @@ export const SELLER_ROUTES: Routes = [
     canActivate: [roleGuard],
     data: { roles: ['ADMIN', 'SELLER', 'SELLER_COLLECTOR'] },
     loadComponent: () =>
-      import('./operations/credit-create/credit-create.component').then(
-        (c) => c.CreditCreateComponent,
+      import('../../shared/operations/new-operation/new-operation.component').then(
+        (c) => c.NewOperationComponent,
       ),
   },
   {
@@ -131,6 +131,13 @@ export const SELLER_ROUTES: Routes = [
     loadComponent: () =>
       import('./commissions/seller-commissions.component').then(
         (c) => c.SellerCommissionsComponent,
+      ),
+  },
+  {
+    path: AppRoutes.SIMULATOR,
+    loadComponent: () =>
+      import('../../shared/simulator/simulator.component').then(
+        (c) => c.SimulatorComponent,
       ),
   },
   { path: '', redirectTo: 'operations', pathMatch: 'full' },

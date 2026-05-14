@@ -22,7 +22,7 @@ import { ToastModule } from 'primeng/toast';
 
 import { CustomersService } from '../../features/seller/clients/customers.service';
 import { Customer } from '../../features/seller/models/customer.model';
-import { MockAuthService } from '../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../core/auth/auth-service.base';
 import { UserRoleEnum } from '../../core/models/types/user-role';
 import { FormatService } from '../../core/services/format.service';
 import { Client } from '../models/interface/client';
@@ -52,7 +52,7 @@ function toClient(c: Customer): Client {
     avatarColor: AVATAR_COLORS[colorIdx],
     name: c.fullName,
     phone: c.phone ?? '',
-    credits: 0,
+    credits: c.activeCredits ?? 0,
     risk: 'Al dia',
   };
 }
@@ -80,7 +80,7 @@ function toClient(c: Customer): Client {
 })
 export class ClientsComponent implements OnInit {
   private readonly customersService = inject(CustomersService);
-  private readonly auth = inject(MockAuthService);
+  private readonly auth = inject(AuthServiceBase);
   private readonly messageService = inject(MessageService);
 
   clients: Client[] = [];
@@ -274,6 +274,7 @@ export class ClientsComponent implements OnInit {
     };
     this.customersService.update(id, payload).subscribe({
       next: () => {
+        this.handleEditSuccess();
         this.showEditModal = false;
         this.selectedClient = null;
         this.loadClients();
@@ -282,9 +283,22 @@ export class ClientsComponent implements OnInit {
         if (err?.status === 403) {
           this.editError = 'No tenés permisos para editar clientes';
         } else {
-          this.editError = 'Ocurrió un error al guardar los cambios. Intentá de nuevo.';
+          this.editError =
+            'Ocurrió un error al guardar los cambios. Intentá de nuevo.';
         }
       },
+    });
+  }
+
+  /**
+   * Muestra feedback visible cuando la edición del cliente se guardó correctamente.
+   */
+  private handleEditSuccess(): void {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Modificación Exitosa.',
+      life: 4500,
     });
   }
 

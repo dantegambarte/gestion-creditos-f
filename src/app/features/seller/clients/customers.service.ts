@@ -7,6 +7,8 @@ import {
   CustomerCreatePayload,
   CustomerDetail,
   CustomerDetailRaw,
+  CustomerWizardSummary,
+  CustomerWizardSummaryRaw,
   CustomerListFilters,
   CustomerRaw,
   CustomerUpdatePayload,
@@ -30,6 +32,9 @@ function toCustomer(raw: CustomerRaw): Customer {
     createdAt: raw.created_at,
     collectorId: raw.collector_id,
     collectorName: raw.collector_name,
+    activeCredits: raw.active_credits,
+    delinquency: raw.delinquency,
+    paymentCapacity: raw.payment_capacity,
   };
 }
 
@@ -45,6 +50,32 @@ function toCustomerDetail(raw: CustomerDetailRaw): CustomerDetail {
     portalFailedAttempts: raw.portal_failed_attempts,
     portalLockedAt: raw.portal_locked_at,
     updatedAt: raw.updated_at,
+  };
+}
+
+/**
+ * Convierte el resumen del wizard a formato frontend.
+ * @param raw
+ * @returns
+ */
+function toCustomerWizardSummary(raw: CustomerWizardSummaryRaw): CustomerWizardSummary {
+  return {
+    ...toCustomer(raw),
+    delinquency: raw.delinquency,
+    paymentCapacity: raw.payment_capacity,
+    activeCredits: raw.active_credits,
+    paidInstallments: raw.paid_installments,
+    pendingInstallments: raw.pending_installments,
+    overdueInstallments: raw.overdue_installments,
+    credits: raw.credits.map((credit) => ({
+      id: credit.id,
+      type: credit.type,
+      creditName: credit.credit_name,
+      totalAmount: credit.total_amount,
+      installmentsCount: credit.installments_count,
+      status: credit.status,
+      referenceDate: credit.reference_date,
+    })),
   };
 }
 
@@ -96,6 +127,9 @@ export class CustomersService {
     if (filters?.status) params['status'] = filters.status;
     if (filters?.search) params['search'] = filters.search;
     if (filters?.collectorId) params['collector_id'] = filters.collectorId;
+    if (filters?.includeSummary !== undefined) {
+      params['include_summary'] = String(filters.includeSummary);
+    }
     return this.api
       .get<CustomerRaw[]>('customers', params)
       .pipe(map((items) => items.map(toCustomer)));
@@ -110,6 +144,17 @@ export class CustomersService {
     return this.api
       .get<CustomerDetailRaw>(`customers/${id}`)
       .pipe(map(toCustomerDetail));
+  }
+
+  /**
+   * Obtiene el resumen enriquecido del cliente para el wizard de operaciones.
+   * @param id
+   * @returns
+   */
+  getWizardSummary(id: string): Observable<CustomerWizardSummary> {
+    return this.api
+      .get<CustomerWizardSummaryRaw>(`customers/${id}/wizard-summary`)
+      .pipe(map(toCustomerWizardSummary));
   }
 
   /**

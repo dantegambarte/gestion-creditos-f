@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -128,7 +128,8 @@ export class SheetComponent implements OnInit, OnDestroy {
    * Genera una planilla para el cobrador seleccionado evitando reentradas mientras ya hay una generación en curso.
    */
   generatePlanilla(): void {
-    if (!this.selectedCollectorId || this.generating || this.generatingAll) return;
+    if (!this.selectedCollectorId || this.generating || this.generatingAll)
+      return;
     this.generating = true;
     this.collectionsService
       .generate({
@@ -388,6 +389,8 @@ export class SheetComponent implements OnInit, OnDestroy {
     const entries: PlanillaEntry[] = detail.items.map((item) => ({
       clientName: item.customerName,
       clientDni: 'N/D', // TODO: customer_dni not included in collection items — consider adding to backend
+      clientPhone: item.customerPhone,
+      clientAddress: item.customerAddress,
       creditId: item.creditId,
       creditType: item.creditType,
       installmentNumber: item.installmentNumber,

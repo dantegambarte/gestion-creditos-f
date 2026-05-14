@@ -18,7 +18,7 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { MockAuthService } from '../../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { AppError } from '../../../../core/models/app-error';
 import { UserRoleEnum } from '../../../../core/models/types/user-role';
 import { HeaderService } from '../../../../core/services/header.service';
@@ -62,7 +62,7 @@ export class ProductUnitsComponent implements OnInit {
   private readonly productsService = inject(ProductsService);
   private readonly variantsService = inject(ProductVariantsService);
   private readonly unitsService = inject(ProductUnitsService);
-  private readonly auth = inject(MockAuthService);
+  private readonly auth = inject(AuthServiceBase);
   private readonly header = inject(HeaderService);
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);

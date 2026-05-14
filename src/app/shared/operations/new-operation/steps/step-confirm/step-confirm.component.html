@@ -1,217 +1,454 @@
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-  <!-- Resumen de la operación -->
-  <div class="ff-panel p-6">
-    <h3 class="text-base font-bold mb-6" style="color: var(--ff-text-primary)">
-      Resumen de la Operación
-    </h3>
-
-    <!-- Cliente -->
-    <div class="mb-5 pb-5" style="border-bottom: 1px solid var(--ff-border)">
-      <span
-        class="text-[10px] font-bold uppercase tracking-wider mb-3 block"
-        style="color: var(--ff-text-muted)"
-        >Cliente</span
+<section class="mx-auto mt-4 max-w-[1180px] space-y-6" [formGroup]="form">
+  <div
+    class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.95fr)]"
+  >
+    <div class="space-y-6">
+      <article
+        class="overflow-hidden rounded-2xl border border-[#1A1D27] bg-[#121520] shadow-[0_12px_36px_rgba(0,0,0,0.22)]"
       >
-      <div class="flex items-center gap-3">
-        <div
-          class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-          style="background: var(--ff-accent)"
-        >
-          {{ initials(form.selectedClient()?.name) }}
-        </div>
-        <div>
-          <p class="font-bold text-sm" style="color: var(--ff-text-primary)">
-            {{ form.selectedClient()?.name || "No seleccionado" }}
-          </p>
-          <p class="text-xs ff-mono" style="color: var(--ff-text-muted)">
-            CC {{ form.selectedClient()?.dni }}
+        <div class="border-b border-[#1A1D27] px-5 py-4">
+          <h3 class="text-lg font-semibold text-white">
+            Simulación del plan de pagos
+          </h3>
+          <p class="mt-1 text-sm text-[#5E6A82]">
+            Los valores son orientativos. La operación queda sujeta a aprobación
+            del administrador.
           </p>
         </div>
-      </div>
-    </div>
 
-    <!-- Tipo de operación -->
-    <div class="mb-5 pb-5" style="border-bottom: 1px solid var(--ff-border)">
-      <span
-        class="text-[10px] font-bold uppercase tracking-wider mb-3 block"
-        style="color: var(--ff-text-muted)"
-        >Operación</span
-      >
-      <p class="text-sm font-semibold" style="color: var(--ff-text-primary)">
-        {{ operationTypeLabel() }}
-        @if (form.selectedType() === "SALE") {
-          - {{ form.selectedProducts().length }} unidad(es)
-        }
-      </p>
-    </div>
+        <div class="space-y-5 px-5 py-5">
+          @if (operationType === "SALE" && cartLines.length) {
+            <div>
+              <p
+                class="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5E6A82]"
+              >
+                Contribución por producto
+              </p>
+              <div
+                class="overflow-hidden rounded-xl border border-[#252A3A] bg-[#1D2231]"
+              >
+                <div
+                  class="grid grid-cols-12 gap-3 border-b border-[#252A3A] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+                >
+                  <span class="col-span-4">Producto</span>
+                  <span class="col-span-3">Variante</span>
+                  <span class="col-span-2 text-right">Precio</span>
+                  <span class="col-span-1 text-right">Tasa</span>
+                  <span class="col-span-2 text-right">Cuota aportada</span>
+                </div>
 
-    <!-- Condiciones financieras -->
-    <div>
-      <span
-        class="text-[10px] font-bold uppercase tracking-wider mb-4 block"
-        style="color: var(--ff-text-muted)"
-        >Condiciones Financieras</span
-      >
-      <div class="space-y-3">
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Total base</span>
-          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
-            {{ form.capital() | currencyArs }}
-          </span>
-        </div>
-        @if (form.selectedType() === "SALE") {
-          <div class="flex justify-between items-center text-sm">
-            <span style="color: var(--ff-text-secondary)">Enganche</span>
-            <span
-              class="font-bold ff-mono"
-              style="color: var(--ff-text-primary)"
+                @for (
+                  line of cartLines;
+                  track line.productoId + "-" + line.variantId
+                ) {
+                  <div
+                    class="grid grid-cols-12 gap-3 border-b border-[#252A3A] px-4 py-3 text-sm last:border-b-0"
+                  >
+                    <span class="col-span-4 font-semibold text-white">{{
+                      line.nombre
+                    }}</span>
+                    <span class="col-span-3 text-[#A1ACBF]">{{
+                      getVariantLabel(line)
+                    }}</span>
+                    <span
+                      class="col-span-2 text-right font-semibold text-white"
+                      >{{ line.subtotal | currencyArs }}</span
+                    >
+                    <span class="col-span-1 text-right text-[#93C5FD]"
+                      >{{ getLineRatePercent(line) }}%</span
+                    >
+                    <span
+                      class="col-span-2 text-right font-semibold text-[#37F0A4]"
+                      >{{ getCuotaPorLinea(line) | currencyArs }}</span
+                    >
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <div>
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5E6A82]"
             >
-              {{ form.downPayment() | currencyArs }}
-            </span>
+              Resultado del plan
+            </p>
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div
+                class="rounded-xl border border-[#314A43] bg-[#232A3F] px-4 py-3"
+              >
+                <p
+                  class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+                >
+                  {{ paymentFrequencyLabel }} total
+                </p>
+                <div class="mt-2 flex items-end gap-2">
+                  <span
+                    class="text-[34px] font-semibold leading-none text-[#37F0A4]"
+                    >{{ valorCuota | currencyArs }}</span
+                  >
+                  <span class="pb-1 text-xs text-[#5E6A82]"
+                    >/
+                    {{
+                      paymentFrequencyLabel.toLowerCase() === "-"
+                        ? "plan"
+                        : paymentFrequencyLabel.toLowerCase()
+                    }}</span
+                  >
+                </div>
+              </div>
+
+              <div
+                class="rounded-xl border border-[#252A3A] bg-[#232A3F] px-4 py-3"
+              >
+                <p
+                  class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+                >
+                  Total a devolver
+                </p>
+                <p
+                  class="mt-2 text-[32px] font-semibold leading-none text-white"
+                >
+                  {{ totalADevolver | currencyArs }}
+                </p>
+              </div>
+
+              <div
+                class="rounded-xl border border-[#252A3A] bg-[#232A3F] px-4 py-3"
+              >
+                <p
+                  class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+                >
+                  Inicio de pagos
+                </p>
+                <p
+                  class="mt-2 text-[28px] font-semibold leading-none text-[#AFC0E9]"
+                >
+                  {{ firstPaymentDateLabel }}
+                </p>
+              </div>
+
+              <div
+                class="rounded-xl border border-[#252A3A] bg-[#232A3F] px-4 py-3"
+              >
+                <p
+                  class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+                >
+                  Pago inicial
+                </p>
+                <p
+                  class="mt-2 text-[28px] font-semibold leading-none text-[#37F0A4]"
+                >
+                  {{ initialPaymentSummary }}
+                </p>
+              </div>
+            </div>
           </div>
-        }
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Capital financiado</span>
-          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
-            {{ form.financedCapital() | currencyArs }}
-          </span>
-        </div>
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Plan de cuotas</span>
-          <span class="font-bold" style="color: var(--ff-text-primary)">
-            {{ installmentsLabel() }}
-          </span>
-        </div>
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Fecha primer pago</span>
-          <span class="font-bold" style="color: var(--ff-text-primary)">
-            {{ (form.firstDueDate() | date: "dd/MM/yyyy") || "No definida" }}
-          </span>
-        </div>
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Valor cuota</span>
-          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
-            {{ form.installmentValue() | currencyArs }}
-          </span>
-        </div>
-        <div class="flex justify-between items-center text-sm">
-          <span style="color: var(--ff-text-secondary)">Total a devolver</span>
-          <span class="font-bold ff-mono" style="color: var(--ff-text-primary)">
-            {{ form.totalToPay() | currencyArs }}
-          </span>
-        </div>
-        <div
-          class="flex justify-between items-center text-sm pt-2"
-          style="border-top: 1px solid var(--ff-border)"
-        >
-          <span style="color: var(--ff-text-secondary)">Tipo de tasa</span>
-          <span
-            class="font-bold"
-            style="color: var(--ff-text-primary)"
-          >
-            {{
-              form.selectedType() === "LOAN"
-                ? form.loanInterest() + "% mensual"
-                : form.interestRate() + "% fijo"
-            }}
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Declaraciones + advertencia -->
-  <div class="flex flex-col gap-4">
-    <div class="ff-panel p-6">
-      <h3
-        class="text-base font-bold mb-6"
-        style="color: var(--ff-text-primary)"
+          <div>
+            <div class="mb-2 flex items-center justify-between gap-3">
+              <p
+                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5E6A82]"
+              >
+                Cronograma (primeras 4 cuotas)
+              </p>
+              @if (summaryInstallmentsCount > 0) {
+                <p class="text-[10px] text-[#5E6A82]">
+                  {{ summaryInstallmentsCount }} cuotas totales
+                </p>
+              }
+            </div>
+
+            <div
+              class="rounded-xl border border-[#252A3A] bg-[#232A3F] px-4 py-4"
+            >
+              @if (schedulePreview.length) {
+                <div class="space-y-3">
+                  @for (item of schedulePreview; track item.label) {
+                    <div
+                      class="grid grid-cols-[72px_1fr_auto] items-center gap-3 text-sm"
+                    >
+                      <span class="text-[#5E6A82]">{{ item.label }}</span>
+                      <span class="font-semibold text-white">{{
+                        item.dueDate
+                      }}</span>
+                      <span class="font-semibold text-white">{{
+                        item.amount | currencyArs
+                      }}</span>
+                    </div>
+                  }
+                </div>
+
+                @if (hiddenInstallmentsCount > 0) {
+                  <p class="pt-3 text-center text-xs italic text-[#5E6A82]">
+                    ... {{ hiddenInstallmentsCount }} cuotas más hasta completar
+                    el plan.
+                  </p>
+                }
+              } @else {
+                <p class="text-sm text-[#7C879B]">
+                  Definí las condiciones para ver el cronograma resumido del
+                  plan.
+                </p>
+              }
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article
+        class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-6 shadow-[0_12px_36px_rgba(0,0,0,0.2)]"
       >
-        Declaraciones y Autorizaciones
-      </h3>
-      <div class="flex flex-col gap-5">
-        <div class="flex items-start gap-3">
-          <p-checkbox
-            [ngModel]="form.checks().identity"
-            (ngModelChange)="updateCheck('identity', $event)"
-            [binary]="true"
-            inputId="chk1"
-            data-cy="chk-identity"
-            class="mt-0.5"
-          />
-          <label
-            for="chk1"
-            class="text-sm leading-snug cursor-pointer select-none"
-            style="color: var(--ff-text-primary)"
-          >
-            Confirmo que la información del cliente es correcta y he verificado
-            su identidad.
+        <h3 class="mb-5 text-xl font-semibold text-white">
+          Declaraciones y Autorizaciones
+        </h3>
+
+        <div class="space-y-4">
+          <label class="flex items-center gap-3">
+            <p-checkbox
+              formControlName="chkIdentity"
+              [binary]="true"
+              data-cy="chk-identity"
+            />
+            <span class="text-sm text-white"
+              >Verifiqué la identidad del cliente.</span
+            >
+          </label>
+          <label class="flex items-center gap-3">
+            <p-checkbox
+              formControlName="chkConditions"
+              [binary]="true"
+              data-cy="chk-conditions"
+            />
+            <span class="text-sm text-white"
+              >Expliqué condiciones y costos del plan.</span
+            >
+          </label>
+          <label class="flex items-center gap-3">
+            <p-checkbox
+              formControlName="chkDisbursement"
+              [binary]="true"
+              data-cy="chk-disbursement"
+            />
+            <span class="text-sm text-white"
+              >Informé que el desembolso requiere aprobación.</span
+            >
+          </label>
+          <label class="flex items-center gap-3">
+            <p-checkbox
+              formControlName="chkCapacity"
+              [binary]="true"
+              data-cy="chk-capacity"
+            />
+            <span class="text-sm text-white"
+              >Validé capacidad de pago del cliente.</span
+            >
           </label>
         </div>
+      </article>
+
+      <article
+        class="rounded-2xl border border-[#6D581D] bg-[#352A16] px-5 py-5 shadow-[0_12px_36px_rgba(0,0,0,0.18)]"
+      >
         <div class="flex items-start gap-3">
-          <p-checkbox
-            [ngModel]="form.checks().conditions"
-            (ngModelChange)="updateCheck('conditions', $event)"
-            [binary]="true"
-            inputId="chk2"
-            data-cy="chk-conditions"
-            class="mt-0.5"
-          />
-          <label
-            for="chk2"
-            class="text-sm leading-snug cursor-pointer select-none"
-            style="color: var(--ff-text-primary)"
-          >
-            El cliente ha sido informado de las condiciones financieras y ha
-            dado su consentimiento.
-          </label>
+          <i class="pi pi-info-circle mt-1 text-[#F59E0B]"></i>
+          <p class="text-sm leading-7 text-[#F1D38A]">
+            Al confirmar, esta operación quedará en estado
+            <strong class="text-[#F7B733]">Pendiente de Aprobación</strong>
+            por parte de tesorería.
+          </p>
         </div>
-        <div class="flex items-start gap-3">
-          <p-checkbox
-            [ngModel]="form.checks().disbursement"
-            (ngModelChange)="updateCheck('disbursement', $event)"
-            [binary]="true"
-            inputId="chk3"
-            data-cy="chk-disbursement"
-            class="mt-0.5"
-          />
-          <label
-            for="chk3"
-            class="text-sm leading-snug cursor-pointer select-none"
-            style="color: var(--ff-text-primary)"
-          >
-            Autorizo el desembolso inmediato al finalizar la aprobación del
-            crédito.
-          </label>
-        </div>
-        <div class="flex items-start gap-3">
-          <p-checkbox
-            [ngModel]="form.checks().capacity"
-            (ngModelChange)="updateCheck('capacity', $event)"
-            [binary]="true"
-            inputId="chk4"
-            data-cy="chk-capacity"
-            class="mt-0.5"
-          />
-          <label
-            for="chk4"
-            class="text-sm leading-snug cursor-pointer select-none"
-            style="color: var(--ff-text-primary)"
-          >
-            He revisado el plan de pagos y confirmo que las cuotas están dentro
-            de la capacidad del cliente.
-          </label>
-        </div>
-      </div>
+      </article>
     </div>
 
-    <!-- Advertencia -->
-    <div class="auth-warning-banner">
-      <i class="pi pi-exclamation-triangle shrink-0"></i>
-      <p class="text-sm font-medium leading-relaxed">
-        Esta operación será enviada a revisión del supervisor antes de ser
-        desembolsada. El cliente será notificado por correo y SMS.
-      </p>
-    </div>
+    <aside class="space-y-6">
+      <article
+        class="overflow-hidden rounded-2xl border border-[#252A3A] bg-[#121520] shadow-[0_12px_36px_rgba(0,0,0,0.22)]"
+      >
+        <div
+          class="flex items-center justify-between border-b border-[#252A3A] px-4 py-4"
+        >
+          <h3 class="text-lg font-semibold text-white">Resumen final</h3>
+          <span
+            class="rounded-md bg-[#5B4411] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#F7B733]"
+          >
+            Pendiente
+          </span>
+        </div>
+
+        <div class="space-y-5 px-4 py-5 text-sm">
+          <div class="border-b border-dashed border-[#252A3A] pb-4">
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Tipo
+            </p>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-[#7C879B]">Operación</span>
+              <span class="font-semibold text-white">{{
+                operationTypeLabel
+              }}</span>
+            </div>
+          </div>
+
+          <div class="border-b border-dashed border-[#252A3A] pb-4">
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Cliente
+            </p>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-[#7C879B]">Nombre</span>
+              <span class="font-semibold text-right text-white">{{
+                selectedClient?.name || "Sin cliente seleccionado"
+              }}</span>
+            </div>
+            <div class="mt-1 flex items-center justify-between gap-3">
+              <span class="text-[#7C879B]">DNI</span>
+              <span class="font-semibold text-white">{{
+                selectedClient?.dni || "-"
+              }}</span>
+            </div>
+          </div>
+
+          @if (operationType === "SALE") {
+            <div class="border-b border-dashed border-[#252A3A] pb-4">
+              <p
+                class="mb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+              >
+                Unidades ({{ totalUnitsCount }})
+              </p>
+              <div class="space-y-2">
+                @for (
+                  unit of selectedUnitsSummary;
+                  track unit.title + "-" + unit.unitCode
+                ) {
+                  <div class="rounded-lg bg-[#232A3F] px-3 py-3">
+                    <p class="text-sm font-semibold text-white">
+                      {{ unit.title }}
+                    </p>
+                    <p class="mt-1 text-[11px] text-[#5E6A82]">
+                      IMEI: {{ unit.unitCode }}
+                    </p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="border-b border-dashed border-[#252A3A] pb-4">
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Financiación
+            </p>
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Frecuencia</span>
+                <span class="font-semibold text-white">{{
+                  paymentFrequencyLabel
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Cuotas</span>
+                <span class="font-semibold text-white">{{
+                  summaryInstallmentsCount
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Tasa prom.</span>
+                <span class="font-semibold text-white">{{
+                  averageRateLabel
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Primera cuota</span>
+                <span class="font-semibold text-white">{{
+                  firstPaymentDateLabel
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-b border-dashed border-[#252A3A] pb-4">
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Pago inicial
+            </p>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-[#7C879B]">{{
+                operationType === "SALE" ? "Enganche" : "Detalle"
+              }}</span>
+              <span class="font-semibold text-[#37F0A4]">{{
+                initialPaymentSummary
+              }}</span>
+            </div>
+          </div>
+
+          <div class="border-b border-dashed border-[#252A3A] pb-4">
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Montos
+            </p>
+            <div class="space-y-1.5">
+              @if (operationType === "SALE") {
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[#7C879B]">Subtotal</span>
+                  <span class="font-semibold text-white">{{
+                    subtotalProductos | currencyArs
+                  }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[#7C879B]">Enganche</span>
+                  <span class="font-semibold text-[#FFB347]"
+                    >- {{ validatedDownPayment | currencyArs }}</span
+                  >
+                </div>
+              }
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Financiado</span>
+                <span class="font-semibold text-white">{{
+                  capitalAFinanciar | currencyArs
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]">Total devol.</span>
+                <span class="font-semibold text-white">{{
+                  totalADevolver | currencyArs
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[#7C879B]"
+                  >Cuota
+                  {{
+                    paymentFrequencyLabel === "-"
+                      ? "estim."
+                      : paymentFrequencyLabel.toLowerCase().slice(0, 4) + "."
+                  }}</span
+                >
+                <span class="text-lg font-bold text-[#37F0A4]">{{
+                  valorCuota | currencyArs
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p
+              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#5E6A82]"
+            >
+              Notas internas (opcional)
+            </p>
+            <div
+              class="w-full rounded-lg border border-[#2B3145] bg-[#232A3F] px-3 py-3 text-sm text-[#6F7C95]"
+            >
+              Observaciones para el Admin...
+            </div>
+          </div>
+        </div>
+      </article>
+    </aside>
   </div>
-</div>
+</section>

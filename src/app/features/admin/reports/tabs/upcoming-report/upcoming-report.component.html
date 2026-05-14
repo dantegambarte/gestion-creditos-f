@@ -1,0 +1,194 @@
+<div class="space-y-6">
+  <!-- Botones pill de horizonte + KPIs inline -->
+  <div class="flex flex-wrap items-center gap-3">
+    @for (opt of upcomingDaysOptions; track opt.value) {
+      <button
+        (click)="upcomingDays = opt.value; consultUpcoming()"
+        class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
+        [class]="
+          upcomingDays === opt.value
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-white'
+        "
+      >
+        {{ opt.label.replace(" días", "d").replace(" día", "d") }}
+      </button>
+    }
+    @if (upcomingReport) {
+      <span class="ml-4 text-xs text-gray-500 uppercase tracking-widest">
+        Cuotas por vencer:
+        <span class="text-white font-bold text-sm ml-1">{{
+          upcomingReport.summary.installmentsCount
+        }}</span>
+      </span>
+      <span class="text-xs text-gray-500 uppercase tracking-widest ml-4">
+        Monto esperado:
+        <span class="text-blue-400 font-bold text-sm ml-1 font-mono">{{
+          formatCurrency(upcomingReport.summary.expectedAmount)
+        }}</span>
+      </span>
+    }
+  </div>
+
+  @if (loading) {
+    <app-loading-state />
+  } @else if (error) {
+    <app-error-state />
+  } @else if (upcomingReport) {
+    <!-- Dos tablas side by side -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+      <!-- Por día -->
+      <div class="bg-gray-800 rounded-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-700">
+          <h2
+            class="text-xs font-semibold text-gray-400 uppercase tracking-widest"
+          >
+            Por día
+          </h2>
+        </div>
+        @if (upcomingReport.byDay.length === 0) {
+          <p class="text-sm text-gray-500 text-center py-8">
+            Sin vencimientos en el período.
+          </p>
+        } @else {
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-700">
+                <th
+                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Fecha
+                </th>
+                <th
+                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Día
+                </th>
+                <th
+                  class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Cuotas
+                </th>
+                <th
+                  class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Monto
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of upcomingReport.byDay; track row.dueDate) {
+                <tr
+                  class="border-t border-gray-700/50 transition-colors"
+                  [class]="
+                    isWeekend(row.dueDate)
+                      ? 'opacity-50'
+                      : 'hover:bg-gray-700/20'
+                  "
+                >
+                  <td class="px-5 py-3 text-gray-300">
+                    {{ formatDate(row.dueDate) }}
+                  </td>
+                  <td class="px-5 py-3 text-gray-500">
+                    {{ getDayName(row.dueDate) }}
+                  </td>
+                  <td class="px-5 py-3 text-right font-semibold text-white">
+                    {{ row.count }}
+                  </td>
+                  <td
+                    class="px-5 py-3 text-right font-mono font-semibold text-blue-400"
+                  >
+                    {{ formatCurrency(row.expectedAmount) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+
+      <!-- Por cliente -->
+      <div class="bg-gray-800 rounded-2xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-700">
+          <h2
+            class="text-xs font-semibold text-gray-400 uppercase tracking-widest"
+          >
+            Por cliente
+          </h2>
+        </div>
+        @if (upcomingReport.byCustomer.length === 0) {
+          <p class="text-sm text-gray-500 text-center py-8">
+            Sin clientes con vencimientos en el período.
+          </p>
+        } @else {
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-700">
+                <th
+                  class="text-left px-4 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Cliente
+                </th>
+                <th
+                  class="text-left px-4 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Teléfono
+                </th>
+                <th
+                  class="text-left px-4 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Cobrador
+                </th>
+                <th
+                  class="text-right px-4 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Cuotas
+                </th>
+                <th
+                  class="text-right px-4 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Monto
+                </th>
+                <th
+                  class="text-right px-4 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Prox. venc.
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of upcomingReport.byCustomer; track row.customerId) {
+                <tr
+                  class="border-t border-gray-700/50 hover:bg-gray-700/20 transition-colors"
+                >
+                  <td class="px-4 py-3 font-semibold text-white">
+                    {{ row.customerName }}
+                  </td>
+                  <td class="px-4 py-3 text-gray-400 text-xs">
+                    {{ row.phone ?? "—" }}
+                  </td>
+                  <td class="px-4 py-3 text-gray-400 text-xs">
+                    {{ row.assignedCollector ?? "—" }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-semibold text-white">
+                    {{ row.installmentsCount }}
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right font-mono font-semibold text-blue-400"
+                  >
+                    {{ formatCurrency(row.expectedAmount) }}
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right text-blue-400 font-semibold text-xs"
+                  >
+                    {{ formatDate(row.nextDueDate) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </div>
+  }
+</div>

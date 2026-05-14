@@ -63,6 +63,21 @@ export interface ClientOperation {
   previousCredits: number;
   delinquency: string;
   paymentCapacity: number;
+  address?: string;
+  collectorName?: string;
+  createdAt?: string;
+  paidInstallments?: number;
+  pendingInstallments?: number;
+  overdueInstallments?: number;
+  creditsSummary?: {
+    id: string;
+    type: 'SALE' | 'LOAN';
+    creditName: string | null;
+    totalAmount: number;
+    installmentsCount: number;
+    status: 'ACTIVE' | 'SETTLED';
+    referenceDate: string;
+  }[];
 }
 
 export type ContactChannel = 'WhatsApp' | 'Correo' | 'Llamada';

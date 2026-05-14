@@ -19,6 +19,7 @@
           optionValue="value"
           placeholder="Todos"
           styleClass="h-11"
+          appendTo="body"
           data-cy="dropdown-filtro-clientes"
         />
         <p-iconField iconPosition="left">
@@ -42,6 +43,11 @@
       [value]="filteredClients"
       styleClass="p-datatable-sm"
       [tableStyle]="{ 'min-width': '50rem' }"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first}–{last} de {totalRecords}"
     >
       <ng-template pTemplate="header">
         <tr>

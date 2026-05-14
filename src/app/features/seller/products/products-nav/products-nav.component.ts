@@ -7,7 +7,7 @@ import {
   switchMap,
   takeUntil,
 } from 'rxjs/operators';
-import { MockAuthService } from '../../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { ProductVariantsService } from '../product-variants.service';
 
 type ProductTab =
@@ -29,7 +29,7 @@ type ProductTab =
 })
 export class ProductsNavComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
-  private readonly authService = inject(MockAuthService);
+  private readonly authService = inject(AuthServiceBase);
   private readonly variantsService = inject(ProductVariantsService);
   private readonly destroy$ = new Subject<void>();
   private readonly productId$ = new Subject<string>();

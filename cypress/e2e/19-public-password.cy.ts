@@ -1,89 +1,196 @@
 /**
- * SUITE: Páginas Públicas — Recuperar y Cambiar Contraseña
+ * SUITE: Cambio obligatorio de contraseña
  *
- * Cubre:
- *  - Forgot Password: render, validaciones, submit, link volver
- *  - Change Password: render, validaciones, 3 campos, botón Cancelar
+ * Alineado a CU01 y CU11:
+ *  - Si el usuario entra con contraseña temporal, no puede operar hasta cambiarla.
+ *  - El portal cliente también debe forzar cambio de contraseña en primer acceso.
+ *  - No se valida aquí recuperación automática por email porque los casos de uso la prohíben.
  */
 
-describe('Recuperar Contraseña (/forgot-password)', () => {
+describe('Cambio de contraseña interno (/change-password)', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-    cy.visit('/forgot-password');
   });
 
-  it('muestra el texto guía de recuperación', () => {
-    cy.contains('p', 'Ingresá tu email para recuperar el acceso').should(
-      'be.visible',
-    );
+  it('muestra banner obligatorio y oculta Cancelar cuando la contraseña es temporal', () => {
+    const tempUser = {
+      id: 'usr-temp-002',
+      full_name: 'Vendedor Temporal',
+      name: 'Vendedor Temporal',
+      dni: '44556688',
+      avatar: 'VT',
+      roles: ['SELLER'],
+      is_temp_password: true,
+      force_relogin_at: null,
+      token:
+        'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3ItdGVtcC0wMDIiLCJyb2xlIjoiU0VMTEVSIiwiYXVkIjoic2lzdGVtYS1pbnRlcm5vIn0.mock_temp_2',
+    };
+
+    cy.intercept('GET', '**/auth/me', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          id: tempUser.id,
+          full_name: tempUser.full_name,
+          dni: tempUser.dni,
+          role: 'SELLER',
+          status: 'ACTIVE',
+          is_temp_password: true,
+          force_relogin_at: null,
+        },
+      },
+    }).as('authMeTemp');
+
+    cy.visit('/change-password', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem('sgcf_token', tempUser.token);
+        win.localStorage.setItem('sgcf_user', JSON.stringify(tempUser));
+      },
+    });
+
+    cy.wait('@authMeTemp');
+    cy.contains('Tu contraseña es temporal').should('be.visible');
+    cy.contains('button', 'Cancelar').should('not.exist');
   });
 
-  it('muestra el campo de email', () => {
-    cy.get('input[type="email"]').should('exist');
-  });
+  it('permite cambiar la contraseña temporal y redirige al home del rol', () => {
+    const tempUser = {
+      id: 'usr-temp-003',
+      full_name: 'Vendedor Temporal',
+      name: 'Vendedor Temporal',
+      dni: '44556699',
+      avatar: 'VT',
+      roles: ['SELLER'],
+      is_temp_password: true,
+      force_relogin_at: null,
+      token:
+        'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3ItdGVtcC0wMDMiLCJyb2xlIjoiU0VMTEVSIiwiYXVkIjoic2lzdGVtYS1pbnRlcm5vIn0.mock_temp_3',
+    };
 
-  it('muestra el botón de enviar enlace', () => {
-    cy.contains('button', 'Enviar enlace de recuperación').should('exist');
-  });
+    let firstMe = true;
+    cy.intercept('GET', '**/auth/me', (req) => {
+      req.reply({
+        statusCode: 200,
+        body: {
+          ok: true,
+          data: {
+            id: tempUser.id,
+            full_name: tempUser.full_name,
+            dni: tempUser.dni,
+            role: 'SELLER',
+            status: 'ACTIVE',
+            is_temp_password: firstMe,
+            force_relogin_at: null,
+          },
+        },
+      });
+      firstMe = false;
+    }).as('authMeFlow');
 
-  it('submit sin email muestra error "obligatorio"', () => {
-    cy.contains('button', 'Enviar enlace de recuperación').click();
-    cy.contains('obligatorio').should('be.visible');
-  });
+    cy.intercept('PATCH', '**/users/me/change-password', {
+      statusCode: 200,
+      body: { ok: true, data: null },
+    }).as('changePassword');
 
-  it('email con formato inválido muestra error', () => {
-    cy.get('input[type="email"]').type('noesvalido');
-    cy.contains('button', 'Enviar enlace de recuperación').click();
-    cy.contains('válido').should('be.visible');
-  });
+    cy.visit('/change-password', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem('sgcf_token', tempUser.token);
+        win.localStorage.setItem('sgcf_user', JSON.stringify(tempUser));
+      },
+    });
 
-  it('link "Volver al login" navega a /login', () => {
-    cy.contains('Volver al login').click();
-    cy.url().should('include', '/login');
-  });
+    cy.wait('@authMeFlow');
 
-  it('submit con email válido muestra confirmación de envío', () => {
-    cy.get('input[type="email"]').type('test@example.com');
-    cy.contains('button', 'Enviar enlace de recuperación').click();
-    cy.contains('Email enviado').should('be.visible');
+    cy.get('p-password').eq(0).find('input').type('temp1234');
+    cy.get('p-password').eq(1).find('input').type('Nueva1234');
+    cy.get('p-password').eq(2).find('input').type('Nueva1234');
+    cy.contains('button', 'Cambiar contraseña').click();
+
+    cy.wait('@changePassword');
+    cy.wait('@authMeFlow');
+    cy.url().should('include', '/seller/operations');
   });
 });
 
-describe('Cambiar Contraseña (/change-password)', () => {
+describe('Cambio de contraseña portal (/portal/change-password)', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-    cy.loginAs('ADMIN', '/change-password');
   });
 
-  it('muestra el texto guía de cambio de contraseña', () => {
-    cy.contains('p', 'Ingresá tu contraseña actual y la nueva').should(
-      'be.visible',
-    );
+  it('redirige al cambio obligatorio cuando el login portal devuelve contraseña temporal', () => {
+    cy.intercept('POST', '**/auth/portal/login', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          token:
+            'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjdXN0LXRlbXAtMDAxIiwiZnVsbF9uYW1lIjoiQ2xpZW50ZSBUZW1wb3JhbCIsImRuaSI6IjEyMzQ1Njc4IiwicG9ydGFsX2lzX3RlbXBfcGFzc3dvcmQiOnRydWV9.sig',
+          customer: {
+            id: 'cust-temp-001',
+            full_name: 'Cliente Temporal',
+            dni: '12345678',
+            portal_is_temp_password: true,
+          },
+        },
+      },
+    }).as('portalLoginTemp');
+
+    cy.visit('/portal/login');
+    cy.get('#dni').type('12345678');
+    cy.get('p-password input').type('Temp1234');
+    cy.contains('button', 'Iniciar sesión').click();
+
+    cy.wait('@portalLoginTemp');
+    cy.url().should('include', '/portal/change-password');
+    cy.contains('Tenés una contraseña temporal').should('be.visible');
   });
 
-  it('tiene el campo contraseña actual', () => {
-    cy.get('p-password').should('have.length.gte', 1);
-  });
+  it('permite cambiar la contraseña temporal del portal y redirige al dashboard', () => {
+    cy.clock();
 
-  it('tiene 3 campos de contraseña (actual, nueva, confirmar)', () => {
-    cy.get('p-password').should('have.length', 3);
-  });
+    cy.intercept('POST', '**/auth/portal/change-password', {
+      statusCode: 200,
+      body: { ok: true, data: null },
+    }).as('portalChangePassword');
 
-  it('muestra botón "Cambiar contraseña"', () => {
-    cy.contains('button', 'Cambiar contraseña').should('exist');
-  });
+    cy.intercept('GET', '**/api/portal/me', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          total_owed: 150000,
+          paid_count: 2,
+          pending_count: 3,
+          overdue_count: 0,
+          status_indicator: 'GREEN',
+          total_paid_amount: 50000,
+          pending_penalty_amount: 0,
+          active_credits: 1,
+          settled_credits: 0,
+          total_installments_count: 5,
+          upcoming_installments: [],
+        },
+      },
+    }).as('portalAccountSummary');
 
-  it('submit sin campos muestra errores de validación', () => {
+    cy.loginPortalAs('/portal/change-password', {
+      customer: {
+        id: 'cust-temp-002',
+        fullName: 'Cliente Temporal',
+        dni: '12345678',
+        portalIsTempPassword: true,
+      },
+    });
+
+    cy.get('#current-password').type('Temp1234');
+    cy.get('#new-password').type('Nueva1234');
+    cy.get('#confirm-password').type('Nueva1234');
     cy.contains('button', 'Cambiar contraseña').click();
-    cy.contains('obligatorio').should('exist');
-  });
 
-  it('botón Cancelar es visible (modo no temporal)', () => {
-    cy.contains('button', 'Cancelar').should('exist');
-  });
-
-  it('clic en Cancelar navega fuera de /change-password', () => {
-    cy.contains('button', 'Cancelar').click();
-    cy.url().should('not.include', '/change-password');
+    cy.wait('@portalChangePassword');
+    cy.tick(1600);
+    cy.wait('@portalAccountSummary');
+    cy.url().should('include', '/portal/dashboard');
   });
 });

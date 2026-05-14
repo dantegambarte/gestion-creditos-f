@@ -98,20 +98,24 @@ describe('Admin — Gestión de Usuarios', () => {
   it('valida email en el formulario modal', () => {
     cy.get('[data-cy="admin-users-create-cta"]').click();
     cy.get('.p-dialog').within(() => {
-      cy.get('input[id="email"]').type('email-invalido');
-      cy.contains('small', 'Formato de email inválido').should('be.visible');
+      cy.get('input[id="email"]').clear().type('email-invalido');
+      cy.get('input[id="fullName"]').click();
+      cy.contains('small', 'Formato de email inválido.').should('be.visible');
     });
   });
 
   it('crea usuario y muestra diálogo de contraseña temporal', () => {
     cy.get('[data-cy="admin-users-create-cta"]').click();
-    cy.get('.p-dialog').within(() => {
+    cy.get('[data-cy="admin-users-create-modal"]').within(() => {
       cy.get('input[id="fullName"]').type('Juan Pérez');
       cy.get('input[id="dni"]').type('99887766');
       cy.get('input[id="email"]').type('test-e2e@finflow.com');
       cy.get('input[id="address"]').type('Calle Falsa 123');
       cy.get('p-dropdown').click();
-      cy.contains('.p-dropdown-item', 'Cobrador').click();
+    });
+    // Panel appendTo="body" → fuera del dialog
+    cy.get('.p-dropdown-panel').contains('.p-dropdown-item', 'Cobrador').click();
+    cy.get('[data-cy="admin-users-create-modal"]').within(() => {
       cy.contains('button', 'Crear usuario').click();
     });
     cy.wait('@createUser');

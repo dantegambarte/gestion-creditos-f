@@ -3,6 +3,9 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiHttpService } from '../../core/http/api-http.service';
 import {
+  AdminDirectPayload,
+  CreditPayment,
+  CreditPaymentRaw,
   Payment,
   PaymentCreatePayload,
   PaymentCreateResult,
@@ -11,6 +14,7 @@ import {
   PaymentDetailRaw,
   PaymentListFilters,
   PaymentRaw,
+  ReversePayload,
 } from './models/payment.model';
 
 /**
@@ -39,6 +43,9 @@ function toPayment(raw: PaymentRaw): Payment {
     customerName: raw.customer_name,
     customerDni: raw.customer_dni,
     collectorName: raw.collector_name,
+    isReversal: raw.is_reversal ?? false,
+    adminDirect: raw.admin_direct ?? false,
+    parentPaymentId: raw.parent_payment_id ?? null,
   };
 }
 
@@ -54,6 +61,10 @@ function toPaymentDetail(raw: PaymentDetailRaw): PaymentDetail {
     penaltyAmount: raw.penalty_amount,
     customerId: raw.customer_id,
     collectorId: raw.collector_id,
+    isReversal: raw.is_reversal ?? false,
+    adminDirect: raw.admin_direct ?? false,
+    reversalReason: raw.reversal_reason ?? null,
+    reversalPaymentId: raw.reversal_payment_id ?? null,
   };
 }
 
@@ -62,6 +73,32 @@ function toPaymentDetail(raw: PaymentDetailRaw): PaymentDetail {
  * @param raw
  * @returns
  */
+function toCreditPayment(raw: CreditPaymentRaw): CreditPayment {
+  return {
+    id: raw.id,
+    installmentId: raw.installment_id,
+    collectorId: raw.collector_id,
+    amountReceived: raw.amount_received,
+    paymentMethod: raw.payment_method,
+    transferReference: raw.transfer_reference,
+    status: raw.status,
+    isReversal: raw.is_reversal,
+    reversalReason: raw.reversal_reason,
+    adminDirect: raw.admin_direct,
+    notes: raw.notes,
+    createdAt: raw.created_at,
+    approvedAt: raw.approved_at,
+    approvedBy: raw.approved_by,
+    parentPaymentId: raw.parent_payment_id,
+    reversedByPaymentId: raw.reversed_by_payment_id,
+    installmentNumber: raw.installment_number,
+    amountDue: raw.amount_due,
+    dueDate: raw.due_date,
+    collectorName: raw.collector_name,
+    approverName: raw.approver_name,
+  };
+}
+
 function toCreateResult(raw: PaymentCreateResultRaw): PaymentCreateResult {
   return {
     id: raw.id,
@@ -145,5 +182,47 @@ export class PaymentsService {
     return this.api.patch<void>(`payments/${id}/reject`, {
       rejection_reason: rejectionReason,
     });
+  }
+
+  /**
+   * Registra y aprueba un cobro directo (sin pre-carga). Solo admin.
+   * @param payload
+   * @returns
+   */
+  adminDirect(payload: AdminDirectPayload): Observable<PaymentDetail> {
+    const body: Record<string, unknown> = {
+      installment_id: payload.installmentId,
+      amount_received: payload.amountReceived,
+      payment_method: payload.paymentMethod,
+    };
+    if (payload.transferReference)
+      body['transfer_reference'] = payload.transferReference;
+    if (payload.notes) body['notes'] = payload.notes;
+    return this.api
+      .post<PaymentDetailRaw>('payments/admin-direct', body)
+      .pipe(map(toPaymentDetail));
+  }
+
+  /**
+   * Revierte un cobro aprobado y todos sus sub-pagos derivados.
+   * @param id
+   * @param payload
+   * @returns
+   */
+  reverse(id: string, payload: ReversePayload): Observable<PaymentDetail> {
+    return this.api
+      .post<PaymentDetailRaw>(`payments/${id}/reverse`, { reason: payload.reason })
+      .pipe(map(toPaymentDetail));
+  }
+
+  /**
+   * Lista todos los cobros aprobados de un crédito.
+   * @param creditId
+   * @returns
+   */
+  listByCredit(creditId: string): Observable<CreditPayment[]> {
+    return this.api
+      .get<CreditPaymentRaw[]>(`credits/${creditId}/payments`)
+      .pipe(map((items) => items.map(toCreditPayment)));
   }
 }

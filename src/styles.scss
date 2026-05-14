@@ -89,6 +89,39 @@ body {
   color: #ffffff !important;
 }
 
+// ─── p-button success ────────────────────────────────────────────────────────
+.p-button.p-button-success {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+
+  &:hover:not(:disabled) {
+    background: #15803d !important;
+    border-color: #15803d !important;
+  }
+
+  &:active:not(:disabled) {
+    background: #166534 !important;
+    border-color: #166534 !important;
+  }
+
+  &:disabled,
+  &.p-disabled {
+    background: #14532d !important;
+    border-color: #14532d !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    opacity: 0.6;
+  }
+
+  .p-button-label {
+    color: #ffffff !important;
+  }
+
+  .p-button-icon {
+    color: #ffffff !important;
+  }
+}
+
 // ─── p-checkbox ──────────────────────────────────────────────────────────────
 .p-checkbox .p-checkbox-box {
   border: 2px solid var(--ff-border) !important;
@@ -105,6 +138,11 @@ body {
 .p-checkbox.p-highlight .p-checkbox-box {
   border-color: var(--ff-accent) !important;
   background-color: var(--ff-accent) !important;
+}
+
+// CR-15: ícono de tilde visible en fondo oscuro
+.p-checkbox.p-highlight .p-checkbox-box .p-checkbox-icon {
+  color: #ffffff !important;
 }
 
 // ─── p-inputtext ─────────────────────────────────────────────────────────────
@@ -1213,6 +1251,47 @@ table.ff-table {
 .ud-section-divider {
   border-top: 1px solid var(--ff-border);
   padding-top: 1rem;
+}
+
+// ─── p-autocomplete — input y panel responsivos ──────────────────────────────
+// El inner <input> debe ser full-width para que el panel calcule correctamente
+// su ancho desde getBoundingClientRect del input, no del wrapper host.
+.p-autocomplete .p-inputtext {
+  width: 100%;
+}
+
+// En mobile el posicionamiento JS (left + width inline) puede desbordar
+// el viewport. Se sobreescribe con !important para ganar sobre estilos inline.
+@media (max-width: 639px) {
+  .p-autocomplete-panel {
+    left: 1rem !important;
+    max-width: calc(100vw - 2rem) !important;
+    box-sizing: border-box !important;
+  }
+}
+
+// ─── portal-tab — navegación del portal del cliente ──────────────────────────
+.portal-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ff-text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--ff-text-primary);
+  }
+
+  &.active-tab {
+    color: var(--ff-accent);
+    border-bottom-color: var(--ff-accent);
+  }
 }
 
 // ─── movement-detail-dialog scrollbar (override específico — no tocar) ───────

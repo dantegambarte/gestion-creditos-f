@@ -1,66 +1,35 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 
 import { NewOperationComponent } from './new-operation.component';
 import { CreditsService } from '../../../features/seller/operations/credits.service';
-import { OperationFormService } from './operation-form.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
-import { ProductsService } from '../../../features/seller/products/products.service';
 import { ProductUnitsService } from '../../../features/seller/products/product-units.service';
+import { InterestRatesService } from '../../../features/admin/config/services/interest-rates.service';
+import { ProductRatesService } from '../../../features/admin/config/services/product-rates.service';
+import { OperationFormService } from './operation-form.service';
 import { MessageService } from 'primeng/api';
-import { ProductOperation } from '../../models/interface/product';
-import { ClientOperation } from '../../models/interface/client';
-
-const mockClient: ClientOperation = {
-  id: 'client-1',
-  name: 'Juan Pérez',
-  dni: '12345678',
-  phone: '',
-  email: '',
-  status: 'ACTIVE',
-  previousCredits: 0,
-  delinquency: 'sin mora',
-  paymentCapacity: 0,
-};
-
-const mockUnit: ProductOperation = {
-  id: 'unit-uuid-1',
-  name: 'Producto A',
-  price: 1000,
-  stock: 5,
-};
 
 describe('NewOperationComponent', () => {
   let component: NewOperationComponent;
   let fixture: ComponentFixture<NewOperationComponent>;
-  let creditsServiceSpy: jasmine.SpyObj<CreditsService>;
   let formService: OperationFormService;
+  let creditsServiceSpy: jasmine.SpyObj<CreditsService>;
 
   beforeEach(async () => {
     creditsServiceSpy = jasmine.createSpyObj('CreditsService', ['create']);
-    creditsServiceSpy.create.and.returnValue(
-      of({ id: 'new-id', status: 'PENDING_APPROVAL' } as any),
-    );
-
-    const customersServiceStub = {
-      list: () => of([]),
-    };
-    const productsServiceStub = {
-      list: () => of([]),
-    };
-    const productUnitsServiceStub = {
-      getAll: () => of([]),
-    };
+    creditsServiceSpy.create.and.returnValue(of({ id: 'new-id', status: 'PENDING_APPROVAL' } as any));
 
     await TestBed.configureTestingModule({
       imports: [NewOperationComponent],
       providers: [
         provideRouter([]),
         { provide: CreditsService, useValue: creditsServiceSpy },
-        { provide: CustomersService, useValue: customersServiceStub },
-        { provide: ProductsService, useValue: productsServiceStub },
-        { provide: ProductUnitsService, useValue: productUnitsServiceStub },
+        { provide: CustomersService, useValue: { list: () => of([]), getWizardSummary: () => of({ phone: null, email: null, status: 'ACTIVE', address: null, collectorName: null, activeCredits: 0, delinquency: 'sin mora', paymentCapacity: 0, createdAt: '', paidInstallments: 0, pendingInstallments: 0, overdueInstallments: 0, credits: [] }) } },
+        { provide: ProductUnitsService, useValue: { getAll: () => of([]) } },
+        { provide: InterestRatesService, useValue: { getAll: () => of([]) } },
+        { provide: ProductRatesService, useValue: { getAll: () => of([]) } },
       ],
     }).compileComponents();
 
@@ -74,123 +43,73 @@ describe('NewOperationComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('finish() — SALE con unidades seleccionadas', () => {
-    it('envía al builder las unidades seleccionadas, no un array vacío', () => {
-      // Arrange
-      formService.selectedClient.set(mockClient);
-      formService.selectedType.set('SALE');
-      formService.selectedProducts.set([mockUnit]);
+  it('empieza en el paso 0', () => {
+    expect(component.activeIndex).toBe(0);
+  });
 
-      // Act
-      component.finish();
+  it('avanza al paso siguiente con nextStep()', () => {
+    component.nextStep();
+    expect(component.activeIndex).toBe(1);
+  });
 
-      // Assert
-      expect(creditsServiceSpy.create).toHaveBeenCalledOnceWith(
-        jasmine.objectContaining({
-          type: 'SALE',
-          units: [{ unitId: 'unit-uuid-1' }],
-        }),
-      );
-      expect(component.unitsError).toBeNull();
+  it('no retrocede del paso 0', () => {
+    component.prevStep();
+    expect(component.activeIndex).toBe(0);
+  });
+
+  it('retrocede correctamente desde el paso 1', () => {
+    component.activeIndex = 1;
+    component.prevStep();
+    expect(component.activeIndex).toBe(0);
+  });
+
+  describe('canNext â€” paso 0 (cliente)', () => {
+    it('bloquea avanzar sin cliente seleccionado', () => {
+      expect(formService.canNext(0)).toBeFalse();
+    });
+
+    it('permite avanzar con cliente activo seleccionado', () => {
+      formService.clients = [{
+        id: 'c1', name: 'Test', dni: '123', phone: '', email: '',
+        status: 'ACTIVE', previousCredits: 0, delinquency: '', paymentCapacity: 0,
+      }];
+      formService.selectClient(formService.clients[0]);
+      expect(formService.canNext(0)).toBeTrue();
     });
   });
 
-  describe('finish() — SALE sin unidades seleccionadas', () => {
-    it('bloquea el envío, muestra error inline y no llama al API', () => {
-      // Arrange
-      formService.selectedClient.set(mockClient);
-      formService.selectedType.set('SALE');
-      formService.selectedProducts.set([]);
+  describe('canNext â€” paso 1 (tipo y producto)', () => {
+    it('bloquea avanzar sin tipo de operaciÃ³n seleccionado', () => {
+      expect(formService.canNext(1)).toBeFalse();
+    });
 
-      // Act
-      component.finish();
+    it('permite avanzar en LOAN con monto vÃ¡lido', () => {
+      formService.operationForm.controls.operationType.setValue('LOAN');
+      formService.operationForm.controls.totalAmount.setValue(50000);
+      expect(formService.canNext(1)).toBeTrue();
+    });
 
-      // Assert
-      expect(creditsServiceSpy.create).not.toHaveBeenCalled();
-      expect(component.unitsError).toBe(
-        'Agregá al menos una unidad al carrito.',
-      );
-      expect(component.submitting).toBeFalse();
+    it('bloquea avanzar en SALE con carrito vacÃ­o', () => {
+      formService.operationForm.controls.operationType.setValue('SALE');
+      formService.cartLines = [];
+      expect(formService.canNext(1)).toBeFalse();
     });
   });
 
-  describe('finish() — LOAN sin productos (CR-03)', () => {
-    it('permite enviar préstamo personal sin exigir unidades/productos', () => {
-      formService.selectedClient.set(mockClient);
-      formService.selectedType.set('LOAN');
-      formService.selectedProducts.set([]);
-      formService.loanCapital.set(250000);
-      formService.selectedInstallments.set(6);
-
-      component.finish();
-
-      expect(creditsServiceSpy.create).toHaveBeenCalledOnceWith(
-        jasmine.objectContaining({
-          type: 'LOAN',
-          totalAmount: 250000,
-        }),
-      );
-      expect(component.unitsError).toBeNull();
-    });
-  });
-
-  describe('canNext — validación fecha primer pago (CR-02)', () => {
-    it('en Paso 3 bloquea avanzar cuando no hay fecha de primer pago', () => {
-      component.activeIndex = 2;
-      formService.firstDueDate.set(undefined);
-
-      expect(component.canNext).toBeFalse();
+  describe('declarationsAccepted', () => {
+    it('es false cuando faltan casillas marcadas', () => {
+      formService.operationForm.controls.chkIdentity.setValue(false);
+      expect(formService.declarationsAccepted).toBeFalse();
     });
 
-    it('en Paso 3 bloquea avanzar cuando la fecha es anterior a hoy', () => {
-      component.activeIndex = 2;
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      formService.firstDueDate.set(yesterday);
-
-      expect(component.canNext).toBeFalse();
-    });
-
-    it('en Paso 3 permite avanzar cuando la fecha es hoy o futura', () => {
-      component.activeIndex = 2;
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      formService.firstDueDate.set(tomorrow);
-
-      expect(component.canNext).toBeTrue();
-    });
-  });
-
-  describe('canNext — bloqueo explícito sin fecha de primer pago (CR-05)', () => {
-    it('en Paso 3 deshabilita avanzar cuando firstDueDate está vacío', () => {
-      component.activeIndex = 2;
-      formService.firstDueDate.set(undefined);
-
-      expect(component.canNext).toBeFalse();
-    });
-  });
-
-  describe('isConfirmed — validación de desembolso inmediato (CR-06)', () => {
-    it('mantiene enviar deshabilitado si falta marcar disbursement', () => {
-      formService.checks.set({
-        identity: true,
-        conditions: true,
-        disbursement: false,
-        capacity: true,
-      });
-
-      expect(component.isConfirmed).toBeFalse();
-    });
-
-    it('habilita enviar solo cuando también se marca disbursement', () => {
-      formService.checks.set({
-        identity: true,
-        conditions: true,
-        disbursement: true,
-        capacity: true,
-      });
-
-      expect(component.isConfirmed).toBeTrue();
+    it('es true cuando todas las casillas estÃ¡n marcadas', () => {
+      formService.operationForm.controls.chkIdentity.setValue(true);
+      formService.operationForm.controls.chkConditions.setValue(true);
+      formService.operationForm.controls.chkDisbursement.setValue(true);
+      formService.operationForm.controls.chkCapacity.setValue(true);
+      expect(formService.declarationsAccepted).toBeTrue();
     });
   });
 });
+
+

@@ -153,8 +153,8 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: AppRoutes.SHEET,
-    loadComponent: () =>
-      import('./sheet/sheet.component').then((c) => c.SheetComponent),
+    redirectTo: AppRoutes.ADMIN_COLLECTIONS,
+    pathMatch: 'full',
   },
   {
     path: AppRoutes.ADMIN_COMMISSIONS,
@@ -172,6 +172,58 @@ export const ADMIN_ROUTES: Routes = [
     path: AppRoutes.CONFIG,
     loadComponent: () =>
       import('./config/config.component').then((c) => c.ConfigComponent),
+    children: [
+      { path: '', redirectTo: 'company', pathMatch: 'full' },
+      {
+        path: 'company',
+        loadComponent: () =>
+          import('./config/company/company-config.component').then(
+            (c) => c.CompanyConfigComponent,
+          ),
+      },
+      {
+        path: 'rates',
+        loadComponent: () =>
+          import('./config/rates/interest-rates-config.component').then(
+            (c) => c.InterestRatesConfigComponent,
+          ),
+      },
+      {
+        path: 'product-rates',
+        loadComponent: () =>
+          import('./config/product-rates/product-rates-config.component').then(
+            (c) => c.ProductRatesConfigComponent,
+          ),
+      },
+      {
+        path: 'system-params',
+        loadComponent: () =>
+          import('./config/system-params/system-params-config.component').then(
+            (c) => c.SystemParamsConfigComponent,
+          ),
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./config/users/users-config.component').then(
+            (c) => c.UsersConfigComponent,
+          ),
+      },
+      {
+        path: 'notifications',
+        loadComponent: () =>
+          import('./config/notifications/notifications-config.component').then(
+            (c) => c.NotificationsConfigComponent,
+          ),
+      },
+      {
+        path: 'holidays',
+        loadComponent: () =>
+          import('./config/holidays/holidays-config.component').then(
+            (c) => c.HolidaysConfigComponent,
+          ),
+      },
+    ],
   },
   {
     path: AppRoutes.ADMIN_COLLECTIONS_NEW,
@@ -205,6 +257,13 @@ export const ADMIN_ROUTES: Routes = [
     path: AppRoutes.ADMIN_EXPENSES,
     loadComponent: () =>
       import('./expenses/expenses.component').then((c) => c.ExpensesComponent),
+  },
+  {
+    path: AppRoutes.SIMULATOR,
+    loadComponent: () =>
+      import('../../shared/simulator/simulator.component').then(
+        (c) => c.SimulatorComponent,
+      ),
   },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 ];

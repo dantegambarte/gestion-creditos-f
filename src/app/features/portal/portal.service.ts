@@ -91,6 +91,7 @@ function mapUpcomingInstallment(
     creditId:                raw['credit_id'] as string,
     creditType:              raw['credit_type'] as 'SALE' | 'LOAN',
     creditInstallmentsCount: raw['credit_installments_count'] as number,
+    creditName:              (raw['credit_name'] as string | null) ?? null,
   };
 }
 
@@ -117,8 +118,9 @@ function mapPortalCredit(raw: Record<string, unknown>): PortalCredit {
     paidInstallments:  raw['paid_installments'] as number,
     nextDueDate:       (raw['next_due_date'] as string | null) ?? null,
     nextDueAmount:     (raw['next_due_amount'] as number | null) ?? null,
-    pendingPenalty:    raw['pending_penalty'] as number,
-    hasOverdue:        raw['has_overdue'] as boolean,
+    pendingPenalty:            raw['pending_penalty'] as number,
+    hasOverdue:                raw['has_overdue'] as boolean,
+    overdueInstallmentsCount:  raw['overdue_installments'] as number,
   };
 }
 

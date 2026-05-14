@@ -1,0 +1,22 @@
+::ng-deep {
+  .op-calendar {
+    border: 1.5px solid var(--ff-border);
+    border-radius: 0.75rem;
+
+    .p-inputtext {
+      border: none !important;
+      border-radius: 0.75rem 0 0 0.75rem !important;
+      box-shadow: none !important;
+      height: 3rem;
+    }
+
+    .p-button {
+      border: none !important;
+      border-radius: 0 0.7rem 0.7rem 0 !important;
+      background: var(--ff-accent) !important;
+      color: #fff !important;
+      height: 3rem;
+      width: 3rem;
+    }
+  }
+}

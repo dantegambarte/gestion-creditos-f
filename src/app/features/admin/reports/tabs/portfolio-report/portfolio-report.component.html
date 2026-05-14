@@ -1,0 +1,146 @@
+<div class="space-y-6">
+  @if (loading) {
+    <app-loading-state />
+  } @else if (error) {
+    <app-error-state />
+  } @else if (portfolioReport) {
+    <!-- KPI saldo pendiente activo -->
+    <div class="bg-gray-800 rounded-2xl p-6 space-y-1">
+      <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+        Saldo pendiente activo
+      </p>
+      <p class="text-3xl font-extrabold text-green-400 font-mono">
+        {{ formatCurrency(portfolioReport.activePendingBalance) }}
+      </p>
+      <p class="text-xs text-gray-500">Cuotas no pagadas de créditos activos</p>
+    </div>
+
+    <!-- Tabla agrupada por estado -->
+    <div class="bg-gray-800 rounded-2xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-700">
+            <th
+              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium w-48"
+            >
+              Estado
+            </th>
+            <th
+              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Tipo
+            </th>
+            <th
+              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Cantidad
+            </th>
+            <th
+              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Monto total
+            </th>
+            <th
+              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              % del total
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (group of portfolioGrouped; track group.status) {
+            <!-- Fila cabecera de estado -->
+            <tr class="bg-gray-700/40 border-t border-gray-700">
+              <td colspan="5" class="px-5 py-2">
+                <div class="flex items-center gap-2">
+                  <span
+                    class="w-2 h-2 rounded-full"
+                    [style.background-color]="STATUS_COLORS[group.status]"
+                  ></span>
+                  <span
+                    class="text-xs font-semibold uppercase tracking-widest"
+                    [style.color]="STATUS_COLORS[group.status]"
+                  >
+                    {{ STATUS_LABELS[group.status] ?? group.status }}
+                  </span>
+                </div>
+              </td>
+            </tr>
+            <!-- Filas por tipo -->
+            @for (row of group.rows; track row.type) {
+              <tr
+                class="border-t border-gray-700/40 hover:bg-gray-700/20 transition-colors"
+              >
+                <td class="px-5 py-3"></td>
+                <td class="px-5 py-3 text-gray-300">
+                  {{ TYPE_LABELS[row.type] ?? row.type }}
+                </td>
+                <td class="px-5 py-3 text-right font-semibold text-white">
+                  {{ row.count }}
+                </td>
+                <td class="px-5 py-3 text-right font-mono text-gray-200">
+                  {{ formatCurrency(row.totalAmount) }}
+                </td>
+                <td class="px-5 py-3 text-right">
+                  @if (group.status === "ACTIVE" && portfolioGrandTotal > 0) {
+                    <span class="text-green-400 font-semibold">
+                      {{
+                        (row.totalAmount / portfolioGrandTotal) * 100
+                          | number: "1.1-1"
+                      }}%
+                    </span>
+                  } @else {
+                    <span class="text-gray-600">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Barra Venta vs Préstamo (activos) -->
+    @if (activeVentaAmount + activeLoanAmount > 0) {
+      <div class="bg-gray-800 rounded-2xl p-5 space-y-3">
+        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          Créditos activos — Venta vs Préstamo
+        </p>
+        <div class="flex h-3 rounded-full overflow-hidden gap-0.5">
+          <div
+            class="bg-blue-500 rounded-l-full"
+            [style.width.%]="
+              (activeVentaAmount / (activeVentaAmount + activeLoanAmount)) * 100
+            "
+          ></div>
+          <div
+            class="bg-purple-500 rounded-r-full"
+            [style.width.%]="
+              (activeLoanAmount / (activeVentaAmount + activeLoanAmount)) * 100
+            "
+          ></div>
+        </div>
+        <div class="flex justify-between text-xs text-gray-400">
+          <span>
+            <span
+              class="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1"
+            ></span>
+            Venta {{ formatCurrency(activeVentaAmount) }} ({{
+              (activeVentaAmount / (activeVentaAmount + activeLoanAmount)) * 100
+                | number: "1.1-1"
+            }}%)
+          </span>
+          <span>
+            Préstamo {{ formatCurrency(activeLoanAmount) }} ({{
+              (activeLoanAmount / (activeVentaAmount + activeLoanAmount)) * 100
+                | number: "1.1-1"
+            }}%)
+            <span
+              class="inline-block w-2 h-2 rounded-full bg-purple-500 ml-1"
+            ></span>
+          </span>
+        </div>
+      </div>
+    }
+  }
+</div>

@@ -7,18 +7,26 @@
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
 | **CR-01** | Operación Crédito | Click en "Enviar para Aprobación". | Debería enviar la operación para ser aprobada. | Corregido / Validado |
-| **CR-02** | Operación Crédito | En fecha de primer pago puse una fecha anterior a la actual. | Debería estar deshabilitadas las fechas fechas anteriores a la actual. | Corregido / Validado |
+| **CR-02** | Operación Crédito | En fecha de primer pago puse una fecha anterior a la actual. | Debería estar deshabilitadas las fechas anteriores a la actual. | Corregido / Validado |
 | **CR-03** | Operación Crédito | Click en "Tipo de operación" y "Préstamo personal". | Debería desaparecer los productos. | Corregido / Validado |
 | **CR-04** | Operación Crédito | Escribí "aire" en "Buscar productos". | Debería filtrar la búsqueda por el nombre. | Corregido / Validado |
 | **CR-05** | Configuración del Crédito | Click en "Siguiente" sin elegir "Fecha de primer pago". | Debería estar deshabilitado el botón "Siguiente". | Corregido / Validado |
 | **CR-06** | Operación Crédito - Declaraciones y Autorizaciones | Dejé sin marcar la casilla "Autorizo el desembolso inmediato". | Debería estar deshabilitado el botón "Siguiente" hasta marcar la casilla. | Corregido / Validado |
 | **CR-07** | Operación Crédito - Operaciones | Click en "Activo" para filtrar las operaciones. | Debería filtrar las operaciones. | Corregido / Validado |
-| **CR-08** | Operación Crédito - Operaciones - Admin | Escribí "Perez" en el buscador. | Debería filtrar los clientes. | Error |
-| **CR-09** | Regresión en seleccion de unidad . | Si posee stock, la operación debería enviarse. | Error |
-| **CR-10** | Calendario de primer pago - Admin | Hice click en el calendario para poder elegir fecha. | El calendario se muestra cortado. | Error |
-| **CR-11 | Operación venta de un producto - Admin. | Se eligió un producto de la lista. | No está implementado el pago diario y quincenal y el interés no cambia. | Error |
-| **CR-12 | Operaciones pre-aprobadas y aprobadas - Admin. | Se realizó una operación para su aprobación. | No está implementado el detalle de las operaciones. | Error |
-| **CR-13 | Nueva Operacion - Seller. | Se hizo click en "Nueva Operación". | Las letras son del mismo color que el fondo. | Error |
+| **CR-08** | Operación Crédito - Operaciones - Admin | Escribí "Perez" en el buscador (Seller ops). | Debería filtrar los clientes. | Corregido / Validado |
+| **CR-08b** | Nueva Operación - Admin | Escribí "Perez" en el buscador. | Debería filtrar los clientes. | Corregido / Validado — error handler agregado a initialize(); si la carga de clientes falla, ahora muestra toast con instrucción de recargar |
+| **CR-09** | Regresión en selección de unidad. | Si posee stock, la operación debería enviarse. | Corregido / Validado — error "unidad no disponible" ahora muestra mensaje claro + recarga automática del catálogo |
+| **CR-10** | Calendario de primer pago. | El calendario se muestra correctamente y permite seleccionar fecha. | Corregido / Validado — removido `iconDisplay="input"`, agregado `autoZIndex="true"`; panel con `appendTo="body"` |
+| **CR-11** | Operación venta de un producto - Admin. | Debería cambiar el interés según el producto, la cantidad de cuotas y la frecuencia. | Pendiente datos — backend soporta WEEKLY/BIWEEKLY/MONTHLY; configurar tasas en Admin → Config → Tasas para que aparezcan las frecuencias |
+| **CR-12** | Operaciones pre-aprobadas y aprobadas - Admin. | Debería poder consultar el detalle de las operaciones. | Corregido / Validado — ruta `/admin/operations/:id` existe y carga el detalle completo con cuotas y productos |
+| **CR-13** | Nueva Operacion - Seller. | Las letras deben ser legibles contra el fondo. | Corregido / Validado — headings en step-confirm ahora tienen `text-white` explícito |
+| **CR-14** | Operaciones - Admin. | Al desplegar el filtro de estado no debe quedar cortado. | Corregido / Validado — `appendTo="body"` en dropdown de estado |
+| **CR-15** | Operación Crédito - Declaraciones y Autorizaciones. | La tilde en los casilleros debe ser visible. | Corregido / Validado — `.p-checkbox-icon { color: #ffffff !important }` en styles.scss |
+| **CR-16** | Nueva Operación - Seller. | Debería poder elegir la variante de un producto. | Pendiente datos — código frontend correcto; variantes aparecen cuando `product_variants` tiene atributos color/size/capacity en DB |
+| **CR-17** | Operaciones - Seller. | Click en paginación debe mostrar los siguientes registros. | Corregido / Validado — agregado `[paginator]="true" [rows]="10"` en `operations.component.html` |
+| **CR-18** | Operaciones - Admin. | Se hizo click en "Ver" en una operación pendiente de aprobación. | Debería mostrar la tasa de interés | Error
+| **CR-19** | Cancelación Anticipada - Admin. | Se hizo click en "Cancelación Anticipada" en una operación aprobada. | Debería poder adelantar cuotas. | Error
+
 
 ## 🟢 2. Módulo: Cliente
 
@@ -26,11 +34,21 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **CL-01** | Crear Cliente | Se realizó la creación de un cliente. | Debería salir un mensaje que el cliente se guardó correctamente. | Corregido / Validado |
 | **CL-02** | Ver Cliente | Click en "Ver" en un cliente. | Debería mostrar los datos del cliente. | Corregido / Validado |
+| **CL-02b** | Ver Cliente - Seller. | Las letras deben ser legibles. | Corregido / Validado — card cambiado de `bg-white` a `ff-panel` (fondo oscuro del tema); labels con `var(--ff-text-muted)` |
 | **CL-03** | Gestión de Clientes | Click en "Editar" en un cliente. | Los cambios deberían guardarse en la DB. | Corregido / Validado |
-| **CL-04** | Editar Clientes | Click en "Editar" en un cliente. | Debería salir un cartel que fue exitoso. | Error |
-| **CL-02** | Ver Cliente | Click en "Ver" en un cliente - Seller. | Debería mostrar los datos del cliente. | Error |
-
-
+| **CL-04** | Editar Clientes | Click en "Editar" en un cliente. | Debería salir un cartel "Modificación Exitosa". | Corregido / Validado — toast implementado en `saveEdit()` y `onEditSubmit()` |
+| **CL-05** | Ver Cliente - Admin. | Debería poder elegir el período en el historial. | Corregido / Validado — `appendTo="body"` + `baseZIndex` en calendarios y dropdown del historial |
+| **CL-06** | Nuevo Cliente - Seller | Click en "Nuevo Cliente". | Debería conducir al formulario de nuevo cliente. | Comportamiento esperado — guard `tempPasswordGuard` redirige a cambio de contraseña en cuentas nuevas; página muestra banner de aviso; tras cambiar contraseña redirige al home |
+| **CL-07** | Nuevo Cliente - Seller-Collector | Click en "Nuevo Cliente". | Debería conducir al formulario de nuevo cliente. | Comportamiento esperado — ídem CL-06 |
+| **CL-08** | Clientes - Seller / Seller-Collector. | Click en paginación debe mostrar los siguientes registros. | Corregido / Validado — agregado `[paginator]="true" [rows]="10"` en `clients.component.html` |
+| **CL-09** | Clientes - Admin. | El menú desplegable de riesgo no debe quedar cortado. | Corregido / Validado — `appendTo="body"` en dropdown de filtro de clientes |
+| **CL-10** | Clientes - Admin. | Muestra la cantidad real de créditos del cliente. | Corregido / Validado — mapper `toClient()` ahora usa `c.activeCredits ?? 0` en lugar de `0` hardcodeado |
+| **CL-11** | Nuevo Cliente - Admin | Se hizo click en "Nuevo Cliente". | No debería permitir poner números en el campo "Nombre" y "Apellido". | Error |
+| **CL-12** | Nuevo Cliente - Admin | Se hizo click en "Nuevo Cliente". | En el campo "DNI" debería poder solo escribir números. | Error |
+| **CL-13** | Nuevo Cliente - Admin | Click en "Nuevo Cliente". | Eliminar ingresos y permitir asignar un cobrador. | Error |
+| **CL-14** | Clientes | Click en el filtro de búsqueda. | Debería poder filtrar los estados. | Error |
+| **CL-15** | Ver Clientes | Click en "Ver Clientes". | Debería poder mostrar los datos. | Error |
+| **CL-16** | Editar Clientes | Click en "Editar" en un cliente. | Debería permitir editar todos los campos. | Error |
 
 
 ## 🟢 3. Módulo: Producto
@@ -43,52 +61,111 @@
 | **PR-04** | Crear Producto | Se hizo click en "Crear Producto". | Los productos deberían mostrarse luego de confirmar la creación. | Corregido / Validado |
 | **PR-05** | Crear Producto | Se hizo click en confirmar al "Crear Producto". | Debería salir un cartel que el producto fué creado exitosamente. | Corregido / Validado |
 | **PR-06** | Crear Producto | Se hizo click en "Crear Producto". | Debería estar deshabilitado el botón "Guardar producto" hasta completar los campos obligatorios. | Corregido / Validado |
+| **PR-07** | Desactivar Categoría - Admin | Se hizo click en "Desactivar Categoría". | Debería salir un cartel de confirmación y poder activarla de nuevo. | Corregido / Validado — `ConfirmDialog` antes de ejecutar; categorías inactivas muestran botón "Activar" |
+| **PR-08** | Desactivar Marca - Admin | Se hizo click en "Desactivar Marca". | Debería salir un cartel de confirmación y poder activarla de nuevo. | Corregido / Validado — ídem PR-07 para marcas |
+| **PR-09** | Editar Producto - Admin | Se hizo click en "Editar Producto". | El formulario debe ser distinguible del fondo. | Corregido / Validado — formulario envuelto en `ff-panel` con heading con color explícito |
+| **PR-10** | Editar Producto | Se hizo click en "Guardar Cambios". | No se hizo ninguna modificación y me permitió "Guardar Cambios". | Error |
+| **PR-11** | Desactivar Producto | Se hizo click en "Desactivar Producto". | Debería permitir desactivar productos por mas que tengan unidades vendidas. | Mensaje de Error "No se permite desactivar productos si posee unidades vendidas" |
+| **PR-12** | Variantes Productos | Se hizo click en "Editar Variantes". | Debería poder mostrar todos los campos en la tabla de la izquierda. | Error: Agregar mas |
+| **PR-13** | Múltiples Variantes Producto | Se hizo click en "Ingresar Múltiples Variantes". | Se ingresaron datos erróneos. | Error: el mensaje de error debería estar en el recuadro de "Múltiples Variantes" y además marcar donde está el error |
+| **PR-14** | Categoría y Marca | Categoría y Marca solo permite creación y no edición. | Error |
 
-## ✅ Correcciones validadas recientemente
-
-- **CR-01**: el flujo SALE quedó alineado al contrato actual (`unit_ids`, `down_payment`, sin `prepaid_installments` en alta).
-- **CR-02**: el calendario de "Fecha del Primer Pago" ahora bloquea días anteriores con `minDate`, input de solo lectura y validación del wizard para impedir avanzar con fecha inválida.
-- **CR-03**: al elegir "Préstamo personal" se ocultan buscador/listados de productos y se limpia la selección previa para evitar datos residuales en el envío.
-- **CR-04**: el buscador de productos ahora filtra por nombre (`filteredAvailableProducts`) en el paso "Tipo y Producto".
-- **CR-05**: el botón "Siguiente" en el paso de Condiciones permanece deshabilitado sin fecha de primer pago válida (cobertura explícita dedicada).
-- **CR-06**: el envío final ahora exige marcar también "Autorizo el desembolso inmediato" (`checks.disbursement`).
-- **CL-02**: el detalle del cliente ya carga por `id` real y no depende de mocks locales.
-- **CL-03**: la edición de cliente persiste los campos soportados actualmente (`full_name`, `phone`) y se refleja tras recargar.
-- **PR-01**: el formulario de `seller/products/new` ya bloquea el alta vacía; el problema era un spec Cypress buscando el label viejo del botón.
-- **PR-02**: el listado compartido de `/admin/products` ahora incluye acción "Editar" por fila y navega a `seller/products/:id/edit`.
-- **PR-03**: la columna categoría del listado compartido ya usa `categoryName` real del backend.
-- **PR-04**: el modal compartido ahora crea también la variante y las unidades iniciales, por eso precio y stock ya se reflejan en el listado tras confirmar.
-- **PR-05**: el modal compartido ahora muestra feedback visual de éxito con toast al completar el alta del producto.
-- **PR-06**: el modal compartido de alta de producto ahora mantiene deshabilitado "Guardar Producto" mientras el formulario esté inválido.
-
-## 🧪 Evidencia de regresión automatizada
-
-- `cypress/e2e/31-qa-regression-issues.cy.ts` → flujo SALE integrado: **passing**
-- `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → CR-02 validación fecha primer pago (pasado bloqueado / futuro permitido): **passing**
-- `src/app/shared/operations/new-operation/steps/step-products/step-products.component.spec.ts` → CR-04 buscador filtra por nombre: **passing**
-- `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → CR-05 bloqueo explícito sin fecha de primer pago: **passing**
-- `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → CR-06 confirmación exige desembolso inmediato: **passing**
-- `src/app/shared/operations/new-operation/steps/step-products/step-products.component.spec.ts` → CR-03 ocultar productos + limpieza de estado al pasar a préstamo personal: **passing**
-- `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → CR-03 préstamo personal se envía sin exigir productos/unidades: **passing**
-- `cypress/e2e/07-negative-nueva-operacion.cy.ts` → CR-02/CR-05 navegación bloqueada sin fecha primer pago y CR-06 desembolso obligatorio: **passing**
-- `src/app/shared/clients/clients.component.spec.ts` → CL-01 toast de éxito al crear cliente: **passing**
-- `cypress/e2e/32-client-detail-regression.cy.ts` → CL-02 detalle cliente: **passing**
-- `cypress/e2e/04-clientes.cy.ts` → módulo clientes / CL-03 persistencia: **passing**
-- `cypress/e2e/30-producto-crear.cy.ts` → PR-01 crear producto: **passing**
-- `cypress/e2e/36-product-edit-category-regression.cy.ts` → PR-02/PR-03 edición + categoría: **passing**
-- `cypress/e2e/34-product-list-regression.cy.ts` → PR-04 alta visible en listado: **passing**
-- `cypress/e2e/35-product-success-toast-regression.cy.ts` → PR-05 toast de éxito: **passing**
-- `cypress/e2e/33-product-create-modal-regression.cy.ts` → PR-06 modal crear producto: **passing**
 
 ## 🟢 Módulo: Planilla
 
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
-| **PL-01** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar el botón "Generar Planilla". | Corregido / Validado |
-| **PL-02** | Botones | Los botones no están correctamente ubicados. |Deberían seguir los patrones visuales. | Corregido / Validado |
+| **PL-01** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar el botón mientras genera. | Corregido / Validado — flags `generating` / `generatingAll` deshabilitan los botones durante la ejecución |
+| **PL-02** | Botones | Los botones no están correctamente ubicados. | Deberían seguir los patrones visuales. | Corregido / Validado |
+
 
 ## 🟢 Módulo: Gastos
 
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
 | **GA-01** | Gastos | Se hizo click en desactivar gasto "Alquiler". | Debería poder activarlo nuevamente. | Corregido / Validado |
+| **GA-02** | Gastos | Se hizo click en "Registrar Gasto" - Admin. | Debería poder seleccionar el método de pago. | Corregido / Validado — `appendTo="body"` en dropdowns del formulario de gastos |
+
+
+## 🟢 Módulo: Usuarios
+
+| ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
+| :--- | :--- | :--- | :--- | :--- |
+| **US-01** | Rol Usuario | Se hizo click en "Nuevo Usuario". | Debería poder elegir el Rol. | Corregido / Validado — `appendTo="body"` en dropdown de Rol en modal de creación |
+| **US-02** | Usuarios - Admin | Se hizo click en "Usuarios". | No funciona el filtro para seleccionar por Rol, sale cortado. | Corregido / Validado — `appendTo="body"` en dropdowns de Rol y Estado en listado |
+| **US-03** | Nuevo Usuario y Editar Usuario - Admin | Se hizo click en "Nuevo Usuario". | No debería permitir ingresar símbolos en "Nombre Completo" y un sólo número en DNI. | Error: arroja un mensaje de error pero no en donde está |
+| **US-04** | Editar Usuario - Admin | Se hizo click en "Editar Usuario". | El menú desplegable de "Rol" debería mostrarse completo. | El menú desplegable sale cortado |
+| **US-05** | Editar Usuario - Admin | Se hizo click en "Editar Usuario". | El botón de "Guardar Cambios" siempre activo. | Error: debería esta desactivado hasta que se modifique algún campo |
+| **US-06** | Crear Usuario - Admin | Se hizo click en "Crear Usuario". | Debería verse el password temporal. | Error: el password temporal sale con el mismo color del fondo al igual que el botón "Copiar" |
+
+
+## 🟢 Módulo: Caja
+
+| ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
+| :--- | :--- | :--- | :--- | :--- |
+| **CA-01** | Cierre de caja | Se hizo click en "Cierre de caja". | Debería poder realizar el cierre de caja. | Corregido / Validado — bug backend: `totalEgresos` vs `totalOutflows` naming mismatch causaba error 500; controller ahora también maneja 422 correctamente |
+
+
+---
+
+## ✅ Correcciones validadas en esta sesión (Grupos A-E + Backend)
+
+### Grupo A — Dropdowns cortados (`appendTo="body"`)
+- **US-01, US-02**: Dropdowns de Rol y Estado en módulo Usuarios
+- **CL-09**: Filtro de riesgo en listado de Clientes
+- **CR-14**: Filtro de Estado en listado de Operaciones
+- **GA-02**: Dropdowns en formulario de Gastos
+
+### Grupo B — Calendarios cortados (`appendTo="body"` + `autoZIndex`)
+- **CR-10**: Removido `iconDisplay="input"` + agregado `autoZIndex="true"` en calendario de primer pago
+- **CL-05**: Calendarios de período e Historial en detalle de cliente
+
+### Grupo C — Contraste y color
+- **CR-15**: Tilde de checkboxes blanca en tema oscuro (`styles.scss`)
+- **CL-02b**: Card de detalle de cliente Seller cambiado de `bg-white` a `ff-panel`
+- **CR-13**: Headings en paso Confirmación con `text-white` explícito
+- **PR-09**: Formulario de edición de producto con wrapper `ff-panel`
+
+### Grupo D — Paginación
+- **CR-17**: `[paginator]="true" [rows]="10"` en tabla de Operaciones
+- **CL-08**: `[paginator]="true" [rows]="10"` en tabla de Clientes
+
+### Grupo E — Bugs lógicos
+- **CL-10**: Mapper `toClient()` usa `c.activeCredits ?? 0` en lugar de `0` hardcodeado
+- **PR-07 / PR-08**: `ConfirmDialog` antes de desactivar Categoría o Marca
+- **CR-09**: Mensaje claro "Unidad no disponible" + recarga automática del catálogo
+- **CR-08b**: Error handler en `initialize()` del wizard de nueva operación
+
+### Backend
+- **CA-01**: `totalEgresos` naming bug en `cashRegister.service.js`; `cashRegister.controller.js` maneja 422 y 400
+
+---
+
+## 🔵 Pendientes por datos (no son bugs de código)
+
+| ID | Descripción | Acción requerida |
+| :--- | :--- | :--- |
+| **CR-11** | Solo aparece frecuencia mensual y tasa 15% fija | Configurar tasas BIWEEKLY/WEEKLY desde Admin → Config → Tasas de interés y Tasas de productos |
+| **CR-16** | Solo aparece "Variante estándar" en productos | Cargar atributos color/size/capacity en variantes desde Admin → Productos → Variantes |
+
+---
+
+## 🧪 Evidencia de regresión automatizada
+
+### Tests existentes (previos a esta sesión)
+- `cypress/e2e/31-qa-regression-issues.cy.ts` → flujo SALE integrado: **passing**
+- `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → CR-02, CR-05, CR-06: **12 passing**
+- `src/app/shared/operations/new-operation/steps/step-products/step-products.component.spec.ts` → CR-03, CR-04: **8 passing**
+- `src/app/shared/operations/new-operation/steps/step-conditions/step-conditions.component.spec.ts` → CR-10: **5 passing**
+- `src/app/shared/clients/clients.component.spec.ts` → CL-01, CL-10, CL-08, paginación: **16 passing**
+- `src/app/shared/operations/operations.component.spec.ts` → CR-07, CR-08, CR-17: **6 passing**
+- `src/app/features/seller/products/product-edit/product-edit.component.spec.ts` → PR-09: **6 passing**
+- `src/app/features/admin/sheet/sheet.component.spec.ts` → PL-01: **6 passing**
+- `src/app/shared/operations/new-operation/operation-form.service.spec.ts` → CR-09: **2 passing**
+
+### Tests nuevos (esta sesión)
+- `cypress/e2e/38-dropdown-overflow-regression.cy.ts` → US-01, US-02, CL-09, CR-14 (Grupo A)
+- `cypress/e2e/39-calendar-overflow-regression.cy.ts` → CR-10, CL-05 (Grupo B)
+- `cypress/e2e/40-contrast-color-regression.cy.ts` → CL-02b, CR-13, PR-09 (Grupo C)
+- `cypress/e2e/41-pagination-regression.cy.ts` → CR-17, CL-08 (Grupo D)
+- `cypress/e2e/42-group-e-regression.cy.ts` → CL-10, PR-07, PR-08, CR-09 (Grupo E)

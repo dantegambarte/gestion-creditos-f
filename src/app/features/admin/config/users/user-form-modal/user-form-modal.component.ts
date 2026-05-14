@@ -1,4 +1,10 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -11,10 +17,12 @@ export interface UserForm {
   name: string;
   email: string;
   dni: string;
+  phone: string;
   role: string | null;
   branch: string | null;
   active: boolean;
   password: string;
+  address: string;
 }
 
 export interface UserRecord {
@@ -22,6 +30,8 @@ export interface UserRecord {
   name: string;
   email: string;
   dni?: string;
+  phone?: string;
+  address?: string;
   role: Roles;
   branch: string;
   active: boolean;
@@ -74,10 +84,12 @@ export class UserFormModalComponent implements OnChanges {
         name: this.editRecord.name,
         email: this.editRecord.email,
         dni: this.editRecord.dni ?? '',
+        phone: this.editRecord.phone ?? '',
         role: this.editRecord.role,
         branch: this.editRecord.branch,
         active: this.editRecord.active,
         password: '',
+        address: this.editRecord.address ?? '',
       };
     } else if (this.visible) {
       this.form = this.emptyForm();
@@ -98,10 +110,12 @@ export class UserFormModalComponent implements OnChanges {
       name: '',
       email: '',
       dni: '',
+      phone: '',
       role: null,
       branch: null,
       active: true,
       password: '',
+      address: '',
     };
   }
 }

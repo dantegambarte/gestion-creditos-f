@@ -6,7 +6,7 @@ import { RippleModule } from 'primeng/ripple';
 import { TooltipModule } from 'primeng/tooltip';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { MockAuthService } from '../../../core/auth/mock-auth.service';
+import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AuthUser } from '../../../core/models/interface/auth-user';
 import { NavItem, ResolvedNavItem } from '../../models/interface/nav-item';
 import { NAV_CONFIG } from '../../utils/nav-config';
@@ -29,7 +29,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   visibleItems: ResolvedNavItem[] = [];
   private destroy$ = new Subject<void>();
 
-  constructor(private auth: MockAuthService) {}
+  constructor(private auth: AuthServiceBase) {}
 
   ngOnInit(): void {
     this.auth.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user) => {

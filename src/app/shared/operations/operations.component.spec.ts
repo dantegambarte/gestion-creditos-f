@@ -99,4 +99,10 @@ describe('OperationsComponent', () => {
     expect(result[0].customerName).toContain('Carlos Ruiz');
     expect(result[0].status).toBe('ACTIVE');
   });
+
+  it('CR-17: la tabla tiene paginador configurado — paginator=true rows=10', () => {
+    const table = fixture.nativeElement.querySelector('p-table');
+    expect(table.getAttribute('ng-reflect-paginator')).toBe('true');
+    expect(table.getAttribute('ng-reflect-rows')).toBe('10');
+  });
 });

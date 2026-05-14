@@ -1,7 +1,8 @@
 ﻿import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { MockAuthService, MOCK_USERS } from './mock-auth.service';
+import { MockAuthService, MOCK_USERS, MOCK_PASSWORD } from './mock-auth.service';
+import { AuthServiceBase } from './auth-service.base';
 import { Roles } from '../../shared/models/enums/roles.enum';
 
 describe('MockAuthService', () => {
@@ -11,7 +12,10 @@ describe('MockAuthService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
-      providers: [MockAuthService],
+      providers: [
+        MockAuthService,
+        { provide: AuthServiceBase, useExisting: MockAuthService },
+      ],
     });
     service = TestBed.inject(MockAuthService);
     router = TestBed.inject(Router);
@@ -32,7 +36,7 @@ describe('MockAuthService', () => {
 
     (service as any)['NETWORK_LATENCY_MS'] = 0;
     service
-      .login({ dni: adminDni, password: 'cualquiera' })
+      .login({ dni: adminDni, password: MOCK_PASSWORD })
       .subscribe((user) => (result = user));
 
     tick(0);
@@ -58,7 +62,7 @@ describe('MockAuthService', () => {
 
   it('deberÃ­a verificar roles correctamente con hasRole()', fakeAsync(() => {
     (service as any)['NETWORK_LATENCY_MS'] = 0;
-    service.login({ dni: '87654321', password: 'x' }).subscribe(); // SELLER
+    service.login({ dni: '87654321', password: MOCK_PASSWORD }).subscribe(); // SELLER
     tick(0);
 
     expect(service.hasRole(Roles.SELLER)).toBeTrue();
@@ -68,7 +72,7 @@ describe('MockAuthService', () => {
 
   it('deberÃ­a verificar hasAnyRole() con mÃºltiples roles', fakeAsync(() => {
     (service as any)['NETWORK_LATENCY_MS'] = 0;
-    service.login({ dni: '11223344', password: 'x' }).subscribe(); // COLLECTOR
+    service.login({ dni: '11223344', password: MOCK_PASSWORD }).subscribe(); // COLLECTOR
     tick(0);
 
     expect(service.hasAnyRole([Roles.ADMIN, Roles.COLLECTOR])).toBeTrue();
@@ -78,7 +82,7 @@ describe('MockAuthService', () => {
   it('deberÃ­a limpiar localStorage y emitir null al hacer logout', fakeAsync(() => {
     (service as any)['NETWORK_LATENCY_MS'] = 0;
     const navigateSpy = spyOn(router, 'navigate');
-    service.login({ dni: '12345678', password: 'x' }).subscribe();
+    service.login({ dni: '12345678', password: MOCK_PASSWORD }).subscribe();
     tick(0);
 
     service.logout();
@@ -93,7 +97,7 @@ describe('MockAuthService', () => {
     const emitted: any[] = [];
     service.currentUser$.subscribe((u) => emitted.push(u));
 
-    service.login({ dni: '12345678', password: 'x' }).subscribe();
+    service.login({ dni: '12345678', password: MOCK_PASSWORD }).subscribe();
     tick(0);
 
     expect(emitted.length).toBe(2); // null inicial + usuario logueado

@@ -1,240 +1,383 @@
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-  <!-- Columna izquierda: buscador + lista -->
-  <div class="flex flex-col gap-4">
-    <div class="flex justify-between items-center">
-      <h2 class="text-base font-bold" style="color: var(--ff-text-primary)">
-        Buscar Cliente
-      </h2>
-      <span
-        class="text-xs font-semibold px-3 py-1 rounded-full"
-        style="background: rgba(79, 110, 247, 0.12); color: var(--ff-accent)"
-      >
-        {{ form.clients.length }} clientes
-      </span>
-    </div>
+<section class="mx-auto w-full max-w-[1200px]">
+  <div class="grid gap-4 xl:grid-cols-[500px_minmax(0,1fr)] 2xl:grid-cols-[520px_minmax(0,1fr)]">
+    <div class="overflow-hidden rounded-2xl border border-[#252A3A] bg-[#171B27] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+      <div class="border-b border-[#252A3A] px-5 py-4">
+        <p class="text-base font-semibold text-white">Buscar cliente</p>
+        <div class="relative mt-3">
+          <i class="pi pi-search pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7C87A1]"></i>
+          <input
+            pInputText
+            [(ngModel)]="searchText"
+            class="h-11 w-full rounded-xl border border-[#2A2E3B] bg-[#232943] pl-11 pr-4 text-sm text-white placeholder:text-[#7C87A1] focus:border-[#4F6BFF] focus:outline-none"
+            placeholder="Buscar por nombre o DNI"
+            data-cy="input-search-client"
+          />
+        </div>
+        <p class="mt-2 text-[11px] text-[#5E6A82]">
+          Buscá por nombre o DNI.
+        </p>
+      </div>
 
-    <p-iconField iconPosition="left">
-      <p-inputIcon
-        styleClass="pi pi-search z-10"
-        style="color: var(--ff-text-muted)"
-      />
-      <input
-        pInputText
-        type="text"
-        placeholder="Buscar por nombre o DNI..."
-        [ngModel]="form.searchClient()"
-        (ngModelChange)="form.searchClient.set($event)"
-        class="w-full h-11 pl-10"
-        data-cy="input-buscar-cliente-wizard"
-      />
-    </p-iconField>
+      <div class="flex items-center justify-between border-b border-[#252A3A] px-5 py-3">
+        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5E6A82]">
+          {{ filteredClients.length }} resultados
+        </p>
+      </div>
 
-    <div
-      class="rounded-xl overflow-hidden flex flex-col h-[380px] overflow-y-auto"
-      style="
-        border: 1px solid var(--ff-border);
-        background: var(--ff-secondary);
-      "
-    >
-      @for (client of form.filteredClients(); track client.id) {
-        <div
-          class="flex items-center justify-between p-4 cursor-pointer transition-colors"
-          [style.background]="
-            form.selectedClient()?.id === client.id
-              ? 'rgba(79,110,247,0.15)'
-              : 'transparent'
-          "
-          [style.borderLeft]="
-            form.selectedClient()?.id === client.id
-              ? '2px solid var(--ff-accent)'
-              : '2px solid transparent'
-          "
-          style="border-bottom: 1px solid var(--ff-border)"
-          [class.opacity-70]="client.status !== 'ACTIVE'"
-          [attr.data-cy]="'cliente-item-' + client.dni"
-          (click)="selectClient(client)"
-        >
-          <div class="flex items-center gap-4">
-            <div
-              class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 transition-colors"
-              [style.background]="
-                form.selectedClient()?.id === client.id
-                  ? 'var(--ff-accent)'
-                  : 'rgba(100,116,139,0.4)'
-              "
-            >
-              {{ initials(client.name) }}
-            </div>
-            <div class="flex flex-col">
-              <div class="flex items-center gap-2">
-                <span
-                  class="text-sm font-bold"
-                  [style.color]="
-                    form.selectedClient()?.id === client.id
-                      ? 'var(--ff-text-primary)'
-                      : 'var(--ff-text-secondary)'
-                  "
-                >
-                  {{ client.name }}
-                </span>
-                @if (client.status !== 'ACTIVE') {
-                  <span class="ff-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--ff-danger)">
-                    Inactivo
-                  </span>
-                }
-              </div>
-              <span class="text-xs ff-mono" style="color: var(--ff-text-muted)">
-                CC {{ client.dni }} · Tel: {{ client.phone }}
-              </span>
-            </div>
+      @if (filteredClients.length === 0) {
+        <div class="px-5 py-14 text-center">
+          <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#35405C] bg-[#1A1F31]">
+            <i class="pi pi-search text-xl text-[#6272A4]"></i>
           </div>
-
-          @if (form.selectedClient()?.id === client.id) {
-            <i
-              class="pi pi-check-circle text-xl animate-fadein"
-              style="color: var(--ff-accent)"
-            ></i>
-          } @else if (client.status !== 'ACTIVE') {
-            <i class="pi pi-lock" style="color: var(--ff-danger)"></i>
+          @if (hasSearchTerm) {
+            <p class="text-sm font-medium text-[#E2E8F0]">
+              No se encontró ningún cliente con
+              <span class="font-semibold text-[#FFB36B]">"{{ searchText.trim() }}"</span>
+            </p>
+            <p class="mt-1 text-sm text-[#66738F]">Revisá el DNI o nombre e intentá de nuevo.</p>
+          } @else {
+            <p class="text-sm font-medium text-[#E2E8F0]">Todavía no seleccionaste un cliente</p>
+            <p class="mt-1 text-sm text-[#848D9E]">Buscá por DNI o nombre para continuar.</p>
+          }
+        </div>
+      } @else {
+        <div class="max-h-[420px] space-y-2 overflow-y-auto p-3 pr-2">
+          @for (client of filteredClients; track client.id) {
+            <button
+              type="button"
+              [class]="selectedClientId === client.id
+                ? 'w-full rounded-xl border border-[#4F6BFF] bg-[#232943] p-4 text-left transition-colors shadow-[0_0_0_1px_rgba(79,107,255,0.12)]'
+                : 'w-full rounded-xl border border-transparent bg-[#232943] p-4 text-left transition-colors hover:border-[#31384B]'"
+              (click)="clientSelected.emit(client)"
+              [attr.data-cy]="'client-card-' + client.id"
+            >
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#4F6BFF]/40 bg-[#4F6BFF]/15 text-[11px] font-semibold text-[#85A0FF]">
+                  {{ getClientInitials(client.name) }}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <p class="truncate text-[14px] font-semibold text-white">{{ client.name }}</p>
+                      <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#7C87A1]">
+                        <span [class]="client.status === 'ACTIVE' ? 'rounded-full bg-[#00D084]/10 px-2 py-0.5 font-semibold text-[#00D084]' : 'rounded-full bg-[#FF4D4F]/10 px-2 py-0.5 font-semibold text-[#FF4D4F]'">
+                          {{ client.status === 'ACTIVE' ? 'ACTIVO' : 'INACTIVO' }}
+                        </span>
+                        @if (client.collectorName) {
+                          <span>Cobrador: {{ client.collectorName }}</span>
+                        }
+                      </div>
+                    </div>
+                    <span class="shrink-0 text-[11px] tracking-[0.08em] text-[#73809A]">
+                      {{ client.dni }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </button>
           }
         </div>
       }
+
+      <div class="border-t border-[#252A3A] px-5 py-4 text-center">
+        <p class="text-[11px] text-[#5E6A82]">¿No encontrás al cliente?</p>
+        <button
+          type="button"
+          class="mt-2 inline-flex items-center gap-2 rounded-xl border border-[#4F6BFF]/60 px-4 py-2 text-xs font-semibold text-[#85A0FF] transition-colors hover:bg-[#4F6BFF]/10"
+          (click)="registerNewClient()"
+        >
+          <i class="pi pi-user-plus text-[11px]"></i>
+          Registrar nuevo cliente
+        </button>
+        <p class="mt-2 text-[11px] italic text-[#5E6A82]">(no perderás los datos cargados)</p>
+      </div>
     </div>
 
-    @if (form.selectedClient() && !form.isSelectedClientActive()) {
-      <small class="text-xs font-medium" style="color: var(--ff-danger)">
-        El cliente seleccionado está inactivo. Activá el cliente para continuar.
-      </small>
-    }
-  </div>
-
-  <!-- Columna derecha: detalle del seleccionado -->
-  <div class="flex flex-col gap-4">
-    <h2 class="text-base font-bold" style="color: var(--ff-text-primary)">
-      Cliente Seleccionado
-    </h2>
-
-    @if (form.selectedClient(); as client) {
-      <div class="ff-panel p-6 h-[380px] animate-fadein">
-        <div class="flex items-center gap-4 mb-6">
-          <div
-            class="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl shrink-0"
-            style="background: var(--ff-accent)"
-          >
-            {{ initials(client.name) }}
+    <div class="overflow-hidden rounded-2xl border border-[#252A3A] bg-[#171B27] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+      @if (showQuickRegister) {
+        <div class="border-l-2 border-l-[#F5A524] bg-[#232943] px-5 py-5">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-exclamation-triangle mt-0.5 text-sm text-[#F5A524]"></i>
+            <div>
+              <p class="text-sm font-semibold text-white">¿El cliente no está registrado?</p>
+              <p class="mt-1 text-xs text-[#91A0C6]">
+                Podés registrarlo ahora sin perder los datos de la operación que estás cargando.
+              </p>
+            </div>
           </div>
+        </div>
+
+        <div class="px-5 py-5">
           <div>
-            <h3
-              class="text-lg font-bold leading-tight"
-              style="color: var(--ff-text-primary)"
-            >
-              {{ client.name }}
-            </h3>
-            <p
-              class="text-sm ff-mono mb-1.5"
-              style="color: var(--ff-text-muted)"
-            >
-              CC {{ client.dni }}
+            <p class="text-base font-semibold text-white">Registro rápido de cliente</p>
+            <p class="mt-1 text-xs text-[#66738F]">Solo los campos esenciales — podrás completar el resto luego.</p>
+          </div>
+
+          <div class="mt-5 space-y-4">
+            <div>
+              <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7180A1]">
+                Nombre completo *
+              </label>
+              <input
+                pInputText
+                [(ngModel)]="quickRegisterDraft.fullName"
+                [class]="hasQuickRegisterError('fullName')
+                  ? 'mt-2 h-11 w-full rounded-xl border border-red-400 bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'
+                  : 'mt-2 h-11 w-full rounded-xl border border-[#2A2E3B] bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'"
+                placeholder="Ej: Juan Martínez"
+              />
+              @if (hasQuickRegisterError('fullName')) {
+                <p class="mt-1 text-[11px] text-[#FF8E8E]">{{ getQuickRegisterError('fullName') }}</p>
+              }
+            </div>
+
+            <div>
+              <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7180A1]">
+                DNI *
+              </label>
+              <input
+                pInputText
+                [(ngModel)]="quickRegisterDraft.dni"
+                [class]="hasQuickRegisterError('dni')
+                  ? 'mt-2 h-11 w-full rounded-xl border border-red-400 bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'
+                  : 'mt-2 h-11 w-full rounded-xl border border-[#2A2E3B] bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'"
+                placeholder="Sin puntos ni espacios"
+              />
+              @if (hasQuickRegisterError('dni')) {
+                <p class="mt-1 text-[11px] text-[#FF8E8E]">{{ getQuickRegisterError('dni') }}</p>
+              }
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+              <div>
+                <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7180A1]">
+                  Teléfono
+                </label>
+                <input
+                  pInputText
+                  [(ngModel)]="quickRegisterDraft.phone"
+                  class="mt-2 h-11 w-full rounded-xl border border-[#2A2E3B] bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]"
+                  placeholder="11-XXXX-XXXX"
+                />
+              </div>
+
+              <div>
+                <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7180A1]">
+                  Email
+                </label>
+                <input
+                  pInputText
+                  [(ngModel)]="quickRegisterDraft.email"
+                  [class]="hasQuickRegisterError('email')
+                    ? 'mt-2 h-11 w-full rounded-xl border border-red-400 bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'
+                    : 'mt-2 h-11 w-full rounded-xl border border-[#2A2E3B] bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'"
+                  placeholder="opcional"
+                  type="email"
+                />
+                @if (hasQuickRegisterError('email')) {
+                  <p class="mt-1 text-[11px] text-[#FF8E8E]">{{ getQuickRegisterError('email') }}</p>
+                }
+              </div>
+            </div>
+
+            <p class="text-[11px] text-[#66738F]">
+              El cliente se registrará y quedará seleccionado automáticamente para esta operación.
             </p>
-            @if (client.status === 'ACTIVE') {
-              <span class="ff-badge ff-badge--activo">Cliente activo</span>
-            } @else {
-              <span class="ff-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--ff-danger)">
-                Cliente inactivo
+
+            <div class="flex flex-col gap-3 pt-2 md:flex-row">
+              <button
+                type="button"
+                class="flex-1 rounded-xl bg-gradient-to-r from-[#4F6BFF] to-[#5D76F2] px-4 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(79,107,255,0.22)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                [disabled]="!isQuickRegisterValid || creatingQuickRegister"
+                (click)="submitQuickRegister()"
+              >
+                <span class="inline-flex items-center gap-2">
+                  <i class="pi pi-user-plus text-xs"></i>
+                  {{ creatingQuickRegister ? 'Creando cliente...' : 'Crear cliente y continuar' }}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="rounded-xl border border-[#2A2E3B] px-5 py-3 text-sm font-medium text-[#A5B4D4] transition-colors hover:bg-[#202637]"
+                [disabled]="creatingQuickRegister"
+                (click)="cancelQuickRegister()"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="px-5 py-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Estado del cliente</p>
+        </div>
+
+      @if (!selectedClient) {
+        <div class="px-5 pb-5">
+          <div class="rounded-xl border border-dashed border-[#2A2E3B] bg-[#121520] px-4 py-10 text-center">
+            <p class="text-sm text-[#848D9E]">Seleccioná un cliente para ver el resumen.</p>
+          </div>
+        </div>
+      } @else if (loadingSummary) {
+        <div class="px-5 pb-5">
+          <div class="space-y-4">
+            <div class="h-8 w-56 animate-pulse rounded bg-[#1A1D27]"></div>
+            <div class="h-20 animate-pulse rounded-xl bg-[#121520]"></div>
+            <div class="h-28 animate-pulse rounded-xl bg-[#121520]"></div>
+            <div class="h-24 animate-pulse rounded-xl bg-[#121520]"></div>
+          </div>
+        </div>
+      } @else {
+        <div class="px-5 pb-5">
+          <div class="space-y-4">
+            <div class="flex items-start gap-4 border-b border-[#252A3A] pb-5">
+              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#4F6BFF]/40 bg-[#4F6BFF]/15 text-sm font-semibold text-[#85A0FF]">
+                {{ selectedClientInitials }}
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <p class="text-[29px] font-semibold leading-none text-white md:text-[31px]">{{ selectedClient.name }}</p>
+                  <span class="rounded-full bg-[#00D084]/10 px-2.5 py-1 text-[11px] font-semibold text-[#00D084]">
+                    {{ selectedClient.status === 'ACTIVE' ? 'ACTIVO' : 'INACTIVO' }}
+                  </span>
+                </div>
+                <p class="mt-2 text-sm text-[#7C87A1]">DNI {{ selectedClient.dni }}</p>
+              </div>
+            </div>
+
+            <div class="grid gap-4 border-b border-[#252A3A] pb-5 sm:grid-cols-2">
+              <div class="space-y-3">
+                <div>
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Teléfono</p>
+                  <p class="mt-1 text-sm font-semibold text-white">{{ selectedClient.phone || 'Sin teléfono' }}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Dirección</p>
+                  <p class="mt-1 text-sm font-semibold text-white">{{ selectedClient.address || 'Sin dirección' }}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Alta</p>
+                  <p class="mt-1 text-sm font-semibold text-white">{{ formatShortDate(selectedClient.createdAt) }}</p>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <div>
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Email</p>
+                  <p class="mt-1 text-sm font-semibold text-white">{{ selectedClient.email || 'Sin email' }}</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Cobrador</p>
+                  <p class="mt-1 text-sm font-semibold text-white">{{ selectedClient.collectorName || 'Sin asignar' }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="border-b border-[#252A3A] pb-5">
+              <p class="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Historial crediticio</p>
+              <div class="space-y-2">
+                @if ((selectedClient.creditsSummary ?? []).length === 0) {
+                  <div class="rounded-lg border border-dashed border-[#2A2E3B] bg-[#121520] px-4 py-4 text-sm text-[#848D9E]">
+                    Este cliente todavía no registra créditos previos.
+                  </div>
+                } @else {
+                  @for (credit of selectedClient.creditsSummary ?? []; track credit.id) {
+                    <div class="grid grid-cols-[auto_auto_auto_1fr_auto] items-center gap-3 rounded-lg bg-[#232943] px-3 py-2">
+                      <span class="rounded-md px-2 py-1 text-[10px] font-semibold" [class]="credit.type === 'SALE' ? 'bg-[#4F6BFF]/15 text-[#85A0FF]' : 'bg-[#00D084]/15 text-[#3BE6A5]'">
+                        {{ getCreditTypeLabel(credit.type) }}
+                      </span>
+                      <span class="text-[11px] text-[#94A3B8]">{{ credit.installmentsCount }} cuotas</span>
+                      <span class="text-sm font-semibold text-white">$ {{ credit.totalAmount | number:'1.0-0' }}</span>
+                      <div class="h-2 rounded-full bg-[#2A2E3B]">
+                        <div
+                          [class]="credit.status === 'ACTIVE'
+                            ? 'h-2 rounded-full bg-[#00D084]/35'
+                            : 'h-2 rounded-full bg-[#64748B]/35'"
+                          [style.width]="credit.status === 'ACTIVE' ? '100%' : '65%'"
+                        ></div>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <span
+                          [class]="credit.status === 'ACTIVE'
+                            ? 'rounded-full bg-[#00D084]/10 px-2 py-0.5 text-[10px] font-semibold text-[#00D084]'
+                            : 'rounded-full bg-[#64748B]/15 px-2 py-0.5 text-[10px] font-semibold text-[#94A3B8]'"
+                        >
+                          {{ getCreditStatusLabel(credit.status) }}
+                        </span>
+                        <span class="text-[11px] text-[#7C879A]">{{ formatShortDate(credit.referenceDate) }}</span>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+
+            <div>
+              <p class="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Estado financiero</p>
+              <div class="grid gap-3 sm:grid-cols-3">
+                <div class="rounded-xl bg-[#232943] px-4 py-3">
+                  <p class="text-[10px] uppercase tracking-[0.12em] text-[#7C879A]">Cuotas pagadas</p>
+                  <p class="mt-2 text-2xl font-semibold text-[#00D084]">{{ selectedClient.paidInstallments ?? 0 }}</p>
+                </div>
+                <div class="rounded-xl bg-[#232943] px-4 py-3">
+                  <p class="text-[10px] uppercase tracking-[0.12em] text-[#7C879A]">Cuotas pendientes</p>
+                  <p class="mt-2 text-2xl font-semibold text-[#CBD5E1]">{{ selectedClient.pendingInstallments ?? 0 }}</p>
+                </div>
+                <div class="rounded-xl bg-[#232943] px-4 py-3">
+                  <p class="text-[10px] uppercase tracking-[0.12em] text-[#7C879A]">En mora</p>
+                  <p
+                    [class]="selectedClientHasMora
+                      ? 'mt-2 text-2xl font-semibold text-[#FF7A00]'
+                      : 'mt-2 text-2xl font-semibold text-[#00D084]'"
+                  >
+                    {{ selectedClient.overdueInstallments ?? 0 }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="w-full rounded-xl bg-gradient-to-r from-[#4F6BFF] to-[#5D76F2] px-4 py-4 text-center shadow-[0_10px_30px_rgba(79,107,255,0.22)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+              [disabled]="loadingSummary || isSelectedClientInactive"
+              (click)="continueWithSelectedClient()"
+            >
+              <div class="inline-flex items-center gap-2 text-sm font-semibold text-white">
+                <i class="pi pi-arrow-right text-xs"></i>
+                Continuar con este cliente
+              </div>
+            </button>
+
+            <div class="flex flex-wrap gap-2">
+              <span
+                [class]="selectedClientHasMora
+                  ? 'rounded-full px-3 py-1 text-xs font-semibold bg-[#FF7A00]/10 text-[#FF7A00]'
+                  : 'rounded-full px-3 py-1 text-xs font-semibold bg-[#00D084]/10 text-[#00D084]'"
+              >
+                {{ selectedClientHasMora ? 'Con Mora' : 'Apto' }}
               </span>
+              <span class="rounded-full bg-[#3B82F6]/10 px-3 py-1 text-xs font-semibold text-[#7EA6FF]">
+                Límite disponible: $ {{ selectedClient.paymentCapacity | number:'1.0-0' }}
+              </span>
+              <span class="rounded-full bg-[#8B5CF6]/10 px-3 py-1 text-xs font-semibold text-[#C4B5FD]">
+                Créditos activos: {{ selectedClient.previousCredits }}
+              </span>
+              @if (isSelectedClientInactive) {
+                <span class="rounded-full bg-[#FF4D4F]/10 px-3 py-1 text-xs font-semibold text-[#FF4D4F]">
+                  Inactivo
+                </span>
+              }
+            </div>
+
+            @if (selectedClientHasMora) {
+              <div class="rounded-xl border border-[#FF7A00]/30 bg-[#FF7A00]/10 px-4 py-3 text-sm text-[#FFB36B]">
+                El cliente registra mora. La operación puede requerir validación adicional.
+              </div>
             }
           </div>
         </div>
-
-        <div class="space-y-3">
-          <div
-            class="flex justify-between items-center py-2.5"
-            style="border-bottom: 1px solid var(--ff-border)"
-          >
-            <span class="text-sm" style="color: var(--ff-text-secondary)"
-              >Teléfono</span
-            >
-            <span
-              class="text-sm font-semibold"
-              style="color: var(--ff-text-primary)"
-            >
-              {{ client.phone }}
-            </span>
-          </div>
-          <div
-            class="flex justify-between items-center py-2.5"
-            style="border-bottom: 1px solid var(--ff-border)"
-          >
-            <span class="text-sm" style="color: var(--ff-text-secondary)"
-              >Correo</span
-            >
-            <span
-              class="text-sm font-semibold"
-              style="color: var(--ff-text-primary)"
-            >
-              {{ client.email }}
-            </span>
-          </div>
-          <div
-            class="flex justify-between items-center py-2.5"
-            style="border-bottom: 1px solid var(--ff-border)"
-          >
-            <span class="text-sm" style="color: var(--ff-text-secondary)"
-              >Créditos anteriores</span
-            >
-            <span
-              class="text-sm font-semibold"
-              style="color: var(--ff-success)"
-            >
-              {{ client.previousCredits }} crédito(s) · {{ client.delinquency }}
-            </span>
-          </div>
-          <div class="flex justify-between items-center py-2.5">
-            <span class="text-sm" style="color: var(--ff-text-secondary)"
-              >Capacidad de pago</span
-            >
-            <span
-              class="text-sm font-bold ff-mono"
-              style="color: var(--ff-text-primary)"
-            >
-              {{
-                client.paymentCapacity | currency: "ARS" : "symbol" : "1.0-0"
-              }}
-              / mes
-            </span>
-          </div>
-        </div>
-      </div>
-    } @else {
-      <div
-        class="rounded-xl p-8 flex flex-col items-center justify-center text-center h-[380px] animate-fadein"
-        style="
-          border: 2px dashed var(--ff-border);
-          background: var(--ff-secondary);
-        "
-      >
-        <div
-          class="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-          style="
-            background: var(--ff-panel);
-            border: 1px solid var(--ff-border);
-          "
-        >
-          <i
-            class="pi pi-user text-2xl"
-            style="color: var(--ff-text-muted)"
-          ></i>
-        </div>
-        <p class="font-semibold" style="color: var(--ff-text-secondary)">
-          Ningún cliente seleccionado
-        </p>
-        <p
-          class="text-sm mt-1 max-w-[250px]"
-          style="color: var(--ff-text-muted)"
-        >
-          Buscá y seleccioná un cliente de la lista para ver sus detalles.
-        </p>
-      </div>
-    }
+      }
+      }
+    </div>
   </div>
-</div>
+</section>

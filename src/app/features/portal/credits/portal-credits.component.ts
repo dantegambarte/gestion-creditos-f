@@ -42,6 +42,97 @@ export class PortalCreditsComponent implements OnInit {
     return this.credits.filter((c) => c.status === 'ACTIVE').length;
   }
 
+  /**
+   * Créditos activos ordenados por urgencia:
+   * primero los que tienen mora, luego por fecha de próximo vencimiento.
+   */
+  get activeCredits(): PortalCredit[] {
+    return this.credits
+      .filter((c) => c.status === 'ACTIVE')
+      .sort((a, b) => {
+        if (a.hasOverdue && !b.hasOverdue) return -1;
+        if (!a.hasOverdue && b.hasOverdue) return 1;
+        if (a.nextDueDate && b.nextDueDate) return a.nextDueDate.localeCompare(b.nextDueDate);
+        if (a.nextDueDate) return -1;
+        if (b.nextDueDate) return 1;
+        return 0;
+      });
+  }
+
+  /** Créditos liquidados. */
+  get settledCredits(): PortalCredit[] {
+    return this.credits.filter((c) => c.status === 'SETTLED');
+  }
+
+  /** Indica si algún crédito activo tiene cuotas vencidas. */
+  get hasAnyOverdue(): boolean {
+    return this.credits.some((c) => c.hasOverdue);
+  }
+
+  /** Cantidad de créditos activos con cuotas vencidas. */
+  get overdueCreditsCount(): number {
+    return this.activeCredits.filter((c) => c.hasOverdue).length;
+  }
+
+  /** Suma de mora pendiente en todos los créditos activos. */
+  get totalPendingPenalty(): number {
+    return this.activeCredits.reduce((sum, c) => sum + c.pendingPenalty, 0);
+  }
+
+  /**
+   * Fecha de vencimiento más próxima entre los créditos activos sin mora.
+   * Se usa en el banner de "todo al día" para indicar el siguiente pago.
+   */
+  get nextUrgentDueDate(): string | null {
+    return this.activeCredits.find((c) => !c.hasOverdue && c.nextDueDate)?.nextDueDate ?? null;
+  }
+
+  /** Estado del filtro activo. */
+  filterState: 'ALL' | 'ON_TIME' | 'OVERDUE' | 'SETTLED' = 'ALL';
+
+  /** Cantidad de créditos activos sin mora. */
+  get onTimeCount(): number {
+    return this.activeCredits.filter((c) => !c.hasOverdue).length;
+  }
+
+  /**
+   * Créditos activos visibles según el filtro seleccionado.
+   */
+  get filteredActiveCredits(): PortalCredit[] {
+    if (this.filterState === 'SETTLED') return [];
+    if (this.filterState === 'OVERDUE') return this.activeCredits.filter((c) => c.hasOverdue);
+    if (this.filterState === 'ON_TIME') return this.activeCredits.filter((c) => !c.hasOverdue);
+    return this.activeCredits;
+  }
+
+  /**
+   * Créditos liquidados visibles según el filtro seleccionado.
+   */
+  get filteredSettledCredits(): PortalCredit[] {
+    if (this.filterState === 'ON_TIME' || this.filterState === 'OVERDUE') return [];
+    return this.settledCredits;
+  }
+
+  /**
+   * Aplica el filtro seleccionado.
+   * @param state
+   */
+  setFilter(state: 'ALL' | 'ON_TIME' | 'OVERDUE' | 'SETTLED'): void {
+    this.filterState = state;
+  }
+
+  /**
+   * Calcula la deuda restante aproximada de un crédito a partir de las cuotas
+   * no pagadas y la mora pendiente.
+   * Devuelve null si no hay suficiente información para el cálculo.
+   * @param credit
+   */
+  remainingDebt(credit: PortalCredit): number | null {
+    if (credit.installmentAmount == null || !credit.totalInstallments) return null;
+    const unpaid = Math.max(0, credit.totalInstallments - credit.paidInstallments);
+    return unpaid * credit.installmentAmount + credit.pendingPenalty;
+  }
+
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
@@ -102,8 +193,11 @@ export class PortalCreditsComponent implements OnInit {
    */
   daysUntil(dateStr: string | null): number | null {
     if (!dateStr) return null;
-    const diff = new Date(dateStr).getTime() - Date.now();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+    const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
+    const due   = new Date(y, m - 1, d);   // medianoche local de la fecha de vencimiento
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);             // medianoche local de hoy
+    return Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   }
 
   /**

@@ -122,11 +122,10 @@
 
               @if (canRegisterPayment(item)) {
                 <p-button
-                  label="Registrar cobro"
-                  icon="pi pi-plus"
+                  label="Cobrar"
+                  icon="pi pi-money-bill"
                   severity="success"
-                  size="small"
-                  styleClass="mt-2"
+                  styleClass="mt-2 font-semibold"
                   (onClick)="openPaymentDialog(item)"
                 />
               }

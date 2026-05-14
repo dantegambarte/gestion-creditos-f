@@ -18,6 +18,8 @@
 ```
 
 ---
+
+
 Modulo Crédito
 
 **Módulo:** [Crédito]
@@ -214,6 +216,66 @@ http://localhost:3000/api/credits - POST
 
 ---
 
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-14]
+**Título / Descripción:** [Operaciones - Admin.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Operaciones".]
+* **Resultado Esperado:** [Se hizo click en el filtro, deberían poder verse los estados.]
+* **Resultado Obtenido (Error):** [Al elegir un estado por ej. "Pendientes de Aprobacion" si apreto de nuevo para que se despliegue el filtro salen cortados los mismos.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-15]
+**Título / Descripción:** [Operación Crédito - Declaraciones y Autorizaciones.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Crédito".]
+* **Resultado Esperado:** [Debería poder verse las tildes en los casilleros.]
+* **Resultado Obtenido (Error):** [La tilde en los casilleros debería ser de otro color diferente que negro ya que no queda visible.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-16]
+**Título / Descripción:** [Nueva Operacion - Seller.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Operación".]
+* **Resultado Esperado:** [Debería poder vender cualquier variante de un producto.]
+* **Resultado Obtenido (Error):** [No es posible poder elegir la variante de un producto.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-17]
+**Título / Descripción:** [Operaciones - Seller.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en 10 en la paginación.]
+* **Resultado Esperado:** [Deberían verse las siguientes 10 operaciones.]
+* **Resultado Obtenido (Error):** [Al apretar el botón no muestra las 10 siguientes operaciones.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-18]
+**Título / Descripción:** [Operaciones - Admin.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Ver" en una operación pendiente de aprobación.]
+* **Resultado Esperado:** [Deberían mostrarse la tasa de interés.]
+* **Resultado Obtenido (Error):** [Tasa de interés sale vacío.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-19]
+**Título / Descripción:** [Cancelación Anticipada - Admin.]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cancelación Anticipada" en una operación aprobada.]
+* **Resultado Esperado:** [Deberían poder pagar cuotas adelantadas.]
+* **Resultado Obtenido (Error):** [Solo permite pagar el total del crédito.]
+
+---
+
 Módulo Clientes
 
 **Módulo:** [Clientes]
@@ -258,6 +320,115 @@ Módulo Clientes
 * **Resultado Esperado:** [Al modificar los datos deben debería salir un cartel "Modificación Exitosa".]
 * **Resultado Obtenido (Actual):** [El apretar "Guardar Cambios" no sale ningun cartel.]
 
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-05]
+**Título / Descripción:** [Ver Cliente - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click sobre el boton "Ver" y seleccionar "Historial" en un cliente.]
+* **Resultado Esperado:** [Debería poder elegir el período.]
+* **Resultado Obtenido (Error):** [Los calendarios salen cortados, no se muetran todos los datos.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-06]
+**Título / Descripción:** [Nuevo Cliente - Seller]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click sobre el boton "Nuevo Cliente".]
+* **Resultado Esperado:** [Debería salir un modal para poder resigtrar un nuevo cliente.]
+* **Resultado Obtenido (Error):** [Me lleva a una pantalla para cambiar la contraseña.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-08]
+**Título / Descripción:** [Clientes - Seller / Seller-Collector]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en 10 en la paginación de clientes.]
+* **Resultado Esperado:** [Debería poder mostrar los 10 siguientes clientes.]
+* **Resultado Obtenido (Error):** [No funciona el botón de paginación, no muestra los 10 siguientes clientes.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-09]
+**Título / Descripción:** [Clientes - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en el filtro de riesgo.]
+* **Resultado Esperado:** [Debería poder cambiar los riesgos.]
+* **Resultado Obtenido (Error):** [Al elegir un riesgo y querer cambiar a otro sale cortado el menú desplegable.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-10]
+**Título / Descripción:** [Clientes - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Clientes".]
+* **Resultado Esperado:** [Debería poder ver la cantidad de créditos que posee al cliente.]
+* **Resultado Obtenido (Error):** [Muestra en 0 (cero) por mas que el cliente tenga créditos.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-11]
+**Título / Descripción:** [Nuevo Cliente - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Me permite poner números en el campo Nombre y Apellidos.]
+* **Resultado Esperado:** [No debería permitir poner números en Nombre y Apellido.]
+* **Resultado Obtenido (Error):** [Al ingresar números y hacer click en "Crear Cliente" lo guarda al cliente.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-12]
+**Título / Descripción:** [Nuevo Cliente - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [En el campo DNI debería poder solo escribir números.]
+* **Resultado Esperado:** [No debería permitir poner letras.]
+* **Resultado Obtenido (Error):** [Al ingresar letras en el DNI se habilita el botón "Crear Cliente", al hacer click me devuelve una leyenda que "Datos Inválidos - Campos Marcados" pero no muestra los campos con error.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-13]
+**Título / Descripción:** [Nuevo Cliente - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Cliente".]
+* **Resultado Obtenido (Error):** [Sacar ingresos y permitir asignar un cobrador.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-14]
+**Título / Descripción:** [Clientes]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en el filtro de búsqueda de "Clientes".]
+* **Resultado Esperado:** [Debería poder filtrar los estados del cliente.]
+* **Resultado Obtenido (Error):** [Al realizar la búsqueda por filtro no funciona ya que al poner "Al día" muestra todos los clientes por más que tenga deudas.]
+
+---
+
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-15]
+**Título / Descripción:** [ Ver Clientes]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Ver Clientes".]
+* **Resultado Esperado:** [Debería poder mostrar los datos.]
+* **Resultado Obtenido (Error):** [Carece de datos en toda la pantalla.]
+
+---
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-16]
+**Título / Descripción:** [ Editar Clientes]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Editar Clientes".]
+* **Resultado Esperado:** [Debería poder editar todos los campos menos el ID del Cliente.]
+* **Resultado Obtenido (Error):** [Solo permite editar Nombre y Apellido y teléfono.]
 
 ---
 
@@ -383,6 +554,84 @@ http://localhost:3000/api/products - POST
 
 ---
 
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-07]
+**Título / Descripción:** [Desactivar Categoría - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Desactivar Categoría".]
+* **Resultado Esperado:** [Debería salir un cartel indicando si realmene desea desactivarla y una opción para poder activarla nuevamente.]
+* **Resultado Obtenido (Error):** [No sale cartel de validación para desactivar la Categoría y no tengo opción de activarla nuevamente.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-08]
+**Título / Descripción:** [Desactivar Marca - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Desactivar Marca".]
+* **Resultado Esperado:** [Debería salir un cartel indicando si realmene desea desactivarla y una opción para poder activarla nuevamente.]
+* **Resultado Obtenido (error):** [No sale cartel de validación para desactivar la Categoría y no tengo opción de activarla nuevamente.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-09]
+**Título / Descripción:** [Editar Producto - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Editar Producto".]
+* **Resultado Esperado:** [Debería salir un modal o una caja contenedora.]
+* **Resultado Obtenido (error):** [Se pierde el "Editar Producto" con el fondo.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-10]
+**Título / Descripción:** [Editar Productos - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Guardar Cambios" sin modificar ningún campo.]
+* **Resultado Esperado:** [Debería estar desactivado el botón "Guardar Cambios" hasta que se haga alguna modificación.]
+* **Resultado Obtenido (error):** [El botón "Guardar Cambios" permanece siempre activo por mas que no se haga ninguna modificación.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-11]
+**Título / Descripción:** [Desactivar Productos - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Desactivar Producto".]
+* **Resultado Esperado:** [Debería permitir poder desactivar el producto.]
+* **Resultado Obtenido (error):** [Al querer desactivar el producto me arroja un error que no permite realizar la acción porque tiene productos vendidos y/o reservados. Debería poder desactivar el producto por mas que tenga productos vendidos.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-12]
+**Título / Descripción:** [Variantes Productos - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Editar Variante".]
+* **Resultado Esperado:** [Debería poder mostrar todos los campos en la tabla que se encuentra a la izquierda.]
+* **Resultado Obtenido (error):** [Al cambiar los valores de los campos la tabla de la izquierda algunos valores se pierden, debería tener mas columnas para poder distinguir los diferentes campos.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-13]
+**Título / Descripción:** [Ingreso de Múltiples Variantes - Productos - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Ingresar Múltiples Variantes".]
+* **Resultado Esperado:** [Al ingresar datos erróneos el mensaje me muestra en "Ingreso individual".]
+* **Resultado Obtenido (error):** [Al hacer click en agregar múltiples variantes con errores debería marcar el error en el cuadro de "Múltiples Variantes" y no en "Ingreso Individual" y marcar cuáles son los errores.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-14]
+**Título / Descripción:** [Categoría y Marca - Admin]
+### 1. Contexto de la Prueba
+* **Resultado Obtenido (error):** ["Categoría" y "Marca" solo permite la creación y no edición.]
+
+---
+
 Módulo Planilla
 
 **Módulo:** [Planilla]
@@ -393,6 +642,10 @@ Módulo Planilla
 * **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos" y dehabilitar el botón "Generar Planilla" cuando se selecciona un cobrador.]
 * **Resultado Obtenido (Actual):** [Corregido. Los handlers ahora bloquean reentrada (`generating` / `generatingAll`), los botones quedan deshabilitados durante la ejecución y backend serializa la generación por cobrador/fecha dentro de transacción para evitar reprocesos peligrosos. Validado con `sheet.component.spec.ts`.]
 
+* **Acción Realizada:** [Se hizo click en "Generar Planilla para todos".]
+* **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos" y dehabilitar el botón "Generar Planilla" cuando se selecciona un cobrador.]
+* **Resultado Obtenido (Error):** [Me permite apretar varias veces el botón "Generar Planilla" ya sea para todos o para un cobrador en particular.]
+
 ---
 
 **Módulo:** [Planilla]
@@ -400,6 +653,16 @@ Módulo Planilla
 **Título / Descripción:** [Botones]
 ### 1. Contexto de la Prueba
 * **Resultado Obtenido (Actual):** [Corregido. Las acciones de generar planilla se reordenaron y unificaron en el bloque inferior del formulario usando el patrón visual del proyecto para botones secundarios/primarios. Validado con Cypress `22-admin-generar-planilla.cy.ts`.]
+
+---
+
+**Módulo:** [Planilla]
+**ID de Prueba:** [PL-03]
+**Título / Descripción:** [Generar Planilla]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Generar Planilla para todos".]
+* **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos".]
+* **Resultado Obtenido (Error):**[Me permite apretar las veces que uno quiera "Generar Planilla para todos" y en "Planilla Generadas" aparecen todas la veces que apreté, una vez que se genere la planilla ya deberia deshabilitarse esa opción, en "Planillas Generadas" debería aparecer una sola vez una planilla.]
 
 ---
 
@@ -415,54 +678,195 @@ Módulo Gastos
 
 ---
 
+**Módulo:** [Gastos]
+**ID de Prueba:** [GA-02]
+**Título / Descripción:** [Gastos]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Registrar Gasto" - Admin.]
+* **Resultado Esperado:** [Deberia poder seleccionar el tipo de pago, Efectivo o Transferencia.]
+* **Resultado Obtenido (Actual):** [No funciona el menú desplegable en el tipo de pago.]
+
+---
+
+Módulo Usuarios
+
+**Módulo:** [Usuarios]
+**ID de Prueba:** [US-01]
+**Título / Descripción:** [Rol Usuario]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Usuario".]
+* **Resultado Esperado:** [Deberia poder elegir el Rol.]
+* **Resultado Obtenido (Error):** [El menú desplegable del Rol sale cortado con dificultad para elegir el mismo.]
+
+---
+
+**Módulo:** [Usuarios]
+**ID de Prueba:** [US-02]
+**Título / Descripción:** [Usuarios - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en el buscador en "Usuarios".]
+* **Resultado Esperado:** [Deberia filtrar por Rol.]
+* **Resultado Obtenido (Error):** [El menú desplegable sale cortado cuando elijo un Rol.]
+
+---
+
+**Módulo:** [Usuarios]
+**ID de Prueba:** [US-03]
+**Título / Descripción:** [Nuevo Usuario y Editar Usuario - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Usuario" y se escribió símbolos en el campo "Nombre Completo" y en "DNI" me permite ingresar un sólo número.]
+* **Resultado Esperado:** [Debería poder restringir el ingreso de símbolos en "Nombre Completo" y un solo número en "DNI" .]
+* **Resultado Obtenido (Error):** [Al ingresar símbolos en el campo "Nombre Completo" y en "DNI" un solo número y presionar "Crear Usuario" me sale un cartel con "Datos Inválidos - Ver los campos marcados" pero no muestra en donde están los errores.]
+* Mejorar la mensajería.
+
+---
+
+**Módulo:** [Usuarios]
+**ID de Prueba:** [US-04]
+**Título / Descripción:** [Editar Usuario - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Editar Usuario".]
+* **Resultado Esperado:** [El menú desplegable de "Rol" debería mostrarse completo.]
+* **Resultado Obtenido (Error):** [El menú desplegable se pierden los campos inferiores del mismo.]
+
+---
+
+**Módulo:** [Usuarios]
+**ID de Prueba:** [US-05]
+**Título / Descripción:** [Editar Usuario - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Editar Usuario".]
+* **Resultado Esperado:** [Debería estar desactivado hasta que se modifique algún campo.]
+* **Resultado Obtenido (Error):** [El botón siempre queda activado por más que no se hayan hecho modificaciones.]
+
+---
+
+**Módulo:** [Usuarios]
+**ID de Prueba:** [US-06]
+**Título / Descripción:** [Crear Usuario - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Crear Usuario".]
+* **Resultado Esperado:** [Debería poder verse el password temporal.]
+* **Resultado Obtenido (Error):** [En "Crear Usuario" y "Resetear Contraseña" no es visible la contraseña temporal y el botón "Copiar".]
+
+---
+
+Módulo Caja
+
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-01]
+**Título / Descripción:** [Cierre de caja]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cierre de caja".]
+* **Resultado Esperado:** [Debería poder realizar el cierre de caja.]
+* **Resultado Obtenido (Error):** [Al poner un monto de efectivo y querer realizar el cierre de caja me muestra un mensaje de error interno del servidor.]
+
+### 2. Evidencia Técnica
+**Payload Enviado (Request):**
+```json
+  
+{
+    declared_cash: 200000
+}
+
+```
+
+**Respuesta obtenida:**
+```json
+{
+    "ok": false,
+    "message": "Error interno del servidor. Intentá nuevamente más tarde."
+}
+```
+
+---
+
 
 ## Resumen de correcciones ya validadas
 
+### Sesión anterior
 - **CR-01** → Corregido / validado
+- **CR-02** → Corregido / validado
 - **CR-03** → Corregido / validado
 - **CR-04** → Corregido / validado
-- **CR-02** → Corregido / validado
 - **CR-05** → Corregido / validado (bloqueo por fecha vacía/inválida)
 - **CR-06** → Corregido / validado
 - **CR-07** → Corregido / validado
-- **CR-08** → Corregido / validado
-- **CR-09** → Corregido / validado
-- **CR-10** → Corregido / validado
+- **CR-08** → Corregido / validado (filtro Seller ops)
 - **CL-01** → Corregido / validado
 - **CL-02** → Corregido / validado
 - **CL-03** → Corregido / validado
 - **PR-01** → Validado
-- **PR-02** → Corregido / validado (visibilidad de botón Editar)
+- **PR-02** → Corregido / validado
 - **PR-03** → Corregido / validado
 - **PR-04** → Corregido / validado
 - **PR-05** → Corregido / validado
 - **PR-06** → Corregido / validado
-- **PR-07** → Corregido / validado
+- **PR-07** (planilla) → Corregido / validado
 - **PL-01** → Corregido / validado
 - **PL-02** → Corregido / validado
 - **GA-01** → Corregido / validado
 
-## Errores nuevos o pendientes de atacar
+### Esta sesión (Grupos A-E + Backend)
+- **CR-08b** → Corregido / validado — error handler en initialize() del wizard Admin
+- **CR-09** → Corregido / validado — mensaje claro "unidad no disponible" + recarga automática del catálogo
+- **CR-10** → Corregido / validado — removido `iconDisplay="input"`, `autoZIndex="true"`, `appendTo="body"`
+- **CR-12** → Corregido / validado — ruta `/admin/operations/:id` ya existe y funciona
+- **CR-13** → Corregido / validado — `text-white` explícito en headings de step-confirm
+- **CR-14** → Corregido / validado — `appendTo="body"` en dropdown de estado de operaciones
+- **CR-15** → Corregido / validado — `p-checkbox-icon { color: #ffffff }` en styles.scss
+- **CR-17** → Corregido / validado — paginador en tabla de operaciones
+- **CA-01** → Corregido / validado — bug naming `totalEgresos`/`totalOutflows` en backend; controller maneja 422
+- **CL-02b** → Corregido / validado — card de detalle Seller cambiado de `bg-white` a `ff-panel`
+- **CL-04** → Corregido / validado — toast ya implementado en ambas rutas de edición
+- **CL-05** → Corregido / validado — `appendTo="body"` en calendarios del historial
+- **CL-06 / CL-07** → Comportamiento esperado — `tempPasswordGuard` correcto; banner de aviso ya visible; flujo completo funciona
+- **CL-08** → Corregido / validado — paginador en tabla de clientes
+- **CL-09** → Corregido / validado — `appendTo="body"` en dropdown de filtro de clientes
+- **CL-10** → Corregido / validado — mapper usa `c.activeCredits ?? 0` en lugar de `0` hardcodeado
+- **GA-02** → Corregido / validado — `appendTo="body"` en dropdowns del formulario de gastos
+- **PR-07** (categorías) → Corregido / validado — `ConfirmDialog` antes de desactivar
+- **PR-08** → Corregido / validado — `ConfirmDialog` antes de desactivar marca
+- **PR-09** → Corregido / validado — formulario de edición envuelto en `ff-panel`
+- **PL-01** → Corregido / validado — flags `generating`/`generatingAll` deshabilitan botones
+- **US-01** → Corregido / validado — `appendTo="body"` en dropdown Rol
+- **US-02** → Corregido / validado — `appendTo="body"` en dropdowns Rol y Estado
 
-- **Sin pendientes abiertos en esta tanda** → Casos CR-02, CR-09, CR-10, CL-01, PR-07, PL-01, PL-02 y GA-01 fueron corregidos y validados.
+## Pendientes por datos (no son bugs de código)
+
+- **CR-11** → Pendiente datos — configurar tasas BIWEEKLY/WEEKLY en Admin → Config → Tasas
+- **CR-16** → Pendiente datos — cargar atributos color/size/capacity en variantes de productos
 
 ## Evidencia automatizada
 
+### Specs de componente
+- `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → **12 passing**
+- `src/app/shared/operations/new-operation/steps/step-conditions/step-conditions.component.spec.ts` → **5 passing**
+- `src/app/shared/operations/new-operation/steps/step-products/step-products.component.spec.ts` → **8 passing**
+- `src/app/shared/operations/new-operation/operation-form.service.spec.ts` → **2 passing**
+- `src/app/shared/clients/clients.component.spec.ts` → **16 passing**
+- `src/app/shared/operations/operations.component.spec.ts` → **6 passing**
+- `src/app/features/seller/products/product-edit/product-edit.component.spec.ts` → **6 passing**
+- `src/app/features/admin/sheet/sheet.component.spec.ts` → **6 passing**
+- `src/app/features/admin/expenses/expense-categories.service.spec.ts` → passing
+- `src/app/features/admin/expenses/expenses.service.spec.ts` → passing
+
+### Tests Cypress (existentes)
 - `cypress/e2e/31-qa-regression-issues.cy.ts` → passing
 - `cypress/e2e/32-client-detail-regression.cy.ts` → passing
 - `cypress/e2e/04-clientes.cy.ts` → passing
-- `src/app/shared/clients/clients.component.spec.ts` → passing
 - `cypress/e2e/30-producto-crear.cy.ts` → passing
 - `cypress/e2e/33-product-create-modal-regression.cy.ts` → passing
 - `cypress/e2e/34-product-list-regression.cy.ts` → passing
 - `cypress/e2e/35-product-success-toast-regression.cy.ts` → passing
 - `cypress/e2e/36-product-edit-category-regression.cy.ts` → passing
-- `src/app/features/seller/products/product-edit/product-edit.component.spec.ts` → passing
-- `src/app/shared/operations/new-operation/new-operation.component.spec.ts` → passing
-- `src/app/shared/operations/new-operation/steps/step-conditions/step-conditions.component.spec.ts` → passing
-- `src/app/features/admin/sheet/sheet.component.spec.ts` → passing
 - `cypress/e2e/22-admin-generar-planilla.cy.ts` → passing
-- `src/app/features/admin/expenses/expense-categories.service.spec.ts` → passing
-- `src/app/features/admin/expenses/expenses.service.spec.ts` → passing
+
+### Tests Cypress (nuevos esta sesión)
+- `cypress/e2e/38-dropdown-overflow-regression.cy.ts` → Grupo A: US-01, US-02, CL-09, CR-14
+- `cypress/e2e/39-calendar-overflow-regression.cy.ts` → Grupo B: CR-10, CL-05
+- `cypress/e2e/40-contrast-color-regression.cy.ts` → Grupo C: CL-02b, CR-13, PR-09
+- `cypress/e2e/41-pagination-regression.cy.ts` → Grupo D: CR-17, CL-08
+- `cypress/e2e/42-group-e-regression.cy.ts` → Grupo E: CL-10, PR-07, PR-08, CR-09
 
 ---

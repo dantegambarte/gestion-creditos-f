@@ -1,23 +1,30 @@
-import { Component, inject } from '@angular/core';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
-import { SidebarComponent } from './shared/layout/sidebar/sidebar.component';
-import { HeaderComponent } from './shared/layout/header/header.component';
 import { AsyncPipe } from '@angular/common';
-import { MockAuthService } from './core/auth/mock-auth.service';
-import { filter, map } from 'rxjs/operators';
+import { Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { ToastModule } from 'primeng/toast';
+import { filter, map } from 'rxjs/operators';
+import { AuthServiceBase } from './core/auth/auth-service.base';
+import { HeaderComponent } from './shared/layout/header/header.component';
+import { SidebarComponent } from './shared/layout/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, HeaderComponent, AsyncPipe],
+  imports: [
+    RouterOutlet,
+    SidebarComponent,
+    HeaderComponent,
+    AsyncPipe,
+    ToastModule,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
 export class AppComponent {
   title = 'gestion-creditos-f';
 
-  auth = inject(MockAuthService);
+  auth = inject(AuthServiceBase);
   private router = inject(Router);
 
   private noLayoutRoutes = ['/portal', '/change-password'];

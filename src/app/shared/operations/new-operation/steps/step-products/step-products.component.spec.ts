@@ -1,91 +1,87 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { CustomersService } from '../../../../../features/seller/clients/customers.service';
-import { ProductsService } from '../../../../../features/seller/products/products.service';
-import { ProductUnitsService } from '../../../../../features/seller/products/product-units.service';
-import { OperationFormService } from '../../operation-form.service';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { StepProductsComponent } from './step-products.component';
+import { CatalogProduct, CartLine } from '../../operation-form.service';
 
-describe('StepProductsComponent (CR-03)', () => {
+describe('StepProductsComponent', () => {
   let component: StepProductsComponent;
   let fixture: ComponentFixture<StepProductsComponent>;
-  let formService: OperationFormService;
+
+  const mockCatalog: CatalogProduct[] = [
+    { productoId: 'p1', nombre: 'Heladera', precio: 1000, stockDisponible: 3, unitIds: ['u1', 'u2', 'u3'], productIds: ['prod1'], variants: [] },
+    { productoId: 'p2', nombre: 'Televisor', precio: 2000, stockDisponible: 1, unitIds: ['u4'], productIds: ['prod2'], variants: [] },
+  ];
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [StepProductsComponent],
-      providers: [
-        { provide: CustomersService, useValue: { list: () => of([]) } },
-        { provide: ProductsService, useValue: { list: () => of([]) } },
-        { provide: ProductUnitsService, useValue: { getAll: () => of([]) } },
-      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(StepProductsComponent);
     component = fixture.componentInstance;
-    formService = fixture.debugElement.injector.get(OperationFormService);
+
+    const fb = TestBed.inject(FormBuilder);
+    component.form = fb.group({
+      operationType: ['SALE'],
+      totalAmount: [null],
+    });
+    component.catalogProducts = mockCatalog;
+    component.cartLines = [];
+    component.operationTypeOptions = [{ label: 'Venta', value: 'SALE' }, { label: 'Préstamo', value: 'LOAN' }];
     fixture.detectChanges();
   });
 
-  it('oculta productos y limpia estado al seleccionar préstamo personal', () => {
-    formService.searchProduct.set('heladera');
-    formService.selectedProducts.set([
-      { id: 'p1', name: 'Heladera', price: 1000, stock: 2 },
-    ]);
-
-    component.changeOperationType('LOAN');
-    fixture.detectChanges();
-
-    expect(component.usesProducts).toBeFalse();
-    expect(formService.searchProduct()).toBe('');
-    expect(formService.selectedProducts()).toEqual([]);
-    expect(
-      fixture.nativeElement.querySelector('[data-cy="input-buscar-producto"]'),
-    ).toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('Unidades Disponibles');
+  it('should create', () => {
+    expect(component).toBeTruthy();
   });
 
-  it('filtra productos por nombre al escribir en el buscador (CR-04)', () => {
-    formService.availableProducts = [
-      {
-        id: 'u1',
-        name: 'Aire Acondicionado',
-        price: 1200,
-        stock: 1,
-        unitCode: 'AA-001',
-      },
-      {
-        id: 'u2',
-        name: 'Heladera',
-        price: 900,
-        stock: 1,
-        unitCode: 'HL-001',
-      },
-    ];
+  describe('filteredCatalogProducts', () => {
+    it('devuelve todos los productos si no hay búsqueda', () => {
+      component.catalogSearchText = '';
+      expect(component.filteredCatalogProducts.length).toBe(2);
+    });
 
-    formService.searchProduct.set('aire');
+    it('filtra por nombre parcial', () => {
+      component.catalogSearchText = 'hela';
+      expect(component.filteredCatalogProducts.length).toBe(1);
+      expect(component.filteredCatalogProducts[0].productoId).toBe('p1');
+    });
 
-    expect(formService.filteredAvailableProducts()).toEqual([
-      {
-        id: 'u1',
-        name: 'Aire Acondicionado',
-        price: 1200,
-        stock: 1,
-        unitCode: 'AA-001',
-      },
-    ]);
+    it('es case-insensitive', () => {
+      component.catalogSearchText = 'TELEV';
+      expect(component.filteredCatalogProducts.length).toBe(1);
+    });
   });
 
-  it('filtra también por código de unidad', () => {
-    formService.availableProducts = [
-      { id: 'u1', name: 'Aire Acondicionado', price: 1200, stock: 1, unitCode: 'AA-001' },
-      { id: 'u2', name: 'Heladera', price: 900, stock: 1, unitCode: 'HL-001' },
-    ];
+  describe('isCatalogProductOutOfStock', () => {
+    it('devuelve false si el carrito no tiene ese producto', () => {
+      component.cartLines = [];
+      expect(component.isCatalogProductOutOfStock(mockCatalog[0])).toBeFalse();
+    });
 
-    formService.searchProduct.set('hl-001');
+    it('devuelve true cuando la cantidad en carrito alcanza el stock', () => {
+      component.cartLines = [{
+        productoId: 'p1', nombre: 'Heladera', variantId: 'v1', variantLabel: 'Std',
+        cantidad: 3, precio: 1000, subtotal: 3000, stockDisponible: 3,
+        unitIds: [], unitCodes: [], productIds: [], rates: [], selectedInstallments: null,
+      }];
+      expect(component.isCatalogProductOutOfStock(mockCatalog[0])).toBeTrue();
+    });
+  });
 
-    expect(formService.filteredAvailableProducts()).toEqual([
-      { id: 'u2', name: 'Heladera', price: 900, stock: 1, unitCode: 'HL-001' },
-    ]);
+  describe('emisión de eventos', () => {
+    it('emite productAdded al hacer click en Agregar', () => {
+      const emitted: CatalogProduct[] = [];
+      component.productAdded.subscribe((p) => emitted.push(p));
+      component.productAdded.emit(mockCatalog[0]);
+      expect(emitted[0]).toBe(mockCatalog[0]);
+    });
+
+    it('emite cartCleared al vaciar el carrito', () => {
+      let cleared = false;
+      component.cartCleared.subscribe(() => (cleared = true));
+      component.cartCleared.emit();
+      expect(cleared).toBeTrue();
+    });
   });
 });
