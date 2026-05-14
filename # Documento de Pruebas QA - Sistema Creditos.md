@@ -43,6 +43,12 @@
 | **CL-08** | Clientes - Seller / Seller-Collector. | Click en paginación debe mostrar los siguientes registros. | Corregido / Validado — agregado `[paginator]="true" [rows]="10"` en `clients.component.html` |
 | **CL-09** | Clientes - Admin. | El menú desplegable de riesgo no debe quedar cortado. | Corregido / Validado — `appendTo="body"` en dropdown de filtro de clientes |
 | **CL-10** | Clientes - Admin. | Muestra la cantidad real de créditos del cliente. | Corregido / Validado — mapper `toClient()` ahora usa `c.activeCredits ?? 0` en lugar de `0` hardcodeado |
+| **CL-11** | Nuevo Cliente - Admin | Se hizo click en "Nuevo Cliente". | No debería permitir poner números en el campo "Nombre" y "Apellido". | Error |
+| **CL-12** | Nuevo Cliente - Admin | Se hizo click en "Nuevo Cliente". | En el campo "DNI" debería poder solo escribir números. | Error |
+| **CL-13** | Nuevo Cliente - Admin | Click en "Nuevo Cliente". | Eliminar ingresos y permitir asignar un cobrador. | Error |
+| **CL-14** | Clientes | Click en el filtro de búsqueda. | Debería poder filtrar los estados. | Error |
+| **CL-15** | Ver Clientes | Click en "Ver Clientes". | Debería poder mostrar los datos. | Error |
+| **CL-16** | Editar Clientes | Click en "Editar" en un cliente. | Debería permitir editar todos los campos. | Error |
 
 
 ## 🟢 3. Módulo: Producto
@@ -58,6 +64,11 @@
 | **PR-07** | Desactivar Categoría - Admin | Se hizo click en "Desactivar Categoría". | Debería salir un cartel de confirmación y poder activarla de nuevo. | Corregido / Validado — `ConfirmDialog` antes de ejecutar; categorías inactivas muestran botón "Activar" |
 | **PR-08** | Desactivar Marca - Admin | Se hizo click en "Desactivar Marca". | Debería salir un cartel de confirmación y poder activarla de nuevo. | Corregido / Validado — ídem PR-07 para marcas |
 | **PR-09** | Editar Producto - Admin | Se hizo click en "Editar Producto". | El formulario debe ser distinguible del fondo. | Corregido / Validado — formulario envuelto en `ff-panel` con heading con color explícito |
+| **PR-10** | Editar Producto | Se hizo click en "Guardar Cambios". | No se hizo ninguna modificación y me permitió "Guardar Cambios". | Error |
+| **PR-11** | Desactivar Producto | Se hizo click en "Desactivar Producto". | Debería permitir desactivar productos por mas que tengan unidades vendidas. | Mensaje de Error "No se permite desactivar productos si posee unidades vendidas" |
+| **PR-12** | Variantes Productos | Se hizo click en "Editar Variantes". | Debería poder mostrar todos los campos en la tabla de la izquierda. | Error: Agregar mas |
+| **PR-13** | Múltiples Variantes Producto | Se hizo click en "Ingresar Múltiples Variantes". | Se ingresaron datos erróneos. | Error: el mensaje de error debería estar en el recuadro de "Múltiples Variantes" y además marcar donde está el error |
+| **PR-14** | Categoría y Marca | Categoría y Marca solo permite creación y no edición. | Error |
 
 
 ## 🟢 Módulo: Planilla
@@ -82,6 +93,10 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **US-01** | Rol Usuario | Se hizo click en "Nuevo Usuario". | Debería poder elegir el Rol. | Corregido / Validado — `appendTo="body"` en dropdown de Rol en modal de creación |
 | **US-02** | Usuarios - Admin | Se hizo click en "Usuarios". | No funciona el filtro para seleccionar por Rol, sale cortado. | Corregido / Validado — `appendTo="body"` en dropdowns de Rol y Estado en listado |
+| **US-03** | Nuevo Usuario y Editar Usuario - Admin | Se hizo click en "Nuevo Usuario". | No debería permitir ingresar símbolos en "Nombre Completo" y un sólo número en DNI. | Error: arroja un mensaje de error pero no en donde está |
+| **US-04** | Editar Usuario - Admin | Se hizo click en "Editar Usuario". | El menú desplegable de "Rol" debería mostrarse completo. | El menú desplegable sale cortado |
+| **US-05** | Editar Usuario - Admin | Se hizo click en "Editar Usuario". | El botón de "Guardar Cambios" siempre activo. | Error: debería esta desactivado hasta que se modifique algún campo |
+| **US-06** | Crear Usuario - Admin | Se hizo click en "Crear Usuario". | Debería verse el password temporal. | Error: el password temporal sale con el mismo color del fondo al igual que el botón "Copiar" |
 
 
 ## 🟢 Módulo: Caja
