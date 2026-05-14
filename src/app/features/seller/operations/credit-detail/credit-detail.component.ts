@@ -2,7 +2,7 @@ import { CommonModule, DatePipe, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -64,6 +64,7 @@ import { PaymentsService } from '../../../collector/payments.service';
 })
 export class CreditDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly creditsService = inject(CreditsService);
   private readonly installmentsService = inject(InstallmentsService);
   private readonly paymentsService = inject(PaymentsService);
@@ -709,6 +710,21 @@ export class CreditDetailComponent implements OnInit {
     return Math.round(
       (this.refinancePendingBalance + (this.refinanceExtraCharges ?? 0)) * 100,
     ) / 100;
+  }
+
+  /** ID del crédito predecesor (el que fue refinanciado para crear este). */
+  get predecessorCreditId(): string | null {
+    return this.credit?.refinancingChain?.predecessorId ?? null;
+  }
+
+  /** ID del crédito sucesor (el creado al refinanciar este). */
+  get successorCreditId(): string | null {
+    return this.credit?.refinancingChain?.successorId ?? null;
+  }
+
+  /** Navega al crédito de la cadena indicado. */
+  navigateToChainCredit(id: string): void {
+    this.router.navigate(['/seller/operations', id]);
   }
 
   get refinanceStep1Valid(): boolean {

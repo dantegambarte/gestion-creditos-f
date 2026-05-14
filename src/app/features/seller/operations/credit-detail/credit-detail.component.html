@@ -16,6 +16,36 @@
     </div>
   }
 
+  <!-- Cadena de refinanciación -->
+  @if (predecessorCreditId) {
+    <div
+      class="auth-warning-banner mx-6 mt-4 cursor-pointer"
+      style="border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); color: #a78bfa"
+      (click)="navigateToChainCredit(predecessorCreditId)"
+    >
+      <i class="pi pi-link shrink-0"></i>
+      <p class="text-sm">
+        <strong>Refinanciación de crédito anterior.</strong>
+        Este crédito fue originado refinanciando un crédito existente.
+        <span class="underline ml-1">Ver crédito original →</span>
+      </p>
+    </div>
+  }
+  @if (successorCreditId) {
+    <div
+      class="auth-warning-banner mx-6 mt-4 cursor-pointer"
+      style="border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); color: #a78bfa"
+      (click)="navigateToChainCredit(successorCreditId)"
+    >
+      <i class="pi pi-arrow-right-arrow-left shrink-0"></i>
+      <p class="text-sm">
+        <strong>Crédito refinanciado.</strong>
+        Este crédito fue refinanciado y su deuda trasladada a un nuevo crédito.
+        <span class="underline ml-1">Ver nuevo crédito →</span>
+      </p>
+    </div>
+  }
+
   <!-- Header bar -->
   <div
     class="flex flex-wrap items-center gap-4 px-6 py-4 border-b"

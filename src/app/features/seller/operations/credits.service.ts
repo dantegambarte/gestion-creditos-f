@@ -23,6 +23,7 @@ import {
   RefinancePayload,
   RefinanceResult,
   RefinanceResultRaw,
+  RefinancingChain,
   SimulatePayload,
   SimulateResult,
   SimulateResultItem,
@@ -114,6 +115,24 @@ function toCreditUnit(raw: CreditUnitRaw): CreditUnit {
  * @param raw
  * @returns
  */
+function toRefinancingChain(
+  raw: NonNullable<CreditDetailRaw['refinancing_chain']>,
+): RefinancingChain {
+  return {
+    predecessorId: raw.predecessor_id,
+    successorId: raw.successor_id,
+    chainDepth: raw.chain_depth,
+    chain: raw.chain.map((n) => ({
+      id: n.id,
+      status: n.status as CreditDetail['status'],
+      createdAt: n.created_at,
+      depth: n.depth,
+    })),
+    isRefinancing: raw.is_refinancing,
+    isPredecessor: raw.is_predecessor,
+  };
+}
+
 function toCreditDetail(raw: CreditDetailRaw): CreditDetail {
   const downPayment = raw.down_payment ?? 0;
   return {
@@ -132,6 +151,10 @@ function toCreditDetail(raw: CreditDetailRaw): CreditDetail {
     settledAt: raw.settled_at,
     settlementAmount: raw.settlement_amount,
     settlementType: raw.settlement_type,
+    refinancedFromCreditId: raw.refinanced_from_credit_id ?? null,
+    refinancingChain: raw.refinancing_chain
+      ? toRefinancingChain(raw.refinancing_chain)
+      : null,
   };
 }
 

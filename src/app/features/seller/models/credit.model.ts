@@ -59,6 +59,22 @@ export interface CreditUnit {
   productName: string;
 }
 
+export interface RefinancingChainNode {
+  id: string;
+  status: CreditStatus;
+  createdAt: string;
+  depth: number;
+}
+
+export interface RefinancingChain {
+  predecessorId: string | null;
+  successorId: string | null;
+  chainDepth: number;
+  chain: RefinancingChainNode[];
+  isRefinancing: boolean;
+  isPredecessor: boolean;
+}
+
 export interface CreditDetail extends Credit {
   rejectionReason: string | null;
   notes: string | null;
@@ -74,6 +90,8 @@ export interface CreditDetail extends Credit {
   settledAt: string | null;
   settlementAmount: number | null;
   settlementType: string | null;
+  refinancedFromCreditId: string | null;
+  refinancingChain: RefinancingChain | null;
 }
 
 export interface CreditListFilters {
@@ -229,6 +247,15 @@ export interface CreditDetailRaw extends CreditRaw {
   settled_at: string | null;
   settlement_amount: number | null;
   settlement_type: string | null;
+  refinanced_from_credit_id: string | null;
+  refinancing_chain?: {
+    predecessor_id: string | null;
+    successor_id: string | null;
+    chain_depth: number;
+    chain: { id: string; status: string; created_at: string; depth: number }[];
+    is_refinancing: boolean;
+    is_predecessor: boolean;
+  } | null;
 }
 
 export interface ApprovePayload {
