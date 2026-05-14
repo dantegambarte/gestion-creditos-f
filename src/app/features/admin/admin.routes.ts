@@ -40,7 +40,7 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: AppRoutes.CLIENTS_DETAIL,
     loadComponent: () =>
-      import('../../shared/clients/client-detail/client-detail.component').then(
+      import('../seller/clients/client-detail/client-detail.component').then(
         (c) => c.ClientDetailComponent,
       ),
   },
