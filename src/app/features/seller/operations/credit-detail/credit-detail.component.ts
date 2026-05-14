@@ -202,7 +202,14 @@ export class CreditDetailComponent implements OnInit {
       { label: 'Operaciones', route: '/seller/operations' },
       { label: 'Detalle' },
     ]);
-    this.load();
+    this.route.paramMap.subscribe(() => {
+      this.credit = null;
+      this.selectedInstallment = null;
+      this.mainTab = 'installments';
+      this.paymentsLoaded = false;
+      this.creditPayments = [];
+      this.load();
+    });
   }
 
   goBack(): void {
