@@ -299,6 +299,7 @@ export class ClientDetailComponent implements OnInit {
       SETTLED: 'Liquidado',
       REJECTED: 'Rechazado',
       EXPIRED: 'Vencido',
+      REFINANCED: 'Refinanciado',
     };
     return map[status];
   }
@@ -320,6 +321,7 @@ export class ClientDetailComponent implements OnInit {
       SETTLED: 'secondary',
       REJECTED: 'danger',
       EXPIRED: 'danger',
+      REFINANCED: 'danger'
     };
     return map[status];
   }

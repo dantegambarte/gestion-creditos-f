@@ -2,6 +2,25 @@
 
 This contract defines stable conventions for E2E specs in this project.
 
+## Global Run Policy (Safe by Default)
+
+- `npm run e2e:run` requires `--spec` explicitly and fails fast if omitted.
+- This prevents accidental execution of the full Cypress suite (~50 specs) during local/CI incremental work.
+- To run all specs intentionally, use `npm run e2e:run:all`.
+
+Examples:
+
+```bash
+# Partial run (required path for normal work)
+npm run e2e:run -- --spec "cypress/e2e/01-auth-real.cy.ts"
+
+# Multiple specs (comma-separated)
+npm run e2e:run -- --spec "cypress/e2e/01-auth-real.cy.ts,cypress/e2e/04-clientes-real.cy.ts"
+
+# Full suite (explicit only)
+npm run e2e:run:all
+```
+
 ## Core Rules
 
 - Each spec is **self-contained**: it owns login/session setup and all required intercepts.
@@ -10,6 +29,50 @@ This contract defines stable conventions for E2E specs in this project.
 - Prefer robust selectors: `data-cy` first, stable visible text second.
 - Avoid fragile attributes such as `ng-reflect-*`, generated IDs, and debug-only DOM markers.
 - Avoid orphan waits (`cy.wait(2000)`) and hidden coupling to execution order.
+
+## Execution Modes: Legacy Mock vs Real Backend
+
+### Legacy Mock (default)
+
+- Keep using `cy.loginAs(...)` and spec-local intercepts.
+- This mode is backward-compatible with the current suite.
+
+### Real Backend (new Batch 1 path)
+
+- Use `cy.loginReal(...)`.
+- `cy.loginReal(...)` MUST run with `realAuthEnabled=true` and real credentials in Cypress env.
+- In real specs, do **not** intercept auth endpoints:
+  - `POST **/auth/login`
+  - `GET **/auth/me`
+
+Required env vars for real mode:
+
+- `CYPRESS_realAuthEnabled=true`
+- `CYPRESS_realAdminDni`, `CYPRESS_realAdminPassword`
+- `CYPRESS_realSellerDni`, `CYPRESS_realSellerPassword`
+- `CYPRESS_realCollectorDni`, `CYPRESS_realCollectorPassword`
+
+Valores de referencia con `db:reset` + `npm run seed` (semillas actuales):
+
+- `ADMIN`: DNI `00000000`, password inicial `Admin1234` (temporal; suele cambiarse en primer login)
+- `SELLER`: DNI `11111111`, password `123456`
+- `COLLECTOR`: DNI `22222222`, password `123456`
+
+Si ya cambiaste la contraseña del ADMIN manualmente (por ejemplo `admin123`), usá ese valor real en `CYPRESS_realAdminPassword`.
+
+Real backend specs included in Batch 1:
+
+- `cypress/e2e/01-auth-real.cy.ts`
+- `cypress/e2e/04-clientes-real.cy.ts`
+- `cypress/e2e/21-seller-clientes-nuevo-real.cy.ts`
+- `cypress/e2e/03-nueva-operacion-real.cy.ts`
+- `cypress/e2e/10-admin-aprobaciones-real.cy.ts`
+
+Recommended command to run only these real specs:
+
+```bash
+npx cypress run --spec "cypress/e2e/01-auth-real.cy.ts,cypress/e2e/04-clientes-real.cy.ts,cypress/e2e/21-seller-clientes-nuevo-real.cy.ts,cypress/e2e/03-nueva-operacion-real.cy.ts,cypress/e2e/10-admin-aprobaciones-real.cy.ts"
+```
 
 ## Spec Isolation Checklist
 

@@ -69,9 +69,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         _redirectToLogin(router, auth, isPortal);
       }
 
-      if (err?.status === 403) {
-        // Un 403 en contexto portal significa contraseña temporal → cambio de contraseña del portal.
-        // En contexto interno redirige al cambio de contraseña interno.
+      if (_shouldRedirectToChangePassword(err)) {
+        // Redirigir solo cuando el backend indica explícitamente "contraseña temporal".
         router.navigate([isPortal ? AppRoutes.PORTAL_CHANGE_PASSWORD : AppRoutes.CHANGE_PASSWORD]);
       }
 
@@ -79,6 +78,20 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     }),
   );
 };
+
+/**
+ * Determina si un 403 corresponde al caso de contraseña temporal obligatoria.
+ * @param {unknown} err Error HTTP devuelto por el backend.
+ * @returns {boolean} true solo si el 403 contiene el mensaje esperado de cambio obligatorio.
+ */
+export function _shouldRedirectToChangePassword(err: unknown): boolean {
+  const message = (err as { error?: { message?: unknown } })?.error?.message;
+  return (
+    (err as { status?: number })?.status === 403 &&
+    typeof message === 'string' &&
+    message.includes('Debés cambiar tu contraseña antes de continuar.')
+  );
+}
 
 function _redirectToLogin(router: Router, auth: AuthServiceBase, isPortal: boolean): void {
   if (isPortal) {

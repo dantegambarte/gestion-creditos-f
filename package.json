@@ -9,11 +9,12 @@
     "test": "ng test",
     "serve:ssr:gestion-creditos-f": "node dist/gestion-creditos-f/server/server.mjs",
     "e2e": "cypress open",
-    "e2e:run": "cypress run",
+    "e2e:run": "node ./cypress/scripts/e2e-run-safe.js",
+    "e2e:run:all": "cypress run",
     "e2e:report:txt": "cypress run 2>&1 | tee cypress-report.txt",
     "e2e:report": "mochawesome-merge cypress/reports/mocha/*.json -o cypress/reports/report.json && marge cypress/reports/report.json --reportDir cypress/reports --inline",
     "e2e:clean": "node -e \"const fs=require('fs');const d='cypress/reports/mocha';if(fs.existsSync(d))fs.readdirSync(d).forEach(f=>fs.unlinkSync(d+'/'+f));\"",
-    "e2e:all": "npm run e2e:clean && cypress run && npm run e2e:report"
+    "e2e:all": "npm run e2e:clean && npm run e2e:run:all && npm run e2e:report"
   },
   "private": true,
   "dependencies": {

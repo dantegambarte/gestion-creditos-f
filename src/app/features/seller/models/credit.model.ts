@@ -3,7 +3,7 @@ export type CreditStatus =
   | 'ACTIVE'
   | 'SETTLED'
   | 'REJECTED'
-  | 'EXPIRED';
+  | 'EXPIRED'
   | 'REFINANCED';
 export type CreditType = 'SALE' | 'LOAN';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
