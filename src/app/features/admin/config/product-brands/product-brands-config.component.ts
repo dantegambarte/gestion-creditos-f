@@ -46,6 +46,11 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
   newName = '';
   dialogError = '';
 
+  showEditDialog = false;
+  editingBrand: ProductBrand | null = null;
+  editName = '';
+  editError = '';
+
   ngOnInit(): void {
     this.load();
   }
@@ -109,6 +114,47 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Abre el diálogo de edición para renombrar una marca existente.
+   * @param {ProductBrand} brand - Marca a editar.
+   */
+  openEdit(brand: ProductBrand): void {
+    this.editingBrand = brand;
+    this.editName = brand.name;
+    this.editError = '';
+    this.showEditDialog = true;
+  }
+
+  /**
+   * Envía el nuevo nombre de la marca al backend.
+   */
+  submitEdit(): void {
+    if (!this.editingBrand || !this.editName.trim()) return;
+    this.saving = true;
+    this.editError = '';
+    this.svc
+      .update(this.editingBrand.id, this.editName.trim())
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.saving = false)),
+      )
+      .subscribe({
+        next: () => {
+          this.showEditDialog = false;
+          this.editingBrand = null;
+          this.msg.add({
+            severity: 'success',
+            summary: 'Marca actualizada',
+            detail: '',
+          });
+          this.load();
+        },
+        error: (err: AppError) => {
+          this.editError = err.message ?? 'No se pudo actualizar la marca.';
+        },
+      });
+  }
+
+  /**
    * Solicita confirmación antes de cambiar el estado de la marca.
    * @param {ProductBrand} brand - Marca a activar o desactivar.
    */
@@ -120,7 +166,11 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
       icon: brand.active ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
       acceptLabel: brand.active ? 'Desactivar' : 'Activar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: brand.active ? 'p-button-danger' : 'p-button-primary',
+      acceptButtonStyleClass: brand.active
+        ? 'p-button-danger h-11 px-5 rounded-xl'
+        : 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () => this.executeToggle(brand),
     });
   }

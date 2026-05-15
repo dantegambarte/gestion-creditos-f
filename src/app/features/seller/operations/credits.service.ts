@@ -20,6 +20,10 @@ import {
   EarlySettlementPayload,
   EarlySettlementResult,
   RejectPayload,
+  RefinancePayload,
+  RefinanceResult,
+  RefinanceResultRaw,
+  RefinancingChain,
   SimulatePayload,
   SimulateResult,
   SimulateResultItem,
@@ -111,6 +115,24 @@ function toCreditUnit(raw: CreditUnitRaw): CreditUnit {
  * @param raw
  * @returns
  */
+function toRefinancingChain(
+  raw: NonNullable<CreditDetailRaw['refinancing_chain']>,
+): RefinancingChain {
+  return {
+    predecessorId: raw.predecessor_id,
+    successorId: raw.successor_id,
+    chainDepth: raw.chain_depth,
+    chain: raw.chain.map((n) => ({
+      id: n.id,
+      status: n.status as CreditDetail['status'],
+      createdAt: n.created_at,
+      depth: n.depth,
+    })),
+    isRefinancing: raw.is_refinancing,
+    isPredecessor: raw.is_predecessor,
+  };
+}
+
 function toCreditDetail(raw: CreditDetailRaw): CreditDetail {
   const downPayment = raw.down_payment ?? 0;
   return {
@@ -129,6 +151,10 @@ function toCreditDetail(raw: CreditDetailRaw): CreditDetail {
     settledAt: raw.settled_at,
     settlementAmount: raw.settlement_amount,
     settlementType: raw.settlement_type,
+    refinancedFromCreditId: raw.refinanced_from_credit_id ?? null,
+    refinancingChain: raw.refinancing_chain
+      ? toRefinancingChain(raw.refinancing_chain)
+      : null,
   };
 }
 
@@ -355,6 +381,45 @@ export class CreditsService {
     return this.api.patch<void>(`credits/${id}/reject`, {
       rejection_reason: payload.rejectionReason,
     });
+  }
+
+  /**
+   * Inicia una refinanciación del crédito activo indicado.
+   * Crea un nuevo crédito LOAN en PENDING_APPROVAL con el saldo trasladado.
+   * @param id - ID del crédito a refinanciar.
+   * @param payload - Parámetros de la refinanciación.
+   * @returns Resultado con el nuevo crédito y el snapshot financiero.
+   */
+  refinance(id: string, payload: RefinancePayload): Observable<RefinanceResult> {
+    const body: Record<string, unknown> = {
+      installments_count: payload.installmentsCount,
+      payment_frequency: payload.paymentFrequency,
+      reason: payload.reason,
+    };
+    if (payload.extraCharges !== undefined && payload.extraCharges > 0)
+      body['extra_charges'] = payload.extraCharges;
+    if (payload.notes) body['notes'] = payload.notes;
+    return this.api
+      .post<RefinanceResultRaw>(`credits/${id}/refinance`, body)
+      .pipe(
+        map((raw): RefinanceResult => ({
+          originalCreditId: raw.original_credit_id,
+          newCredit: {
+            id: raw.new_credit.id,
+            type: raw.new_credit.type,
+            totalAmount: raw.new_credit.total_amount,
+            installmentsCount: raw.new_credit.installments_count,
+            paymentFrequency: raw.new_credit.payment_frequency,
+            status: raw.new_credit.status,
+            refinancedFromCreditId: raw.new_credit.refinanced_from_credit_id,
+            createdAt: raw.new_credit.created_at,
+          },
+          pendingBalance: raw.pending_balance,
+          extraCharges: raw.extra_charges,
+          totalTransferred: raw.total_transferred,
+          message: raw.message,
+        })),
+      );
   }
 
   /**

@@ -1,6 +1,15 @@
 import { defineConfig } from 'cypress';
 
 export default defineConfig({
+  env: {
+    realAuthEnabled: false,
+    realAdminDni: '00000000',
+    realAdminPassword: 'admin123',
+    realSellerDni: '11111111',
+    realSellerPassword: '123456',
+    realCollectorDni: '22222222',
+    realCollectorPassword: '123456',
+  },
   e2e: {
     baseUrl: 'http://localhost:4200',
     specPattern: 'cypress/e2e/**/*.cy.ts',

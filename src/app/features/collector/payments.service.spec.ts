@@ -31,6 +31,9 @@ const mockPaymentRaw: PaymentRaw = {
   customer_name: 'Juan Pérez',
   customer_dni: '12345678',
   collector_name: 'María G.',
+  is_reversal: false,
+  admin_direct: false,
+  parent_payment_id: null,
 };
 
 describe('PaymentsService', () => {

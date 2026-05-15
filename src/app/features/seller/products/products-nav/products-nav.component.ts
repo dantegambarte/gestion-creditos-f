@@ -79,13 +79,25 @@ export class ProductsNavComponent implements OnInit, OnDestroy {
    * @param {string} url - URL actual del router.
    */
   private parseUrl(url: string): void {
-    this.currentUrl = url.split('?')[0];
+    const urlTree = this.router.parseUrl(url);
+    this.currentUrl = urlTree.root.toString();
 
     const baseMatch = ProductsNavComponent.BASE_RE.exec(url);
     this.basePath = baseMatch ? `/${baseMatch[1]}` : '/seller';
 
     if (ProductsNavComponent.CONFIG_RE.test(url)) {
-      this.productId = null;
+      const qpProductId = urlTree.queryParams['productId'];
+      const contextualProductId =
+        typeof qpProductId === 'string' && qpProductId.trim().length > 0
+          ? qpProductId
+          : null;
+
+      if (contextualProductId !== this.productId) {
+        this.productId = contextualProductId;
+        this.firstVariantId = null;
+        if (contextualProductId) this.productId$.next(contextualProductId);
+      }
+
       this.variantId = null;
       return;
     }
@@ -160,8 +172,18 @@ export class ProductsNavComponent implements OnInit, OnDestroy {
     return `${this.basePath}/products/config/categories`;
   }
 
+  /** Query params para preservar el producto activo en pantallas de configuración. */
+  get categoriesQueryParams(): { productId: string } | null {
+    return this.productId ? { productId: this.productId } : null;
+  }
+
   /** Link a la pantalla de marcas de productos. */
   get brandsLink(): string {
     return `${this.basePath}/products/config/brands`;
+  }
+
+  /** Query params para preservar el producto activo en pantallas de configuración. */
+  get brandsQueryParams(): { productId: string } | null {
+    return this.productId ? { productId: this.productId } : null;
   }
 }

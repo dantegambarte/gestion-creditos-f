@@ -1,419 +1,665 @@
-<section class="mx-auto mt-4 flex w-full max-w-6xl flex-col gap-6 text-slate-100" [formGroup]="form">
-  <div class="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+<section
+  class="mx-auto mt-4 flex w-full max-w-6xl flex-col gap-6 text-slate-100"
+  [formGroup]="form"
+>
+  <div
+    class="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
+  >
     <div class="space-y-8">
-    <div>
-      <h2 class="mb-1 text-xl font-semibold text-white">Configurar Plan de Pagos</h2>
-      <p class="mb-6 text-sm text-slate-400">Selecciona la frecuencia y los plazos de financiación.</p>
+      <div>
+        <h2 class="mb-1 text-xl font-semibold text-white">
+          Configurar Plan de Pagos
+        </h2>
+        <p class="mb-6 text-sm text-slate-400">
+          Selecciona la frecuencia y los plazos de financiación.
+        </p>
 
-      <div class="mb-6 flex gap-1 rounded-xl border border-[#1A1D27] bg-[#121520] p-1">
-        <div class="grid w-full gap-1 sm:grid-cols-3">
-          @for (option of allPaymentFrequencies; track option.value) {
-            <button
-              type="button"
-              class="flex-1 rounded-lg py-2.5 text-sm font-medium"
-              [class]="!isFrequencyAvailable(option.value)
-                ? 'flex-1 rounded-lg py-2.5 text-sm font-medium text-slate-600 opacity-50 cursor-not-allowed'
-                : isFrequencySelected(option.value)
-                  ? 'flex-1 rounded-lg bg-[#3B82F6]/10 py-2.5 text-sm font-medium text-[#3B82F6] shadow-sm'
-                  : 'flex-1 rounded-lg py-2.5 text-sm font-medium text-slate-400 transition-colors hover:text-white'"
-              [disabled]="!isFrequencyAvailable(option.value)"
-              (click)="selectFrequency(option.value)"
+        <div
+          class="mb-6 flex gap-1 rounded-xl border border-[#1A1D27] bg-[#121520] p-1"
+        >
+          <div class="grid w-full gap-1 sm:grid-cols-3">
+            @for (option of allPaymentFrequencies; track option.value) {
+              <button
+                type="button"
+                class="flex-1 rounded-lg py-2.5 text-sm font-medium"
+                [class]="
+                  !isFrequencyAvailable(option.value)
+                    ? 'flex-1 rounded-lg py-2.5 text-sm font-medium text-slate-600 opacity-50 cursor-not-allowed'
+                    : isFrequencySelected(option.value)
+                      ? 'flex-1 rounded-lg bg-[#3B82F6]/10 py-2.5 text-sm font-medium text-[#3B82F6] shadow-sm'
+                      : 'flex-1 rounded-lg py-2.5 text-sm font-medium text-slate-400 transition-colors hover:text-white'
+                "
+                [disabled]="!isFrequencyAvailable(option.value)"
+                (click)="selectFrequency(option.value)"
+              >
+                {{ option.label }}
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (paymentFrequencyOptions.length === 0) {
+          <p-message
+            severity="warn"
+            text="No hay frecuencias disponibles para esta operación. Revisá la configuración de tasas."
+          />
+        }
+
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div
+            class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4 md:col-span-2"
+          >
+            <label
+              class="mb-3 block text-xs font-medium uppercase tracking-wide text-slate-400"
+              >Fecha de inicio de pago</label
             >
-              {{ option.label }}
-            </button>
+
+            <div class="space-y-3">
+              <label
+                class="flex cursor-pointer items-start gap-3 rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3"
+              >
+                <p-radioButton
+                  formControlName="firstPaymentDateMode"
+                  value="APPROVAL_DATE"
+                  inputId="start-approval"
+                />
+                <div class="space-y-1">
+                  <p class="text-sm font-medium text-white">
+                    Usar fecha de aprobación
+                    <span class="text-[#3B82F6]">(recomendada)</span>
+                  </p>
+                  <p class="text-xs text-slate-400">
+                    La primera cuota no vence el mismo día:
+                    {{ getApprovalFrequencyHint() }} desde la aprobación.
+                  </p>
+                </div>
+              </label>
+
+              <label
+                class="flex cursor-pointer items-start gap-3 rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3"
+              >
+                <p-radioButton
+                  formControlName="firstPaymentDateMode"
+                  value="CUSTOM_DATE"
+                  inputId="start-custom"
+                />
+                <div class="space-y-1">
+                  <p class="text-sm font-medium text-white">
+                    Fecha personalizada
+                  </p>
+                  <p class="text-xs text-slate-400">
+                    Definí manualmente el primer vencimiento.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <div class="mt-4">
+              <label
+                class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                >Fecha de 1er pago</label
+              >
+              <p-calendar
+                formControlName="firstPaymentDate"
+                dateFormat="dd/mm/yy"
+                [minDate]="todayDate"
+                [showIcon]="true"
+                [readonlyInput]="true"
+                [baseZIndex]="1200"
+                [autoZIndex]="true"
+                appendTo="body"
+                styleClass="w-full op-calendar"
+                inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+              />
+              @if (isApprovalDateMode()) {
+                <p class="mt-2 text-xs text-blue-300">
+                  Se calcula automáticamente según la frecuencia seleccionada.
+                </p>
+              }
+              @if (
+                form.controls["firstPaymentDate"].touched &&
+                form.controls["firstPaymentDate"].errors?.["pastDate"]
+              ) {
+                <p class="mt-2 text-xs text-red-400">
+                  La fecha del primer pago no puede ser anterior a hoy.
+                </p>
+              }
+            </div>
+          </div>
+
+          @if (form.controls["operationType"].value === "SALE") {
+            <div>
+              <label
+                class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                >Anticipo / Entrega</label
+              >
+              @if (
+                form.controls["initialPaymentType"].value === "DOWN_PAYMENT"
+              ) {
+                <p-inputNumber
+                  formControlName="downPayment"
+                  mode="currency"
+                  currency="ARS"
+                  locale="es-AR"
+                  [allowEmpty]="true"
+                  placeholder="$ 0"
+                  [min]="1"
+                  [max]="capitalBase - 1"
+                  styleClass="w-full"
+                  inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                />
+              } @else {
+                <div
+                  class="flex w-full items-center rounded-xl border border-[#1A1D27] bg-[#121520] px-4 py-3 text-white"
+                >
+                  {{ validatedDownPayment | currencyArs }}
+                </div>
+              }
+            </div>
+          } @else {
+            <div>
+              <label
+                class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                >Anticipo / Entrega</label
+              >
+              <div
+                class="flex w-full items-center rounded-xl border border-[#1A1D27] bg-[#121520] px-4 py-3 text-white"
+              >
+                {{ 0 | currencyArs }}
+              </div>
+            </div>
           }
         </div>
       </div>
 
-      @if (paymentFrequencyOptions.length === 0) {
-        <p-message
-          severity="warn"
-          text="No hay frecuencias disponibles para esta operación. Revisá la configuración de tasas."
-        />
-      }
+      <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-6">
+        @if (form.controls["operationType"].value === "SALE") {
+          <div class="space-y-5">
+            <div>
+              <h3 class="text-base font-semibold text-white">
+                Configuración por producto
+              </h3>
+              <p class="mt-1 text-sm text-slate-400">
+                Cada producto mantiene su propio plan de cuotas según la
+                frecuencia elegida.
+              </p>
+            </div>
 
-      <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4 md:col-span-2">
-          <label class="mb-3 block text-xs font-medium uppercase tracking-wide text-slate-400">Fecha de inicio de pago</label>
-
-          <div class="space-y-3">
-            <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3">
-              <p-radioButton formControlName="firstPaymentDateMode" value="APPROVAL_DATE" inputId="start-approval" />
-              <div class="space-y-1">
-                <p class="text-sm font-medium text-white">Usar fecha de aprobación <span class="text-[#3B82F6]">(recomendada)</span></p>
-                <p class="text-xs text-slate-400">La primera cuota no vence el mismo día: {{ getApprovalFrequencyHint() }} desde la aprobación.</p>
+            <div
+              class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4 space-y-3"
+            >
+              <label
+                class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                >Pago inicial</label
+              >
+              <div class="flex flex-wrap gap-4">
+                <label class="flex cursor-pointer items-center gap-2">
+                  <p-radioButton
+                    formControlName="initialPaymentType"
+                    value="NONE"
+                    inputId="pay-none"
+                  />
+                  <span class="text-sm text-slate-300">Sin pago inicial</span>
+                </label>
+                <label class="flex cursor-pointer items-center gap-2">
+                  <p-radioButton
+                    formControlName="initialPaymentType"
+                    value="DOWN_PAYMENT"
+                    inputId="pay-down"
+                  />
+                  <span class="text-sm text-slate-300">Enganche</span>
+                </label>
+                <label class="flex cursor-pointer items-center gap-2">
+                  <p-radioButton
+                    formControlName="initialPaymentType"
+                    value="ADVANCED_INSTALLMENTS"
+                    inputId="pay-advance"
+                  />
+                  <span class="text-sm text-slate-300">Cuotas adelantadas</span>
+                </label>
               </div>
-            </label>
 
-            <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3">
-              <p-radioButton formControlName="firstPaymentDateMode" value="CUSTOM_DATE" inputId="start-custom" />
-              <div class="space-y-1">
-                <p class="text-sm font-medium text-white">Fecha personalizada</p>
-                <p class="text-xs text-slate-400">Definí manualmente el primer vencimiento.</p>
-              </div>
-            </label>
-          </div>
+              @if (
+                form.controls["initialPaymentType"].value === "DOWN_PAYMENT"
+              ) {
+                <div class="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label
+                      class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                      >Tipo de pago</label
+                    >
+                    <div class="flex gap-4">
+                      <label class="flex cursor-pointer items-center gap-2">
+                        <p-radioButton
+                          formControlName="downPaymentMethod"
+                          value="CASH"
+                          inputId="dp-cash"
+                        />
+                        <span class="text-sm text-slate-300">Efectivo</span>
+                      </label>
+                      <label class="flex cursor-pointer items-center gap-2">
+                        <p-radioButton
+                          formControlName="downPaymentMethod"
+                          value="TRANSFER"
+                          inputId="dp-transfer"
+                        />
+                        <span class="text-sm text-slate-300"
+                          >Transferencia</span
+                        >
+                      </label>
+                    </div>
+                  </div>
 
-          <div class="mt-4">
-            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">Fecha de 1er pago</label>
-            <p-calendar
-              formControlName="firstPaymentDate"
-              dateFormat="dd/mm/yy"
-              [minDate]="todayDate"
-              [showIcon]="true"
-              [readonlyInput]="true"
-              [baseZIndex]="1200"
-              [autoZIndex]="true"
-              appendTo="body"
-              styleClass="w-full op-calendar"
-              inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
-            />
-            @if (isApprovalDateMode()) {
-              <p class="mt-2 text-xs text-blue-300">Se calcula automáticamente según la frecuencia seleccionada.</p>
-            }
-            @if (form.controls['firstPaymentDate'].touched && form.controls['firstPaymentDate'].errors?.['pastDate']) {
-              <p class="mt-2 text-xs text-red-400">La fecha del primer pago no puede ser anterior a hoy.</p>
-            }
-          </div>
-        </div>
+                  @if (
+                    form.controls["downPaymentMethod"].value === "TRANSFER"
+                  ) {
+                    <div>
+                      <label
+                        class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                        >Referencia de transferencia</label
+                      >
+                      <input
+                        pInputText
+                        formControlName="downPaymentTransferReference"
+                        class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                        placeholder="Nro. de operación..."
+                        maxlength="100"
+                      />
+                    </div>
+                  }
+                </div>
+              }
 
-        @if (form.controls['operationType'].value === 'SALE') {
-          <div>
-            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">Anticipo / Entrega</label>
-            @if (form.controls['initialPaymentType'].value === 'DOWN_PAYMENT') {
-              <p-inputNumber
-                formControlName="downPayment"
-                mode="currency"
-                currency="ARS"
-                locale="es-AR"
-                [allowEmpty]="true"
-                placeholder="$ 0"
-                [min]="1"
-                [max]="capitalBase - 1"
-                styleClass="w-full"
-                inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
-              />
-            } @else {
-              <div class="flex w-full items-center rounded-xl border border-[#1A1D27] bg-[#121520] px-4 py-3 text-white">
-                {{ validatedDownPayment | currencyArs }}
-              </div>
-            }
+              @if (
+                form.controls["initialPaymentType"].value ===
+                "ADVANCED_INSTALLMENTS"
+              ) {
+                <div class="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label
+                      class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                      >Cantidad de cuotas adelantadas</label
+                    >
+                    <p-inputNumber
+                      formControlName="advancedInstallmentsCount"
+                      [min]="1"
+                      [useGrouping]="false"
+                      placeholder="Ej: 2"
+                      styleClass="w-full"
+                      inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                      >Tipo de pago</label
+                    >
+                    <div class="flex gap-4">
+                      <label class="flex cursor-pointer items-center gap-2">
+                        <p-radioButton
+                          formControlName="advancedInstallmentsMethod"
+                          value="CASH"
+                          inputId="adv-cash"
+                        />
+                        <span class="text-sm text-slate-300">Efectivo</span>
+                      </label>
+                      <label class="flex cursor-pointer items-center gap-2">
+                        <p-radioButton
+                          formControlName="advancedInstallmentsMethod"
+                          value="TRANSFER"
+                          inputId="adv-transfer"
+                        />
+                        <span class="text-sm text-slate-300"
+                          >Transferencia</span
+                        >
+                      </label>
+                    </div>
+                  </div>
+
+                  @if (
+                    form.controls["advancedInstallmentsMethod"].value ===
+                    "TRANSFER"
+                  ) {
+                    <div class="md:col-span-2">
+                      <label
+                        class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                        >Referencia de transferencia</label
+                      >
+                      <input
+                        pInputText
+                        formControlName="advancedInstallmentsTransferReference"
+                        class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                        placeholder="Nro. de operación..."
+                        maxlength="100"
+                      />
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="space-y-4">
+              @for (line of cartLines; track line.productoId) {
+                <div
+                  class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4"
+                >
+                  <div
+                    class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+                  >
+                    <div>
+                      <p class="text-sm font-medium text-white">
+                        {{ line.nombre }}
+                      </p>
+                      <p class="mt-1 text-xs text-slate-400">
+                        {{ getLinePlanSubtitle(line) }}
+                      </p>
+                    </div>
+
+                    <div class="w-full md:w-[280px]" data-cy="ddl-installments">
+                      <p-dropdown
+                        [options]="getInstallmentsOptionsForLine(line)"
+                        optionLabel="label"
+                        optionValue="value"
+                        [ngModel]="line.selectedInstallments"
+                        (ngModelChange)="
+                          saleInstallmentsChanged.emit({
+                            productoId: line.productoId,
+                            installments: $event,
+                          })
+                        "
+                        [ngModelOptions]="{ standalone: true }"
+                        appendTo="body"
+                        [scrollHeight]="'180px'"
+                        placeholder="Seleccionar cuotas para este producto"
+                        styleClass="w-full bg-[#121520] border border-[#1A1D27] text-white rounded-xl focus:border-[#3B82F6] outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  @if (getInstallmentsOptionsForLine(line).length === 0) {
+                    <div class="mt-3">
+                      <p-message
+                        severity="warn"
+                        text="Este producto no tiene cuotas para la frecuencia elegida."
+                      />
+                    </div>
+                  }
+                </div>
+              }
+            </div>
           </div>
         } @else {
-          <div>
-            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">Anticipo / Entrega</label>
-            <div class="flex w-full items-center rounded-xl border border-[#1A1D27] bg-[#121520] px-4 py-3 text-white">
-              {{ 0 | currencyArs }}
+          <div class="space-y-5">
+            <div>
+              <h3 class="text-base font-semibold text-white">
+                Cuotas globales del préstamo
+              </h3>
+              <p class="mt-1 text-sm text-slate-400">
+                Definí un único plazo para todo el capital solicitado.
+              </p>
+            </div>
+
+            <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4">
+              <label
+                class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                >Cantidad de cuotas</label
+              >
+              <div data-cy="ddl-installments">
+                <p-dropdown
+                  [options]="installmentsOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  formControlName="installmentsCount"
+                  placeholder="Seleccionar cuotas"
+                  [styleClass]="
+                    'w-full bg-[#121520] border border-[#1A1D27] text-white rounded-xl focus:border-[#3B82F6] outline-none transition-all'
+                  "
+                />
+              </div>
+
+              @if (isInstallmentsRefreshing) {
+                <p class="mt-3 text-xs text-blue-300">
+                  Las cuotas se actualizaron según la frecuencia seleccionada.
+                </p>
+              }
+
+              @if (installmentsOptions.length === 0) {
+                <div class="mt-3">
+                  <p-message
+                    severity="warn"
+                    text="No hay cuotas disponibles para esta combinación. Revisá la configuración de tasas antes de continuar."
+                  />
+                </div>
+              }
             </div>
           </div>
         }
       </div>
-    </div>
-
-      <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-6">
-      @if (form.controls['operationType'].value === 'SALE') {
-        <div class="space-y-5">
-          <div>
-            <h3 class="text-base font-semibold text-white">Configuración por producto</h3>
-            <p class="mt-1 text-sm text-slate-400">Cada producto mantiene su propio plan de cuotas según la frecuencia elegida.</p>
-          </div>
-
-          <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4 space-y-3">
-            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">Pago inicial</label>
-            <div class="flex flex-wrap gap-4">
-              <label class="flex cursor-pointer items-center gap-2">
-                <p-radioButton formControlName="initialPaymentType" value="NONE" inputId="pay-none" />
-                <span class="text-sm text-slate-300">Sin pago inicial</span>
-              </label>
-              <label class="flex cursor-pointer items-center gap-2">
-                <p-radioButton formControlName="initialPaymentType" value="DOWN_PAYMENT" inputId="pay-down" />
-                <span class="text-sm text-slate-300">Enganche</span>
-              </label>
-              <label class="flex cursor-pointer items-center gap-2">
-                <p-radioButton formControlName="initialPaymentType" value="ADVANCED_INSTALLMENTS" inputId="pay-advance" />
-                <span class="text-sm text-slate-300">Cuotas adelantadas</span>
-              </label>
-            </div>
-
-            @if (form.controls['initialPaymentType'].value === 'DOWN_PAYMENT') {
-              <div class="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">Tipo de pago</label>
-                  <div class="flex gap-4">
-                    <label class="flex cursor-pointer items-center gap-2">
-                      <p-radioButton formControlName="downPaymentMethod" value="CASH" inputId="dp-cash" />
-                      <span class="text-sm text-slate-300">Efectivo</span>
-                    </label>
-                    <label class="flex cursor-pointer items-center gap-2">
-                      <p-radioButton formControlName="downPaymentMethod" value="TRANSFER" inputId="dp-transfer" />
-                      <span class="text-sm text-slate-300">Transferencia</span>
-                    </label>
-                  </div>
-                </div>
-
-                @if (form.controls['downPaymentMethod'].value === 'TRANSFER') {
-                  <div>
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">Referencia de transferencia</label>
-                    <input
-                      pInputText
-                      formControlName="downPaymentTransferReference"
-                      class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
-                      placeholder="Nro. de operación..."
-                      maxlength="100"
-                    />
-                  </div>
-                }
-              </div>
-            }
-
-            @if (form.controls['initialPaymentType'].value === 'ADVANCED_INSTALLMENTS') {
-              <div class="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">Cantidad de cuotas adelantadas</label>
-                  <p-inputNumber
-                    formControlName="advancedInstallmentsCount"
-                    [min]="1"
-                    [useGrouping]="false"
-                    placeholder="Ej: 2"
-                    styleClass="w-full"
-                    inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
-                  />
-                </div>
-
-                <div>
-                  <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">Tipo de pago</label>
-                  <div class="flex gap-4">
-                    <label class="flex cursor-pointer items-center gap-2">
-                      <p-radioButton formControlName="advancedInstallmentsMethod" value="CASH" inputId="adv-cash" />
-                      <span class="text-sm text-slate-300">Efectivo</span>
-                    </label>
-                    <label class="flex cursor-pointer items-center gap-2">
-                      <p-radioButton formControlName="advancedInstallmentsMethod" value="TRANSFER" inputId="adv-transfer" />
-                      <span class="text-sm text-slate-300">Transferencia</span>
-                    </label>
-                  </div>
-                </div>
-
-                @if (form.controls['advancedInstallmentsMethod'].value === 'TRANSFER') {
-                  <div class="md:col-span-2">
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">Referencia de transferencia</label>
-                    <input
-                      pInputText
-                      formControlName="advancedInstallmentsTransferReference"
-                      class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
-                      placeholder="Nro. de operación..."
-                      maxlength="100"
-                    />
-                  </div>
-                }
-              </div>
-            }
-          </div>
-
-          <div class="space-y-4">
-            @for (line of cartLines; track line.productoId) {
-              <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4">
-                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p class="text-sm font-medium text-white">{{ line.nombre }}</p>
-                    <p class="mt-1 text-xs text-slate-400">{{ getLinePlanSubtitle(line) }}</p>
-                  </div>
-
-                  <div class="w-full md:w-[280px]" data-cy="ddl-installments">
-                    <p-dropdown
-                      [options]="getInstallmentsOptionsForLine(line)"
-                      optionLabel="label"
-                      optionValue="value"
-                      [ngModel]="line.selectedInstallments"
-                      (ngModelChange)="saleInstallmentsChanged.emit({ productoId: line.productoId, installments: $event })"
-                      [ngModelOptions]="{ standalone: true }"
-                      appendTo="body"
-                      [scrollHeight]="'180px'"
-                      placeholder="Seleccionar cuotas para este producto"
-                      styleClass="w-full bg-[#121520] border border-[#1A1D27] text-white rounded-xl focus:border-[#3B82F6] outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                @if (getInstallmentsOptionsForLine(line).length === 0) {
-                  <div class="mt-3">
-                    <p-message
-                      severity="warn"
-                      text="Este producto no tiene cuotas para la frecuencia elegida."
-                    />
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-      } @else {
-        <div class="space-y-5">
-          <div>
-            <h3 class="text-base font-semibold text-white">Cuotas globales del préstamo</h3>
-            <p class="mt-1 text-sm text-slate-400">Definí un único plazo para todo el capital solicitado.</p>
-          </div>
-
-          <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4">
-            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400">Cantidad de cuotas</label>
-            <div data-cy="ddl-installments">
-              <p-dropdown
-                [options]="installmentsOptions"
-                optionLabel="label"
-                optionValue="value"
-                formControlName="installmentsCount"
-                placeholder="Seleccionar cuotas"
-                [styleClass]="'w-full bg-[#121520] border border-[#1A1D27] text-white rounded-xl focus:border-[#3B82F6] outline-none transition-all'"
-              />
-            </div>
-
-            @if (isInstallmentsRefreshing) {
-              <p class="mt-3 text-xs text-blue-300">Las cuotas se actualizaron según la frecuencia seleccionada.</p>
-            }
-
-            @if (installmentsOptions.length === 0) {
-              <div class="mt-3">
-                <p-message
-                  severity="warn"
-                  text="No hay cuotas disponibles para esta combinación. Revisá la configuración de tasas antes de continuar."
-                />
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </div>
     </div>
 
     <div class="w-full">
-    <div class="h-full overflow-hidden rounded-2xl border border-[#1A1D27] bg-[#121520]">
-      <div class="border-b border-[#1A1D27] p-6">
-        <h3 class="mb-4 font-medium text-white">Resumen del Plan</h3>
+      <div
+        class="h-full overflow-hidden rounded-2xl border border-[#1A1D27] bg-[#121520]"
+      >
+        <div class="border-b border-[#1A1D27] p-6">
+          <h3 class="mb-4 font-medium text-white">Resumen del Plan</h3>
 
-        <div class="space-y-3 text-sm">
-          <div class="flex justify-between">
-            <span class="text-slate-400">Capital Base</span>
-            <span class="font-medium text-white">{{ capitalBase | currencyArs }}</span>
-          </div>
-
-          @if (form.controls['operationType'].value === 'SALE' && form.controls['initialPaymentType'].value === 'DOWN_PAYMENT') {
+          <div class="space-y-3 text-sm">
             <div class="flex justify-between">
-              <span class="text-slate-400">Anticipo</span>
-              <span class="font-medium text-white">{{ validatedDownPayment | currencyArs }}</span>
+              <span class="text-slate-400">Capital Base</span>
+              <span class="font-medium text-white">{{
+                capitalBase | currencyArs
+              }}</span>
             </div>
-          }
 
-          <div class="flex justify-between">
-            <span class="text-slate-400">Intereses</span>
-            <span class="font-medium text-white">{{ totalInterestAmount | currencyArs }}</span>
-          </div>
-
-          <div class="mt-3 flex justify-between border-t border-[#1A1D27] pt-3">
-            <span class="text-slate-300">Total a Pagar</span>
-            <span class="font-semibold text-white">{{ totalADevolver | currencyArs }}</span>
-          </div>
-        </div>
-
-        <div class="mt-6 rounded-xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-4">
-          <span class="mb-1 block text-xs font-semibold text-[#3B82F6]">
-            {{ form.controls['operationType'].value === 'SALE' ? 'Cuota consolidada' : 'Cuota mensual' }}
-          </span>
-          <span class="text-2xl font-bold text-[#3B82F6]">{{ valorCuota | currencyArs }}</span>
-        </div>
-
-        @if (form.controls['operationType'].value === 'SALE') {
-          <div class="mt-6 space-y-2 rounded-2xl border border-[#1A1D27] bg-[#121520] p-4">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Detalle por producto</p>
-            @for (line of cartLines; track line.productoId) {
-              <div class="flex items-center justify-between gap-3 text-xs">
-                <div class="min-w-0">
-                  <p class="truncate text-slate-300">{{ line.nombre }}</p>
-                  <div class="mt-0.5 flex items-center gap-2">
-                    <span class="text-slate-400">{{ line.selectedInstallments ?? 0 }} cuotas</span>
-                    <span class="rounded-full border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-2 py-0.5 font-semibold text-[#3B82F6]">
-                      {{ getLineRatePercent(line) }}%
-                    </span>
-                  </div>
-                </div>
-                <span class="font-semibold text-white">{{ getLineInstallmentValue(line) | currencyArs }}</span>
+            @if (
+              form.controls["operationType"].value === "SALE" &&
+              form.controls["initialPaymentType"].value === "DOWN_PAYMENT"
+            ) {
+              <div class="flex justify-between">
+                <span class="text-slate-400">Anticipo</span>
+                <span class="font-medium text-white">{{
+                  validatedDownPayment | currencyArs
+                }}</span>
               </div>
             }
+
+            <div class="flex justify-between">
+              <span class="text-slate-400">Intereses</span>
+              <span class="font-medium text-white">{{
+                totalInterestAmount | currencyArs
+              }}</span>
+            </div>
+
+            <div
+              class="mt-3 flex justify-between border-t border-[#1A1D27] pt-3"
+            >
+              <span class="text-slate-300">Total a Pagar</span>
+              <span class="font-semibold text-white">{{
+                totalADevolver | currencyArs
+              }}</span>
+            </div>
           </div>
-        }
-      </div>
 
-      <div class="bg-[#0B0D14] p-4">
-        <button
-          type="button"
-          class="w-full py-3 rounded-xl border border-[#2A2E3B] text-slate-300 hover:text-white hover:bg-[#1A1D27] transition-colors text-sm font-medium flex items-center justify-center gap-2"
-          [disabled]="!canShowSimulation() || simulationLoading"
-          [class.opacity-50]="!canShowSimulation() || simulationLoading"
-          [class.cursor-not-allowed]="!canShowSimulation() || simulationLoading"
-          (click)="toggleSimulation()"
-        >
-          <i class="pi" [class.pi-table]="!simulationVisible" [class.pi-times]="simulationVisible"></i>
-          {{ simulationLoading ? 'Calculando simulación...' : simulationVisible ? 'Ocultar simulación' : 'Ver Simulación' }}
-        </button>
-      </div>
+          <div
+            class="mt-6 rounded-xl border border-[#3B82F6]/20 bg-[#3B82F6]/10 p-4"
+          >
+            <span class="mb-1 block text-xs font-semibold text-[#3B82F6]">
+              {{
+                form.controls["operationType"].value === "SALE"
+                  ? "Cuota consolidada"
+                  : "Cuota mensual"
+              }}
+            </span>
+            <span class="text-2xl font-bold text-[#3B82F6]">{{
+              valorCuota | currencyArs
+            }}</span>
+          </div>
 
+          @if (form.controls["operationType"].value === "SALE") {
+            <div
+              class="mt-6 space-y-2 rounded-2xl border border-[#1A1D27] bg-[#121520] p-4"
+            >
+              <p
+                class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+              >
+                Detalle por producto
+              </p>
+              @for (line of cartLines; track line.productoId) {
+                <div class="flex items-center justify-between gap-3 text-xs">
+                  <div class="min-w-0">
+                    <p class="truncate text-slate-300">{{ line.nombre }}</p>
+                    <div class="mt-0.5 flex items-center gap-2">
+                      <span class="text-slate-400"
+                        >{{ line.selectedInstallments ?? 0 }} cuotas</span
+                      >
+                      <span
+                        class="rounded-full border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-2 py-0.5 font-semibold text-[#3B82F6]"
+                      >
+                        {{ getLineRatePercent(line) }}%
+                      </span>
+                    </div>
+                  </div>
+                  <span class="font-semibold text-white">{{
+                    getLineInstallmentValue(line) | currencyArs
+                  }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="bg-[#0B0D14] p-4">
+          <button
+            type="button"
+            class="w-full py-3 rounded-xl border border-[#2A2E3B] text-slate-300 hover:text-white hover:bg-[#1A1D27] transition-colors text-sm font-medium flex items-center justify-center gap-2"
+            [disabled]="!canShowSimulation() || simulationLoading"
+            [class.opacity-50]="!canShowSimulation() || simulationLoading"
+            [class.cursor-not-allowed]="
+              !canShowSimulation() || simulationLoading
+            "
+            (click)="toggleSimulation()"
+          >
+            <i
+              class="pi"
+              [class.pi-table]="!simulationVisible"
+              [class.pi-times]="simulationVisible"
+            ></i>
+            {{
+              simulationLoading
+                ? "Calculando simulación..."
+                : simulationVisible
+                  ? "Ocultar simulación"
+                  : "Ver Simulación"
+            }}
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
   </div>
 
   @if (simulationVisible) {
-    <div class="overflow-hidden rounded-2xl border border-[#1A1D27] bg-[#121520]">
+    <div
+      class="overflow-hidden rounded-2xl border border-[#1A1D27] bg-[#121520]"
+    >
       <div class="border-b border-[#1A1D27] bg-[#0F121B] p-5">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        >
           <div>
-            <h3 class="text-lg font-semibold text-white">Resultado de la simulación</h3>
-            <p class="mt-1 text-sm text-slate-400">Vista estimada del plan financiero según la configuración actual.</p>
+            <h3 class="text-lg font-semibold text-white">
+              Resultado de la simulación
+            </h3>
+            <p class="mt-1 text-sm text-slate-400">
+              Vista estimada del plan financiero según la configuración actual.
+            </p>
           </div>
           <div class="flex items-center gap-2">
-            <span class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300">
+            <span
+              class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300"
+            >
               {{ getSimulationStatusLabel() }}
             </span>
-            <span class="rounded-full border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-2.5 py-1 text-[11px] font-semibold text-[#93C5FD]">
+            <span
+              class="rounded-full border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-2.5 py-1 text-[11px] font-semibold text-[#93C5FD]"
+            >
               {{ getSelectedFrequencyLabel() }}
             </span>
           </div>
         </div>
       </div>
 
-      <div class="grid gap-5 p-5 xl:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]">
+      <div
+        class="grid gap-5 p-5 xl:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]"
+      >
         <div class="space-y-5">
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div class="rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3">
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">Cuota estimada</p>
-              <p class="mt-1 text-base font-semibold text-white">{{ valorCuota | currencyArs }}</p>
+              <p class="text-[11px] uppercase tracking-wide text-slate-400">
+                Cuota estimada
+              </p>
+              <p class="mt-1 text-base font-semibold text-white">
+                {{ valorCuota | currencyArs }}
+              </p>
             </div>
             <div class="rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3">
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">Cantidad de cuotas</p>
-              <p class="mt-1 text-base font-semibold text-white">{{ getSelectedInstallmentsCount() }}</p>
+              <p class="text-[11px] uppercase tracking-wide text-slate-400">
+                Cantidad de cuotas
+              </p>
+              <p class="mt-1 text-base font-semibold text-white">
+                {{ getSelectedInstallmentsCount() }}
+              </p>
             </div>
             <div class="rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3">
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">Intereses estimados</p>
-              <p class="mt-1 text-base font-semibold text-white">{{ totalInterestAmount | currencyArs }}</p>
+              <p class="text-[11px] uppercase tracking-wide text-slate-400">
+                Intereses estimados
+              </p>
+              <p class="mt-1 text-base font-semibold text-white">
+                {{ totalInterestAmount | currencyArs }}
+              </p>
             </div>
             <div class="rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3">
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">Total del plan</p>
-              <p class="mt-1 text-base font-semibold text-white">{{ totalADevolver | currencyArs }}</p>
+              <p class="text-[11px] uppercase tracking-wide text-slate-400">
+                Total del plan
+              </p>
+              <p class="mt-1 text-base font-semibold text-white">
+                {{ totalADevolver | currencyArs }}
+              </p>
             </div>
           </div>
 
-          <div class="overflow-hidden rounded-xl border border-[#1A1D27] bg-[#0B0D14]">
-            <div class="flex items-center justify-between border-b border-[#1A1D27] px-4 py-3">
-              <p class="text-sm font-semibold text-white">Cronograma de pagos</p>
-              <p class="text-xs text-slate-400">{{ getSimulationScheduleRows().length }} filas visibles</p>
+          <div
+            class="overflow-hidden rounded-xl border border-[#1A1D27] bg-[#0B0D14]"
+          >
+            <div
+              class="flex items-center justify-between border-b border-[#1A1D27] px-4 py-3"
+            >
+              <p class="text-sm font-semibold text-white">
+                Cronograma de pagos
+              </p>
+              <p class="text-xs text-slate-400">
+                {{ getSimulationScheduleRows().length }} filas visibles
+              </p>
             </div>
 
             @if (simulationError) {
-              <div class="px-4 py-4 text-sm text-red-300">{{ simulationError }}</div>
+              <div class="px-4 py-4 text-sm text-red-300">
+                {{ simulationError }}
+              </div>
             } @else if (simulationLoading) {
-              <div class="px-4 py-4 text-sm text-slate-300">Calculando cronograma real...</div>
+              <div class="px-4 py-4 text-sm text-slate-300">
+                Calculando cronograma real...
+              </div>
             } @else if (getSimulationScheduleRows().length === 0) {
-              <div class="px-4 py-4 text-sm text-slate-300">Definí la fecha del primer pago y simulá para ver el cronograma real.</div>
+              <div class="px-4 py-4 text-sm text-slate-300">
+                Definí la fecha del primer pago y simulá para ver el cronograma
+                real.
+              </div>
             } @else {
-              <div class="grid grid-cols-12 gap-2 border-b border-[#1A1D27] px-4 py-2 text-[11px] uppercase tracking-wide text-slate-500">
+              <div
+                class="grid grid-cols-12 gap-2 border-b border-[#1A1D27] px-4 py-2 text-[11px] uppercase tracking-wide text-slate-500"
+              >
                 <p class="col-span-1">N°</p>
                 <p class="col-span-3">Vencimiento</p>
                 <p class="col-span-2 text-right">Cuota</p>
@@ -423,49 +669,89 @@
               </div>
 
               <div class="divide-y divide-[#1A1D27]">
-                @for (item of getSimulationScheduleRows(); track item.installment) {
-                  <div class="grid grid-cols-12 items-center gap-2 px-4 py-2.5 text-xs sm:text-sm">
-                    <p class="col-span-1 font-medium text-slate-200">{{ item.installment }}</p>
-                    <p class="col-span-3 text-slate-300">{{ getFormattedDate(item.dueDate) }}</p>
-                    <p class="col-span-2 text-right font-semibold text-emerald-300">{{ item.amount | currencyArs }}</p>
-                    <p class="col-span-2 text-right text-white">{{ (item.capital ?? 0) | currencyArs }}</p>
-                    <p class="col-span-2 text-right text-slate-300">{{ (item.interest ?? 0) | currencyArs }}</p>
-                    <p class="col-span-2 text-right text-slate-400">{{ item.remainingEstimated | currencyArs }}</p>
+                @for (
+                  item of getSimulationScheduleRows();
+                  track item.installment
+                ) {
+                  <div
+                    class="grid grid-cols-12 items-center gap-2 px-4 py-2.5 text-xs sm:text-sm"
+                  >
+                    <p class="col-span-1 font-medium text-slate-200">
+                      {{ item.installment }}
+                    </p>
+                    <p class="col-span-3 text-slate-300">
+                      {{ getFormattedDate(item.dueDate) }}
+                    </p>
+                    <p
+                      class="col-span-2 text-right font-semibold text-emerald-300"
+                    >
+                      {{ item.amount | currencyArs }}
+                    </p>
+                    <p class="col-span-2 text-right text-white">
+                      {{ item.capital ?? 0 | currencyArs }}
+                    </p>
+                    <p class="col-span-2 text-right text-slate-300">
+                      {{ item.interest ?? 0 | currencyArs }}
+                    </p>
+                    <p class="col-span-2 text-right text-slate-400">
+                      {{ item.remainingEstimated | currencyArs }}
+                    </p>
                   </div>
                 }
               </div>
             }
 
             @if (hasHiddenScheduleRows()) {
-              <p class="border-t border-[#1A1D27] px-4 py-2 text-xs text-slate-400">
-                Se muestran las primeras {{ getSimulationScheduleRows().length }} cuotas de {{ getSelectedInstallmentsCount() }}.
+              <p
+                class="border-t border-[#1A1D27] px-4 py-2 text-xs text-slate-400"
+              >
+                Se muestran las primeras
+                {{ getSimulationScheduleRows().length }} cuotas de
+                {{ getSelectedInstallmentsCount() }}.
               </p>
             }
           </div>
         </div>
 
         <div class="rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-4">
-          <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Resumen del plan</p>
-          <p class="mt-2 text-sm font-semibold text-white">{{ getPlanSummary() }}</p>
-          <p class="mt-2 text-xs text-slate-300">Si te cierra esta simulación, continuá al paso de confirmación para registrar la operación.</p>
+          <p
+            class="text-xs font-semibold uppercase tracking-wide text-slate-400"
+          >
+            Resumen del plan
+          </p>
+          <p class="mt-2 text-sm font-semibold text-white">
+            {{ getPlanSummary() }}
+          </p>
+          <p class="mt-2 text-xs text-slate-300">
+            Si te cierra esta simulación, continuá al paso de confirmación para
+            registrar la operación.
+          </p>
 
           <div class="mt-4 space-y-2 text-xs text-slate-300">
             <div class="flex items-center justify-between">
               <span>Primer vencimiento</span>
-              <span class="font-semibold text-white">{{ getFirstSimulationDueDate() ? getFormattedDate(getFirstSimulationDueDate()!) : 'Sin fecha' }}</span>
+              <span class="font-semibold text-white">{{
+                getFirstSimulationDueDate()
+                  ? getFormattedDate(getFirstSimulationDueDate()!)
+                  : "Sin fecha"
+              }}</span>
             </div>
             <div class="flex items-center justify-between">
               <span>Frecuencia</span>
-              <span class="font-semibold text-white">{{ getSelectedFrequencyLabel() }}</span>
+              <span class="font-semibold text-white">{{
+                getSelectedFrequencyLabel()
+              }}</span>
             </div>
           </div>
 
           <button
             type="button"
             class="mt-5 w-full rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors"
-            [class]="canContinueWithPlan
-              ? 'mt-5 w-full rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/10 px-3 py-2.5 text-sm font-semibold text-[#93C5FD] transition-colors hover:bg-[#3B82F6]/20'
-              : 'mt-5 w-full rounded-xl border border-[#2A3145] bg-[#151A27] px-3 py-2.5 text-sm font-semibold text-[#5E6A82] opacity-60 cursor-not-allowed'"
+            [class]="
+              canContinueWithPlan
+                ? 'mt-5 w-full rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/10 px-3 py-2.5 text-sm font-semibold text-[#93C5FD] transition-colors hover:bg-[#3B82F6]/20'
+                : 'mt-5 w-full rounded-xl border border-[#2A3145] bg-[#151A27] px-3 py-2.5 text-sm font-semibold text-[#5E6A82] opacity-60 cursor-not-allowed'
+            "
             [disabled]="!canContinueWithPlan"
             (click)="continueFromSimulation()"
           >

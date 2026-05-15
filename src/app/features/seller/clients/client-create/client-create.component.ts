@@ -58,9 +58,10 @@ export class ClientCreateComponent implements OnInit {
           Validators.required,
           Validators.minLength(3),
           Validators.maxLength(150),
+          Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
         ],
       ],
-      dni: ['', [Validators.required]],
+      dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
       address: ['', [Validators.maxLength(255)]],
       phone: [''],
       email: ['', [Validators.email]],
@@ -114,6 +115,10 @@ export class ClientCreateComponent implements OnInit {
     if (camp.errors['maxlength'])
       return `Máximo ${camp.errors['maxlength'].requiredLength} caracteres.`;
     if (camp.errors['email']) return 'Formato de email inválido.';
+    if (camp.errors['pattern']) {
+      if (field === 'dni') return 'El DNI debe contener entre 7 y 8 dígitos.';
+      return 'Solo se permiten letras y espacios.';
+    }
     return 'Campo inválido.';
   }
 

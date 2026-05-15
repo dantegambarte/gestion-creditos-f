@@ -1,4 +1,3 @@
-import { UserRole } from './../../../../shared/models/enums/roles.enum';
 import { CommonModule, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import {
@@ -7,7 +6,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -18,17 +17,19 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { AppError } from '../../../../core/models/app-error';
+import { UserRoleEnum } from '../../../../core/models/types/user-role';
 import { HeaderService } from '../../../../core/services/header.service';
 import { UsersService } from '../../../../features/admin/users/users.service';
 import { TempPasswordDialogComponent } from '../../../../shared/components/temp-password-dialog/temp-password-dialog.component';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
+import { Credit, CreditStatus } from '../../models/credit.model';
 import {
   CustomerDetail,
   CustomerUpdatePayload,
 } from '../../models/customer.model';
+import { CreditsService } from '../../operations/credits.service';
 import { CustomersService } from '../customers.service';
-import { UserRoleEnum } from '../../../../core/models/types/user-role';
 
 @Component({
   selector: 'app-client-detail',
@@ -52,7 +53,9 @@ import { UserRoleEnum } from '../../../../core/models/types/user-role';
 })
 export class ClientDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly customersService = inject(CustomersService);
+  private readonly creditsService = inject(CreditsService);
   private readonly usersService = inject(UsersService);
   private readonly auth = inject(AuthServiceBase);
   private readonly location = inject(Location);
@@ -62,7 +65,9 @@ export class ClientDetailComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   customer: CustomerDetail | null = null;
+  credits: Credit[] = [];
   loading = false;
+  loadingCredits = false;
   error: AppError | null = null;
 
   editMode = false;
@@ -92,10 +97,19 @@ export class ClientDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.header.set([
-      { label: 'Clientes', route: '/seller/clients' },
+      { label: 'Clientes', route: this.clientsBaseRoute },
       { label: 'Detalle' },
     ]);
     this.load();
+  }
+
+  /**
+   * Calcula la ruta base de clientes según el módulo actual (admin/seller).
+   * @returns Ruta absoluta al listado de clientes.
+   */
+  private get clientsBaseRoute(): string {
+    const root = this.router.url.startsWith('/admin') ? '/admin' : '/seller';
+    return `${root}/clients`;
   }
 
   /**
@@ -115,9 +129,10 @@ export class ClientDetailComponent implements OnInit {
       next: (data) => {
         this.customer = data;
         this.header.set([
-          { label: 'Clientes', route: '/seller/clients' },
+          { label: 'Clientes', route: this.clientsBaseRoute },
           { label: data.fullName },
         ]);
+        this.loadCredits(data.id);
         this.loading = false;
       },
       error: (err: AppError) => {
@@ -135,9 +150,10 @@ export class ClientDetailComponent implements OnInit {
       next: (data) => {
         this.customer = data;
         this.header.set([
-          { label: 'Clientes', route: '/seller/clients' },
+          { label: 'Clientes', route: this.clientsBaseRoute },
           { label: data.fullName },
         ]);
+        this.loadCredits(data.id);
       },
       error: () => {},
     });
@@ -225,7 +241,7 @@ export class ClientDetailComponent implements OnInit {
           detail: 'Cliente actualizado correctamente.',
         });
         this.header.set([
-          { label: 'Clientes', route: '/seller/clients' },
+          { label: 'Clientes', route: this.clientsBaseRoute },
           { label: updated.fullName },
         ]);
       },
@@ -251,6 +267,89 @@ export class ClientDetailComponent implements OnInit {
         }
       },
     });
+  }
+
+  /**
+   * Carga el historial de créditos del cliente para mostrarlo en el panel derecho.
+   * @param customerId ID interno del cliente.
+   */
+  private loadCredits(customerId: string): void {
+    this.loadingCredits = true;
+    this.creditsService.list({ customerId }).subscribe({
+      next: (credits) => {
+        this.credits = credits;
+        this.loadingCredits = false;
+      },
+      error: () => {
+        this.credits = [];
+        this.loadingCredits = false;
+      },
+    });
+  }
+
+  /**
+   * Devuelve una etiqueta legible para el estado del crédito.
+   * @param status Estado técnico del crédito.
+   * @returns Estado listo para UI.
+   */
+  creditStatusLabel(status: CreditStatus): string {
+    const map: Record<CreditStatus, string> = {
+      PENDING_APPROVAL: 'Pendiente',
+      ACTIVE: 'Activo',
+      SETTLED: 'Liquidado',
+      REJECTED: 'Rechazado',
+      EXPIRED: 'Vencido',
+      REFINANCED: 'Refinanciado',
+    };
+    return map[status];
+  }
+
+  /**
+   * Asigna severidad visual al estado de crédito.
+   * @param status Estado técnico del crédito.
+   * @returns Severidad de PrimeNG para p-tag.
+   */
+  creditStatusSeverity(
+    status: CreditStatus,
+  ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
+    const map: Record<
+      CreditStatus,
+      'success' | 'info' | 'warning' | 'danger' | 'secondary'
+    > = {
+      PENDING_APPROVAL: 'warning',
+      ACTIVE: 'success',
+      SETTLED: 'secondary',
+      REJECTED: 'danger',
+      EXPIRED: 'danger',
+      REFINANCED: 'danger'
+    };
+    return map[status];
+  }
+
+  /**
+   * Traduce la frecuencia de pago al formato visible en la tabla.
+   * @param frequency Frecuencia técnica del crédito.
+   * @returns Etiqueta legible.
+   */
+  creditFrequencyLabel(frequency: string | null | undefined): string {
+    if (!frequency) return '—';
+    const map: Record<string, string> = {
+      WEEKLY: 'Semanal',
+      BIWEEKLY: 'Quincenal',
+      MONTHLY: 'Mensual',
+    };
+    return map[frequency] ?? frequency;
+  }
+
+  /**
+   * Navega al detalle de operación/crédito desde la tabla de historial.
+   * @param creditId ID del crédito a visualizar.
+   */
+  openCreditDetail(creditId: string): void {
+    this.router.navigate([
+      this.clientsBaseRoute.replace('/clients', '/operations'),
+      creditId,
+    ]);
   }
 
   /**
@@ -291,7 +390,9 @@ export class ClientDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
+      acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.deactivate(this.customerId).subscribe({
           next: () => {
@@ -317,6 +418,9 @@ export class ClientDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Activar',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.activate(this.customerId).subscribe({
           next: () => {
@@ -342,6 +446,9 @@ export class ClientDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Habilitar',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.enablePortal(this.customerId).subscribe({
           next: ({ tempPassword }) => {
@@ -363,7 +470,9 @@ export class ClientDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Deshabilitar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
+      acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.disablePortal(this.customerId).subscribe({
           next: () => {
@@ -389,6 +498,9 @@ export class ClientDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Resetear',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.resetPortalPassword(this.customerId).subscribe({
           next: ({ tempPassword }) => {
@@ -410,6 +522,9 @@ export class ClientDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desbloquear',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.unlockPortal(this.customerId).subscribe({
           next: () => {

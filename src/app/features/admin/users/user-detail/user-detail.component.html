@@ -263,6 +263,8 @@
               [options]="roleOptions"
               optionLabel="label"
               optionValue="value"
+              styleClass="w-full"
+              appendTo="body"
             />
           </div>
 
@@ -273,7 +275,7 @@
               label="Guardar cambios"
               icon="pi pi-check"
               [loading]="saving"
-              [disabled]="editForm.invalid || saving"
+              [disabled]="editForm.invalid || !formHasChanges || saving"
             />
             <p-button
               data-cy="admin-user-detail-cancel-edit-action"

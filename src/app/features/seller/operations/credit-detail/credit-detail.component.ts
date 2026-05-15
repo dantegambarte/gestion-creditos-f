@@ -2,7 +2,7 @@ import { CommonModule, DatePipe, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -25,6 +25,8 @@ import {
   CreditStatus,
   CreditUnit,
   InstallmentStatus,
+  RefinanceResult,
+  SimulateResult,
 } from '../../models/credit.model';
 import {
   ApplyPenaltyPayload,
@@ -62,6 +64,7 @@ import { PaymentsService } from '../../../collector/payments.service';
 })
 export class CreditDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly creditsService = inject(CreditsService);
   private readonly installmentsService = inject(InstallmentsService);
   private readonly paymentsService = inject(PaymentsService);
@@ -95,15 +98,24 @@ export class CreditDetailComponent implements OnInit {
   processingDirect = false;
 
   get paidCount(): number {
-    return this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0;
+    return (
+      this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0
+    );
   }
 
   get pendingCount(): number {
-    return this.credit?.installments.filter((i) => i.status === 'PENDING' || i.status === 'PARTIAL').length ?? 0;
+    return (
+      this.credit?.installments.filter(
+        (i) => i.status === 'PENDING' || i.status === 'PARTIAL',
+      ).length ?? 0
+    );
   }
 
   get overdueCount(): number {
-    return this.credit?.installments.filter((i) => i.status === 'OVERDUE').length ?? 0;
+    return (
+      this.credit?.installments.filter((i) => i.status === 'OVERDUE').length ??
+      0
+    );
   }
 
   get installmentAmount(): number | null {
@@ -115,7 +127,8 @@ export class CreditDetailComponent implements OnInit {
    * @param {CreditDetail['installments'][number]} inst - Cuota clickeada.
    */
   selectInstallment(inst: CreditDetail['installments'][number]): void {
-    this.selectedInstallment = this.selectedInstallment?.id === inst.id ? null : inst;
+    this.selectedInstallment =
+      this.selectedInstallment?.id === inst.id ? null : inst;
   }
 
   showApproveDialog = false;
@@ -136,6 +149,12 @@ export class CreditDetailComponent implements OnInit {
     { label: 'Transferencia', value: 'TRANSFER' },
   ];
 
+  readonly FREQUENCY_OPTIONS = [
+    { label: 'Mensual', value: 'MONTHLY' },
+    { label: 'Quincenal', value: 'BIWEEKLY' },
+    { label: 'Semanal', value: 'WEEKLY' },
+  ];
+
   showPenaltyDialog = false;
   penaltyInstallment: CreditDetail['installments'][number] | null = null;
   penaltyAmount: number | null = null;
@@ -152,12 +171,32 @@ export class CreditDetailComponent implements OnInit {
   earlyPayTransferRef = '';
   processingEarlyPay = false;
 
+  // ── Refinanciación ────────────────────────────────────────────
+  showRefinanceDialog = false;
+  refinanceStep: 1 | 2 = 1;
+  refinanceInstallmentsCount: number | null = null;
+  refinanceFrequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' = 'MONTHLY';
+  refinanceReason = '';
+  refinanceExtraCharges: number | null = null;
+  refinanceNotes = '';
+  refinanceSimulation: SimulateResult | null = null;
+  refinanceSimulating = false;
+  refinanceResult: RefinanceResult | null = null;
+  processingRefinance = false;
+
   /**
    * Verifica si el usuario actual es un administrador.
    * @returns
    */
   get isAdmin(): boolean {
     return this.auth.hasRole('ADMIN');
+  }
+
+  /** Un crédito REFINANCED o SETTLED no acepta más acciones sobre sus cuotas. */
+  get canActOnInstallments(): boolean {
+    return this.isAdmin &&
+      this.credit?.status !== 'REFINANCED' &&
+      this.credit?.status !== 'SETTLED';
   }
 
   /**
@@ -180,7 +219,14 @@ export class CreditDetailComponent implements OnInit {
       { label: 'Operaciones', route: '/seller/operations' },
       { label: 'Detalle' },
     ]);
-    this.load();
+    this.route.paramMap.subscribe(() => {
+      this.credit = null;
+      this.selectedInstallment = null;
+      this.mainTab = 'installments';
+      this.paymentsLoaded = false;
+      this.creditPayments = [];
+      this.load();
+    });
   }
 
   goBack(): void {
@@ -208,6 +254,8 @@ export class CreditDetailComponent implements OnInit {
       ACTIVE: 'Activo',
       SETTLED: 'Liquidado',
       REJECTED: 'Rechazado',
+      EXPIRED: 'Vencido',
+      REFINANCED: 'Refinanciado',
     };
     return map[status];
   }
@@ -228,6 +276,8 @@ export class CreditDetailComponent implements OnInit {
       ACTIVE: 'success',
       SETTLED: 'secondary',
       REJECTED: 'danger',
+      EXPIRED: 'danger',
+      REFINANCED: 'contrast',
     };
     return map[status];
   }
@@ -597,7 +647,8 @@ export class CreditDetailComponent implements OnInit {
       this.directInstallmentId.length > 0 &&
       (this.directAmount ?? 0) > 0 &&
       (this.directAmount ?? 0) <= this.directMaxAmount &&
-      (this.directMethod !== 'TRANSFER' || this.directTransferRef.trim().length > 0)
+      (this.directMethod !== 'TRANSFER' ||
+        this.directTransferRef.trim().length > 0)
     );
   }
 
@@ -642,8 +693,12 @@ export class CreditDetailComponent implements OnInit {
         error: (err: AppError) => {
           this.processingDirect = false;
           this.msg.add({
-            severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
-            summary: err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
+            severity:
+              err.status === 409 || err.status === 422 ? 'warn' : 'error',
+            summary:
+              err.status === 409 || err.status === 422
+                ? 'Advertencia'
+                : 'Error',
             detail: err.message ?? 'No se pudo registrar el cobro.',
           });
         },
@@ -667,6 +722,133 @@ export class CreditDetailComponent implements OnInit {
         this.loadingPayments = false;
       },
     });
+  }
+
+  // ── Refinanciación ────────────────────────────────────────────
+
+  /** Saldo pendiente del crédito: suma de cuotas no pagadas. */
+  get refinancePendingBalance(): number {
+    if (!this.credit) return 0;
+    return Math.round(
+      this.credit.installments
+        .filter((i) => ['PENDING', 'PARTIAL', 'OVERDUE'].includes(i.status))
+        .reduce((sum, i) => sum + (i.amountDue - i.amountPaid), 0) * 100,
+    ) / 100;
+  }
+
+  /** Total trasladado: saldo + cargos adicionales opcionales. */
+  get refinanceTotalTransferred(): number {
+    return Math.round(
+      (this.refinancePendingBalance + (this.refinanceExtraCharges ?? 0)) * 100,
+    ) / 100;
+  }
+
+  /** ID del crédito predecesor (el que fue refinanciado para crear este). */
+  get predecessorCreditId(): string | null {
+    return this.credit?.refinancingChain?.predecessorId ?? null;
+  }
+
+  /** ID del crédito sucesor (el creado al refinanciar este). */
+  get successorCreditId(): string | null {
+    return this.credit?.refinancingChain?.successorId ?? null;
+  }
+
+  /** Navega al crédito de la cadena preservando el contexto admin/seller. */
+  navigateToChainCredit(id: string): void {
+    const segments = this.router.url.split('/');
+    const base = `/${segments[1]}/${segments[2]}`;
+    this.router.navigate([base, id]);
+  }
+
+  get refinanceStep1Valid(): boolean {
+    return (
+      (this.refinanceInstallmentsCount ?? 0) >= 1 &&
+      (this.refinanceInstallmentsCount ?? 0) <= 120 &&
+      this.refinanceReason.trim().length >= 5
+    );
+  }
+
+  /**
+   * Abre el wizard de refinanciación reseteando todos los campos.
+   */
+  openRefinanceDialog(): void {
+    this.refinanceStep = 1;
+    this.refinanceInstallmentsCount = null;
+    this.refinanceFrequency = 'MONTHLY';
+    this.refinanceReason = '';
+    this.refinanceExtraCharges = null;
+    this.refinanceNotes = '';
+    this.refinanceSimulation = null;
+    this.refinanceResult = null;
+    this.showRefinanceDialog = true;
+  }
+
+  /**
+   * Paso 1 → 2: simula el nuevo crédito con el saldo pendiente.
+   */
+  goToRefinanceStep2(): void {
+    if (!this.refinanceStep1Valid || !this.credit) return;
+    this.refinanceSimulating = true;
+    this.creditsService
+      .simulate({
+        type: 'LOAN',
+        totalAmount: this.refinanceTotalTransferred,
+        installmentsCount: this.refinanceInstallmentsCount!,
+        paymentFrequency: this.refinanceFrequency,
+      })
+      .subscribe({
+        next: (result) => {
+          this.refinanceSimulation = result;
+          this.refinanceSimulating = false;
+          this.refinanceStep = 2;
+        },
+        error: (err: AppError) => {
+          this.refinanceSimulating = false;
+          this.msg.add({
+            severity: err.status === 409 ? 'warn' : 'error',
+            summary: err.status === 409 ? 'Sin tasa' : 'Error',
+            detail: err.message ?? 'No se pudo simular con los parámetros indicados.',
+          });
+        },
+      });
+  }
+
+  /**
+   * Confirma y ejecuta la refinanciación. El nuevo crédito queda en PENDING_APPROVAL.
+   */
+  confirmRefinance(): void {
+    if (!this.credit || !this.refinanceStep1Valid) return;
+    this.processingRefinance = true;
+    this.creditsService
+      .refinance(this.credit.id, {
+        installmentsCount: this.refinanceInstallmentsCount!,
+        paymentFrequency: this.refinanceFrequency,
+        reason: this.refinanceReason.trim(),
+        extraCharges: this.refinanceExtraCharges ?? undefined,
+        notes: this.refinanceNotes || undefined,
+      })
+      .subscribe({
+        next: (result) => {
+          this.processingRefinance = false;
+          this.refinanceResult = result;
+          this.showRefinanceDialog = false;
+          this.msg.add({
+            severity: 'success',
+            summary: 'Refinanciación creada',
+            detail: `Nuevo crédito generado (${this.fmt.currency(result.totalTransferred, 2)}) pendiente de aprobación.`,
+            life: 7000,
+          });
+          this.load();
+        },
+        error: (err: AppError) => {
+          this.processingRefinance = false;
+          this.msg.add({
+            severity: err.status === 409 ? 'warn' : 'error',
+            summary: err.status === 409 ? 'Advertencia' : 'Error',
+            detail: err.message ?? 'No se pudo crear la refinanciación.',
+          });
+        },
+      });
   }
 
   /**

@@ -122,6 +122,30 @@ body {
   }
 }
 
+// ─── p-button secondary outlined ─────────────────────────────────────────────
+.p-button.p-button-secondary.p-button-outlined {
+  background: transparent !important;
+  border-color: var(--ff-border) !important;
+  color: var(--ff-text-secondary) !important;
+
+  &:hover:not(:disabled) {
+    background: var(--ff-secondary) !important;
+    border-color: var(--ff-border) !important;
+    color: var(--ff-text-primary) !important;
+  }
+
+  &:active:not(:disabled) {
+    background: #2a2f45 !important;
+    border-color: #3a4260 !important;
+    color: var(--ff-text-primary) !important;
+  }
+
+  .p-button-label,
+  .p-button-icon {
+    color: inherit !important;
+  }
+}
+
 // ─── p-checkbox ──────────────────────────────────────────────────────────────
 .p-checkbox .p-checkbox-box {
   border: 2px solid var(--ff-border) !important;
@@ -227,6 +251,46 @@ body {
   .p-dialog-footer {
     background: var(--ff-panel) !important;
     border-top: 1px solid var(--ff-border) !important;
+  }
+}
+
+// ─── p-confirmdialog ─────────────────────────────────────────────────────────
+.p-confirm-dialog {
+  .p-dialog-content {
+    padding: 1.25rem 1.5rem 1.5rem !important;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .p-confirm-dialog-icon {
+    margin-top: 0.125rem;
+  }
+}
+
+.temp-password-dialog {
+  .p-dialog-header {
+    padding-bottom: 1rem !important;
+  }
+
+  .p-dialog-content {
+    padding: 1.25rem 1.5rem 1.5rem !important;
+  }
+
+  .p-dialog-footer {
+    padding: 1rem 1.5rem 1.5rem !important;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+}
+
+.early-settlement-dialog {
+  .p-dialog-content {
+    padding: 1.25rem 1.5rem 1.25rem !important;
+  }
+
+  .p-dialog-footer {
+    padding: 1rem 1.5rem 1.5rem !important;
   }
 }
 
@@ -1067,6 +1131,7 @@ table.ff-table {
   font-weight: 500;
   color: var(--ff-accent);
   text-decoration: none;
+  cursor: pointer;
   transition: opacity 0.15s;
 
   &:hover {
@@ -1281,7 +1346,9 @@ table.ff-table {
   color: var(--ff-text-muted);
   text-decoration: none;
   border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
 
   &:hover {
