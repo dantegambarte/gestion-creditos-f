@@ -290,10 +290,13 @@ function toSummaryReport(r: SummaryReportRaw): SummaryReport {
     pendingPaymentsCount: r.pending_payments_count,
     pendingCreditsCount: r.pending_credits_count,
     activePortfolioBalance: r.active_portfolio_balance,
+    activeCreditsCount: r.active_credits_count,
     overdueCount: r.overdue_count,
     overdueAmount: r.overdue_amount,
     upcoming7dCount: r.upcoming_7d_count,
     upcoming7dAmount: r.upcoming_7d_amount,
+    refinancedMonthCount: r.refinanced_month_count,
+    refinancedMonthAmount: r.refinanced_month_amount,
   };
 }
 
