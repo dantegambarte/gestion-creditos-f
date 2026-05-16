@@ -2,6 +2,7 @@ export type DifferenceStatus = 'EXACT' | 'SURPLUS' | 'SHORTAGE';
 
 export interface CashRegisterDashboard {
   date: string;
+  isClosed: boolean;
   cashAmount: number;
   transferAmount: number;
   totalCollected: number;
@@ -44,6 +45,7 @@ export interface CashRegisterClosePayload {
 
 export interface CashRegisterDashboardRaw {
   date: string;
+  is_closed: boolean;
   cash_amount: number;
   transfer_amount: number;
   total_collected: number;

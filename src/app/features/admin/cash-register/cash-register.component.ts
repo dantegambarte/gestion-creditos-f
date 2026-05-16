@@ -111,6 +111,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (d) => {
           this.dashboard = d;
+          this.closedToday = d.isClosed;
         },
       });
   }
@@ -132,6 +133,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (d) => {
           this.dashboard = d;
+          this.closedToday = d.isClosed;
         },
         error: (err: AppError) => {
           this.errorDashboard = err;

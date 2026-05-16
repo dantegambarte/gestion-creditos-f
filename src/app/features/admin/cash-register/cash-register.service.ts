@@ -19,6 +19,7 @@ import {
 function toDashboard(r: CashRegisterDashboardRaw): CashRegisterDashboard {
   return {
     date: r.date,
+    isClosed: r.is_closed ?? false,
     cashAmount: r.cash_amount,
     transferAmount: r.transfer_amount,
     totalCollected: r.total_collected,
