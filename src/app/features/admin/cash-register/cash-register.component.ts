@@ -377,4 +377,32 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   paymentMethodLabel(method: string): string {
     return method === 'CASH' ? 'Efectivo' : 'Transferencia';
   }
+
+  /**
+   * Suma amountReceived de todos los cobros del detalle seleccionado.
+   */
+  get detailPaymentsTotal(): number {
+    return this.selectedRegister?.breakdown.payments.reduce((s, p) => s + p.amountReceived, 0) ?? 0;
+  }
+
+  /**
+   * Suma amount de todos los enganches del detalle seleccionado.
+   */
+  get detailDownPaymentsTotal(): number {
+    return this.selectedRegister?.breakdown.downPayments.reduce((s, p) => s + p.amount, 0) ?? 0;
+  }
+
+  /**
+   * Suma amount de todos los gastos del detalle seleccionado.
+   */
+  get detailExpensesTotal(): number {
+    return this.selectedRegister?.breakdown.expenses.reduce((s, e) => s + e.amount, 0) ?? 0;
+  }
+
+  /**
+   * Suma totalPaid de todas las liquidaciones del detalle seleccionado.
+   */
+  get detailLiquidationsTotal(): number {
+    return this.selectedRegister?.breakdown.liquidations.reduce((s, l) => s + l.totalPaid, 0) ?? 0;
+  }
 }

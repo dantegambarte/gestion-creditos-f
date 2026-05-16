@@ -578,7 +578,7 @@
                 {{ selectedRegister.breakdown.payments.length }} cobros
               </span>
               <span class="ff-mono font-medium">
-                {{ formatCurrency(selectedRegister.breakdown.payments.reduce((s, p) => s + p.amountReceived, 0)) }}
+                {{ formatCurrency(detailPaymentsTotal) }}
               </span>
             </div>
           </div>
@@ -589,7 +589,7 @@
                 {{ selectedRegister.breakdown.downPayments.length }} enganches
               </span>
               <span class="ff-mono font-medium">
-                {{ formatCurrency(selectedRegister.breakdown.downPayments.reduce((s, p) => s + p.amount, 0)) }}
+                {{ formatCurrency(detailDownPaymentsTotal) }}
               </span>
             </div>
           </div>
@@ -613,7 +613,7 @@
                 <div class="flex gap-3 text-right">
                   <span class="ff-mono text-xs" style="color: var(--ff-text-muted)">{{ selectedRegister.breakdown.expenses.length }} gastos</span>
                   <span class="ff-mono font-medium" style="color: var(--ff-danger)">
-                    - {{ formatCurrency(selectedRegister.breakdown.expenses.reduce((s, e) => s + e.amount, 0)) }}
+                    - {{ formatCurrency(detailExpensesTotal) }}
                   </span>
                 </div>
               </div>
@@ -624,7 +624,7 @@
                 <div class="flex gap-3 text-right">
                   <span class="ff-mono text-xs" style="color: var(--ff-text-muted)">{{ selectedRegister.breakdown.liquidations.length }} liquidaciones</span>
                   <span class="ff-mono font-medium" style="color: var(--ff-danger)">
-                    - {{ formatCurrency(selectedRegister.breakdown.liquidations.reduce((s, l) => s + l.totalPaid, 0)) }}
+                    - {{ formatCurrency(detailLiquidationsTotal) }}
                   </span>
                 </div>
               </div>
