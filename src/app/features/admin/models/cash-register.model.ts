@@ -19,6 +19,7 @@ export interface CashRegister {
   id: string;
   registerDate: string;
   totalCollected: number;
+  totalOutflows: number;
   cashAmount: number;
   transferAmount: number;
   declaredCash: number;
@@ -27,6 +28,58 @@ export interface CashRegister {
   observations: string | null;
   createdAt: string;
   closedByName: string;
+}
+
+export interface CashRegisterBreakdownPayment {
+  id: string;
+  amountReceived: number;
+  paymentMethod: 'CASH' | 'TRANSFER';
+  transferReference: string | null;
+  approvedAt: string;
+  customerName: string;
+  collectorName: string;
+  installmentNumber: number;
+}
+
+export interface CashRegisterBreakdownDownPayment {
+  id: string;
+  amount: number;
+  paymentMethod: 'CASH' | 'TRANSFER';
+  transferReference: string | null;
+  paymentType: string;
+  createdAt: string;
+  customerName: string;
+  approvedByName: string;
+}
+
+export interface CashRegisterBreakdownLiquidation {
+  id: string;
+  totalPaid: number;
+  commissionsTotal: number;
+  salaryAmount: number;
+  paymentMethod: 'CASH' | 'TRANSFER';
+  transferReference: string | null;
+  paidAt: string;
+  employeeName: string;
+}
+
+export interface CashRegisterBreakdownExpense {
+  id: string;
+  amount: number;
+  description: string;
+  paymentMethod: 'CASH' | 'TRANSFER';
+  transferReference: string | null;
+  createdAt: string;
+  createdByName: string;
+}
+
+export interface CashRegisterDetail extends CashRegister {
+  breakdown: {
+    payments: CashRegisterBreakdownPayment[];
+    downPayments: CashRegisterBreakdownDownPayment[];
+    liquidations: CashRegisterBreakdownLiquidation[];
+    expenses: CashRegisterBreakdownExpense[];
+  };
 }
 
 export interface CashRegisterPreClose {
@@ -104,6 +157,7 @@ export interface CashRegisterRaw {
   id: string;
   register_date: string;
   total_collected: number;
+  total_outflows: number;
   cash_amount: number;
   transfer_amount: number;
   declared_cash: number;
@@ -112,4 +166,28 @@ export interface CashRegisterRaw {
   observations: string | null;
   created_at: string;
   closed_by_name: string;
+}
+
+export interface CashRegisterDetailRaw extends CashRegisterRaw {
+  breakdown: {
+    payments: Array<{
+      id: string; amount_received: number; payment_method: string;
+      transfer_reference: string | null; approved_at: string;
+      customer_name: string; collector_name: string; installment_number: number;
+    }>;
+    down_payments: Array<{
+      id: string; amount: number; payment_method: string;
+      transfer_reference: string | null; payment_type: string;
+      created_at: string; customer_name: string; approved_by_name: string;
+    }>;
+    liquidations: Array<{
+      id: string; total_paid: number; commissions_total: number;
+      salary_amount: number; payment_method: string;
+      transfer_reference: string | null; paid_at: string; employee_name: string;
+    }>;
+    expenses: Array<{
+      id: string; amount: number; description: string; payment_method: string;
+      transfer_reference: string | null; created_at: string; created_by_name: string;
+    }>;
+  };
 }

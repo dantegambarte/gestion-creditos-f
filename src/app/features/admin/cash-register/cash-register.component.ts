@@ -23,6 +23,7 @@ import {
   CashRegister,
   CashRegisterClosePayload,
   CashRegisterDashboard,
+  CashRegisterDetail,
   CashRegisterFilters,
   CashRegisterPreClose,
   DifferenceStatus,
@@ -93,7 +94,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   showDetailDialog = false;
-  selectedRegister: CashRegister | null = null;
+  selectedRegister: CashRegisterDetail | null = null;
+  loadingDetail = false;
 
   ngOnInit(): void {
     this.header.set([{ label: 'Caja' }]);
@@ -237,9 +239,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
             detail: 'Cierre de caja registrado correctamente.',
             life: 5000,
           });
-          this.selectedRegister = reg;
-          this.showDetailDialog = true;
           this.loadDashboard();
+          this.openDetail(reg);
         },
         error: (err: AppError) => {
           if (err.status === 409) {
@@ -271,12 +272,27 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abre el diálogo para ver los detalles de un registro de caja.
-   * @param reg - El registro de caja para el cual mostrar detalles.
+   * Abre el diálogo de detalle cargando el breakdown completo desde el servidor.
+   * @param reg - El registro de caja de la lista (se usa su id para el fetch).
    */
   openDetail(reg: CashRegister): void {
-    this.selectedRegister = reg;
+    this.selectedRegister = null;
+    this.loadingDetail = true;
     this.showDetailDialog = true;
+    this.service
+      .getById(reg.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (detail) => {
+          this.selectedRegister = detail;
+          this.loadingDetail = false;
+        },
+        error: () => {
+          this.loadingDetail = false;
+          this.showDetailDialog = false;
+          this.msg.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el detalle.', life: 4000 });
+        },
+      });
   }
 
   /**
@@ -338,5 +354,27 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     if (!iso) return '—';
     const d = iso.split('T')[0].split('-');
     return `${d[2]}/${d[1]}/${d[0]}`;
+  }
+
+  /**
+   * Formatea una fecha ISO con hora en el formato dd/mm/yyyy HH:mm.
+   * @param iso
+   * @returns
+   */
+  formatDateTime(iso: string): string {
+    if (!iso) return '—';
+    const dt = new Date(iso);
+    const date = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+    const time = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+    return `${date} ${time}`;
+  }
+
+  /**
+   * Devuelve la etiqueta de método de pago.
+   * @param method
+   * @returns
+   */
+  paymentMethodLabel(method: string): string {
+    return method === 'CASH' ? 'Efectivo' : 'Transferencia';
   }
 }

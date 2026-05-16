@@ -247,10 +247,27 @@
       >
         <ng-template pTemplate="header">
           <tr>
-            <th>Fecha</th>
-            <th class="text-right">Total recaudado</th>
-            <th class="text-right">Efectivo</th>
-            <th class="text-right">Transferencia</th>
+            <th>Fecha y hora</th>
+            <th class="text-right">
+              <span pTooltip="Cobros + enganches del día (sin descontar egresos)" tooltipPosition="top">
+                Recaudado bruto
+              </span>
+            </th>
+            <th class="text-right" style="color: var(--ff-danger)">
+              <span pTooltip="Gastos + comisiones pagadas en el día" tooltipPosition="top">
+                Egresos
+              </span>
+            </th>
+            <th class="text-right">
+              <span pTooltip="Cobros e inganches en efectivo menos egresos en efectivo" tooltipPosition="top">
+                Efectivo neto
+              </span>
+            </th>
+            <th class="text-right">
+              <span pTooltip="Cobros e enganches por transferencia menos egresos por transferencia" tooltipPosition="top">
+                Transf. neta
+              </span>
+            </th>
             <th class="text-right">Declarado</th>
             <th class="text-right">Diferencia</th>
             <th class="text-center">Estado</th>
@@ -263,27 +280,26 @@
             (click)="openDetail(reg)"
             data-cy="admin-cash-register-history-row"
           >
-            <td class="font-medium">{{ formatDate(reg.registerDate) }}</td>
-            <td
-              class="text-right ff-mono font-semibold"
-              style="color: var(--ff-accent)"
-            >
+            <td>
+              <p class="font-medium">{{ formatDate(reg.registerDate) }}</p>
+              <p class="text-xs" style="color: var(--ff-text-muted)">{{ formatDateTime(reg.createdAt) }}</p>
+            </td>
+            <td class="text-right ff-mono font-semibold" style="color: var(--ff-accent)">
               {{ formatCurrency(reg.totalCollected) }}
             </td>
-            <td class="text-right ff-mono">
-              {{ formatCurrency(reg.cashAmount) }}
+            <td class="text-right ff-mono font-medium" style="color: var(--ff-danger)">
+              @if (reg.totalOutflows > 0) {
+                - {{ formatCurrency(reg.totalOutflows) }}
+              } @else {
+                <span style="color: var(--ff-text-muted)">—</span>
+              }
             </td>
-            <td class="text-right ff-mono">
-              {{ formatCurrency(reg.transferAmount) }}
-            </td>
-            <td class="text-right ff-mono">
-              {{ formatCurrency(reg.declaredCash) }}
-            </td>
+            <td class="text-right ff-mono">{{ formatCurrency(reg.cashAmount) }}</td>
+            <td class="text-right ff-mono">{{ formatCurrency(reg.transferAmount) }}</td>
+            <td class="text-right ff-mono">{{ formatCurrency(reg.declaredCash) }}</td>
             <td
               class="text-right ff-mono font-semibold"
-              [style.color]="
-                reg.difference >= 0 ? 'var(--ff-success)' : 'var(--ff-danger)'
-              "
+              [style.color]="reg.difference >= 0 ? 'var(--ff-success)' : 'var(--ff-danger)'"
             >
               {{ formatCurrency(reg.difference) }}
             </td>
@@ -293,9 +309,7 @@
                 [severity]="differenceSeverity(reg.differenceStatus)"
               />
             </td>
-            <td style="color: var(--ff-text-secondary)">
-              {{ reg.closedByName }}
-            </td>
+            <td style="color: var(--ff-text-secondary)">{{ reg.closedByName }}</td>
           </tr>
         </ng-template>
       </p-table>
@@ -526,119 +540,310 @@
   data-cy="admin-cash-register-detail-modal"
   [(visible)]="showDetailDialog"
   [modal]="true"
-  [style]="{ width: '500px' }"
-  header="Detalle de cierre"
+  [style]="{ width: '660px', maxHeight: '90vh' }"
+  [contentStyle]="{ overflow: 'auto' }"
+  header="Informe de cierre"
 >
-  @if (selectedRegister) {
-    <div class="space-y-3">
-      <div class="grid grid-cols-2 gap-3">
+  @if (loadingDetail) {
+    <app-loading-state />
+  } @else if (selectedRegister) {
+    <div class="space-y-4">
+
+      <!-- Encabezado: fecha, hora y responsable -->
+      <div class="grid grid-cols-3 gap-3">
         <div class="cr-detail-cell">
           <p class="ud-label">Fecha</p>
-          <p class="ud-value font-semibold">
-            {{ formatDate(selectedRegister.registerDate) }}
-          </p>
+          <p class="ud-value font-semibold">{{ formatDate(selectedRegister.registerDate) }}</p>
+        </div>
+        <div class="cr-detail-cell">
+          <p class="ud-label">Hora de cierre</p>
+          <p class="ud-value font-semibold">{{ formatDateTime(selectedRegister.createdAt).split(' ')[1] }}</p>
         </div>
         <div class="cr-detail-cell">
           <p class="ud-label">Cerrado por</p>
-          <p class="ud-value font-semibold">
-            {{ selectedRegister.closedByName }}
-          </p>
+          <p class="ud-value font-semibold">{{ selectedRegister.closedByName }}</p>
         </div>
-        <div
-          class="cr-detail-cell"
-          style="
-            background: rgba(52, 211, 153, 0.08);
-            border-color: rgba(52, 211, 153, 0.2);
-          "
-        >
-          <p class="ud-label" style="color: var(--ff-success)">
-            Total recaudado
-          </p>
-          <p
-            class="ud-value ff-mono font-bold"
-            style="color: var(--ff-success)"
-          >
-            {{ formatCurrency(selectedRegister.totalCollected) }}
-          </p>
+      </div>
+
+      <!-- Ingresos brutos -->
+      <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(52,211,153,0.25)">
+        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(52,211,153,0.1); color: var(--ff-success)">
+          Ingresos brutos del día
         </div>
-        <div class="cr-detail-cell">
-          <p class="ud-label">Efectivo sistema</p>
-          <p class="ud-value ff-mono font-semibold">
-            {{ formatCurrency(selectedRegister.cashAmount) }}
-          </p>
-        </div>
-        <div class="cr-detail-cell">
-          <p class="ud-label">Transferencia</p>
-          <p class="ud-value ff-mono font-semibold">
-            {{ formatCurrency(selectedRegister.transferAmount) }}
-          </p>
-        </div>
-        <div class="cr-detail-cell">
-          <p class="ud-label">Efectivo declarado</p>
-          <p class="ud-value ff-mono font-semibold">
-            {{ formatCurrency(selectedRegister.declaredCash) }}
-          </p>
-        </div>
-        <div
-          class="col-span-2 cr-detail-cell border-2"
-          [style.background]="
-            selectedRegister.difference >= 0
-              ? 'rgba(52,211,153,0.08)'
-              : 'rgba(248,113,113,0.08)'
-          "
-          [style.borderColor]="
-            selectedRegister.difference >= 0
-              ? 'rgba(52,211,153,0.25)'
-              : 'rgba(248,113,113,0.25)'
-          "
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p
-                class="ud-label"
-                [style.color]="
-                  selectedRegister.difference >= 0
-                    ? 'var(--ff-success)'
-                    : 'var(--ff-danger)'
-                "
-              >
-                Diferencia
-              </p>
-              <p
-                class="ud-value ff-mono font-bold text-xl"
-                [style.color]="
-                  selectedRegister.difference >= 0
-                    ? 'var(--ff-success)'
-                    : 'var(--ff-danger)'
-                "
-              >
-                {{ formatCurrency(selectedRegister.difference) }}
-              </p>
+        <div class="divide-y" style="border-color: var(--ff-border)">
+          <div class="flex justify-between px-3 py-2 text-sm">
+            <span style="color: var(--ff-text-secondary)">Cobros aprobados</span>
+            <div class="flex gap-3 text-right">
+              <span class="ff-mono text-xs" style="color: var(--ff-text-muted)">
+                {{ selectedRegister.breakdown.payments.length }} cobros
+              </span>
+              <span class="ff-mono font-medium">
+                {{ formatCurrency(selectedRegister.breakdown.payments.reduce((s, p) => s + p.amountReceived, 0)) }}
+              </span>
             </div>
-            <p-tag
-              [value]="differenceLabel(selectedRegister.differenceStatus)"
-              [severity]="differenceSeverity(selectedRegister.differenceStatus)"
-              styleClass="text-sm"
-            />
+          </div>
+          <div class="flex justify-between px-3 py-2 text-sm">
+            <span style="color: var(--ff-text-secondary)">Enganches</span>
+            <div class="flex gap-3 text-right">
+              <span class="ff-mono text-xs" style="color: var(--ff-text-muted)">
+                {{ selectedRegister.breakdown.downPayments.length }} enganches
+              </span>
+              <span class="ff-mono font-medium">
+                {{ formatCurrency(selectedRegister.breakdown.downPayments.reduce((s, p) => s + p.amount, 0)) }}
+              </span>
+            </div>
+          </div>
+          <div class="flex justify-between px-3 py-2 text-sm font-semibold" style="background: rgba(52,211,153,0.05)">
+            <span>Total bruto recaudado</span>
+            <span class="ff-mono" style="color: var(--ff-success)">{{ formatCurrency(selectedRegister.totalCollected) }}</span>
           </div>
         </div>
       </div>
-      @if (selectedRegister.observations) {
-        <div
-          class="cr-detail-cell"
-          style="
-            background: rgba(251, 176, 64, 0.08);
-            border-color: rgba(251, 176, 64, 0.2);
-          "
-        >
-          <p class="ud-label" style="color: var(--ff-warning)">Observaciones</p>
-          <p class="text-sm" style="color: var(--ff-text-primary)">
-            {{ selectedRegister.observations }}
-          </p>
+
+      <!-- Egresos -->
+      @if (selectedRegister.totalOutflows > 0) {
+        <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(248,113,113,0.25)">
+          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(248,113,113,0.1); color: var(--ff-danger)">
+            Egresos del día
+          </div>
+          <div class="divide-y" style="border-color: var(--ff-border)">
+            @if (selectedRegister.breakdown.expenses.length > 0) {
+              <div class="flex justify-between px-3 py-2 text-sm">
+                <span style="color: var(--ff-text-secondary)">Gastos</span>
+                <div class="flex gap-3 text-right">
+                  <span class="ff-mono text-xs" style="color: var(--ff-text-muted)">{{ selectedRegister.breakdown.expenses.length }} gastos</span>
+                  <span class="ff-mono font-medium" style="color: var(--ff-danger)">
+                    - {{ formatCurrency(selectedRegister.breakdown.expenses.reduce((s, e) => s + e.amount, 0)) }}
+                  </span>
+                </div>
+              </div>
+            }
+            @if (selectedRegister.breakdown.liquidations.length > 0) {
+              <div class="flex justify-between px-3 py-2 text-sm">
+                <span style="color: var(--ff-text-secondary)">Liquidaciones de comisiones</span>
+                <div class="flex gap-3 text-right">
+                  <span class="ff-mono text-xs" style="color: var(--ff-text-muted)">{{ selectedRegister.breakdown.liquidations.length }} liquidaciones</span>
+                  <span class="ff-mono font-medium" style="color: var(--ff-danger)">
+                    - {{ formatCurrency(selectedRegister.breakdown.liquidations.reduce((s, l) => s + l.totalPaid, 0)) }}
+                  </span>
+                </div>
+              </div>
+            }
+            <div class="flex justify-between px-3 py-2 text-sm font-semibold" style="background: rgba(248,113,113,0.05)">
+              <span>Total egresos</span>
+              <span class="ff-mono" style="color: var(--ff-danger)">- {{ formatCurrency(selectedRegister.totalOutflows) }}</span>
+            </div>
+          </div>
         </div>
       }
+
+      <!-- Arqueo de efectivo -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-xl overflow-hidden" style="border: 1px solid var(--ff-border)">
+          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(79,110,247,0.07); color: var(--ff-accent)">
+            Arqueo efectivo
+          </div>
+          <div class="divide-y" style="border-color: var(--ff-border)">
+            <div class="flex justify-between px-3 py-2 text-sm">
+              <span style="color: var(--ff-text-secondary)">Esperado en caja</span>
+              <span class="ff-mono font-medium">{{ formatCurrency(selectedRegister.cashAmount) }}</span>
+            </div>
+            <div class="flex justify-between px-3 py-2 text-sm">
+              <span style="color: var(--ff-text-secondary)">Declarado (contado)</span>
+              <span class="ff-mono font-medium">{{ formatCurrency(selectedRegister.declaredCash) }}</span>
+            </div>
+            <div
+              class="flex justify-between px-3 py-2 text-sm font-bold"
+              [style.background]="selectedRegister.difference === 0 ? 'rgba(52,211,153,0.08)' : (selectedRegister.difference > 0 ? 'rgba(251,176,64,0.08)' : 'rgba(248,113,113,0.08)')"
+              [style.color]="selectedRegister.difference === 0 ? 'var(--ff-success)' : (selectedRegister.difference > 0 ? 'var(--ff-warning)' : 'var(--ff-danger)')"
+            >
+              <span>{{ selectedRegister.difference === 0 ? 'Cuadra exacto' : (selectedRegister.difference > 0 ? 'Sobrante' : 'Faltante') }}</span>
+              <span class="ff-mono">{{ formatCurrency(selectedRegister.difference) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl overflow-hidden" style="border: 1px solid var(--ff-border); background: rgba(79,110,247,0.03)">
+          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(79,110,247,0.07); color: var(--ff-accent)">
+            Balance transferencias
+          </div>
+          <div class="divide-y" style="border-color: var(--ff-border)">
+            <div class="flex justify-between px-3 py-2 text-sm">
+              <span style="color: var(--ff-text-secondary)">Esperado en banco</span>
+              <span class="ff-mono font-medium">{{ formatCurrency(selectedRegister.transferAmount) }}</span>
+            </div>
+            <div class="px-3 py-2">
+              <p class="text-xs" style="color: var(--ff-text-muted)">
+                <i class="pi pi-info-circle mr-1"></i>Validar contra extracto bancario.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detalle cobros -->
+      @if (selectedRegister.breakdown.payments.length > 0) {
+        <div class="rounded-xl overflow-hidden" style="border: 1px solid var(--ff-border)">
+          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(0,0,0,0.03); color: var(--ff-text-secondary)">
+            Cobros aprobados ({{ selectedRegister.breakdown.payments.length }})
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--ff-border); background: rgba(0,0,0,0.02)">
+                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Cliente</th>
+                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Cobrador</th>
+                  <th class="text-center px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Cuota</th>
+                  <th class="text-center px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Método</th>
+                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of selectedRegister.breakdown.payments; track p.id) {
+                  <tr style="border-bottom: 1px solid var(--ff-border)">
+                    <td class="px-3 py-2">{{ p.customerName }}</td>
+                    <td class="px-3 py-2" style="color: var(--ff-text-secondary)">{{ p.collectorName }}</td>
+                    <td class="px-3 py-2 text-center" style="color: var(--ff-text-secondary)">N° {{ p.installmentNumber }}</td>
+                    <td class="px-3 py-2 text-center">
+                      <span
+                        class="text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                        [style.background]="p.paymentMethod === 'CASH' ? 'rgba(52,211,153,0.12)' : 'rgba(79,110,247,0.12)'"
+                        [style.color]="p.paymentMethod === 'CASH' ? 'var(--ff-success)' : 'var(--ff-accent)'"
+                      >{{ paymentMethodLabel(p.paymentMethod) }}</span>
+                    </td>
+                    <td class="px-3 py-2 text-right ff-mono font-medium">{{ formatCurrency(p.amountReceived) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Detalle enganches -->
+      @if (selectedRegister.breakdown.downPayments.length > 0) {
+        <div class="rounded-xl overflow-hidden" style="border: 1px solid var(--ff-border)">
+          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(0,0,0,0.03); color: var(--ff-text-secondary)">
+            Enganches ({{ selectedRegister.breakdown.downPayments.length }})
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--ff-border); background: rgba(0,0,0,0.02)">
+                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Cliente</th>
+                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Aprobado por</th>
+                  <th class="text-center px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Método</th>
+                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (dp of selectedRegister.breakdown.downPayments; track dp.id) {
+                  <tr style="border-bottom: 1px solid var(--ff-border)">
+                    <td class="px-3 py-2">{{ dp.customerName }}</td>
+                    <td class="px-3 py-2" style="color: var(--ff-text-secondary)">{{ dp.approvedByName }}</td>
+                    <td class="px-3 py-2 text-center">
+                      <span
+                        class="text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                        [style.background]="dp.paymentMethod === 'CASH' ? 'rgba(52,211,153,0.12)' : 'rgba(79,110,247,0.12)'"
+                        [style.color]="dp.paymentMethod === 'CASH' ? 'var(--ff-success)' : 'var(--ff-accent)'"
+                      >{{ paymentMethodLabel(dp.paymentMethod) }}</span>
+                    </td>
+                    <td class="px-3 py-2 text-right ff-mono font-medium">{{ formatCurrency(dp.amount) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Detalle liquidaciones -->
+      @if (selectedRegister.breakdown.liquidations.length > 0) {
+        <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(248,113,113,0.2)">
+          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(248,113,113,0.07); color: var(--ff-danger)">
+            Liquidaciones de comisiones ({{ selectedRegister.breakdown.liquidations.length }})
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--ff-border); background: rgba(0,0,0,0.02)">
+                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Empleado</th>
+                  <th class="text-center px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Método</th>
+                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Comisiones</th>
+                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Sueldo</th>
+                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Total pagado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (l of selectedRegister.breakdown.liquidations; track l.id) {
+                  <tr style="border-bottom: 1px solid var(--ff-border)">
+                    <td class="px-3 py-2">{{ l.employeeName }}</td>
+                    <td class="px-3 py-2 text-center">
+                      <span
+                        class="text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                        [style.background]="l.paymentMethod === 'CASH' ? 'rgba(52,211,153,0.12)' : 'rgba(79,110,247,0.12)'"
+                        [style.color]="l.paymentMethod === 'CASH' ? 'var(--ff-success)' : 'var(--ff-accent)'"
+                      >{{ paymentMethodLabel(l.paymentMethod) }}</span>
+                    </td>
+                    <td class="px-3 py-2 text-right ff-mono">{{ formatCurrency(l.commissionsTotal) }}</td>
+                    <td class="px-3 py-2 text-right ff-mono">{{ formatCurrency(l.salaryAmount) }}</td>
+                    <td class="px-3 py-2 text-right ff-mono font-semibold" style="color: var(--ff-danger)">{{ formatCurrency(l.totalPaid) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Detalle gastos -->
+      @if (selectedRegister.breakdown.expenses.length > 0) {
+        <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(248,113,113,0.2)">
+          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(248,113,113,0.07); color: var(--ff-danger)">
+            Gastos ({{ selectedRegister.breakdown.expenses.length }})
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--ff-border); background: rgba(0,0,0,0.02)">
+                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Descripción</th>
+                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Registrado por</th>
+                  <th class="text-center px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Método</th>
+                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of selectedRegister.breakdown.expenses; track e.id) {
+                  <tr style="border-bottom: 1px solid var(--ff-border)">
+                    <td class="px-3 py-2">{{ e.description }}</td>
+                    <td class="px-3 py-2" style="color: var(--ff-text-secondary)">{{ e.createdByName }}</td>
+                    <td class="px-3 py-2 text-center">
+                      <span
+                        class="text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                        [style.background]="e.paymentMethod === 'CASH' ? 'rgba(52,211,153,0.12)' : 'rgba(79,110,247,0.12)'"
+                        [style.color]="e.paymentMethod === 'CASH' ? 'var(--ff-success)' : 'var(--ff-accent)'"
+                      >{{ paymentMethodLabel(e.paymentMethod) }}</span>
+                    </td>
+                    <td class="px-3 py-2 text-right ff-mono font-semibold" style="color: var(--ff-danger)">{{ formatCurrency(e.amount) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- Observaciones -->
+      @if (selectedRegister.observations) {
+        <div class="cr-detail-cell" style="background: rgba(251,176,64,0.08); border-color: rgba(251,176,64,0.2)">
+          <p class="ud-label" style="color: var(--ff-warning)">Observaciones</p>
+          <p class="text-sm" style="color: var(--ff-text-primary)">{{ selectedRegister.observations }}</p>
+        </div>
+      }
+
     </div>
   }
+
   <ng-template pTemplate="footer">
     <p-button
       data-cy="admin-cash-register-detail-close-action"
