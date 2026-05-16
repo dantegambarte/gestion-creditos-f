@@ -675,6 +675,20 @@
         </div>
       </div>
 
+      <!-- Total neto del día -->
+      <div
+        class="rounded-xl px-4 py-3 flex items-center justify-between"
+        style="background: rgba(79,110,247,0.08); border: 1px solid rgba(79,110,247,0.2)"
+      >
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-accent)">Total neto del día</p>
+          <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">Efectivo neto + Transferencias netas</p>
+        </div>
+        <span class="ff-mono text-xl font-extrabold" style="color: var(--ff-accent)">
+          {{ formatCurrency(selectedRegister.cashAmount + selectedRegister.transferAmount) }}
+        </span>
+      </div>
+
       <!-- Detalle cobros -->
       @if (selectedRegister.breakdown.payments.length > 0) {
         <div class="rounded-xl overflow-hidden" style="border: 1px solid var(--ff-border)">
