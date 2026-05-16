@@ -29,6 +29,48 @@ export interface CashRegister {
   closedByName: string;
 }
 
+export interface CashRegisterPreClose {
+  date: string;
+  ingresos: {
+    cobrosEfectivo: number;
+    cobrosTransferencia: number;
+    enganchesEfectivo: number;
+    enganchesTransferencia: number;
+    totalBruto: number;
+  };
+  egresos: {
+    gastosEfectivo: number;
+    gastosTransferencia: number;
+    comisionesEfectivo: number;
+    comisionesTransferencia: number;
+    total: number;
+  };
+  efectivo: { esperado: number };
+  transferencias: { esperado: number };
+  pendientes: { count: number; amount: number };
+}
+
+export interface CashRegisterPreCloseRaw {
+  date: string;
+  ingresos: {
+    cobros_efectivo: number;
+    cobros_transferencia: number;
+    enganches_efectivo: number;
+    enganches_transferencia: number;
+    total_bruto: number;
+  };
+  egresos: {
+    gastos_efectivo: number;
+    gastos_transferencia: number;
+    comisiones_efectivo: number;
+    comisiones_transferencia: number;
+    total: number;
+  };
+  efectivo: { esperado: number };
+  transferencias: { esperado: number };
+  pendientes: { count: number; amount: number };
+}
+
 export interface CashRegisterFilters {
   dateFrom?: string;
   dateTo?: string;

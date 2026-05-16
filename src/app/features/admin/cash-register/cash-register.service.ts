@@ -8,6 +8,8 @@ import {
   CashRegisterDashboard,
   CashRegisterDashboardRaw,
   CashRegisterFilters,
+  CashRegisterPreClose,
+  CashRegisterPreCloseRaw,
   CashRegisterRaw,
 } from '../models/cash-register.model';
 
@@ -54,6 +56,34 @@ function toCashRegister(r: CashRegisterRaw): CashRegister {
   };
 }
 
+/**
+ * Convierte un objeto de tipo CashRegisterPreCloseRaw a CashRegisterPreClose.
+ * @param r
+ * @returns
+ */
+function toPreClose(r: CashRegisterPreCloseRaw): CashRegisterPreClose {
+  return {
+    date: r.date,
+    ingresos: {
+      cobrosEfectivo:        r.ingresos.cobros_efectivo,
+      cobrosTransferencia:   r.ingresos.cobros_transferencia,
+      enganchesEfectivo:     r.ingresos.enganches_efectivo,
+      enganchesTransferencia: r.ingresos.enganches_transferencia,
+      totalBruto:            r.ingresos.total_bruto,
+    },
+    egresos: {
+      gastosEfectivo:        r.egresos.gastos_efectivo,
+      gastosTransferencia:   r.egresos.gastos_transferencia,
+      comisionesEfectivo:    r.egresos.comisiones_efectivo,
+      comisionesTransferencia: r.egresos.comisiones_transferencia,
+      total:                 r.egresos.total,
+    },
+    efectivo:       { esperado: r.efectivo.esperado },
+    transferencias: { esperado: r.transferencias.esperado },
+    pendientes:     { count: r.pendientes.count, amount: r.pendientes.amount },
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class CashRegisterService {
   private readonly api = inject(ApiHttpService);
@@ -96,6 +126,19 @@ export class CashRegisterService {
     return this.api
       .get<CashRegisterRaw>(`cash-register/${id}`)
       .pipe(map(toCashRegister));
+  }
+
+  /**
+   * Obtiene el desglose pre-cierre del día (solo lectura).
+   * @param date - Fecha opcional en formato YYYY-MM-DD.
+   * @returns
+   */
+  getPreClose(date?: string): Observable<CashRegisterPreClose> {
+    const params: Record<string, string> = {};
+    if (date) params['date'] = date;
+    return this.api
+      .get<CashRegisterPreCloseRaw>('cash-register/pre-close', params)
+      .pipe(map(toPreClose));
   }
 
   /**

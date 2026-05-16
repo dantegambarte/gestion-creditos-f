@@ -24,6 +24,7 @@ import {
   CashRegisterClosePayload,
   CashRegisterDashboard,
   CashRegisterFilters,
+  CashRegisterPreClose,
   DifferenceStatus,
 } from '../models/cash-register.model';
 import { CashRegisterService } from './cash-register.service';
@@ -78,10 +79,18 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   ];
 
   showCloseDialog = false;
+  preClose: CashRegisterPreClose | null = null;
+  loadingPreClose = false;
   declaredCash: number | null = null;
   observations = '';
   closing = false;
   closePendingError: string | null = null;
+
+  /** Diferencia calculada en tiempo real: efectivo declarado - efectivo esperado. */
+  get closeDifference(): number {
+    if (this.declaredCash == null || !this.preClose) return 0;
+    return this.declaredCash - this.preClose.efectivo.esperado;
+  }
 
   showDetailDialog = false;
   selectedRegister: CashRegister | null = null;
@@ -171,13 +180,27 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abre el diálogo para cerrar la caja.
+   * Abre el diálogo de cierre cargando el resumen pre-cierre desde el servidor.
    */
   openCloseDialog(): void {
-    this.declaredCash = this.dashboard?.cashAmount ?? 0;
+    this.declaredCash = null;
     this.observations = '';
     this.closePendingError = null;
+    this.preClose = null;
+    this.loadingPreClose = true;
     this.showCloseDialog = true;
+    this.service
+      .getPreClose()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (pc) => {
+          this.preClose = pc;
+          this.loadingPreClose = false;
+        },
+        error: () => {
+          this.loadingPreClose = false;
+        },
+      });
   }
 
   /**
