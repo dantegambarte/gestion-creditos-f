@@ -249,7 +249,7 @@
           <tr>
             <th>Fecha y hora</th>
             <th class="text-right">
-              <span pTooltip="Cobros + enganches del día (sin descontar egresos)" tooltipPosition="top">
+              <span pTooltip="Cobros + enganches del día sin descontar egresos" tooltipPosition="top">
                 Recaudado bruto
               </span>
             </th>
@@ -259,13 +259,8 @@
               </span>
             </th>
             <th class="text-right">
-              <span pTooltip="Cobros e inganches en efectivo menos egresos en efectivo" tooltipPosition="top">
-                Efectivo neto
-              </span>
-            </th>
-            <th class="text-right">
-              <span pTooltip="Cobros e enganches por transferencia menos egresos por transferencia" tooltipPosition="top">
-                Transf. neta
+              <span pTooltip="Recaudado bruto menos egresos del día" tooltipPosition="top">
+                Recaudado neto
               </span>
             </th>
             <th class="text-right">Declarado</th>
@@ -294,8 +289,9 @@
                 <span style="color: var(--ff-text-muted)">—</span>
               }
             </td>
-            <td class="text-right ff-mono">{{ formatCurrency(reg.cashAmount) }}</td>
-            <td class="text-right ff-mono">{{ formatCurrency(reg.transferAmount) }}</td>
+            <td class="text-right ff-mono font-semibold">
+              {{ formatCurrency(reg.cashAmount + reg.transferAmount) }}
+            </td>
             <td class="text-right ff-mono">{{ formatCurrency(reg.declaredCash) }}</td>
             <td
               class="text-right ff-mono font-semibold"
