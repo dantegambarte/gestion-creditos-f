@@ -153,6 +153,96 @@
     </div>
   </div>
 
+  <!-- Overdue row -->
+  <div class="db-overdue-row">
+    <!-- Ranking cuotas vencidas -->
+    <div class="db-panel">
+      <div class="db-panel__header">
+        <span>Ranking de cuotas vencidas</span>
+      </div>
+      <div class="db-panel__body">
+        <p-table
+          [value]="upcomingInstallments"
+          [loading]="loadingUpcoming"
+          [rows]="5"
+          styleClass="p-datatable-sm db-table"
+          responsiveLayout="scroll"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Vencimiento</th>
+              <th>Días</th>
+              <th>Cliente</th>
+              <th>Cuota</th>
+              <th class="text-right">Monto</th>
+              <th>Estado</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-inst>
+            <tr>
+              <td>{{ inst.dueDate | date: 'dd/MM/yyyy' }}</td>
+              <td>
+                <span style="color: var(--ff-danger)">
+                  {{ inst.daysOverdue }} días
+                </span>
+              </td>
+              <td class="db-td--client">{{ inst.customerName }}</td>
+              <td>{{ inst.installmentNumber }}</td>
+              <td class="text-right db-td--amount">
+                {{ inst.amountDue - inst.amountPaid | currencyArs: 2 }}
+              </td>
+              <td>
+                <p-tag
+                  [value]="statusLabel(inst.status)"
+                  [severity]="'danger'"
+                  [rounded]="true"
+                />
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6" class="db-empty">
+                @if (upcomingError) {
+                  No se pudieron cargar los vencimientos.
+                } @else {
+                  Sin cuotas vencidas.
+                }
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+
+    <!-- Quick access (reduced) -->
+    <div class="db-panel">
+      <div class="db-panel__header">
+        <span>Accesos rápidos</span>
+      </div>
+      <div class="db-panel__body" style="display: flex; flex-direction: column; gap: 12px;">
+        <button class="db-quick-btn" (click)="navigateNewCredit()">
+          <i class="pi pi-plus"></i>
+          <span>Nuevo crédito</span>
+        </button>
+        <button class="db-quick-btn" (click)="navigateCashRegister()">
+          <i class="pi pi-wallet"></i>
+          <span>Cerrar caja</span>
+        </button>
+        <button class="db-quick-btn" (click)="navigateGenerateSheet()">
+          <i class="pi pi-file"></i>
+          <span>Generar planilla</span>
+        </button>
+        <button class="db-quick-btn" (click)="navigateReports()">
+          <i class="pi pi-chart-bar"></i>
+          <span>Reportes</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Analysis row (3 charts) -->
   <div class="db-analysis-row">
     <!-- Weekly collection -->
@@ -183,106 +273,19 @@
       }
     </div>
 
-  </div>
-
-  <!-- Quick access buttons -->
-  <div class="db-quick-access">
-    <button class="db-quick-btn" (click)="navigateNewCredit()">
-      <i class="pi pi-plus"></i>
-      <span>Nuevo crédito</span>
-    </button>
-    <button class="db-quick-btn" (click)="navigateRecordPayment()">
-      <i class="pi pi-credit-card"></i>
-      <span>Registrar cobro</span>
-    </button>
-    <button class="db-quick-btn" (click)="navigateCashRegister()">
-      <i class="pi pi-wallet"></i>
-      <span>Cerrar caja</span>
-    </button>
-    <button class="db-quick-btn" (click)="navigateGenerateSheet()">
-      <i class="pi pi-file"></i>
-      <span>Generar planilla</span>
-    </button>
-    <button class="db-quick-btn" (click)="navigateRefinance()">
-      <i class="pi pi-refresh"></i>
-      <span>Refinanciar</span>
-    </button>
-    <button class="db-quick-btn" (click)="navigateNewClient()">
-      <i class="pi pi-user-plus"></i>
-      <span>Nuevo cliente</span>
-    </button>
-    <button class="db-quick-btn" (click)="navigateReports()">
-      <i class="pi pi-chart-bar"></i>
-      <span>Reportes</span>
-    </button>
-    <button class="db-quick-btn" (click)="navigateConfig()">
-      <i class="pi pi-cog"></i>
-      <span>Configuración</span>
-    </button>
-  </div>
-
-  <!-- Panels row -->
-  <div class="db-panels">
-    <!-- Próximos vencimientos -->
-    <div class="db-panel" style="flex: 100">
+    <!-- Sellers ranking -->
+    <div class="db-chart-panel">
       <div class="db-panel__header">
-        <span>Próximos vencimientos</span>
+        <span>Top 5 vendedores</span>
       </div>
-      <div class="db-panel__body">
-        <p-table
-          [value]="upcomingInstallments"
-          [loading]="loadingUpcoming"
-          [rows]="5"
-          styleClass="p-datatable-sm db-table"
-          responsiveLayout="scroll"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Vencimiento</th>
-              <th>Días</th>
-              <th>Cliente</th>
-              <th>Cuota</th>
-              <th class="text-right">Monto</th>
-              <th>Estado</th>
-            </tr>
-          </ng-template>
-
-          <ng-template pTemplate="body" let-inst>
-            <tr>
-              <td>{{ inst.dueDate | date: 'dd/MM/yyyy' }}</td>
-              <td>
-                <span [style.color]="inst.daysUntilDue > 7 ? 'var(--ff-success)' : 'var(--ff-danger)'">
-                  {{ inst.daysUntilDue }} días
-                </span>
-              </td>
-              <td class="db-td--client">{{ inst.customerName }}</td>
-              <td>{{ inst.installmentNumber }}</td>
-              <td class="text-right db-td--amount">
-                {{ inst.amountDue - inst.amountPaid | currencyArs: 2 }}
-              </td>
-              <td>
-                <p-tag
-                  [value]="statusLabel(inst.status)"
-                  [severity]="inst.status === 'PENDING' ? 'warning' : 'danger'"
-                  [rounded]="true"
-                />
-              </td>
-            </tr>
-          </ng-template>
-
-          <ng-template pTemplate="emptymessage">
-            <tr>
-              <td colspan="6" class="db-empty">
-                @if (upcomingError) {
-                  No se pudieron cargar los vencimientos.
-                } @else {
-                  Sin próximos vencimientos.
-                }
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      </div>
+      @if (loadingCharts) {
+        <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
+          <p-skeleton width="100%" height="250px" />
+        </div>
+      } @else {
+        <p-chart type="bar" [data]="chartSellersData" [options]="chartSellersOptions" style="height: 250px;" />
+      }
     </div>
+
   </div>
 </div>
