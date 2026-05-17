@@ -866,6 +866,14 @@ aside.sidebar {
   gap: 16px;
 }
 
+// ─── Overdue and quick access row ───────────────────────────────────────────
+.db-overdue-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
 .db-pending-col {
   background: var(--ff-panel);
   border: 1px solid var(--ff-border);
