@@ -88,7 +88,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadingCharts = true;
   isCashClosed = false;
   kpis: KpiCard[] = [];
-  upcomingInstallments: (Installment & { daysUntilDue: number })[] = [];
+  upcomingInstallments: (Installment & { daysOverdue: number })[] = [];
   upcomingError = false;
   showAlert = false;
   alertMessage = '';
@@ -100,6 +100,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   chartWeeklyOptions: any;
   chartCollectorsData: any = { labels: [], datasets: [] };
   chartCollectorsOptions: any;
+  chartSellersData: any = { labels: [], datasets: [] };
+  chartSellersOptions: any;
 
   lineData: any;
   lineOptions: any;
@@ -259,31 +261,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga los próximos vencimientos de cuotas pendientes. Obtiene todas las cuotas con estado PENDING u OVERDUE,
-   * las ordena por fecha de vencimiento y muestra las próximas 5, calculando los días hasta el vencimiento.
+   * Carga las cuotas vencidas (OVERDUE). Obtiene todas las cuotas con estado OVERDUE,
+   * las ordena por mayor deuda pendiente primero, y muestra las primeras 5.
    */
   private loadUpcomingInstallments(): void {
     this.loadingUpcoming = true;
     this.upcomingError = false;
-    combineLatest([
-      this.installmentsSvc.list({ status: 'PENDING' }).pipe(catchError(() => of([]))),
-      this.installmentsSvc.list({ status: 'OVERDUE' }).pipe(catchError(() => of([]))),
-    ])
-      .pipe(takeUntil(this.destroy$))
+    this.installmentsSvc
+      .list({ status: 'OVERDUE' })
+      .pipe(
+        catchError(() => of([])),
+        takeUntil(this.destroy$),
+      )
       .subscribe({
-        next: ([pending, overdue]) => {
+        next: (overdue) => {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          const allInstallments = [...pending, ...overdue]
+          const overdueInstallments = overdue
             .map((inst) => ({
               ...inst,
-              daysUntilDue: Math.ceil(
-                (new Date(inst.dueDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+              daysOverdue: Math.abs(
+                Math.ceil(
+                  (new Date(inst.dueDate).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+                )
               ),
             }))
-            .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+            .sort((a, b) => (b.amountDue - b.amountPaid) - (a.amountDue - a.amountPaid))
             .slice(0, 5);
-          this.upcomingInstallments = allInstallments;
+          this.upcomingInstallments = overdueInstallments;
           this.loadingUpcoming = false;
         },
         error: () => {
@@ -341,7 +346,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Agrupa créditos pendientes por vendedor.
+   * Agrupa créditos pendientes por vendedor. Ordena los créditos dentro de cada grupo por fecha de creación (más antiguos primero).
    */
   private groupCreditsBySeller(credits: Credit[]): PendingCreditGroup[] {
     const grouped = new Map<string | null, Credit[]>();
@@ -354,19 +359,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
       grouped.get(seller)!.push(credit);
     });
 
-    return Array.from(grouped.entries()).map(([sellerName, items]) => ({
-      sellerName,
-      count: items.length,
-      totalAmount: items.reduce((sum, c) => sum + c.totalAmount, 0),
-      oldestDate: items.reduce((oldest, c) => {
-        return new Date(c.createdAt) < new Date(oldest) ? c.createdAt : oldest;
-      }, items[0].createdAt),
-      credits: items,
-    }));
+    return Array.from(grouped.entries()).map(([sellerName, items]) => {
+      const sortedItems = items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      return {
+        sellerName,
+        count: sortedItems.length,
+        totalAmount: sortedItems.reduce((sum, c) => sum + c.totalAmount, 0),
+        oldestDate: sortedItems.reduce((oldest, c) => {
+          return new Date(c.createdAt) < new Date(oldest) ? c.createdAt : oldest;
+        }, sortedItems[0].createdAt),
+        credits: sortedItems,
+      };
+    });
   }
 
   /**
-   * Agrupa cobros pendientes por cobrador.
+   * Agrupa cobros pendientes por cobrador. Ordena los cobros dentro de cada grupo por fecha de creación (más antiguos primero).
    */
   private groupPaymentsByCollector(payments: Payment[]): PendingPaymentGroup[] {
     const grouped = new Map<string | null, Payment[]>();
@@ -379,15 +387,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       grouped.get(collector)!.push(payment);
     });
 
-    return Array.from(grouped.entries()).map(([collectorName, items]) => ({
-      collectorName,
-      count: items.length,
-      totalAmount: items.reduce((sum, p) => sum + p.amountReceived, 0),
-      oldestDate: items.reduce((oldest, p) => {
-        return new Date(p.createdAt) < new Date(oldest) ? p.createdAt : oldest;
-      }, items[0].createdAt),
-      payments: items,
-    }));
+    return Array.from(grouped.entries()).map(([collectorName, items]) => {
+      const sortedItems = items.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      return {
+        collectorName,
+        count: sortedItems.length,
+        totalAmount: sortedItems.reduce((sum, p) => sum + p.amountReceived, 0),
+        oldestDate: sortedItems.reduce((oldest, p) => {
+          return new Date(p.createdAt) < new Date(oldest) ? p.createdAt : oldest;
+        }, sortedItems[0].createdAt),
+        payments: sortedItems,
+      };
+    });
   }
 
   /**
@@ -442,12 +453,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
           return of([]);
         })
       ),
+      this.reportsSvc.getSellersReport({ dateFrom: dateFromWeek, dateTo: dateToWeek }, true).pipe(
+        catchError((err) => {
+          console.error('Error loading sellers report:', err);
+          return of([]);
+        })
+      ),
     ])
       .pipe(takeUntil(this.destroy$))
-      .subscribe(([collection, collectors]) => {
-        console.log('Data loaded - collectors:', collectors);
+      .subscribe(([collection, collectors, sellers]) => {
+        console.log('Data loaded - collectors:', collectors, 'sellers:', sellers);
         this.buildWeeklyChart(collection?.daily ?? []);
         this.buildCollectorsChart(Array.isArray(collectors) ? collectors : []);
+        this.buildSellersChart(Array.isArray(sellers) ? sellers : []);
         this.loadingCharts = false;
       });
   }
@@ -487,6 +505,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           borderColor: 'rgb(79, 110, 247)',
           borderWidth: 1,
           borderRadius: 4,
+          barThickness: 24,
         },
       ],
     };
@@ -532,20 +551,78 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const gridColor = 'rgba(46, 51, 71, 0.3)';
 
     this.chartCollectorsData = {
-      labels: top5.map((c, i) => `${i + 1}. ${c.collector_name || 'Sin asignar'}`),
+      labels: top5.map((c) => (c.collectorName || 'Sin asignar').split(' ')[0]),
       datasets: [
         {
           label: 'Monto cobrado',
-          data: top5.map(c => c.total_collected),
+          data: top5.map(c => c.totalCollected),
           backgroundColor: 'rgba(52, 211, 153, 0.6)',
           borderColor: 'rgb(52, 211, 153)',
           borderWidth: 1,
           borderRadius: 4,
+          barThickness: 24,
         },
       ],
     };
 
     this.chartCollectorsOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => this.fmt.currency(ctx.parsed.y),
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: textColor,
+            font: { size: 11 },
+          },
+          grid: { display: false },
+        },
+        y: {
+          ticks: {
+            color: textColor,
+            font: { size: 11 },
+            callback: (v: number) => `$${(v / 1000).toFixed(0)}k`,
+          },
+          grid: { color: gridColor },
+        },
+      },
+    };
+
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Construye el gráfico de ranking de vendedores.
+   */
+  private buildSellersChart(sellers: any[]): void {
+    if (!sellers || !Array.isArray(sellers)) sellers = [];
+    const top5 = sellers.slice(0, 5);
+    const textColor = '#8b97b8';
+    const gridColor = 'rgba(46, 51, 71, 0.3)';
+
+    this.chartSellersData = {
+      labels: top5.map((s) => (s.sellerName || 'Sin asignar').split(' ')[0]),
+      datasets: [
+        {
+          label: 'Monto creado',
+          data: top5.map(s => s.totalAmount),
+          backgroundColor: 'rgba(251, 191, 36, 0.6)',
+          borderColor: 'rgb(251, 191, 36)',
+          borderWidth: 1,
+          borderRadius: 4,
+          barThickness: 24,
+        },
+      ],
+    };
+
+    this.chartSellersOptions = {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
