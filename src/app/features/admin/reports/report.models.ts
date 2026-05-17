@@ -62,6 +62,14 @@ export interface CollectorReportRow {
   approvalRate: number | null;
 }
 
+export interface SellerReportRow {
+  sellerId: string;
+  sellerName: string;
+  role: string;
+  totalCredits: number;
+  totalAmount: number;
+}
+
 export interface ProductReportRow {
   id: string;
   title: string;
@@ -239,6 +247,14 @@ export interface CollectorReportRowRaw {
   rejected_count: number;
   total_collected: number;
   approval_rate: number | null;
+}
+
+export interface SellerReportRowRaw {
+  seller_id: string;
+  seller_name: string;
+  role: string;
+  total_credits: number;
+  total_amount: number;
 }
 
 export interface ProductReportRowRaw {
