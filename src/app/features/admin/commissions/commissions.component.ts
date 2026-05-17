@@ -12,7 +12,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { Subject } from 'rxjs';
+import { Subject, catchError, of } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
@@ -29,6 +29,7 @@ import {
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
 import { CommissionsService } from './commissions.service';
+import { CashRegisterService } from '../cash-register/cash-register.service';
 
 type CommissionsTab = 'liquidaciones' | 'historial';
 
@@ -57,11 +58,13 @@ type CommissionsTab = 'liquidaciones' | 'historial';
 export class CommissionsComponent implements OnInit, OnDestroy {
   private readonly commissionsService = inject(CommissionsService);
   private readonly usersService = inject(UsersService);
+  private readonly cashRegisterSvc = inject(CashRegisterService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
   readonly format = inject(FormatService);
   private destroy$ = new Subject<void>();
 
+  isCashClosed = false;
   activeTab: CommissionsTab = 'liquidaciones';
 
   employees: WeeklySummaryEmployee[] = [];
@@ -94,6 +97,7 @@ export class CommissionsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.header.set([{ label: 'Liquidaciones' }]);
+    this.checkCashRegisterStatus();
     this.loadSummary();
     this.loadLiquidations();
     this.usersService
@@ -101,6 +105,20 @@ export class CommissionsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((c) => {
         this.collectors = c;
+      });
+  }
+
+  /**
+   * Verifica el estado de cierre de caja del día actual.
+   */
+  private checkCashRegisterStatus(): void {
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
       });
   }
 
@@ -189,9 +207,36 @@ export class CommissionsComponent implements OnInit, OnDestroy {
    */
   confirmLiquidate(): void {
     if (!this.selectedEmployee) return;
+
     this.showConfirmDialog = false;
+    this.liquidating = true;
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.liquidating = false;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes liquidar comisiones. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processLiquidation();
+      });
+  }
+
+  private processLiquidation(): void {
     const payload: LiquidatePayload = {
-      userId: this.selectedEmployee.userId,
+      userId: this.selectedEmployee!.userId,
       paymentMethod: this.liquidatePaymentMethod,
     };
     if (
@@ -200,7 +245,6 @@ export class CommissionsComponent implements OnInit, OnDestroy {
     ) {
       payload.transferReference = this.liquidateTransferReference.trim();
     }
-    this.liquidating = true;
     this.commissionsService
       .liquidate(payload)
       .pipe(

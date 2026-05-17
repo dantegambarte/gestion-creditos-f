@@ -14,10 +14,13 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { MessageModule } from 'primeng/message';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { AppError } from '../../../../core/models/app-error';
 import { FormatService } from '../../../../core/services/format.service';
 import { HeaderService } from '../../../../core/services/header.service';
+import { CashRegisterService } from '../../../admin/cash-register/cash-register.service';
+import { catchError, of } from 'rxjs';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import {
@@ -30,7 +33,6 @@ import {
 } from '../../models/credit.model';
 import {
   ApplyPenaltyPayload,
-  EarlyPayPayload,
   Installment,
 } from '../../models/installment.model';
 import { CreditsService } from '../credits.service';
@@ -58,6 +60,7 @@ import { PaymentsService } from '../../../collector/payments.service';
     TooltipModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    MessageModule,
   ],
   providers: [MessageService],
   templateUrl: './credit-detail.component.html',
@@ -70,6 +73,7 @@ export class CreditDetailComponent implements OnInit {
   private readonly paymentsService = inject(PaymentsService);
   private readonly location = inject(Location);
   private readonly header = inject(HeaderService);
+  private readonly cashRegisterSvc = inject(CashRegisterService);
   readonly auth = inject(AuthServiceBase);
   private readonly msg = inject(MessageService);
   private readonly fmt = inject(FormatService);
@@ -77,6 +81,7 @@ export class CreditDetailComponent implements OnInit {
   credit: CreditDetail | null = null;
   loading = false;
   error: AppError | null = null;
+  isCashClosed = false;
 
   selectedInstallment: CreditDetail['installments'][number] | null = null;
   activeTab: 'all' | 'paid' | 'pending' | 'overdue' = 'all';
@@ -122,6 +127,18 @@ export class CreditDetailComponent implements OnInit {
     return this.credit?.installments[0]?.amountDue ?? null;
   }
 
+  get settlementTotalAmount(): number {
+    if (!this.credit?.installments) return 0;
+    return this.credit.installments
+      .filter(inst => ['PENDING', 'PARTIAL', 'OVERDUE'].includes(inst.status))
+      .reduce((sum, inst) => sum + (inst.amountDue - inst.amountPaid), 0);
+  }
+
+  get hasPendingPayments(): boolean {
+    if (!this.creditPayments) return false;
+    return this.creditPayments.some(p => p.status === 'PENDING');
+  }
+
   /**
    * Selecciona o deselecciona una cuota para mostrar el panel lateral de detalle.
    * @param {CreditDetail['installments'][number]} inst - Cuota clickeada.
@@ -164,12 +181,6 @@ export class CreditDetailComponent implements OnInit {
   showWaiveDialog = false;
   waiveInstallment: CreditDetail['installments'][number] | null = null;
   processingWaive = false;
-
-  showEarlyPayDialog = false;
-  earlyPayInstallment: CreditDetail['installments'][number] | null = null;
-  earlyPayMethod: 'CASH' | 'TRANSFER' = 'CASH';
-  earlyPayTransferRef = '';
-  processingEarlyPay = false;
 
   // ── Refinanciación ────────────────────────────────────────────
   showRefinanceDialog = false;
@@ -219,6 +230,7 @@ export class CreditDetailComponent implements OnInit {
       { label: 'Operaciones', route: '/seller/operations' },
       { label: 'Detalle' },
     ]);
+    this.checkCashRegisterStatus();
     this.route.paramMap.subscribe(() => {
       this.credit = null;
       this.selectedInstallment = null;
@@ -227,6 +239,20 @@ export class CreditDetailComponent implements OnInit {
       this.creditPayments = [];
       this.load();
     });
+  }
+
+  /**
+   * Verifica el estado de cierre de caja del día actual.
+   */
+  private checkCashRegisterStatus(): void {
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+      });
   }
 
   goBack(): void {
@@ -340,11 +366,22 @@ export class CreditDetailComponent implements OnInit {
   }
 
   /**
-   * Confirma la aprobación del crédito.
+   * Confirma la aprobación del crédito. Valida que la caja no esté cerrada.
    * @returns
    */
   confirmApprove(): void {
     if (!this.credit) return;
+
+    if (this.isCashClosed) {
+      this.msg.add({
+        severity: 'error',
+        summary: 'Caja Cerrada',
+        detail: 'No puedes aprobar créditos. La caja del día está CERRADA. El crédito + enganche se aprobarán juntos cuando se abra una nueva caja.',
+        life: 5000,
+      });
+      return;
+    }
+
     this.processingApprove = true;
     const payload =
       this.approveInstallmentsCount !== null &&
@@ -422,7 +459,25 @@ export class CreditDetailComponent implements OnInit {
   openSettlementDialog(): void {
     this.settlementPaymentMethod = 'CASH';
     this.settlementTransferRef = '';
-    this.showSettlementDialog = true;
+
+    // Cargar pagos para validar si hay PENDING
+    if (!this.paymentsLoaded && this.credit) {
+      this.loadingPayments = true;
+      this.paymentsService.listByCredit(this.credit.id).subscribe({
+        next: (data) => {
+          this.creditPayments = data;
+          this.paymentsLoaded = true;
+          this.loadingPayments = false;
+          this.showSettlementDialog = true;
+        },
+        error: () => {
+          this.loadingPayments = false;
+          this.showSettlementDialog = true;
+        },
+      });
+    } else {
+      this.showSettlementDialog = true;
+    }
   }
 
   /**
@@ -431,7 +486,45 @@ export class CreditDetailComponent implements OnInit {
    */
   confirmSettlement(): void {
     if (!this.credit) return;
+
+    // Validar que no haya pagos pendientes
+    if (this.hasPendingPayments) {
+      this.msg.add({
+        severity: 'error',
+        summary: 'Pagos Pendientes',
+        detail: 'Este crédito tiene pagos pendientes de aprobación. Resuelvalos antes de cancelar.',
+        life: 5000,
+      });
+      return;
+    }
+
     this.processingSettlement = true;
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.processingSettlement = false;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes cancelar créditos. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processSettlement();
+      });
+  }
+
+  private processSettlement(): void {
+    if (!this.credit) return;
 
     const payload = {
       paymentMethod: this.settlementPaymentMethod,
@@ -442,14 +535,14 @@ export class CreditDetailComponent implements OnInit {
     };
 
     this.creditsService.earlySettlement(this.credit.id, payload).subscribe({
-      next: (result) => {
+      next: (result: any) => {
         this.processingSettlement = false;
         this.showSettlementDialog = false;
-        const formatted = this.fmt.currency(result.settlementAmount, 2);
+        const formatted = this.fmt.currency(result.settlement_amount, 2);
         this.msg.add({
           severity: 'success',
-          summary: 'Cancelación anticipada',
-          detail: `Procesada correctamente. Monto: ${formatted}`,
+          summary: 'Cancelación anticipada creada',
+          detail: `${result.message} Monto: ${formatted}`,
           life: 6000,
         });
         this.load();
@@ -558,72 +651,7 @@ export class CreditDetailComponent implements OnInit {
   }
 
   /**
-   * Abre el diálogo para el pago anticipado de una cuota, reseteando los campos relacionados y mostrando el diálogo.
-   */
-  openEarlyPayDialog(inst: CreditDetail['installments'][number]): void {
-    this.earlyPayInstallment = inst;
-    this.earlyPayMethod = 'CASH';
-    this.earlyPayTransferRef = '';
-    this.showEarlyPayDialog = true;
-  }
-
-  /**
-   * Confirma el pago anticipado de una cuota.
-   * @returns
-   */
-  confirmEarlyPay(): void {
-    if (!this.earlyPayInstallment) return;
-    this.processingEarlyPay = true;
-
-    const payload: EarlyPayPayload = { paymentMethod: this.earlyPayMethod };
-    if (this.earlyPayMethod === 'TRANSFER' && this.earlyPayTransferRef) {
-      payload.transferReference = this.earlyPayTransferRef;
-    }
-
-    this.installmentsService
-      .earlyPay(this.earlyPayInstallment.id, payload)
-      .subscribe({
-        next: (result) => {
-          this.processingEarlyPay = false;
-          this.showEarlyPayDialog = false;
-
-          if (result.creditSettled) {
-            this.msg.add({
-              severity: 'success',
-              summary: 'Crédito liquidado',
-              detail: 'El crédito quedó liquidado completamente.',
-              life: 6000,
-            });
-            this.load();
-          } else {
-            this.updateInstallmentInList({
-              id: result.id,
-              amountDue: result.amountDue,
-              amountPaid: result.amountPaid,
-              penaltyAmount: result.penaltyAmount,
-              status: result.status,
-            });
-            this.msg.add({
-              severity: 'success',
-              summary: 'Pago anticipado',
-              detail: 'Cuota pagada anticipadamente.',
-              life: 3000,
-            });
-          }
-        },
-        error: (err: AppError) => {
-          this.processingEarlyPay = false;
-          this.msg.add({
-            severity: err.status === 409 ? 'warn' : 'error',
-            summary: err.status === 409 ? 'Advertencia' : 'Error',
-            detail: err.message ?? 'No se pudo procesar el pago.',
-          });
-        },
-      });
-  }
-
-  /**
-   * Actualiza una cuota en la lista de cuotas del crédito, reemplazando la cuota con el mismo ID por la versión actualizada. Se utiliza para reflejar los cambios después de aplicar o condonar una mora, o realizar un pago anticipado.
+   * Actualiza una cuota en la lista de cuotas del crédito, reemplazando la cuota con el mismo ID por la versión actualizada. Se utiliza para reflejar los cambios después de aplicar o condonar una mora.
    */
   private updateInstallmentInList(updated: Partial<Installment>): void {
     if (!this.credit || !updated.id) return;
@@ -668,9 +696,35 @@ export class CreditDetailComponent implements OnInit {
 
   confirmDirect(): void {
     if (!this.directFormValid) return;
+
     this.processingDirect = true;
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.processingDirect = false;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes crear cobros. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processDirectPayment();
+      });
+  }
+
+  private processDirectPayment(): void {
     this.paymentsService
-      .adminDirect({
+      .create({
         installmentId: this.directInstallmentId,
         amountReceived: this.directAmount!,
         paymentMethod: this.directMethod,
@@ -681,11 +735,11 @@ export class CreditDetailComponent implements OnInit {
         next: () => {
           this.processingDirect = false;
           this.showDirectDialog = false;
-          this.paymentsLoaded = false; // fuerza recarga del tab de cobros
+          this.paymentsLoaded = false;
           this.msg.add({
             severity: 'success',
             summary: 'Cobro registrado',
-            detail: 'El cobro fue registrado y aprobado correctamente.',
+            detail: 'El cobro fue registrado y está pendiente de aprobación.',
             life: 5000,
           });
           this.load();

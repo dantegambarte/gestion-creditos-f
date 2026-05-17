@@ -1,9 +1,9 @@
 import { DatePipe, NgClass } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { catchError, of, takeUntil } from 'rxjs';
 
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -21,9 +21,11 @@ import { TooltipModule } from 'primeng/tooltip';
 import { BadgeModule } from 'primeng/badge';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
+import { MessageModule } from 'primeng/message';
 import { DateService } from '../../../core/services/date.service';
 import { Credit, CreditType } from '../../seller/models/credit.model';
 import { CreditsService } from '../../seller/operations/credits.service';
+import { CashRegisterService } from '../cash-register/cash-register.service';
 
 @Component({
   selector: 'approvals',
@@ -47,15 +49,22 @@ import { CreditsService } from '../../seller/operations/credits.service';
     InputIconModule,
     InputTextModule,
     CheckboxModule,
+    MessageModule,
   ],
   providers: [MessageService],
   templateUrl: './approvals.component.html',
   styleUrl: './approvals.component.scss',
 })
 export class ApprovalsComponent implements OnInit, OnDestroy {
+  private readonly credits = inject(CreditsService);
+  private readonly msg = inject(MessageService);
+  private readonly cashRegisterSvc = inject(CashRegisterService);
+  readonly dateService = inject(DateService);
+
   approvals: Credit[] = [];
   loading = true;
   processingId: string | null = null;
+  isCashClosed = false;
 
   showApproveDialog = false;
   approvingRow: Credit | null = null;
@@ -93,15 +102,17 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Retorna el monto del enganche del crédito aprobado.
+   */
+  get approvingRowDownPayment(): number {
+    return (this.approvingRow as any)?.downPayment ?? 0;
+  }
+
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private credits: CreditsService,
-    private msg: MessageService,
-    public dateService: DateService,
-  ) {}
-
   ngOnInit(): void {
+    this.checkCashRegisterStatus();
     this.loadApprovals();
   }
 
@@ -111,9 +122,25 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Verifica el estado de cierre de caja del día actual.
+   */
+  private checkCashRegisterStatus(): void {
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+      });
+  }
+
+  /**
    * Recarga la lista de aprobaciones pendientes. Se puede llamar después de aprobar o rechazar para actualizar la vista, o usar el botón de recarga manual.
    */
   refresh(): void {
+    this.checkCashRegisterStatus();
     this.loadApprovals();
   }
 
@@ -152,11 +179,22 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Confirma la aprobación de la fila seleccionada.
+   * Confirma la aprobación de la fila seleccionada. Valida que la caja no esté cerrada.
    * @returns
    */
   confirmApprove(): void {
     if (!this.approvingRow) return;
+
+    if (this.isCashClosed) {
+      this.msg.add({
+        severity: 'error',
+        summary: 'Caja Cerrada',
+        detail: 'No puedes aprobar créditos. La caja del día está CERRADA. El crédito + enganche se aprobarán juntos cuando se abra una nueva caja.',
+        life: 5000,
+      });
+      return;
+    }
+
     this.processingApprove = true;
     const row = this.approvingRow;
 

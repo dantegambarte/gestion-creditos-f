@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -11,10 +11,12 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { MessageModule } from 'primeng/message';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { catchError, of, takeUntil } from 'rxjs';
 import { Installment } from '../../../features/seller/models/installment.model';
 import { InstallmentsService } from '../../../features/seller/operations/installments.service';
+import { CashRegisterService } from '../cash-register/cash-register.service';
 import {
   DelinquencyRow,
   DelinquencyStats,
@@ -35,18 +37,24 @@ import {
     DropdownModule,
     CardModule,
     DialogModule,
+    MessageModule,
   ],
   providers: [MessageService],
   templateUrl: './delinquency.component.html',
   styleUrl: './delinquency.component.scss',
 })
 export class DelinquencyComponent implements OnInit, OnDestroy {
+  private readonly installmentsService = inject(InstallmentsService);
+  private readonly msg = inject(MessageService);
+  private readonly cashRegisterSvc = inject(CashRegisterService);
+
   stats: DelinquencyStats = { enMoraCount: 0, sinAplicar: 0, aplicada: 0 };
   clients: DelinquencyRow[] = [];
   filteredClients: DelinquencyRow[] = [];
   loadingStats = false;
   loadingClients = true;
   processingId: string | null = null;
+  isCashClosed = false;
 
   searchTerm = '';
   filterEstado: string | null = null;
@@ -77,13 +85,24 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private installmentsService: InstallmentsService,
-    private msg: MessageService,
-  ) {}
-
   ngOnInit(): void {
+    this.checkCashRegisterStatus();
     this.loadClients();
+  }
+
+  /**
+   * Verifica el estado de cierre de caja del día actual.
+   */
+  private checkCashRegisterStatus(): void {
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+      });
   }
 
   ngOnDestroy(): void {
@@ -170,8 +189,37 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
    */
   confirmApply(): void {
     if (!this.applyingRow || !this.applyAmount || this.applyAmount <= 0) return;
+
+    this.processingId = `${this.applyingRow.id}_apply`;
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.processingId = null;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes aplicar mora. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processApplyPenalty();
+      });
+  }
+
+  private processApplyPenalty(): void {
+    if (!this.applyingRow || !this.applyAmount) return;
+
     const row = this.applyingRow;
-    this.processingId = `${row.id}_apply`;
     this.installmentsService
       .applyPenalty(row.id, { penaltyAmount: this.applyAmount })
       .pipe(takeUntil(this.destroy$))
@@ -208,7 +256,34 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
    */
   onCondone(row: DelinquencyRow): void {
     if (this.processingId) return;
+
     this.processingId = `${row.id}_condone`;
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.processingId = null;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes condonar mora. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processWaivePenalty(row);
+      });
+  }
+
+  private processWaivePenalty(row: DelinquencyRow): void {
     this.installmentsService
       .waivePenalty(row.id)
       .pipe(takeUntil(this.destroy$))

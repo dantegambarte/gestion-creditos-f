@@ -1,5 +1,16 @@
 <p-toast />
 
+<!-- Cash closed alert -->
+@if (isCashClosed) {
+  <div class="p-4">
+    <p-message
+      severity="warn"
+      text="⚠️ La caja del día está CERRADA. No se pueden aprobar créditos de hoy. Los créditos y sus enganches se aprobarán juntos cuando se abra una nueva caja."
+      styleClass="w-full"
+    />
+  </div>
+}
+
 <div class="p-6">
   <div
     class="ff-list-header mb-6"
@@ -193,6 +204,19 @@
       <p class="text-base font-bold mt-1" style="color: var(--ff-success)">
         Monto: {{ approvingRow?.totalAmount | currencyArs: 2 }}
       </p>
+      @if (approvingRowDownPayment > 0) {
+        <p class="text-sm mt-2 p-2 rounded" style="
+          background: rgba(108, 231, 183, 0.1);
+          border: 1px solid var(--ff-success);
+          color: var(--ff-success);
+        ">
+          💰 Enganche incluido: {{ approvingRowDownPayment | currencyArs: 2 }}
+          <br />
+          <span style="font-size: 0.75rem; opacity: 0.8;">
+            Se aprobará junto con el crédito (operación atómica)
+          </span>
+        </p>
+      }
     </div>
 
     <div class="flex flex-col gap-1">
@@ -257,6 +281,9 @@
         styleClass="h-11 rounded-xl w-full"
         (onClick)="confirmApprove()"
         [loading]="processingApprove"
+        [disabled]="isCashClosed || processingApprove"
+        [pTooltip]="isCashClosed ? 'La caja está cerrada' : ''"
+        tooltipPosition="top"
       />
     </div>
   </ng-template>

@@ -226,10 +226,12 @@ export class ReportsService {
   /**
    * Obtiene el informe de cobradores para un rango de fechas.
    * @param range
+   * @param nocache Parámetro opcional para evitar caching HTTP 304
    * @returns
    */
   getCollectorsReport(
     range: ReportDateRange,
+    nocache?: boolean,
   ): Observable<CollectorReportRow[]> {
     if (!range.dateFrom || !range.dateTo) {
       return throwError(() => ({
@@ -237,7 +239,10 @@ export class ReportsService {
         message: 'Los parámetros date_from y date_to son obligatorios.',
       }));
     }
-    const params = { date_from: range.dateFrom, date_to: range.dateTo };
+    const params: Record<string, string> = { date_from: range.dateFrom, date_to: range.dateTo };
+    if (nocache) {
+      params['t'] = Date.now().toString();
+    }
     return this.api
       .get<CollectorReportRowRaw[]>('reports/collectors', params)
       .pipe(map((items) => items.map(toCollectorRow)));
