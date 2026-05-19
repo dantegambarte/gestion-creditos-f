@@ -112,6 +112,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   pieOptions: any;
 
   private destroy$ = new Subject<void>();
+  private monthlyReportReady$ = new Subject<void>();
 
   ngOnInit(): void {
     this.userName = this.auth.snapshot?.name ?? 'Administrador';
@@ -234,6 +235,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         ];
 
         this.loadingKpis = false;
+
+        // Notificar que el reporte mensual está listo para que loadCharts() construya el gráfico
+        this.monthlyReportReady$.next();
       });
   }
 
@@ -415,6 +419,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const todayDate = toLocalDateString(today);
 
     combineLatest([
+      this.monthlyReportReady$.pipe(take(1)),
       this.reportsSvc.getCollectorsReport({ dateFrom: todayDate, dateTo: todayDate }, true).pipe(
         catchError((err) => {
           console.error('Error loading collectors report:', err);
@@ -429,7 +434,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ),
     ])
       .pipe(takeUntil(this.destroy$))
-      .subscribe(([collectors, sellers]) => {
+      .subscribe(([_, collectors, sellers]) => {
         console.log('Data loaded - collectors:', collectors, 'sellers:', sellers);
         // Reutilizar monthlyCollectionReport cargado en loadKpis
         this.buildWeeklyChart(this.monthlyCollectionReport?.daily ?? []);
