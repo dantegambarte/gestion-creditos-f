@@ -723,6 +723,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.loadPending();
+          this.loadKpis();
+          this.loadCharts();
         },
         error: (err) => {
           console.error('Error al aprobar pago:', err);
