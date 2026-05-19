@@ -332,7 +332,7 @@
           <p>
             Hay <strong>{{ preClose.pendientes.count }}</strong> cobro(s) pendiente(s) sin aprobar
             por <strong>{{ formatCurrency(preClose.pendientes.amount) }}</strong>.
-            Aprobá o rechazá antes de cerrar, o cerrá igual con "force".
+            Aprobá o rechazá antes de cerrar, o fuerza el cierre de caja, las aprobaciones pasan para mañana.
           </p>
         </div>
       }
@@ -341,10 +341,10 @@
         <div class="auth-danger-banner">
           <i class="pi pi-exclamation-circle shrink-0"></i>
           <div class="space-y-2">
-            <p class="font-semibold">{{ closePendingError }}</p>
+            <p class="font-semibold">Hay operaciones pendientes que bloquean el cierre. Aprueba o rechaza, o fuerza el cierre de la caja si es necesario.</p>
             <p-button
               data-cy="admin-cash-register-close-force-action"
-              label="🔓 Cerrar caja a la fuerza"
+              label="🔓 Forzar cierre de caja"
               icon="pi pi-exclamation-circle"
               severity="danger"
               size="small"
