@@ -338,16 +338,15 @@
       }
 
       @if (closePendingError) {
-        <div class="auth-warning-banner">
-          <i class="pi pi-exclamation-triangle shrink-0"></i>
+        <div class="auth-danger-banner">
+          <i class="pi pi-exclamation-circle shrink-0"></i>
           <div class="space-y-2">
-            <p>{{ closePendingError }}</p>
+            <p class="font-semibold">{{ closePendingError }}</p>
             <p-button
               data-cy="admin-cash-register-close-force-action"
-              label="Cerrar igualmente (force)"
-              icon="pi pi-lock"
-              severity="warning"
-              [outlined]="true"
+              label="🔓 Cerrar caja a la fuerza"
+              icon="pi pi-exclamation-circle"
+              severity="danger"
               size="small"
               [loading]="closing"
               (onClick)="confirmClose(true)"
@@ -523,7 +522,7 @@
       icon="pi pi-lock"
       severity="danger"
       [loading]="closing"
-      [disabled]="declaredCash == null || loadingPreClose"
+      [disabled]="declaredCash == null || loadingPreClose || !!closePendingError"
       (onClick)="confirmClose(false)"
     />
   </ng-template>
