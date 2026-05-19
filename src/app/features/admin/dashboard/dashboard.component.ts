@@ -486,7 +486,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!daily || !Array.isArray(daily)) daily = [];
     // Inicializar con 0 para cada día
     daily.forEach((d: any) => {
-      const date = new Date(d.day);
+      const [year, month, day] = d.day.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
       const dayName = dayLabels[date.getDay() === 0 ? 6 : date.getDay() - 1];
       daysMap.set(dayName, d.total);
     });
