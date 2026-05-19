@@ -490,6 +490,22 @@ body {
   margin-bottom: 20px;
 }
 
+.auth-danger-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 6px;
+  padding: 12px 14px;
+  color: var(--ff-danger);
+  margin-bottom: 20px;
+
+  i {
+    color: var(--ff-danger);
+  }
+}
+
 // ─── Sidebar (global — garantiza especificidad sobre encapsulation) ──────────
 aside.sidebar {
   width: 168px;
