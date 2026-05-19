@@ -434,11 +434,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     monday.setDate(monday.getDate() - daysToMonday);
     monday.setHours(0, 0, 0, 0);
 
-    const dateFromWeek = monday.toISOString().split('T')[0];
-    const dateToWeek = today.toISOString().split('T')[0];
+    // Convertir a fecha local sin pasar por UTC
+    const toLocalDateString = (date: Date): string => {
+      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return localDate.toISOString().split('T')[0];
+    };
+
+    const dateFromWeek = toLocalDateString(monday);
+    const dateToWeek = toLocalDateString(today);
 
     // Para collectors report: solo el día en curso
-    const todayDate = today.toISOString().split('T')[0];
+    const todayDate = toLocalDateString(today);
 
     combineLatest([
       this.reportsSvc.getCollectionReport({ dateFrom: dateFromWeek, dateTo: dateToWeek }).pipe(
