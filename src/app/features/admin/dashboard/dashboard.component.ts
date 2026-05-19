@@ -95,6 +95,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   pendingCredits: PendingCreditGroup[] = [];
   pendingPayments: PendingPaymentGroup[] = [];
 
+  // Reporte mensual reutilizado
+  monthlyCollectionReport: any = null;
+
   // Charts
   chartWeeklyData: any;
   chartWeeklyOptions: any;
@@ -116,7 +119,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.checkCashRegisterStatus();
     this.loadKpis();
     this.loadUpcomingInstallments();
-    this.loadAlerts();
     this.loadPending();
     this.initCharts();
     this.loadCharts();
@@ -143,27 +145,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga los datos para las tarjetas KPI, obteniendo un resumen de los indicadores clave del sistema a través del servicio de reportes. Maneja el estado de carga y posibles errores, y formatea los valores para su presentación en la interfaz.
+   * Carga los datos para las tarjetas KPI, obteniendo un resumen de los indicadores clave del sistema a través del servicio de reportes. También carga la recaudación del mes en paralelo.
    */
   private loadKpis(): void {
     this.loadingKpis = true;
-    this.reportsSvc
-      .getSummaryReport()
-      .pipe(
-        catchError(() => of(null)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((summary) => {
+
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const dateFromMonth = firstDay.toISOString().split('T')[0];
+    const dateToMonth = today.toISOString().split('T')[0];
+
+    combineLatest([
+      this.reportsSvc.getSummaryReport().pipe(catchError(() => of(null))),
+      this.reportsSvc.getCollectionReport({ dateFrom: dateFromMonth, dateTo: dateToMonth }).pipe(catchError(() => of(null))),
+    ])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(([summary, monthlyCollection]) => {
         if (!summary) {
           this.kpis = [];
           this.loadingKpis = false;
           return;
         }
 
+        // Guardar el reporte mensual para reutilizarlo en loadCharts()
+        this.monthlyCollectionReport = monthlyCollection;
+
         const overduePercent = summary.activePortfolioBalance > 0
           ? (summary.overdueAmount / summary.activePortfolioBalance) * 100
           : 0;
         const pendingTotal = summary.pendingCreditsCount + summary.pendingPaymentsCount;
+        const monthlyTotal = monthlyCollection?.summary?.grandTotal ?? 0;
 
         this.kpis = [
           {
@@ -204,9 +215,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           },
           {
             label: 'Recaudado del mes',
-            value: '–',
+            value: this.fmt.currency(monthlyTotal),
             subtitle: 'Progreso del mes',
-            trend: 'Cargando...',
+            trend: `${monthlyTotal > 0 ? 'Activo' : 'Sin movimientos'}`,
             trendUp: true,
             icon: 'pi pi-chart-bar',
             iconBg: 'db-kpi__bg--success',
@@ -222,29 +233,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           },
         ];
 
-        this.loadMonthlyCollection();
-      });
-  }
-
-  /**
-   * Carga la recaudación del mes para actualizar la tarjeta 5.
-   */
-  private loadMonthlyCollection(): void {
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const dateFrom = firstDay.toISOString().split('T')[0];
-    const dateTo = today.toISOString().split('T')[0];
-
-    this.reportsSvc
-      .getCollectionReport({ dateFrom, dateTo })
-      .pipe(
-        catchError(() => of(null)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((collection) => {
-        if (collection && this.kpis[4]) {
-          this.kpis[4].value = this.fmt.currency(collection.summary.grandTotal);
-        }
         this.loadingKpis = false;
       });
   }
@@ -299,36 +287,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga los cobros pendientes y verifica si hay alguno con más de 48 horas sin aprobar.
-   */
-  private loadAlerts(): void {
-    this.paymentsSvc
-      .list({ status: 'PENDING' })
-      .pipe(
-        catchError(() => of([])),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((payments) => {
-        const now = new Date();
-        const overdue48h = payments.filter((payment) => {
-          if (!payment.createdAt) return false;
-          const createdAt = new Date(payment.createdAt);
-          const diffHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
-          return diffHours > 48;
-        });
-
-        if (overdue48h.length > 0) {
-          const count = overdue48h.length;
-          this.alertMessage = `${count} cobro${count > 1 ? 's' : ''} pendiente${count > 1 ? 's' : ''} con más de 48 horas sin revisar. Revisión recomendada.`;
-          this.showAlert = true;
-        } else {
-          this.showAlert = false;
-        }
-      });
-  }
-
-  /**
    * Carga los créditos y cobros pendientes, agrupados por vendedor/cobrador.
+   * También verifica si hay cobros pendientes con más de 48 horas sin aprobar.
    */
   private loadPending(): void {
     this.loadingPending = true;
@@ -341,8 +301,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .subscribe(([credits, payments]) => {
         this.pendingCredits = this.groupCreditsBySeller(credits);
         this.pendingPayments = this.groupPaymentsByCollector(payments as any);
+        this.checkPendingAlerts(payments);
         this.loadingPending = false;
       });
+  }
+
+  private checkPendingAlerts(payments: any[]): void {
+    const now = new Date();
+    const overdue48h = payments.filter((payment) => {
+      if (!payment.createdAt) return false;
+      const createdAt = new Date(payment.createdAt);
+      const diffHours = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+      return diffHours > 48;
+    });
+
+    if (overdue48h.length > 0) {
+      const count = overdue48h.length;
+      this.alertMessage = `${count} cobro${count > 1 ? 's' : ''} pendiente${count > 1 ? 's' : ''} con más de 48 horas sin revisar. Revisión recomendada.`;
+      this.showAlert = true;
+    } else {
+      this.showAlert = false;
+    }
   }
 
   /**
@@ -426,40 +405,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private loadCharts(): void {
     this.loadingCharts = true;
 
-    // Calcular rango de semana actual (lunes a hoy)
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const monday = new Date(today);
-    monday.setDate(monday.getDate() - daysToMonday);
-    monday.setHours(0, 0, 0, 0);
-
     // Convertir a fecha local sin pasar por UTC
     const toLocalDateString = (date: Date): string => {
       const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
       return localDate.toISOString().split('T')[0];
     };
 
-    const dateFromWeek = toLocalDateString(monday);
-    const dateToWeek = toLocalDateString(today);
-
-    // Para collectors report: solo el día en curso
+    const today = new Date();
     const todayDate = toLocalDateString(today);
 
     combineLatest([
-      this.reportsSvc.getCollectionReport({ dateFrom: dateFromWeek, dateTo: dateToWeek }).pipe(
-        catchError((err) => {
-          console.error('Error loading collection report:', err);
-          return of({ summary: {}, daily: [] } as any);
-        })
-      ),
       this.reportsSvc.getCollectorsReport({ dateFrom: todayDate, dateTo: todayDate }, true).pipe(
         catchError((err) => {
           console.error('Error loading collectors report:', err);
           return of([]);
         })
       ),
-      this.reportsSvc.getSellersReport({ dateFrom: dateFromWeek, dateTo: dateToWeek }, true).pipe(
+      this.reportsSvc.getSellersReport({ dateFrom: toLocalDateString(new Date(today.getFullYear(), today.getMonth(), 1)), dateTo: todayDate }, true).pipe(
         catchError((err) => {
           console.error('Error loading sellers report:', err);
           return of([]);
@@ -467,9 +429,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       ),
     ])
       .pipe(takeUntil(this.destroy$))
-      .subscribe(([collection, collectors, sellers]) => {
+      .subscribe(([collectors, sellers]) => {
         console.log('Data loaded - collectors:', collectors, 'sellers:', sellers);
-        this.buildWeeklyChart(collection?.daily ?? []);
+        // Reutilizar monthlyCollectionReport cargado en loadKpis
+        this.buildWeeklyChart(this.monthlyCollectionReport?.daily ?? []);
         this.buildCollectorsChart(Array.isArray(collectors) ? collectors : []);
         this.buildSellersChart(Array.isArray(sellers) ? sellers : []);
         this.loadingCharts = false;
