@@ -9,7 +9,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { Subject } from 'rxjs';
-import { catchError, combineLatest, of, takeUntil } from 'rxjs';
+import { catchError, combineLatest, of, take, takeUntil } from 'rxjs';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { DateService } from '../../../core/services/date.service';
 import { FormatService } from '../../../core/services/format.service';
