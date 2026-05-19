@@ -58,7 +58,7 @@
     <div class="db-pending-col">
       <div class="db-panel__header">
         <span>Créditos por aprobar</span>
-        <span class="db-badge">{{ pendingCredits.length }}</span>
+        <span class="db-badge">{{ getTotalCredits() }}</span>
       </div>
       <div class="db-pending-body">
         @if (loadingPending) {
@@ -107,7 +107,7 @@
     <div class="db-pending-col">
       <div class="db-panel__header">
         <span>Cobros por aprobar</span>
-        <span class="db-badge">{{ pendingPayments.length }}</span>
+        <span class="db-badge">{{ getTotalPayments() }}</span>
       </div>
       <div class="db-pending-body">
         @if (loadingPending) {

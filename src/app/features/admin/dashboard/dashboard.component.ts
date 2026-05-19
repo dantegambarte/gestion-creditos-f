@@ -703,6 +703,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Retorna el total de créditos pendientes sumando el count de cada grupo.
+   */
+  getTotalCredits(): number {
+    return this.pendingCredits.reduce((sum, group) => sum + group.count, 0);
+  }
+
+  /**
+   * Retorna el total de cobros pendientes sumando el count de cada grupo.
+   */
+  getTotalPayments(): number {
+    return this.pendingPayments.reduce((sum, group) => sum + group.count, 0);
+  }
+
+  /**
    * Devuelve la severidad del estado de una operación reciente.
    */
   private initCharts(): void {
