@@ -253,8 +253,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga las cuotas vencidas (OVERDUE). Obtiene todas las cuotas con estado OVERDUE,
-   * las ordena por mayor deuda pendiente primero, y muestra las primeras 5.
+   * Carga las cuotas vencidas (OVERDUE). Agrupa por cliente y muestra solo la cuota más antigua
+   * de cada uno, ordenada por mayor deuda pendiente primero.
    */
   private loadUpcomingInstallments(): void {
     this.loadingUpcoming = true;
@@ -269,7 +269,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         next: (overdue) => {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          const overdueInstallments = overdue
+
+          // Mapear y agrupar por cliente, manteniendo solo la cuota más antigua
+          const overdueByCustomer = overdue
             .map((inst) => ({
               ...inst,
               daysOverdue: Math.abs(
@@ -278,8 +280,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 )
               ),
             }))
+            .reduce((map, inst) => {
+              const key = inst.customerId;
+              if (!map.has(key)) {
+                map.set(key, inst);
+              } else {
+                const existing = map.get(key)!;
+                // Mantener la cuota con fecha de vencimiento más antigua
+                if (new Date(inst.dueDate) < new Date(existing.dueDate)) {
+                  map.set(key, inst);
+                }
+              }
+              return map;
+            }, new Map<string, any>());
+
+          // Convertir a array, ordenar por mayor deuda y tomar los primeros 5
+          const overdueInstallments = Array.from(overdueByCustomer.values())
             .sort((a, b) => (b.amountDue - b.amountPaid) - (a.amountDue - a.amountPaid))
             .slice(0, 5);
+
           this.upcomingInstallments = overdueInstallments;
           this.loadingUpcoming = false;
         },

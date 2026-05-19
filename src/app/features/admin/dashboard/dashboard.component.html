@@ -158,7 +158,12 @@
     <!-- Ranking cuotas vencidas -->
     <div class="db-panel">
       <div class="db-panel__header">
-        <span>Ranking de cuotas vencidas</span>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span>Ranking de cuotas vencidas</span>
+          <span style="font-size: 0.75rem; color: var(--text-color-secondary); font-weight: normal;">
+            Cuota más antigua por cliente. Puede haber más vencidas.
+          </span>
+        </div>
       </div>
       <div class="db-panel__body">
         <p-table
