@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
@@ -19,6 +20,7 @@ import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { InstallmentStatus } from '../../seller/models/installment.model';
+import { InstallmentsService } from '../../seller/operations/installments.service';
 import { CollectionAttemptsService } from '../collection-attempts.service';
 import { CollectionsService } from '../collections.service';
 import {
@@ -32,6 +34,11 @@ import {
   CollectionAttemptCreatePayload,
   CollectionAttemptType,
 } from '../models/collection-attempt.model';
+import {
+  MANAGEMENT_EVENT_LABELS,
+  ManagementEventType,
+  ManagementLogEntry,
+} from '../models/management-log.model';
 import { PaymentCreatePayload } from '../models/payment.model';
 import { PaymentsService } from '../payments.service';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
@@ -46,6 +53,7 @@ import { AppRoutes } from '../../../shared/models/enums/routes.enum';
     ButtonModule,
     TagModule,
     BadgeModule,
+    CalendarModule,
     ToastModule,
     DialogModule,
     DropdownModule,
@@ -64,6 +72,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   private readonly collectionsService = inject(CollectionsService);
   private readonly paymentsService = inject(PaymentsService);
   private readonly attemptsService = inject(CollectionAttemptsService);
+  private readonly installmentsService = inject(InstallmentsService);
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
@@ -76,6 +85,14 @@ export class CollectionSheetDetailComponent implements OnInit {
   /** ID de la cuota cuyo refresh silencioso está en curso (spinner local). */
   processingItemId: string | null = null;
 
+  // ── Panel cronológico (management log) por cuota ─────────────────────────────
+  /** installmentId cuyo log está abierto en el panel expandido (uno a la vez). */
+  expandedLogItemId: string | null = null;
+  /** Cache de logs ya descargados, por installmentId. */
+  managementLogs: Record<string, ManagementLogEntry[]> = {};
+  /** installmentId del log que está cargándose en este momento. */
+  loadingLogItemId: string | null = null;
+
   // ── Diálogo de cobro ─────────────────────────────────────────────────────────
   showPaymentDialog = false;
   dialogItem: CollectionSheetItem | null = null;
@@ -83,7 +100,8 @@ export class CollectionSheetDetailComponent implements OnInit {
   paymentMethod: 'CASH' | 'TRANSFER' = 'CASH';
   transferReference = '';
   paymentNotes = '';
-  paymentNextVisitDate = '';
+  /** Date para p-calendar; se convierte a 'YYYY-MM-DD' al enviar. */
+  paymentNextVisitDate: Date | null = null;
   processingPayment = false;
 
   // ── Diálogo de intento (NO_PAYMENT / NOT_FOUND) ──────────────────────────────
@@ -91,7 +109,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   attemptItem: CollectionSheetItem | null = null;
   attemptType: CollectionAttemptType = 'NO_PAYMENT';
   attemptReason = '';
-  attemptNextVisitDate = '';
+  attemptNextVisitDate: Date | null = null;
   attemptNotes = '';
   processingAttempt = false;
 
@@ -100,7 +118,14 @@ export class CollectionSheetDetailComponent implements OnInit {
     { label: 'Transferencia', value: 'TRANSFER' },
   ];
 
+  /** Hoy en formato 'YYYY-MM-DD' para comparar con item.antecedentDate. */
   readonly todayIso = new Date().toISOString().split('T')[0];
+  /** Hoy como Date (sin hora) para p-calendar.minDate. */
+  readonly todayDate = (() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  })();
 
   private get sheetId(): string {
     return this.route.snapshot.paramMap.get('sheetId')!;
@@ -162,16 +187,100 @@ export class CollectionSheetDetailComponent implements OnInit {
     return this.processingItemId === item.installmentId;
   }
 
-  /** Solo se puede operar si la cuota no está pagada y la planilla está activa. */
+  /**
+   * Solo se puede operar si:
+   *  - la planilla está activa (no REGENERATED)
+   *  - la cuota no está pagada
+   *  - no hay refresh en curso sobre la cuota
+   *  - no se registró una gestión HOY sobre la cuota
+   *  - no hay un cobro pre-cargado PENDIENTE de aprobación
+   *
+   * El bloqueo por gestión del día evita doble registro de intentos. El bloqueo
+   * por pre-carga pendiente evita registrar nuevos cobros/intentos mientras el
+   * admin no aprueba/rechaza el cobro ya cargado.
+   */
   canActOnItem(item: CollectionSheetItem): boolean {
     if (this.sheet?.status === 'REGENERATED') return false;
-    return item.installmentStatus !== 'PAID' && !this.isItemProcessing(item);
+    if (item.installmentStatus === 'PAID') return false;
+    if (this.isItemProcessing(item)) return false;
+    if (item.hasPendingPayment) return false;
+    if (this.alreadyManagedToday(item)) return false;
+    return true;
+  }
+
+  /** True si esta cuota ya tiene una gestión registrada en la fecha actual. */
+  alreadyManagedToday(item: CollectionSheetItem): boolean {
+    return !!item.antecedentDate && item.antecedentDate === this.todayIso;
   }
 
   /** True si el monto ingresado dejaría la cuota parcial (saldo > 0 después del cobro). */
   isPartialPayment(): boolean {
     if (!this.dialogItem || !this.paymentAmount) return false;
     return this.paymentAmount < this.availableBalance(this.dialogItem);
+  }
+
+  // ── Panel cronológico (management log) ──────────────────────────────────────
+
+  /**
+   * Abre/cierra el panel del log para una cuota. Si se abre y no hay cache
+   * previo, dispara la carga. Solo se mantiene abierto un panel a la vez para
+   * no sobrecargar la UI en móvil.
+   */
+  toggleLog(item: CollectionSheetItem): void {
+    if (this.expandedLogItemId === item.installmentId) {
+      this.expandedLogItemId = null;
+      return;
+    }
+    this.expandedLogItemId = item.installmentId;
+    if (!this.managementLogs[item.installmentId]) {
+      this.loadLog(item.installmentId);
+    }
+  }
+
+  isLogExpanded(item: CollectionSheetItem): boolean {
+    return this.expandedLogItemId === item.installmentId;
+  }
+
+  eventTypeLabel(type: ManagementEventType): string {
+    return MANAGEMENT_EVENT_LABELS[type];
+  }
+
+  /** Severity para el tag del evento en el log. */
+  eventSeverity(type: ManagementEventType): 'success' | 'warning' | 'secondary' {
+    const map: Record<ManagementEventType, 'success' | 'warning' | 'secondary'> = {
+      PAYMENT: 'success',
+      NO_PAYMENT: 'warning',
+      NOT_FOUND: 'secondary',
+    };
+    return map[type];
+  }
+
+  private loadLog(installmentId: string): void {
+    this.loadingLogItemId = installmentId;
+    this.installmentsService.getManagementLog(installmentId).subscribe({
+      next: (log) => {
+        this.managementLogs[installmentId] = log;
+        this.loadingLogItemId = null;
+      },
+      error: () => {
+        this.loadingLogItemId = null;
+        this.managementLogs[installmentId] = [];
+        this.msg.add({
+          severity: 'warn',
+          summary: 'No se pudo cargar',
+          detail: 'No pudimos cargar el historial de gestiones de esta cuota.',
+        });
+      },
+    });
+  }
+
+  /** Convierte un Date a 'YYYY-MM-DD' usando hora local (sin shift de UTC). */
+  private dateToIso(d: Date | null): string {
+    if (!d) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   // ── Diálogo de cobro ─────────────────────────────────────────────────────────
@@ -183,14 +292,14 @@ export class CollectionSheetDetailComponent implements OnInit {
     this.paymentMethod = 'CASH';
     this.transferReference = '';
     this.paymentNotes = '';
-    this.paymentNextVisitDate = '';
+    this.paymentNextVisitDate = null;
     this.showPaymentDialog = true;
   }
 
   /** Limpia next_visit_date si el monto cubre el saldo completo (validación UX). */
   onPaymentAmountChange(): void {
     if (!this.isPartialPayment()) {
-      this.paymentNextVisitDate = '';
+      this.paymentNextVisitDate = null;
     }
   }
 
@@ -210,7 +319,8 @@ export class CollectionSheetDetailComponent implements OnInit {
     }
 
     const isPartial = this.paymentAmount < balance;
-    if (isPartial && !this.paymentNextVisitDate) {
+    const partialDateIso = isPartial ? this.dateToIso(this.paymentNextVisitDate) : '';
+    if (isPartial && !partialDateIso) {
       this.msg.add({
         severity: 'warn',
         summary: 'Fecha requerida',
@@ -229,7 +339,7 @@ export class CollectionSheetDetailComponent implements OnInit {
       payload.transferReference = this.transferReference;
     }
     if (this.paymentNotes) payload.notes = this.paymentNotes;
-    if (isPartial) payload.nextVisitDate = this.paymentNextVisitDate;
+    if (isPartial) payload.nextVisitDate = partialDateIso;
 
     const itemId = this.dialogItem.installmentId;
     const itemNumber = this.dialogItem.installmentNumber;
@@ -241,7 +351,7 @@ export class CollectionSheetDetailComponent implements OnInit {
         const successMsg = result.warning
           ? { severity: 'warn' as const, summary: 'Cobro registrado con advertencia', detail: result.warning }
           : isPartial
-            ? { severity: 'success' as const, summary: 'Cobro parcial registrado', detail: `Pre-carga registrada. Próxima visita: ${this.formatDate(this.paymentNextVisitDate)}.` }
+            ? { severity: 'success' as const, summary: 'Cobro parcial registrado', detail: `Pre-carga registrada. Próxima visita: ${this.formatDate(partialDateIso)}.` }
             : { severity: 'success' as const, summary: 'Cobro registrado', detail: `Pre-carga registrada para la cuota ${itemNumber}. Pendiente de aprobación.` };
         this.silentReload(itemId, successMsg);
       },
@@ -269,7 +379,7 @@ export class CollectionSheetDetailComponent implements OnInit {
     this.attemptItem = item;
     this.attemptType = type;
     this.attemptReason = '';
-    this.attemptNextVisitDate = '';
+    this.attemptNextVisitDate = null;
     this.attemptNotes = '';
     this.showAttemptDialog = true;
   }
@@ -282,6 +392,9 @@ export class CollectionSheetDetailComponent implements OnInit {
     if (this.processingAttempt) return;
     if (!this.attemptItem) return;
 
+    const attemptDateIso =
+      this.attemptType === 'NO_PAYMENT' ? this.dateToIso(this.attemptNextVisitDate) : '';
+
     if (this.attemptType === 'NO_PAYMENT') {
       if (!this.attemptReason.trim()) {
         this.msg.add({
@@ -291,7 +404,7 @@ export class CollectionSheetDetailComponent implements OnInit {
         });
         return;
       }
-      if (!this.attemptNextVisitDate) {
+      if (!attemptDateIso) {
         this.msg.add({
           severity: 'warn',
           summary: 'Fecha requerida',
@@ -308,13 +421,13 @@ export class CollectionSheetDetailComponent implements OnInit {
     };
     if (this.attemptType === 'NO_PAYMENT') {
       payload.reason = this.attemptReason.trim();
-      payload.nextVisitDate = this.attemptNextVisitDate;
+      payload.nextVisitDate = attemptDateIso;
     }
     if (this.attemptNotes) payload.notes = this.attemptNotes;
 
     const itemId = this.attemptItem.installmentId;
     const isNoPayment = this.attemptType === 'NO_PAYMENT';
-    const nextVisitForToast = this.attemptNextVisitDate;
+    const nextVisitForToast = attemptDateIso;
 
     this.attemptsService.create(payload).subscribe({
       next: () => {
@@ -355,6 +468,8 @@ export class CollectionSheetDetailComponent implements OnInit {
     onSuccessToast: { severity: 'success' | 'warn'; summary: string; detail: string },
   ): void {
     this.processingItemId = expectedItemId;
+    // Invalida el log cacheado: si el panel queda abierto, se recargará al verlo.
+    delete this.managementLogs[expectedItemId];
     this.collectionsService.getById(this.sheetId).subscribe({
       next: (data) => {
         const newItems = [...data.items].sort((a, b) => a.orderNumber - b.orderNumber);
@@ -362,6 +477,9 @@ export class CollectionSheetDetailComponent implements OnInit {
         this.sheet = data;
         this.items = newItems;
         this.processingItemId = null;
+        if (this.expandedLogItemId === expectedItemId && stillPresent) {
+          this.loadLog(expectedItemId);
+        }
 
         if (!stillPresent) {
           this.msg.add({

@@ -28,6 +28,7 @@ export interface CollectionSheetItem {
   antecedentDate: string | null;
   antecedentNotes: string | null;
   nextVisitDate: string | null;
+  hasPendingPayment: boolean;
   installmentId: string;
   installmentNumber: number;
   dueDate: string;
@@ -94,6 +95,7 @@ export interface CollectionSheetItemRaw {
   antecedent_date: string | null;
   antecedent_notes: string | null;
   next_visit_date: string | null;
+  has_pending_payment: boolean;
   installment_id: string;
   installment_number: number;
   due_date: string;

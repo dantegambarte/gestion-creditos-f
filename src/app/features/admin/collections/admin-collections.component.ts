@@ -9,6 +9,7 @@ import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -34,6 +35,12 @@ import {
   SHEET_STATUS_LABELS,
 } from '../../collector/models/collection.model';
 import {
+  MANAGEMENT_EVENT_LABELS,
+  ManagementEventType,
+  ManagementLogEntry,
+} from '../../collector/models/management-log.model';
+import { InstallmentsService } from '../../seller/operations/installments.service';
+import {
   GeneratedPlanillaResult,
   PlanillaEntry,
 } from '../models/interface/sheet';
@@ -54,6 +61,7 @@ type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
     DialogModule,
     DropdownModule,
     InputSwitchModule,
+    ProgressSpinnerModule,
     SkeletonModule,
     TableModule,
     TagModule,
@@ -67,6 +75,7 @@ type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
 })
 export class AdminCollectionsComponent implements OnInit, OnDestroy {
   private readonly collectionsService = inject(CollectionsService);
+  private readonly installmentsService = inject(InstallmentsService);
   private readonly usersService = inject(UsersService);
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
@@ -91,6 +100,11 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   alertsUnassignedExpanded = false;
 
   readonly SHEET_STATUS_LABELS = SHEET_STATUS_LABELS;
+
+  // ── Panel de log cronológico por cuota (auditoría admin) ─────────────────────
+  expandedLogItemId: string | null = null;
+  managementLogs: Record<string, ManagementLogEntry[]> = {};
+  loadingLogItemId: string | null = null;
 
   // Detail panel
   selectedSheetMeta: CollectionSheet | null = null;
@@ -499,6 +513,50 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
    */
   goToCredit(creditId: string): void {
     this.router.navigate(['/admin/operations', creditId]);
+  }
+
+  /**
+   * Abre/cierra el panel del log para una cuota; carga si no hay cache.
+   */
+  toggleLog(installmentId: string): void {
+    if (this.expandedLogItemId === installmentId) {
+      this.expandedLogItemId = null;
+      return;
+    }
+    this.expandedLogItemId = installmentId;
+    if (!this.managementLogs[installmentId]) {
+      this.loadingLogItemId = installmentId;
+      this.installmentsService
+        .getManagementLog(installmentId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (log) => {
+            this.managementLogs[installmentId] = log;
+            this.loadingLogItemId = null;
+          },
+          error: () => {
+            this.managementLogs[installmentId] = [];
+            this.loadingLogItemId = null;
+          },
+        });
+    }
+  }
+
+  isLogExpanded(installmentId: string): boolean {
+    return this.expandedLogItemId === installmentId;
+  }
+
+  eventTypeLabel(type: ManagementEventType): string {
+    return MANAGEMENT_EVENT_LABELS[type];
+  }
+
+  eventSeverity(type: ManagementEventType): 'success' | 'warning' | 'secondary' {
+    const map: Record<ManagementEventType, 'success' | 'warning' | 'secondary'> = {
+      PAYMENT: 'success',
+      NO_PAYMENT: 'warning',
+      NOT_FOUND: 'secondary',
+    };
+    return map[type];
   }
 
   /**

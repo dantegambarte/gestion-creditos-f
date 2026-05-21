@@ -47,6 +47,7 @@ function toSheetItem(raw: CollectionSheetItemRaw): CollectionSheetItem {
     antecedentDate: raw.antecedent_date,
     antecedentNotes: raw.antecedent_notes,
     nextVisitDate: raw.next_visit_date,
+    hasPendingPayment: !!raw.has_pending_payment,
     installmentId: raw.installment_id,
     installmentNumber: raw.installment_number,
     dueDate: raw.due_date,

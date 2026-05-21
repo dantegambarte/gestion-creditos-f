@@ -13,6 +13,10 @@ import {
   InstallmentListFilters,
   InstallmentRaw,
 } from '../models/installment.model';
+import {
+  ManagementLogEntry,
+  ManagementLogEntryRaw,
+} from '../../collector/models/management-log.model';
 
 /**
  * Convierte un objeto raw de tipo InstallmentRaw en un objeto de tipo Installment.
@@ -163,5 +167,34 @@ export class InstallmentsService {
     return this.api
       .patch<EarlyPayResultRaw>(`installments/${id}/early-pay`, body)
       .pipe(map(toEarlyPayResult));
+  }
+
+  /**
+   * Devuelve el log cronológico (más reciente primero) de gestiones sobre una cuota:
+   * cobros + intentos NO_PAYMENT / NOT_FOUND. Útil para que admin/cobrador vean
+   * el historial completo de actividad operativa.
+   */
+  getManagementLog(installmentId: string): Observable<ManagementLogEntry[]> {
+    return this.api
+      .get<ManagementLogEntryRaw[]>(`installments/${installmentId}/management-log`)
+      .pipe(
+        map((items) =>
+          items.map((raw) => ({
+            eventType: raw.event_type,
+            eventId: raw.event_id,
+            createdAt: raw.created_at,
+            nextVisitDate: raw.next_visit_date,
+            reason: raw.reason,
+            notes: raw.notes,
+            amount: raw.amount,
+            paymentStatus: raw.payment_status,
+            paymentMethod: raw.payment_method,
+            isReversal: raw.is_reversal,
+            adminDirect: raw.admin_direct,
+            rejectionReason: raw.rejection_reason,
+            collectorName: raw.collector_name,
+          })),
+        ),
+      );
   }
 }

@@ -101,6 +101,15 @@
                   }
                 </div>
               }
+
+              <button
+                type="button"
+                class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"
+                (click)="toggleLog(item)"
+              >
+                <i class="pi text-[10px]" [class.pi-chevron-down]="!isLogExpanded(item)" [class.pi-chevron-up]="isLogExpanded(item)"></i>
+                {{ isLogExpanded(item) ? "Ocultar historial" : "Ver historial de gestiones" }}
+              </button>
             </div>
 
             <div class="text-right shrink-0">
@@ -139,38 +148,113 @@
               }
 
               @if (canActOnItem(item)) {
-                <div class="flex flex-col gap-2 mt-2 items-end">
-                  <p-button
-                    label="Cobrar"
-                    icon="pi pi-money-bill"
-                    severity="success"
-                    styleClass="font-semibold w-full"
-                    (onClick)="openPaymentDialog(item)"
-                  />
-                  <div class="flex gap-2 w-full">
-                    <p-button
-                      label="No pagó"
-                      icon="pi pi-times-circle"
-                      severity="warning"
-                      [outlined]="true"
-                      size="small"
-                      styleClass="flex-1"
-                      (onClick)="openAttemptDialog(item, 'NO_PAYMENT')"
-                    />
-                    <p-button
-                      label="No encontrado"
-                      icon="pi pi-user-minus"
-                      severity="secondary"
-                      [outlined]="true"
-                      size="small"
-                      styleClass="flex-1"
-                      (onClick)="openAttemptDialog(item, 'NOT_FOUND')"
-                    />
-                  </div>
+                <div class="flex flex-col gap-2 mt-2 items-stretch w-44">
+                  <button
+                    type="button"
+                    class="h-10 px-3 rounded-lg font-semibold text-sm text-white bg-green-600 hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-2 shadow-sm transition-colors"
+                    (click)="openPaymentDialog(item)"
+                  >
+                    <i class="pi pi-money-bill"></i>
+                    Cobrar
+                  </button>
+                  <button
+                    type="button"
+                    class="h-9 px-3 rounded-lg font-semibold text-sm text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 flex items-center justify-center gap-2 shadow-sm transition-colors"
+                    (click)="openAttemptDialog(item, 'NO_PAYMENT')"
+                  >
+                    <i class="pi pi-times-circle"></i>
+                    No pagó
+                  </button>
+                  <button
+                    type="button"
+                    class="h-9 px-3 rounded-lg font-semibold text-sm text-white bg-slate-600 hover:bg-slate-700 active:bg-slate-800 flex items-center justify-center gap-2 shadow-sm transition-colors"
+                    (click)="openAttemptDialog(item, 'NOT_FOUND')"
+                  >
+                    <i class="pi pi-user-minus"></i>
+                    No encontrado
+                  </button>
+                </div>
+              } @else if (item.hasPendingPayment) {
+                <div class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-orange-50 border border-orange-200">
+                  <i class="pi pi-clock text-orange-700"></i>
+                  <span class="text-xs font-semibold text-orange-900">
+                    Cobro pendiente de aprobación
+                  </span>
+                </div>
+              } @else if (alreadyManagedToday(item) && item.antecedentType) {
+                <div class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-blue-50 border border-blue-200">
+                  <i class="pi pi-check-circle text-blue-700"></i>
+                  <span class="text-xs font-semibold text-blue-900">
+                    Ya gestionada hoy ({{ antecedentLabel(item.antecedentType) }})
+                  </span>
                 </div>
               }
             </div>
           </div>
+
+          @if (isLogExpanded(item)) {
+            <div class="mt-3 pt-3 border-t border-gray-200">
+              <p class="text-xs font-semibold mb-2 text-gray-600">Historial de gestiones (más reciente primero)</p>
+              @if (loadingLogItemId === item.installmentId && !managementLogs[item.installmentId]) {
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                  <p-progressSpinner [style]="{ width: '16px', height: '16px' }" strokeWidth="4" />
+                  <span>Cargando...</span>
+                </div>
+              } @else if (managementLogs[item.installmentId] && managementLogs[item.installmentId].length === 0) {
+                <p class="text-xs text-gray-500">Sin gestiones previas registradas.</p>
+              } @else if (managementLogs[item.installmentId]) {
+                <ul class="flex flex-col gap-2">
+                  @for (entry of managementLogs[item.installmentId]; track entry.eventId) {
+                    <li class="flex items-start gap-2 text-xs">
+                      <p-tag
+                        [value]="eventTypeLabel(entry.eventType)"
+                        [severity]="eventSeverity(entry.eventType)"
+                        styleClass="!text-[10px] !py-0.5"
+                      />
+                      <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <span class="text-gray-700">{{ entry.createdAt | date: "dd/MM/yyyy HH:mm" }}</span>
+                          @if (entry.collectorName) {
+                            <span class="text-gray-500">· {{ entry.collectorName }}</span>
+                          }
+                          @if (entry.eventType === "PAYMENT" && entry.amount !== null) {
+                            <span class="font-semibold text-green-700">{{ entry.amount | currencyArs: 2 }}</span>
+                            @if (entry.paymentStatus) {
+                              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded"
+                                [class.bg-yellow-100]="entry.paymentStatus === 'PENDING'"
+                                [class.text-yellow-800]="entry.paymentStatus === 'PENDING'"
+                                [class.bg-green-100]="entry.paymentStatus === 'APPROVED'"
+                                [class.text-green-800]="entry.paymentStatus === 'APPROVED'"
+                                [class.bg-red-100]="entry.paymentStatus === 'REJECTED'"
+                                [class.text-red-800]="entry.paymentStatus === 'REJECTED'"
+                              >
+                                {{ entry.paymentStatus === "PENDING" ? "PEND." : entry.paymentStatus === "APPROVED" ? "APROB." : "RECH." }}
+                              </span>
+                            }
+                            @if (entry.isReversal) {
+                              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800">REV.</span>
+                            }
+                          }
+                          @if (entry.nextVisitDate) {
+                            <span class="text-purple-700">→ próxima visita {{ entry.nextVisitDate | date: "dd/MM/yyyy" }}</span>
+                          }
+                        </div>
+                        @if (entry.reason) {
+                          <p class="text-gray-700 mt-0.5">{{ entry.reason }}</p>
+                        }
+                        @if (entry.notes) {
+                          <p class="text-gray-500 mt-0.5 italic">"{{ entry.notes }}"</p>
+                        }
+                        @if (entry.rejectionReason) {
+                          <p class="text-red-700 mt-0.5">Rechazo: {{ entry.rejectionReason }}</p>
+                        }
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
         </div>
       }
     </div>
@@ -249,11 +333,15 @@
         <p class="text-xs text-amber-800 mb-1">
           El cobro es parcial. Indicá cuándo volverás a visitar al cliente.
         </p>
-        <input
-          type="date"
+        <p-calendar
           [(ngModel)]="paymentNextVisitDate"
-          [min]="todayIso"
-          class="w-full rounded-xl border border-amber-300 bg-white p-2.5 text-sm text-gray-700 outline-none focus:border-amber-500"
+          [minDate]="todayDate"
+          [showIcon]="true"
+          [readonlyInput]="true"
+          [touchUI]="true"
+          dateFormat="dd/mm/yy"
+          placeholder="Seleccionar fecha..."
+          styleClass="w-full"
         />
       </div>
     }
@@ -287,7 +375,7 @@
         styleClass="w-full"
         (onClick)="confirmPayment()"
         [loading]="processingPayment"
-        [disabled]="processingPayment || !paymentAmount || paymentAmount <= 0 || (isPartialPayment() && !paymentNextVisitDate)"
+        [disabled]="!!processingPayment || !paymentAmount || paymentAmount <= 0 || (isPartialPayment() && !paymentNextVisitDate)"
       />
     </div>
   </ng-template>
@@ -333,11 +421,15 @@
         <label class="text-sm font-medium text-gray-700">
           Próxima visita <span class="text-red-600">*</span>
         </label>
-        <input
-          type="date"
+        <p-calendar
           [(ngModel)]="attemptNextVisitDate"
-          [min]="todayIso"
-          class="w-full rounded-xl border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-700 outline-none focus:border-blue-500"
+          [minDate]="todayDate"
+          [showIcon]="true"
+          [readonlyInput]="true"
+          [touchUI]="true"
+          dateFormat="dd/mm/yy"
+          placeholder="Seleccionar fecha..."
+          styleClass="w-full"
         />
       </div>
     } @else {
@@ -376,7 +468,7 @@
         styleClass="w-full"
         (onClick)="confirmAttempt()"
         [loading]="processingAttempt"
-        [disabled]="processingAttempt || (attemptType === 'NO_PAYMENT' && (!attemptReason.trim() || !attemptNextVisitDate))"
+        [disabled]="!!processingAttempt || (attemptType === 'NO_PAYMENT' && (!attemptReason.trim() || !attemptNextVisitDate))"
       />
     </div>
   </ng-template>
