@@ -363,15 +363,11 @@
         <p class="text-xs text-amber-800 mb-1">
           El cobro es parcial. Indicá cuándo volverás a visitar al cliente.
         </p>
-        <p-calendar
+        <input
+          type="date"
           [(ngModel)]="paymentNextVisitDate"
-          [minDate]="todayDate"
-          [showIcon]="true"
-          [readonlyInput]="true"
-          [touchUI]="true"
-          dateFormat="dd/mm/yy"
-          placeholder="Seleccionar fecha..."
-          styleClass="w-full"
+          [min]="todayIso"
+          class="native-date-input h-10"
         />
       </div>
     }
@@ -451,15 +447,11 @@
         <label class="text-sm font-medium text-gray-700">
           Próxima visita <span class="text-red-600">*</span>
         </label>
-        <p-calendar
+        <input
+          type="date"
           [(ngModel)]="attemptNextVisitDate"
-          [minDate]="todayDate"
-          [showIcon]="true"
-          [readonlyInput]="true"
-          [touchUI]="true"
-          dateFormat="dd/mm/yy"
-          placeholder="Seleccionar fecha..."
-          styleClass="w-full"
+          [min]="todayIso"
+          class="native-date-input h-10"
         />
       </div>
     } @else {

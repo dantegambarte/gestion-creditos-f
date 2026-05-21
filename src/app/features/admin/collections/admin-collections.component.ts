@@ -117,6 +117,8 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   showGenerateDialog = false;
   selectedCollectorId: string | null = null;
   selectedDate: string = new Date().toISOString().split('T')[0];
+  /** Fecha mínima del input de generación: hoy. Bloquea seleccionar fechas pasadas. */
+  readonly todayIsoDate: string = new Date().toISOString().split('T')[0];
   selectedFilter: CollectionFilter = 'OVERDUE';
   filterOptions: { label: string; value: CollectionFilter }[] = [
     { label: 'Solo vencidas', value: 'OVERDUE' },
@@ -259,6 +261,15 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   generatePlanilla(): void {
     if (!this.selectedCollectorId || this.generating || this.generatingAll)
       return;
+    if (this.selectedDate < this.todayIsoDate) {
+      this.msg.add({
+        severity: 'warn',
+        summary: 'Fecha inválida',
+        detail: 'No se puede generar una planilla para una fecha pasada.',
+        life: 4000,
+      });
+      return;
+    }
     this.generating = true;
     this.collectionsService
       .generate({
@@ -329,6 +340,15 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
    */
   generateForAll(): void {
     if (this.generatingAll || this.generating) return;
+    if (this.selectedDate < this.todayIsoDate) {
+      this.msg.add({
+        severity: 'warn',
+        summary: 'Fecha inválida',
+        detail: 'No se puede generar una planilla para una fecha pasada.',
+        life: 4000,
+      });
+      return;
+    }
     this.generatingAll = true;
     this.usersService
       .listCollectors()

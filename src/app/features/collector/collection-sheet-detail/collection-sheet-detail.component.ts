@@ -6,7 +6,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
-import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
@@ -53,7 +52,6 @@ import { AppRoutes } from '../../../shared/models/enums/routes.enum';
     ButtonModule,
     TagModule,
     BadgeModule,
-    CalendarModule,
     ToastModule,
     DialogModule,
     DropdownModule,
@@ -100,8 +98,8 @@ export class CollectionSheetDetailComponent implements OnInit {
   paymentMethod: 'CASH' | 'TRANSFER' = 'CASH';
   transferReference = '';
   paymentNotes = '';
-  /** Date para p-calendar; se convierte a 'YYYY-MM-DD' al enviar. */
-  paymentNextVisitDate: Date | null = null;
+  /** Fecha ISO 'YYYY-MM-DD' del input nativo type="date". */
+  paymentNextVisitDate = '';
   processingPayment = false;
 
   // ── Diálogo de intento (NO_PAYMENT / NOT_FOUND) ──────────────────────────────
@@ -109,7 +107,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   attemptItem: CollectionSheetItem | null = null;
   attemptType: CollectionAttemptType = 'NO_PAYMENT';
   attemptReason = '';
-  attemptNextVisitDate: Date | null = null;
+  attemptNextVisitDate = '';
   attemptNotes = '';
   processingAttempt = false;
 
@@ -123,14 +121,8 @@ export class CollectionSheetDetailComponent implements OnInit {
     { label: 'Transferencia', value: 'TRANSFER' },
   ];
 
-  /** Hoy en formato 'YYYY-MM-DD' para comparar con item.antecedentDate. */
+  /** Hoy en formato 'YYYY-MM-DD' — bloquea fechas pasadas en input type="date". */
   readonly todayIso = new Date().toISOString().split('T')[0];
-  /** Hoy como Date (sin hora) para p-calendar.minDate. */
-  readonly todayDate = (() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  })();
 
   private get sheetId(): string {
     return this.route.snapshot.paramMap.get('sheetId')!;
@@ -296,15 +288,6 @@ export class CollectionSheetDetailComponent implements OnInit {
     });
   }
 
-  /** Convierte un Date a 'YYYY-MM-DD' usando hora local (sin shift de UTC). */
-  private dateToIso(d: Date | null): string {
-    if (!d) return '';
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-
   // ── Diálogo de cobro ─────────────────────────────────────────────────────────
 
   openPaymentDialog(item: CollectionSheetItem): void {
@@ -314,14 +297,14 @@ export class CollectionSheetDetailComponent implements OnInit {
     this.paymentMethod = 'CASH';
     this.transferReference = '';
     this.paymentNotes = '';
-    this.paymentNextVisitDate = null;
+    this.paymentNextVisitDate = '';
     this.showPaymentDialog = true;
   }
 
   /** Limpia next_visit_date si el monto cubre el saldo completo (validación UX). */
   onPaymentAmountChange(): void {
     if (!this.isPartialPayment()) {
-      this.paymentNextVisitDate = null;
+      this.paymentNextVisitDate = '';
     }
   }
 
@@ -341,12 +324,20 @@ export class CollectionSheetDetailComponent implements OnInit {
     }
 
     const isPartial = this.paymentAmount < balance;
-    const partialDateIso = isPartial ? this.dateToIso(this.paymentNextVisitDate) : '';
+    const partialDateIso = isPartial ? this.paymentNextVisitDate : '';
     if (isPartial && !partialDateIso) {
       this.msg.add({
         severity: 'warn',
         summary: 'Fecha requerida',
         detail: 'Indicá la fecha de próxima visita para el cobro parcial.',
+      });
+      return;
+    }
+    if (isPartial && partialDateIso < this.todayIso) {
+      this.msg.add({
+        severity: 'warn',
+        summary: 'Fecha inválida',
+        detail: 'La próxima visita no puede ser una fecha pasada.',
       });
       return;
     }
@@ -401,7 +392,7 @@ export class CollectionSheetDetailComponent implements OnInit {
     this.attemptItem = item;
     this.attemptType = type;
     this.attemptReason = '';
-    this.attemptNextVisitDate = null;
+    this.attemptNextVisitDate = '';
     this.attemptNotes = '';
     this.showAttemptDialog = true;
   }
@@ -415,7 +406,7 @@ export class CollectionSheetDetailComponent implements OnInit {
     if (!this.attemptItem) return;
 
     const attemptDateIso =
-      this.attemptType === 'NO_PAYMENT' ? this.dateToIso(this.attemptNextVisitDate) : '';
+      this.attemptType === 'NO_PAYMENT' ? this.attemptNextVisitDate : '';
 
     if (this.attemptType === 'NO_PAYMENT') {
       if (!this.attemptReason.trim()) {
@@ -431,6 +422,14 @@ export class CollectionSheetDetailComponent implements OnInit {
           severity: 'warn',
           summary: 'Fecha requerida',
           detail: 'Indicá la fecha de próxima visita.',
+        });
+        return;
+      }
+      if (attemptDateIso < this.todayIso) {
+        this.msg.add({
+          severity: 'warn',
+          summary: 'Fecha inválida',
+          detail: 'La próxima visita no puede ser una fecha pasada.',
         });
         return;
       }
