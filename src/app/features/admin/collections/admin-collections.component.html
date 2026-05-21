@@ -315,7 +315,7 @@
               <tr>
                 <th class="w-8">#</th>
                 <th>Cliente / Contacto</th>
-                <th>Tipo / Cuota</th>
+                <th>Detalle</th>
                 <th>Vencimiento</th>
                 <th class="text-right">Monto</th>
                 <th class="text-right">Mora</th>
@@ -362,13 +362,7 @@
                 </td>
                 <td>
                   <p class="text-sm" style="color: var(--ff-text-secondary)">
-                    {{ item.creditType === "SALE" ? "Venta" : "Préstamo" }}
-                  </p>
-                  <p
-                    class="text-xs ff-mono"
-                    style="color: var(--ff-text-muted)"
-                  >
-                    Cuota {{ item.installmentNumber }}
+                    {{ item.collectionReference }}
                   </p>
                 </td>
                 <td class="text-sm" style="color: var(--ff-text-secondary)">

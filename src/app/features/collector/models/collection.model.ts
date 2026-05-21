@@ -39,6 +39,8 @@ export interface CollectionSheetItem {
   installmentStatus: InstallmentStatus;
   creditId: string;
   creditType: 'SALE' | 'LOAN';
+  /** Frase armada en backend: "Cuota X de N · crédito de … / préstamo de $…". */
+  collectionReference: string;
   customerName: string;
   customerPhone: string | null;
   customerAddress: string | null;
@@ -107,6 +109,7 @@ export interface CollectionSheetItemRaw {
   installment_status: InstallmentStatus;
   credit_id: string;
   credit_type: 'SALE' | 'LOAN';
+  collection_reference: string;
   customer_name: string;
   customer_phone: string | null;
   customer_address: string | null;

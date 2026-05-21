@@ -58,6 +58,7 @@ function toSheetItem(raw: CollectionSheetItemRaw): CollectionSheetItem {
     installmentStatus: raw.installment_status,
     creditId: raw.credit_id,
     creditType: raw.credit_type,
+    collectionReference: raw.collection_reference,
     customerName: raw.customer_name,
     customerPhone: raw.customer_phone,
     customerAddress: raw.customer_address,
