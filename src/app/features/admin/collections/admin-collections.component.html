@@ -441,10 +441,13 @@
                       } @else if (managementLogs[item.installmentId]) {
                         <ul class="flex flex-col gap-2">
                           @for (entry of managementLogs[item.installmentId]; track entry.eventId) {
-                            <li class="flex items-start gap-2 text-xs">
+                            <li class="flex items-start gap-2 text-xs"
+                              [class.opacity-50]="!!entry.voidedAt"
+                              [class.line-through]="!!entry.voidedAt"
+                            >
                               <p-tag
                                 [value]="eventTypeLabel(entry.eventType)"
-                                [severity]="eventSeverity(entry.eventType)"
+                                [severity]="entry.voidedAt ? 'secondary' : eventSeverity(entry.eventType)"
                                 styleClass="!text-[10px] !py-0.5"
                               />
                               <div class="flex-1 min-w-0">
@@ -452,6 +455,9 @@
                                   <span style="color: var(--ff-text-secondary)">{{ entry.createdAt | date: "dd/MM/yyyy HH:mm" }}</span>
                                   @if (entry.collectorName) {
                                     <span style="color: var(--ff-text-muted)">· {{ entry.collectorName }}</span>
+                                  }
+                                  @if (entry.voidedAt) {
+                                    <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800" style="text-decoration: none;">ANULADO</span>
                                   }
                                   @if (entry.eventType === "PAYMENT" && entry.amount !== null) {
                                     <span class="font-semibold" style="color: #15803d;">{{ entry.amount | currencyArs: 2 }}</span>
@@ -486,6 +492,14 @@
                                 }
                                 @if (entry.rejectionReason) {
                                   <p class="mt-0.5" style="color: #b91c1c;">Rechazo: {{ entry.rejectionReason }}</p>
+                                }
+                                @if (entry.voidedAt) {
+                                  <p class="mt-0.5" style="color: #b91c1c; text-decoration: none;">
+                                    Anulado el {{ entry.voidedAt | date: "dd/MM/yyyy HH:mm" }}
+                                    @if (entry.voidedByName) {
+                                      por {{ entry.voidedByName }}
+                                    }
+                                  </p>
                                 }
                               </div>
                             </li>

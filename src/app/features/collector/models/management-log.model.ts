@@ -22,6 +22,8 @@ export interface ManagementLogEntry {
   adminDirect: boolean;
   rejectionReason: string | null;
   collectorName: string | null;
+  voidedAt: string | null;
+  voidedByName: string | null;
 }
 
 export interface ManagementLogEntryRaw {
@@ -38,6 +40,8 @@ export interface ManagementLogEntryRaw {
   admin_direct: boolean;
   rejection_reason: string | null;
   collector_name: string | null;
+  voided_at: string | null;
+  voided_by_name: string | null;
 }
 
 export const MANAGEMENT_EVENT_LABELS: Record<ManagementEventType, string> = {

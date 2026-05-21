@@ -46,4 +46,15 @@ export class CollectionAttemptsService {
       .post<CollectionAttemptRaw>('collection-attempts', body)
       .pipe(map(toAttempt));
   }
+
+  /**
+   * Anula un intento de cobranza (supersede). El backend valida que sea el mismo
+   * cobrador y el mismo día. El intento sigue visible en el management log con
+   * badge "ANULADO".
+   */
+  void(id: string): Observable<CollectionAttempt> {
+    return this.api
+      .patch<CollectionAttemptRaw>(`collection-attempts/${id}/void`)
+      .pipe(map(toAttempt));
+  }
 }

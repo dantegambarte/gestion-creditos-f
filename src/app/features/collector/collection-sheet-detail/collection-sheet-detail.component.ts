@@ -113,6 +113,11 @@ export class CollectionSheetDetailComponent implements OnInit {
   attemptNotes = '';
   processingAttempt = false;
 
+  // ── Diálogo de anulación (void) ──────────────────────────────────────────────
+  showVoidDialog = false;
+  voidItem: CollectionSheetItem | null = null;
+  processingVoid = false;
+
   readonly PAYMENT_METHOD_OPTIONS = [
     { label: 'Efectivo', value: 'CASH' },
     { label: 'Transferencia', value: 'TRANSFER' },
@@ -188,22 +193,28 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   /**
-   * Solo se puede operar si:
-   *  - la planilla está activa (no REGENERATED)
-   *  - la cuota no está pagada
-   *  - no hay refresh en curso sobre la cuota
-   *  - no se registró una gestión HOY sobre la cuota
-   *  - no hay un cobro pre-cargado PENDIENTE de aprobación
-   *
-   * El bloqueo por gestión del día evita doble registro de intentos. El bloqueo
-   * por pre-carga pendiente evita registrar nuevos cobros/intentos mientras el
-   * admin no aprueba/rechaza el cobro ya cargado.
+   * Reglas para "Cobrar":
+   *  - planilla activa, cuota no pagada, no en procesamiento, sin pre-carga pendiente.
+   *  - Mantenido habilitado incluso tras un intento del día: si el cliente aparece
+   *    con plata después de marcar "no pagó/no encontrado", el cobrador debe
+   *    poder registrar el cobro.
    */
-  canActOnItem(item: CollectionSheetItem): boolean {
+  canRegisterPayment(item: CollectionSheetItem): boolean {
     if (this.sheet?.status === 'REGENERATED') return false;
     if (item.installmentStatus === 'PAID') return false;
     if (this.isItemProcessing(item)) return false;
     if (item.hasPendingPayment) return false;
+    return true;
+  }
+
+  /**
+   * Reglas para "No pagó" / "No encontrado":
+   *  - todas las del cobro, PLUS no se permite si ya hubo una gestión del día.
+   *  - Tras un cobro parcial del día, también se bloquean (la reversión va por
+   *    el flujo admin existente).
+   */
+  canRegisterAttempt(item: CollectionSheetItem): boolean {
+    if (!this.canRegisterPayment(item)) return false;
     if (this.alreadyManagedToday(item)) return false;
     return true;
   }
@@ -211,6 +222,17 @@ export class CollectionSheetDetailComponent implements OnInit {
   /** True si esta cuota ya tiene una gestión registrada en la fecha actual. */
   alreadyManagedToday(item: CollectionSheetItem): boolean {
     return !!item.antecedentDate && item.antecedentDate === this.todayIso;
+  }
+
+  /**
+   * True si el antecedente del día es un intento (no un cobro parcial) y por lo
+   * tanto puede anularse desde la UI del cobrador. Los cobros parciales se
+   * revierten desde el flujo de admin, no acá.
+   */
+  canVoidTodayAttempt(item: CollectionSheetItem): boolean {
+    if (!this.alreadyManagedToday(item)) return false;
+    if (!item.antecedentId) return false;
+    return item.antecedentType === 'NO_PAYMENT' || item.antecedentType === 'NOT_FOUND';
   }
 
   /** True si el monto ingresado dejaría la cuota parcial (saldo > 0 después del cobro). */
@@ -286,7 +308,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   // ── Diálogo de cobro ─────────────────────────────────────────────────────────
 
   openPaymentDialog(item: CollectionSheetItem): void {
-    if (!this.canActOnItem(item)) return;
+    if (!this.canRegisterPayment(item)) return;
     this.dialogItem = item;
     this.paymentAmount = this.availableBalance(item);
     this.paymentMethod = 'CASH';
@@ -375,7 +397,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   // ── Diálogo de intento (NO_PAYMENT / NOT_FOUND) ──────────────────────────────
 
   openAttemptDialog(item: CollectionSheetItem, type: CollectionAttemptType): void {
-    if (!this.canActOnItem(item)) return;
+    if (!this.canRegisterAttempt(item)) return;
     this.attemptItem = item;
     this.attemptType = type;
     this.attemptReason = '';
@@ -450,6 +472,48 @@ export class CollectionSheetDetailComponent implements OnInit {
                 ? 'Datos inválidos'
                 : 'Error',
           detail: err.message ?? 'No se pudo registrar el intento.',
+        });
+      },
+    });
+  }
+
+  // ── Anulación del intento del día (supersede) ────────────────────────────────
+
+  openVoidDialog(item: CollectionSheetItem): void {
+    if (!this.canVoidTodayAttempt(item)) return;
+    this.voidItem = item;
+    this.showVoidDialog = true;
+  }
+
+  confirmVoid(): void {
+    if (this.processingVoid) return;
+    const item = this.voidItem;
+    if (!item) return;
+    const antecedentId = item.antecedentId;
+    if (!antecedentId) return;
+    this.processingVoid = true;
+    this.attemptsService.void(antecedentId).subscribe({
+      next: () => {
+        this.processingVoid = false;
+        this.showVoidDialog = false;
+        this.silentReload(item.installmentId, {
+          severity: 'success',
+          summary: 'Gestión anulada',
+          detail: 'Podés volver a registrar la gestión de la cuota.',
+        });
+      },
+      error: (err: AppError) => {
+        this.processingVoid = false;
+        const severity = err.status === 403 || err.status === 409 ? 'warn' : 'error';
+        this.msg.add({
+          severity,
+          summary:
+            err.status === 403
+              ? 'No autorizado'
+              : err.status === 409
+                ? 'No se pudo anular'
+                : 'Error',
+          detail: err.message ?? 'No se pudo anular la gestión.',
         });
       },
     });

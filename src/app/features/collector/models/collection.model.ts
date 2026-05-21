@@ -24,6 +24,7 @@ export interface CollectionSheetItem {
   orderNumber: number;
   plannedAmount: number;
   inclusionCriteria: InclusionCriteria;
+  antecedentId: string | null;
   antecedentType: AntecedentType | null;
   antecedentDate: string | null;
   antecedentNotes: string | null;
@@ -91,6 +92,7 @@ export interface CollectionSheetItemRaw {
   order_number: number;
   planned_amount: number;
   inclusion_criteria: InclusionCriteria;
+  antecedent_id: string | null;
   antecedent_type: AntecedentType | null;
   antecedent_date: string | null;
   antecedent_notes: string | null;

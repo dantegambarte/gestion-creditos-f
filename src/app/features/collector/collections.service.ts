@@ -43,6 +43,7 @@ function toSheetItem(raw: CollectionSheetItemRaw): CollectionSheetItem {
     orderNumber: raw.order_number,
     plannedAmount: raw.planned_amount,
     inclusionCriteria: raw.inclusion_criteria,
+    antecedentId: raw.antecedent_id,
     antecedentType: raw.antecedent_type,
     antecedentDate: raw.antecedent_date,
     antecedentNotes: raw.antecedent_notes,

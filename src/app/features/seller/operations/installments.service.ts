@@ -193,6 +193,8 @@ export class InstallmentsService {
             adminDirect: raw.admin_direct,
             rejectionReason: raw.rejection_reason,
             collectorName: raw.collector_name,
+            voidedAt: raw.voided_at,
+            voidedByName: raw.voided_by_name,
           })),
         ),
       );
