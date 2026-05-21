@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -7,15 +8,16 @@ import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
 import { MessageModule } from 'primeng/message';
 import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../../core/models/app-error';
 import { HeaderService } from '../../../../core/services/header.service';
-import {
-  CollectionsService,
-} from '../../../collector/collections.service';
+import { CollectionsService } from '../../../collector/collections.service';
 import {
   COLLECTION_FILTER_LABELS,
+  CollectionAlerts,
   CollectionFilter,
   CollectionGeneratePayload,
+  CollectionGenerateResult,
 } from '../../../collector/models/collection.model';
 import { User } from '../../users/user.model';
 import { UsersService } from '../../users/users.service';
@@ -24,12 +26,14 @@ import { UsersService } from '../../users/users.service';
   selector: 'app-collection-generate',
   standalone: true,
   imports: [
+    DatePipe,
     FormsModule,
     ButtonModule,
     CardModule,
     DropdownModule,
     MessageModule,
     ToastModule,
+    TooltipModule,
   ],
   providers: [MessageService],
   templateUrl: './collection-generate.component.html',
@@ -47,23 +51,34 @@ export class CollectionGenerateComponent implements OnInit {
   selectedFilter: CollectionFilter = 'TODAY';
   processing = false;
 
+  /** Resultado de la última generación (incluye alertas operativas). */
+  result: CollectionGenerateResult | null = null;
+  alertsOverdueExpanded = true;
+  alertsUnassignedExpanded = false;
+
   readonly FILTER_OPTIONS = (
     Object.keys(COLLECTION_FILTER_LABELS) as CollectionFilter[]
   ).map((k) => ({ label: COLLECTION_FILTER_LABELS[k], value: k }));
 
-  /**
-   * Devuelve las opciones de cobradores para el filtro, formateando cada cobrador como un objeto con propiedades `label` (nombre completo del cobrador) y `value` (ID del cobrador).
-   */
   get collectorOptions(): { label: string; value: string }[] {
     return this.collectors.map((c) => ({ label: c.fullName, value: c.id }));
   }
 
-  /**
-   * Indica si los datos seleccionados para generar la planilla de cobro son válidos. Para que los datos sean considerados válidos, se requiere que se haya seleccionado un cobrador, una fecha y un filtro. Si alguno de estos campos no tiene un valor válido, esta propiedad devolverá `false`, lo que puede ser utilizado para deshabilitar el botón de generación de la planilla hasta que se completen todos los campos requeridos.
-   */
   get isValid(): boolean {
     return (
       !!this.selectedCollectorId && !!this.selectedDate && !!this.selectedFilter
+    );
+  }
+
+  get alerts(): CollectionAlerts | null {
+    return this.result?.alerts ?? null;
+  }
+
+  get hasAlerts(): boolean {
+    if (!this.alerts) return false;
+    return (
+      this.alerts.overdueNextVisits.length > 0 ||
+      this.alerts.unassignedCustomers.length > 0
     );
   }
 
@@ -75,35 +90,39 @@ export class CollectionGenerateComponent implements OnInit {
     this.usersService.listCollectors().subscribe((c) => (this.collectors = c));
   }
 
-  /**
-   * Cancela la generación de la planilla de cobro y navega de regreso a la lista de planillas. Esta función se ejecuta cuando el usuario decide no continuar con la generación de la planilla y desea volver a la vista anterior sin realizar ningún cambio.
-   */
   cancel(): void {
     this.router.navigate(['/admin/collections']);
   }
 
   /**
-   * Confirma la generación de la planilla de cobro. Esta función se ejecuta cuando el usuario hace clic en el botón de generación y los datos son válidos.
-   * @returns
+   * Tras generar, no autonavega: muestra las alertas y deja al admin navegar
+   * manualmente cuando termine de revisarlas (directiva UX prioritaria).
    */
   confirm(): void {
-    if (!this.isValid) return;
+    if (!this.isValid || this.processing) return;
     this.processing = true;
+    this.result = null;
     const payload: CollectionGeneratePayload = {
       collectorId: this.selectedCollectorId,
       date: this.selectedDate,
       filter: this.selectedFilter,
     };
     this.collectionsService.generate(payload).subscribe({
-      next: (sheet) => {
+      next: (res) => {
         this.processing = false;
+        this.result = res;
+        const hasOverdue = res.alerts.overdueNextVisits.length > 0;
+        const hasUnassigned = res.alerts.unassignedCustomers.length > 0;
+        this.alertsOverdueExpanded = hasOverdue;
+        this.alertsUnassignedExpanded = !hasOverdue && hasUnassigned;
         this.msg.add({
           severity: 'success',
           summary: 'Planilla generada',
-          detail: `Planilla generada con ${sheet.totalItems} cuota${sheet.totalItems !== 1 ? 's' : ''}.`,
+          detail: hasOverdue || hasUnassigned
+            ? 'Revisá las alertas antes de continuar.'
+            : 'Sin alertas operativas.',
           life: 4000,
         });
-        this.router.navigate(['/admin/collections', sheet.id]);
       },
       error: (err: AppError) => {
         this.processing = false;
@@ -117,5 +136,20 @@ export class CollectionGenerateComponent implements OnInit {
         });
       },
     });
+  }
+
+  /**
+   * Navega al detalle de la planilla recién generada.
+   */
+  viewSheet(): void {
+    if (!this.result) return;
+    this.router.navigate(['/admin/collections', this.result.sheet.id]);
+  }
+
+  /**
+   * Resetea el resultado para permitir generar otra planilla sin recargar.
+   */
+  generateAnother(): void {
+    this.result = null;
   }
 }

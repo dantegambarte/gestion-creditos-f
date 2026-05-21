@@ -49,6 +49,8 @@ export interface PaymentCreatePayload {
   paymentMethod: 'CASH' | 'TRANSFER';
   transferReference?: string;
   notes?: string;
+  /** Obligatorio cuando el cobro queda parcial (amount < saldo restante). */
+  nextVisitDate?: string;
 }
 
 export interface PaymentCreateResult {
@@ -58,6 +60,7 @@ export interface PaymentCreateResult {
   paymentMethod: string;
   status: PaymentStatus;
   createdAt: string;
+  nextVisitDate: string | null;
   warning?: string;
 }
 
@@ -142,6 +145,7 @@ export interface PaymentCreateResultRaw {
   payment_method: string;
   status: PaymentStatus;
   created_at: string;
+  next_visit_date: string | null;
   warning?: string;
 }
 
