@@ -107,6 +107,7 @@ function toCreateResult(raw: PaymentCreateResultRaw): PaymentCreateResult {
     paymentMethod: raw.payment_method,
     status: raw.status,
     createdAt: raw.created_at,
+    nextVisitDate: raw.next_visit_date ?? null,
     ...(raw.warning ? { warning: raw.warning } : {}),
   };
 }
@@ -143,7 +144,8 @@ export class PaymentsService {
   }
 
   /**
-   * Crea un nuevo pago.
+   * Crea un nuevo pago. Si el cobro queda parcial, `nextVisitDate` es obligatorio
+   * (validado en cliente y backend).
    * @param payload
    * @returns
    */
@@ -156,6 +158,7 @@ export class PaymentsService {
     if (payload.transferReference)
       body['transfer_reference'] = payload.transferReference;
     if (payload.notes) body['notes'] = payload.notes;
+    if (payload.nextVisitDate) body['next_visit_date'] = payload.nextVisitDate;
     return this.api
       .post<PaymentCreateResultRaw>('payments', body)
       .pipe(map(toCreateResult));

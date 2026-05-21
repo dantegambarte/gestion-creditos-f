@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { InputSwitchModule } from 'primeng/inputswitch';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -24,10 +25,13 @@ import { LoadingStateComponent } from '../../../shared/states/loading-state/load
 import { CollectionsService } from '../../collector/collections.service';
 import {
   COLLECTION_FILTER_LABELS,
+  CollectionAlerts,
   CollectionFilter,
+  CollectionGenerateResult,
   CollectionSheet,
   CollectionSheetDetail,
   CollectionSheetItem,
+  SHEET_STATUS_LABELS,
 } from '../../collector/models/collection.model';
 import {
   GeneratedPlanillaResult,
@@ -49,6 +53,7 @@ type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
     CardModule,
     DialogModule,
     DropdownModule,
+    InputSwitchModule,
     SkeletonModule,
     TableModule,
     TagModule,
@@ -76,6 +81,16 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   error: AppError | null = null;
   filterCollectorId: string | null = null;
   filterDate = '';
+  filterIncludeRegenerated = false;
+
+  // Alerts dialog (mostrado tras generar una planilla)
+  showAlertsDialog = false;
+  lastAlerts: CollectionAlerts | null = null;
+  lastGeneratedSheetId: string | null = null;
+  alertsOverdueExpanded = true;
+  alertsUnassignedExpanded = false;
+
+  readonly SHEET_STATUS_LABELS = SHEET_STATUS_LABELS;
 
   // Detail panel
   selectedSheetMeta: CollectionSheet | null = null;
@@ -114,6 +129,14 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
     return this.selectedSheet.items.filter(
       (i) => i.installmentStatus === this.activeTab,
     );
+  }
+
+  /**
+   * True si la planilla seleccionada está en estado REGENERATED.
+   * En ese caso no se permiten acciones operativas (solo lectura/auditoría).
+   */
+  get isSelectedSheetReadonly(): boolean {
+    return this.selectedSheetMeta?.status === 'REGENERATED';
   }
 
   /**
@@ -164,7 +187,26 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   clearFilters(): void {
     this.filterCollectorId = null;
     this.filterDate = '';
+    this.filterIncludeRegenerated = false;
     this.load();
+  }
+
+  /**
+   * Cierra el diálogo de alertas y opcionalmente foco la planilla generada.
+   */
+  closeAlertsDialog(): void {
+    this.showAlertsDialog = false;
+  }
+
+  /**
+   * True si la última generación devolvió al menos un tipo de alerta.
+   */
+  get hasAlerts(): boolean {
+    if (!this.lastAlerts) return false;
+    return (
+      this.lastAlerts.overdueNextVisits.length > 0 ||
+      this.lastAlerts.unassignedCustomers.length > 0
+    );
   }
 
   /**
@@ -197,6 +239,8 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
 
   /**
    * Genera una planilla para el cobrador seleccionado en el diálogo.
+   * Tras éxito, si la respuesta trae alertas operativas, muestra el diálogo
+   * de alertas con `overdueNextVisits` priorizado (más crítico).
    */
   generatePlanilla(): void {
     if (!this.selectedCollectorId || this.generating || this.generatingAll)
@@ -213,25 +257,9 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
         finalize(() => (this.generating = false)),
       )
       .subscribe({
-        next: (detail) => {
-          this.msg.add({
-            severity: 'success',
-            summary: 'Planilla generada',
-            detail: 'La planilla fue generada correctamente.',
-            life: 4000,
-          });
+        next: (result: CollectionGenerateResult) => {
           this.showGenerateDialog = false;
-          this.selectedSheet = detail;
-          this.selectedSheetMeta = {
-            id: detail.id,
-            sheetDate: detail.sheetDate,
-            filterUsed: detail.filterUsed,
-            createdAt: detail.createdAt,
-            collectorName: detail.collectorName,
-            totalItems: detail.totalItems,
-          };
-          this.activeTab = 'ALL';
-          this.leftPanelCollapsed = false;
+          this.applyGenerationResult(result);
           this.load();
         },
         error: (err: AppError) => {
@@ -243,6 +271,43 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
           });
         },
       });
+  }
+
+  /**
+   * Aplica el resultado de una generación al panel derecho y dispara el diálogo
+   * de alertas cuando corresponda (overdue priorizado y expandido por defecto).
+   */
+  private applyGenerationResult(result: CollectionGenerateResult): void {
+    this.selectedSheet = result.sheet;
+    this.selectedSheetMeta = {
+      id: result.sheet.id,
+      sheetDate: result.sheet.sheetDate,
+      filterUsed: result.sheet.filterUsed,
+      status: result.sheet.status,
+      createdAt: result.sheet.createdAt,
+      collectorName: result.sheet.collectorName,
+      totalItems: result.sheet.totalItems,
+    };
+    this.activeTab = 'ALL';
+    this.leftPanelCollapsed = false;
+
+    this.lastAlerts = result.alerts;
+    this.lastGeneratedSheetId = result.sheet.id;
+    const hasOverdue = result.alerts.overdueNextVisits.length > 0;
+    const hasUnassigned = result.alerts.unassignedCustomers.length > 0;
+
+    if (hasOverdue || hasUnassigned) {
+      this.alertsOverdueExpanded = hasOverdue;
+      this.alertsUnassignedExpanded = !hasOverdue && hasUnassigned;
+      this.showAlertsDialog = true;
+    } else {
+      this.msg.add({
+        severity: 'success',
+        summary: 'Planilla generada',
+        detail: 'Planilla generada sin alertas operativas.',
+        life: 4000,
+      });
+    }
   }
 
   /**
@@ -268,9 +333,10 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
                 filter: this.selectedFilter,
               })
               .pipe(
-                map(() => ({
+                map((result) => ({
                   success: true as const,
                   collectorName: c.fullName,
+                  result,
                 })),
                 catchError((err: AppError) =>
                   of({
@@ -287,14 +353,22 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
               finalize(() => (this.generatingAll = false)),
             )
             .subscribe((outcomes) => {
-              const successes = outcomes.filter((o) => o.success).length;
+              const successOutcomes = outcomes.filter((o) => o.success);
               const failures = outcomes.filter((o) => !o.success);
-              if (successes > 0) {
+              const withAlerts = successOutcomes.filter((o) =>
+                o.success &&
+                (o.result.alerts.overdueNextVisits.length > 0 ||
+                  o.result.alerts.unassignedCustomers.length > 0),
+              ).length;
+              if (successOutcomes.length > 0) {
+                const alertsNote = withAlerts > 0
+                  ? ` ${withAlerts} con alertas operativas — abrilas para revisarlas.`
+                  : '';
                 this.msg.add({
                   severity: 'success',
                   summary: 'Planillas generadas',
-                  detail: `${successes} planilla(s) generadas correctamente.`,
-                  life: 4000,
+                  detail: `${successOutcomes.length} planilla(s) generadas correctamente.${alertsNote}`,
+                  life: 5000,
                 });
                 this.showGenerateDialog = false;
                 this.load();
@@ -480,13 +554,20 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
 
   /**
    * Carga la lista de planillas aplicando los filtros activos.
+   * Si `filterIncludeRegenerated` está activo, también lista planillas REGENERATED
+   * (auditoría — solo lectura).
    */
   private load(): void {
     this.loading = true;
     this.error = null;
-    const filters: { collectorId?: string; date?: string } = {};
+    const filters: {
+      collectorId?: string;
+      date?: string;
+      includeRegenerated?: boolean;
+    } = {};
     if (this.filterCollectorId) filters.collectorId = this.filterCollectorId;
     if (this.filterDate) filters.date = this.filterDate;
+    if (this.filterIncludeRegenerated) filters.includeRegenerated = true;
     this.collectionsService.list(filters).subscribe({
       next: (data) => {
         this.sheets = data;

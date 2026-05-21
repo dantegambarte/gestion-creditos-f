@@ -34,7 +34,7 @@
 
     <!-- Filtros -->
     <div
-      class="flex flex-wrap gap-2 px-4 py-3 shrink-0"
+      class="flex flex-wrap items-center gap-2 px-4 py-3 shrink-0"
       style="border-bottom: 1px solid var(--ff-border)"
     >
       <p-dropdown
@@ -54,7 +54,16 @@
         (change)="applyFilters()"
         class="native-date-input h-10"
       />
-      @if (filterCollectorId || filterDate) {
+      <label class="inline-flex items-center gap-2 cursor-pointer text-xs select-none" style="color: var(--ff-text-secondary)">
+        <p-inputSwitch
+          [(ngModel)]="filterIncludeRegenerated"
+          (onChange)="applyFilters()"
+        />
+        <span pTooltip="Incluye planillas regeneradas (solo auditoría)" tooltipPosition="bottom">
+          Incluir regeneradas
+        </span>
+      </label>
+      @if (filterCollectorId || filterDate || filterIncludeRegenerated) {
         <p-button
           label="Limpiar"
           severity="secondary"
@@ -112,7 +121,18 @@
               <td class="font-medium text-xs">
                 {{ sheet.sheetDate | date: "dd/MM/yyyy" }}
               </td>
-              <td class="text-sm">{{ sheet.collectorName }}</td>
+              <td class="text-sm">
+                {{ sheet.collectorName }}
+                @if (sheet.status === "REGENERATED") {
+                  <span
+                    class="ml-1 inline-block text-[10px] font-bold px-1.5 py-0.5 rounded uppercase"
+                    style="background: #e5e7eb; color: #4b5563;"
+                    pTooltip="Planilla regenerada — solo lectura"
+                  >
+                    Regenerada
+                  </span>
+                }
+              </td>
               <td>
                 <p-tag
                   [value]="filterLabel(sheet.filterUsed)"
@@ -192,6 +212,15 @@
             </p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
+            @if (isSelectedSheetReadonly) {
+              <span
+                class="text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide"
+                style="background: #6b7280; color: #fff;"
+                pTooltip="Planilla regenerada — solo lectura/auditoría"
+              >
+                Regenerada
+              </span>
+            }
             <span
               class="text-xs font-bold px-2 py-1 rounded-full"
               style="background: var(--ff-accent); color: #fff"
@@ -208,6 +237,19 @@
             />
           </div>
         </div>
+
+        @if (isSelectedSheetReadonly) {
+          <div
+            class="px-4 py-2 text-xs flex items-center gap-2"
+            style="background: #f3f4f6; border-bottom: 1px solid var(--ff-border); color: #4b5563;"
+          >
+            <i class="pi pi-history"></i>
+            <span>
+              Esta planilla fue regenerada. Se muestra únicamente para auditoría histórica.
+              Las acciones operativas están deshabilitadas; podés descargar el PDF y ver los créditos.
+            </span>
+          </div>
+        }
 
         <!-- Tabs -->
         <div
@@ -453,6 +495,120 @@
       [loading]="generating"
       [disabled]="!selectedCollectorId || generating || generatingAll"
       (onClick)="generatePlanilla()"
+    />
+  </div>
+</p-dialog>
+
+<!-- DIALOG: Alertas operativas tras generación -->
+<p-dialog
+  [(visible)]="showAlertsDialog"
+  [modal]="true"
+  [style]="{ width: '640px' }"
+  header="Planilla generada"
+  [draggable]="false"
+  [resizable]="false"
+>
+  @if (lastAlerts) {
+    <p class="text-sm mb-3" style="color: var(--ff-text-muted)">
+      Revisá las alertas operativas detectadas antes de continuar.
+    </p>
+
+    <!-- ── Visitas vencidas (sección prioritaria) ────────────────────────── -->
+    <div class="mb-3 rounded-lg border" style="border-color: var(--ff-border)">
+      <button
+        type="button"
+        class="w-full flex items-center justify-between px-3 py-2.5 text-left"
+        style="background: #fef2f2; border-bottom: 1px solid var(--ff-border);"
+        (click)="alertsOverdueExpanded = !alertsOverdueExpanded"
+      >
+        <span class="flex items-center gap-2">
+          <i class="pi pi-exclamation-triangle" style="color: #b91c1c;"></i>
+          <span class="text-sm font-semibold" style="color: #991b1b;">
+            Visitas vencidas
+            <span class="ml-1 text-xs font-bold px-1.5 py-0.5 rounded" style="background: #fecaca; color: #991b1b;">
+              {{ lastAlerts.overdueNextVisits.length }}
+            </span>
+          </span>
+        </span>
+        <i class="pi text-xs" [class.pi-chevron-up]="alertsOverdueExpanded" [class.pi-chevron-down]="!alertsOverdueExpanded"></i>
+      </button>
+      @if (alertsOverdueExpanded) {
+        @if (lastAlerts.overdueNextVisits.length === 0) {
+          <p class="px-3 py-2 text-xs" style="color: var(--ff-text-muted)">Sin visitas vencidas.</p>
+        } @else {
+          <ul class="divide-y" style="border-color: var(--ff-border)">
+            @for (item of lastAlerts.overdueNextVisits; track item.installmentId) {
+              <li class="px-3 py-2 text-sm flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium truncate" style="color: var(--ff-text-primary)">{{ item.customerName }}</p>
+                  @if (item.customerPhone) {
+                    <p class="text-xs" style="color: var(--ff-text-muted)">
+                      <i class="pi pi-phone mr-1"></i>{{ item.customerPhone }}
+                    </p>
+                  }
+                </div>
+                <div class="text-right shrink-0">
+                  <p class="text-xs font-semibold" style="color: #b91c1c;">
+                    Visita: {{ item.nextVisitDate | date: "dd/MM/yyyy" }}
+                  </p>
+                  <p class="text-[11px]" style="color: var(--ff-text-muted)">
+                    Vence: {{ item.dueDate | date: "dd/MM/yyyy" }}
+                  </p>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </div>
+
+    <!-- ── Clientes sin cobrador ──────────────────────────────────────────── -->
+    <div class="mb-2 rounded-lg border" style="border-color: var(--ff-border)">
+      <button
+        type="button"
+        class="w-full flex items-center justify-between px-3 py-2.5 text-left"
+        style="background: #fffbeb; border-bottom: 1px solid var(--ff-border);"
+        (click)="alertsUnassignedExpanded = !alertsUnassignedExpanded"
+      >
+        <span class="flex items-center gap-2">
+          <i class="pi pi-user-minus" style="color: #b45309;"></i>
+          <span class="text-sm font-semibold" style="color: #92400e;">
+            Clientes sin cobrador
+            <span class="ml-1 text-xs font-bold px-1.5 py-0.5 rounded" style="background: #fde68a; color: #92400e;">
+              {{ lastAlerts.unassignedCustomers.length }}
+            </span>
+          </span>
+        </span>
+        <i class="pi text-xs" [class.pi-chevron-up]="alertsUnassignedExpanded" [class.pi-chevron-down]="!alertsUnassignedExpanded"></i>
+      </button>
+      @if (alertsUnassignedExpanded) {
+        @if (lastAlerts.unassignedCustomers.length === 0) {
+          <p class="px-3 py-2 text-xs" style="color: var(--ff-text-muted)">Todos los clientes con cuotas pendientes tienen cobrador asignado.</p>
+        } @else {
+          <ul class="divide-y" style="border-color: var(--ff-border)">
+            @for (item of lastAlerts.unassignedCustomers; track item.customerId) {
+              <li class="px-3 py-2 text-sm flex items-center justify-between gap-3">
+                <p class="font-medium truncate" style="color: var(--ff-text-primary)">{{ item.fullName }}</p>
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background: #f3f4f6; color: #4b5563;">
+                  {{ item.pendingCount }} {{ item.pendingCount === 1 ? "cuota" : "cuotas" }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </div>
+  }
+
+  <div
+    class="flex items-center justify-end gap-3 pt-4 mt-2"
+    style="border-top: 1px solid var(--ff-border)"
+  >
+    <p-button
+      label="Cerrar"
+      severity="primary"
+      styleClass="h-10 px-5 rounded-xl"
+      (onClick)="closeAlertsDialog()"
     />
   </div>
 </p-dialog>

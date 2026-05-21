@@ -144,8 +144,8 @@ export class SheetComponent implements OnInit, OnDestroy {
         }),
       )
       .subscribe({
-        next: (detail) => {
-          this.results = [this.mapDetailToResult(detail), ...this.results];
+        next: (result) => {
+          this.results = [this.mapDetailToResult(result.sheet), ...this.results];
           this.loadHistorial();
         },
         error: (err: AppError) => {
@@ -192,9 +192,9 @@ export class SheetComponent implements OnInit, OnDestroy {
                 filter: this.selectedFilter,
               })
               .pipe(
-                map((detail) => ({
+                map((generated) => ({
                   success: true as const,
-                  result: this.mapDetailToResult(detail),
+                  result: this.mapDetailToResult(generated.sheet),
                   collectorName: c.fullName,
                 })),
                 catchError((err: AppError) =>
