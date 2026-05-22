@@ -512,95 +512,220 @@
   }
 </div>
 
-<!-- DIALOG: Generar planilla -->
+<!-- DIALOG: Generar planilla ──────────────────────────────────────────────── -->
+<!-- Diseño rediseñado: un solo botón de acción cuyo comportamiento se deriva
+     del dropdown (Todos vs cobrador específico). El destinatario es la única
+     decisión visible; el modal se adapta al contexto. -->
 <p-dialog
   [(visible)]="showGenerateDialog"
   [modal]="true"
   [style]="{ width: '600px' }"
-  header="Generar planilla de cobro"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="generate-sheet-dialog"
 >
-  <p class="text-sm mb-4" style="color: var(--ff-text-muted)">
-    Seleccioná un cobrador o generá para todos.
-  </p>
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2.5">
+      <div
+        class="w-9 h-9 rounded-xl flex items-center justify-center"
+        style="background: rgba(59, 130, 246, 0.12);"
+      >
+        <i class="pi pi-file-export text-base" style="color: #2563eb;"></i>
+      </div>
+      <div>
+        <h2 class="text-base font-semibold" style="color: var(--ff-text-primary);">
+          Generar planilla de cobro
+        </h2>
+        <p class="text-xs mt-0.5" style="color: var(--ff-text-muted);">
+          Elegí destinatario, fecha y filtro
+        </p>
+      </div>
+    </div>
+  </ng-template>
 
-  <div class="flex flex-wrap items-end gap-4">
+  <div class="flex flex-col gap-5 pt-2">
+    <!-- ── ¿Para quién? ──────────────────────────────────────────────────── -->
     <div class="flex flex-col gap-1.5">
-      <label class="auth-label">Cobrador</label>
+      <label class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-text-muted);">
+        ¿Para quién?
+      </label>
       <p-dropdown
-        [options]="collectorOptions"
+        [options]="generateCollectorOptions"
         [(ngModel)]="selectedCollectorId"
         optionLabel="label"
         optionValue="value"
-        placeholder="Seleccioná un cobrador"
-        styleClass="w-56"
-        appendTo="body"
-        [showClear]="true"
-      />
-    </div>
-
-    <div class="flex flex-col gap-1.5">
-      <label class="auth-label">Fecha</label>
-      <input
-        type="date"
-        [(ngModel)]="selectedDate"
-        [min]="todayIsoDate"
-        class="native-date-input h-10"
-      />
-    </div>
-
-    <div class="flex flex-col gap-1.5">
-      <label class="auth-label">Filtro de cuotas</label>
-      <p-dropdown
-        [options]="filterOptions"
-        [(ngModel)]="selectedFilter"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="w-48"
+        styleClass="w-full"
         appendTo="body"
       />
     </div>
+
+    <!-- ── Fecha + Filtro ───────────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-text-muted);">
+          Fecha
+        </label>
+        <input
+          type="date"
+          [(ngModel)]="selectedDate"
+          (ngModelChange)="onDialogDateChange()"
+          [min]="todayIsoDate"
+          class="native-date-input h-10"
+        />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-text-muted);">
+          Filtro de cuotas
+        </label>
+        <p-dropdown
+          [options]="filterOptions"
+          [(ngModel)]="selectedFilter"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="w-full"
+          appendTo="body"
+        />
+      </div>
+    </div>
+
+    <!-- ── Bloque contextual ─────────────────────────────────────────────── -->
+    @if (loadingDialogSheets) {
+      <div
+        class="p-4 rounded-xl flex items-center gap-2.5"
+        style="background: #f9fafb; border: 1px solid var(--ff-border);"
+      >
+        <i class="pi pi-spin pi-spinner text-sm" style="color: var(--ff-text-muted);"></i>
+        <span class="text-xs" style="color: var(--ff-text-muted);">
+          Analizando planillas existentes…
+        </span>
+      </div>
+    } @else if (isBatchMode) {
+      <!-- Modo batch: resumen del día + toggle -->
+      <div
+        class="p-4 rounded-xl flex flex-col gap-3"
+        style="background: #f9fafb; border: 1px solid var(--ff-border);"
+      >
+        <div class="flex items-center gap-2">
+          <i class="pi pi-globe text-xs" style="color: var(--ff-text-muted);"></i>
+          <span class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-text-muted);">
+            Estado del día
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div
+            class="p-3 rounded-lg flex items-center gap-3"
+            style="background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.25);"
+          >
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center text-base font-bold"
+              style="background: rgba(34, 197, 94, 0.18); color: #15803d;"
+            >
+              {{ batchMissingCount }}
+            </div>
+            <div class="text-xs leading-tight" style="color: #166534;">
+              <p class="font-semibold">Sin planilla</p>
+              <p style="color: #15803d;">listos para generar</p>
+            </div>
+          </div>
+          <div
+            class="p-3 rounded-lg flex items-center gap-3"
+            style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25);"
+          >
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center text-base font-bold"
+              style="background: rgba(245, 158, 11, 0.18); color: #b45309;"
+            >
+              {{ batchExistingCount }}
+            </div>
+            <div class="text-xs leading-tight" style="color: #78350f;">
+              <p class="font-semibold">Con planilla</p>
+              <p style="color: #b45309;">ya generada activa</p>
+            </div>
+          </div>
+        </div>
+
+        @if (batchExistingCount > 0) {
+          <label
+            class="flex items-start gap-2.5 p-2.5 rounded-lg cursor-pointer transition-colors hover:bg-white"
+            style="border: 1px solid var(--ff-border);"
+          >
+            <p-inputSwitch [(ngModel)]="regenerateExisting" />
+            <div class="text-xs leading-relaxed" style="color: var(--ff-text-secondary);">
+              <span class="font-semibold">Regenerar también las {{ batchExistingCount }} existentes</span>
+              <p class="mt-0.5" style="color: var(--ff-text-muted);">
+                Las planillas actuales pasan a REGENERADAS (quedan en historial)
+                y se crean nuevas activas.
+              </p>
+            </div>
+          </label>
+        }
+      </div>
+    } @else if (conflictingSheet) {
+      <!-- Modo single con conflicto: banner ámbar -->
+      <div
+        class="p-4 rounded-xl flex items-start gap-3"
+        style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.35);"
+      >
+        <div
+          class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+          style="background: rgba(245, 158, 11, 0.2);"
+        >
+          <i class="pi pi-exclamation-triangle text-sm" style="color: #b45309;"></i>
+        </div>
+        <div class="text-xs leading-relaxed flex-1" style="color: #78350f;">
+          <p class="font-semibold text-sm mb-1" style="color: #92400e;">
+            Ya tiene planilla activa
+          </p>
+          <p>
+            <strong>{{ selectedCollectorName }}</strong> ya tiene planilla del
+            <strong>{{ conflictingSheet.sheetDate | date: "dd/MM/yyyy" }}</strong>,
+            generada el
+            <strong>{{ conflictingSheet.createdAt | date: "dd/MM HH:mm" }}</strong>.
+          </p>
+          <p class="mt-1.5">
+            Si continuás, esa planilla pasa a <strong>REGENERADA</strong> (queda
+            en el historial para auditoría) y se crea una nueva activa con el
+            filtro elegido.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <!-- Modo single sin conflicto: confirmación verde sutil -->
+      <div
+        class="p-3 rounded-xl flex items-center gap-2.5"
+        style="background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.25);"
+      >
+        <i class="pi pi-check-circle text-sm" style="color: #15803d;"></i>
+        <span class="text-xs" style="color: #166534;">
+          <strong>{{ selectedCollectorName }}</strong> no tiene planilla activa para esta fecha.
+        </span>
+      </div>
+    }
   </div>
 
-  <div
-    class="flex items-center justify-end gap-3 pt-5 mt-2"
-    style="border-top: 1px solid var(--ff-border)"
-  >
-    <button
-      type="button"
-      class="h-11 px-5 rounded-xl text-sm font-medium transition-colors hover:opacity-80"
-      style="color: var(--ff-text-muted)"
-      (click)="showGenerateDialog = false"
-    >
-      Cancelar
-    </button>
-    <button
-      type="button"
-      class="h-11 px-5 rounded-xl text-sm font-medium flex items-center gap-2 border transition-colors hover:opacity-80"
-      style="
-        border-color: var(--ff-border);
-        color: var(--ff-text-secondary);
-        background: transparent;
-      "
-      [disabled]="generating || generatingAll"
-      (click)="generateForAll()"
-    >
-      @if (generatingAll) {
-        <i class="pi pi-spin pi-spinner text-xs"></i>
-      } @else {
-        <i class="pi pi-users text-xs"></i>
-      }
-      Generar para todos
-    </button>
-    <p-button
-      label="Generar planilla"
-      icon="pi pi-file-export"
-      severity="primary"
-      styleClass="h-11 px-5 rounded-xl"
-      [loading]="generating"
-      [disabled]="!selectedCollectorId || generating || generatingAll"
-      (onClick)="generatePlanilla()"
-    />
-  </div>
+  <ng-template pTemplate="footer">
+    <div class="flex items-center justify-end gap-3 w-full">
+      <button
+        type="button"
+        class="h-10 px-5 rounded-xl text-sm font-medium transition-colors hover:bg-gray-100"
+        style="color: var(--ff-text-muted);"
+        [disabled]="generating || generatingAll"
+        (click)="showGenerateDialog = false"
+      >
+        Cancelar
+      </button>
+      <p-button
+        [label]="submitLabel"
+        icon="pi pi-file-export"
+        [severity]="submitSeverity"
+        styleClass="h-10 px-5 rounded-xl font-semibold"
+        [loading]="generating || generatingAll"
+        [disabled]="submitDisabled"
+        (onClick)="submit()"
+      />
+    </div>
+  </ng-template>
 </p-dialog>
 
 <!-- DIALOG: Alertas operativas tras generación -->
