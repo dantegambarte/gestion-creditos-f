@@ -9,9 +9,12 @@ import {
   CollectionAlertsRaw,
   CollectionAlertsUnassignedItem,
   CollectionAlertsUnassignedItemRaw,
+  CollectionGenerateOutcome,
   CollectionGeneratePayload,
   CollectionGenerateResult,
   CollectionGenerateResultRaw,
+  CollectionGenerateSkippedResult,
+  CollectionGenerateSkippedResultRaw,
   CollectionSheet,
   CollectionSheetDetail,
   CollectionSheetDetailRaw,
@@ -30,8 +33,27 @@ function toSheet(raw: CollectionSheetRaw): CollectionSheet {
     filterUsed: raw.filter_used,
     status: raw.status,
     createdAt: raw.created_at,
+    collectorId: raw.collector_id,
     collectorName: raw.collector_name,
     totalItems: raw.total_items,
+  };
+}
+
+/**
+ * Mapea la respuesta { skipped: true, existing_sheet } del backend cuando
+ * skip_if_exists=true detectó una planilla ACTIVE existente.
+ */
+function toSkippedResult(
+  raw: CollectionGenerateSkippedResultRaw,
+): CollectionGenerateSkippedResult {
+  return {
+    skipped: true,
+    existingSheet: {
+      id: raw.existing_sheet.id,
+      sheetDate: raw.existing_sheet.sheet_date,
+      createdAt: raw.existing_sheet.created_at,
+      generatedByName: raw.existing_sheet.generated_by_name,
+    },
   };
 }
 
@@ -148,13 +170,24 @@ export class CollectionsService {
    */
   generate(
     payload: CollectionGeneratePayload,
-  ): Observable<CollectionGenerateResult> {
+  ): Observable<CollectionGenerateOutcome> {
+    const body: Record<string, unknown> = {
+      collector_id: payload.collectorId,
+      date: payload.date,
+      filter: payload.filter,
+    };
+    if (payload.skipIfExists) body['skip_if_exists'] = true;
     return this.api
-      .post<CollectionGenerateResultRaw>('collections', {
-        collector_id: payload.collectorId,
-        date: payload.date,
-        filter: payload.filter,
-      })
-      .pipe(map(toGenerateResult));
+      .post<CollectionGenerateResultRaw | CollectionGenerateSkippedResultRaw>(
+        'collections',
+        body,
+      )
+      .pipe(
+        map((raw) =>
+          'skipped' in raw && raw.skipped
+            ? toSkippedResult(raw)
+            : toGenerateResult(raw as CollectionGenerateResultRaw),
+        ),
+      );
   }
 }

@@ -16,6 +16,7 @@ export interface CollectionSheet {
   filterUsed: CollectionFilter;
   status: CollectionSheetStatus;
   createdAt: string;
+  collectorId: string;
   collectorName: string;
   totalItems: number;
 }
@@ -78,6 +79,35 @@ export interface CollectionGenerateResult {
   alerts: CollectionAlerts;
 }
 
+/**
+ * Respuesta del backend cuando se envía skip_if_exists=true y ya existe una
+ * planilla ACTIVE para (collector, date): no se crea ni regenera nada y se
+ * devuelve un puntero a la existente para que el front lo refleje.
+ */
+export interface CollectionGenerateSkippedResult {
+  skipped: true;
+  existingSheet: {
+    id: string;
+    sheetDate: string;
+    createdAt: string;
+    generatedByName: string;
+  };
+}
+
+export type CollectionGenerateOutcome =
+  | CollectionGenerateResult
+  | CollectionGenerateSkippedResult;
+
+export interface CollectionGenerateSkippedResultRaw {
+  skipped: true;
+  existing_sheet: {
+    id: string;
+    sheet_date: string;
+    created_at: string;
+    generated_by_name: string;
+  };
+}
+
 // ── Raw API shapes ─────────────────────────────────────────────────────────────
 
 export interface CollectionSheetRaw {
@@ -86,6 +116,7 @@ export interface CollectionSheetRaw {
   filter_used: CollectionFilter;
   status: CollectionSheetStatus;
   created_at: string;
+  collector_id: string;
   collector_name: string;
   total_items: number;
 }
@@ -171,4 +202,6 @@ export interface CollectionGeneratePayload {
   collectorId: string;
   date: string;
   filter: CollectionFilter;
+  /** Si true y ya existe planilla ACTIVE, el backend la omite y devuelve {skipped}. */
+  skipIfExists?: boolean;
 }
