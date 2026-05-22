@@ -1,4 +1,5 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
 
 export const ADMIN_ROUTES: Routes = [
@@ -40,7 +41,7 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: AppRoutes.CLIENTS_DETAIL,
     loadComponent: () =>
-      import('../../shared/clients/client-detail/client-detail.component').then(
+      import('../seller/clients/client-detail/client-detail.component').then(
         (c) => c.ClientDetailComponent,
       ),
   },
@@ -226,11 +227,16 @@ export const ADMIN_ROUTES: Routes = [
     ],
   },
   {
+    // Compatibilidad de URL: el flujo de generación se unificó dentro de
+    // AdminCollectionsComponent. La ruta antigua redirige preservando bookmarks
+    // y dispara el modal vía query param.
     path: AppRoutes.ADMIN_COLLECTIONS_NEW,
-    loadComponent: () =>
-      import('./collections/generate/collection-generate.component').then(
-        (c) => c.CollectionGenerateComponent,
-      ),
+    redirectTo: () => {
+      const router = inject(Router);
+      return router.createUrlTree(['/admin/collections'], {
+        queryParams: { openGenerate: 'true' },
+      });
+    },
   },
   {
     path: AppRoutes.ADMIN_COLLECTIONS_DETAIL,

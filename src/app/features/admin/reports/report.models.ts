@@ -62,6 +62,14 @@ export interface CollectorReportRow {
   approvalRate: number | null;
 }
 
+export interface SellerReportRow {
+  sellerId: string;
+  sellerName: string;
+  role: string;
+  totalCredits: number;
+  totalAmount: number;
+}
+
 export interface ProductReportRow {
   id: string;
   title: string;
@@ -92,10 +100,13 @@ export interface SummaryReport {
   pendingPaymentsCount: number;
   pendingCreditsCount: number;
   activePortfolioBalance: number;
+  activeCreditsCount: number;
   overdueCount: number;
   overdueAmount: number;
   upcoming7dCount: number;
   upcoming7dAmount: number;
+  refinancedMonthCount: number;
+  refinancedMonthAmount: number;
 }
 
 export interface UpcomingByDay {
@@ -133,10 +144,13 @@ export interface SummaryReportRaw {
   pending_payments_count: number;
   pending_credits_count: number;
   active_portfolio_balance: number;
+  active_credits_count: number;
   overdue_count: number;
   overdue_amount: number;
   upcoming_7d_count: number;
   upcoming_7d_amount: number;
+  refinanced_month_count: number;
+  refinanced_month_amount: number;
 }
 
 export interface UpcomingByDayRaw {
@@ -233,6 +247,14 @@ export interface CollectorReportRowRaw {
   rejected_count: number;
   total_collected: number;
   approval_rate: number | null;
+}
+
+export interface SellerReportRowRaw {
+  seller_id: string;
+  seller_name: string;
+  role: string;
+  total_credits: number;
+  total_amount: number;
 }
 
 export interface ProductReportRowRaw {

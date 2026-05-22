@@ -2,6 +2,11 @@
 
 type InternalRole = 'ADMIN' | 'SELLER' | 'COLLECTOR';
 
+type RealCredentials = {
+  dni: string;
+  password: string;
+};
+
 type PortalSession = {
   token: string;
   customer: {
@@ -172,6 +177,25 @@ const ROLE_HOME: Record<string, string> = {
 
 const PORTAL_DEFAULT_HOME = '/portal/dashboard';
 
+const REAL_ROLE_HOME: Record<InternalRole, string> = {
+  ADMIN: '/admin/dashboard',
+  SELLER: '/seller/operations',
+  COLLECTOR: '/collector/route',
+};
+
+/**
+ * Normaliza pathname removiendo slash final para comparaciones estables.
+ * @param path Ruta a normalizar.
+ * @returns Pathname normalizado sin slash final (excepto raíz).
+ */
+function normalizePath(path: string): string {
+  if (path.length > 1 && path.endsWith('/')) {
+    return path.slice(0, -1);
+  }
+
+  return path;
+}
+
 const DEFAULT_PORTAL_SESSION: PortalSession = {
   token:
     'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjdXN0LTAwMSIsImZ1bGxfbmFtZSI6IkFuYSBHYXJjw61hIiwiZG5pIjoiMTIzNDU2NzgiLCJwb3J0YWxfaXNfdGVtcF9wYXNzd29yZCI6ZmFsc2V9.sig',
@@ -211,6 +235,43 @@ function seedPortalSession(
 }
 
 /**
+ * Obtiene las credenciales reales desde Cypress.env para un rol interno.
+ * @param role Rol interno a autenticar contra backend real.
+ * @returns Credenciales reales (dni/password) para el rol.
+ */
+function getRealCredentials(role: InternalRole): RealCredentials {
+  const envByRole: Record<InternalRole, { dniKey: string; passKey: string }> = {
+    ADMIN: { dniKey: 'realAdminDni', passKey: 'realAdminPassword' },
+    SELLER: { dniKey: 'realSellerDni', passKey: 'realSellerPassword' },
+    COLLECTOR: { dniKey: 'realCollectorDni', passKey: 'realCollectorPassword' },
+  };
+
+  const keys = envByRole[role];
+  const dni = String(Cypress.env(keys.dniKey) ?? '').trim();
+  const password = String(Cypress.env(keys.passKey) ?? '').trim();
+
+  if (!dni || !password) {
+    throw new Error(
+      `[cypress][loginReal] Faltan credenciales para ${role}. Configurá ${keys.dniKey} y ${keys.passKey}.`,
+    );
+  }
+
+  return { dni, password };
+}
+
+/**
+ * Exige el flag de habilitación de modo real para evitar mezcla accidental.
+ */
+function assertRealAuthEnabled(): void {
+  const enabled = Cypress.env('realAuthEnabled') === true;
+  if (!enabled) {
+    throw new Error(
+      '[cypress][loginReal] realAuthEnabled=false. Habilitá CYPRESS_realAuthEnabled=true para specs reales.',
+    );
+  }
+}
+
+/**
  * Inyecta auth en el AUT via onBeforeLoad + intercepta GET /auth/me.
  *
  * POR QUÉ onBeforeLoad + intercept:
@@ -238,6 +299,44 @@ Cypress.Commands.add('loginAs', (role: InternalRole, destination?: string) => {
   });
 
   cy.wait('@authMe');
+});
+
+/**
+ * Inicia sesión real por UI y navega de forma robusta al destino solicitado.
+ * @param role Rol a autenticar contra backend real.
+ * @param destination Ruta protegida de destino opcional. Si el redirect real
+ * post-login cae en home del rol, este helper navega explícitamente al destino.
+ */
+Cypress.Commands.add('loginReal', (role: InternalRole, destination?: string) => {
+  assertRealAuthEnabled();
+  const { dni, password } = getRealCredentials(role);
+  const roleHome = REAL_ROLE_HOME[role];
+  const normalizedDestination = destination ? normalizePath(destination) : undefined;
+
+  cy.clearAllLocalStorage();
+  cy.visit('/login');
+
+  cy.get('[data-testid="input-dni"]').clear().type(dni);
+  cy.get('[data-testid="input-password"] input').clear().type(password);
+  cy.get('[data-testid="btn-login"]').click();
+
+  cy.url({ timeout: 15000 }).should('include', roleHome);
+
+  if (!normalizedDestination) {
+    return;
+  }
+
+  cy.location('pathname', { timeout: 15000 }).then((pathname) => {
+    const normalizedCurrentPath = normalizePath(pathname);
+    if (normalizedCurrentPath !== normalizedDestination) {
+      cy.visit(normalizedDestination);
+    }
+  });
+
+  cy.location('pathname', { timeout: 15000 }).should(
+    'eq',
+    normalizedDestination,
+  );
 });
 
 /**
@@ -274,6 +373,7 @@ declare global {
   namespace Cypress {
     interface Chainable {
       loginAs(role: InternalRole, destination?: string): Chainable<void>;
+      loginReal(role: InternalRole, destination?: string): Chainable<void>;
       loginPortalAs(
         destination?: string,
         overrides?: Partial<PortalSession>,

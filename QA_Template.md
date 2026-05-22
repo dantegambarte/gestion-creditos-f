@@ -262,7 +262,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Ver" en una operación pendiente de aprobación.]
 * **Resultado Esperado:** [Deberían mostrarse la tasa de interés.]
-* **Resultado Obtenido (Error):** [Tasa de interés sale vacío.]
+* **Resultado Obtenido (Actual):** [Corregido. Se usa `!= null` (loose equality) para capturar tanto `null` como `undefined`; la tasa se multiplica ×100 para mostrar como porcentaje (el backend envía decimales, ej. `0.15` → `15.00%`); ventas tipo SALE muestran "N/A (Venta)"; tipo `EXPIRED` agregado al union type y a los mapas `statusLabel`/`statusSeverity` en `credits-list`, `credit-detail` y `client-detail`.]
 
 ---
 
@@ -272,9 +272,20 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Cancelación Anticipada" en una operación aprobada.]
 * **Resultado Esperado:** [Deberían poder pagar cuotas adelantadas.]
-* **Resultado Obtenido (Error):** [Solo permite pagar el total del crédito.]
+* **Resultado Obtenido (Actual):** [Corregido. El botón se renombró a "Cancelación total anticipada" para distinguirlo del pago por cuota individual. El diálogo de confirmación ahora explica que esta acción cancela el saldo total restante del crédito de una sola vez, y menciona que el pago anticipado por cuota individual está disponible en la tabla de cuotas. Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (CR-19).]
 
 ---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-20]
+**Título / Descripción:** [Nueva Operación]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nueva Operación".]
+* **Resultado Esperado:** [Al elegir el plan de pagos deberían aparecer las coutas debajo.]
+* **Resultado Obtenido (Error):** [Se debe scrollear hasta abajo para elegir la cantidad de cuotas.]
+
+---
+
 
 Módulo Clientes
 
@@ -378,7 +389,7 @@ Módulo Clientes
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Me permite poner números en el campo Nombre y Apellidos.]
 * **Resultado Esperado:** [No debería permitir poner números en Nombre y Apellido.]
-* **Resultado Obtenido (Error):** [Al ingresar números y hacer click en "Crear Cliente" lo guarda al cliente.]
+* **Resultado Obtenido (Actual):** [Corregido. `Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/)` en los campos `nombres` y `apellidos`. El error "Solo se permiten letras y espacios." aparece inline debajo del campo al tipear. El botón "Crear Cliente" permanece deshabilitado mientras los campos tengan errores. Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (CL-11).]
 
 ---
 
@@ -388,7 +399,7 @@ Módulo Clientes
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [En el campo DNI debería poder solo escribir números.]
 * **Resultado Esperado:** [No debería permitir poner letras.]
-* **Resultado Obtenido (Error):** [Al ingresar letras en el DNI se habilita el botón "Crear Cliente", al hacer click me devuelve una leyenda que "Datos Inválidos - Campos Marcados" pero no muestra los campos con error.]
+* **Resultado Obtenido (Actual):** [Corregido. `Validators.pattern(/^\d{7,8}$/)` valida que el DNI tenga exactamente 7 u 8 dígitos numéricos. Se agregó `inputmode="numeric"` para mostrar teclado numérico en mobile. El método `isDniInvalid()` usa `dirty || touched || submitted` para mostrar el error inmediatamente al tipear, sin esperar blur. El error "El DNI debe contener entre 7 y 8 dígitos." aparece inline. Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (CL-12).]
 
 ---
 
@@ -397,7 +408,7 @@ Módulo Clientes
 **Título / Descripción:** [Nuevo Cliente - Admin]
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Nuevo Cliente".]
-* **Resultado Obtenido (Error):** [Sacar ingresos y permitir asignar un cobrador.]
+* **Resultado Obtenido (Actual):** [Corregido. Los campos "Ingresos Mensuales" y "Capacidad de Pago" fueron eliminados del modal de creación, ya que el backend no los soporta en este flujo. Se agregó un dropdown "Cobrador Asignado" que carga la lista de cobradores activos desde `UsersService.listCollectors()`. El `assignedCollectorId` se envía en el payload de creación. Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (CL-13).]
 
 ---
 
@@ -407,31 +418,40 @@ Módulo Clientes
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en el filtro de búsqueda de "Clientes".]
 * **Resultado Esperado:** [Debería poder filtrar los estados del cliente.]
-* **Resultado Obtenido (Error):** [Al realizar la búsqueda por filtro no funciona ya que al poner "Al día" muestra todos los clientes por más que tenga deudas.]
+* **Resultado Obtenido (Actual):** [Corregido. La llamada al listado ahora incluye `includeSummary: true` para que el backend devuelva el campo `delinquency` por cliente. El mapper `toClient()` usa `c.delinquency ?? 'Al dia'` en lugar de hardcodear "Al dia" para todos. El filtro de riesgo en el frontend compara contra el valor real del backend (`"con mora"`, `"sin mora"`, etc.).]
 
 ---
 
 
 **Módulo:** [Clientes]
 **ID de Prueba:** [CL-15]
-**Título / Descripción:** [ Ver Clientes]
+**Título / Descripción:** [Ver Clientes]
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Ver Clientes".]
 * **Resultado Esperado:** [Debería poder mostrar los datos.]
-* **Resultado Obtenido (Error):** [Carece de datos en toda la pantalla.]
+* **Resultado Obtenido (Actual):** [Corregido. `CreditsService` fue inyectado en `ClientDetailComponent`. Después de cargar los datos del cliente, se llama a `creditsService.list({ customerId })` y los resultados se mapean al modelo de UI mediante `toUiCredit()`. Los créditos se muestran en la sección correspondiente del detalle. Causa raíz: `toClientDetail()` hardcodeaba `credits: []`.]
 
 ---
 
 **Módulo:** [Clientes]
 **ID de Prueba:** [CL-16]
-**Título / Descripción:** [ Editar Clientes]
+**Título / Descripción:** [Editar Clientes]
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Editar Clientes".]
 * **Resultado Esperado:** [Debería poder editar todos los campos menos el ID del Cliente.]
-* **Resultado Obtenido (Error):** [Solo permite editar Nombre y Apellido y teléfono.]
+* **Resultado Obtenido (Actual):** [Corregido. El modal de edición fue expandido con los campos Email, Dirección y Cobrador Asignado. Se agregó `isEditInvalid()`/`getEditError()` para mostrar error si el email tiene formato inválido. El `buildEditForm()` pre-carga los datos del cliente (incluyendo email, address y collectorId) usando los nuevos campos `email?`, `address?`, `collectorId?` añadidos a la interfaz `Client`. El payload de actualización incluye todos los campos editables. Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (CL-16).]
 
 ---
 
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-17]
+**Título / Descripción:** [Nuevo Cliente]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Cliente" - Seller - Seller-Collector.]
+* **Resultado Esperado:** [Debería mantener el mismo formato que el Admin.]
+* **Resultado Obtenido (Error):** [No mantiene el mismo formato que en Admin.]
+
+---
 
 Módulo Producto
 
@@ -590,7 +610,7 @@ http://localhost:3000/api/products - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Guardar Cambios" sin modificar ningún campo.]
 * **Resultado Esperado:** [Debería estar desactivado el botón "Guardar Cambios" hasta que se haga alguna modificación.]
-* **Resultado Obtenido (error):** [El botón "Guardar Cambios" permanece siempre activo por mas que no se haga ninguna modificación.]
+* **Resultado Obtenido (Actual):** [Corregido. El binding del botón cambió a `[disabled]="form.invalid || !form.dirty || submitting"`. El flag `form.dirty` es `false` al cargar los datos vía `patchValue` (que no marca dirty) y se vuelve `true` solo cuando el usuario modifica un campo manualmente. Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (PR-10) y `product-edit.component.spec.ts`.]
 
 ---
 
@@ -600,7 +620,7 @@ http://localhost:3000/api/products - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Desactivar Producto".]
 * **Resultado Esperado:** [Debería permitir poder desactivar el producto.]
-* **Resultado Obtenido (error):** [Al querer desactivar el producto me arroja un error que no permite realizar la acción porque tiene productos vendidos y/o reservados. Debería poder desactivar el producto por mas que tenga productos vendidos.]
+* **Resultado Obtenido (Actual):** [Parcialmente corregido. El frontend envía `{ force: true }` en el body del `PATCH products/:id/deactivate`. El backend devuelve `"No se puede desactivar un producto con unidades reservadas o vendidas."` porque aún no soporta el parámetro `force`. La corrección definitiva requiere soporte backend. El frontend muestra el mensaje de error del servidor correctamente.]
 
 ---
 
@@ -610,7 +630,7 @@ http://localhost:3000/api/products - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Editar Variante".]
 * **Resultado Esperado:** [Debería poder mostrar todos los campos en la tabla que se encuentra a la izquierda.]
-* **Resultado Obtenido (error):** [Al cambiar los valores de los campos la tabla de la izquierda algunos valores se pierden, debería tener mas columnas para poder distinguir los diferentes campos.]
+* **Resultado Obtenido (Actual):** [Corregido. La tabla de variantes ahora tiene columnas separadas COLOR, TALLE y CAPACIDAD. Las columnas se muestran dinámicamente solo si alguna variante del producto usa ese atributo (getters `hasColor`, `hasSize`, `hasCapacity`). El panel de formulario (nueva variante / editar variante) se muestra a demanda al hacer click en "Nueva variante" o "Editar"; cuando está cerrado la tabla ocupa el ancho completo. Las acciones son links de texto horizontales ("Ver unidades | Editar | Desactivar"). Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (PR-12).]
 
 ---
 
@@ -620,7 +640,7 @@ http://localhost:3000/api/products - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Ingresar Múltiples Variantes".]
 * **Resultado Esperado:** [Al ingresar datos erróneos el mensaje me muestra en "Ingreso individual".]
-* **Resultado Obtenido (error):** [Al hacer click en agregar múltiples variantes con errores debería marcar el error en el cuadro de "Múltiples Variantes" y no en "Ingreso Individual" y marcar cuáles son los errores.]
+* **Resultado Obtenido (Pendiente):** [La feature "Ingresar Múltiples Variantes" no existe en el codebase actual. Requiere implementación desde cero (UI, validación por fila, mapeo de errores por campo). No atacado en esta sesión.]
 
 ---
 
@@ -628,9 +648,20 @@ http://localhost:3000/api/products - POST
 **ID de Prueba:** [PR-14]
 **Título / Descripción:** [Categoría y Marca - Admin]
 ### 1. Contexto de la Prueba
-* **Resultado Obtenido (error):** ["Categoría" y "Marca" solo permite la creación y no edición.]
+* **Resultado Obtenido (Actual):** [Corregido. Se agregó un botón "Editar" por fila en las tablas de Categorías y Marcas. Al hacer click se abre un `p-dialog` con el nombre actual pre-cargado en un input. Al guardar se llama al endpoint de actualización y la tabla se refresca. Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (PR-14).]
 
 ---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-15]
+**Título / Descripción:** [Nuevo Producto - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Producto".]
+* **Resultado Esperado:** [El menú desplegable de "Marca" y "Categoría" deberia mostrarse todas las opciones.]
+* **Resultado Obtenido (Pendiente):** [El menú desplegable de "Marca" y "Producto" sale cortado, las últimas opciones no salen.]
+
+---
+
 
 Módulo Planilla
 
@@ -661,8 +692,18 @@ Módulo Planilla
 **Título / Descripción:** [Generar Planilla]
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Generar Planilla para todos".]
-* **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos".]
+* **Resultado Esperado:** [Debería aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos".]
 * **Resultado Obtenido (Error):**[Me permite apretar las veces que uno quiera "Generar Planilla para todos" y en "Planilla Generadas" aparecen todas la veces que apreté, una vez que se genere la planilla ya deberia deshabilitarse esa opción, en "Planillas Generadas" debería aparecer una sola vez una planilla.]
+
+---
+
+**Módulo:** [Planilla]
+**ID de Prueba:** [PL-04]
+**Título / Descripción:** [Mi Ruta - Collector]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Ver Planillas" - "Cobrar" (importe menor que la cuota) o "No Pagó".]
+* **Resultado Esperado:** [Al seleccionar el ícono del calendario, el mismo ocupa toda la pantalla.]
+* **Resultado Obtenido (Error):**[Debería desplegarse un calendario mas pequeño.]
 
 ---
 
@@ -685,6 +726,16 @@ Módulo Gastos
 * **Acción Realizada:** [Se hizo click en "Registrar Gasto" - Admin.]
 * **Resultado Esperado:** [Deberia poder seleccionar el tipo de pago, Efectivo o Transferencia.]
 * **Resultado Obtenido (Actual):** [No funciona el menú desplegable en el tipo de pago.]
+
+---
+
+**Módulo:** [Gastos]
+**ID de Prueba:** [GA-03]
+**Título / Descripción:** [Gastos]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Registrar Gasto" - Admin.]
+* **Resultado Esperado:** [No me debería permitir registrar gastos con fechas anteriores y menos si cerraron caja de ese día .]
+* **Resultado Obtenido (Actual):** [Me permite registrar pago con fechas anteriores a la actual.]
 
 ---
 
@@ -715,9 +766,8 @@ Módulo Usuarios
 **Título / Descripción:** [Nuevo Usuario y Editar Usuario - Admin]
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Nuevo Usuario" y se escribió símbolos en el campo "Nombre Completo" y en "DNI" me permite ingresar un sólo número.]
-* **Resultado Esperado:** [Debería poder restringir el ingreso de símbolos en "Nombre Completo" y un solo número en "DNI" .]
-* **Resultado Obtenido (Error):** [Al ingresar símbolos en el campo "Nombre Completo" y en "DNI" un solo número y presionar "Crear Usuario" me sale un cartel con "Datos Inválidos - Ver los campos marcados" pero no muestra en donde están los errores.]
-* Mejorar la mensajería.
+* **Resultado Esperado:** [Debería poder restringir el ingreso de símbolos en "Nombre Completo" y un solo número en "DNI".]
+* **Resultado Obtenido (Actual):** [Corregido. `Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/)` en `fullName`; `Validators.pattern(/^\d{7,8}$/)` en `dni`. Los errores se muestran inline con mensajes descriptivos: "Solo se permiten letras y espacios." y "El DNI debe contener entre 7 y 8 dígitos numéricos." Se agregó `inputmode="numeric"` en el campo DNI. Aplicado en `user-create.component.ts` (modal Nuevo Usuario) y `user-detail.component.ts` (formulario de edición). Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (US-03) y `user-create.component.spec.ts`.]
 
 ---
 
@@ -727,7 +777,7 @@ Módulo Usuarios
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Editar Usuario".]
 * **Resultado Esperado:** [El menú desplegable de "Rol" debería mostrarse completo.]
-* **Resultado Obtenido (Error):** [El menú desplegable se pierden los campos inferiores del mismo.]
+* **Resultado Obtenido (Actual):** [Corregido. `appendTo="body"` agregado al `p-dropdown` de Rol en el formulario de edición (`user-detail.component.html`). El panel del dropdown se renderiza en el body del documento, sin quedar cortado por el contenedor. Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (US-04).]
 
 ---
 
@@ -737,7 +787,7 @@ Módulo Usuarios
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Editar Usuario".]
 * **Resultado Esperado:** [Debería estar desactivado hasta que se modifique algún campo.]
-* **Resultado Obtenido (Error):** [El botón siempre queda activado por más que no se hayan hecho modificaciones.]
+* **Resultado Obtenido (Actual):** [Corregido. Se reemplazó `!editForm.dirty` por un getter `formHasChanges` que guarda un snapshot de los valores al entrar en modo edición y compara contra los valores actuales en cada evaluación. `form.dirty` es un flag unidireccional (no revierte si el usuario vuelve al valor original); `formHasChanges` sí detecta reversiones. Binding actualizado a `[disabled]="editForm.invalid || !formHasChanges || saving"`. Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (US-05).]
 
 ---
 
@@ -747,7 +797,7 @@ Módulo Usuarios
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Crear Usuario".]
 * **Resultado Esperado:** [Debería poder verse el password temporal.]
-* **Resultado Obtenido (Error):** [En "Crear Usuario" y "Resetear Contraseña" no es visible la contraseña temporal y el botón "Copiar".]
+* **Resultado Obtenido (Actual):** [Corregido. El componente `temp-password-dialog` usaba colores hardcodeados que eran invisibles en tema oscuro. Se reemplazaron por CSS variables del tema: fondo con `var(--ff-secondary)`, borde con `var(--ff-border)`, texto con `var(--ff-text-primary)`. El botón "Copiar" ahora es visible y funcional. Validado con `cypress/e2e/44-qa-regression-batch2.cy.ts` (US-06).]
 
 ---
 
@@ -781,18 +831,51 @@ Módulo Caja
 
 ---
 
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-02]
+**Título / Descripción:** [Cierre de caja]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cierre de caja".]
+* **Resultado Esperado:** [Al pasar las 00:00 debería permitirme cerrar la caja del día anterior.]
+* **Resultado Obtenido (Error):** [Al hacer click en "Cierre de caja" al pasar las 00:00 no me permite cerrar la caja del día anterior.]
+
+---
+
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-03]
+**Título / Descripción:** [Cierre de caja]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Estado".]
+* **Resultado Esperado:** [Debería mostrarme todos los estados de los cierres de cajas.]
+* **Resultado Obtenido (Error):** [Al hacer click en "Estado" sale cortado las opciones de abajo.]
+
+---
+
+
+Módulo Cobro
+
+**Módulo:** [Cobro]
+**ID de Prueba:** [CO-01]
+**Título / Descripción:** [Reversión de cuota - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Acciones" dentro de "Operaciones".]
+* **Resultado Esperado:** [Al cobrar una cuota en y hacer una reversión en la planilla de "Cobros" deberia volver al estado de pendiente.]
+* **Resultado Obtenido (Error):** [Al cobrar una cuota y hacerle una reversión figura "Aprobada".]
+
+---
+
 
 ## Resumen de correcciones ya validadas
 
-### Sesión anterior
+### Sesión 1 (base)
 - **CR-01** → Corregido / validado
 - **CR-02** → Corregido / validado
 - **CR-03** → Corregido / validado
 - **CR-04** → Corregido / validado
-- **CR-05** → Corregido / validado (bloqueo por fecha vacía/inválida)
+- **CR-05** → Corregido / validado
 - **CR-06** → Corregido / validado
 - **CR-07** → Corregido / validado
-- **CR-08** → Corregido / validado (filtro Seller ops)
+- **CR-08** → Corregido / validado
 - **CL-01** → Corregido / validado
 - **CL-02** → Corregido / validado
 - **CL-03** → Corregido / validado
@@ -807,30 +890,51 @@ Módulo Caja
 - **PL-02** → Corregido / validado
 - **GA-01** → Corregido / validado
 
-### Esta sesión (Grupos A-E + Backend)
-- **CR-08b** → Corregido / validado — error handler en initialize() del wizard Admin
-- **CR-09** → Corregido / validado — mensaje claro "unidad no disponible" + recarga automática del catálogo
-- **CR-10** → Corregido / validado — removido `iconDisplay="input"`, `autoZIndex="true"`, `appendTo="body"`
-- **CR-12** → Corregido / validado — ruta `/admin/operations/:id` ya existe y funciona
-- **CR-13** → Corregido / validado — `text-white` explícito en headings de step-confirm
-- **CR-14** → Corregido / validado — `appendTo="body"` en dropdown de estado de operaciones
-- **CR-15** → Corregido / validado — `p-checkbox-icon { color: #ffffff }` en styles.scss
-- **CR-17** → Corregido / validado — paginador en tabla de operaciones
-- **CA-01** → Corregido / validado — bug naming `totalEgresos`/`totalOutflows` en backend; controller maneja 422
-- **CL-02b** → Corregido / validado — card de detalle Seller cambiado de `bg-white` a `ff-panel`
-- **CL-04** → Corregido / validado — toast ya implementado en ambas rutas de edición
-- **CL-05** → Corregido / validado — `appendTo="body"` en calendarios del historial
-- **CL-06 / CL-07** → Comportamiento esperado — `tempPasswordGuard` correcto; banner de aviso ya visible; flujo completo funciona
-- **CL-08** → Corregido / validado — paginador en tabla de clientes
-- **CL-09** → Corregido / validado — `appendTo="body"` en dropdown de filtro de clientes
-- **CL-10** → Corregido / validado — mapper usa `c.activeCredits ?? 0` en lugar de `0` hardcodeado
-- **GA-02** → Corregido / validado — `appendTo="body"` en dropdowns del formulario de gastos
-- **PR-07** (categorías) → Corregido / validado — `ConfirmDialog` antes de desactivar
-- **PR-08** → Corregido / validado — `ConfirmDialog` antes de desactivar marca
-- **PR-09** → Corregido / validado — formulario de edición envuelto en `ff-panel`
-- **PL-01** → Corregido / validado — flags `generating`/`generatingAll` deshabilitan botones
-- **US-01** → Corregido / validado — `appendTo="body"` en dropdown Rol
-- **US-02** → Corregido / validado — `appendTo="body"` en dropdowns Rol y Estado
+### Sesión 2 (Grupos A-E + Backend)
+- **CR-08b** → Corregido / validado
+- **CR-09** → Corregido / validado
+- **CR-10** → Corregido / validado
+- **CR-12** → Corregido / validado
+- **CR-13** → Corregido / validado
+- **CR-14** → Corregido / validado
+- **CR-15** → Corregido / validado
+- **CR-17** → Corregido / validado
+- **CA-01** → Corregido / validado
+- **CL-02b** → Corregido / validado
+- **CL-04** → Corregido / validado
+- **CL-05** → Corregido / validado
+- **CL-06 / CL-07** → Comportamiento esperado
+- **CL-08** → Corregido / validado
+- **CL-09** → Corregido / validado
+- **CL-10** → Corregido / validado
+- **GA-02** → Corregido / validado
+- **PR-07** (categorías) → Corregido / validado
+- **PR-08** → Corregido / validado
+- **PR-09** → Corregido / validado
+- **PL-01** → Corregido / validado
+- **US-01** → Corregido / validado
+- **US-02** → Corregido / validado
+
+### Sesión 3 (QA Batch 2 — esta sesión)
+- **CR-18** → Corregido / validado — tasa como %; `!= null`; EXPIRED en tipo y mapas
+- **CR-19** → Corregido / validado — "Cancelación total anticipada"; diálogo explicativo
+- **CL-11** → Corregido / validado — pattern validator nombres/apellidos; error inline
+- **CL-12** → Corregido / validado — pattern validator DNI; `inputmode="numeric"`; error al tipear
+- **CL-13** → Corregido / validado — eliminados Ingresos/Cap.Pago; agregado Cobrador
+- **CL-14** → Corregido / validado — `includeSummary: true`; delinquency mapeado desde backend
+- **CL-15** → Corregido / validado — créditos cargados desde API en detalle de cliente
+- **CL-16** → Corregido / validado — modal editar con Email, Dirección, Cobrador; pre-carga
+- **PR-10** → Corregido / validado — `!form.dirty` en botón Guardar Cambios
+- **PR-12** → Corregido / validado — columnas dinámicas COLOR/TALLE/CAP; panel a demanda
+- **PR-14** → Corregido / validado — botón Editar por fila en Categorías y Marcas
+- **US-03** → Corregido / validado — pattern validators en user-create y user-detail
+- **US-04** → Corregido / validado — `appendTo="body"` en dropdown Rol editar usuario
+- **US-05** → Corregido / validado — `formHasChanges` por snapshot; revierte al estado inicial
+- **US-06** → Corregido / validado — CSS variables tema en diálogo contraseña temporal
+
+### Pendiente (requiere backend o es feature nueva)
+- **PR-11** → Parcial — frontend envía `force: true`; backend aún no lo soporta
+- **PR-13** → Pendiente — feature "Múltiples Variantes" no existe; requiere implementación
 
 ## Pendientes por datos (no son bugs de código)
 
@@ -862,11 +966,19 @@ Módulo Caja
 - `cypress/e2e/36-product-edit-category-regression.cy.ts` → passing
 - `cypress/e2e/22-admin-generar-planilla.cy.ts` → passing
 
-### Tests Cypress (nuevos esta sesión)
+### Tests Cypress (sesión 2)
 - `cypress/e2e/38-dropdown-overflow-regression.cy.ts` → Grupo A: US-01, US-02, CL-09, CR-14
 - `cypress/e2e/39-calendar-overflow-regression.cy.ts` → Grupo B: CR-10, CL-05
 - `cypress/e2e/40-contrast-color-regression.cy.ts` → Grupo C: CL-02b, CR-13, PR-09
 - `cypress/e2e/41-pagination-regression.cy.ts` → Grupo D: CR-17, CL-08
 - `cypress/e2e/42-group-e-regression.cy.ts` → Grupo E: CL-10, PR-07, PR-08, CR-09
+
+### Tests Cypress (sesión 3 — QA Batch 2)
+- `cypress/e2e/44-qa-regression-batch2.cy.ts` → 21 tests: CL-11/12/13/16, US-03/04/05, PR-10/12/14, CR-18/19
+
+### Specs de componente (sesión 3)
+- `src/app/features/admin/users/user-create/user-create.component.spec.ts` → US-03: validators fullName y DNI
+- `src/app/features/seller/products/product-edit/product-edit.component.spec.ts` → PR-10: dirty check (actualizado)
+- `src/app/shared/clients/clients.component.spec.ts` → CL-11/12/13/14: validators y mapeo delinquency (actualizado)
 
 ---

@@ -339,12 +339,14 @@
       label="Cancelar"
       severity="secondary"
       [outlined]="true"
+      styleClass="h-11 px-5 rounded-xl"
       [disabled]="liquidating"
       (onClick)="showLiquidateDialog = false"
     />
     <p-button
       label="Confirmar liquidación"
       icon="pi pi-send"
+      styleClass="h-11 px-5 rounded-xl"
       [loading]="liquidating"
       (onClick)="openConfirmDialog()"
     />
@@ -367,12 +369,14 @@
       label="Cancelar"
       severity="secondary"
       [outlined]="true"
+      styleClass="h-11 px-5 rounded-xl"
       (onClick)="showConfirmDialog = false"
     />
     <p-button
       label="Sí, liquidar"
       icon="pi pi-check"
-      severity="success"
+      severity="danger"
+      styleClass="h-11 px-5 rounded-xl"
       (onClick)="confirmLiquidate()"
     />
   </ng-template>

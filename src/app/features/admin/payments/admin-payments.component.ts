@@ -15,6 +15,8 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
+import { MessageModule } from 'primeng/message';
+import { catchError, of } from 'rxjs';
 import { AppError } from '../../../core/models/app-error';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
@@ -25,6 +27,7 @@ import {
   PaymentStatus,
 } from '../../collector/models/payment.model';
 import { PaymentsService } from '../../collector/payments.service';
+import { CashRegisterService } from '../cash-register/cash-register.service';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
 
@@ -49,6 +52,7 @@ import { UsersService } from '../users/users.service';
     TooltipModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    MessageModule,
   ],
   providers: [MessageService],
   templateUrl: './admin-payments.component.html',
@@ -56,6 +60,7 @@ import { UsersService } from '../users/users.service';
 export class AdminPaymentsComponent implements OnInit {
   private readonly paymentsService = inject(PaymentsService);
   private readonly usersService = inject(UsersService);
+  private readonly cashRegisterSvc = inject(CashRegisterService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
 
@@ -63,6 +68,7 @@ export class AdminPaymentsComponent implements OnInit {
   collectors: User[] = [];
   loading = true;
   error: AppError | null = null;
+  isCashClosed = false;
 
   filterStatus: PaymentStatus | null = null;
   filterCollectorId: string | null = null;
@@ -133,8 +139,23 @@ export class AdminPaymentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.header.set([{ label: 'Cobros' }]);
+    this.checkCashRegisterStatus();
     this.usersService.listCollectors().subscribe((c) => (this.collectors = c));
     this.load();
+  }
+
+  /**
+   * Verifica el estado de cierre de caja del día actual.
+   */
+  private checkCashRegisterStatus(): void {
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+      });
   }
 
   /**
@@ -186,8 +207,34 @@ export class AdminPaymentsComponent implements OnInit {
 
   confirmApprove(): void {
     if (!this.selectedPayment) return;
+
     this.processingApprove = true;
-    this.paymentsService.approve(this.selectedPayment.id).subscribe({
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.processingApprove = false;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes aprobar cobros. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processPaymentApproval();
+      });
+  }
+
+  private processPaymentApproval(): void {
+    this.paymentsService.approve(this.selectedPayment!.id).subscribe({
       next: (detail) => {
         this.processingApprove = false;
         this.showDetailDialog = false;
@@ -215,9 +262,35 @@ export class AdminPaymentsComponent implements OnInit {
 
   confirmReject(): void {
     if (!this.selectedPayment || this.rejectReason.length < 5) return;
+
     this.processingReject = true;
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.processingReject = false;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes rechazar cobros. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processPaymentReject();
+      });
+  }
+
+  private processPaymentReject(): void {
     this.paymentsService
-      .reject(this.selectedPayment.id, this.rejectReason)
+      .reject(this.selectedPayment!.id, this.rejectReason)
       .subscribe({
         next: () => {
           this.processingReject = false;
@@ -293,9 +366,35 @@ export class AdminPaymentsComponent implements OnInit {
 
   confirmDirect(): void {
     if (!this.directFormValid) return;
+
     this.processingDirect = true;
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.processingDirect = false;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes crear cobros. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processDirectPayment();
+      });
+  }
+
+  private processDirectPayment(): void {
     this.paymentsService
-      .adminDirect({
+      .create({
         installmentId: this.directInstallmentId.trim(),
         amountReceived: this.directAmount!,
         paymentMethod: this.directMethod,
@@ -303,13 +402,13 @@ export class AdminPaymentsComponent implements OnInit {
         notes: this.directNotes || undefined,
       })
       .subscribe({
-        next: () => {
+        next: (result) => {
           this.processingDirect = false;
           this.showDirectDialog = false;
           this.msg.add({
             severity: 'success',
             summary: 'Cobro registrado',
-            detail: 'El cobro fue registrado y aprobado correctamente.',
+            detail: 'El cobro fue registrado y está pendiente de aprobación.',
             life: 5000,
           });
           this.load();

@@ -121,12 +121,13 @@ export class ProductsService {
   }
 
   /**
-   * Desactiva un producto (baja lógica). Solo disponible si el producto no tiene créditos activos.
+   * Desactiva un producto (baja lógica). Pasa force=true para permitir desactivar aunque tenga unidades vendidas.
    * @param id - UUID del producto.
+   * @param force - Si es true, ignora la restricción de unidades vendidas/reservadas.
    */
-  deactivate(id: string): Observable<void> {
+  deactivate(id: string, force = false): Observable<void> {
     return this.api
-      .patch<void>(`products/${id}/deactivate`)
+      .patch<void>(`products/${id}/deactivate`, force ? { force: true } : {})
       .pipe(map(() => undefined));
   }
 

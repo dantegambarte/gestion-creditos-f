@@ -2,7 +2,7 @@ import { CommonModule, DatePipe, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -14,10 +14,13 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { MessageModule } from 'primeng/message';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { AppError } from '../../../../core/models/app-error';
 import { FormatService } from '../../../../core/services/format.service';
 import { HeaderService } from '../../../../core/services/header.service';
+import { CashRegisterService } from '../../../admin/cash-register/cash-register.service';
+import { catchError, of } from 'rxjs';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import {
@@ -25,10 +28,11 @@ import {
   CreditStatus,
   CreditUnit,
   InstallmentStatus,
+  RefinanceResult,
+  SimulateResult,
 } from '../../models/credit.model';
 import {
   ApplyPenaltyPayload,
-  EarlyPayPayload,
   Installment,
 } from '../../models/installment.model';
 import { CreditsService } from '../credits.service';
@@ -56,17 +60,20 @@ import { PaymentsService } from '../../../collector/payments.service';
     TooltipModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    MessageModule,
   ],
   providers: [MessageService],
   templateUrl: './credit-detail.component.html',
 })
 export class CreditDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly creditsService = inject(CreditsService);
   private readonly installmentsService = inject(InstallmentsService);
   private readonly paymentsService = inject(PaymentsService);
   private readonly location = inject(Location);
   private readonly header = inject(HeaderService);
+  private readonly cashRegisterSvc = inject(CashRegisterService);
   readonly auth = inject(AuthServiceBase);
   private readonly msg = inject(MessageService);
   private readonly fmt = inject(FormatService);
@@ -74,6 +81,7 @@ export class CreditDetailComponent implements OnInit {
   credit: CreditDetail | null = null;
   loading = false;
   error: AppError | null = null;
+  isCashClosed = false;
 
   selectedInstallment: CreditDetail['installments'][number] | null = null;
   activeTab: 'all' | 'paid' | 'pending' | 'overdue' = 'all';
@@ -95,19 +103,40 @@ export class CreditDetailComponent implements OnInit {
   processingDirect = false;
 
   get paidCount(): number {
-    return this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0;
+    return (
+      this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0
+    );
   }
 
   get pendingCount(): number {
-    return this.credit?.installments.filter((i) => i.status === 'PENDING' || i.status === 'PARTIAL').length ?? 0;
+    return (
+      this.credit?.installments.filter(
+        (i) => i.status === 'PENDING' || i.status === 'PARTIAL',
+      ).length ?? 0
+    );
   }
 
   get overdueCount(): number {
-    return this.credit?.installments.filter((i) => i.status === 'OVERDUE').length ?? 0;
+    return (
+      this.credit?.installments.filter((i) => i.status === 'OVERDUE').length ??
+      0
+    );
   }
 
   get installmentAmount(): number | null {
     return this.credit?.installments[0]?.amountDue ?? null;
+  }
+
+  get settlementTotalAmount(): number {
+    if (!this.credit?.installments) return 0;
+    return this.credit.installments
+      .filter(inst => ['PENDING', 'PARTIAL', 'OVERDUE'].includes(inst.status))
+      .reduce((sum, inst) => sum + (inst.amountDue - inst.amountPaid), 0);
+  }
+
+  get hasPendingPayments(): boolean {
+    if (!this.creditPayments) return false;
+    return this.creditPayments.some(p => p.status === 'PENDING');
   }
 
   /**
@@ -115,7 +144,8 @@ export class CreditDetailComponent implements OnInit {
    * @param {CreditDetail['installments'][number]} inst - Cuota clickeada.
    */
   selectInstallment(inst: CreditDetail['installments'][number]): void {
-    this.selectedInstallment = this.selectedInstallment?.id === inst.id ? null : inst;
+    this.selectedInstallment =
+      this.selectedInstallment?.id === inst.id ? null : inst;
   }
 
   showApproveDialog = false;
@@ -136,6 +166,12 @@ export class CreditDetailComponent implements OnInit {
     { label: 'Transferencia', value: 'TRANSFER' },
   ];
 
+  readonly FREQUENCY_OPTIONS = [
+    { label: 'Mensual', value: 'MONTHLY' },
+    { label: 'Quincenal', value: 'BIWEEKLY' },
+    { label: 'Semanal', value: 'WEEKLY' },
+  ];
+
   showPenaltyDialog = false;
   penaltyInstallment: CreditDetail['installments'][number] | null = null;
   penaltyAmount: number | null = null;
@@ -146,11 +182,18 @@ export class CreditDetailComponent implements OnInit {
   waiveInstallment: CreditDetail['installments'][number] | null = null;
   processingWaive = false;
 
-  showEarlyPayDialog = false;
-  earlyPayInstallment: CreditDetail['installments'][number] | null = null;
-  earlyPayMethod: 'CASH' | 'TRANSFER' = 'CASH';
-  earlyPayTransferRef = '';
-  processingEarlyPay = false;
+  // ── Refinanciación ────────────────────────────────────────────
+  showRefinanceDialog = false;
+  refinanceStep: 1 | 2 = 1;
+  refinanceInstallmentsCount: number | null = null;
+  refinanceFrequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' = 'MONTHLY';
+  refinanceReason = '';
+  refinanceExtraCharges: number | null = null;
+  refinanceNotes = '';
+  refinanceSimulation: SimulateResult | null = null;
+  refinanceSimulating = false;
+  refinanceResult: RefinanceResult | null = null;
+  processingRefinance = false;
 
   /**
    * Verifica si el usuario actual es un administrador.
@@ -158,6 +201,13 @@ export class CreditDetailComponent implements OnInit {
    */
   get isAdmin(): boolean {
     return this.auth.hasRole('ADMIN');
+  }
+
+  /** Un crédito REFINANCED o SETTLED no acepta más acciones sobre sus cuotas. */
+  get canActOnInstallments(): boolean {
+    return this.isAdmin &&
+      this.credit?.status !== 'REFINANCED' &&
+      this.credit?.status !== 'SETTLED';
   }
 
   /**
@@ -180,7 +230,29 @@ export class CreditDetailComponent implements OnInit {
       { label: 'Operaciones', route: '/seller/operations' },
       { label: 'Detalle' },
     ]);
-    this.load();
+    this.checkCashRegisterStatus();
+    this.route.paramMap.subscribe(() => {
+      this.credit = null;
+      this.selectedInstallment = null;
+      this.mainTab = 'installments';
+      this.paymentsLoaded = false;
+      this.creditPayments = [];
+      this.load();
+    });
+  }
+
+  /**
+   * Verifica el estado de cierre de caja del día actual.
+   */
+  private checkCashRegisterStatus(): void {
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+      });
   }
 
   goBack(): void {
@@ -208,6 +280,8 @@ export class CreditDetailComponent implements OnInit {
       ACTIVE: 'Activo',
       SETTLED: 'Liquidado',
       REJECTED: 'Rechazado',
+      EXPIRED: 'Vencido',
+      REFINANCED: 'Refinanciado',
     };
     return map[status];
   }
@@ -228,6 +302,8 @@ export class CreditDetailComponent implements OnInit {
       ACTIVE: 'success',
       SETTLED: 'secondary',
       REJECTED: 'danger',
+      EXPIRED: 'danger',
+      REFINANCED: 'contrast',
     };
     return map[status];
   }
@@ -290,11 +366,22 @@ export class CreditDetailComponent implements OnInit {
   }
 
   /**
-   * Confirma la aprobación del crédito.
+   * Confirma la aprobación del crédito. Valida que la caja no esté cerrada.
    * @returns
    */
   confirmApprove(): void {
     if (!this.credit) return;
+
+    if (this.isCashClosed) {
+      this.msg.add({
+        severity: 'error',
+        summary: 'Caja Cerrada',
+        detail: 'No puedes aprobar créditos. La caja del día está CERRADA. El crédito + enganche se aprobarán juntos cuando se abra una nueva caja.',
+        life: 5000,
+      });
+      return;
+    }
+
     this.processingApprove = true;
     const payload =
       this.approveInstallmentsCount !== null &&
@@ -372,7 +459,25 @@ export class CreditDetailComponent implements OnInit {
   openSettlementDialog(): void {
     this.settlementPaymentMethod = 'CASH';
     this.settlementTransferRef = '';
-    this.showSettlementDialog = true;
+
+    // Cargar pagos para validar si hay PENDING
+    if (!this.paymentsLoaded && this.credit) {
+      this.loadingPayments = true;
+      this.paymentsService.listByCredit(this.credit.id).subscribe({
+        next: (data) => {
+          this.creditPayments = data;
+          this.paymentsLoaded = true;
+          this.loadingPayments = false;
+          this.showSettlementDialog = true;
+        },
+        error: () => {
+          this.loadingPayments = false;
+          this.showSettlementDialog = true;
+        },
+      });
+    } else {
+      this.showSettlementDialog = true;
+    }
   }
 
   /**
@@ -381,7 +486,45 @@ export class CreditDetailComponent implements OnInit {
    */
   confirmSettlement(): void {
     if (!this.credit) return;
+
+    // Validar que no haya pagos pendientes
+    if (this.hasPendingPayments) {
+      this.msg.add({
+        severity: 'error',
+        summary: 'Pagos Pendientes',
+        detail: 'Este crédito tiene pagos pendientes de aprobación. Resuelvalos antes de cancelar.',
+        life: 5000,
+      });
+      return;
+    }
+
     this.processingSettlement = true;
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.processingSettlement = false;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes cancelar créditos. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processSettlement();
+      });
+  }
+
+  private processSettlement(): void {
+    if (!this.credit) return;
 
     const payload = {
       paymentMethod: this.settlementPaymentMethod,
@@ -392,14 +535,14 @@ export class CreditDetailComponent implements OnInit {
     };
 
     this.creditsService.earlySettlement(this.credit.id, payload).subscribe({
-      next: (result) => {
+      next: (result: any) => {
         this.processingSettlement = false;
         this.showSettlementDialog = false;
-        const formatted = this.fmt.currency(result.settlementAmount, 2);
+        const formatted = this.fmt.currency(result.settlement_amount, 2);
         this.msg.add({
           severity: 'success',
-          summary: 'Cancelación anticipada',
-          detail: `Procesada correctamente. Monto: ${formatted}`,
+          summary: 'Cancelación anticipada creada',
+          detail: `${result.message} Monto: ${formatted}`,
           life: 6000,
         });
         this.load();
@@ -508,72 +651,7 @@ export class CreditDetailComponent implements OnInit {
   }
 
   /**
-   * Abre el diálogo para el pago anticipado de una cuota, reseteando los campos relacionados y mostrando el diálogo.
-   */
-  openEarlyPayDialog(inst: CreditDetail['installments'][number]): void {
-    this.earlyPayInstallment = inst;
-    this.earlyPayMethod = 'CASH';
-    this.earlyPayTransferRef = '';
-    this.showEarlyPayDialog = true;
-  }
-
-  /**
-   * Confirma el pago anticipado de una cuota.
-   * @returns
-   */
-  confirmEarlyPay(): void {
-    if (!this.earlyPayInstallment) return;
-    this.processingEarlyPay = true;
-
-    const payload: EarlyPayPayload = { paymentMethod: this.earlyPayMethod };
-    if (this.earlyPayMethod === 'TRANSFER' && this.earlyPayTransferRef) {
-      payload.transferReference = this.earlyPayTransferRef;
-    }
-
-    this.installmentsService
-      .earlyPay(this.earlyPayInstallment.id, payload)
-      .subscribe({
-        next: (result) => {
-          this.processingEarlyPay = false;
-          this.showEarlyPayDialog = false;
-
-          if (result.creditSettled) {
-            this.msg.add({
-              severity: 'success',
-              summary: 'Crédito liquidado',
-              detail: 'El crédito quedó liquidado completamente.',
-              life: 6000,
-            });
-            this.load();
-          } else {
-            this.updateInstallmentInList({
-              id: result.id,
-              amountDue: result.amountDue,
-              amountPaid: result.amountPaid,
-              penaltyAmount: result.penaltyAmount,
-              status: result.status,
-            });
-            this.msg.add({
-              severity: 'success',
-              summary: 'Pago anticipado',
-              detail: 'Cuota pagada anticipadamente.',
-              life: 3000,
-            });
-          }
-        },
-        error: (err: AppError) => {
-          this.processingEarlyPay = false;
-          this.msg.add({
-            severity: err.status === 409 ? 'warn' : 'error',
-            summary: err.status === 409 ? 'Advertencia' : 'Error',
-            detail: err.message ?? 'No se pudo procesar el pago.',
-          });
-        },
-      });
-  }
-
-  /**
-   * Actualiza una cuota en la lista de cuotas del crédito, reemplazando la cuota con el mismo ID por la versión actualizada. Se utiliza para reflejar los cambios después de aplicar o condonar una mora, o realizar un pago anticipado.
+   * Actualiza una cuota en la lista de cuotas del crédito, reemplazando la cuota con el mismo ID por la versión actualizada. Se utiliza para reflejar los cambios después de aplicar o condonar una mora.
    */
   private updateInstallmentInList(updated: Partial<Installment>): void {
     if (!this.credit || !updated.id) return;
@@ -597,7 +675,8 @@ export class CreditDetailComponent implements OnInit {
       this.directInstallmentId.length > 0 &&
       (this.directAmount ?? 0) > 0 &&
       (this.directAmount ?? 0) <= this.directMaxAmount &&
-      (this.directMethod !== 'TRANSFER' || this.directTransferRef.trim().length > 0)
+      (this.directMethod !== 'TRANSFER' ||
+        this.directTransferRef.trim().length > 0)
     );
   }
 
@@ -617,9 +696,35 @@ export class CreditDetailComponent implements OnInit {
 
   confirmDirect(): void {
     if (!this.directFormValid) return;
+
     this.processingDirect = true;
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.processingDirect = false;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes crear cobros. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processDirectPayment();
+      });
+  }
+
+  private processDirectPayment(): void {
     this.paymentsService
-      .adminDirect({
+      .create({
         installmentId: this.directInstallmentId,
         amountReceived: this.directAmount!,
         paymentMethod: this.directMethod,
@@ -630,11 +735,11 @@ export class CreditDetailComponent implements OnInit {
         next: () => {
           this.processingDirect = false;
           this.showDirectDialog = false;
-          this.paymentsLoaded = false; // fuerza recarga del tab de cobros
+          this.paymentsLoaded = false;
           this.msg.add({
             severity: 'success',
             summary: 'Cobro registrado',
-            detail: 'El cobro fue registrado y aprobado correctamente.',
+            detail: 'El cobro fue registrado y está pendiente de aprobación.',
             life: 5000,
           });
           this.load();
@@ -642,8 +747,12 @@ export class CreditDetailComponent implements OnInit {
         error: (err: AppError) => {
           this.processingDirect = false;
           this.msg.add({
-            severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
-            summary: err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
+            severity:
+              err.status === 409 || err.status === 422 ? 'warn' : 'error',
+            summary:
+              err.status === 409 || err.status === 422
+                ? 'Advertencia'
+                : 'Error',
             detail: err.message ?? 'No se pudo registrar el cobro.',
           });
         },
@@ -667,6 +776,133 @@ export class CreditDetailComponent implements OnInit {
         this.loadingPayments = false;
       },
     });
+  }
+
+  // ── Refinanciación ────────────────────────────────────────────
+
+  /** Saldo pendiente del crédito: suma de cuotas no pagadas. */
+  get refinancePendingBalance(): number {
+    if (!this.credit) return 0;
+    return Math.round(
+      this.credit.installments
+        .filter((i) => ['PENDING', 'PARTIAL', 'OVERDUE'].includes(i.status))
+        .reduce((sum, i) => sum + (i.amountDue - i.amountPaid), 0) * 100,
+    ) / 100;
+  }
+
+  /** Total trasladado: saldo + cargos adicionales opcionales. */
+  get refinanceTotalTransferred(): number {
+    return Math.round(
+      (this.refinancePendingBalance + (this.refinanceExtraCharges ?? 0)) * 100,
+    ) / 100;
+  }
+
+  /** ID del crédito predecesor (el que fue refinanciado para crear este). */
+  get predecessorCreditId(): string | null {
+    return this.credit?.refinancingChain?.predecessorId ?? null;
+  }
+
+  /** ID del crédito sucesor (el creado al refinanciar este). */
+  get successorCreditId(): string | null {
+    return this.credit?.refinancingChain?.successorId ?? null;
+  }
+
+  /** Navega al crédito de la cadena preservando el contexto admin/seller. */
+  navigateToChainCredit(id: string): void {
+    const segments = this.router.url.split('/');
+    const base = `/${segments[1]}/${segments[2]}`;
+    this.router.navigate([base, id]);
+  }
+
+  get refinanceStep1Valid(): boolean {
+    return (
+      (this.refinanceInstallmentsCount ?? 0) >= 1 &&
+      (this.refinanceInstallmentsCount ?? 0) <= 120 &&
+      this.refinanceReason.trim().length >= 5
+    );
+  }
+
+  /**
+   * Abre el wizard de refinanciación reseteando todos los campos.
+   */
+  openRefinanceDialog(): void {
+    this.refinanceStep = 1;
+    this.refinanceInstallmentsCount = null;
+    this.refinanceFrequency = 'MONTHLY';
+    this.refinanceReason = '';
+    this.refinanceExtraCharges = null;
+    this.refinanceNotes = '';
+    this.refinanceSimulation = null;
+    this.refinanceResult = null;
+    this.showRefinanceDialog = true;
+  }
+
+  /**
+   * Paso 1 → 2: simula el nuevo crédito con el saldo pendiente.
+   */
+  goToRefinanceStep2(): void {
+    if (!this.refinanceStep1Valid || !this.credit) return;
+    this.refinanceSimulating = true;
+    this.creditsService
+      .simulate({
+        type: 'LOAN',
+        totalAmount: this.refinanceTotalTransferred,
+        installmentsCount: this.refinanceInstallmentsCount!,
+        paymentFrequency: this.refinanceFrequency,
+      })
+      .subscribe({
+        next: (result) => {
+          this.refinanceSimulation = result;
+          this.refinanceSimulating = false;
+          this.refinanceStep = 2;
+        },
+        error: (err: AppError) => {
+          this.refinanceSimulating = false;
+          this.msg.add({
+            severity: err.status === 409 ? 'warn' : 'error',
+            summary: err.status === 409 ? 'Sin tasa' : 'Error',
+            detail: err.message ?? 'No se pudo simular con los parámetros indicados.',
+          });
+        },
+      });
+  }
+
+  /**
+   * Confirma y ejecuta la refinanciación. El nuevo crédito queda en PENDING_APPROVAL.
+   */
+  confirmRefinance(): void {
+    if (!this.credit || !this.refinanceStep1Valid) return;
+    this.processingRefinance = true;
+    this.creditsService
+      .refinance(this.credit.id, {
+        installmentsCount: this.refinanceInstallmentsCount!,
+        paymentFrequency: this.refinanceFrequency,
+        reason: this.refinanceReason.trim(),
+        extraCharges: this.refinanceExtraCharges ?? undefined,
+        notes: this.refinanceNotes || undefined,
+      })
+      .subscribe({
+        next: (result) => {
+          this.processingRefinance = false;
+          this.refinanceResult = result;
+          this.showRefinanceDialog = false;
+          this.msg.add({
+            severity: 'success',
+            summary: 'Refinanciación creada',
+            detail: `Nuevo crédito generado (${this.fmt.currency(result.totalTransferred, 2)}) pendiente de aprobación.`,
+            life: 7000,
+          });
+          this.load();
+        },
+        error: (err: AppError) => {
+          this.processingRefinance = false;
+          this.msg.add({
+            severity: err.status === 409 ? 'warn' : 'error',
+            summary: err.status === 409 ? 'Advertencia' : 'Error',
+            detail: err.message ?? 'No se pudo crear la refinanciación.',
+          });
+        },
+      });
   }
 
   /**

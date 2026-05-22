@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -17,16 +18,15 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
-import { CustomersService } from '../../features/seller/clients/customers.service';
-import { Customer } from '../../features/seller/models/customer.model';
 import { AuthServiceBase } from '../../core/auth/auth-service.base';
 import { UserRoleEnum } from '../../core/models/types/user-role';
-import { FormatService } from '../../core/services/format.service';
-import { Client } from '../models/interface/client';
+import { UsersService } from '../../features/admin/users/users.service';
+import { CustomersService } from '../../features/seller/clients/customers.service';
+import { Customer } from '../../features/seller/models/customer.model';
 import { AppRoutes } from '../models/enums/routes.enum';
+import { Client } from '../models/interface/client';
 
 const AVATAR_COLORS = [
   '#3B82F6',
@@ -53,7 +53,10 @@ function toClient(c: Customer): Client {
     name: c.fullName,
     phone: c.phone ?? '',
     credits: c.activeCredits ?? 0,
-    risk: 'Al dia',
+    risk: c.delinquency ?? 'Al dia',
+    email: c.email ?? undefined,
+    address: c.address ?? undefined,
+    collectorId: c.collectorId ?? undefined,
   };
 }
 
@@ -80,11 +83,14 @@ function toClient(c: Customer): Client {
 })
 export class ClientsComponent implements OnInit {
   private readonly customersService = inject(CustomersService);
+  private readonly usersService = inject(UsersService);
   private readonly auth = inject(AuthServiceBase);
   private readonly messageService = inject(MessageService);
 
   clients: Client[] = [];
   loading = false;
+  collectorOptions: { label: string; value: string }[] = [];
+  collectorsLoading = false;
 
   filterOptions = [
     { label: 'Todos', value: null },
@@ -109,13 +115,13 @@ export class ClientsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private fmt: FormatService,
   ) {
     this.form = this.buildForm();
     this.editForm = this.buildEditForm(null);
   }
 
   ngOnInit(): void {
+    this.loadCollectors();
     this.loadClients();
   }
 
@@ -128,31 +134,40 @@ export class ClientsComponent implements OnInit {
   }
 
   /**
-   * Carga la lista de clientes activos desde el servicio de clientes, transformando los datos recibidos al formato utilizado en la interfaz y manejando el estado de carga para mostrar indicadores visuales mientras se obtienen los datos.
+   * Carga los cobradores activos para asignarlos al cliente.
    */
-  loadClients(): void {
-    this.loading = true;
-    this.customersService.list({ status: 'ACTIVE' }).subscribe({
-      next: (customers) => {
-        this.clients = customers.map(toClient);
-        this.loading = false;
+  private loadCollectors(): void {
+    this.collectorsLoading = true;
+    this.usersService.listCollectors().subscribe({
+      next: (collectors) => {
+        this.collectorOptions = collectors.map((c) => ({
+          label: c.fullName,
+          value: c.id,
+        }));
+        this.collectorsLoading = false;
       },
       error: () => {
-        this.loading = false;
+        this.collectorsLoading = false;
       },
     });
   }
 
   /**
-   * Calcula la capacidad de pago estimada del cliente basada en sus ingresos declarados.
-   * Se asume que el cliente puede destinar hasta el 50% de sus ingresos mensuales al pago de créditos.
-   * El valor se formatea como moneda local (ARS) para su presentación en la interfaz.
+   * Carga la lista de clientes activos desde el servicio de clientes, transformando los datos recibidos al formato utilizado en la interfaz y manejando el estado de carga para mostrar indicadores visuales mientras se obtienen los datos.
    */
-  get abilityToPay(): string {
-    const raw = (this.form.get('ingresos')?.value ?? '').replace(/[^0-9]/g, '');
-    const num = parseInt(raw, 10);
-    if (!num) return '';
-    return `${this.fmt.currency(Math.round(num * 0.5))} / mes`;
+  loadClients(): void {
+    this.loading = true;
+    this.customersService
+      .list({ status: 'ACTIVE', includeSummary: true })
+      .subscribe({
+        next: (customers) => {
+          this.clients = customers.map(toClient);
+          this.loading = false;
+        },
+        error: () => {
+          this.loading = false;
+        },
+      });
   }
 
   /**
@@ -175,9 +190,41 @@ export class ClientsComponent implements OnInit {
    * @param field
    * @returns
    */
+  /**
+   * Permite solo dígitos numéricos en campos de teclado.
+   * @param event
+   */
   isInvalid(field: string): boolean {
     const control = this.form.get(field);
     return !!control && control.invalid && (control.touched || this.submitted);
+  }
+
+  /** DNI muestra error inmediatamente al tipear (dirty) para guiar al usuario. */
+  isDniInvalid(): boolean {
+    const control = this.form.get('dni');
+    return !!control && control.invalid && (control.dirty || control.touched || this.submitted);
+  }
+
+  /**
+   * Determina si un campo del formulario de edición es inválido para mostrar errores.
+   * @param field
+   */
+  isEditInvalid(field: string): boolean {
+    const control = this.editForm.get(field);
+    return !!control && control.invalid && (control.touched || control.dirty);
+  }
+
+  /**
+   * Genera un mensaje de error para un campo del formulario de edición.
+   * @param field
+   */
+  getEditError(field: string): string {
+    const control = this.editForm.get(field);
+    if (!control || !control.errors) return '';
+    if (control.errors['email']) return 'Ingresá un email válido.';
+    if (control.errors['maxlength'])
+      return `Máximo ${control.errors['maxlength'].requiredLength} caracteres.`;
+    return '';
   }
 
   /**
@@ -191,7 +238,10 @@ export class ClientsComponent implements OnInit {
     if (control.errors['required']) return 'Campo obligatorio';
     if (control.errors['minlength'])
       return `Mínimo ${control.errors['minlength'].requiredLength} caracteres`;
-    if (control.errors['pattern']) return 'Formato inválido';
+    if (control.errors['pattern']) {
+      if (field === 'dni') return 'El DNI debe contener entre 7 y 8 dígitos.';
+      return 'Solo se permiten letras y espacios.';
+    }
     return '';
   }
 
@@ -266,11 +316,15 @@ export class ClientsComponent implements OnInit {
     }
     if (this.editForm.invalid || !this.selectedClient) return;
     this.editError = '';
-    const { nombre, apellido, phone } = this.editForm.value;
+    const { nombre, apellido, phone, email, direccion, assignedCollectorId } =
+      this.editForm.value;
     const id = this.selectedClient.id;
     const payload = {
       fullName: `${nombre} ${apellido}`.trim(),
-      phone: phone as string,
+      phone: (phone as string) || undefined,
+      email: (email as string) || undefined,
+      address: (direccion as string) || undefined,
+      assignedCollectorId: (assignedCollectorId as string) || undefined,
     };
     this.customersService.update(id, payload).subscribe({
       next: () => {
@@ -321,18 +375,25 @@ export class ClientsComponent implements OnInit {
 
     this.creatingClient = true;
 
-    const { nombres, apellidos, dni, telefonoPrincipal, email, direccion } =
-      this.form.value;
-    const cleanDni = String(dni).replace(/[^0-9]/g, '');
+    const {
+      nombres,
+      apellidos,
+      dni,
+      telefonoPrincipal,
+      email,
+      direccion,
+      assignedCollectorId,
+    } = this.form.value;
     const cleanPhone = String(telefonoPrincipal).replace(/[^0-9]/g, '');
 
     this.customersService
       .create({
         fullName: `${nombres} ${apellidos}`.trim(),
-        dni: cleanDni,
+        dni: String(dni),
         phone: cleanPhone || undefined,
         email: email || undefined,
         address: direccion || undefined,
+        assignedCollectorId: assignedCollectorId || undefined,
       })
       .subscribe({
         next: () => {
@@ -382,33 +443,59 @@ export class ClientsComponent implements OnInit {
   }
 
   /**
-   *  Construye un formulario de edición alineado con los campos que hoy persisten y se reflejan al recargar.
+   * Construye el formulario de edición de cliente incluyendo todos los campos editables.
    * @param client
-   * @returns
    */
   private buildEditForm(client: Client | null): FormGroup {
     const parts = client?.name.split(' ') ?? ['', ''];
     const nombre = parts[0] ?? '';
     const apellido = parts.slice(1).join(' ') || '';
     return this.fb.group({
-      nombre: [nombre, [Validators.required, Validators.minLength(2)]],
-      apellido: [apellido, [Validators.required, Validators.minLength(2)]],
-      phone: [
-        client?.phone ?? '',
-        [Validators.required, Validators.pattern(/^[\d\s\+\-]+$/)],
+      nombre: [
+        nombre,
+        [
+          Validators.required,
+          Validators.minLength(2),
+          Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
+        ],
       ],
+      apellido: [
+        apellido,
+        [
+          Validators.required,
+          Validators.minLength(2),
+          Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
+        ],
+      ],
+      phone: [client?.phone ?? '', [Validators.pattern(/^[\d\s\+\-]*$/)]],
+      email: [client?.email ?? '', [Validators.email]],
+      direccion: [client?.address ?? '', [Validators.maxLength(255)]],
+      assignedCollectorId: [client?.collectorId ?? ''],
     });
   }
 
   /**
-   *  Construye un formulario de creación para un nuevo cliente, con campos vacíos y reglas de validación definidas para cada campo.
-   * @returns
+   * Construye el formulario de creación de cliente con validaciones de formato estrictas.
    */
   private buildForm(): FormGroup {
-    return this.fb.group({
-      nombres: ['', [Validators.required, Validators.minLength(2)]],
-      apellidos: ['', [Validators.required, Validators.minLength(2)]],
-      dni: ['', [Validators.required, Validators.pattern(/^[\d.\-]+$/)]],
+    const form = this.fb.group({
+      nombres: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(2),
+          Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
+        ],
+      ],
+      apellidos: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(2),
+          Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
+        ],
+      ],
+      dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
       telefonoPrincipal: [
         '',
         [Validators.required, Validators.pattern(/^[\d\s\+\-]+$/)],
@@ -416,7 +503,8 @@ export class ClientsComponent implements OnInit {
       telefonoAlterno: ['', [Validators.pattern(/^[\d\s\+\-]*$/)]],
       email: ['', [Validators.email]],
       direccion: ['', [Validators.required]],
-      ingresos: ['', [Validators.required, Validators.pattern(/^[\$\d\.,]+$/)]],
+      assignedCollectorId: [''],
     });
+    return form;
   }
 }

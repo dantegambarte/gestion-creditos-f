@@ -46,6 +46,11 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
   newName = '';
   dialogError = '';
 
+  showEditDialog = false;
+  editingCategory: ProductCategory | null = null;
+  editName = '';
+  editError = '';
+
   ngOnInit(): void {
     this.load();
   }
@@ -109,6 +114,47 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Abre el diálogo de edición para renombrar una categoría existente.
+   * @param {ProductCategory} cat - Categoría a editar.
+   */
+  openEdit(cat: ProductCategory): void {
+    this.editingCategory = cat;
+    this.editName = cat.name;
+    this.editError = '';
+    this.showEditDialog = true;
+  }
+
+  /**
+   * Envía el nuevo nombre de la categoría al backend.
+   */
+  submitEdit(): void {
+    if (!this.editingCategory || !this.editName.trim()) return;
+    this.saving = true;
+    this.editError = '';
+    this.svc
+      .update(this.editingCategory.id, this.editName.trim())
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.saving = false)),
+      )
+      .subscribe({
+        next: () => {
+          this.showEditDialog = false;
+          this.editingCategory = null;
+          this.msg.add({
+            severity: 'success',
+            summary: 'Categoría actualizada',
+            detail: '',
+          });
+          this.load();
+        },
+        error: (err: AppError) => {
+          this.editError = err.message ?? 'No se pudo actualizar la categoría.';
+        },
+      });
+  }
+
+  /**
    * Solicita confirmación antes de cambiar el estado de la categoría.
    * @param {ProductCategory} cat - Categoría a activar o desactivar.
    */
@@ -120,7 +166,11 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
       icon: cat.active ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
       acceptLabel: cat.active ? 'Desactivar' : 'Activar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: cat.active ? 'p-button-danger' : 'p-button-primary',
+      acceptButtonStyleClass: cat.active
+        ? 'p-button-danger h-11 px-5 rounded-xl'
+        : 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () => this.executeToggle(cat),
     });
   }

@@ -122,6 +122,30 @@ body {
   }
 }
 
+// ─── p-button secondary outlined ─────────────────────────────────────────────
+.p-button.p-button-secondary.p-button-outlined {
+  background: transparent !important;
+  border-color: var(--ff-border) !important;
+  color: var(--ff-text-secondary) !important;
+
+  &:hover:not(:disabled) {
+    background: var(--ff-secondary) !important;
+    border-color: var(--ff-border) !important;
+    color: var(--ff-text-primary) !important;
+  }
+
+  &:active:not(:disabled) {
+    background: #2a2f45 !important;
+    border-color: #3a4260 !important;
+    color: var(--ff-text-primary) !important;
+  }
+
+  .p-button-label,
+  .p-button-icon {
+    color: inherit !important;
+  }
+}
+
 // ─── p-checkbox ──────────────────────────────────────────────────────────────
 .p-checkbox .p-checkbox-box {
   border: 2px solid var(--ff-border) !important;
@@ -227,6 +251,46 @@ body {
   .p-dialog-footer {
     background: var(--ff-panel) !important;
     border-top: 1px solid var(--ff-border) !important;
+  }
+}
+
+// ─── p-confirmdialog ─────────────────────────────────────────────────────────
+.p-confirm-dialog {
+  .p-dialog-content {
+    padding: 1.25rem 1.5rem 1.5rem !important;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .p-confirm-dialog-icon {
+    margin-top: 0.125rem;
+  }
+}
+
+.temp-password-dialog {
+  .p-dialog-header {
+    padding-bottom: 1rem !important;
+  }
+
+  .p-dialog-content {
+    padding: 1.25rem 1.5rem 1.5rem !important;
+  }
+
+  .p-dialog-footer {
+    padding: 1rem 1.5rem 1.5rem !important;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+}
+
+.early-settlement-dialog {
+  .p-dialog-content {
+    padding: 1.25rem 1.5rem 1.25rem !important;
+  }
+
+  .p-dialog-footer {
+    padding: 1rem 1.5rem 1.5rem !important;
   }
 }
 
@@ -424,6 +488,22 @@ body {
   padding: 12px 14px;
   color: var(--ff-warning);
   margin-bottom: 20px;
+}
+
+.auth-danger-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  border-radius: 6px;
+  padding: 12px 14px;
+  color: var(--ff-danger);
+  margin-bottom: 20px;
+
+  i {
+    color: var(--ff-danger);
+  }
 }
 
 // ─── Sidebar (global — garantiza especificidad sobre encapsulation) ──────────
@@ -624,8 +704,9 @@ aside.sidebar {
 }
 
 .db-kpis {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
 }
 
 .db-kpi {
@@ -633,23 +714,24 @@ aside.sidebar {
   border: 1px solid var(--ff-border);
   border-radius: 6px;
   padding: 16px 20px;
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  min-height: 110px;
 }
 
 .db-kpi__label {
-  font-size: 11px;
+  font-size: 10px;
   font-family: "Inter", sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ff-text-muted);
+  margin-bottom: 2px;
 }
 
 .db-kpi__value {
-  font-size: 28px;
+  font-size: 24px;
   font-family: "DM Mono", monospace;
   font-weight: 700;
   color: #f1f5f9;
@@ -657,9 +739,18 @@ aside.sidebar {
   line-height: 1;
 }
 
-.db-kpi__trend {
-  font-size: 12px;
+.db-kpi__subtitle {
+  font-size: 11px;
   font-family: "Inter", sans-serif;
+  color: var(--ff-text-secondary);
+  margin-top: 2px;
+}
+
+.db-kpi__trend {
+  font-size: 11px;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  margin-top: 4px;
 }
 
 .db-panels {
@@ -781,6 +872,234 @@ aside.sidebar {
   &--danger {
     color: #f87171;
     background: rgba(248, 113, 113, 0.12);
+  }
+}
+
+// ─── Pending by role row ────────────────────────────────────────────────────
+.db-pending-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+// ─── Overdue and quick access row ───────────────────────────────────────────
+.db-overdue-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.db-pending-col {
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.db-pending-body {
+  padding: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 400px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--ff-border);
+    border-radius: 2px;
+  }
+}
+
+.db-pending-group {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(46, 51, 71, 0.5);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.db-pending-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.db-pending-seller {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f1f5f9;
+  flex: 1;
+}
+
+.db-pending-meta {
+  font-size: 11px;
+  color: var(--ff-text-secondary);
+  font-family: "DM Mono", monospace;
+  white-space: nowrap;
+}
+
+.db-pending-time {
+  font-size: 10px;
+  color: var(--ff-text-muted);
+}
+
+.db-pending-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.db-pending-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  gap: 8px;
+  font-size: 11px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 3px;
+  align-items: center;
+}
+
+.db-pending-type {
+  font-weight: 600;
+  color: var(--ff-accent);
+  white-space: nowrap;
+  min-width: 50px;
+}
+
+.db-pending-customer {
+  color: #f1f5f9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.db-pending-amount {
+  font-family: "DM Mono", monospace;
+  color: #34d399;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.db-pending-installments {
+  color: var(--ff-text-secondary);
+  white-space: nowrap;
+  text-align: right;
+  min-width: 60px;
+}
+
+.db-pending-btn {
+  padding: 6px 12px;
+  background: var(--ff-accent);
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #3d5ce6;
+  }
+
+  &:active:not(:disabled) {
+    background: #2b49d5;
+  }
+
+  &:disabled,
+  &.db-pending-btn--disabled {
+    background: #6b7280;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.db-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  background: var(--ff-accent);
+  color: #ffffff;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+// ─── Analysis row (3 charts) ─────────────────────────────────────────────────
+.db-analysis-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.db-chart-panel {
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  :deep(.p-chart) {
+    padding: 12px;
+  }
+}
+
+// ─── Quick access buttons ─────────────────────────────────────────────────────
+.db-quick-access {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.db-quick-btn {
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  color: var(--ff-text-primary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+
+  i {
+    font-size: 18px;
+    color: var(--ff-accent);
+  }
+
+  &:hover {
+    background: rgba(79, 110, 247, 0.1);
+    border-color: var(--ff-accent);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 
@@ -1067,6 +1386,7 @@ table.ff-table {
   font-weight: 500;
   color: var(--ff-accent);
   text-decoration: none;
+  cursor: pointer;
   transition: opacity 0.15s;
 
   &:hover {
@@ -1281,7 +1601,9 @@ table.ff-table {
   color: var(--ff-text-muted);
   text-decoration: none;
   border-bottom: 2px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
 
   &:hover {

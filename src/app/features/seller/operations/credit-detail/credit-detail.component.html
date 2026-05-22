@@ -1,5 +1,16 @@
 <p-toast />
 
+<!-- Cash closed alert -->
+@if (isCashClosed) {
+  <div class="p-4">
+    <p-message
+      severity="warn"
+      text="⚠️ La caja del día está CERRADA. No se pueden aprobar créditos de hoy. El crédito y su enganche se aprobarán juntos cuando se abra una nueva caja."
+      styleClass="w-full"
+    />
+  </div>
+}
+
 @if (loading) {
   <app-loading-state />
 } @else if (error) {
@@ -13,6 +24,36 @@
     >
       <i class="pi pi-times-circle shrink-0"></i>
       <p class="text-sm"><strong>Motivo de rechazo:</strong> {{ credit.rejectionReason }}</p>
+    </div>
+  }
+
+  <!-- Cadena de refinanciación -->
+  @if (predecessorCreditId) {
+    <div
+      class="auth-warning-banner mx-6 mt-4 cursor-pointer"
+      style="border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); color: #a78bfa"
+      (click)="navigateToChainCredit(predecessorCreditId)"
+    >
+      <i class="pi pi-link shrink-0"></i>
+      <p class="text-sm">
+        <strong>Refinanciación de crédito anterior.</strong>
+        Este crédito fue originado refinanciando un crédito existente.
+        <span class="underline ml-1">Ver crédito original →</span>
+      </p>
+    </div>
+  }
+  @if (successorCreditId) {
+    <div
+      class="auth-warning-banner mx-6 mt-4 cursor-pointer"
+      style="border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); color: #a78bfa"
+      (click)="navigateToChainCredit(successorCreditId)"
+    >
+      <i class="pi pi-arrow-right-arrow-left shrink-0"></i>
+      <p class="text-sm">
+        <strong>Crédito refinanciado.</strong>
+        Este crédito fue refinanciado y su deuda trasladada a un nuevo crédito.
+        <span class="underline ml-1">Ver nuevo crédito →</span>
+      </p>
     </div>
   }
 
@@ -72,16 +113,33 @@
         </span>
       }
       @if (isAdmin && credit.status === 'PENDING_APPROVAL') {
-        <p-button label="Aprobar" icon="pi pi-check" severity="success" size="small" (onClick)="openApproveDialog()" />
+        <p-button
+          label="Aprobar"
+          icon="pi pi-check"
+          severity="success"
+          size="small"
+          (onClick)="openApproveDialog()"
+          [disabled]="isCashClosed"
+          [pTooltip]="isCashClosed ? 'La caja está cerrada' : ''"
+          tooltipPosition="top"
+        />
         <p-button label="Rechazar" icon="pi pi-times" severity="danger" size="small" (onClick)="openRejectDialog()" />
       }
       @if (isAdmin && credit.status === 'ACTIVE') {
         <p-button
-          label="Cancelación anticipada"
+          label="Cancelación total anticipada"
           severity="secondary"
           [outlined]="true"
           size="small"
+          pTooltip="Liquidar todas las cuotas pendientes en un solo pago"
           (onClick)="openSettlementDialog()"
+        />
+        <p-button
+          label="Refinanciar"
+          icon="pi pi-refresh"
+          severity="warning"
+          size="small"
+          (onClick)="openRefinanceDialog()"
         />
       }
       <p-button
@@ -119,10 +177,12 @@
           <div>
             <div class="ud-label">Tasa de interés</div>
             <div class="ud-value">
-              @if (credit.interestRate !== null) {
-                {{ credit.interestRate }}%
-              } @else {
+              @if (credit.interestRate != null) {
+                {{ (credit.interestRate * 100).toFixed(2) }}%
+              } @else if (credit.type === 'SALE') {
                 N/A (Venta)
+              } @else {
+                <span style="color: var(--ff-text-muted)">—</span>
               }
             </div>
           </div>
@@ -325,7 +385,7 @@
                   <th class="text-right">Pagado</th>
                   <th class="text-right">Mora</th>
                   <th>Estado</th>
-                  @if (isAdmin) { <th class="text-center">Acciones</th> }
+                  @if (canActOnInstallments) { <th class="text-center">Acciones</th> }
                 </tr>
               </ng-template>
               <ng-template pTemplate="body" let-inst>
@@ -360,7 +420,7 @@
                       [class.ff-badge--liquidado]="inst.status === 'WAIVED' || inst.status === 'SETTLED'"
                     >{{ installmentLabel(inst.status) }}</span>
                   </td>
-                  @if (isAdmin) {
+                  @if (canActOnInstallments) {
                     <td class="text-center">
                       <div class="flex justify-center gap-1">
                         @if (inst.status === 'OVERDUE') {
@@ -385,19 +445,11 @@
                         }
                         @if (inst.status === 'PENDING' || inst.status === 'OVERDUE') {
                           <p-button
-                            icon="pi pi-dollar"
-                            severity="success"
-                            [text]="true"
-                            size="small"
-                            pTooltip="Pago anticipado"
-                            (onClick)="$event.stopPropagation(); openEarlyPayDialog(inst)"
-                          />
-                          <p-button
                             icon="pi pi-credit-card"
                             severity="info"
                             [text]="true"
                             size="small"
-                            pTooltip="Cobro directo"
+                            pTooltip="Cobrar cuota"
                             (onClick)="$event.stopPropagation(); openDirectDialog(inst)"
                           />
                         }
@@ -407,7 +459,7 @@
                             severity="info"
                             [text]="true"
                             size="small"
-                            pTooltip="Cobro directo (saldo restante)"
+                            pTooltip="Cobrar saldo restante"
                             (onClick)="$event.stopPropagation(); openDirectDialog(inst)"
                           />
                         }
@@ -477,17 +529,8 @@
                 </div>
               </div>
 
-              @if (isAdmin) {
+              @if (canActOnInstallments) {
                 <div class="flex flex-col gap-2 px-4 py-3">
-                  @if (selectedInstallment.status === 'PENDING' || selectedInstallment.status === 'OVERDUE') {
-                    <p-button
-                      label="Pago anticipado"
-                      severity="success"
-                      styleClass="w-full"
-                      size="small"
-                      (onClick)="openEarlyPayDialog(selectedInstallment)"
-                    />
-                  }
                   @if (selectedInstallment.status === 'OVERDUE') {
                     <p-button
                       label="Aplicar mora"
@@ -544,7 +587,16 @@
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
       <button type="button" class="cancel-btn w-full" (click)="showApproveDialog = false">Cancelar</button>
-      <p-button label="Confirmar" severity="success" styleClass="w-full" (onClick)="confirmApprove()" [loading]="processingApprove" />
+      <p-button
+        label="Confirmar"
+        severity="success"
+        styleClass="w-full"
+        (onClick)="confirmApprove()"
+        [loading]="processingApprove"
+        [disabled]="isCashClosed || processingApprove"
+        [pTooltip]="isCashClosed ? 'La caja está cerrada' : ''"
+        tooltipPosition="top"
+      />
     </div>
   </ng-template>
 </p-dialog>
@@ -608,11 +660,27 @@
   [style]="{ width: '440px' }"
   [draggable]="false"
   [resizable]="false"
+  styleClass="early-settlement-dialog"
 >
   <div class="flex flex-col gap-4 py-2">
+    @if (hasPendingPayments) {
+      <div style="background: #fee; border: 1px solid #fcc; border-radius: 8px; padding: 12px;">
+        <p style="color: #c33; font-size: 14px; margin: 0;">
+          <i class="pi pi-exclamation-triangle" style="margin-right: 8px;"></i>
+          <strong>Advertencia:</strong> Este crédito tiene pagos pendientes de aprobación. Apruébalos o rechazalos antes de cancelar.
+        </p>
+      </div>
+    }
     <div class="auth-warning-banner">
       <i class="pi pi-info-circle shrink-0"></i>
-      <p class="text-sm">El monto de cancelación incluye todas las cuotas pendientes y moras acumuladas. Se calculará al confirmar.</p>
+      <div class="text-sm space-y-1">
+        <p><strong>Cancelación total anticipada del crédito.</strong> Liquida todas las cuotas pendientes y moras acumuladas en un solo pago.</p>
+        <p style="color: var(--ff-text-muted)">Para pagar cuotas individuales en adelanto, usá el botón <strong>Cobrar cuota</strong> en cada cuota del cronograma.</p>
+      </div>
+    </div>
+    <div style="background: var(--ff-secondary); border: 1px solid var(--ff-border); border-radius: 8px; padding: 12px;">
+      <p style="font-size: 12px; color: var(--ff-text-muted); margin: 0 0 4px 0;">Monto total a cobrar:</p>
+      <p style="font-size: 18px; font-weight: 600; color: var(--ff-success); margin: 0; font-family: monospace;">{{ settlementTotalAmount | currencyArs: 2 }}</p>
     </div>
     <div class="flex flex-col gap-1">
       <label class="auth-label">Método de pago</label>
@@ -641,8 +709,22 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button type="button" class="cancel-btn w-full" (click)="showSettlementDialog = false">Cancelar</button>
-      <p-button label="Confirmar" severity="warning" styleClass="w-full" (onClick)="confirmSettlement()" [loading]="processingSettlement" />
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl"
+        (onClick)="showSettlementDialog = false"
+      />
+      <p-button
+        label="Confirmar"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl"
+        (onClick)="confirmSettlement()"
+        [loading]="processingSettlement"
+        [disabled]="hasPendingPayments"
+        [pTooltip]="hasPendingPayments ? 'Resuelve los pagos pendientes antes de cancelar' : ''"
+      />
     </div>
   </ng-template>
 </p-dialog>
@@ -718,55 +800,209 @@
   </ng-template>
 </p-dialog>
 
-<!-- Dialog: Pago anticipado -->
+<!-- Dialog: Refinanciación -->
 <p-dialog
-  [(visible)]="showEarlyPayDialog"
-  header="Pago Anticipado"
+  [(visible)]="showRefinanceDialog"
+  [header]="refinanceStep === 1 ? 'Refinanciar crédito — Paso 1 de 2' : 'Refinanciar crédito — Paso 2 de 2'"
   [modal]="true"
-  [style]="{ width: '400px' }"
+  [style]="{ width: '560px' }"
   [draggable]="false"
   [resizable]="false"
 >
-  <div class="flex flex-col gap-4 py-2">
-    <p class="text-sm ff-mono" style="color: var(--ff-text-primary)">
-      Cuota #{{ earlyPayInstallment?.installmentNumber }} — {{ earlyPayInstallment?.amountDue | currencyArs: 2 }}
-    </p>
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Método de pago</label>
-      <p-dropdown
-        [options]="PAYMENT_METHOD_OPTIONS"
-        [(ngModel)]="earlyPayMethod"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="w-full"
-        appendTo="body"
-      />
-    </div>
-    @if (earlyPayMethod === 'TRANSFER') {
+  <!-- ── Paso 1: parámetros ─────────────────────────────────── -->
+  @if (refinanceStep === 1) {
+    <div class="flex flex-col gap-4 py-2">
+
+      <div class="rounded-lg p-3" style="background: rgba(251,176,64,0.08); border: 1px solid rgba(251,176,64,0.3)">
+        <p class="text-xs" style="color: var(--ff-warning)">
+          <i class="pi pi-exclamation-triangle mr-1"></i>
+          El crédito actual pasará a estado <strong>Refinanciado</strong>. La deuda pendiente se traslada a un nuevo crédito que deberá ser aprobado.
+        </p>
+      </div>
+
+      <!-- Resumen de saldo -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="cr-detail-cell">
+          <div class="ud-label">Saldo pendiente</div>
+          <div class="ud-value ff-mono text-lg">{{ refinancePendingBalance | currencyArs: 2 }}</div>
+        </div>
+        <div class="cr-detail-cell">
+          <div class="ud-label">Total a refinanciar</div>
+          <div class="ud-value ff-mono text-lg" style="color: var(--ff-accent)">{{ refinanceTotalTransferred | currencyArs: 2 }}</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Cuotas</label>
+          <p-inputNumber
+            [(ngModel)]="refinanceInstallmentsCount"
+            [min]="1"
+            [max]="120"
+            [useGrouping]="false"
+            styleClass="w-full"
+            placeholder="Ej: 12"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Frecuencia</label>
+          <p-dropdown
+            [options]="FREQUENCY_OPTIONS"
+            [(ngModel)]="refinanceFrequency"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            appendTo="body"
+          />
+        </div>
+      </div>
+
       <div class="flex flex-col gap-1">
-        <label class="auth-label">Referencia (opcional)</label>
-        <input
-          type="text"
-          [(ngModel)]="earlyPayTransferRef"
-          maxlength="100"
-          class="w-full rounded-xl p-3 text-sm outline-none"
-          style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
-          placeholder="Número de operación..."
+        <label class="auth-label">Cargos adicionales (opcional)</label>
+        <p-inputNumber
+          [(ngModel)]="refinanceExtraCharges"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [minFractionDigits]="2"
+          [min]="0"
+          styleClass="w-full"
+          placeholder="Gastos, intereses punitorios, etc."
+        />
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Motivo de refinanciación (mín. 5 caracteres)</label>
+        <textarea
+          pInputTextarea
+          [(ngModel)]="refinanceReason"
+          rows="3"
+          maxlength="500"
+          class="w-full"
+          placeholder="Describe el motivo..."
+        ></textarea>
+        <div class="flex justify-between text-xs mt-1" style="color: var(--ff-text-muted)">
+          <span [style.color]="refinanceReason.length > 0 && refinanceReason.length < 5 ? 'var(--ff-danger)' : ''">
+            Mínimo 5 caracteres
+          </span>
+          <span>{{ refinanceReason.length }}/500</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Notas (opcional)</label>
+        <textarea
+          pInputTextarea
+          [(ngModel)]="refinanceNotes"
+          rows="2"
+          maxlength="500"
+          class="w-full"
+          placeholder="Observaciones adicionales..."
+        ></textarea>
+      </div>
+    </div>
+
+  }
+
+  <!-- ── Paso 2: simulación ────────────────────────────────── -->
+  @if (refinanceStep === 2 && refinanceSimulation) {
+    <div class="flex flex-col gap-4 py-2">
+
+      <div class="rounded-lg p-3" style="background: rgba(79,110,247,0.08); border: 1px solid rgba(79,110,247,0.2)">
+        <p class="text-xs" style="color: var(--ff-text-secondary)">
+          <i class="pi pi-info-circle mr-1"></i>
+          Revisá el cronograma del nuevo crédito antes de confirmar. Esta acción no se puede deshacer.
+        </p>
+      </div>
+
+      <!-- KPIs del nuevo crédito -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="cr-detail-cell text-center">
+          <div class="ud-label">Monto total</div>
+          <div class="ud-value ff-mono">{{ refinanceSimulation.totalAmount | currencyArs: 0 }}</div>
+        </div>
+        <div class="cr-detail-cell text-center">
+          <div class="ud-label">Cuota</div>
+          <div class="ud-value ff-mono" style="color: var(--ff-accent)">{{ refinanceSimulation.installmentAmount | currencyArs: 0 }}</div>
+        </div>
+        <div class="cr-detail-cell text-center">
+          <div class="ud-label">Total a devolver</div>
+          <div class="ud-value ff-mono">{{ refinanceSimulation.totalToReturn | currencyArs: 0 }}</div>
+        </div>
+      </div>
+
+      <!-- Cronograma resumido (primeras 6 cuotas) -->
+      @if (refinanceSimulation.schedule && refinanceSimulation.schedule.length > 0) {
+        <div>
+          <p class="text-xs font-semibold mb-2" style="color: var(--ff-text-muted)">CRONOGRAMA (primeras cuotas)</p>
+          <table class="ff-table w-full text-xs">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Vencimiento</th>
+                <th class="text-right">Monto</th>
+                <th class="text-right">Capital</th>
+                <th class="text-right">Interés</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of refinanceSimulation.schedule.slice(0, 6); track row.installmentNumber) {
+                <tr>
+                  <td class="ff-mono">{{ row.installmentNumber }}</td>
+                  <td>{{ row.dueDate | date: 'dd/MM/yyyy' }}</td>
+                  <td class="text-right ff-mono">{{ row.amount | currencyArs: 0 }}</td>
+                  <td class="text-right ff-mono">{{ (row.capital ?? 0) | currencyArs: 0 }}</td>
+                  <td class="text-right ff-mono">{{ (row.interest ?? 0) | currencyArs: 0 }}</td>
+                </tr>
+              }
+              @if (refinanceSimulation.schedule.length > 6) {
+                <tr>
+                  <td colspan="5" class="text-center" style="color: var(--ff-text-muted)">
+                    ... y {{ refinanceSimulation.schedule.length - 6 }} cuotas más
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <p class="text-xs" style="color: var(--ff-text-muted)">
+        {{ refinanceSimulation.note }}
+      </p>
+    </div>
+
+  }
+
+  <ng-template pTemplate="footer">
+    @if (refinanceStep === 1) {
+      <div class="grid grid-cols-2 gap-3 w-full">
+        <button type="button" class="cancel-btn w-full" (click)="showRefinanceDialog = false">Cancelar</button>
+        <p-button
+          label="Simular nuevo crédito"
+          icon="pi pi-arrow-right"
+          severity="warning"
+          styleClass="w-full"
+          (onClick)="goToRefinanceStep2()"
+          [loading]="refinanceSimulating"
+          [disabled]="!refinanceStep1Valid"
         />
       </div>
     }
-  </div>
-  <ng-template pTemplate="footer">
-    <div class="grid grid-cols-2 gap-3 w-full">
-      <button type="button" class="cancel-btn w-full" (click)="showEarlyPayDialog = false">Cancelar</button>
-      <p-button
-        label="Confirmar pago"
-        severity="success"
-        styleClass="w-full"
-        (onClick)="confirmEarlyPay()"
-        [loading]="processingEarlyPay"
-      />
-    </div>
+    @if (refinanceStep === 2) {
+      <div class="grid grid-cols-3 gap-3 w-full">
+        <button type="button" class="cancel-btn w-full" (click)="refinanceStep = 1">Volver</button>
+        <button type="button" class="cancel-btn w-full" (click)="showRefinanceDialog = false">Cancelar</button>
+        <p-button
+          label="Confirmar refinanciación"
+          icon="pi pi-check"
+          severity="warning"
+          styleClass="w-full"
+          (onClick)="confirmRefinance()"
+          [loading]="processingRefinance"
+        />
+      </div>
+    }
   </ng-template>
 </p-dialog>
 

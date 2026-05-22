@@ -25,33 +25,49 @@
       />
     </div>
 
+    @if (sheet.status === "REGENERATED") {
+      <div class="mb-4 p-3 bg-gray-100 border border-gray-300 rounded-lg flex items-center gap-2">
+        <i class="pi pi-history text-gray-500"></i>
+        <span class="text-sm text-gray-700">
+          Esta planilla fue <strong>regenerada</strong>. Se muestra solo para auditoría. No se pueden registrar cobros ni intentos.
+        </span>
+      </div>
+    }
+
     <div class="flex flex-col gap-3">
       @for (item of items; track item.installmentId) {
         <div
-          class="p-4 bg-white border rounded-lg shadow-sm"
+          class="relative p-4 bg-white border rounded-lg shadow-sm"
           [class.border-red-200]="item.installmentStatus === 'OVERDUE'"
           [class.bg-red-50]="item.installmentStatus === 'OVERDUE'"
           [class.border-green-200]="item.installmentStatus === 'PAID'"
           [class.bg-green-50]="item.installmentStatus === 'PAID'"
         >
+          @if (isItemProcessing(item)) {
+            <div class="absolute inset-0 bg-white/60 backdrop-blur-[1px] rounded-lg z-10 flex items-center justify-center">
+              <p-progressSpinner [style]="{ width: '36px', height: '36px' }" strokeWidth="4" />
+            </div>
+          }
+
+          <!-- Badge prioritario: visita programada -->
+          @if (item.inclusionCriteria === "VISIT_DATE" && item.nextVisitDate) {
+            <div class="mb-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-purple-50 border border-purple-200">
+              <i class="pi pi-calendar-clock text-purple-700"></i>
+              <span class="text-sm font-semibold text-purple-800">
+                Visita programada para {{ item.nextVisitDate | date: "dd/MM/yyyy" }}
+              </span>
+            </div>
+          }
+
           <div class="flex items-start justify-between gap-4">
             <!-- Left: customer info -->
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="font-semibold text-gray-800">{{
-                  item.customerName
-                }}</span>
+              <div class="flex items-center gap-2 mb-1 flex-wrap">
+                <span class="font-semibold text-gray-800">{{ item.customerName }}</span>
                 <p-tag
                   [value]="installmentLabel(item.installmentStatus)"
                   [severity]="installmentSeverity(item.installmentStatus)"
                 />
-                @if (item.hasPendingPayment) {
-                  <span
-                    class="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5"
-                  >
-                    Cobro pendiente de aprobación
-                  </span>
-                }
               </div>
 
               @if (item.customerPhone) {
@@ -61,15 +77,41 @@
               }
               @if (item.customerAddress) {
                 <p class="text-sm text-gray-500">
-                  <i class="pi pi-map-marker mr-1"></i
-                  >{{ item.customerAddress }}
+                  <i class="pi pi-map-marker mr-1"></i>{{ item.customerAddress }}
                 </p>
               }
 
-              <p class="text-sm text-gray-600 mt-1">
-                Cuota {{ item.installmentNumber }} · Vence
-                {{ item.dueDate | date: "dd/MM/yyyy" }}
+              <p class="text-sm text-gray-700 mt-1">
+                {{ item.collectionReference }}
               </p>
+              <p class="text-xs text-gray-500">
+                Vence {{ item.dueDate | date: "dd/MM/yyyy" }}
+              </p>
+
+              <!-- Antecedente -->
+              @if (item.antecedentType) {
+                <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs">
+                  <div class="flex items-center gap-1 font-semibold text-amber-800">
+                    <i class="pi pi-info-circle"></i>
+                    <span>Última gestión: {{ antecedentLabel(item.antecedentType) }}</span>
+                    @if (item.antecedentDate) {
+                      <span class="text-amber-700 font-normal">· {{ item.antecedentDate | date: "dd/MM/yyyy" }}</span>
+                    }
+                  </div>
+                  @if (item.antecedentNotes) {
+                    <p class="text-amber-900 mt-0.5">{{ item.antecedentNotes }}</p>
+                  }
+                </div>
+              }
+
+              <button
+                type="button"
+                class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"
+                (click)="toggleLog(item)"
+              >
+                <i class="pi text-[10px]" [class.pi-chevron-down]="!isLogExpanded(item)" [class.pi-chevron-up]="isLogExpanded(item)"></i>
+                {{ isLogExpanded(item) ? "Ocultar historial" : "Ver historial de gestiones" }}
+              </button>
             </div>
 
             <div class="text-right shrink-0">
@@ -80,10 +122,7 @@
                     pTooltip="Monto al generar la planilla"
                     tooltipPosition="left"
                   >
-                    {{
-                      item.plannedAmount
-                        | currencyArs: 2
-                    }}
+                    {{ item.plannedAmount | currencyArs: 2 }}
                   </span>
                 }
                 <span
@@ -95,48 +134,166 @@
                   "
                   tooltipPosition="left"
                 >
-                  {{
-                    item.amountDue | currencyArs: 2
-                  }}
+                  {{ item.amountDue | currencyArs: 2 }}
                 </span>
               </div>
 
               @if (item.penaltyAmount > 0) {
                 <p class="text-xs text-red-600">
-                  Mora:
-                  {{
-                    item.penaltyAmount
-                      | currencyArs: 2
-                  }}
+                  Mora: {{ item.penaltyAmount | currencyArs: 2 }}
                 </p>
               }
               @if (item.amountPaid > 0) {
                 <p class="text-xs text-green-600">
-                  Pagado:
-                  {{
-                    item.amountPaid
-                      | currencyArs: 2
-                  }}
+                  Pagado: {{ item.amountPaid | currencyArs: 2 }}
                 </p>
               }
 
-              @if (canRegisterPayment(item)) {
-                <p-button
-                  label="Cobrar"
-                  icon="pi pi-money-bill"
-                  severity="success"
-                  styleClass="mt-2 font-semibold"
-                  (onClick)="openPaymentDialog(item)"
-                />
+              @if (item.hasPendingPayment) {
+                <div class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-orange-50 border border-orange-200">
+                  <i class="pi pi-clock text-orange-700"></i>
+                  <span class="text-xs font-semibold text-orange-900">
+                    Cobro pendiente de aprobación
+                  </span>
+                </div>
+              } @else if (canRegisterPayment(item) || canRegisterAttempt(item)) {
+                <div class="flex flex-col gap-2 mt-2 items-stretch w-44">
+                  @if (canRegisterPayment(item)) {
+                    <button
+                      type="button"
+                      class="h-10 px-3 rounded-lg font-semibold text-sm text-white bg-green-600 hover:bg-green-700 active:bg-green-800 flex items-center justify-center gap-2 shadow-sm transition-colors"
+                      (click)="openPaymentDialog(item)"
+                    >
+                      <i class="pi pi-money-bill"></i>
+                      Cobrar
+                    </button>
+                  }
+                  @if (canRegisterAttempt(item)) {
+                    <button
+                      type="button"
+                      class="h-9 px-3 rounded-lg font-semibold text-sm text-white bg-orange-500 hover:bg-orange-600 active:bg-orange-700 flex items-center justify-center gap-2 shadow-sm transition-colors"
+                      (click)="openAttemptDialog(item, 'NO_PAYMENT')"
+                    >
+                      <i class="pi pi-times-circle"></i>
+                      No pagó
+                    </button>
+                    <button
+                      type="button"
+                      class="h-9 px-3 rounded-lg font-semibold text-sm text-white bg-slate-600 hover:bg-slate-700 active:bg-slate-800 flex items-center justify-center gap-2 shadow-sm transition-colors"
+                      (click)="openAttemptDialog(item, 'NOT_FOUND')"
+                    >
+                      <i class="pi pi-user-minus"></i>
+                      No encontrado
+                    </button>
+                  } @else if (alreadyManagedToday(item) && item.antecedentType) {
+                    <div class="flex flex-col items-stretch gap-1.5 mt-1">
+                      <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200">
+                        <i class="pi pi-check-circle text-blue-700 text-xs"></i>
+                        <span class="text-[11px] font-semibold text-blue-900">
+                          Ya gestionada: {{ antecedentLabel(item.antecedentType) }}
+                        </span>
+                      </div>
+                      @if (canVoidTodayAttempt(item)) {
+                        <button
+                          type="button"
+                          class="h-8 px-2.5 rounded-md text-xs font-medium border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 active:bg-gray-100 flex items-center justify-center gap-1.5 transition-colors"
+                          (click)="openVoidDialog(item)"
+                        >
+                          <i class="pi pi-undo text-[10px]"></i>
+                          Anular gestión
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
               }
             </div>
           </div>
+
+          @if (isLogExpanded(item)) {
+            <div class="mt-3 pt-3 border-t border-gray-200">
+              <p class="text-xs font-semibold mb-2 text-gray-600">Historial de gestiones (más reciente primero)</p>
+              @if (loadingLogItemId === item.installmentId && !managementLogs[item.installmentId]) {
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                  <p-progressSpinner [style]="{ width: '16px', height: '16px' }" strokeWidth="4" />
+                  <span>Cargando...</span>
+                </div>
+              } @else if (managementLogs[item.installmentId] && managementLogs[item.installmentId].length === 0) {
+                <p class="text-xs text-gray-500">Sin gestiones previas registradas.</p>
+              } @else if (managementLogs[item.installmentId]) {
+                <ul class="flex flex-col gap-2">
+                  @for (entry of managementLogs[item.installmentId]; track entry.eventId) {
+                    <li class="flex items-start gap-2 text-xs"
+                      [class.opacity-50]="!!entry.voidedAt"
+                      [class.line-through]="!!entry.voidedAt"
+                    >
+                      <p-tag
+                        [value]="eventTypeLabel(entry.eventType)"
+                        [severity]="entry.voidedAt ? 'secondary' : eventSeverity(entry.eventType)"
+                        styleClass="!text-[10px] !py-0.5"
+                      />
+                      <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <span class="text-gray-700">{{ entry.createdAt | date: "dd/MM/yyyy HH:mm" }}</span>
+                          @if (entry.collectorName) {
+                            <span class="text-gray-500">· {{ entry.collectorName }}</span>
+                          }
+                          @if (entry.voidedAt) {
+                            <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800 no-underline" style="text-decoration: none;">ANULADO</span>
+                          }
+                          @if (entry.eventType === "PAYMENT" && entry.amount !== null) {
+                            <span class="font-semibold text-green-700">{{ entry.amount | currencyArs: 2 }}</span>
+                            @if (entry.paymentStatus) {
+                              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded"
+                                [class.bg-yellow-100]="entry.paymentStatus === 'PENDING'"
+                                [class.text-yellow-800]="entry.paymentStatus === 'PENDING'"
+                                [class.bg-green-100]="entry.paymentStatus === 'APPROVED'"
+                                [class.text-green-800]="entry.paymentStatus === 'APPROVED'"
+                                [class.bg-red-100]="entry.paymentStatus === 'REJECTED'"
+                                [class.text-red-800]="entry.paymentStatus === 'REJECTED'"
+                              >
+                                {{ entry.paymentStatus === "PENDING" ? "PEND." : entry.paymentStatus === "APPROVED" ? "APROB." : "RECH." }}
+                              </span>
+                            }
+                            @if (entry.isReversal) {
+                              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800">REV.</span>
+                            }
+                          }
+                          @if (entry.nextVisitDate) {
+                            <span class="text-purple-700">→ próxima visita {{ entry.nextVisitDate | date: "dd/MM/yyyy" }}</span>
+                          }
+                        </div>
+                        @if (entry.reason) {
+                          <p class="text-gray-700 mt-0.5">{{ entry.reason }}</p>
+                        }
+                        @if (entry.notes) {
+                          <p class="text-gray-500 mt-0.5 italic">"{{ entry.notes }}"</p>
+                        }
+                        @if (entry.rejectionReason) {
+                          <p class="text-red-700 mt-0.5">Rechazo: {{ entry.rejectionReason }}</p>
+                        }
+                        @if (entry.voidedAt) {
+                          <p class="mt-0.5 no-underline text-red-700" style="text-decoration: none;">
+                            Anulado el {{ entry.voidedAt | date: "dd/MM/yyyy HH:mm" }}
+                            @if (entry.voidedByName) {
+                              por {{ entry.voidedByName }}
+                            }
+                          </p>
+                        }
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
         </div>
       }
     </div>
   }
 </div>
 
+<!-- ── Diálogo de cobro ──────────────────────────────────────────────────────── -->
 <p-dialog
   [(visible)]="showPaymentDialog"
   header="Registrar Cobro"
@@ -148,17 +305,16 @@
   <div class="flex flex-col gap-4 py-2">
     @if (dialogItem) {
       <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
-        <p class="text-sm font-medium text-gray-700">
-          {{ dialogItem.customerName }} · Cuota
-          {{ dialogItem.installmentNumber }}
+        <p class="text-sm font-semibold text-gray-800">
+          {{ dialogItem.customerName }}
         </p>
-        <p class="text-sm text-gray-500 mt-0.5">
+        <p class="text-xs text-gray-600 mt-0.5">
+          {{ dialogItem.collectionReference }}
+        </p>
+        <p class="text-sm text-gray-500 mt-1">
           Saldo disponible:
           <span class="font-bold text-blue-600">
-            {{
-              availableBalance(dialogItem)
-                | currencyArs: 2
-            }}
+            {{ availableBalance(dialogItem) | currencyArs: 2 }}
           </span>
         </p>
       </div>
@@ -169,6 +325,7 @@
       <input
         type="number"
         [(ngModel)]="paymentAmount"
+        (ngModelChange)="onPaymentAmountChange()"
         min="0.01"
         step="0.01"
         [max]="dialogItem ? availableBalance(dialogItem) : null"
@@ -191,9 +348,7 @@
 
     @if (paymentMethod === "TRANSFER") {
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700"
-          >Referencia de transferencia</label
-        >
+        <label class="text-sm font-medium text-gray-700">Referencia de transferencia</label>
         <input
           type="text"
           pInputText
@@ -201,6 +356,23 @@
           maxlength="100"
           class="w-full"
           placeholder="Número de operación..."
+        />
+      </div>
+    }
+
+    @if (isPartialPayment()) {
+      <div class="flex flex-col gap-1 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+        <label class="text-sm font-semibold text-amber-900">
+          Próxima visita <span class="text-red-600">*</span>
+        </label>
+        <p class="text-xs text-amber-800 mb-1">
+          El cobro es parcial. Indicá cuándo volverás a visitar al cliente.
+        </p>
+        <input
+          type="date"
+          [(ngModel)]="paymentNextVisitDate"
+          [min]="todayIso"
+          class="native-date-input h-10"
         />
       </div>
     }
@@ -224,6 +396,7 @@
         type="button"
         class="cancel-btn w-full"
         (click)="showPaymentDialog = false"
+        [disabled]="processingPayment"
       >
         Cancelar
       </button>
@@ -233,7 +406,151 @@
         styleClass="w-full"
         (onClick)="confirmPayment()"
         [loading]="processingPayment"
-        [disabled]="!paymentAmount || paymentAmount <= 0"
+        [disabled]="!!processingPayment || !paymentAmount || paymentAmount <= 0 || (isPartialPayment() && !paymentNextVisitDate)"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ── Diálogo de intento (NO_PAYMENT / NOT_FOUND) ─────────────────────────── -->
+<p-dialog
+  [(visible)]="showAttemptDialog"
+  [header]="attemptTitle()"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    @if (attemptItem) {
+      <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
+        <p class="text-sm font-semibold text-gray-800">
+          {{ attemptItem.customerName }}
+        </p>
+        <p class="text-xs text-gray-600 mt-0.5">
+          {{ attemptItem.collectionReference }}
+        </p>
+        <p class="text-xs text-gray-500 mt-1">
+          Vence {{ attemptItem.dueDate | date: "dd/MM/yyyy" }}
+        </p>
+      </div>
+    }
+
+    @if (attemptType === "NO_PAYMENT") {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-gray-700">
+          Motivo <span class="text-red-600">*</span>
+        </label>
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="attemptReason"
+          maxlength="200"
+          class="w-full"
+          placeholder="Ej: no tenía plata, prometió pagar mañana..."
+        />
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-gray-700">
+          Próxima visita <span class="text-red-600">*</span>
+        </label>
+        <input
+          type="date"
+          [(ngModel)]="attemptNextVisitDate"
+          [min]="todayIso"
+          class="native-date-input h-10"
+        />
+      </div>
+    } @else {
+      <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
+        Registrar que el cliente <strong>no fue encontrado</strong> en el domicilio.
+        La cuota seguirá apareciendo en próximas planillas.
+      </div>
+    }
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-gray-700">Notas (opcional)</label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="attemptNotes"
+        rows="2"
+        maxlength="500"
+        class="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        placeholder="Observaciones..."
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <button
+        type="button"
+        class="cancel-btn w-full"
+        (click)="showAttemptDialog = false"
+        [disabled]="processingAttempt"
+      >
+        Cancelar
+      </button>
+      <p-button
+        label="Confirmar"
+        severity="warning"
+        styleClass="w-full"
+        (onClick)="confirmAttempt()"
+        [loading]="processingAttempt"
+        [disabled]="!!processingAttempt || (attemptType === 'NO_PAYMENT' && (!attemptReason.trim() || !attemptNextVisitDate))"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- ── Diálogo de anulación de gestión ─────────────────────────────────────── -->
+<p-dialog
+  [(visible)]="showVoidDialog"
+  header="Anular gestión"
+  [modal]="true"
+  [style]="{ width: '420px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-3 py-2">
+    @if (voidItem && voidItem.antecedentType) {
+      <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
+        <p class="text-sm font-semibold text-gray-800">
+          {{ voidItem.customerName }}
+        </p>
+        <p class="text-xs text-gray-600 mt-0.5">
+          {{ voidItem.collectionReference }}
+        </p>
+        <p class="text-sm text-gray-500 mt-1">
+          Gestión a anular: <strong>{{ antecedentLabel(voidItem.antecedentType) }}</strong>
+        </p>
+      </div>
+      <p class="text-sm text-gray-700">
+        Se va a anular la gestión registrada hoy. El evento queda en el historial marcado como
+        <strong>ANULADO</strong> (no se borra) y vas a poder volver a registrar la gestión correcta.
+      </p>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <button
+        type="button"
+        class="cancel-btn w-full"
+        (click)="showVoidDialog = false"
+        [disabled]="processingVoid"
+      >
+        Cancelar
+      </button>
+      <p-button
+        label="Anular"
+        icon="pi pi-undo"
+        severity="danger"
+        styleClass="w-full"
+        (onClick)="confirmVoid()"
+        [loading]="processingVoid"
+        [disabled]="!!processingVoid"
       />
     </div>
   </ng-template>

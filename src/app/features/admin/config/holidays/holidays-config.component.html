@@ -17,6 +17,7 @@
         pInputText
         type="number"
         [(ngModel)]="duplicateSourceYear"
+        data-cy="holidays-duplicate-source-year"
         class="w-32 h-11 px-3"
         min="2000"
         max="2999"
@@ -27,6 +28,7 @@
         icon="pi pi-copy"
         severity="secondary"
         [outlined]="true"
+        data-cy="holidays-preview-duplicate-btn"
         styleClass="h-11 px-5 rounded-xl"
         (onClick)="previewDuplicateToNextYear()"
         [loading]="previewLoading"
@@ -35,6 +37,7 @@
         label="Nuevo feriado"
         icon="pi pi-plus"
         severity="primary"
+        data-cy="holidays-open-create-btn"
         styleClass="h-11 px-5 rounded-xl shadow-sm"
         (onClick)="openCreateDialog()"
       />
@@ -160,6 +163,7 @@
       >
       <p-calendar
         [(ngModel)]="createForm.date"
+        inputId="create-holiday-date"
         dateFormat="dd/mm/yy"
         [showIcon]="true"
         [showOnFocus]="false"
@@ -194,6 +198,7 @@
       <input
         pInputText
         [(ngModel)]="createForm.name"
+        data-cy="holidays-create-name"
         maxlength="150"
         class="w-full h-11 px-3"
         placeholder="Ej: Feriado puente regional"
@@ -262,6 +267,7 @@
             </div>
             <p-checkbox
               [(ngModel)]="createForm.recalculateFutureInstallments"
+              data-cy="holidays-create-recalculate-checkbox"
               [binary]="true"
             />
           </div>
@@ -292,6 +298,7 @@
         label="Crear feriado"
         icon="pi pi-check"
         severity="primary"
+        data-cy="holidays-submit-create-btn"
         styleClass="h-11 px-5 rounded-xl"
         (onClick)="submitCreate()"
         [loading]="saving"
@@ -314,6 +321,7 @@
       >
       <p-calendar
         [(ngModel)]="editForm.date"
+        inputId="edit-holiday-date"
         dateFormat="dd/mm/yy"
         [showIcon]="true"
         [showOnFocus]="false"
@@ -349,6 +357,7 @@
       <input
         pInputText
         [(ngModel)]="editForm.name"
+        data-cy="holidays-edit-name"
         maxlength="150"
         class="w-full h-11 px-3"
       />
@@ -416,6 +425,7 @@
             </div>
             <p-checkbox
               [(ngModel)]="editForm.recalculateFutureInstallments"
+              data-cy="holidays-edit-recalculate-checkbox"
               [binary]="true"
             />
           </div>
@@ -446,6 +456,7 @@
         label="Guardar"
         icon="pi pi-check"
         severity="primary"
+        data-cy="holidays-submit-edit-btn"
         styleClass="h-11 px-5 rounded-xl"
         (onClick)="submitEdit()"
         [loading]="saving"
@@ -642,6 +653,7 @@
         label="Confirmar duplicación"
         icon="pi pi-check"
         severity="primary"
+        data-cy="holidays-confirm-duplicate-btn"
         styleClass="h-11 px-5 rounded-xl"
         (onClick)="confirmDuplicateToNextYear()"
         [loading]="duplicating"

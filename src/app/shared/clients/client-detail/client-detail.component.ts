@@ -1,19 +1,22 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs/operators';
 import { ButtonModule } from 'primeng/button';
-import { CustomersService } from '../../../features/seller/clients/customers.service';
-import { CustomerDetail as CustomerApiDetail } from '../../../features/seller/models/customer.model';
+import { finalize } from 'rxjs/operators';
 import { HeaderService } from '../../../core/services/header.service';
+import { CustomersService } from '../../../features/seller/clients/customers.service';
+import { Credit as ApiCredit } from '../../../features/seller/models/credit.model';
+import { CustomerDetail as CustomerApiDetail } from '../../../features/seller/models/customer.model';
+import { CreditsService } from '../../../features/seller/operations/credits.service';
+import { AppRoutes } from '../../models/enums/routes.enum';
 import { ClientDetail } from '../../models/interface/client';
+import { Credit } from '../../models/interface/credit';
 import { ErrorStateComponent } from '../../states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../states/loading-state/loading-state.component';
 import { ClientContactarComponent } from './tabs/client-contactar/client-contactar.component';
 import { ClientCreditsComponent } from './tabs/client-credits/client-credits.component';
 import { ClientDocumentsComponent } from './tabs/client-documents/client-documents.component';
 import { ClientHistorialComponent } from './tabs/client-historial/client-historial.component';
-import { AppRoutes } from '../../models/enums/routes.enum';
 
 type TabId = 'creditos' | 'historial' | 'documentos' | 'contactar';
 
@@ -36,7 +39,9 @@ const AVATAR_COLORS = [
  */
 function toClientDetail(customer: CustomerApiDetail): ClientDetail {
   const parts = customer.fullName.trim().split(/\s+/);
-  const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
+  const initials = (
+    (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')
+  ).toUpperCase();
   const colorIdx = customer.fullName.charCodeAt(0) % AVATAR_COLORS.length;
 
   return {
@@ -54,6 +59,36 @@ function toClientDetail(customer: CustomerApiDetail): ClientDetail {
     historial: [],
     documents: [],
     contactHistory: [],
+  };
+}
+
+/**
+ * Convierte un crédito de la API al modelo visual simplificado para la pestaña de créditos del cliente.
+ * @param c - Crédito de la API
+ */
+function toUiCredit(c: ApiCredit): Credit | null {
+  const statusMap: Record<string, Credit['estado'] | null> = {
+    ACTIVE: 'ACTIVO',
+    PENDING_APPROVAL: 'ACTIVO',
+    SETTLED: 'PAGADO',
+    REJECTED: null,
+  };
+  const estado = statusMap[c.status] ?? 'ACTIVO';
+  if (estado === null) return null;
+  return {
+    id: c.id,
+    tipo: c.type === 'SALE' ? 'Venta' : 'Préstamo',
+    producto: c.customerName,
+    montoOriginal: c.totalAmount,
+    saldoPendiente: c.totalAmount,
+    cuotaActual: 1,
+    totalCuotas: c.installmentsCount,
+    cuotaMensual: 0,
+    proximoVencimiento: c.approvedAt ?? c.createdAt,
+    tasa:
+      c.interestRate != null ? `${(c.interestRate * 100).toFixed(2)}%` : 'N/A',
+    estado,
+    progreso: estado === 'PAGADO' ? 100 : 0,
   };
 }
 
@@ -78,6 +113,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly headerService = inject(HeaderService);
   private readonly customersService = inject(CustomersService);
+  private readonly creditsService = inject(CreditsService);
 
   client: ClientDetail | null = null;
   loading = false;
@@ -124,7 +160,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
       this.client?.credits
         .filter((c) => c.estado !== 'PAGADO')
         .reduce((sum, c) => sum + c.saldoPendiente, 0) ?? 0
-      );
+    );
   }
 
   /**
@@ -151,6 +187,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
         next: (customer) => {
           this.client = toClientDetail(customer);
           this.updateBreadcrumbs();
+          this.loadCredits(id);
         },
         error: (error: { status?: number; message?: string }) => {
           this.client = null;
@@ -163,6 +200,26 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
           this.updateBreadcrumbs();
         },
       });
+  }
+
+  /**
+   * Carga los créditos del cliente desde la API y los mapea al modelo visual de la pestaña.
+   * @param customerId - ID del cliente
+   */
+  private loadCredits(customerId: string): void {
+    this.creditsService.list({ customerId }).subscribe({
+      next: (credits) => {
+        if (this.client) {
+          this.client = {
+            ...this.client,
+            credits: credits
+              .map(toUiCredit)
+              .filter((c): c is Credit => c !== null),
+          };
+        }
+      },
+      error: () => {},
+    });
   }
 
   /**

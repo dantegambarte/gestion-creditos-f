@@ -23,7 +23,9 @@ import {
   CashRegister,
   CashRegisterClosePayload,
   CashRegisterDashboard,
+  CashRegisterDetail,
   CashRegisterFilters,
+  CashRegisterPreClose,
   DifferenceStatus,
 } from '../models/cash-register.model';
 import { CashRegisterService } from './cash-register.service';
@@ -78,13 +80,22 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   ];
 
   showCloseDialog = false;
+  preClose: CashRegisterPreClose | null = null;
+  loadingPreClose = false;
   declaredCash: number | null = null;
   observations = '';
   closing = false;
   closePendingError: string | null = null;
 
+  /** Diferencia calculada en tiempo real: efectivo declarado - efectivo esperado. */
+  get closeDifference(): number {
+    if (this.declaredCash == null || !this.preClose) return 0;
+    return this.declaredCash - this.preClose.efectivo.esperado;
+  }
+
   showDetailDialog = false;
-  selectedRegister: CashRegister | null = null;
+  selectedRegister: CashRegisterDetail | null = null;
+  loadingDetail = false;
 
   ngOnInit(): void {
     this.header.set([{ label: 'Caja' }]);
@@ -111,6 +122,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (d) => {
           this.dashboard = d;
+          this.closedToday = d.isClosed;
         },
       });
   }
@@ -132,6 +144,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (d) => {
           this.dashboard = d;
+          this.closedToday = d.isClosed;
         },
         error: (err: AppError) => {
           this.errorDashboard = err;
@@ -169,13 +182,27 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abre el diálogo para cerrar la caja.
+   * Abre el diálogo de cierre cargando el resumen pre-cierre desde el servidor.
    */
   openCloseDialog(): void {
-    this.declaredCash = this.dashboard?.cashAmount ?? 0;
+    this.declaredCash = null;
     this.observations = '';
     this.closePendingError = null;
+    this.preClose = null;
+    this.loadingPreClose = true;
     this.showCloseDialog = true;
+    this.service
+      .getPreClose()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (pc) => {
+          this.preClose = pc;
+          this.loadingPreClose = false;
+        },
+        error: () => {
+          this.loadingPreClose = false;
+        },
+      });
   }
 
   /**
@@ -212,9 +239,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
             detail: 'Cierre de caja registrado correctamente.',
             life: 5000,
           });
-          this.selectedRegister = reg;
-          this.showDetailDialog = true;
           this.loadDashboard();
+          this.openDetail(reg);
         },
         error: (err: AppError) => {
           if (err.status === 409) {
@@ -246,12 +272,27 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abre el diálogo para ver los detalles de un registro de caja.
-   * @param reg - El registro de caja para el cual mostrar detalles.
+   * Abre el diálogo de detalle cargando el breakdown completo desde el servidor.
+   * @param reg - El registro de caja de la lista (se usa su id para el fetch).
    */
   openDetail(reg: CashRegister): void {
-    this.selectedRegister = reg;
+    this.selectedRegister = null;
+    this.loadingDetail = true;
     this.showDetailDialog = true;
+    this.service
+      .getById(reg.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (detail) => {
+          this.selectedRegister = detail;
+          this.loadingDetail = false;
+        },
+        error: () => {
+          this.loadingDetail = false;
+          this.showDetailDialog = false;
+          this.msg.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el detalle.', life: 4000 });
+        },
+      });
   }
 
   /**
@@ -313,5 +354,55 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     if (!iso) return '—';
     const d = iso.split('T')[0].split('-');
     return `${d[2]}/${d[1]}/${d[0]}`;
+  }
+
+  /**
+   * Formatea una fecha ISO con hora en el formato dd/mm/yyyy HH:mm.
+   * @param iso
+   * @returns
+   */
+  formatDateTime(iso: string): string {
+    if (!iso) return '—';
+    const dt = new Date(iso);
+    const date = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+    const time = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+    return `${date} ${time}`;
+  }
+
+  /**
+   * Devuelve la etiqueta de método de pago.
+   * @param method
+   * @returns
+   */
+  paymentMethodLabel(method: string): string {
+    return method === 'CASH' ? 'Efectivo' : 'Transferencia';
+  }
+
+  /**
+   * Suma amountReceived de todos los cobros del detalle seleccionado.
+   */
+  get detailPaymentsTotal(): number {
+    return this.selectedRegister?.breakdown.payments.reduce((s, p) => s + p.amountReceived, 0) ?? 0;
+  }
+
+  /**
+   * Suma amount de todos los enganches del detalle seleccionado.
+   */
+  get detailDownPaymentsTotal(): number {
+    return this.selectedRegister?.breakdown.downPayments.reduce((s, p) => s + p.amount, 0) ?? 0;
+  }
+
+  /**
+   * Suma amount de todos los gastos del detalle seleccionado.
+   */
+  get detailExpensesTotal(): number {
+    return this.selectedRegister?.breakdown.expenses.reduce((s, e) => s + e.amount, 0) ?? 0;
+  }
+
+  /**
+   * Suma totalPaid de todas las liquidaciones del detalle seleccionado.
+   */
+  get detailLiquidationsTotal(): number {
+    return this.selectedRegister?.breakdown.liquidations.reduce((s, l) => s + l.totalPaid, 0) ?? 0;
   }
 }

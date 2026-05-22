@@ -24,6 +24,8 @@ import {
   ProductReportRow,
   ProductReportRowRaw,
   ReportDateRange,
+  SellerReportRow,
+  SellerReportRowRaw,
   SummaryReport,
   SummaryReportRaw,
   UpcomingByCustomer,
@@ -162,6 +164,21 @@ function toCollectorRow(r: CollectorReportRowRaw): CollectorReportRow {
 }
 
 /**
+ * Convierte un objeto SellerReportRowRaw a SellerReportRow.
+ * @param r
+ * @returns
+ */
+function toSellerRow(r: SellerReportRowRaw): SellerReportRow {
+  return {
+    sellerId: r.seller_id,
+    sellerName: r.seller_name,
+    role: r.role,
+    totalCredits: r.total_credits,
+    totalAmount: r.total_amount,
+  };
+}
+
+/**
  * Convierte un objeto ProductReportRowRaw a ProductReportRow.
  * @param r
  * @returns
@@ -226,10 +243,12 @@ export class ReportsService {
   /**
    * Obtiene el informe de cobradores para un rango de fechas.
    * @param range
+   * @param nocache Parámetro opcional para evitar caching HTTP 304
    * @returns
    */
   getCollectorsReport(
     range: ReportDateRange,
+    nocache?: boolean,
   ): Observable<CollectorReportRow[]> {
     if (!range.dateFrom || !range.dateTo) {
       return throwError(() => ({
@@ -237,10 +256,38 @@ export class ReportsService {
         message: 'Los parámetros date_from y date_to son obligatorios.',
       }));
     }
-    const params = { date_from: range.dateFrom, date_to: range.dateTo };
+    const params: Record<string, string> = { date_from: range.dateFrom, date_to: range.dateTo };
+    if (nocache) {
+      params['t'] = Date.now().toString();
+    }
     return this.api
       .get<CollectorReportRowRaw[]>('reports/collectors', params)
       .pipe(map((items) => items.map(toCollectorRow)));
+  }
+
+  /**
+   * Obtiene el informe de vendedores para un rango de fechas.
+   * @param range
+   * @param nocache Parámetro opcional para evitar caching HTTP 304
+   * @returns
+   */
+  getSellersReport(
+    range: ReportDateRange,
+    nocache?: boolean,
+  ): Observable<SellerReportRow[]> {
+    if (!range.dateFrom || !range.dateTo) {
+      return throwError(() => ({
+        status: 400,
+        message: 'Los parámetros date_from y date_to son obligatorios.',
+      }));
+    }
+    const params: Record<string, string> = { date_from: range.dateFrom, date_to: range.dateTo };
+    if (nocache) {
+      params['t'] = Date.now().toString();
+    }
+    return this.api
+      .get<SellerReportRowRaw[]>('reports/sellers', params)
+      .pipe(map((items) => items.map(toSellerRow)));
   }
 
   /**
@@ -290,10 +337,13 @@ function toSummaryReport(r: SummaryReportRaw): SummaryReport {
     pendingPaymentsCount: r.pending_payments_count,
     pendingCreditsCount: r.pending_credits_count,
     activePortfolioBalance: r.active_portfolio_balance,
+    activeCreditsCount: r.active_credits_count,
     overdueCount: r.overdue_count,
     overdueAmount: r.overdue_amount,
     upcoming7dCount: r.upcoming_7d_count,
     upcoming7dAmount: r.upcoming_7d_amount,
+    refinancedMonthCount: r.refinanced_month_count,
+    refinancedMonthAmount: r.refinanced_month_amount,
   };
 }
 

@@ -50,7 +50,10 @@ export interface Client {
   name: string;
   phone: string;
   credits: number;
-  risk: 'Al dia' | 'Mora leve' | 'Mora alta';
+  risk: string;
+  email?: string;
+  address?: string;
+  collectorId?: string;
 }
 
 export interface ClientOperation {
@@ -109,7 +112,7 @@ export interface ClientDetail {
   email: string;
   direccion: string;
   ciudad: string;
-  risk: 'Al dia' | 'Mora leve' | 'Mora alta';
+  risk: string;
   credits: Credit[];
   historial: HistorialEvent[];
   documents: ClientDocument[];

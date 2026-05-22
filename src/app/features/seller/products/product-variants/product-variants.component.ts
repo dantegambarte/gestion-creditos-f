@@ -66,6 +66,7 @@ export class ProductVariantsComponent implements OnInit {
   productName = '';
 
   showDialog = false;
+  showPanel = false;
   editingVariant: ProductVariant | null = null;
   dialogSubmitting = false;
   dialogError: string | null = null;
@@ -73,6 +74,16 @@ export class ProductVariantsComponent implements OnInit {
 
   get isAdmin(): boolean {
     return this.auth.hasRole(UserRoleEnum.ADMIN);
+  }
+
+  get hasColor(): boolean {
+    return this.variants.some((v) => !!v.color);
+  }
+  get hasSize(): boolean {
+    return this.variants.some((v) => !!v.size);
+  }
+  get hasCapacity(): boolean {
+    return this.variants.some((v) => !!v.capacity);
   }
 
   private get productId(): string {
@@ -89,10 +100,19 @@ export class ProductVariantsComponent implements OnInit {
     this.loadVariants();
   }
 
-    // TODO: agregar documentacion de las funciones
+  // TODO: agregar documentacion de las funciones
 
   goBack(): void {
     this.location.back();
+  }
+
+  /**
+   * Devuelve un resumen legible de los atributos de la variante (color, talle, capacidad).
+   * @param v - Variante del producto.
+   */
+  variantSummary(v: ProductVariant): string {
+    const parts = [v.color, v.size, v.capacity].filter((s) => !!s);
+    return parts.length > 0 ? parts.join(' · ') : 'Estándar';
   }
 
   openCreate(): void {
@@ -100,6 +120,7 @@ export class ProductVariantsComponent implements OnInit {
     this.form.reset({ currentPrice: null });
     this.dialogError = null;
     this.showDialog = true;
+    this.showPanel = true;
   }
 
   openEdit(variant: ProductVariant): void {
@@ -112,6 +133,16 @@ export class ProductVariantsComponent implements OnInit {
     });
     this.dialogError = null;
     this.showDialog = true;
+    this.showPanel = true;
+  }
+
+  /** Cierra el panel lateral de creación/edición. */
+  closePanel(): void {
+    this.showPanel = false;
+    this.showDialog = false;
+    this.editingVariant = null;
+    this.form.reset({ currentPrice: null });
+    this.dialogError = null;
   }
 
   saveDialog(): void {
@@ -179,7 +210,9 @@ export class ProductVariantsComponent implements OnInit {
       message: `¿Desactivar variante <strong>${variant.color ?? ''} ${variant.size ?? ''} ${variant.capacity ?? ''}</strong>?`,
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger',
+      acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.variantsService.deactivate(variant.id).subscribe({
           next: () => {
@@ -200,6 +233,9 @@ export class ProductVariantsComponent implements OnInit {
       message: '¿Activar esta variante?',
       acceptLabel: 'Activar',
       rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.variantsService.activate(variant.id).subscribe({
           next: () => {
@@ -248,7 +284,10 @@ export class ProductVariantsComponent implements OnInit {
         this.productName = p.title;
         this.header.set([
           { label: 'Productos', route: `/${this.routePrefix}/products` },
-          { label: p.title, route: `/${this.routePrefix}/products/${this.productId}` },
+          {
+            label: p.title,
+            route: `/${this.routePrefix}/products/${this.productId}`,
+          },
           { label: 'Variantes' },
         ]);
       },

@@ -11,7 +11,8 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { Subject } from 'rxjs';
+import { MessageModule } from 'primeng/message';
+import { Subject, catchError, of } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
@@ -21,6 +22,7 @@ import { Expense, ExpenseCreatePayload } from './expense.model';
 import { ExpensesService } from './expenses.service';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategory } from '../models/interface/expenses';
+import { CashRegisterService } from '../cash-register/cash-register.service';
 
 @Component({
   selector: 'app-expenses',
@@ -38,6 +40,7 @@ import { ExpenseCategory } from '../models/interface/expenses';
     TagModule,
     ToastModule,
     LoadingStateComponent,
+    MessageModule,
   ],
   providers: [MessageService],
   templateUrl: './expenses.component.html',
@@ -47,7 +50,9 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   private readonly catSvc = inject(ExpenseCategoriesService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
+  private readonly cashRegisterSvc = inject(CashRegisterService);
   readonly fmt = inject(FormatService);
+  isCashClosed = false;
   private destroy$ = new Subject<void>();
 
   rows: Expense[] = [];
@@ -105,8 +110,23 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.header.set([{ label: 'Gastos' }]);
+    this.checkCashRegisterStatus();
     this.loadCategories();
     this.load();
+  }
+
+  /**
+   * Verifica el estado de cierre de caja del día actual.
+   */
+  private checkCashRegisterStatus(): void {
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+      });
   }
 
   ngOnDestroy(): void {
@@ -210,8 +230,37 @@ export class ExpensesComponent implements OnInit, OnDestroy {
       !this.createDescription.trim()
     )
       return;
+
+    this.saving = true;
+    this.createError = '';
+
+    this.cashRegisterSvc
+      .getDashboard()
+      .pipe(
+        catchError(() => of(null)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((dashboard) => {
+        this.isCashClosed = dashboard?.isClosed ?? false;
+
+        if (this.isCashClosed) {
+          this.saving = false;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail: 'No puedes crear gastos. La caja del día está CERRADA.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processCreateExpense();
+      });
+  }
+
+  private processCreateExpense(): void {
     const payload: ExpenseCreatePayload = {
-      amount: this.createAmount,
+      amount: this.createAmount!,
       description: this.createDescription.trim(),
       paymentMethod: this.createPaymentMethod,
       expenseDate: this.createExpenseDate || undefined,
@@ -225,8 +274,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     if (this.createCategoryId) {
       payload.categoryId = this.createCategoryId;
     }
-    this.saving = true;
-    this.createError = '';
+
     this.svc
       .create(payload)
       .pipe(

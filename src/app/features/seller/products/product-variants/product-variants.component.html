@@ -51,12 +51,15 @@
   } @else {
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <!-- ── LEFT: table ── -->
-      <div [class]="isAdmin ? 'lg:col-span-7' : 'lg:col-span-12'">
+      <div [class]="showPanel ? 'lg:col-span-7' : 'lg:col-span-12'">
         <div class="ff-panel overflow-hidden">
           <p-table [value]="variants" styleClass="p-datatable-sm">
             <ng-template pTemplate="header">
               <tr>
                 <th>VARIANTE</th>
+                @if (hasColor) { <th>COLOR</th> }
+                @if (hasSize) { <th>TALLE</th> }
+                @if (hasCapacity) { <th>CAPACIDAD</th> }
                 <th class="text-right">PRECIO</th>
                 <th class="text-center">DISPONIBLES</th>
                 <th class="text-center">RESERVADAS</th>
@@ -68,100 +71,47 @@
             <ng-template pTemplate="body" let-v>
               <tr>
                 <td>
-                  <span
-                    class="font-medium"
-                    style="color: var(--ff-text-primary)"
-                  >
-                    {{
-                      v.color && v.capacity
-                        ? v.color + " · " + v.capacity
-                        : v.color || v.capacity || "—"
-                    }}
-                  </span>
-                  @if (v.size) {
-                    <span
-                      class="text-xs ml-1"
-                      style="color: var(--ff-text-muted)"
-                      >{{ v.size }}</span
-                    >
-                  }
+                  <span class="font-medium" style="color: var(--ff-text-primary)">{{ variantSummary(v) }}</span>
                 </td>
-                <td
-                  class="text-right ff-mono font-bold"
-                  style="color: var(--ff-accent)"
-                >
+                @if (hasColor) { <td style="color: var(--ff-text-secondary)">{{ v.color || "—" }}</td> }
+                @if (hasSize) { <td style="color: var(--ff-text-secondary)">{{ v.size || "—" }}</td> }
+                @if (hasCapacity) { <td style="color: var(--ff-text-secondary)">{{ v.capacity || "—" }}</td> }
+                <td class="text-right ff-mono font-bold" style="color: var(--ff-accent)">
                   {{ v.currentPrice | currencyArs: 2 }}
                 </td>
                 <td class="text-center">
-                  @if (
-                    (v.availableCount ?? 0) <= 3 && (v.availableCount ?? 0) > 0
-                  ) {
-                    <span
-                      class="font-bold ff-mono"
-                      style="color: var(--ff-warning)"
-                    >
-                      {{ v.availableCount }}
-                      <i class="pi pi-arrow-down text-xs ml-0.5"></i>
+                  @if ((v.availableCount ?? 0) <= 3 && (v.availableCount ?? 0) > 0) {
+                    <span class="font-bold ff-mono" style="color: var(--ff-warning)">
+                      {{ v.availableCount }}<i class="pi pi-arrow-down text-xs ml-0.5"></i>
                     </span>
                   } @else {
-                    <span
-                      class="font-bold ff-mono"
-                      style="color: var(--ff-success)"
-                      >{{ v.availableCount ?? "—" }}</span
-                    >
+                    <span class="font-bold ff-mono" style="color: var(--ff-success)">{{ v.availableCount ?? "—" }}</span>
                   }
                 </td>
-                <td
-                  class="text-center ff-mono"
-                  style="color: var(--ff-text-secondary)"
-                >
-                  {{ v.reservedCount ?? "—" }}
-                </td>
-                <td
-                  class="text-center ff-mono"
-                  style="color: var(--ff-text-muted)"
-                >
-                  {{ v.soldCount ?? "—" }}
-                </td>
+                <td class="text-center ff-mono" style="color: var(--ff-text-secondary)">{{ v.reservedCount ?? "—" }}</td>
+                <td class="text-center ff-mono" style="color: var(--ff-text-muted)">{{ v.soldCount ?? "—" }}</td>
                 <td class="text-center">
                   <span
                     class="ff-badge"
                     [class.ff-badge--activo]="v.status === 'ACTIVE'"
                     [class.ff-badge--inactivo]="v.status !== 'ACTIVE'"
-                    >{{ v.status === "ACTIVE" ? "ACTIVO" : "INACTIVO" }}</span
-                  >
+                  >{{ v.status === "ACTIVE" ? "ACTIVO" : "INACTIVO" }}</span>
                 </td>
                 <td>
                   <div class="flex items-center gap-3 flex-wrap">
-                    <a
-                      class="prod-action-link text-xs"
-                      (click)="navigateToUnits(v)"
-                      style="cursor: pointer"
-                    >
+                    <a class="prod-action-link text-xs" style="cursor: pointer" (click)="navigateToUnits(v)">
                       Ver unidades
                     </a>
                     @if (isAdmin) {
-                      <a
-                        class="prod-action-link text-xs"
-                        (click)="openEdit(v)"
-                        style="cursor: pointer"
-                      >
+                      <a class="prod-action-link text-xs" style="cursor: pointer" (click)="openEdit(v)">
                         Editar
                       </a>
                       @if (v.status === "ACTIVE") {
-                        <a
-                          class="prod-action-link text-xs"
-                          style="color: var(--ff-danger); cursor: pointer"
-                          (click)="confirmDeactivate(v)"
-                        >
+                        <a class="prod-action-link text-xs" style="color: var(--ff-danger); cursor: pointer" (click)="confirmDeactivate(v)">
                           Desactivar
                         </a>
                       } @else {
-                        <a
-                          class="prod-action-link text-xs"
-                          (click)="confirmActivate(v)"
-                          style="cursor: pointer"
-                        >
+                        <a class="prod-action-link text-xs" style="cursor: pointer" (click)="confirmActivate(v)">
                           Activar
                         </a>
                       }
@@ -172,11 +122,7 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
               <tr>
-                <td
-                  colspan="7"
-                  class="text-center py-8"
-                  style="color: var(--ff-text-muted)"
-                >
+                <td [attr.colspan]="7 + (hasColor ? 1 : 0) + (hasSize ? 1 : 0) + (hasCapacity ? 1 : 0)" class="text-center py-8" style="color: var(--ff-text-muted)">
                   Sin variantes registradas.
                 </td>
               </tr>
@@ -185,62 +131,41 @@
         </div>
       </div>
 
-      <!-- ── RIGHT: inline form (admin only) ── -->
-      @if (isAdmin) {
+      <!-- ── RIGHT: panel a demanda (admin only) ── -->
+      @if (isAdmin && showPanel) {
         <div class="lg:col-span-5">
           <div class="ff-panel p-6 space-y-4">
-            <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
-              {{ editingVariant ? "Editar variante" : "Nueva variante" }}
-            </h3>
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
+                {{ editingVariant ? "Editar variante" : "Nueva variante" }}
+              </h3>
+              <button
+                type="button"
+                class="p-1 rounded-lg"
+                style="color: var(--ff-text-muted)"
+                (click)="closePanel()"
+                title="Cerrar"
+              >
+                <i class="pi pi-times text-sm"></i>
+              </button>
+            </div>
 
             <form [formGroup]="form" (ngSubmit)="saveDialog()">
               <div class="space-y-4">
                 <div class="flex flex-col gap-1">
-                  <label
-                    class="text-xs font-bold uppercase tracking-wider"
-                    style="color: var(--ff-text-muted)"
-                    >Color</label
-                  >
-                  <input
-                    pInputText
-                    formControlName="color"
-                    placeholder="Ej: Negro, Azul marino..."
-                    class="w-full h-11"
-                  />
+                  <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--ff-text-muted)">Color</label>
+                  <input pInputText formControlName="color" placeholder="Ej: Negro, Azul marino..." class="w-full h-11" />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <label
-                    class="text-xs font-bold uppercase tracking-wider"
-                    style="color: var(--ff-text-muted)"
-                    >Talle</label
-                  >
-                  <input
-                    pInputText
-                    formControlName="size"
-                    placeholder="Ej: S, M, L, XL, 42..."
-                    class="w-full h-11"
-                  />
+                  <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--ff-text-muted)">Talle</label>
+                  <input pInputText formControlName="size" placeholder="Ej: S, M, L, XL, 42..." class="w-full h-11" />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <label
-                    class="text-xs font-bold uppercase tracking-wider"
-                    style="color: var(--ff-text-muted)"
-                    >Capacidad</label
-                  >
-                  <input
-                    pInputText
-                    formControlName="capacity"
-                    placeholder="Ej: 128 GB, 256 GB..."
-                    class="w-full h-11"
-                  />
+                  <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--ff-text-muted)">Capacidad</label>
+                  <input pInputText formControlName="capacity" placeholder="Ej: 128 GB, 256 GB..." class="w-full h-11" />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <label
-                    class="text-xs font-bold uppercase tracking-wider"
-                    style="color: var(--ff-text-muted)"
-                  >
-                    Precio de venta *
-                  </label>
+                  <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--ff-text-muted)">Precio de venta *</label>
                   <p-inputNumber
                     formControlName="currentPrice"
                     mode="currency"
@@ -250,34 +175,21 @@
                     inputStyleClass="w-full h-11 rounded-xl"
                     [class.ng-invalid]="isInvalid('currentPrice')"
                   />
-                  <small class="text-xs" style="color: var(--ff-text-muted)">
-                    Completá solo los atributos que aplican. El precio es
-                    obligatorio.
-                  </small>
+                  <small class="text-xs" style="color: var(--ff-text-muted)">Completá solo los atributos que aplican. El precio es obligatorio.</small>
                   @if (isInvalid("currentPrice")) {
-                    <small style="color: var(--ff-danger)"
-                      >Precio requerido y mayor a 0.</small
-                    >
+                    <small style="color: var(--ff-danger)">Precio requerido y mayor a 0.</small>
                   }
                 </div>
 
                 @if (dialogError) {
-                  <p
-                    class="text-sm px-3 py-2 rounded-lg"
-                    style="
-                      color: var(--ff-danger);
-                      background: rgba(239, 68, 68, 0.1);
-                    "
-                  >
+                  <p class="text-sm px-3 py-2 rounded-lg" style="color: var(--ff-danger); background: rgba(239, 68, 68, 0.1)">
                     {{ dialogError }}
                   </p>
                 }
 
                 <p-button
                   type="submit"
-                  [label]="
-                    editingVariant ? 'Guardar cambios' : 'Agregar variante'
-                  "
+                  [label]="editingVariant ? 'Guardar cambios' : 'Agregar variante'"
                   severity="primary"
                   styleClass="w-full justify-center h-11 rounded-xl"
                   [loading]="dialogSubmitting"
@@ -288,7 +200,7 @@
                   severity="secondary"
                   [text]="true"
                   styleClass="w-full justify-center h-9"
-                  (onClick)="openCreate()"
+                  (onClick)="closePanel()"
                 />
               </div>
             </form>

@@ -2,7 +2,9 @@ export type CreditStatus =
   | 'PENDING_APPROVAL'
   | 'ACTIVE'
   | 'SETTLED'
-  | 'REJECTED';
+  | 'REJECTED'
+  | 'EXPIRED'
+  | 'REFINANCED';
 export type CreditType = 'SALE' | 'LOAN';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 export type InstallmentStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'PARTIAL';
@@ -58,6 +60,22 @@ export interface CreditUnit {
   productName: string;
 }
 
+export interface RefinancingChainNode {
+  id: string;
+  status: CreditStatus;
+  createdAt: string;
+  depth: number;
+}
+
+export interface RefinancingChain {
+  predecessorId: string | null;
+  successorId: string | null;
+  chainDepth: number;
+  chain: RefinancingChainNode[];
+  isRefinancing: boolean;
+  isPredecessor: boolean;
+}
+
 export interface CreditDetail extends Credit {
   rejectionReason: string | null;
   notes: string | null;
@@ -73,6 +91,8 @@ export interface CreditDetail extends Credit {
   settledAt: string | null;
   settlementAmount: number | null;
   settlementType: string | null;
+  refinancedFromCreditId: string | null;
+  refinancingChain: RefinancingChain | null;
 }
 
 export interface CreditListFilters {
@@ -228,6 +248,15 @@ export interface CreditDetailRaw extends CreditRaw {
   settled_at: string | null;
   settlement_amount: number | null;
   settlement_type: string | null;
+  refinanced_from_credit_id: string | null;
+  refinancing_chain?: {
+    predecessor_id: string | null;
+    successor_id: string | null;
+    chain_depth: number;
+    chain: { id: string; status: string; created_at: string; depth: number }[];
+    is_refinancing: boolean;
+    is_predecessor: boolean;
+  } | null;
 }
 
 export interface ApprovePayload {
@@ -247,6 +276,50 @@ export interface EarlySettlementResult {
   creditId: string;
   settlementAmount: number;
   paymentMethod: string;
+}
+
+export interface RefinancePayload {
+  installmentsCount: number;
+  paymentFrequency: PaymentFrequency;
+  reason: string;
+  extraCharges?: number;
+  notes?: string;
+}
+
+export interface RefinanceResult {
+  originalCreditId: string;
+  newCredit: {
+    id: string;
+    type: string;
+    totalAmount: number;
+    installmentsCount: number;
+    paymentFrequency: PaymentFrequency;
+    status: CreditStatus;
+    refinancedFromCreditId: string;
+    createdAt: string;
+  };
+  pendingBalance: number;
+  extraCharges: number;
+  totalTransferred: number;
+  message: string;
+}
+
+export interface RefinanceResultRaw {
+  original_credit_id: string;
+  new_credit: {
+    id: string;
+    type: string;
+    total_amount: number;
+    installments_count: number;
+    payment_frequency: PaymentFrequency;
+    status: CreditStatus;
+    refinanced_from_credit_id: string;
+    created_at: string;
+  };
+  pending_balance: number;
+  extra_charges: number;
+  total_transferred: number;
+  message: string;
 }
 
 export interface CartUnit {

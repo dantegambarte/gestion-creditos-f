@@ -91,6 +91,10 @@ export class OperationsComponent implements OnInit {
         return 'secondary';
       case 'REJECTED':
         return 'danger';
+      case 'EXPIRED':
+        return 'danger';
+      case 'REFINANCED':
+        return 'secondary';
     }
   }
 
@@ -109,6 +113,10 @@ export class OperationsComponent implements OnInit {
         return 'LIQUIDADO';
       case 'REJECTED':
         return 'RECHAZADO';
+      case 'EXPIRED':
+        return 'VENCIDO';
+      case 'REFINANCED':
+        return 'REFINANCIADO';
     }
   }
 
