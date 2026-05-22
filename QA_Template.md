@@ -276,6 +276,17 @@ http://localhost:3000/api/credits - POST
 
 ---
 
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-20]
+**Título / Descripción:** [Nueva Operación]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nueva Operación".]
+* **Resultado Esperado:** [Al elegir el plan de pagos deberían aparecer las coutas debajo.]
+* **Resultado Obtenido (Error):** [Se debe scrollear hasta abajo para elegir la cantidad de cuotas.]
+
+---
+
+
 Módulo Clientes
 
 **Módulo:** [Clientes]
@@ -432,6 +443,15 @@ Módulo Clientes
 
 ---
 
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-17]
+**Título / Descripción:** [Nuevo Cliente]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Cliente" - Seller - Seller-Collector.]
+* **Resultado Esperado:** [Debería mantener el mismo formato que el Admin.]
+* **Resultado Obtenido (Error):** [No mantiene el mismo formato que en Admin.]
+
+---
 
 Módulo Producto
 
@@ -632,6 +652,17 @@ http://localhost:3000/api/products - POST
 
 ---
 
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-15]
+**Título / Descripción:** [Nuevo Producto - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Producto".]
+* **Resultado Esperado:** [El menú desplegable de "Marca" y "Categoría" deberia mostrarse todas las opciones.]
+* **Resultado Obtenido (Pendiente):** [El menú desplegable de "Marca" y "Producto" sale cortado, las últimas opciones no salen.]
+
+---
+
+
 Módulo Planilla
 
 **Módulo:** [Planilla]
@@ -661,8 +692,18 @@ Módulo Planilla
 **Título / Descripción:** [Generar Planilla]
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Generar Planilla para todos".]
-* **Resultado Esperado:** [Deberia aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos".]
+* **Resultado Esperado:** [Debería aparecer las planillas generadas y deshabilitar el botón "Generar Planilla para todos".]
 * **Resultado Obtenido (Error):**[Me permite apretar las veces que uno quiera "Generar Planilla para todos" y en "Planilla Generadas" aparecen todas la veces que apreté, una vez que se genere la planilla ya deberia deshabilitarse esa opción, en "Planillas Generadas" debería aparecer una sola vez una planilla.]
+
+---
+
+**Módulo:** [Planilla]
+**ID de Prueba:** [PL-04]
+**Título / Descripción:** [Mi Ruta - Collector]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Ver Planillas" - "Cobrar" (importe menor que la cuota) o "No Pagó".]
+* **Resultado Esperado:** [Al seleccionar el ícono del calendario, el mismo ocupa toda la pantalla.]
+* **Resultado Obtenido (Error):**[Debería desplegarse un calendario mas pequeño.]
 
 ---
 
@@ -685,6 +726,16 @@ Módulo Gastos
 * **Acción Realizada:** [Se hizo click en "Registrar Gasto" - Admin.]
 * **Resultado Esperado:** [Deberia poder seleccionar el tipo de pago, Efectivo o Transferencia.]
 * **Resultado Obtenido (Actual):** [No funciona el menú desplegable en el tipo de pago.]
+
+---
+
+**Módulo:** [Gastos]
+**ID de Prueba:** [GA-03]
+**Título / Descripción:** [Gastos]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Registrar Gasto" - Admin.]
+* **Resultado Esperado:** [No me debería permitir registrar gastos con fechas anteriores y menos si cerraron caja de ese día .]
+* **Resultado Obtenido (Actual):** [Me permite registrar pago con fechas anteriores a la actual.]
 
 ---
 
@@ -777,6 +828,39 @@ Módulo Caja
     "message": "Error interno del servidor. Intentá nuevamente más tarde."
 }
 ```
+
+---
+
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-02]
+**Título / Descripción:** [Cierre de caja]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cierre de caja".]
+* **Resultado Esperado:** [Al pasar las 00:00 debería permitirme cerrar la caja del día anterior.]
+* **Resultado Obtenido (Error):** [Al hacer click en "Cierre de caja" al pasar las 00:00 no me permite cerrar la caja del día anterior.]
+
+---
+
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-03]
+**Título / Descripción:** [Cierre de caja]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Estado".]
+* **Resultado Esperado:** [Debería mostrarme todos los estados de los cierres de cajas.]
+* **Resultado Obtenido (Error):** [Al hacer click en "Estado" sale cortado las opciones de abajo.]
+
+---
+
+
+Módulo Cobro
+
+**Módulo:** [Cobro]
+**ID de Prueba:** [CO-01]
+**Título / Descripción:** [Reversión de cuota - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Acciones" dentro de "Operaciones".]
+* **Resultado Esperado:** [Al cobrar una cuota en y hacer una reversión en la planilla de "Cobros" deberia volver al estado de pendiente.]
+* **Resultado Obtenido (Error):** [Al cobrar una cuota y hacerle una reversión figura "Aprobada".]
 
 ---
 

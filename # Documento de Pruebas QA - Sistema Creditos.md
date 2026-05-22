@@ -26,6 +26,7 @@
 | **CR-17** | Operaciones - Seller. | Click en paginación debe mostrar los siguientes registros. | Corregido / Validado — agregado `[paginator]="true" [rows]="10"` en `operations.component.html` |
 | **CR-18** | Operaciones - Admin. | Se hizo click en "Ver" en una operación pendiente de aprobación. | Debería mostrar la tasa de interés | Corregido / Validado — `!= null` para capturar `undefined`; tasa multiplicada ×100 para display como %; tipo SALE muestra "N/A (Venta)"; status EXPIRED agregado al tipo y mapas de label/severity |
 | **CR-19** | Cancelación Anticipada - Admin. | Se hizo click en "Cancelación Anticipada" en una operación aprobada. | Debería poder adelantar cuotas. | Corregido / Validado — botón renombrado a "Cancelación total anticipada"; diálogo explica que es pago total de todas las cuotas y menciona la opción de pago anticipado por cuota individual |
+| **CR-19** | Nueva Operació. | Se hizo click en "Nueva Operación". | Debería estar debajo la cantidad de cuotas al elegir el plan de pago. | Error |
 
 
 ## 🟢 2. Módulo: Cliente
@@ -49,6 +50,7 @@
 | **CL-14** | Clientes | Click en el filtro de búsqueda. | Debería poder filtrar los estados. | Corregido / Validado — `includeSummary: true` en llamada al listado; `toClient()` mapea `c.delinquency ?? 'Al dia'` en lugar de hardcodear "Al dia" |
 | **CL-15** | Ver Clientes | Click en "Ver Clientes". | Debería poder mostrar los datos. | Corregido / Validado — `CreditsService` inyectado en `client-detail`; créditos cargados desde API por `customerId` después de cargar el cliente |
 | **CL-16** | Editar Clientes | Click en "Editar" en un cliente. | Debería permitir editar todos los campos. | Corregido / Validado — modal editar expandido con Email, Dirección y Cobrador Asignado; pre-carga datos existentes del cliente; error visible si email inválido |
+| **CL-16** | Nuevo Cliente | Click en "Nuevo Cliente" en Seller y Seller-Collector. | Error: no mantiene el mismo formato |
 
 
 ## 🟢 3. Módulo: Producto
@@ -65,10 +67,11 @@
 | **PR-08** | Desactivar Marca - Admin | Se hizo click en "Desactivar Marca". | Debería salir un cartel de confirmación y poder activarla de nuevo. | Corregido / Validado — ídem PR-07 para marcas |
 | **PR-09** | Editar Producto - Admin | Se hizo click en "Editar Producto". | El formulario debe ser distinguible del fondo. | Corregido / Validado — formulario envuelto en `ff-panel` con heading con color explícito |
 | **PR-10** | Editar Producto | Se hizo click en "Guardar Cambios". | No se hizo ninguna modificación y me permitió "Guardar Cambios". | Corregido / Validado — `[disabled]="form.invalid \|\| !form.dirty \|\| submitting"` en botón Guardar Cambios |
-| **PR-11** | Desactivar Producto | Se hizo click en "Desactivar Producto". | Debería permitir desactivar productos por mas que tengan unidades vendidas. | Parcial — frontend envía `force: true`; backend devuelve error si tiene unidades reservadas/vendidas; requiere soporte en backend |
+| **PR-11** | Desactivar Producto | Se hizo click en "Desactivar Producto". | Debería permitir desactivar productos por mas que tengan unidades vendidas. | Error |
 | **PR-12** | Variantes Productos | Se hizo click en "Editar Variantes". | Debería poder mostrar todos los campos en la tabla de la izquierda. | Corregido / Validado — tabla con columnas COLOR, TALLE, CAPACIDAD dinámicas (ocultas si ninguna variante las usa); panel de formulario a demanda (click "Nueva variante" o "Editar"); acciones de texto horizontal |
 | **PR-13** | Múltiples Variantes Producto | Se hizo click en "Ingresar Múltiples Variantes". | Se ingresaron datos erróneos. | Pendiente — feature "Múltiples Variantes" no existe en el codebase actual; requiere implementación desde cero |
 | **PR-14** | Categoría y Marca | Categoría y Marca solo permite creación y no edición. | Corregido / Validado — botón "Editar" por fila en tablas de Categorías y Marcas; diálogo de edición con nombre pre-cargado |
+| **PR-15** | Nuevo Producto - Admin | Se hizo click en "Nuevo Producto". | El menú desplegable sale cortado en "Categoria" y "Marca". |Error |
 
 
 ## 🟢 Módulo: Planilla
@@ -77,6 +80,8 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **PL-01** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar el botón mientras genera. | Corregido / Validado — flags `generating` / `generatingAll` deshabilitan los botones durante la ejecución |
 | **PL-02** | Botones | Los botones no están correctamente ubicados. | Deberían seguir los patrones visuales. | Corregido / Validado |
+| **PL-03** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar "Generar Planilla para todos". | Corregido |
+| **PL-04** | Mi Ruta - Collector | Se hizo click en "Ver Planilla". | Al seleccionar el ícono del calendario, el mismo ocupa toda la pantalla. | Corregido |
 
 
 ## 🟢 Módulo: Gastos
@@ -85,6 +90,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **GA-01** | Gastos | Se hizo click en desactivar gasto "Alquiler". | Debería poder activarlo nuevamente. | Corregido / Validado |
 | **GA-02** | Gastos | Se hizo click en "Registrar Gasto" - Admin. | Debería poder seleccionar el método de pago. | Corregido / Validado — `appendTo="body"` en dropdowns del formulario de gastos |
+| **GA-03** | Gastos | Se hizo click en "Registrar Gasto" - Admin. | Debería poder seleccionar la fecha si no cerraron caja. | Error |
 
 
 ## 🟢 Módulo: Usuarios
@@ -104,6 +110,15 @@
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
 | **CA-01** | Cierre de caja | Se hizo click en "Cierre de caja". | Debería poder realizar el cierre de caja. | Corregido / Validado — bug backend: `totalEgresos` vs `totalOutflows` naming mismatch causaba error 500; controller ahora también maneja 422 correctamente |
+| **CA-02** | Cierre de caja | Se hizo click en "Cierre de caja" al pasar las 00:00. | Debería permitirme cerrar la caja del día anterior pasadas las 00:00. | Error |
+| **CA-03** | Cierre de caja | Se hizo click en "Estado". | Debería poder ver todas las opciones. | Error |
+
+
+## 🟢 Módulo: Cobro
+
+| ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
+| :--- | :--- | :--- | :--- | :--- |
+| **CO-01** | Reversión de cuota | Se hizo click en "Revertir Cuota". | Debería volver al estado pendiente en la planilla de "Cobros". | Error |
 
 
 ---
