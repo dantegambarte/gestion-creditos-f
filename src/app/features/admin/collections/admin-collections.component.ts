@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { jsPDF } from 'jspdf';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -78,6 +78,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   private readonly installmentsService = inject(InstallmentsService);
   private readonly usersService = inject(UsersService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
   readonly format = inject(FormatService);
@@ -174,6 +175,23 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((c) => (this.collectors = c));
     this.load();
+    this.maybeAutoOpenGenerate();
+  }
+
+  /**
+   * Abre automáticamente el diálogo de generación si llegamos con
+   * ?openGenerate=true (por ej. desde el botón del dashboard o la ruta
+   * legada /admin/collections/new). Limpia el query param con replaceUrl
+   * para que un refresh o un "atrás" no reabran el modal.
+   */
+  private maybeAutoOpenGenerate(): void {
+    if (this.route.snapshot.queryParamMap.get('openGenerate') !== 'true') return;
+    this.openGenerateDialog();
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      replaceUrl: true,
+    });
   }
 
   ngOnDestroy(): void {

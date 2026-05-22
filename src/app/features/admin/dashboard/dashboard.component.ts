@@ -663,7 +663,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   navigateGenerateSheet(): void {
-    this.router.navigate(['/admin/collections/new']);
+    this.router.navigate(['/admin/collections'], {
+      queryParams: { openGenerate: 'true' },
+    });
   }
 
   navigateRefinance(): void {
