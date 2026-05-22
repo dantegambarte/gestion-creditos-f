@@ -9,13 +9,14 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { PasswordModule } from 'primeng/password';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { PasswordModule } from 'primeng/password';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AppError } from '../../../core/models/app-error';
 import { UserRoleEnum } from '../../../core/models/types/user-role';
+import { PasswordTabSkipDirective } from '../../../shared/directives/password-tab-skip.directive';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 
 function passwordMatchValidator(
@@ -36,6 +37,7 @@ function passwordMatchValidator(
     PasswordModule,
     IconFieldModule,
     InputIconModule,
+    PasswordTabSkipDirective,
   ],
   templateUrl: './change-password.component.html',
 })
