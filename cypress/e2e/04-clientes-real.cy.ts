@@ -36,6 +36,19 @@ describe('Gestión de Clientes real — Admin', () => {
    */
   const getVisibleDialog = () => cy.get('.p-dialog:visible', { timeout: 10000 }).first();
 
+  /**
+   * Hace click en el botón principal del modal re-consultando el DOM visible.
+   * Evita referencias stale cuando PrimeNG/Angular re-renderiza durante actionability.
+   * @param {string} label - Texto exacto del botón a presionar.
+   */
+  const clickVisibleDialogButton = (label: string) => {
+    cy.contains('.p-dialog:visible button.p-button', label, { timeout: 10000 })
+      .should('be.visible')
+      .and('not.be.disabled');
+
+    cy.contains('.p-dialog:visible button.p-button', label, { timeout: 10000 }).click();
+  };
+
   it('crea y edita cliente real con persistencia cruzada', () => {
     const data = buildCustomerData();
 
@@ -51,7 +64,7 @@ describe('Gestión de Clientes real — Admin', () => {
     getVisibleDialog().find('input[formControlName="apellidos"]').clear().type(data.apellido);
     getVisibleDialog().find('input[formControlName="dni"]').clear().type(data.dni);
     getVisibleDialog().find('input[formControlName="telefonoPrincipal"]').clear().type(data.telefonoInicial);
-    cy.contains('p-dialog:visible button', 'Crear Cliente').click();
+    clickVisibleDialogButton('Crear Cliente');
 
     cy.contains('.p-toast-message', 'Cliente guardado correctamente.', { timeout: 15000 }).should('be.visible');
     cy.get('.p-dialog:visible').should('not.exist');

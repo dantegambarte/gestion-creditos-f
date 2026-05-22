@@ -13,8 +13,12 @@ describe('Seller clientes real', () => {
    */
   const buildCustomerData = () => {
     const stamp = Date.now().toString().slice(-6);
+    const letters = stamp
+      .split('')
+      .map((digit) => String.fromCharCode(65 + Number(digit)))
+      .join('');
     return {
-      fullName: `Seller E2E ${stamp}`,
+      fullName: `Seller E2E ${letters}`,
       dni: `7${stamp}2`,
       phone: `383${stamp}`,
     };
