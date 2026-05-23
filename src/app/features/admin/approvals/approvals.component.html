@@ -268,17 +268,18 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
+      <p-button
         type="button"
-        class="cancel-btn w-full"
-        (click)="showApproveDialog = false"
-      >
-        Cancelar
-      </button>
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showApproveDialog = false"
+      />
       <p-button
         label="Confirmar Aprobación"
-        severity="success"
-        styleClass="h-11 rounded-xl w-full"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmApprove()"
         [loading]="processingApprove"
         [disabled]="isCashClosed || processingApprove"
@@ -322,10 +323,11 @@
         >Motivo de rechazo (obligatorio, mín. 5 caracteres)</label
       >
       <textarea
+        pInputTextarea
         [(ngModel)]="rejectReason"
         rows="4"
         maxlength="500"
-        class="w-full resize-none rounded-xl p-3 text-sm outline-none"
+        class="w-full resize-none px-3 py-2"
         style="
           border: 1px solid var(--ff-border);
           background: var(--ff-secondary);
@@ -352,17 +354,19 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
+      <p-button
         type="button"
-        class="cancel-btn w-full"
-        (click)="showRejectDialog = false"
-      >
-        Cancelar
-      </button>
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showRejectDialog = false"
+      />
       <p-button
         label="Rechazar Operación"
         severity="danger"
-        styleClass="h-11 rounded-xl w-full"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmReject()"
         [loading]="processingReject"
         [disabled]="rejectCharCount() < 5"
