@@ -24,3 +24,18 @@
     }
   }
 }
+
+::ng-deep .cr-history-filters {
+  .p-calendar {
+    width: 11rem;
+  }
+
+  .native-date-input {
+    width: 100%;
+  }
+
+  .p-dropdown {
+    min-height: 2.5rem;
+    align-items: center;
+  }
+}

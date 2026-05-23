@@ -11,6 +11,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
 
 export interface CloseRegisterData {
   date: string;
@@ -33,6 +34,7 @@ export interface CloseRegisterData {
     ButtonModule,
     InputTextareaModule,
     InputNumberModule,
+    CurrencyAmountInputDirective,
   ],
   templateUrl: './close-register.component.html',
   styleUrl: './close-register.component.scss',
