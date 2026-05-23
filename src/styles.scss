@@ -251,6 +251,10 @@ body {
   .p-dialog-footer {
     background: var(--ff-panel) !important;
     border-top: 1px solid var(--ff-border) !important;
+    padding: 1rem 1.5rem 1.25rem !important;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
   }
 }
 
@@ -1492,7 +1496,7 @@ table.ff-table {
   padding: 12px;
 }
 
-// ─── native date input (global — reutilizable en sheet, cash-register, etc) ──
+// ─── calendarios PrimeNG (global) ─────────────────────────────────────────────
 .native-date-input {
   padding: 0 0.875rem;
   border: 1px solid var(--ff-border);
@@ -1508,14 +1512,138 @@ table.ff-table {
     border-color: var(--ff-accent);
     box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.15);
   }
+}
 
-  &::-webkit-calendar-picker-indicator {
-    cursor: pointer;
-    filter: invert(0.6);
-    &:hover {
-      filter: invert(0.8);
-    }
+// ─── p-button danger outlined ────────────────────────────────────────────────
+.p-button.p-button-danger.p-button-outlined {
+  background: rgba(248, 113, 113, 0.06) !important;
+  border-color: rgba(248, 113, 113, 0.55) !important;
+  color: #fda4af !important;
+
+  &:disabled,
+  &.p-disabled {
+    background: rgba(248, 113, 113, 0.06) !important;
+    border-color: rgba(248, 113, 113, 0.55) !important;
+    color: #fda4af !important;
+    opacity: 0.7;
   }
+
+  &:hover:not(:disabled) {
+    background: rgba(248, 113, 113, 0.14) !important;
+    border-color: rgba(248, 113, 113, 0.75) !important;
+    color: #fecdd3 !important;
+  }
+
+  &:active:not(:disabled) {
+    background: rgba(248, 113, 113, 0.2) !important;
+    border-color: rgba(248, 113, 113, 0.85) !important;
+    color: #ffe4e6 !important;
+  }
+
+  .p-button-label,
+  .p-button-icon {
+    color: inherit !important;
+  }
+}
+
+// ─── ff-filter-btn (global) ──────────────────────────────────────────────────
+.p-button.ff-filter-btn,
+.p-button.p-button-secondary.p-button-outlined.ff-filter-btn {
+  height: 2.5rem !important;
+  padding-left: 0.95rem !important;
+  padding-right: 0.95rem !important;
+  border-radius: 0.75rem !important;
+  border-color: rgba(147, 197, 253, 0.55) !important;
+  background: rgba(59, 130, 246, 0.08) !important;
+  color: #bfdbfe !important;
+
+  &:hover:not(:disabled) {
+    border-color: rgba(147, 197, 253, 0.8) !important;
+    background: rgba(59, 130, 246, 0.16) !important;
+    color: #dbeafe !important;
+  }
+
+  &:active:not(:disabled) {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #eff6ff !important;
+  }
+
+  .p-button-label,
+  .p-button-icon {
+    color: inherit !important;
+  }
+}
+
+.p-calendar {
+  width: 100%;
+}
+
+.p-calendar .p-datepicker-trigger {
+  width: 2.5rem;
+  border-top-right-radius: 0.75rem;
+  border-bottom-right-radius: 0.75rem;
+  border: 1px solid var(--ff-border);
+  border-left: 0;
+  background: var(--ff-secondary);
+  color: var(--ff-text-secondary);
+
+  &:hover {
+    color: var(--ff-text-primary);
+  }
+}
+
+.p-datepicker {
+  background: #1f2430;
+  border: 1px solid var(--ff-border);
+  border-radius: 0.75rem;
+  color: var(--ff-text-primary);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.p-datepicker .p-datepicker-header {
+  background: transparent;
+  border-bottom: 1px solid var(--ff-border);
+  color: var(--ff-text-primary);
+}
+
+.p-datepicker .p-datepicker-title,
+.p-datepicker .p-datepicker-prev,
+.p-datepicker .p-datepicker-next {
+  color: var(--ff-text-primary);
+}
+
+.p-datepicker .p-datepicker-calendar th {
+  color: var(--ff-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.p-datepicker .p-datepicker-calendar td > span {
+  color: var(--ff-text-primary);
+  border-radius: 8px;
+}
+
+.p-datepicker .p-datepicker-calendar td > span:hover {
+  background: rgba(79, 110, 247, 0.2);
+}
+
+.p-datepicker .p-datepicker-calendar td.p-datepicker-today > span {
+  background: rgba(79, 110, 247, 0.18);
+  border: 1px solid rgba(79, 110, 247, 0.45);
+}
+
+.p-datepicker .p-datepicker-calendar td > span.p-highlight {
+  background: var(--ff-accent);
+  color: #fff;
+}
+
+.p-datepicker .p-datepicker-buttonbar {
+  border-top: 1px solid var(--ff-border);
+}
+
+.p-datepicker .p-datepicker-buttonbar .p-button {
+  color: var(--ff-text-secondary);
 }
 
 // ─── ff-table — padding compacto en mobile ───────────────────────────────────
