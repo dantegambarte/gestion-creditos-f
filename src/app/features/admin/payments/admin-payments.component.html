@@ -13,12 +13,17 @@
         label="Cobro directo"
         icon="pi pi-plus"
         severity="primary"
+        styleClass="h-11 px-5 rounded-xl shadow-sm"
         (onClick)="openDirectDialog()"
       />
       <p-button
-        icon="pi pi-refresh"
+        label="Actualizar"
+        icon="pi pi-sync"
         severity="secondary"
         [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl"
+        pTooltip="Actualizar cobros"
+        tooltipPosition="top"
         [loading]="loading"
         (onClick)="refresh()"
       />
@@ -96,19 +101,26 @@
                 {{ p.paymentMethod === "CASH" ? "Efectivo" : "Transferencia" }}
               </td>
               <td class="text-center">
-                <div class="flex flex-col items-center gap-1">
-                  <p-tag
-                    [value]="statusLabel(p.status)"
-                    [severity]="statusSeverity(p.status)"
-                  />
-                  @if (paymentTypeLabel(p)) {
+                @if (p.reversalPaymentId) {
+                  <p-tag value="Revertido" severity="warning" />
+                } @else if (p.isReversal) {
+                  <p-tag value="Reversión" severity="danger" />
+                } @else if (p.adminDirect) {
+                  <p-tag value="Pago directo" severity="info" />
+                } @else {
+                  <div class="flex flex-wrap justify-center gap-1">
                     <p-tag
-                      [value]="paymentTypeLabel(p)!"
-                      [severity]="paymentTypeSeverity(p)!"
-                      styleClass="text-xs"
+                      [value]="statusLabel(p.status)"
+                      [severity]="statusSeverity(p.status)"
                     />
-                  }
-                </div>
+                    @if (paymentTypeLabel(p)) {
+                      <p-tag
+                        [value]="paymentTypeLabel(p)!"
+                        [severity]="paymentTypeSeverity(p)!"
+                      />
+                    }
+                  </div>
+                }
               </td>
               <td class="text-sm text-gray-500">
                 {{ p.createdAt | date: "dd/MM/yyyy HH:mm" }}
@@ -221,21 +233,22 @@
       </div>
 
       @if (selectedPayment.status === "PENDING") {
-        <div class="flex gap-3 pt-3 border-t border-gray-100">
-          <p-button
-            label="Aprobar"
-            icon="pi pi-check"
-            severity="success"
-            styleClass="flex-1"
-            (onClick)="confirmApprove()"
-            [loading]="processingApprove"
-          />
+        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
           <p-button
             label="Rechazar"
             icon="pi pi-times"
             severity="danger"
-            styleClass="flex-1"
+            [outlined]="true"
+            styleClass="w-full h-11 px-5 rounded-xl justify-center"
             (onClick)="openRejectDialog()"
+          />
+          <p-button
+            label="Aprobar"
+            icon="pi pi-check"
+            severity="success"
+            styleClass="w-full h-11 px-5 rounded-xl justify-center"
+            (onClick)="confirmApprove()"
+            [loading]="processingApprove"
           />
         </div>
       }
@@ -284,7 +297,7 @@
         [(ngModel)]="rejectReason"
         rows="4"
         maxlength="500"
-        class="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        class="w-full resize-none px-3 py-2"
         placeholder="Describe el motivo..."
       ></textarea>
       <div class="flex justify-between text-xs text-gray-400 mt-1">
@@ -299,17 +312,19 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
+      <p-button
         type="button"
-        class="cancel-btn w-full"
-        (click)="showRejectDialog = false"
-      >
-        Cancelar
-      </button>
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showRejectDialog = false"
+      />
       <p-button
         label="Rechazar"
         severity="danger"
-        styleClass="w-full"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmReject()"
         [loading]="processingReject"
         [disabled]="rejectCharCount() < 5"
@@ -341,7 +356,7 @@
         pInputText
         [(ngModel)]="directInstallmentId"
         placeholder="UUID de la cuota"
-        class="w-full"
+        class="w-full h-11 px-3"
         [class.ng-invalid]="directInstallmentIdInvalid"
         [class.ng-dirty]="directInstallmentIdInvalid"
       />
@@ -356,13 +371,15 @@
     <div class="flex flex-col gap-1">
       <label class="text-sm font-medium text-gray-700">Monto cobrado</label>
       <p-inputNumber
+        appCurrencyAmountInput
         [(ngModel)]="directAmount"
         mode="currency"
         currency="ARS"
         locale="es-AR"
-        [minFractionDigits]="2"
+        [minFractionDigits]="0"
         [min]="0.01"
         styleClass="w-full"
+        inputStyleClass="w-full h-11 px-3"
       />
     </div>
 
@@ -373,7 +390,7 @@
         [(ngModel)]="directMethod"
         optionLabel="label"
         optionValue="value"
-        styleClass="w-full"
+        styleClass="w-full h-11"
         appendTo="body"
       />
     </div>
@@ -385,11 +402,30 @@
           pInputText
           [(ngModel)]="directTransferRef"
           placeholder="N° de operación o referencia"
-          class="w-full"
+          class="w-full h-11 px-3"
           maxlength="100"
         />
       </div>
     }
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-gray-700">
+        Próxima visita
+        <span class="text-xs text-gray-400 font-normal ml-1">(requerida si el cobro es parcial)</span>
+      </label>
+      <p-calendar
+        [(ngModel)]="directNextVisitDate"
+        dataType="string"
+        dateFormat="yy-mm-dd"
+        [showIcon]="true"
+        iconDisplay="input"
+        appendTo="body"
+        [minDate]="todayDate"
+        styleClass="w-full"
+        inputStyleClass="w-full h-11 px-3"
+        placeholder="Seleccioná una fecha..."
+      />
+    </div>
 
     <div class="flex flex-col gap-1">
       <label class="text-sm font-medium text-gray-700">Notas (opcional)</label>
@@ -398,7 +434,7 @@
         [(ngModel)]="directNotes"
         rows="2"
         maxlength="500"
-        class="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        class="w-full resize-none px-3 py-2"
         placeholder="Observaciones adicionales..."
       ></textarea>
     </div>
@@ -406,18 +442,19 @@
 
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
+      <p-button
         type="button"
-        class="cancel-btn w-full"
-        (click)="showDirectDialog = false"
-      >
-        Cancelar
-      </button>
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showDirectDialog = false"
+      />
       <p-button
         label="Registrar cobro"
         icon="pi pi-check"
-        severity="success"
-        styleClass="w-full"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmDirect()"
         [loading]="processingDirect"
         [disabled]="!directFormValid"
@@ -429,6 +466,7 @@
 <!-- ── Reverse Dialog ─────────────────────────────────────────── -->
 <p-dialog
   [(visible)]="showReverseDialog"
+  (onHide)="onReverseDialogHide()"
   header="Revertir cobro"
   [modal]="true"
   [style]="{ width: '440px' }"
@@ -452,7 +490,7 @@
         [(ngModel)]="reverseReason"
         rows="4"
         maxlength="500"
-        class="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        class="w-full resize-none px-3 py-2"
         placeholder="Describe el motivo..."
       ></textarea>
       <div class="flex justify-between text-xs text-gray-400 mt-1">
@@ -467,18 +505,19 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
+      <p-button
         type="button"
-        class="cancel-btn w-full"
-        (click)="showReverseDialog = false"
-      >
-        Cancelar
-      </button>
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showReverseDialog = false"
+      />
       <p-button
         label="Revertir cobro"
-        icon="pi pi-undo"
         severity="danger"
-        styleClass="w-full"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmReverse()"
         [loading]="processingReverse"
         [disabled]="reverseCharCount() < 5"

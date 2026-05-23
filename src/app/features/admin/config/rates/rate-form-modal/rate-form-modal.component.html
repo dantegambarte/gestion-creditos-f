@@ -175,7 +175,14 @@
   <!-- Footer -->
   <ng-template pTemplate="footer">
     <div class="flex justify-between items-center pt-2">
-      <button type="button" class="cancel-btn" (click)="close()">Cancelar</button>
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+      />
       <p-button
         [label]="isEdit ? 'Guardar Cambios' : 'Guardar Tasa'"
         icon="pi pi-save"

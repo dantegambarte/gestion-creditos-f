@@ -640,7 +640,7 @@ http://localhost:3000/api/products - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Ingresar Múltiples Variantes".]
 * **Resultado Esperado:** [Al ingresar datos erróneos el mensaje me muestra en "Ingreso individual".]
-* **Resultado Obtenido (Pendiente):** [La feature "Ingresar Múltiples Variantes" no existe en el codebase actual. Requiere implementación desde cero (UI, validación por fila, mapeo de errores por campo). No atacado en esta sesión.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. Feature implementada: tab "Ingresar múltiples" con tabla de filas (COLOR, TALLE, CAPACIDAD, PRECIO, UNITS); filas completamente vacías se ignoran; errores por fila remapeados al índice original de UI; summary de variantes cargadas/suma de precios/total estimado; toast de éxito al confirmar. Ingreso individual: toast adicional en error 409 (duplicado) además del mensaje inline.]
 
 ---
 
@@ -861,6 +861,43 @@ Módulo Cobro
 * **Acción Realizada:** [Se hizo click en "Acciones" dentro de "Operaciones".]
 * **Resultado Esperado:** [Al cobrar una cuota en y hacer una reversión en la planilla de "Cobros" deberia volver al estado de pendiente.]
 * **Resultado Obtenido (Error):** [Al cobrar una cuota y hacerle una reversión figura "Aprobada".]
+
+---
+
+**Módulo:** [Cobro]
+**ID de Prueba:** [CO-02]
+**Título / Descripción:** [Cobro directo - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cobro directo", se ingresó el ID de cuota, monto completo y método de pago.]
+* **Resultado Esperado:** [Debería registrar y aprobar el cobro en el mismo paso. El banner del dialog dice "El cobro se registra y aprueba en el mismo paso."]
+* **Resultado Obtenido (Error):** [El cobro queda en estado `PENDING` con `admin_direct: false`. No se aprueba automáticamente. El admin debe aprobarlo manualmente desde el listado de cobros.]
+### 2. Evidencia Técnica
+**Payload Enviado (Request):**
+```json
+{
+    "installment_id": "2b138a9b-6caf-410f-bff9-1bf9cf2a937f",
+    "amount_received": 390000,
+    "payment_method": "CASH"
+}
+```
+**Respuesta obtenida:**
+```json
+{
+    "status": "PENDING",
+    "admin_direct": false,
+    "approved_at": null
+}
+```
+
+---
+
+**Módulo:** [Cobro]
+**ID de Prueba:** [CO-03]
+**Título / Descripción:** [Cobro directo parcial - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se intentó registrar un cobro con monto menor al de la cuota ($39.000 sobre $390.000).]
+* **Resultado Esperado:** [El form debería pedir "Fecha de próxima visita" para cobros parciales, ya que el backend la requiere.]
+* **Resultado Obtenido (Error):** [El campo `nextVisitDate` no existe en el dialog de cobro directo. El backend devuelve 422 "La fecha de próxima visita es obligatoria para cobros parciales." El cobro no puede registrarse.]
 
 ---
 

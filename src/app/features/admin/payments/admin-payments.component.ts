@@ -1,24 +1,26 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { MessageModule } from 'primeng/message';
 import { catchError, of } from 'rxjs';
 import { AppError } from '../../../core/models/app-error';
+import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { HeaderService } from '../../../core/services/header.service';
+import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import {
@@ -50,6 +52,8 @@ import { UsersService } from '../users/users.service';
     SkeletonModule,
     ToastModule,
     TooltipModule,
+    CalendarModule,
+    CurrencyAmountInputDirective,
     LoadingStateComponent,
     ErrorStateComponent,
     MessageModule,
@@ -89,10 +93,13 @@ export class AdminPaymentsComponent implements OnInit {
   directMethod: 'CASH' | 'TRANSFER' = 'CASH';
   directTransferRef = '';
   directNotes = '';
+  directNextVisitDate: string = '';
   processingDirect = false;
+  readonly todayDate = new Date();
 
   // ── Reversión ─────────────────────────────────────────────────
   showReverseDialog = false;
+  reopenDetailOnReverseClose = false;
   reverseReason = '';
   processingReverse = false;
 
@@ -150,9 +157,7 @@ export class AdminPaymentsComponent implements OnInit {
   private checkCashRegisterStatus(): void {
     this.cashRegisterSvc
       .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-      )
+      .pipe(catchError(() => of(null)))
       .subscribe((dashboard) => {
         this.isCashClosed = dashboard?.isClosed ?? false;
       });
@@ -212,9 +217,7 @@ export class AdminPaymentsComponent implements OnInit {
 
     this.cashRegisterSvc
       .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-      )
+      .pipe(catchError(() => of(null)))
       .subscribe((dashboard) => {
         this.isCashClosed = dashboard?.isClosed ?? false;
 
@@ -267,9 +270,7 @@ export class AdminPaymentsComponent implements OnInit {
 
     this.cashRegisterSvc
       .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-      )
+      .pipe(catchError(() => of(null)))
       .subscribe((dashboard) => {
         this.isCashClosed = dashboard?.isClosed ?? false;
 
@@ -323,13 +324,15 @@ export class AdminPaymentsComponent implements OnInit {
     this.directMethod = 'CASH';
     this.directTransferRef = '';
     this.directNotes = '';
+    this.directNextVisitDate = '';
     this.showDirectDialog = true;
   }
 
   /**
    * Indica si el formulario de cobro directo es válido para enviar.
    */
-  private readonly UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  private readonly UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   get directFormValid(): boolean {
     return (
@@ -351,13 +354,17 @@ export class AdminPaymentsComponent implements OnInit {
    * Devuelve la etiqueta de tipo de cobro para mostrar en la lista.
    */
   paymentTypeLabel(p: Payment): string | null {
+    if (p.reversalPaymentId) return 'Revertido';
     if (p.isReversal) return 'Reversión';
     if (p.adminDirect) return 'Directo';
     if (p.parentPaymentId) return 'Adelanto';
     return null;
   }
 
-  paymentTypeSeverity(p: Payment): 'danger' | 'info' | 'secondary' | null {
+  paymentTypeSeverity(
+    p: Payment,
+  ): 'danger' | 'info' | 'secondary' | 'warning' | null {
+    if (p.reversalPaymentId) return 'warning';
     if (p.isReversal) return 'danger';
     if (p.adminDirect) return 'info';
     if (p.parentPaymentId) return 'secondary';
@@ -371,9 +378,7 @@ export class AdminPaymentsComponent implements OnInit {
 
     this.cashRegisterSvc
       .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-      )
+      .pipe(catchError(() => of(null)))
       .subscribe((dashboard) => {
         this.isCashClosed = dashboard?.isClosed ?? false;
 
@@ -394,21 +399,22 @@ export class AdminPaymentsComponent implements OnInit {
 
   private processDirectPayment(): void {
     this.paymentsService
-      .create({
+      .adminDirect({
         installmentId: this.directInstallmentId.trim(),
         amountReceived: this.directAmount!,
         paymentMethod: this.directMethod,
         transferReference: this.directTransferRef || undefined,
         notes: this.directNotes || undefined,
+        nextVisitDate: this.directNextVisitDate || undefined,
       })
       .subscribe({
-        next: (result) => {
+        next: () => {
           this.processingDirect = false;
           this.showDirectDialog = false;
           this.msg.add({
             severity: 'success',
             summary: 'Cobro registrado',
-            detail: 'El cobro fue registrado y está pendiente de aprobación.',
+            detail: 'El cobro fue registrado y aprobado correctamente.',
             life: 5000,
           });
           this.load();
@@ -416,8 +422,12 @@ export class AdminPaymentsComponent implements OnInit {
         error: (err: AppError) => {
           this.processingDirect = false;
           this.msg.add({
-            severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
-            summary: err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
+            severity:
+              err.status === 409 || err.status === 422 ? 'warn' : 'error',
+            summary:
+              err.status === 409 || err.status === 422
+                ? 'Advertencia'
+                : 'Error',
             detail: err.message ?? 'No se pudo registrar el cobro.',
           });
         },
@@ -426,9 +436,25 @@ export class AdminPaymentsComponent implements OnInit {
 
   // ── Reversión ─────────────────────────────────────────────────
 
+  /**
+   * Abre el modal de reversión cerrando antes el detalle para evitar modales anidados.
+   */
   openReverseDialog(): void {
+    if (!this.selectedPayment) return;
     this.reverseReason = '';
+    this.reopenDetailOnReverseClose = true;
+    this.showDetailDialog = false;
     this.showReverseDialog = true;
+  }
+
+  /**
+   * Gestiona el cierre del modal de reversión y reabre detalle solo si corresponde.
+   */
+  onReverseDialogHide(): void {
+    if (this.reopenDetailOnReverseClose && this.selectedPayment) {
+      this.showDetailDialog = true;
+    }
+    this.reopenDetailOnReverseClose = false;
   }
 
   confirmReverse(): void {
@@ -439,6 +465,7 @@ export class AdminPaymentsComponent implements OnInit {
       .subscribe({
         next: () => {
           this.processingReverse = false;
+          this.reopenDetailOnReverseClose = false;
           this.showReverseDialog = false;
           this.showDetailDialog = false;
           this.msg.add({

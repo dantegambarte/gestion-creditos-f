@@ -19,6 +19,7 @@ import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
+import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 import {
   LiquidatePayload,
   Liquidation,
@@ -49,6 +50,7 @@ type CommissionsTab = 'liquidaciones' | 'historial';
     TagModule,
     ToastModule,
     TooltipModule,
+    CurrencyAmountInputDirective,
     LoadingStateComponent,
     ErrorStateComponent,
   ],

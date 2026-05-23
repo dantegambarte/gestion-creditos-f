@@ -172,25 +172,35 @@
     </div>
 
     <div
-      class="flex flex-wrap gap-3 px-4 py-3 items-end"
+      class="cr-history-filters flex flex-wrap gap-3 px-4 py-3 items-end"
       style="border-bottom: 1px solid var(--ff-border)"
     >
       <div class="flex flex-col gap-1">
         <label class="auth-label">Desde</label>
-        <input
+        <p-calendar
           data-cy="admin-cash-register-filter-from"
-          type="date"
           [(ngModel)]="filterDateFrom"
-          class="native-date-input h-10"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          styleClass="w-44"
+          inputStyleClass="native-date-input h-10 w-full"
         />
       </div>
       <div class="flex flex-col gap-1">
         <label class="auth-label">Hasta</label>
-        <input
+        <p-calendar
           data-cy="admin-cash-register-filter-to"
-          type="date"
           [(ngModel)]="filterDateTo"
-          class="native-date-input h-10"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          styleClass="w-44"
+          inputStyleClass="native-date-input h-10 w-full"
         />
       </div>
       <div class="flex flex-col gap-1">
@@ -201,7 +211,8 @@
           [(ngModel)]="filterDifferenceStatus"
           optionLabel="label"
           optionValue="value"
-          styleClass="text-sm"
+          styleClass="text-sm w-56"
+          appendTo="body"
         />
       </div>
       <p-button
@@ -210,6 +221,7 @@
         icon="pi pi-search"
         severity="secondary"
         [outlined]="true"
+        styleClass="ff-filter-btn"
         (onClick)="applyFilters()"
       />
       @if (filterDateFrom || filterDateTo || filterDifferenceStatus) {
@@ -451,11 +463,13 @@
           <div class="flex flex-col gap-1">
             <label class="auth-label">Contado físicamente (ARS)</label>
             <p-inputNumber
+              appCurrencyAmountInput
               data-cy="admin-cash-register-declared-cash-input"
               [(ngModel)]="declaredCash"
               mode="currency"
               currency="ARS"
               locale="es-AR"
+              [minFractionDigits]="0"
               [min]="0"
               styleClass="w-full"
               inputStyleClass="w-full"

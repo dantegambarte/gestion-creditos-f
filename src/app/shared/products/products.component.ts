@@ -31,6 +31,7 @@ import { ProductVariantsService } from '../../features/seller/products/product-v
 import { ProductsService } from '../../features/seller/products/products.service';
 import { AppRoutes } from '../models/enums/routes.enum';
 import { Product } from '../models/interface/product';
+import { CurrencyAmountInputDirective } from '../directives/currency-amount-input.directive';
 
 function toProduct(p: ApiProduct): Product {
   return {
@@ -62,6 +63,7 @@ function toProduct(p: ApiProduct): Product {
     DialogModule,
     DropdownModule,
     InputNumberModule,
+    CurrencyAmountInputDirective,
     InputTextareaModule,
     ToastModule,
   ],

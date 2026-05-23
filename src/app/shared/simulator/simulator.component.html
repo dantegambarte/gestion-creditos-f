@@ -60,10 +60,12 @@
         <div class="flex flex-col gap-1.5">
           <label class="text-sm font-medium text-gray-700">¿Cuánto necesitás?</label>
           <p-inputNumber
+            appCurrencyAmountInput
             [(ngModel)]="amount"
             mode="currency"
             currency="ARS"
             locale="es-AR"
+            [minFractionDigits]="0"
             [min]="1"
             [useGrouping]="true"
             placeholder="$ 0"

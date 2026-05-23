@@ -23,6 +23,7 @@ import { CashRegisterService } from '../../../admin/cash-register/cash-register.
 import { catchError, of } from 'rxjs';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
+import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
 import {
   CreditDetail,
   CreditStatus,
@@ -58,6 +59,7 @@ import { PaymentsService } from '../../../collector/payments.service';
     InputNumberModule,
     InputTextareaModule,
     TooltipModule,
+    CurrencyAmountInputDirective,
     LoadingStateComponent,
     ErrorStateComponent,
     MessageModule,

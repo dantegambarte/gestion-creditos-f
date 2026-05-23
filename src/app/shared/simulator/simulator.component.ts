@@ -11,6 +11,7 @@ import { ApiHttpService } from '../../core/http/api-http.service';
 import { CurrencyArsPipe } from '../../core/pipes/currency-ars.pipe';
 import { HeaderService } from '../../core/services/header.service';
 import { SimulateResult } from '../../features/seller/models/credit.model';
+import { CurrencyAmountInputDirective } from '../directives/currency-amount-input.directive';
 
 const FREQUENCY_LABELS: Record<string, string> = {
   MONTHLY:  'Mensual',
@@ -80,7 +81,7 @@ export interface FrequencyGroup {
 @Component({
   selector: 'app-simulator',
   standalone: true,
-  imports: [FormsModule, LowerCasePipe, AutoCompleteModule, ButtonModule, InputNumberModule, SkeletonModule, CurrencyArsPipe],
+  imports: [FormsModule, LowerCasePipe, AutoCompleteModule, ButtonModule, InputNumberModule, SkeletonModule, CurrencyArsPipe, CurrencyAmountInputDirective],
   templateUrl: './simulator.component.html',
 })
 export class SimulatorComponent implements OnInit, OnDestroy {

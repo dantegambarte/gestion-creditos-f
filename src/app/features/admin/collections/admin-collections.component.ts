@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { jsPDF } from 'jspdf';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -58,6 +59,7 @@ type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
     DatePipe,
     FormsModule,
     ButtonModule,
+    CalendarModule,
     CardModule,
     DialogModule,
     DropdownModule,
@@ -122,6 +124,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   /** UUID de un cobrador específico o 'ALL' para modo batch. Default 'ALL'. */
   selectedCollectorId: string = this.ALL_COLLECTORS;
   selectedDate: string = new Date().toISOString().split('T')[0];
+  readonly todayDate = new Date();
   /** Fecha mínima del input de generación: hoy. Bloquea seleccionar fechas pasadas. */
   readonly todayIsoDate: string = new Date().toISOString().split('T')[0];
   selectedFilter: CollectionFilter = 'OVERDUE';
@@ -174,8 +177,8 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   get selectedCollectorName(): string {
     if (this.isBatchMode) return '';
     return (
-      this.collectors.find((c) => c.id === this.selectedCollectorId)?.fullName ??
-      ''
+      this.collectors.find((c) => c.id === this.selectedCollectorId)
+        ?.fullName ?? ''
     );
   }
 
@@ -227,7 +230,8 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
    * para que un refresh o un "atrás" no reabran el modal.
    */
   private maybeAutoOpenGenerate(): void {
-    if (this.route.snapshot.queryParamMap.get('openGenerate') !== 'true') return;
+    if (this.route.snapshot.queryParamMap.get('openGenerate') !== 'true')
+      return;
     this.openGenerateDialog();
     this.router.navigate([], {
       relativeTo: this.route,
@@ -296,6 +300,25 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
     this.activeTab = 'ALL';
     this.collectionsService
       .getById(sheet.id)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.loadingDetail = false)),
+      )
+      .subscribe({
+        next: (detail) => (this.selectedSheet = detail),
+        error: () => {},
+      });
+  }
+
+  /**
+   * Recarga el detalle de la planilla actualmente seleccionada para reflejar
+   * cambios recientes (ej: reversiones de cobros realizadas desde otra vista).
+   */
+  reloadDetail(): void {
+    if (!this.selectedSheetMeta) return;
+    this.loadingDetail = true;
+    this.collectionsService
+      .getById(this.selectedSheetMeta.id)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.loadingDetail = false)),
@@ -405,11 +428,13 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
       const missing = this.batchMissingCount;
       const existing = this.batchExistingCount;
       if (this.regenerateExisting) {
-        if (existing > 0 && missing > 0) return `Regenerar ${existing} y generar ${missing}`;
+        if (existing > 0 && missing > 0)
+          return `Regenerar ${existing} y generar ${missing}`;
         if (existing > 0) return `Regenerar ${existing}`;
         return `Generar ${missing}`;
       }
-      if (missing > 0) return `Generar ${missing} planilla${missing === 1 ? '' : 's'}`;
+      if (missing > 0)
+        return `Generar ${missing} planilla${missing === 1 ? '' : 's'}`;
       return 'Sin pendientes';
     }
     return this.conflictingSheet ? 'Regenerar planilla' : 'Generar planilla';
@@ -427,7 +452,8 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
 
   /** Deshabilita el botón principal cuando no hay acción válida posible. */
   get submitDisabled(): boolean {
-    if (this.generating || this.generatingAll || this.loadingDialogSheets) return true;
+    if (this.generating || this.generatingAll || this.loadingDialogSheets)
+      return true;
     if (this.isBatchMode) {
       if (this.regenerateExisting) {
         return this.batchExistingCount + this.batchMissingCount === 0;
@@ -618,7 +644,10 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
 
               for (const o of outcomes) {
                 if (!o.success) {
-                  failures.push({ collectorName: o.collectorName, error: o.error });
+                  failures.push({
+                    collectorName: o.collectorName,
+                    error: o.error,
+                  });
                   continue;
                 }
                 if ('skipped' in o.result) {
@@ -639,16 +668,26 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
               }
 
               const summaryParts: string[] = [];
-              if (generated > 0) summaryParts.push(`${generated} generada${generated === 1 ? '' : 's'}`);
-              if (regenerated > 0) summaryParts.push(`${regenerated} regenerada${regenerated === 1 ? '' : 's'}`);
-              if (skipped > 0) summaryParts.push(`${skipped} omitida${skipped === 1 ? '' : 's'}`);
+              if (generated > 0)
+                summaryParts.push(
+                  `${generated} generada${generated === 1 ? '' : 's'}`,
+                );
+              if (regenerated > 0)
+                summaryParts.push(
+                  `${regenerated} regenerada${regenerated === 1 ? '' : 's'}`,
+                );
+              if (skipped > 0)
+                summaryParts.push(
+                  `${skipped} omitida${skipped === 1 ? '' : 's'}`,
+                );
               const summary = summaryParts.join(' · ') || 'Sin cambios';
 
               const totalSuccess = generated + regenerated;
               if (totalSuccess > 0 || skipped > 0) {
-                const alertsNote = withAlerts > 0
-                  ? ` ${withAlerts} con alertas operativas — abrilas para revisarlas.`
-                  : '';
+                const alertsNote =
+                  withAlerts > 0
+                    ? ` ${withAlerts} con alertas operativas — abrilas para revisarlas.`
+                    : '';
                 this.msg.add({
                   severity: 'success',
                   summary: 'Planillas procesadas',
@@ -821,8 +860,13 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
     return MANAGEMENT_EVENT_LABELS[type];
   }
 
-  eventSeverity(type: ManagementEventType): 'success' | 'warning' | 'secondary' {
-    const map: Record<ManagementEventType, 'success' | 'warning' | 'secondary'> = {
+  eventSeverity(
+    type: ManagementEventType,
+  ): 'success' | 'warning' | 'secondary' {
+    const map: Record<
+      ManagementEventType,
+      'success' | 'warning' | 'secondary'
+    > = {
       PAYMENT: 'success',
       NO_PAYMENT: 'warning',
       NOT_FOUND: 'secondary',

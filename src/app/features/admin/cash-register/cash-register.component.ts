@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -19,6 +20,7 @@ import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
+import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 import {
   CashRegister,
   CashRegisterClosePayload,
@@ -36,6 +38,7 @@ import { CashRegisterService } from './cash-register.service';
   imports: [
     FormsModule,
     ButtonModule,
+    CalendarModule,
     CardModule,
     DialogModule,
     DropdownModule,
@@ -46,6 +49,7 @@ import { CashRegisterService } from './cash-register.service';
     TagModule,
     ToastModule,
     TooltipModule,
+    CurrencyAmountInputDirective,
     LoadingStateComponent,
     ErrorStateComponent,
   ],

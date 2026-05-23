@@ -183,9 +183,14 @@
     </div>
   }
   <ng-template pTemplate="footer">
-    <button type="button" class="cancel-btn" (click)="showViewModal = false">
-      Cerrar
-    </button>
+    <p-button
+      type="button"
+      label="Cerrar"
+      severity="secondary"
+      [outlined]="true"
+      styleClass="h-11 px-5 rounded-xl justify-center"
+      (onClick)="showViewModal = false"
+    />
   </ng-template>
 </p-dialog>
 
@@ -246,9 +251,14 @@
   </form>
   <ng-template pTemplate="footer">
     <div class="flex justify-end gap-3 pt-2">
-      <button type="button" class="cancel-btn" (click)="showEditModal = false">
-        Cancelar
-      </button>
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl justify-center"
+        (onClick)="showEditModal = false"
+      />
       <p-button
         label="Guardar Cambios"
         icon="pi pi-save"
@@ -402,18 +412,24 @@
 
   <ng-template pTemplate="footer">
     <div class="flex justify-end gap-3 pt-2">
-      <button type="button" class="cancel-btn" (click)="cancelCreate()">
-        Cancelar
-      </button>
-      <button
+      <p-button
         type="button"
-        class="cancel-btn cancel-btn--danger"
-        (click)="form.reset()"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl justify-center"
+        (onClick)="cancelCreate()"
+      />
+      <p-button
+        type="button"
+        label="Borrar"
+        icon="pi pi-trash"
+        severity="danger"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl justify-center"
+        (onClick)="form.reset()"
         [disabled]="creatingClient"
-        title="Borrar campos"
-      >
-        <i class="pi pi-trash mr-1"></i>Borrar
-      </button>
+      />
       <p-button
         label="Crear Cliente"
         icon="pi pi-user"

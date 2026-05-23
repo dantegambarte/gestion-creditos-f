@@ -149,6 +149,7 @@
         <label class="text-xs font-bold text-gray-500 uppercase">Categoría</label>
         <p-dropdown [options]="categoryOptions" formControlName="categoria"
           optionLabel="label" optionValue="value" placeholder="Seleccionar..."
+          appendTo="body"
           styleClass="w-full h-14 rounded-xl flex items-center bg-gray-50" />
       </div>
     </div>
@@ -179,12 +180,12 @@
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-2 field-dark-border">
         <label class="text-xs font-bold text-gray-500 uppercase">Precio de Compra</label>
-        <p-inputNumber formControlName="precioCompra" mode="currency" currency="ARS" locale="es-AR"
+        <p-inputNumber appCurrencyAmountInput formControlName="precioCompra" mode="currency" currency="ARS" locale="es-AR" [minFractionDigits]="0"
           inputStyleClass="w-full h-14 rounded-xl bg-gray-50" styleClass="w-full" />
       </div>
       <div class="flex flex-col gap-2 field-dark-border">
         <label class="text-xs font-bold text-gray-500 uppercase">Precio de Venta</label>
-        <p-inputNumber formControlName="precioVenta" mode="currency" currency="ARS" locale="es-AR"
+        <p-inputNumber appCurrencyAmountInput formControlName="precioVenta" mode="currency" currency="ARS" locale="es-AR" [minFractionDigits]="0"
           inputStyleClass="w-full h-14 rounded-xl bg-gray-50" styleClass="w-full" />
       </div>
     </div>
@@ -202,6 +203,7 @@
         <label class="text-xs font-bold text-gray-500 uppercase">Estado</label>
         <p-dropdown [options]="estadoOptions" formControlName="estado"
           optionLabel="label" optionValue="value"
+          appendTo="body"
           styleClass="w-full h-14 rounded-xl flex items-center bg-gray-50">
           <ng-template pTemplate="selectedItem" let-item>
             <div class="flex items-center gap-2">
@@ -216,9 +218,14 @@
 
   <ng-template pTemplate="footer">
     <div class="flex justify-end gap-3 pt-2">
-      <button type="button" class="cancel-btn" (click)="cancelCreate()">
-        Cancelar
-      </button>
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl justify-center"
+        (onClick)="cancelCreate()"
+      />
       <p-button
         label="Guardar Producto"
         icon="pi pi-save"

@@ -73,6 +73,7 @@
         Efectivo contado en caja
       </p>
       <p-inputNumber
+        appCurrencyAmountInput
         [(ngModel)]="countedCash"
         mode="currency"
         currency="COP"
@@ -124,9 +125,14 @@
         Acción irreversible
       </span>
       <div class="dialog-footer__actions">
-        <button type="button" class="cancel-btn" (click)="cancel()">
-          Cancelar
-        </button>
+        <p-button
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="h-11 px-5 rounded-xl justify-center"
+          (onClick)="cancel()"
+        />
         <button
           type="button"
           class="close-btn"

@@ -45,7 +45,44 @@
           />
         }
 
-        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        @if (form.controls["operationType"].value !== "SALE") {
+          <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4">
+            <label
+              class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+              >Cantidad de cuotas</label
+            >
+            <div data-cy="ddl-installments">
+              <p-dropdown
+                [options]="installmentsOptions"
+                optionLabel="label"
+                optionValue="value"
+                formControlName="installmentsCount"
+                placeholder="Seleccionar cuotas"
+                appendTo="body"
+                [styleClass]="
+                  'w-full bg-[#121520] border border-[#1A1D27] text-white rounded-xl focus:border-[#3B82F6] outline-none transition-all'
+                "
+              />
+            </div>
+
+            @if (isInstallmentsRefreshing) {
+              <p class="mt-3 text-xs text-blue-300">
+                Las cuotas se actualizaron según la frecuencia seleccionada.
+              </p>
+            }
+
+            @if (installmentsOptions.length === 0) {
+              <div class="mt-3">
+                <p-message
+                  severity="warn"
+                  text="No hay cuotas disponibles para esta combinación. Revisá la configuración de tasas antes de continuar."
+                />
+              </div>
+            }
+          </div>
+        }
+
+        <div class="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
           <div
             class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4 md:col-span-2"
           >
@@ -137,10 +174,12 @@
                 form.controls["initialPaymentType"].value === "DOWN_PAYMENT"
               ) {
                 <p-inputNumber
+                  appCurrencyAmountInput
                   formControlName="downPayment"
                   mode="currency"
                   currency="ARS"
                   locale="es-AR"
+                  [minFractionDigits]="0"
                   [allowEmpty]="true"
                   placeholder="$ 0"
                   [min]="1"
@@ -172,8 +211,8 @@
         </div>
       </div>
 
+      @if (form.controls["operationType"].value === "SALE") {
       <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-6">
-        @if (form.controls["operationType"].value === "SALE") {
           <div class="space-y-5">
             <div>
               <h3 class="text-base font-semibold text-white">
@@ -389,53 +428,8 @@
               }
             </div>
           </div>
-        } @else {
-          <div class="space-y-5">
-            <div>
-              <h3 class="text-base font-semibold text-white">
-                Cuotas globales del préstamo
-              </h3>
-              <p class="mt-1 text-sm text-slate-400">
-                Definí un único plazo para todo el capital solicitado.
-              </p>
-            </div>
-
-            <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4">
-              <label
-                class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
-                >Cantidad de cuotas</label
-              >
-              <div data-cy="ddl-installments">
-                <p-dropdown
-                  [options]="installmentsOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  formControlName="installmentsCount"
-                  placeholder="Seleccionar cuotas"
-                  [styleClass]="
-                    'w-full bg-[#121520] border border-[#1A1D27] text-white rounded-xl focus:border-[#3B82F6] outline-none transition-all'
-                  "
-                />
-              </div>
-
-              @if (isInstallmentsRefreshing) {
-                <p class="mt-3 text-xs text-blue-300">
-                  Las cuotas se actualizaron según la frecuencia seleccionada.
-                </p>
-              }
-
-              @if (installmentsOptions.length === 0) {
-                <div class="mt-3">
-                  <p-message
-                    severity="warn"
-                    text="No hay cuotas disponibles para esta combinación. Revisá la configuración de tasas antes de continuar."
-                  />
-                </div>
-              }
-            </div>
-          </div>
-        }
       </div>
+      }
     </div>
 
     <div class="w-full">

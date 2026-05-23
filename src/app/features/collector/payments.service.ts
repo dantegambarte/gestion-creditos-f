@@ -46,6 +46,7 @@ function toPayment(raw: PaymentRaw): Payment {
     isReversal: raw.is_reversal ?? false,
     adminDirect: raw.admin_direct ?? false,
     parentPaymentId: raw.parent_payment_id ?? null,
+    reversalPaymentId: raw.reversal_payment_id ?? null,
   };
 }
 
@@ -201,6 +202,7 @@ export class PaymentsService {
     if (payload.transferReference)
       body['transfer_reference'] = payload.transferReference;
     if (payload.notes) body['notes'] = payload.notes;
+    if (payload.nextVisitDate) body['next_visit_date'] = payload.nextVisitDate;
     return this.api
       .post<PaymentDetailRaw>('payments/admin-direct', body)
       .pipe(map(toPaymentDetail));

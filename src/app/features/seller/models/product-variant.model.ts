@@ -29,6 +29,7 @@ export interface ProductVariantCreatePayload {
   size?: string;
   capacity?: string;
   currentPrice: number;
+  initialUnits?: number;
 }
 
 export interface ProductVariantUpdatePayload {
@@ -36,6 +37,29 @@ export interface ProductVariantUpdatePayload {
   size?: string;
   capacity?: string;
   currentPrice?: number;
+}
+
+export interface ProductVariantBulkRowPayload {
+  color?: string;
+  size?: string;
+  capacity?: string;
+  currentPrice?: number;
+  initialUnits?: number;
+}
+
+export interface ProductVariantBulkCreatePayload {
+  productId: string;
+  rows: ProductVariantBulkRowPayload[];
+}
+
+export interface ProductVariantBulkCreateResultRaw {
+  created: ProductVariantRaw[];
+  rejected: unknown[];
+}
+
+export interface ProductVariantBulkCreateResult {
+  created: ProductVariant[];
+  rejected: unknown[];
 }
 
 export interface ProductVariantRaw {

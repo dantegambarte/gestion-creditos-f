@@ -19,6 +19,7 @@ import { ToastModule } from 'primeng/toast';
 import { AppError } from '../../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { HeaderService } from '../../../../core/services/header.service';
+import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
 import { CustomersService } from '../../clients/customers.service';
 import {
   CartUnit,
@@ -48,6 +49,7 @@ import { CreditsService } from '../credits.service';
     DropdownModule,
     InputTextModule,
     InputNumberModule,
+    CurrencyAmountInputDirective,
     RadioButtonModule,
     InputTextareaModule,
     ToastModule,

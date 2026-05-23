@@ -19,11 +19,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ToastModule } from 'primeng/toast';
 import { Subject, takeUntil } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
+import { AuthUser } from '../../../core/models/interface/auth-user';
+import { PasswordTabSkipDirective } from '../../../shared/directives/password-tab-skip.directive';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { UserRoleEnum } from './../../../core/models/types/user-role';
-import { AuthUser } from '../../../core/models/interface/auth-user';
-import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -40,6 +41,7 @@ import { environment } from '../../../../environments/environment';
     ToastModule,
     IconFieldModule,
     InputIconModule,
+    PasswordTabSkipDirective,
   ],
   providers: [MessageService],
   templateUrl: './login.component.html',
@@ -124,11 +126,17 @@ export class LoginComponent implements OnDestroy {
     if (user.roles.includes(UserRoleEnum.ADMIN))
       return void this.router.navigate([AppRoutes.ADMIN, AppRoutes.DASHBOARD]);
     if (user.roles.includes(UserRoleEnum.SELLER))
-      return void this.router.navigate([AppRoutes.SELLER, AppRoutes.OPERATIONS]);
+      return void this.router.navigate([
+        AppRoutes.SELLER,
+        AppRoutes.OPERATIONS,
+      ]);
     if (user.roles.includes(UserRoleEnum.COLLECTOR))
       return void this.router.navigate([AppRoutes.ROUTE]);
     if (user.roles.includes(UserRoleEnum.SELLER_COLLECTOR))
-      return void this.router.navigate([AppRoutes.SELLER, AppRoutes.OPERATIONS]);
+      return void this.router.navigate([
+        AppRoutes.SELLER,
+        AppRoutes.OPERATIONS,
+      ]);
 
     this.router.navigate([AppRoutes.LOGIN]);
   }
