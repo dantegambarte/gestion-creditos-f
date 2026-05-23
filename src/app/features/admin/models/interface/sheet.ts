@@ -10,6 +10,8 @@ export interface PlanillaEntry {
   paidAmount: number;
   dueDate: string;
   paymentStatus: string;
+  /** Frase contextual armada en backend, p.ej. "Cuota 1 de 12 · crédito de Lavarropas". */
+  collectionReference: string;
 }
 
 export interface GeneratedPlanillaResult {
