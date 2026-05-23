@@ -29,6 +29,7 @@ import { Product as ApiProduct } from '../../features/seller/models/product.mode
 import { ProductUnitsService } from '../../features/seller/products/product-units.service';
 import { ProductVariantsService } from '../../features/seller/products/product-variants.service';
 import { ProductsService } from '../../features/seller/products/products.service';
+import { ProductCategoriesService } from '../../features/admin/config/services/product-categories.service';
 import { AppRoutes } from '../models/enums/routes.enum';
 import { Product } from '../models/interface/product';
 import { CurrencyAmountInputDirective } from '../directives/currency-amount-input.directive';
@@ -74,20 +75,15 @@ export class ProductsComponent implements OnInit {
   private readonly productsService = inject(ProductsService);
   private readonly productVariantsService = inject(ProductVariantsService);
   private readonly productUnitsService = inject(ProductUnitsService);
+  private readonly productCategoriesService = inject(ProductCategoriesService);
   private readonly messageService = inject(MessageService);
   private readonly router = inject(Router);
 
   products: Product[] = [];
   loading = false;
 
-  // TODO: reemplazar hardcodeo por categorias propias del backend
-  categoryOptions = [
-    { label: 'Electrónica', value: 'Electrónica' },
-    { label: 'Electrodomésticos', value: 'Electrodomésticos' },
-    { label: 'Ropa', value: 'Ropa' },
-    { label: 'Hogar', value: 'Hogar' },
-    { label: 'Otros', value: 'Otros' },
-  ];
+  categoryOptions: { label: string; value: string }[] = [];
+  categoriesLoading = false;
 
   estadoOptions = [
     { label: 'Activo', value: 'activo' },
@@ -108,6 +104,7 @@ export class ProductsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
+    this.loadCategories();
   }
 
   // TODO: agregar documentacion de las funciones
@@ -121,6 +118,24 @@ export class ProductsComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
+      },
+    });
+  }
+
+  /**
+   * Carga las categorías activas desde el backend y las mapea al formato requerido por el dropdown.
+   */
+  private loadCategories(): void {
+    this.categoriesLoading = true;
+    this.productCategoriesService.getAll().subscribe({
+      next: (cats) => {
+        this.categoryOptions = cats
+          .filter((c) => c.active)
+          .map((c) => ({ label: c.name, value: c.id }));
+        this.categoriesLoading = false;
+      },
+      error: () => {
+        this.categoriesLoading = false;
       },
     });
   }
@@ -198,7 +213,7 @@ export class ProductsComponent implements OnInit {
     this.submitted = true;
     if (this.form.invalid) return;
 
-    const { codigo, descripcion, marca, modelo, precioVenta, stockInicial } =
+    const { codigo, categoria, descripcion, marca, modelo, precioVenta, stockInicial } =
       this.form.value;
     const nameParts = [codigo, marca, modelo].filter(Boolean);
     const name = nameParts.join(' ') || descripcion || codigo;
@@ -209,6 +224,7 @@ export class ProductsComponent implements OnInit {
       .create({
         title: name,
         description,
+        categoryId: categoria ?? undefined,
       })
       .pipe(
         switchMap((product) =>
