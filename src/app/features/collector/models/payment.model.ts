@@ -23,6 +23,8 @@ export interface Payment {
   isReversal: boolean;
   adminDirect: boolean;
   parentPaymentId: string | null;
+  /** ID del payment de reversión que anuló este cobro (null si no fue revertido). */
+  reversalPaymentId: string | null;
 }
 
 export interface PaymentDetail extends Payment {
@@ -95,6 +97,8 @@ export interface AdminDirectPayload {
   paymentMethod: 'CASH' | 'TRANSFER';
   transferReference?: string;
   notes?: string;
+  /** Obligatorio cuando el cobro queda parcial (amount < saldo restante). */
+  nextVisitDate?: string;
 }
 
 export interface ReversePayload {
@@ -125,6 +129,7 @@ export interface PaymentRaw {
   is_reversal: boolean;
   admin_direct: boolean;
   parent_payment_id: string | null;
+  reversal_payment_id: string | null;
 }
 
 export interface PaymentDetailRaw extends PaymentRaw {
