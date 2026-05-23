@@ -48,11 +48,16 @@
         appendTo="body"
         (onChange)="applyFilters()"
       />
-      <input
-        type="date"
+      <p-calendar
         [(ngModel)]="filterDate"
-        (change)="applyFilters()"
-        class="native-date-input h-10"
+        dataType="string"
+        dateFormat="yy-mm-dd"
+        [showIcon]="true"
+        iconDisplay="input"
+        appendTo="body"
+        styleClass="w-44"
+        inputStyleClass="native-date-input h-10"
+        (onSelect)="applyFilters()"
       />
       <label class="inline-flex items-center gap-2 cursor-pointer text-xs select-none" style="color: var(--ff-text-secondary)">
         <p-inputSwitch
@@ -227,6 +232,15 @@
             >
               {{ selectedSheet.totalItems }} CUOTAS
             </span>
+            <p-button
+              icon="pi pi-refresh"
+              pTooltip="Actualizar estados de cuotas"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              [loading]="loadingDetail"
+              (onClick)="reloadDetail()"
+            />
             <p-button
               icon="pi pi-download"
               pTooltip="Descargar PDF"
@@ -565,12 +579,17 @@
         <label class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-text-muted);">
           Fecha
         </label>
-        <input
-          type="date"
+        <p-calendar
           [(ngModel)]="selectedDate"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          [minDate]="todayDate"
+          styleClass="w-full"
+          inputStyleClass="native-date-input h-10"
           (ngModelChange)="onDialogDateChange()"
-          [min]="todayIsoDate"
-          class="native-date-input h-10"
         />
       </div>
       <div class="flex flex-col gap-1.5">
