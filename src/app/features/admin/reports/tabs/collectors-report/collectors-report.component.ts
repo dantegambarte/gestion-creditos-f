@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
@@ -16,6 +17,7 @@ import { ReportsService } from '../../reports.service';
   imports: [
     FormsModule,
     ButtonModule,
+    CalendarModule,
     LoadingStateComponent,
     ErrorStateComponent,
   ],
