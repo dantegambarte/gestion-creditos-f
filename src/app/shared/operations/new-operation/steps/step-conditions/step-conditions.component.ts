@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
+import { CurrencyAmountInputDirective } from '../../../../directives/currency-amount-input.directive';
 import { ProductRate } from '../../../../../features/admin/config/models/interfaces/product';
 import { SimulateResult } from '../../../../../features/seller/models/credit.model';
 import {
@@ -27,6 +28,7 @@ import {
     InputTextModule,
     MessageModule,
     RadioButtonModule,
+    CurrencyAmountInputDirective,
     CurrencyArsPipe,
   ],
   templateUrl: './step-conditions.component.html',

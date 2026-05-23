@@ -123,10 +123,12 @@
         <div>
           <label class="block text-sm font-medium mb-1">Monto total *</label>
           <p-inputNumber
+            appCurrencyAmountInput
             formControlName="totalAmount"
             mode="currency"
             currency="ARS"
             locale="es-AR"
+            [minFractionDigits]="0"
             [min]="1"
             [max]="99999999"
             styleClass="w-full"
@@ -341,11 +343,13 @@
             <div>
               <label class="block text-sm font-medium mb-1">Enganche ($)</label>
               <p-inputNumber
+                appCurrencyAmountInput
                 formControlName="downPayment"
                 [min]="0"
                 mode="currency"
                 currency="ARS"
                 locale="es-AR"
+                [minFractionDigits]="0"
                 styleClass="w-full"
                 inputId="sale-down-payment"
                 data-cy="sale-down-payment"

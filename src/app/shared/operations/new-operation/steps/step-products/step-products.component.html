@@ -31,10 +31,12 @@
               Monto total
             </label>
             <p-inputNumber
+              appCurrencyAmountInput
               formControlName="totalAmount"
               mode="currency"
               currency="ARS"
               locale="es-AR"
+              [minFractionDigits]="0"
               [min]="1"
               styleClass="block w-full"
               inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all"

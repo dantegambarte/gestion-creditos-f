@@ -123,7 +123,7 @@
           [pTooltip]="isCashClosed ? 'La caja está cerrada' : ''"
           tooltipPosition="top"
         />
-        <p-button label="Rechazar" icon="pi pi-times" severity="danger" size="small" (onClick)="openRejectDialog()" />
+        <p-button label="Rechazar" icon="pi pi-times" severity="danger" [outlined]="true" size="small" (onClick)="openRejectDialog()" />
       }
       @if (isAdmin && credit.status === 'ACTIVE') {
         <p-button
@@ -586,11 +586,18 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button type="button" class="cancel-btn w-full" (click)="showApproveDialog = false">Cancelar</button>
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showApproveDialog = false"
+      />
       <p-button
         label="Confirmar"
-        severity="success"
-        styleClass="w-full"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmApprove()"
         [loading]="processingApprove"
         [disabled]="isCashClosed || processingApprove"
@@ -625,7 +632,7 @@
         [(ngModel)]="rejectReason"
         rows="4"
         maxlength="500"
-        class="w-full resize-none rounded-xl p-3 text-sm outline-none"
+        class="w-full resize-none px-3 py-2"
         style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
         placeholder="Describe el motivo..."
       ></textarea>
@@ -639,11 +646,19 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button type="button" class="cancel-btn w-full" (click)="showRejectDialog = false">Cancelar</button>
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showRejectDialog = false"
+      />
       <p-button
         label="Rechazar"
         severity="danger"
-        styleClass="w-full"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmReject()"
         [loading]="processingReject"
         [disabled]="rejectCharCount() < 5"
@@ -689,7 +704,7 @@
         [(ngModel)]="settlementPaymentMethod"
         optionLabel="label"
         optionValue="value"
-        styleClass="w-full"
+        styleClass="w-full h-11"
         appendTo="body"
       />
     </div>
@@ -701,7 +716,7 @@
           pInputText
           [(ngModel)]="settlementTransferRef"
           maxlength="100"
-          class="w-full"
+          class="w-full h-11 px-3"
           placeholder="Número de operación..."
         />
       </div>
@@ -713,13 +728,13 @@
         label="Cancelar"
         severity="secondary"
         [outlined]="true"
-        styleClass="w-full h-11 px-5 rounded-xl"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="showSettlementDialog = false"
       />
       <p-button
         label="Confirmar"
         severity="primary"
-        styleClass="w-full h-11 px-5 rounded-xl"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmSettlement()"
         [loading]="processingSettlement"
         [disabled]="hasPendingPayments"
@@ -765,11 +780,18 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button type="button" class="cancel-btn w-full" (click)="showPenaltyDialog = false">Cancelar</button>
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showPenaltyDialog = false"
+      />
       <p-button
         label="Aplicar"
         severity="danger"
-        styleClass="w-full"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmApplyPenalty()"
         [loading]="processingPenalty"
         [disabled]="!penaltyAmount || penaltyAmount <= 0"
@@ -794,8 +816,21 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button type="button" class="cancel-btn w-full" (click)="showWaiveDialog = false">Cancelar</button>
-      <p-button label="Condonar" severity="warning" styleClass="w-full" (onClick)="confirmWaivePenalty()" [loading]="processingWaive" />
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showWaiveDialog = false"
+      />
+      <p-button
+        label="Condonar"
+        severity="warning"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirmWaivePenalty()"
+        [loading]="processingWaive"
+      />
     </div>
   </ng-template>
 </p-dialog>
@@ -841,6 +876,7 @@
             [max]="120"
             [useGrouping]="false"
             styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
             placeholder="Ej: 12"
           />
         </div>
@@ -851,7 +887,7 @@
             [(ngModel)]="refinanceFrequency"
             optionLabel="label"
             optionValue="value"
-            styleClass="w-full"
+            styleClass="w-full h-11"
             appendTo="body"
           />
         </div>
@@ -860,13 +896,15 @@
       <div class="flex flex-col gap-1">
         <label class="auth-label">Cargos adicionales (opcional)</label>
         <p-inputNumber
+          appCurrencyAmountInput
           [(ngModel)]="refinanceExtraCharges"
           mode="currency"
           currency="ARS"
           locale="es-AR"
-          [minFractionDigits]="2"
+          [minFractionDigits]="0"
           [min]="0"
           styleClass="w-full"
+          inputStyleClass="w-full h-11 px-3"
           placeholder="Gastos, intereses punitorios, etc."
         />
       </div>
@@ -878,7 +916,7 @@
           [(ngModel)]="refinanceReason"
           rows="3"
           maxlength="500"
-          class="w-full"
+          class="w-full resize-none px-3 py-2"
           placeholder="Describe el motivo..."
         ></textarea>
         <div class="flex justify-between text-xs mt-1" style="color: var(--ff-text-muted)">
@@ -896,7 +934,7 @@
           [(ngModel)]="refinanceNotes"
           rows="2"
           maxlength="500"
-          class="w-full"
+          class="w-full resize-none px-3 py-2"
           placeholder="Observaciones adicionales..."
         ></textarea>
       </div>
@@ -977,12 +1015,19 @@
   <ng-template pTemplate="footer">
     @if (refinanceStep === 1) {
       <div class="grid grid-cols-2 gap-3 w-full">
-        <button type="button" class="cancel-btn w-full" (click)="showRefinanceDialog = false">Cancelar</button>
+        <p-button
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="w-full h-11 px-5 rounded-xl justify-center"
+          (onClick)="showRefinanceDialog = false"
+        />
         <p-button
           label="Simular nuevo crédito"
           icon="pi pi-arrow-right"
           severity="warning"
-          styleClass="w-full"
+          styleClass="w-full h-11 px-5 rounded-xl justify-center"
           (onClick)="goToRefinanceStep2()"
           [loading]="refinanceSimulating"
           [disabled]="!refinanceStep1Valid"
@@ -991,13 +1036,27 @@
     }
     @if (refinanceStep === 2) {
       <div class="grid grid-cols-3 gap-3 w-full">
-        <button type="button" class="cancel-btn w-full" (click)="refinanceStep = 1">Volver</button>
-        <button type="button" class="cancel-btn w-full" (click)="showRefinanceDialog = false">Cancelar</button>
+        <p-button
+          type="button"
+          label="Volver"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="w-full h-11 px-5 rounded-xl justify-center"
+          (onClick)="refinanceStep = 1"
+        />
+        <p-button
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="w-full h-11 px-5 rounded-xl justify-center"
+          (onClick)="showRefinanceDialog = false"
+        />
         <p-button
           label="Confirmar refinanciación"
           icon="pi pi-check"
           severity="warning"
-          styleClass="w-full"
+          styleClass="w-full h-11 px-5 rounded-xl justify-center"
           (onClick)="confirmRefinance()"
           [loading]="processingRefinance"
         />
@@ -1027,14 +1086,16 @@
     <div class="flex flex-col gap-1">
       <label class="text-sm font-medium" style="color: var(--ff-text-primary)">Monto cobrado</label>
       <p-inputNumber
+        appCurrencyAmountInput
         [(ngModel)]="directAmount"
         mode="currency"
         currency="ARS"
         locale="es-AR"
-        [minFractionDigits]="2"
+        [minFractionDigits]="0"
         [min]="0.01"
         [max]="directMaxAmount"
         styleClass="w-full"
+        inputStyleClass="w-full h-11 px-3"
       />
     </div>
 
@@ -1045,7 +1106,7 @@
         [(ngModel)]="directMethod"
         optionLabel="label"
         optionValue="value"
-        styleClass="w-full"
+        styleClass="w-full h-11"
         appendTo="body"
       />
     </div>
@@ -1057,7 +1118,7 @@
           pInputText
           [(ngModel)]="directTransferRef"
           placeholder="N° de operación o referencia"
-          class="w-full"
+          class="w-full h-11 px-3"
           maxlength="100"
         />
       </div>
@@ -1070,7 +1131,7 @@
         [(ngModel)]="directNotes"
         rows="2"
         maxlength="500"
-        class="w-full"
+        class="w-full px-3 py-2"
         placeholder="Observaciones adicionales..."
       ></textarea>
     </div>
@@ -1078,12 +1139,19 @@
 
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button type="button" class="cancel-btn w-full" (click)="showDirectDialog = false">Cancelar</button>
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showDirectDialog = false"
+      />
       <p-button
         label="Registrar cobro"
         icon="pi pi-check"
-        severity="success"
-        styleClass="w-full"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmDirect()"
         [loading]="processingDirect"
         [disabled]="!directFormValid"
