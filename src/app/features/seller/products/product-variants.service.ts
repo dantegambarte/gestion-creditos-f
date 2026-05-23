@@ -6,6 +6,9 @@ import {
   ProductVariant,
   ProductVariantCreatePayload,
   ProductVariantDetail,
+  ProductVariantBulkCreatePayload,
+  ProductVariantBulkCreateResult,
+  ProductVariantBulkCreateResultRaw,
   ProductVariantDetailRaw,
   ProductVariantFilters,
   ProductVariantRaw,
@@ -69,9 +72,39 @@ export class ProductVariantsService {
     if (payload.color) body['color'] = payload.color;
     if (payload.size) body['size'] = payload.size;
     if (payload.capacity) body['capacity'] = payload.capacity;
+    if (payload.initialUnits !== undefined) body['initial_units'] = payload.initialUnits;
     return this.api
       .post<ProductVariantRaw>('product-variants', body)
       .pipe(map(toVariant));
+  }
+
+  /**
+   * Crea múltiples variantes y devuelve las filas creadas en bloque.
+   * @param {ProductVariantBulkCreatePayload} payload - Producto y filas a crear.
+   * @returns {Observable<ProductVariantBulkCreateResult>} Resultado del lote.
+   */
+  createBulk(
+    payload: ProductVariantBulkCreatePayload,
+  ): Observable<ProductVariantBulkCreateResult> {
+    const body = {
+      product_id: payload.productId,
+      rows: payload.rows.map((row) => ({
+        color: row.color || undefined,
+        size: row.size || undefined,
+        capacity: row.capacity || undefined,
+        current_price: row.currentPrice,
+        initial_units: row.initialUnits,
+      })),
+    };
+
+    return this.api
+      .post<ProductVariantBulkCreateResultRaw>('product-variants/bulk', body)
+      .pipe(
+        map((result) => ({
+          created: (result.created || []).map(toVariant),
+          rejected: result.rejected || [],
+        })),
+      );
   }
 
   update(
