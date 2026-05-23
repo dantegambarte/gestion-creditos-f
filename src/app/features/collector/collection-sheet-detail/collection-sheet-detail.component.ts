@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
@@ -50,6 +51,7 @@ import { AppRoutes } from '../../../shared/models/enums/routes.enum';
     DatePipe,
     FormsModule,
     ButtonModule,
+    CalendarModule,
     TagModule,
     BadgeModule,
     ToastModule,
@@ -110,6 +112,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   attemptNextVisitDate = '';
   attemptNotes = '';
   processingAttempt = false;
+  readonly todayDate = new Date();
 
   // ── Diálogo de anulación (void) ──────────────────────────────────────────────
   showVoidDialog = false;

@@ -329,7 +329,7 @@
         min="0.01"
         step="0.01"
         [max]="dialogItem ? availableBalance(dialogItem) : null"
-        class="w-full rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        class="w-full h-11 rounded-xl border border-gray-300 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-blue-500"
         placeholder="0.00"
       />
     </div>
@@ -341,7 +341,7 @@
         [(ngModel)]="paymentMethod"
         optionLabel="label"
         optionValue="value"
-        styleClass="w-full"
+        styleClass="w-full h-11"
         appendTo="body"
       />
     </div>
@@ -354,7 +354,7 @@
           pInputText
           [(ngModel)]="transferReference"
           maxlength="100"
-          class="w-full"
+          class="w-full h-11 px-3"
           placeholder="Número de operación..."
         />
       </div>
@@ -368,11 +368,16 @@
         <p class="text-xs text-amber-800 mb-1">
           El cobro es parcial. Indicá cuándo volverás a visitar al cliente.
         </p>
-        <input
-          type="date"
+        <p-calendar
           [(ngModel)]="paymentNextVisitDate"
-          [min]="todayIso"
-          class="native-date-input h-10"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          [minDate]="todayDate"
+          styleClass="w-full"
+          inputStyleClass="native-date-input h-10"
         />
       </div>
     }
@@ -384,7 +389,7 @@
         [(ngModel)]="paymentNotes"
         rows="2"
         maxlength="500"
-        class="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        class="w-full resize-none px-3 py-2"
         placeholder="Observaciones..."
       ></textarea>
     </div>
@@ -392,18 +397,19 @@
 
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
+      <p-button
         type="button"
-        class="cancel-btn w-full"
-        (click)="showPaymentDialog = false"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showPaymentDialog = false"
         [disabled]="processingPayment"
-      >
-        Cancelar
-      </button>
+      />
       <p-button
         label="Confirmar"
-        severity="success"
-        styleClass="w-full"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmPayment()"
         [loading]="processingPayment"
         [disabled]="!!processingPayment || !paymentAmount || paymentAmount <= 0 || (isPartialPayment() && !paymentNextVisitDate)"
@@ -446,7 +452,7 @@
           pInputText
           [(ngModel)]="attemptReason"
           maxlength="200"
-          class="w-full"
+          class="w-full h-11 px-3"
           placeholder="Ej: no tenía plata, prometió pagar mañana..."
         />
       </div>
@@ -455,11 +461,16 @@
         <label class="text-sm font-medium text-gray-700">
           Próxima visita <span class="text-red-600">*</span>
         </label>
-        <input
-          type="date"
+        <p-calendar
           [(ngModel)]="attemptNextVisitDate"
-          [min]="todayIso"
-          class="native-date-input h-10"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          [minDate]="todayDate"
+          styleClass="w-full"
+          inputStyleClass="native-date-input h-10"
         />
       </div>
     } @else {
@@ -476,7 +487,7 @@
         [(ngModel)]="attemptNotes"
         rows="2"
         maxlength="500"
-        class="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"
+        class="w-full resize-none px-3 py-2"
         placeholder="Observaciones..."
       ></textarea>
     </div>
@@ -484,18 +495,19 @@
 
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
+      <p-button
         type="button"
-        class="cancel-btn w-full"
-        (click)="showAttemptDialog = false"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showAttemptDialog = false"
         [disabled]="processingAttempt"
-      >
-        Cancelar
-      </button>
+      />
       <p-button
         label="Confirmar"
         severity="warning"
-        styleClass="w-full"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmAttempt()"
         [loading]="processingAttempt"
         [disabled]="!!processingAttempt || (attemptType === 'NO_PAYMENT' && (!attemptReason.trim() || !attemptNextVisitDate))"
@@ -535,19 +547,20 @@
 
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
+      <p-button
         type="button"
-        class="cancel-btn w-full"
-        (click)="showVoidDialog = false"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showVoidDialog = false"
         [disabled]="processingVoid"
-      >
-        Cancelar
-      </button>
+      />
       <p-button
         label="Anular"
         icon="pi pi-undo"
         severity="danger"
-        styleClass="w-full"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmVoid()"
         [loading]="processingVoid"
         [disabled]="!!processingVoid"

@@ -28,10 +28,15 @@
 
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Fecha</label>
-        <input
-          type="date"
+        <p-calendar
           [(ngModel)]="selectedDate"
-          class="native-date-input h-10"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          styleClass="w-52"
+          inputStyleClass="native-date-input h-10"
         />
       </div>
 
