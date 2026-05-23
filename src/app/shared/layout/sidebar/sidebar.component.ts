@@ -62,6 +62,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
       ...item,
       route:
         typeof item.route === 'function' ? item.route(userRole) : item.route,
+      badge:
+        typeof item.badge === 'function' ? item.badge(user) : item.badge,
     }));
   }
 
