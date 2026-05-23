@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { finalize } from 'rxjs/operators';
@@ -109,6 +109,9 @@ function toUiCredit(c: ApiCredit): Credit | null {
   styleUrl: './client-detail.component.scss',
 })
 export class ClientDetailComponent implements OnInit, OnDestroy {
+  @ViewChild(ClientContactarComponent) private contactarTab?: ClientContactarComponent;
+  @ViewChild(ClientHistorialComponent) private historialTab?: ClientHistorialComponent;
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly headerService = inject(HeaderService);
@@ -251,9 +254,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
           label: 'Enviar Mensaje',
           icon: 'pi pi-send',
           severity: 'primary',
-          action: () => {
-            /* TODO */
-          },
+          action: () => this.contactarTab?.openWhatsApp(),
         },
       ]);
     } else if (this._activeTab === 'historial') {
@@ -263,9 +264,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
           icon: 'pi pi-download',
           severity: 'success',
           styleClass: '!bg-green-500 !border-green-500 hover:!bg-green-600',
-          action: () => {
-            /* TODO */
-          },
+          action: () => this.exportHistorial(),
         },
       ]);
     } else {
@@ -282,6 +281,31 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
         },
       ]);
     }
+  }
+
+  /**
+   * Exporta el historial filtrado del cliente como archivo CSV descargable.
+   */
+  private exportHistorial(): void {
+    const rows = this.historialTab?.filteredHistorial ?? this.client?.historial ?? [];
+    const headers = ['Fecha', 'Hora', 'Evento', 'Crédito', 'Monto', 'Estado', 'Usuario'];
+    const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const csv = [
+      headers.join(','),
+      ...rows.map((e) =>
+        [e.fecha, e.hora, e.evento, e.creditoId, e.monto ?? '', e.estado, e.usuario]
+          .map(escape)
+          .join(','),
+      ),
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `historial-${this.client?.dni ?? 'cliente'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   goBack(): void {
