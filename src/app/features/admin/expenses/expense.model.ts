@@ -28,6 +28,15 @@ export interface ExpenseCreatePayload {
   expenseDate?: string;
 }
 
+export interface ExpenseUpdatePayload {
+  amount: number;
+  description: string;
+  paymentMethod: 'CASH' | 'TRANSFER';
+  transferReference?: string;
+  categoryId?: string;
+  expenseDate?: string;
+}
+
 export interface ExpensePagedResponse {
   rows: Expense[];
   total: number;

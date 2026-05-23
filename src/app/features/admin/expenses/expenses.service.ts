@@ -5,6 +5,7 @@ import { ApiHttpService } from '../../../core/http/api-http.service';
 import {
   Expense,
   ExpenseCreatePayload,
+  ExpenseUpdatePayload,
   ExpenseListFilters,
   ExpensePagedRaw,
   ExpensePagedResponse,
@@ -82,6 +83,24 @@ export class ExpensesService {
       body['expense_date'] = payload.expenseDate;
     }
     return this.api.post<ExpenseRaw>('expenses', body).pipe(map(toExpense));
+  }
+
+  /**
+   * Actualiza un gasto existente.
+   * @param id
+   * @param payload
+   * @returns
+   */
+  update(id: string, payload: ExpenseUpdatePayload): Observable<Expense> {
+    const body: Record<string, unknown> = {
+      amount: payload.amount,
+      description: payload.description,
+      payment_method: payload.paymentMethod,
+      expense_date: payload.expenseDate,
+      category_id: payload.categoryId || null,
+      transfer_reference: payload.transferReference || null,
+    };
+    return this.api.put<ExpenseRaw>(`expenses/${id}`, body).pipe(map(toExpense));
   }
 
   /**
