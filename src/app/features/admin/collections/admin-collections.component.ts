@@ -34,6 +34,8 @@ import {
   CollectionSheet,
   CollectionSheetDetail,
   CollectionSheetItem,
+  INCLUSION_REASON_LABELS,
+  InclusionReason,
   SHEET_STATUS_LABELS,
 } from '../../collector/models/collection.model';
 import {
@@ -210,6 +212,33 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
     if (!this.selectedSheet) return 0;
     return this.selectedSheet.items.filter(
       (i) => i.installmentStatus === status,
+    ).length;
+  }
+
+  /**
+   * True si el item en posición `index` es la primera cuota de su cliente en
+   * la lista (la previa es de otro cliente o no existe). Usado para decidir
+   * cuándo dibujar el header de agrupación.
+   *
+   * Asume que la lista ya viene agrupada por cliente desde el backend
+   * (ORDER BY cu.full_name, cu.id, ...).
+   */
+  isFirstOfCustomer(items: CollectionSheetItem[], index: number): boolean {
+    if (index === 0) return true;
+    const current = items[index];
+    const prev = items[index - 1];
+    if (!current?.customerName || !prev?.customerName) return true;
+    return prev.customerName !== current.customerName;
+  }
+
+  /**
+   * Cantidad de cuotas del cliente del item dado dentro de la planilla actual.
+   * Se usa en el header de agrupación: "JUAN PÉREZ · 3 cuotas".
+   */
+  customerCuotasCount(customerName: string): number {
+    if (!this.selectedSheet) return 0;
+    return this.selectedSheet.items.filter(
+      (i) => i.customerName === customerName,
     ).length;
   }
 
@@ -739,11 +768,10 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
     const HEADER_H = 26;
 
     const COLS = {
-      num: { x: MARGIN_X,             w: 8  },
-      cli: { x: MARGIN_X + 8,         w: 76 },
-      ven: { x: MARGIN_X + 84,        w: 18 },
-      esp: { x: MARGIN_X + 102,       w: 24 },
-      ges: { x: MARGIN_X + 126,       w: 56 },
+      cli: { x: MARGIN_X,          w: 84 },
+      ven: { x: MARGIN_X + 84,     w: 18 },
+      esp: { x: MARGIN_X + 102,    w: 24 },
+      ges: { x: MARGIN_X + 126,    w: 56 },
     };
 
     const COLOR_TEXT = [33, 37, 41] as const;
@@ -774,6 +802,9 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
       doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
       doc.setLineWidth(width);
     };
+
+    /** Altura fija del header de cliente: nombre, teléfono y dirección en una sola línea. */
+    const calcHeaderH = (_phone: string, _address: string): number => 7;
 
     const drawPdfHeader = (): void => {
       // Caja contenedora
@@ -818,10 +849,9 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
       doc.line(MARGIN_X, yTop, MARGIN_X + CONTENT_W, yTop);
       doc.line(MARGIN_X, yTop + TABLE_HEADER_H, MARGIN_X + CONTENT_W, yTop + TABLE_HEADER_H);
       // Labels
-      setFont(7.5, 'bold');
-      setColor(COLOR_MUTED);
-      const textY = yTop + 4;
-      doc.text('#', COLS.num.x + COLS.num.w / 2, textY, { align: 'center' });
+      setFont(8, 'bold');
+      setColor([55, 65, 81]);
+      const textY = yTop + 4.2;
       doc.text('CLIENTE', COLS.cli.x + 1.5, textY);
       doc.text('VENCE', COLS.ven.x + COLS.ven.w / 2, textY, { align: 'center' });
       doc.text('ESPERADO', COLS.esp.x + COLS.esp.w / 2, textY, { align: 'center' });
@@ -829,97 +859,84 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
     };
 
     /**
-     * Compone la línea de contacto (teléfono · dirección) para la columna
-     * CLIENTE. Recorta para que entre en el ancho disponible. Devuelve '' si
-     * no hay datos — la fila simplemente no la dibuja.
-     */
-    const composeContactLine = (entry: PlanillaEntry): string => {
-      const parts: string[] = [];
-      if (entry.clientPhone) parts.push(entry.clientPhone);
-      if (entry.clientAddress) parts.push(entry.clientAddress);
-      return parts.join('  ·  ');
-    };
-
-    /**
-     * Mide la altura efectiva de una fila considerando si collectionReference
-     * necesita 2 líneas y si hay línea de contacto. Devuelve refLines (max 2)
-     * y contactLine ya recortada al ancho disponible.
+     * Mide la altura efectiva de una fila según si collectionReference necesita
+     * 1 o 2 líneas. El contacto del cliente ya no se repite en la fila — vive
+     * en el header de agrupación del cliente.
      */
     const measureRow = (entry: PlanillaEntry): {
       height: number;
       refLines: string[];
-      contactLine: string;
     } => {
       setFont(7.5, 'normal');
       const ref = entry.collectionReference || `Cuota ${entry.installmentNumber} · —`;
       const refLines = (doc.splitTextToSize(ref, COLS.cli.w - 3) as string[]).slice(0, 2);
-      const contactRaw = composeContactLine(entry);
-      // Recorto contacto a 1 línea: si no entra en el ancho, splitTextToSize
-      // devuelve varias; me quedo con la primera.
-      const contactLine = contactRaw
-        ? (doc.splitTextToSize(contactRaw, COLS.cli.w - 3) as string[])[0]
-        : '';
-      // Altura: cuento líneas internas en la columna CLIENTE (la más alta).
-      //   1 línea de nombre  +  refLines  +  (1 si hay contacto)
-      // ROW_H_BASE cubre 2 líneas internas; ROW_H_WRAPPED cubre 3; >3 → 21mm.
-      const internalLines = 1 + refLines.length + (contactLine ? 1 : 0);
-      let height: number;
-      if (internalLines <= 2) height = ROW_H_BASE;          // 14mm
-      else if (internalLines === 3) height = ROW_H_WRAPPED; // 18mm
-      else height = 21;                                     // ref 2 líneas + contacto
-      return { height, refLines, contactLine };
+      const height = refLines.length >= 2 ? ROW_H_WRAPPED : ROW_H_BASE;
+      return { height, refLines };
+    };
+
+    /**
+     * Dibuja el header de agrupación: nombre bold + teléfono + dirección en
+     * una única línea (izquierda) y conteo de cuotas a la derecha.
+     */
+    const drawCustomerHeader = (
+      yTop: number,
+      customerName: string,
+      cuotasCount: number,
+      phone: string,
+      address: string,
+    ): void => {
+      const hdrH = 7;
+      const textY = yTop + 4.8;
+      // Fondo
+      doc.setFillColor(COLOR_HEADER_BG[0], COLOR_HEADER_BG[1], COLOR_HEADER_BG[2]);
+      doc.rect(MARGIN_X, yTop, CONTENT_W, hdrH, 'F');
+      // Borde inferior
+      setStroke(COLOR_BORDER_STRONG, 0.5);
+      doc.line(MARGIN_X, yTop + hdrH, MARGIN_X + CONTENT_W, yTop + hdrH);
+      // Conteo (derecha, primero para reservar espacio)
+      setFont(7.5, 'normal');
+      setColor(COLOR_MUTED);
+      const countLabel = `${cuotasCount} ${cuotasCount === 1 ? 'cuota' : 'cuotas'}`;
+      doc.text(countLabel, MARGIN_X + CONTENT_W - 2, textY, { align: 'right' });
+      const countW = doc.getTextWidth(countLabel) + 4;
+      // Nombre (bold)
+      setFont(8.5, 'bold');
+      setColor(COLOR_TEXT);
+      const nameText = (customerName ?? '').toUpperCase();
+      doc.text(nameText, MARGIN_X + 2, textY);
+      const nameW = doc.getTextWidth(nameText);
+      // Contacto en línea, justo después del nombre
+      const contactParts: string[] = [];
+      if (phone) contactParts.push(`Tel: ${phone}`);
+      if (address) contactParts.push(address);
+      if (contactParts.length > 0) {
+        setFont(7.5, 'normal');
+        setColor(COLOR_MUTED);
+        const contactRaw = `  ·  ${contactParts.join('  ·  ')}`;
+        const maxW = CONTENT_W - nameW - countW - 4;
+        const contactFit = (doc.splitTextToSize(contactRaw, maxW) as string[])[0] ?? contactRaw;
+        doc.text(contactFit, MARGIN_X + 2 + nameW, textY);
+      }
     };
 
     const drawRow = (
       entry: PlanillaEntry,
-      index: number,
       yTop: number,
-      isFifth: boolean,
       refLines: string[],
-      contactLine: string,
       height: number,
     ): void => {
-      const innerTop = yTop + 4;        // línea 1: nombre cliente / fecha / cobrado
-      const innerSecond = yTop + 7.7;   // línea 2: ref (o ref-1) / estado / obs-visita
-      // línea 3 dentro de CLIENTE: si la ref se wrappea ocupa innerSecond+3.5,
-      // si no, esa posición la usa la línea de contacto.
+      const innerTop = yTop + 4;       // línea 1: ref / fecha / cobrado
+      const innerSecond = yTop + 7.7;  // línea 2: ref wrap / estado / obs-visita
 
-      // Borde superior (fino o grueso cada 5)
-      setStroke(
-        isFifth ? COLOR_BORDER_STRONG : COLOR_BORDER,
-        isFifth ? 0.5 : 0.15,
-      );
+      // Borde superior fino entre filas del mismo cliente.
+      setStroke(COLOR_BORDER, 0.15);
       doc.line(MARGIN_X, yTop, MARGIN_X + CONTENT_W, yTop);
 
-      // ── # de orden ───────────────────────────────────────────────────────
-      setFont(8.5, 'normal');
-      setColor(COLOR_MUTED);
-      doc.text(
-        String(index + 1).padStart(2, '0'),
-        COLS.num.x + COLS.num.w / 2,
-        innerTop,
-        { align: 'center' },
-      );
-
-      // ── Cliente: nombre + ref + contacto ────────────────────────────────
-      setFont(9.5, 'bold');
-      setColor(COLOR_TEXT);
-      const clientName = (entry.clientName ?? '').toUpperCase();
-      const clientFit = doc.splitTextToSize(clientName, COLS.cli.w - 3)[0] ?? clientName;
-      doc.text(clientFit, COLS.cli.x + 1.5, innerTop);
-
-      // Contacto (línea 2) + referencia debajo. El nombre queda arriba, los
-      // datos de contacto pegados al nombre y la referencia (que puede ocupar
-      // 2 líneas con wrap) al final.
+      // ── Cliente: solo collectionReference (contacto vive en el header) ──
       setFont(7.5, 'normal');
-      setColor(COLOR_MUTED);
-      let nextY = innerSecond;
-      if (contactLine) {
-        doc.text(contactLine, COLS.cli.x + 1.5, nextY);
-        nextY += 3.3;
-      }
+      setColor(COLOR_TEXT);
       refLines.forEach((line, i) => {
-        doc.text(line, COLS.cli.x + 1.5, nextY + i * 3.3);
+        doc.text(line, COLS.cli.x + 1.5, innerTop + i * 3.7);
       });
 
       // ── Vence (línea 1) + Estado (línea 2) ──────────────────────────────
@@ -940,7 +957,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
         { align: 'center' },
       );
 
-      // ── Esperado (línea única centrada vertical) ────────────────────────
+      // ── Esperado (centrado vertical) ────────────────────────────────────
       setFont(10.5, 'bold');
       setColor(COLOR_TEXT);
       doc.text(
@@ -984,27 +1001,65 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
       doc.text(text, PAGE_W / 2, PAGE_H - MARGIN_BOTTOM / 2 - 2, { align: 'center' });
     };
 
-    // ── Paginación: pre-calcular qué fila va a qué página ───────────────────
-    // Esto permite saber el totalPages para el footer ANTES de empezar a
-    // dibujar, y garantiza que las filas NO se corten entre páginas.
+    // ── Pre-cálculo: contar cuotas por cliente para los headers ─────────────
+    const cuotasByCustomer = new Map<string, number>();
+    result.entries.forEach((e) => {
+      const name = e.clientName ?? '';
+      cuotasByCustomer.set(name, (cuotasByCustomer.get(name) ?? 0) + 1);
+    });
+
+    // ── Paginación: construir una lista plana de "blocks" donde cada block es
+    // o bien un header de cliente, o bien una fila de cuota. Mantener el header
+    // y al menos la primera fila del cliente en la misma página (evita un
+    // header huérfano al final de una página).
+    type RowMeasure = { height: number; refLines: string[] };
+    type Block =
+      | { kind: 'header'; height: number; customerName: string; cuotasCount: number; pairedRowHeight: number; phone: string; address: string }
+      | { kind: 'row'; height: number; entry: PlanillaEntry; measure: RowMeasure; globalIdx: number };
+
+    const blocks: Block[] = [];
     const rowMeasures = result.entries.map((e) => measureRow(e));
-    const pageRowsBudget = PAGE_H - MARGIN_TOP - HEADER_H - TABLE_HEADER_H - MARGIN_BOTTOM - FOOTER_H;
-    type RowMeasure = { height: number; refLines: string[]; contactLine: string };
-    const pageBuckets: { entries: PlanillaEntry[]; measures: RowMeasure[] }[] = [];
-    let bucket: { entries: PlanillaEntry[]; measures: RowMeasure[] } = { entries: [], measures: [] };
-    let used = 0;
-    for (let i = 0; i < result.entries.length; i++) {
+    let lastCustomer: string | null = null;
+    result.entries.forEach((entry, i) => {
       const m = rowMeasures[i];
-      if (used + m.height > pageRowsBudget && bucket.entries.length > 0) {
+      if (entry.clientName !== lastCustomer) {
+        const phone = entry.clientPhone ?? '';
+        const address = entry.clientAddress ?? '';
+        blocks.push({
+          kind: 'header',
+          height: calcHeaderH(phone, address),
+          customerName: entry.clientName,
+          cuotasCount: cuotasByCustomer.get(entry.clientName) ?? 0,
+          pairedRowHeight: m.height,
+          phone,
+          address,
+        });
+        lastCustomer = entry.clientName;
+      }
+      blocks.push({ kind: 'row', height: m.height, entry, measure: m, globalIdx: i });
+    });
+
+    const TABLE_HEADER_GAP = 2; // separación entre el header de columnas y el primer cliente
+    const pageRowsBudget = PAGE_H - MARGIN_TOP - HEADER_H - TABLE_HEADER_H - TABLE_HEADER_GAP - MARGIN_BOTTOM - FOOTER_H;
+    const pageBuckets: Block[][] = [];
+    let bucket: Block[] = [];
+    let used = 0;
+    for (let i = 0; i < blocks.length; i++) {
+      const b = blocks[i];
+      // Si es un header de cliente, exigir que ENTRE también la primera fila
+      // del cliente (evita header huérfano al final de la página).
+      const requiredSpace = b.kind === 'header'
+        ? b.height + b.pairedRowHeight
+        : b.height;
+      if (used + requiredSpace > pageRowsBudget && bucket.length > 0) {
         pageBuckets.push(bucket);
-        bucket = { entries: [], measures: [] };
+        bucket = [];
         used = 0;
       }
-      bucket.entries.push(result.entries[i]);
-      bucket.measures.push(m);
-      used += m.height;
+      bucket.push(b);
+      used += b.height;
     }
-    if (bucket.entries.length > 0) pageBuckets.push(bucket);
+    if (bucket.length > 0) pageBuckets.push(bucket);
     const totalPages = Math.max(pageBuckets.length, 1);
 
     // ── Render por página ───────────────────────────────────────────────────
@@ -1013,23 +1068,14 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
       drawPdfHeader();
       const tableY = MARGIN_TOP + HEADER_H + 2;
       drawTableHeader(tableY);
-      let y = tableY + TABLE_HEADER_H;
-      const globalStartIndex = pageBuckets
-        .slice(0, pageIdx)
-        .reduce((acc, p) => acc + p.entries.length, 0);
-      page.entries.forEach((entry, localIdx) => {
-        const globalIdx = globalStartIndex + localIdx;
-        const isFifth = globalIdx > 0 && globalIdx % 5 === 0;
-        drawRow(
-          entry,
-          globalIdx,
-          y,
-          isFifth,
-          page.measures[localIdx].refLines,
-          page.measures[localIdx].contactLine,
-          page.measures[localIdx].height,
-        );
-        y += page.measures[localIdx].height;
+      let y = tableY + TABLE_HEADER_H + TABLE_HEADER_GAP;
+      page.forEach((b) => {
+        if (b.kind === 'header') {
+          drawCustomerHeader(y, b.customerName, b.cuotasCount, b.phone, b.address);
+        } else {
+          drawRow(b.entry, y, b.measure.refLines, b.measure.height);
+        }
+        y += b.height;
       });
       // Borde inferior final de la tabla
       setStroke(COLOR_BORDER_STRONG, 0.4);
@@ -1132,6 +1178,36 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
     return map[status] ?? status;
   }
 
+  /** Etiqueta amigable del motivo de inclusión (visible solo en admin). */
+  inclusionReasonLabel(reason: InclusionReason | null | undefined): string {
+    if (!reason) return '';
+    return INCLUSION_REASON_LABELS[reason] ?? '';
+  }
+
+  /** Color de fondo del chip según el motivo. Sutil, paleta consistente. */
+  inclusionReasonBg(reason: InclusionReason | null | undefined): string {
+    switch (reason) {
+      case 'OVERDUE':
+      case 'OVERDUE_UNSCHEDULED': return '#fee2e2'; // rojo claro
+      case 'DUE_TODAY':           return '#dbeafe'; // azul claro
+      case 'SCHEDULED_VISIT':     return '#ede9fe'; // violeta claro
+      case 'ALL_PENDING':         return '#f3f4f6'; // gris claro
+      default:                    return '#f3f4f6';
+    }
+  }
+
+  /** Color de texto del chip — combinado con el fondo da contraste accesible. */
+  inclusionReasonFg(reason: InclusionReason | null | undefined): string {
+    switch (reason) {
+      case 'OVERDUE':
+      case 'OVERDUE_UNSCHEDULED': return '#991b1b';
+      case 'DUE_TODAY':           return '#1e40af';
+      case 'SCHEDULED_VISIT':     return '#6d28d9';
+      case 'ALL_PENDING':         return '#4b5563';
+      default:                    return '#4b5563';
+    }
+  }
+
   /**
    * Formatea una fecha ISO a dd/mm/yyyy.
    * @param iso Fecha en formato ISO
@@ -1193,7 +1269,9 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
       creditId: item.creditId,
       creditType: item.creditType,
       installmentNumber: item.installmentNumber,
-      amount: item.amountDue,
+      // Usamos el saldo a cobrar al momento de generación (snapshot). Si la
+      // planilla es vieja y no lo tiene, caemos al monto original.
+      amount: item.remainingAmount ?? item.amountDue,
       paidAmount: item.amountPaid,
       dueDate: item.dueDate,
       paymentStatus: this.mapInstallmentStatus(item.installmentStatus),
