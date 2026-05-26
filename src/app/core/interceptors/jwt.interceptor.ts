@@ -1,6 +1,5 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { AppRoutes } from '../../shared/models/enums/routes.enum';
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   if (!req.url.startsWith(environment.apiBaseUrl)) {
@@ -11,7 +10,10 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  const isPortalUrl = req.url.includes(AppRoutes.PORTAL);
+  // Detecta endpoints del portal del cliente buscando "/portal/" como segmento.
+  // No usar includes('portal') porque hace match con acciones admin como
+  // customers/{id}/enable-portal y rompe el token / redirige a /portal/login.
+  const isPortalUrl = req.url.includes('/portal/');
   const tokenKey = isPortalUrl
     ? environment.portalTokenKey
     : environment.tokenKey;
