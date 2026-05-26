@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "data": [
+    { "id": "cat-001", "name": "Electrónica", "active": true, "created_at": "2026-01-01T00:00:00Z" },
+    { "id": "cat-002", "name": "Electrodomésticos", "active": true, "created_at": "2026-01-01T00:00:00Z" },
+    { "id": "cat-003", "name": "Ropa", "active": true, "created_at": "2026-01-01T00:00:00Z" },
+    { "id": "cat-004", "name": "Desactivada", "active": false, "created_at": "2026-01-01T00:00:00Z" }
+  ]
+}
