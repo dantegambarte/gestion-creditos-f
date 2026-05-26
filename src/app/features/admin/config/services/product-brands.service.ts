@@ -10,22 +10,23 @@ function toBrand(r: ProductBrandRaw): ProductBrand {
 
 @Injectable({ providedIn: 'root' })
 export class ProductBrandsService {
-  // TODO: agregar documentacion de las funciones
-
   private readonly api = inject(ApiHttpService);
 
+  /** Obtiene todas las marcas de producto. */
   getAll(): Observable<ProductBrand[]> {
     return this.api
       .get<ProductBrandRaw[]>('product-brands')
       .pipe(map((items) => items.map(toBrand)));
   }
 
+  /** Obtiene una marca por su ID. */
   getById(id: string): Observable<ProductBrand> {
     return this.api
       .get<ProductBrandRaw>(`product-brands/${id}`)
       .pipe(map(toBrand));
   }
 
+  /** Crea una nueva marca con el nombre indicado. */
   create(name: string): Observable<ProductBrand> {
     return this.api
       .post<ProductBrandRaw>('product-brands', { name })
@@ -43,12 +44,14 @@ export class ProductBrandsService {
       .pipe(map(toBrand));
   }
 
+  /** Activa una marca de producto. */
   activate(id: string): Observable<void> {
     return this.api
       .patch<void>(`product-brands/${id}/activate`)
       .pipe(map(() => undefined));
   }
 
+  /** Desactiva una marca de producto. */
   deactivate(id: string): Observable<void> {
     return this.api
       .patch<void>(`product-brands/${id}/deactivate`)

@@ -14,14 +14,14 @@ function toCategory(r: ProductCategoryRaw): ProductCategory {
 export class ProductCategoriesService {
   private readonly api = inject(ApiHttpService);
 
-  // TODO: agregar documentacion de las funciones
-
+  /** Obtiene todas las categorías de producto. */
   getAll(): Observable<ProductCategory[]> {
     return this.api
       .get<ProductCategoryRaw[]>('product-categories')
       .pipe(map((items) => items.map(toCategory)));
   }
 
+  /** Crea una nueva categoría con el nombre indicado. */
   create(name: string): Observable<ProductCategory> {
     return this.api
       .post<ProductCategoryRaw>('product-categories', { name })
@@ -39,12 +39,14 @@ export class ProductCategoriesService {
       .pipe(map(toCategory));
   }
 
+  /** Activa una categoría de producto. */
   activate(id: string): Observable<void> {
     return this.api
       .patch<void>(`product-categories/${id}/activate`)
       .pipe(map(() => undefined));
   }
 
+  /** Desactiva una categoría de producto. */
   deactivate(id: string): Observable<void> {
     return this.api
       .patch<void>(`product-categories/${id}/deactivate`)
