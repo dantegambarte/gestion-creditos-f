@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -47,7 +47,12 @@ import { UserRoleEnum } from './../../../core/models/types/user-role';
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
-export class LoginComponent implements OnDestroy {
+export class LoginComponent implements OnDestroy, AfterViewInit {
+  private readonly REMEMBER_ME_KEY = 'sgcf_remember_me';
+  private readonly REMEMBERED_DNI_KEY = 'sgcf_remembered_dni';
+  @ViewChild('passwordField', { read: ElementRef })
+  passwordField?: ElementRef<HTMLElement>;
+
   form: FormGroup;
   loading = false;
   submitted = false;
@@ -71,9 +76,12 @@ export class LoginComponent implements OnDestroy {
     private auth: AuthServiceBase,
     private router: Router,
   ) {
+    const remembered = this.readRememberedCredentials();
+    this.rememberMe = remembered.rememberMe;
+
     this.form = this.fb.group({
       dni: [
-        '',
+        remembered.dni,
         [
           Validators.required,
           Validators.minLength(7),
@@ -89,6 +97,9 @@ export class LoginComponent implements OnDestroy {
     return this.form.controls;
   }
 
+  /**
+   * Envía las credenciales y guarda la preferencia de recordatorio de DNI.
+   */
   onSubmit(): void {
     this.submitted = true;
     this.errorMessage = '';
@@ -100,7 +111,10 @@ export class LoginComponent implements OnDestroy {
       .login(this.form.value)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (user) => this.redirectByRole(user),
+        next: (user) => {
+          this.persistRememberedCredentials();
+          this.redirectByRole(user);
+        },
         error: (err) => {
           this.loading = false;
           this.errorMessage = err.message ?? 'Credenciales incorrectas.';
@@ -144,5 +158,50 @@ export class LoginComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Enfoca contraseña automáticamente cuando hay DNI recordado.
+   */
+  ngAfterViewInit(): void {
+    if (!this.rememberMe || !this.formControls['dni'].value) return;
+
+    queueMicrotask(() => {
+      const input = this.passwordField?.nativeElement.querySelector('input');
+      if (input instanceof HTMLInputElement) {
+        input.focus();
+      }
+    });
+  }
+
+  /**
+   * Lee el estado de "Recuérdame" y el DNI recordado desde el navegador.
+   * @returns {{ rememberMe: boolean; dni: string }} preferencia y valor inicial del formulario.
+   */
+  private readRememberedCredentials(): { rememberMe: boolean; dni: string } {
+    if (typeof localStorage === 'undefined') {
+      return { rememberMe: false, dni: '' };
+    }
+
+    const rememberMe = localStorage.getItem(this.REMEMBER_ME_KEY) === 'true';
+    const dni = rememberMe ? (localStorage.getItem(this.REMEMBERED_DNI_KEY) ?? '') : '';
+    return { rememberMe, dni };
+  }
+
+  /**
+   * Persiste o limpia el DNI recordado según el estado del checkbox.
+   */
+  private persistRememberedCredentials(): void {
+    if (typeof localStorage === 'undefined') return;
+
+    if (this.rememberMe) {
+      const dni = String(this.formControls['dni'].value ?? '');
+      localStorage.setItem(this.REMEMBER_ME_KEY, 'true');
+      localStorage.setItem(this.REMEMBERED_DNI_KEY, dni);
+      return;
+    }
+
+    localStorage.removeItem(this.REMEMBER_ME_KEY);
+    localStorage.removeItem(this.REMEMBERED_DNI_KEY);
   }
 }
