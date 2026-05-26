@@ -67,28 +67,28 @@ function toClientDetail(customer: CustomerApiDetail): ClientDetail {
  * @param c - Crédito de la API
  */
 function toUiCredit(c: ApiCredit): Credit | null {
-  const statusMap: Record<string, Credit['estado'] | null> = {
-    ACTIVE: 'ACTIVO',
-    PENDING_APPROVAL: 'ACTIVO',
-    SETTLED: 'PAGADO',
+  const statusMap: Record<string, Credit['status'] | null> = {
+    ACTIVE: 'ACTIVE',
+    PENDING_APPROVAL: 'ACTIVE',
+    SETTLED: 'PAID',
     REJECTED: null,
   };
-  const estado = statusMap[c.status] ?? 'ACTIVO';
-  if (estado === null) return null;
+  const status = statusMap[c.status] ?? 'ACTIVE';
+  if (status === null) return null;
   return {
     id: c.id,
-    tipo: c.type === 'SALE' ? 'Venta' : 'Préstamo',
-    producto: c.customerName,
-    montoOriginal: c.totalAmount,
-    saldoPendiente: c.totalAmount,
-    cuotaActual: 1,
-    totalCuotas: c.installmentsCount,
-    cuotaMensual: 0,
-    proximoVencimiento: c.approvedAt ?? c.createdAt,
-    tasa:
+    type: c.type === 'SALE' ? 'Venta' : 'Préstamo',
+    product: c.customerName,
+    originalAmount: c.totalAmount,
+    pendingBalance: c.totalAmount,
+    currentInstallment: 1,
+    totalInstallments: c.installmentsCount,
+    monthlyInstallment: 0,
+    nextDueDate: c.approvedAt ?? c.createdAt,
+    rate:
       c.interestRate != null ? `${(c.interestRate * 100).toFixed(2)}%` : 'N/A',
-    estado,
-    progreso: estado === 'PAGADO' ? 100 : 0,
+    status,
+    progress: status === 'PAID' ? 100 : 0,
   };
 }
 
@@ -147,22 +147,22 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   get activeCredits(): number {
     return (
       this.client?.credits.filter(
-        (c) => c.estado === 'ACTIVO' || c.estado === 'EN MORA',
+        (c) => c.status === 'ACTIVE' || c.status === 'OVERDUE',
       ).length ?? 0
     );
   }
 
   get totalPortfolio(): number {
     return (
-      this.client?.credits.reduce((sum, c) => sum + c.montoOriginal, 0) ?? 0
+      this.client?.credits.reduce((sum, c) => sum + c.originalAmount, 0) ?? 0
     );
   }
 
   get totalOutstandingBalance(): number {
     return (
       this.client?.credits
-        .filter((c) => c.estado !== 'PAGADO')
-        .reduce((sum, c) => sum + c.saldoPendiente, 0) ?? 0
+        .filter((c) => c.status !== 'PAID')
+        .reduce((sum, c) => sum + c.pendingBalance, 0) ?? 0
     );
   }
 

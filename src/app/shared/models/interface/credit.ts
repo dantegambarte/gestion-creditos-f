@@ -1,19 +1,17 @@
-// TODO: reemplazar por variables en ingles, solo es provisorio para las pruebas del frontend
-
 export interface Credit {
   id: string;
-  tipo: string;
-  producto: string;
-  montoOriginal: number;
-  saldoPendiente: number;
-  cuotaActual: number;
-  totalCuotas: number;
-  cuotaMensual: number;
-  proximoVencimiento: string;
-  tasa: string;
-  estado: 'ACTIVO' | 'EN MORA' | 'PAGADO';
-  progreso: number;
-  diasMora?: number;
-  moraAcumulada?: number;
-  vencimientoMora?: string;
+  type: string;
+  product: string;
+  originalAmount: number;
+  pendingBalance: number;
+  currentInstallment: number;
+  totalInstallments: number;
+  monthlyInstallment: number;
+  nextDueDate: string;
+  rate: string;
+  status: 'ACTIVE' | 'OVERDUE' | 'PAID';
+  progress: number;
+  overdueDays?: number;
+  accruedLateFee?: number;
+  lateFeeExpiry?: string;
 }
