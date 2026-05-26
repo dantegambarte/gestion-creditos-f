@@ -31,6 +31,7 @@ export interface CollectionSheet {
   filterUsed: CollectionFilter;
   status: CollectionSheetStatus;
   createdAt: string;
+  sentAt: string | null;
   collectorId: string;
   collectorName: string;
   totalItems: number;
@@ -66,6 +67,7 @@ export interface CollectionSheetItem {
   customerName: string;
   customerPhone: string | null;
   customerAddress: string | null;
+  customerDni: string | null;
 }
 
 export interface CollectionSheetDetail extends CollectionSheet {
@@ -137,6 +139,7 @@ export interface CollectionSheetRaw {
   filter_used: CollectionFilter;
   status: CollectionSheetStatus;
   created_at: string;
+  sent_at: string | null;
   collector_id: string;
   collector_name: string;
   total_items: number;
@@ -168,6 +171,7 @@ export interface CollectionSheetItemRaw {
   customer_name: string;
   customer_phone: string | null;
   customer_address: string | null;
+  customer_dni: string | null;
 }
 
 export interface CollectionSheetDetailRaw extends CollectionSheetRaw {

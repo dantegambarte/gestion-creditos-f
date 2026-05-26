@@ -111,7 +111,7 @@
               size="small"
               severity="secondary"
               [outlined]="true"
-              (onClick)="confirmSend()"
+              (onClick)="confirmSend(result.sheetId)"
             />
           </div>
         </div>
@@ -184,7 +184,7 @@
                   size="small"
                   severity="secondary"
                   [outlined]="true"
-                  (onClick)="confirmSend()"
+                  (onClick)="confirmSend(sheet.id)"
                 />
               </div>
             </td>

@@ -33,6 +33,7 @@ function toSheet(raw: CollectionSheetRaw): CollectionSheet {
     filterUsed: raw.filter_used,
     status: raw.status,
     createdAt: raw.created_at,
+    sentAt: raw.sent_at ?? null,
     collectorId: raw.collector_id,
     collectorName: raw.collector_name,
     totalItems: raw.total_items,
@@ -87,6 +88,7 @@ function toSheetItem(raw: CollectionSheetItemRaw): CollectionSheetItem {
     customerName: raw.customer_name,
     customerPhone: raw.customer_phone,
     customerAddress: raw.customer_address,
+    customerDni: raw.customer_dni,
   };
 }
 
@@ -171,6 +173,13 @@ export class CollectionsService {
    * Genera una nueva planilla de cobranza. Devuelve la planilla creada junto con las alertas
    * operativas asociadas (visitas vencidas y clientes sin cobrador).
    */
+  /**
+   * Marca una planilla activa como enviada al cobrador.
+   */
+  send(id: string): Observable<void> {
+    return this.api.patch<void>(`collections/${id}/send`).pipe(map(() => undefined));
+  }
+
   generate(
     payload: CollectionGeneratePayload,
   ): Observable<CollectionGenerateOutcome> {
