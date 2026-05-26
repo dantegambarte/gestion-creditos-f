@@ -1,10 +1,14 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { ApiHttpService } from '../../../core/http/api-http.service';
 import { environment } from '../../../../environments/environment';
-import { PortalChangePasswordPayload, PortalCustomer, PortalLoginPayload } from '../models/portal.models';
+import { ApiHttpService } from '../../../core/http/api-http.service';
 import { LoginResponseRaw } from '../models/interface/login.interface';
+import {
+  PortalChangePasswordPayload,
+  PortalCustomer,
+  PortalLoginPayload,
+} from '../models/portal.models';
 
 const isBrowser = typeof localStorage !== 'undefined';
 
@@ -121,13 +125,16 @@ export class PortalAuthService {
     const token = localStorage.getItem(this.TOKEN_KEY);
     if (!token) return;
 
+    // Decodificar y validar el JWT una sola vez.
+    let jwtPayload: Record<string, unknown>;
     try {
       const parts = token.split('.');
       if (parts.length !== 3) throw new Error('invalid jwt');
-      // No se verifica expiración: un AT expirado sigue siendo válido para bootstrap.
-      // El error interceptor detectará TOKEN_EXPIRED en la primera llamada y hará
-      // el refresh automáticamente. Si aquí limpiamos la sesión, el refresh nunca ocurre.
-      JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      jwtPayload = JSON.parse(
+        atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')),
+      );
+      if (jwtPayload?.['aud'] !== 'portal-cliente')
+        throw new Error('wrong audience');
     } catch {
       this._clearSession();
       return;
@@ -142,15 +149,13 @@ export class PortalAuthService {
       }
     } else {
       try {
-        const parts = token.split('.');
-        const payload = JSON.parse(
-          atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')),
-        );
         const customer: PortalCustomer = {
-          id: payload.sub ?? '',
-          fullName: payload.full_name ?? payload.name ?? '',
-          dni: payload.dni ?? '',
-          portalIsTempPassword: payload.portal_is_temp_password ?? false,
+          id: String(jwtPayload['sub'] ?? ''),
+          fullName: String(jwtPayload['full_name'] ?? jwtPayload['name'] ?? ''),
+          dni: String(jwtPayload['dni'] ?? ''),
+          portalIsTempPassword: Boolean(
+            jwtPayload['portal_is_temp_password'] ?? false,
+          ),
         };
         this._customer$.next(customer);
       } catch {
