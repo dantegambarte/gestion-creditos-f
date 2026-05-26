@@ -107,8 +107,7 @@ export class ProductsComponent implements OnInit {
     this.loadCategories();
   }
 
-  // TODO: agregar documentacion de las funciones
-
+  /** Carga el listado de productos activos desde el backend. */
   private loadProducts(): void {
     this.loading = true;
     this.productsService.list({ status: 'ACTIVE' }).subscribe({
@@ -140,6 +139,7 @@ export class ProductsComponent implements OnInit {
     });
   }
 
+  /** Filtra el listado local por nombre o categoría según el término de búsqueda. */
   get filteredProducts(): Product[] {
     if (!this.searchTerm) return this.products;
     const term = this.searchTerm.toLowerCase();
@@ -150,6 +150,7 @@ export class ProductsComponent implements OnInit {
     );
   }
 
+  /** Calcula el margen de ganancia entre precio de compra y venta del formulario. */
   get margen(): string {
     const compra = this.form.get('precioCompra')?.value ?? 0;
     const venta = this.form.get('precioVenta')?.value ?? 0;
@@ -157,6 +158,7 @@ export class ProductsComponent implements OnInit {
     return this.fmt.percent((venta - compra) / compra, 1);
   }
 
+  /** Clasifica el nivel de stock para aplicar el estilo visual correspondiente. */
   getStockStatus(stock: number): 'activo' | 'stock-bajo' | 'sin-stock' {
     if (stock === 0) return 'sin-stock';
     if (stock <= 3) return 'stock-bajo';

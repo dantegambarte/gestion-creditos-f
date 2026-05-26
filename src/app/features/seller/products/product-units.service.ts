@@ -34,8 +34,9 @@ function toUnit(raw: ProductUnitRaw): ProductUnit {
 export class ProductUnitsService {
   private readonly api = inject(ApiHttpService);
 
-    // TODO: agregar documentacion de las funciones
-
+  /**
+   * Obtiene todas las unidades de producto aplicando los filtros indicados.
+   */
   getAll(filters?: ProductUnitFilters): Observable<ProductUnit[]> {
     const params: Record<string, string> = {};
     if (filters?.variantId) params['variant_id'] = filters.variantId;
@@ -46,12 +47,14 @@ export class ProductUnitsService {
       .pipe(map((items) => items.map(toUnit)));
   }
 
+  /** Obtiene una unidad por su ID. */
   getById(id: string): Observable<ProductUnit> {
     return this.api
       .get<ProductUnitRaw>(`product-units/${id}`)
       .pipe(map(toUnit));
   }
 
+  /** Crea una nueva unidad para la variante indicada. */
   create(payload: ProductUnitCreatePayload): Observable<ProductUnit> {
     const body: Record<string, unknown> = {
       variant_id: payload.variantId,
@@ -63,6 +66,7 @@ export class ProductUnitsService {
       .pipe(map(toUnit));
   }
 
+  /** Crea múltiples unidades en un solo request. */
   createBulk(
     payload: ProductUnitBulkPayload,
   ): Observable<ProductUnitBulkResult> {
@@ -84,6 +88,7 @@ export class ProductUnitsService {
       );
   }
 
+  /** Actualiza el código y las notas de una unidad existente. */
   update(
     id: string,
     payload: ProductUnitUpdatePayload,
@@ -96,10 +101,12 @@ export class ProductUnitsService {
       .pipe(map(toUnit));
   }
 
+  /** Desactiva una unidad de producto. */
   deactivate(id: string): Observable<void> {
     return this.api.patch<void>(`product-units/${id}/deactivate`, {});
   }
 
+  /** Activa una unidad de producto. */
   activate(id: string): Observable<void> {
     return this.api.patch<void>(`product-units/${id}/activate`, {});
   }

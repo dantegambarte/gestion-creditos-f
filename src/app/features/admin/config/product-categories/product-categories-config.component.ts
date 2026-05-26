@@ -60,8 +60,7 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // TODO: agregar documentacion de las funciones
-
+  /** Carga todas las categorías desde el backend y actualiza la tabla. */
   load(): void {
     this.loading = true;
     this.svc
@@ -81,12 +80,14 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Abre el diálogo de creación con el campo nombre vacío. */
   openCreate(): void {
     this.newName = '';
     this.dialogError = '';
     this.showDialog = true;
   }
 
+  /** Envía el nuevo nombre al backend y recarga la lista al confirmar. */
   submitCreate(): void {
     if (!this.newName.trim()) return;
     this.saving = true;

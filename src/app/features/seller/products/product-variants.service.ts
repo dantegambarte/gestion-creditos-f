@@ -47,8 +47,9 @@ function toVariantDetail(raw: ProductVariantDetailRaw): ProductVariantDetail {
 export class ProductVariantsService {
   private readonly api = inject(ApiHttpService);
 
-    // TODO: agregar documentacion de las funciones
-
+  /**
+   * Obtiene todas las variantes del producto aplicando los filtros indicados.
+   */
   getAll(filters?: ProductVariantFilters): Observable<ProductVariant[]> {
     const params: Record<string, string> = {};
     if (filters?.productId) params['product_id'] = filters.productId;
@@ -58,12 +59,14 @@ export class ProductVariantsService {
       .pipe(map((items) => items.map(toVariant)));
   }
 
+  /** Obtiene el detalle de una variante por su ID. */
   getById(id: string): Observable<ProductVariantDetail> {
     return this.api
       .get<ProductVariantDetailRaw>(`product-variants/${id}`)
       .pipe(map(toVariantDetail));
   }
 
+  /** Crea una nueva variante para el producto indicado. */
   create(payload: ProductVariantCreatePayload): Observable<ProductVariant> {
     const body: Record<string, unknown> = {
       product_id: payload.productId,
@@ -107,6 +110,7 @@ export class ProductVariantsService {
       );
   }
 
+  /** Actualiza atributos y precio de una variante existente. */
   update(
     id: string,
     payload: ProductVariantUpdatePayload,
@@ -122,10 +126,12 @@ export class ProductVariantsService {
       .pipe(map(toVariant));
   }
 
+  /** Desactiva una variante de producto. */
   deactivate(id: string): Observable<void> {
     return this.api.patch<void>(`product-variants/${id}/deactivate`, {});
   }
 
+  /** Activa una variante de producto. */
   activate(id: string): Observable<void> {
     return this.api.patch<void>(`product-variants/${id}/activate`, {});
   }
