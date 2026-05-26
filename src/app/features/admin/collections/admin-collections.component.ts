@@ -34,6 +34,8 @@ import {
   CollectionSheet,
   CollectionSheetDetail,
   CollectionSheetItem,
+  INCLUSION_REASON_LABELS,
+  InclusionReason,
   SHEET_STATUS_LABELS,
 } from '../../collector/models/collection.model';
 import {
@@ -210,6 +212,33 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
     if (!this.selectedSheet) return 0;
     return this.selectedSheet.items.filter(
       (i) => i.installmentStatus === status,
+    ).length;
+  }
+
+  /**
+   * True si el item en posición `index` es la primera cuota de su cliente en
+   * la lista (la previa es de otro cliente o no existe). Usado para decidir
+   * cuándo dibujar el header de agrupación.
+   *
+   * Asume que la lista ya viene agrupada por cliente desde el backend
+   * (ORDER BY cu.full_name, cu.id, ...).
+   */
+  isFirstOfCustomer(items: CollectionSheetItem[], index: number): boolean {
+    if (index === 0) return true;
+    const current = items[index];
+    const prev = items[index - 1];
+    if (!current?.customerName || !prev?.customerName) return true;
+    return prev.customerName !== current.customerName;
+  }
+
+  /**
+   * Cantidad de cuotas del cliente del item dado dentro de la planilla actual.
+   * Se usa en el header de agrupación: "JUAN PÉREZ · 3 cuotas".
+   */
+  customerCuotasCount(customerName: string): number {
+    if (!this.selectedSheet) return 0;
+    return this.selectedSheet.items.filter(
+      (i) => i.customerName === customerName,
     ).length;
   }
 
@@ -713,103 +742,345 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Descarga el detalle de la planilla seleccionada en formato PDF.
+   * Descarga la planilla seleccionada como PDF imprimible, formato A4 portrait,
+   * optimizado para uso operativo en calle: filas multi-línea con espacio
+   * manual para anotar (Cobrado / Obs/Visita), referencia completa de la
+   * cuota como protagonista y densidad de ~15-17 cuotas por página.
+   *
+   * Sin queries adicionales — reutiliza collection_reference que ya viaja.
    */
   downloadPdf(): void {
     if (!this.selectedSheet) return;
     const result = this.mapDetailToResult(this.selectedSheet);
     const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const startX = 14;
-    let y = 20;
 
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Planilla de Cobro', pageWidth / 2, y, { align: 'center' });
-    y += 8;
+    // ── Layout constants (mm) ───────────────────────────────────────────────
+    const PAGE_W = doc.internal.pageSize.getWidth();   // 210
+    const PAGE_H = doc.internal.pageSize.getHeight();  // 297
+    const MARGIN_X = 14;
+    const MARGIN_TOP = 18;
+    const MARGIN_BOTTOM = 18;
+    const CONTENT_W = PAGE_W - MARGIN_X * 2; // 182
+    const FOOTER_H = 8;
+    const ROW_H_BASE = 14;
+    const ROW_H_WRAPPED = 18;  // cuando collectionReference toma 2 líneas
+    const TABLE_HEADER_H = 6;
+    const HEADER_H = 26;
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Cobrador: ${result.collectorName}`, startX, y);
-    doc.text(`Fecha: ${this.formatDate(result.fecha)}`, pageWidth - 14, y, {
-      align: 'right',
-    });
-    y += 6;
-    doc.text(`Cuotas: ${result.clientCount}`, startX, y);
-    doc.text(
-      `Total: ${this.formatCurrency(result.totalAmount)}`,
-      pageWidth - 14,
-      y,
-      { align: 'right' },
-    );
-    y += 8;
+    const COLS = {
+      cli: { x: MARGIN_X,          w: 84 },
+      ven: { x: MARGIN_X + 84,     w: 18 },
+      esp: { x: MARGIN_X + 102,    w: 24 },
+      ges: { x: MARGIN_X + 126,    w: 56 },
+    };
 
-    const colWidths = [60, 18, 15, 20, 25, 29];
-    const headers = [
-      'Cliente',
-      'Tipo',
-      'N° Cuota',
-      'Estado',
-      'Vencimiento',
-      'Monto',
-    ];
-    const tableWidth = colWidths.reduce((a, b) => a + b, 0);
+    const COLOR_TEXT = [33, 37, 41] as const;
+    const COLOR_MUTED = [108, 117, 125] as const;
+    const COLOR_BORDER = [220, 220, 224] as const;
+    const COLOR_BORDER_STRONG = [120, 120, 130] as const;
+    const COLOR_HEADER_BG = [245, 247, 250] as const;
 
-    doc.setFillColor(41, 98, 255);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.rect(startX, y - 4, tableWidth, 7, 'F');
-    let x = startX;
-    headers.forEach((h, i) => {
-      doc.text(h, x + 2, y);
-      x += colWidths[i];
-    });
-    y += 5;
+    const folio = (result.sheetId ?? '').slice(0, 8) || '—';
+    const issuedAt = (() => {
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      return `${hh}:${mm}`;
+    })();
 
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
-    result.entries.forEach((entry, idx) => {
-      const subLines: string[] = [];
-      if (entry.clientPhone) subLines.push(`Tel: ${entry.clientPhone}`);
-      if (entry.clientAddress)
-        subLines.push(entry.clientAddress.substring(0, 35));
-      const rowHeight = 6 + subLines.length * 4;
+    const filterLabel = COLLECTION_FILTER_LABELS[this.selectedSheet.filterUsed] ?? '—';
 
-      if (y + rowHeight > 275) {
-        doc.addPage();
-        y = 20;
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    const setFont = (size: number, weight: 'normal' | 'bold' = 'normal') => {
+      doc.setFont('helvetica', weight);
+      doc.setFontSize(size);
+    };
+    const setColor = (rgb: readonly [number, number, number]) => {
+      doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+    };
+    const setStroke = (rgb: readonly [number, number, number], width: number) => {
+      doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+      doc.setLineWidth(width);
+    };
+
+    /** Altura fija del header de cliente: nombre, teléfono y dirección en una sola línea. */
+    const calcHeaderH = (_phone: string, _address: string): number => 7;
+
+    const drawPdfHeader = (): void => {
+      // Caja contenedora
+      setStroke(COLOR_BORDER, 0.3);
+      doc.rect(MARGIN_X, MARGIN_TOP, CONTENT_W, HEADER_H);
+      // Título
+      setFont(13, 'bold');
+      setColor(COLOR_TEXT);
+      doc.text('PLANILLA DE COBRANZA', MARGIN_X + 3, MARGIN_TOP + 6);
+      // Folio (derecha)
+      setFont(8, 'normal');
+      setColor(COLOR_MUTED);
+      doc.text(`Folio  ${folio}`, MARGIN_X + CONTENT_W - 3, MARGIN_TOP + 6, { align: 'right' });
+      // Subtítulo
+      setFont(8, 'normal');
+      doc.text('Documento operativo de cobranza', MARGIN_X + 3, MARGIN_TOP + 11);
+      // Línea separadora interna
+      setStroke(COLOR_BORDER, 0.2);
+      doc.line(MARGIN_X + 3, MARGIN_TOP + 13.5, MARGIN_X + CONTENT_W - 3, MARGIN_TOP + 13.5);
+      // Línea 3: Cobrador · Fecha · Filtro
+      setFont(9, 'normal');
+      setColor(COLOR_TEXT);
+      doc.text(
+        `Cobrador: ${result.collectorName}     Fecha: ${this.formatDate(result.fecha)}     Filtro: ${filterLabel}`,
+        MARGIN_X + 3,
+        MARGIN_TOP + 18,
+      );
+      // Línea 4: Cuotas · Total esperado
+      doc.text(
+        `Cuotas: ${result.clientCount}     Total esperado: ${this.formatCurrency(result.totalAmount)}`,
+        MARGIN_X + 3,
+        MARGIN_TOP + 23,
+      );
+    };
+
+    const drawTableHeader = (yTop: number): void => {
+      // Fondo
+      doc.setFillColor(COLOR_HEADER_BG[0], COLOR_HEADER_BG[1], COLOR_HEADER_BG[2]);
+      doc.rect(MARGIN_X, yTop, CONTENT_W, TABLE_HEADER_H, 'F');
+      // Bordes superior e inferior
+      setStroke(COLOR_BORDER_STRONG, 0.4);
+      doc.line(MARGIN_X, yTop, MARGIN_X + CONTENT_W, yTop);
+      doc.line(MARGIN_X, yTop + TABLE_HEADER_H, MARGIN_X + CONTENT_W, yTop + TABLE_HEADER_H);
+      // Labels
+      setFont(8, 'bold');
+      setColor([55, 65, 81]);
+      const textY = yTop + 4.2;
+      doc.text('CLIENTE', COLS.cli.x + 1.5, textY);
+      doc.text('VENCE', COLS.ven.x + COLS.ven.w / 2, textY, { align: 'center' });
+      doc.text('ESPERADO', COLS.esp.x + COLS.esp.w / 2, textY, { align: 'center' });
+      doc.text('GESTIÓN', COLS.ges.x + 1.5, textY);
+    };
+
+    /**
+     * Mide la altura efectiva de una fila según si collectionReference necesita
+     * 1 o 2 líneas. El contacto del cliente ya no se repite en la fila — vive
+     * en el header de agrupación del cliente.
+     */
+    const measureRow = (entry: PlanillaEntry): {
+      height: number;
+      refLines: string[];
+    } => {
+      setFont(7.5, 'normal');
+      const ref = entry.collectionReference || `Cuota ${entry.installmentNumber} · —`;
+      const refLines = (doc.splitTextToSize(ref, COLS.cli.w - 3) as string[]).slice(0, 2);
+      const height = refLines.length >= 2 ? ROW_H_WRAPPED : ROW_H_BASE;
+      return { height, refLines };
+    };
+
+    /**
+     * Dibuja el header de agrupación: nombre bold + teléfono + dirección en
+     * una única línea (izquierda) y conteo de cuotas a la derecha.
+     */
+    const drawCustomerHeader = (
+      yTop: number,
+      customerName: string,
+      cuotasCount: number,
+      phone: string,
+      address: string,
+    ): void => {
+      const hdrH = 7;
+      const textY = yTop + 4.8;
+      // Fondo
+      doc.setFillColor(COLOR_HEADER_BG[0], COLOR_HEADER_BG[1], COLOR_HEADER_BG[2]);
+      doc.rect(MARGIN_X, yTop, CONTENT_W, hdrH, 'F');
+      // Borde inferior
+      setStroke(COLOR_BORDER_STRONG, 0.5);
+      doc.line(MARGIN_X, yTop + hdrH, MARGIN_X + CONTENT_W, yTop + hdrH);
+      // Conteo (derecha, primero para reservar espacio)
+      setFont(7.5, 'normal');
+      setColor(COLOR_MUTED);
+      const countLabel = `${cuotasCount} ${cuotasCount === 1 ? 'cuota' : 'cuotas'}`;
+      doc.text(countLabel, MARGIN_X + CONTENT_W - 2, textY, { align: 'right' });
+      const countW = doc.getTextWidth(countLabel) + 4;
+      // Nombre (bold)
+      setFont(8.5, 'bold');
+      setColor(COLOR_TEXT);
+      const nameText = (customerName ?? '').toUpperCase();
+      doc.text(nameText, MARGIN_X + 2, textY);
+      const nameW = doc.getTextWidth(nameText);
+      // Contacto en línea, justo después del nombre
+      const contactParts: string[] = [];
+      if (phone) contactParts.push(`Tel: ${phone}`);
+      if (address) contactParts.push(address);
+      if (contactParts.length > 0) {
+        setFont(7.5, 'normal');
+        setColor(COLOR_MUTED);
+        const contactRaw = `  ·  ${contactParts.join('  ·  ')}`;
+        const maxW = CONTENT_W - nameW - countW - 4;
+        const contactFit = (doc.splitTextToSize(contactRaw, maxW) as string[])[0] ?? contactRaw;
+        doc.text(contactFit, MARGIN_X + 2 + nameW, textY);
       }
-      if (idx % 2 === 0) {
-        doc.setFillColor(245, 247, 250);
-        doc.rect(startX, y - 4, tableWidth, rowHeight, 'F');
-      }
+    };
 
-      x = startX;
-      const mainRow = [
-        entry.clientName.substring(0, 32),
-        entry.creditType === 'SALE' ? 'Venta' : 'Préstamo',
-        String(entry.installmentNumber),
-        entry.paymentStatus,
-        this.formatDate(entry.dueDate),
-        this.formatCurrency(entry.amount),
-      ];
-      mainRow.forEach((cell, i) => {
-        doc.text(cell, x + 2, y);
-        x += colWidths[i];
+    const drawRow = (
+      entry: PlanillaEntry,
+      yTop: number,
+      refLines: string[],
+      height: number,
+    ): void => {
+      const innerTop = yTop + 4;       // línea 1: ref / fecha / cobrado
+      const innerSecond = yTop + 7.7;  // línea 2: ref wrap / estado / obs-visita
+
+      // Borde superior fino entre filas del mismo cliente.
+      setStroke(COLOR_BORDER, 0.15);
+      doc.line(MARGIN_X, yTop, MARGIN_X + CONTENT_W, yTop);
+
+      // ── Cliente: solo collectionReference (contacto vive en el header) ──
+      setFont(7.5, 'normal');
+      setColor(COLOR_TEXT);
+      refLines.forEach((line, i) => {
+        doc.text(line, COLS.cli.x + 1.5, innerTop + i * 3.7);
       });
 
-      if (subLines.length > 0) {
-        doc.setFontSize(6.5);
-        doc.setTextColor(100, 100, 100);
-        subLines.forEach((line, li) => {
-          doc.text(line, startX + 2, y + 4 + li * 4);
-        });
-        doc.setFontSize(8);
-        doc.setTextColor(0, 0, 0);
-      }
+      // ── Vence (línea 1) + Estado (línea 2) ──────────────────────────────
+      setFont(8.5, 'normal');
+      setColor(COLOR_TEXT);
+      doc.text(
+        this.formatDate(entry.dueDate),
+        COLS.ven.x + COLS.ven.w / 2,
+        innerTop,
+        { align: 'center' },
+      );
+      setFont(7.5, 'bold');
+      setColor(statusColor(entry.paymentStatus));
+      doc.text(
+        entry.paymentStatus.toUpperCase(),
+        COLS.ven.x + COLS.ven.w / 2,
+        innerSecond,
+        { align: 'center' },
+      );
 
-      y += rowHeight;
+      // ── Esperado (centrado vertical) ────────────────────────────────────
+      setFont(10.5, 'bold');
+      setColor(COLOR_TEXT);
+      doc.text(
+        this.formatCurrency(entry.amount),
+        COLS.esp.x + COLS.esp.w / 2,
+        yTop + height / 2 + 1.5,
+        { align: 'center' },
+      );
+
+      // ── Gestión: Cobrado (línea 1) + Obs/Visita (línea 2) ───────────────
+      setFont(7.5, 'normal');
+      setColor(COLOR_MUTED);
+      const gesX = COLS.ges.x + 1.5;
+      const gesLineEnd = COLS.ges.x + COLS.ges.w - 1.5;
+
+      doc.text('Cobrado:', gesX, innerTop);
+      setStroke(COLOR_BORDER_STRONG, 0.25);
+      doc.line(gesX + 13, innerTop + 0.5, gesLineEnd, innerTop + 0.5);
+
+      doc.text('Obs/Visita:', gesX, innerSecond);
+      doc.line(gesX + 16, innerSecond + 0.5, gesLineEnd, innerSecond + 0.5);
+    };
+
+    /**
+     * Devuelve un color hex para el estado (sutil, sin fondo, sin badge).
+     */
+    function statusColor(status: string): readonly [number, number, number] {
+      switch (status) {
+        case 'EN_MORA':   return [185, 28, 28];   // rojo sobrio
+        case 'PARCIAL':   return [180, 83, 9];    // ámbar
+        case 'COBRADO':   return [21, 128, 61];   // verde
+        case 'PENDIENTE':
+        default:          return [55, 65, 81];    // gris oscuro
+      }
+    }
+
+    const drawFooter = (pageNum: number, totalPages: number): void => {
+      setFont(7, 'normal');
+      setColor(COLOR_MUTED);
+      const text = `Página ${pageNum} de ${totalPages}  ·  Emitido ${issuedAt}  ·  ${result.collectorName}  ·  ${this.formatDate(result.fecha)}`;
+      doc.text(text, PAGE_W / 2, PAGE_H - MARGIN_BOTTOM / 2 - 2, { align: 'center' });
+    };
+
+    // ── Pre-cálculo: contar cuotas por cliente para los headers ─────────────
+    const cuotasByCustomer = new Map<string, number>();
+    result.entries.forEach((e) => {
+      const name = e.clientName ?? '';
+      cuotasByCustomer.set(name, (cuotasByCustomer.get(name) ?? 0) + 1);
+    });
+
+    // ── Paginación: construir una lista plana de "blocks" donde cada block es
+    // o bien un header de cliente, o bien una fila de cuota. Mantener el header
+    // y al menos la primera fila del cliente en la misma página (evita un
+    // header huérfano al final de una página).
+    type RowMeasure = { height: number; refLines: string[] };
+    type Block =
+      | { kind: 'header'; height: number; customerName: string; cuotasCount: number; pairedRowHeight: number; phone: string; address: string }
+      | { kind: 'row'; height: number; entry: PlanillaEntry; measure: RowMeasure; globalIdx: number };
+
+    const blocks: Block[] = [];
+    const rowMeasures = result.entries.map((e) => measureRow(e));
+    let lastCustomer: string | null = null;
+    result.entries.forEach((entry, i) => {
+      const m = rowMeasures[i];
+      if (entry.clientName !== lastCustomer) {
+        const phone = entry.clientPhone ?? '';
+        const address = entry.clientAddress ?? '';
+        blocks.push({
+          kind: 'header',
+          height: calcHeaderH(phone, address),
+          customerName: entry.clientName,
+          cuotasCount: cuotasByCustomer.get(entry.clientName) ?? 0,
+          pairedRowHeight: m.height,
+          phone,
+          address,
+        });
+        lastCustomer = entry.clientName;
+      }
+      blocks.push({ kind: 'row', height: m.height, entry, measure: m, globalIdx: i });
+    });
+
+    const TABLE_HEADER_GAP = 2; // separación entre el header de columnas y el primer cliente
+    const pageRowsBudget = PAGE_H - MARGIN_TOP - HEADER_H - TABLE_HEADER_H - TABLE_HEADER_GAP - MARGIN_BOTTOM - FOOTER_H;
+    const pageBuckets: Block[][] = [];
+    let bucket: Block[] = [];
+    let used = 0;
+    for (let i = 0; i < blocks.length; i++) {
+      const b = blocks[i];
+      // Si es un header de cliente, exigir que ENTRE también la primera fila
+      // del cliente (evita header huérfano al final de la página).
+      const requiredSpace = b.kind === 'header'
+        ? b.height + b.pairedRowHeight
+        : b.height;
+      if (used + requiredSpace > pageRowsBudget && bucket.length > 0) {
+        pageBuckets.push(bucket);
+        bucket = [];
+        used = 0;
+      }
+      bucket.push(b);
+      used += b.height;
+    }
+    if (bucket.length > 0) pageBuckets.push(bucket);
+    const totalPages = Math.max(pageBuckets.length, 1);
+
+    // ── Render por página ───────────────────────────────────────────────────
+    pageBuckets.forEach((page, pageIdx) => {
+      if (pageIdx > 0) doc.addPage();
+      drawPdfHeader();
+      const tableY = MARGIN_TOP + HEADER_H + 2;
+      drawTableHeader(tableY);
+      let y = tableY + TABLE_HEADER_H + TABLE_HEADER_GAP;
+      page.forEach((b) => {
+        if (b.kind === 'header') {
+          drawCustomerHeader(y, b.customerName, b.cuotasCount, b.phone, b.address);
+        } else {
+          drawRow(b.entry, y, b.measure.refLines, b.measure.height);
+        }
+        y += b.height;
+      });
+      // Borde inferior final de la tabla
+      setStroke(COLOR_BORDER_STRONG, 0.4);
+      doc.line(MARGIN_X, y, MARGIN_X + CONTENT_W, y);
+      drawFooter(pageIdx + 1, totalPages);
     });
 
     const safeName = (result.collectorName ?? 'cobrador').replace(/\s+/g, '-');
@@ -907,6 +1178,36 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
     return map[status] ?? status;
   }
 
+  /** Etiqueta amigable del motivo de inclusión (visible solo en admin). */
+  inclusionReasonLabel(reason: InclusionReason | null | undefined): string {
+    if (!reason) return '';
+    return INCLUSION_REASON_LABELS[reason] ?? '';
+  }
+
+  /** Color de fondo del chip según el motivo. Sutil, paleta consistente. */
+  inclusionReasonBg(reason: InclusionReason | null | undefined): string {
+    switch (reason) {
+      case 'OVERDUE':
+      case 'OVERDUE_UNSCHEDULED': return '#fee2e2'; // rojo claro
+      case 'DUE_TODAY':           return '#dbeafe'; // azul claro
+      case 'SCHEDULED_VISIT':     return '#ede9fe'; // violeta claro
+      case 'ALL_PENDING':         return '#f3f4f6'; // gris claro
+      default:                    return '#f3f4f6';
+    }
+  }
+
+  /** Color de texto del chip — combinado con el fondo da contraste accesible. */
+  inclusionReasonFg(reason: InclusionReason | null | undefined): string {
+    switch (reason) {
+      case 'OVERDUE':
+      case 'OVERDUE_UNSCHEDULED': return '#991b1b';
+      case 'DUE_TODAY':           return '#1e40af';
+      case 'SCHEDULED_VISIT':     return '#6d28d9';
+      case 'ALL_PENDING':         return '#4b5563';
+      default:                    return '#4b5563';
+    }
+  }
+
   /**
    * Formatea una fecha ISO a dd/mm/yyyy.
    * @param iso Fecha en formato ISO
@@ -968,10 +1269,13 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
       creditId: item.creditId,
       creditType: item.creditType,
       installmentNumber: item.installmentNumber,
-      amount: item.amountDue,
+      // Usamos el saldo a cobrar al momento de generación (snapshot). Si la
+      // planilla es vieja y no lo tiene, caemos al monto original.
+      amount: item.remainingAmount ?? item.amountDue,
       paidAmount: item.amountPaid,
       dueDate: item.dueDate,
       paymentStatus: this.mapInstallmentStatus(item.installmentStatus),
+      collectionReference: item.collectionReference,
     }));
     return {
       collectorId: detail.collectorId,

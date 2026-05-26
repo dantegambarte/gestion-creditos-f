@@ -337,31 +337,55 @@
                 <th></th>
               </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-item>
+            <ng-template pTemplate="body" let-item let-rowIndex="rowIndex">
+              @if (isFirstOfCustomer(filteredItems, rowIndex)) {
+                <tr style="background: #eef2ff; border-top: 2px solid #c7d2fe;">
+                  <td colspan="8" class="px-3 py-1.5" style="border-left: 4px solid #4f46e5;">
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="flex items-center gap-3 min-w-0 flex-wrap">
+                        <div class="flex items-center gap-1.5">
+                          <i class="pi pi-user text-xs shrink-0" style="color: #4f46e5;"></i>
+                          <span class="text-sm font-bold uppercase tracking-wide" style="color: #1e1b4b;">
+                            {{ item.customerName }}
+                          </span>
+                        </div>
+                        @if (item.customerPhone) {
+                          <span class="text-[11px]" style="color: #4338ca;">
+                            <i class="pi pi-phone mr-1"></i>{{ item.customerPhone }}
+                          </span>
+                        }
+                        @if (item.customerAddress) {
+                          <span class="text-[11px]" style="color: #4338ca;">
+                            <i class="pi pi-map-marker mr-1"></i>{{ item.customerAddress }}
+                          </span>
+                        }
+                      </div>
+                      <span class="text-xs font-medium shrink-0" style="color: #6366f1;">
+                        {{ customerCuotasCount(item.customerName) }}
+                        {{ customerCuotasCount(item.customerName) === 1 ? "cuota" : "cuotas" }}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              }
               <tr>
                 <td class="text-xs" style="color: var(--ff-text-muted)">
                   {{ item.orderNumber }}
                 </td>
                 <td>
-                  <p
-                    class="font-semibold text-sm"
-                    style="color: var(--ff-text-primary)"
-                  >
-                    {{ item.customerName }}
-                  </p>
-                  @if (item.customerPhone) {
-                    <p class="text-xs" style="color: var(--ff-text-muted)">
-                      <i class="pi pi-phone mr-1"></i>{{ item.customerPhone }}
-                    </p>
-                  }
-                  @if (item.customerAddress) {
-                    <p class="text-xs" style="color: var(--ff-text-muted)">
-                      <i class="pi pi-map-marker mr-1"></i
-                      >{{ item.customerAddress }}
+                  @if (item.inclusionReason) {
+                    <p
+                      class="text-[11px] mt-1 px-1.5 py-0.5 inline-block rounded font-medium"
+                      [style.background]="inclusionReasonBg(item.inclusionReason)"
+                      [style.color]="inclusionReasonFg(item.inclusionReason)"
+                      pTooltip="Motivo de inclusión en la planilla"
+                      tooltipPosition="top"
+                    >
+                      {{ inclusionReasonLabel(item.inclusionReason) }}
                     </p>
                   }
                   @if (item.antecedentType) {
-                    <p class="text-[11px] mt-1 px-1.5 py-0.5 inline-block rounded" style="background: #fef3c7; color: #92400e;">
+                    <p class="text-[11px] mt-1 ml-1 px-1.5 py-0.5 inline-block rounded" style="background: #fef3c7; color: #92400e;">
                       Última gestión: {{ item.antecedentType === "PARTIAL_PAYMENT" ? "Cobro parcial" : item.antecedentType === "NO_PAYMENT" ? "No pagó" : "No encontrado" }}
                       @if (item.antecedentDate) {
                         · {{ item.antecedentDate | date: "dd/MM/yyyy" }}

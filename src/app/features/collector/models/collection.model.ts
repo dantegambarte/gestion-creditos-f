@@ -8,7 +8,22 @@ export type CollectionFilter =
 
 export type CollectionSheetStatus = 'ACTIVE' | 'REGENERATED';
 export type InclusionCriteria = 'DUE_DATE' | 'VISIT_DATE';
+export type InclusionReason =
+  | 'OVERDUE'
+  | 'OVERDUE_UNSCHEDULED'
+  | 'DUE_TODAY'
+  | 'SCHEDULED_VISIT'
+  | 'ALL_PENDING';
 export type AntecedentType = 'PARTIAL_PAYMENT' | 'NO_PAYMENT' | 'NOT_FOUND';
+
+/** Etiquetas amigables para mostrar en UI admin (no se muestra al cobrador). */
+export const INCLUSION_REASON_LABELS: Record<InclusionReason, string> = {
+  OVERDUE: 'Vencida',
+  OVERDUE_UNSCHEDULED: 'Vencida',
+  DUE_TODAY: 'Vence hoy',
+  SCHEDULED_VISIT: 'Visita pactada',
+  ALL_PENDING: 'Pendiente',
+};
 
 export interface CollectionSheet {
   id: string;
@@ -25,6 +40,12 @@ export interface CollectionSheetItem {
   orderNumber: number;
   plannedAmount: number;
   inclusionCriteria: InclusionCriteria;
+  /** Razón por la que la cuota fue incluida (snapshot al generar). */
+  inclusionReason: InclusionReason | null;
+  /** Prioridad operativa del orden de render (1 visita · 2 mora · 3 hoy · 4 resto). */
+  opPriority: number | null;
+  /** Saldo a cobrar al momento de la generación: amount_due - amount_paid. */
+  remainingAmount: number | null;
   antecedentId: string | null;
   antecedentType: AntecedentType | null;
   antecedentDate: string | null;
@@ -125,6 +146,9 @@ export interface CollectionSheetItemRaw {
   order_number: number;
   planned_amount: number;
   inclusion_criteria: InclusionCriteria;
+  inclusion_reason: InclusionReason | null;
+  op_priority: number | null;
+  remaining_amount: number | null;
   antecedent_id: string | null;
   antecedent_type: AntecedentType | null;
   antecedent_date: string | null;

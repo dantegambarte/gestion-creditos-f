@@ -262,6 +262,24 @@ export class CollectionSheetDetailComponent implements OnInit {
     return MANAGEMENT_EVENT_LABELS[type];
   }
 
+  /**
+   * True si el item en `index` es la primera cuota de su cliente (la anterior
+   * es de otro cliente o no existe). Usado para insertar el header de
+   * agrupación entre cards. Asume orden por cliente desde backend.
+   */
+  isFirstOfCustomer(items: CollectionSheetItem[], index: number): boolean {
+    if (index === 0) return true;
+    const current = items[index];
+    const prev = items[index - 1];
+    if (!current?.customerName || !prev?.customerName) return true;
+    return prev.customerName !== current.customerName;
+  }
+
+  /** Cantidad de cuotas del cliente dado dentro de la planilla actual. */
+  customerCuotasCount(customerName: string): number {
+    return this.items.filter((i) => i.customerName === customerName).length;
+  }
+
   /** Severity para el tag del evento en el log. */
   eventSeverity(type: ManagementEventType): 'success' | 'warning' | 'secondary' {
     const map: Record<ManagementEventType, 'success' | 'warning' | 'secondary'> = {
