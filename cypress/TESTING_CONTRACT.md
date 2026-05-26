@@ -12,10 +12,10 @@ Examples:
 
 ```bash
 # Partial run (required path for normal work)
-npm run e2e:run -- --spec "cypress/e2e/01-auth-real.cy.ts"
+npm run e2e:run -- --spec "cypress/e2e/01-auth.cy.ts"
 
 # Multiple specs (comma-separated)
-npm run e2e:run -- --spec "cypress/e2e/01-auth-real.cy.ts,cypress/e2e/04-clientes-real.cy.ts"
+npm run e2e:run -- --spec "cypress/e2e/01-auth.cy.ts,cypress/e2e/04-clientes-real.cy.ts"
 
 # Full suite (explicit only)
 npm run e2e:run:all
@@ -62,7 +62,7 @@ Si ya cambiaste la contraseña del ADMIN manualmente (por ejemplo `admin123`), u
 
 Real backend specs included in Batch 1:
 
-- `cypress/e2e/01-auth-real.cy.ts`
+- `cypress/e2e/01-auth.cy.ts`
 - `cypress/e2e/04-clientes-real.cy.ts`
 - `cypress/e2e/21-seller-clientes-nuevo-real.cy.ts`
 - `cypress/e2e/03-nueva-operacion-real.cy.ts`
@@ -71,7 +71,7 @@ Real backend specs included in Batch 1:
 Recommended command to run only these real specs:
 
 ```bash
-npx cypress run --spec "cypress/e2e/01-auth-real.cy.ts,cypress/e2e/04-clientes-real.cy.ts,cypress/e2e/21-seller-clientes-nuevo-real.cy.ts,cypress/e2e/03-nueva-operacion-real.cy.ts,cypress/e2e/10-admin-aprobaciones-real.cy.ts"
+npx cypress run --spec "cypress/e2e/01-auth.cy.ts,cypress/e2e/04-clientes-real.cy.ts,cypress/e2e/21-seller-clientes-nuevo-real.cy.ts,cypress/e2e/03-nueva-operacion-real.cy.ts,cypress/e2e/10-admin-aprobaciones-real.cy.ts"
 ```
 
 ## Spec Isolation Checklist

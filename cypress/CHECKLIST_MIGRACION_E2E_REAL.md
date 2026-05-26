@@ -14,12 +14,11 @@ Estado general: en progreso.
 
 ## Avance actual informado
 
-- [x] `cypress/e2e/01-auth-real.cy.ts` -> 10/10 tests pasando (run local verificado)
+- [x] `cypress/e2e/01-auth.cy.ts` -> 10/10 tests pasando (run local verificado)
 
 ## Fase 1 (prioridad alta: CU01, CU03, CU05, CU08)
 
-- [x] `cypress/e2e/01-auth-real.cy.ts` (CU01)
-- [ ] `cypress/e2e/01-auth.cy.ts` -> migrar a real o retirar si queda duplicado
+- [x] `cypress/e2e/01-auth.cy.ts` (CU01)
 - [ ] `cypress/e2e/05-negative-auth.cy.ts` -> migrar a real (errores reales)
 - [ ] `cypress/e2e/04-clientes-real.cy.ts` (CU03) -> ampliar alternativos
 - [ ] `cypress/e2e/04-clientes.cy.ts` -> migrar a real o consolidar
