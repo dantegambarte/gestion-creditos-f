@@ -22,7 +22,10 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       const isTokenExpired = err?.status === 401 && err?.error?.message === 'TOKEN_EXPIRED';
       const isRefreshUrl   = req.url.includes('/auth/refresh');
-      const isPortal       = req.url.includes(AppRoutes.PORTAL);
+      // Detecta endpoints del portal del cliente buscando "/portal/" como segmento.
+      // No usar includes('portal') porque hace match con acciones admin como
+      // customers/{id}/enable-portal y dispara redirect a /portal/login.
+      const isPortal       = req.url.includes('/portal/');
 
       // Token expirado → refresh automático + reintento de la request original
       if (isTokenExpired && !isRefreshUrl) {
