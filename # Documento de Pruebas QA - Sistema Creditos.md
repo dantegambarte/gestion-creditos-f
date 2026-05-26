@@ -121,6 +121,7 @@
 | **CO-01** | Reversión de cuota | Se hizo click en "Revertir Cuota". | Debería volver al estado pendiente en la planilla de "Cobros". | Corregido / Validado — cobro original muestra tag "Aprobado" + "Revertido" (warning); payment de reversión muestra "Aprobado" + "Reversión" (danger); toast confirma la operación; `reversalPaymentId` mapeado en model + service; `reloadDetail()` agregado en planilla de cobros |
 | **CO-02** | Cobro directo - Admin | Se hizo click en "Cobro directo" y se completaron los campos. | Debería registrar y aprobar el cobro en el mismo paso (`admin_direct: true`, `status: APPROVED`). | Corregido / Validado — `processDirectPayment()` llamaba a `create` (PENDING) en vez de `adminDirect` (APPROVED); corregido en `admin-payments.component.ts` |
 | **CO-03** | Cobro directo parcial - Admin | Se intentó registrar un cobro con monto menor al de la cuota. | El form debería pedir "Fecha de próxima visita" para cobros parciales. | Corregido / Validado — campo `p-calendar` agregado al dialog con `[minDate]="todayDate"`; `nextVisitDate` agregado a `AdminDirectPayload`, mapeado en service y enviado al backend |
+| **CO-04** | Registrar Cobro - Collector | Se hizo click en "Cobrar" en la cuota de la planilla generada. | El form debería permitir solo ingresar números. | El form me permite ingresar la letra "e" | Error |
 
 
 ---
