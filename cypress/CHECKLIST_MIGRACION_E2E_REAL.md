@@ -33,12 +33,12 @@ Estado general: en progreso.
 
 ## Fase 2 (CU07, CU09, CU14)
 
-- [ ] `cypress/e2e/09-cobranzas-collector.cy.ts` (CU07) -> migrar a real
-- [ ] `cypress/e2e/22-admin-generar-planilla.cy.ts` (CU14) -> migrar a real
-- [ ] `cypress/e2e/26-collector-planilla-detalle.cy.ts` (CU14) -> migrar a real
-- [ ] `cypress/e2e/29-admin-collection-detail.cy.ts` (CU09/CU14) -> migrar a real
-- [ ] `cypress/e2e/17-admin-colecciones-gastos-pagos.cy.ts` -> separar cobertura y migrar
-- [ ] `cypress/e2e/20-admin-config-sheet.cy.ts` -> migrar a real
+- [x] `cypress/e2e/09-cobranzas-collector.cy.ts` (CU07) -> migrado a real (3/3 tests pasando, run local verificado)
+- [x] `cypress/e2e/22-admin-generar-planilla.cy.ts` (CU14) -> migrado a real (3/3 tests pasando, run local verificado)
+- [x] `cypress/e2e/26-collector-planilla-detalle.cy.ts` (CU14) -> migrado a real (3/3 tests pasando, run local verificado)
+- [x] `cypress/e2e/29-admin-collection-detail.cy.ts` (CU09/CU14) -> migrado a real (3/3 tests pasando, run local verificado)
+- [x] `cypress/e2e/17-admin-colecciones-gastos-pagos.cy.ts` -> separado de colecciones (queda gastos+cobros) y migrado a real (5/5 tests pasando)
+- [x] `cypress/e2e/20-admin-config-sheet.cy.ts` -> migrado a real (4/4 tests pasando, incluye contrato de fallback para /admin/sheet)
 
 ## Fase 3 (CU11, CU12, CU13, CU02, CU04, CU15)
 
