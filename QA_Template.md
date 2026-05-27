@@ -911,6 +911,38 @@ Módulo Cobro
 
 ---
 
+Módulo Liquidaciones
+
+**Módulo:** [Liquidaciones]
+**ID de Prueba:** [LI-01]
+**Título / Descripción:** [Sueldo Fijo]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Sueldo Fijo".]
+* **Resultado Esperado:** [Al poner un importe en "Sueldo Fijo" de un empleado debería mostrarse el nuevo valor.]
+* **Resultado Obtenido (Error):** [No se actualiza automáticamente el nuevo valor, hay que refrescar la página para que impacte, tampoco se refresca en "Resumen Semanal".]
+
+---
+
+**Módulo:** [Liquidaciones]
+**ID de Prueba:** [LI-02]
+**Título / Descripción:** [Sueldo Fijo]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Sueldo Fijo".]
+* **Resultado Esperado:** [Al poner un importe en "Sueldo Fijo" de un empleado el editor de sueldo debería limpiarse.]
+* **Resultado Obtenido (Error):** [El editor de sueldo sigue mostrando el valor y el empleado.]
+
+---
+
+**Módulo:** [Liquidaciones]
+**ID de Prueba:** [LI-03]
+**Título / Descripción:** [Liquidar]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Liquidar".]
+* **Resultado Esperado:** [Al hacer click en "Liquidar" debería mostrar cuáles fueron las ventas para corroborar la liquidación.]
+* **Resultado Obtenido (Error):** [No muestra las ventas para corroborar que la liquidación sea la correcta.]
+
+---
+
 
 ## Resumen de correcciones ya validadas
 
