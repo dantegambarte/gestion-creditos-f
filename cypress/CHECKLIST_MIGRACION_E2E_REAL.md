@@ -19,7 +19,7 @@ Estado general: en progreso.
 ## Fase 1 (prioridad alta: CU01, CU03, CU05, CU08)
 
 - [x] `cypress/e2e/01-auth.cy.ts` (CU01)
-- [ ] `cypress/e2e/05-negative-auth.cy.ts` -> migrar a real (errores reales)
+- [x] `cypress/e2e/05-negative-auth.cy.ts` -> 5/5 tests pasando (run local verificado)
 - [ ] `cypress/e2e/04-clientes-real.cy.ts` (CU03) -> ampliar alternativos
 - [ ] `cypress/e2e/04-clientes.cy.ts` -> migrar a real o consolidar
 - [ ] `cypress/e2e/06-negative-clientes.cy.ts` -> migrar a real
