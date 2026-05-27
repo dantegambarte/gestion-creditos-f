@@ -91,12 +91,10 @@
                     >
                     <a
                       class="prod-action-link text-xs"
-                      [style.color]="
-                        cat.active ? 'var(--ff-danger)' : 'var(--ff-accent)'
-                      "
+                      [style.color]="cat.active ? 'var(--ff-danger)' : 'var(--ff-success)'"
                       (click)="toggle(cat)"
                       style="cursor: pointer"
-                      >{{ cat.active ? "Desactivar" : "Activar" }}</a
+                      >{{ cat.active ? 'Desactivar' : 'Activar' }}</a
                     >
                   </div>
                 </td>

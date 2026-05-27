@@ -91,12 +91,10 @@
                     >
                     <a
                       class="prod-action-link text-xs"
-                      [style.color]="
-                        brand.active ? 'var(--ff-danger)' : 'var(--ff-accent)'
-                      "
+                      [style.color]="brand.active ? 'var(--ff-danger)' : 'var(--ff-success)'"
                       (click)="toggle(brand)"
                       style="cursor: pointer"
-                      >{{ brand.active ? "Desactivar" : "Activar" }}</a
+                      >{{ brand.active ? 'Desactivar' : 'Activar' }}</a
                     >
                   </div>
                 </td>
