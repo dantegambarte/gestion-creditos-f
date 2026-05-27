@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { finalize } from 'rxjs/operators';
@@ -67,28 +67,28 @@ function toClientDetail(customer: CustomerApiDetail): ClientDetail {
  * @param c - Crédito de la API
  */
 function toUiCredit(c: ApiCredit): Credit | null {
-  const statusMap: Record<string, Credit['estado'] | null> = {
-    ACTIVE: 'ACTIVO',
-    PENDING_APPROVAL: 'ACTIVO',
-    SETTLED: 'PAGADO',
+  const statusMap: Record<string, Credit['status'] | null> = {
+    ACTIVE: 'ACTIVE',
+    PENDING_APPROVAL: 'ACTIVE',
+    SETTLED: 'PAID',
     REJECTED: null,
   };
-  const estado = statusMap[c.status] ?? 'ACTIVO';
-  if (estado === null) return null;
+  const status = statusMap[c.status] ?? 'ACTIVE';
+  if (status === null) return null;
   return {
     id: c.id,
-    tipo: c.type === 'SALE' ? 'Venta' : 'Préstamo',
-    producto: c.customerName,
-    montoOriginal: c.totalAmount,
-    saldoPendiente: c.totalAmount,
-    cuotaActual: 1,
-    totalCuotas: c.installmentsCount,
-    cuotaMensual: 0,
-    proximoVencimiento: c.approvedAt ?? c.createdAt,
-    tasa:
+    type: c.type === 'SALE' ? 'Venta' : 'Préstamo',
+    product: c.customerName,
+    originalAmount: c.totalAmount,
+    pendingBalance: c.totalAmount,
+    currentInstallment: 1,
+    totalInstallments: c.installmentsCount,
+    monthlyInstallment: 0,
+    nextDueDate: c.approvedAt ?? c.createdAt,
+    rate:
       c.interestRate != null ? `${(c.interestRate * 100).toFixed(2)}%` : 'N/A',
-    estado,
-    progreso: estado === 'PAGADO' ? 100 : 0,
+    status,
+    progress: status === 'PAID' ? 100 : 0,
   };
 }
 
@@ -109,6 +109,9 @@ function toUiCredit(c: ApiCredit): Credit | null {
   styleUrl: './client-detail.component.scss',
 })
 export class ClientDetailComponent implements OnInit, OnDestroy {
+  @ViewChild(ClientContactarComponent) private contactarTab?: ClientContactarComponent;
+  @ViewChild(ClientHistorialComponent) private historialTab?: ClientHistorialComponent;
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly headerService = inject(HeaderService);
@@ -144,22 +147,22 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   get activeCredits(): number {
     return (
       this.client?.credits.filter(
-        (c) => c.estado === 'ACTIVO' || c.estado === 'EN MORA',
+        (c) => c.status === 'ACTIVE' || c.status === 'OVERDUE',
       ).length ?? 0
     );
   }
 
   get totalPortfolio(): number {
     return (
-      this.client?.credits.reduce((sum, c) => sum + c.montoOriginal, 0) ?? 0
+      this.client?.credits.reduce((sum, c) => sum + c.originalAmount, 0) ?? 0
     );
   }
 
   get totalOutstandingBalance(): number {
     return (
       this.client?.credits
-        .filter((c) => c.estado !== 'PAGADO')
-        .reduce((sum, c) => sum + c.saldoPendiente, 0) ?? 0
+        .filter((c) => c.status !== 'PAID')
+        .reduce((sum, c) => sum + c.pendingBalance, 0) ?? 0
     );
   }
 
@@ -251,9 +254,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
           label: 'Enviar Mensaje',
           icon: 'pi pi-send',
           severity: 'primary',
-          action: () => {
-            /* TODO */
-          },
+          action: () => this.contactarTab?.openWhatsApp(),
         },
       ]);
     } else if (this._activeTab === 'historial') {
@@ -263,9 +264,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
           icon: 'pi pi-download',
           severity: 'success',
           styleClass: '!bg-green-500 !border-green-500 hover:!bg-green-600',
-          action: () => {
-            /* TODO */
-          },
+          action: () => this.exportHistorial(),
         },
       ]);
     } else {
@@ -282,6 +281,31 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
         },
       ]);
     }
+  }
+
+  /**
+   * Exporta el historial filtrado del cliente como archivo CSV descargable.
+   */
+  private exportHistorial(): void {
+    const rows = this.historialTab?.filteredHistorial ?? this.client?.historial ?? [];
+    const headers = ['Fecha', 'Hora', 'Evento', 'Crédito', 'Monto', 'Estado', 'Usuario'];
+    const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const csv = [
+      headers.join(','),
+      ...rows.map((e) =>
+        [e.fecha, e.hora, e.evento, e.creditoId, e.monto ?? '', e.estado, e.usuario]
+          .map(escape)
+          .join(','),
+      ),
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `historial-${this.client?.dni ?? 'cliente'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   goBack(): void {

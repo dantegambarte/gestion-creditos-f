@@ -199,6 +199,7 @@ export class AuthService extends AuthServiceBase {
       avatar: this.initials(me.full_name),
       is_temp_password: me.is_temp_password,
       force_relogin_at: me.force_relogin_at ?? null,
+      pending_approvals_count: me.pending_approvals_count,
       token,
     };
   }

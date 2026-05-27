@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "data": [
+    {
+      "id": "sheet-001",
+      "sheet_date": "2026-05-26",
+      "filter_used": "OVERDUE",
+      "status": "ACTIVE",
+      "created_at": "2026-05-26T09:00:00Z",
+      "sent_at": null,
+      "collector_id": "usr-003",
+      "collector_name": "Juan Pedraza",
+      "total_items": 2
+    }
+  ]
+}

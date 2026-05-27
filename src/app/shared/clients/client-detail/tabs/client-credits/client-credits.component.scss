@@ -74,13 +74,13 @@
   border-radius: 0.75rem;
   padding: 1rem 1.25rem;
 
-  &.card-activo {
+  &.card-active {
     border-left: 4px solid #22c55e;
   }
-  &.card-en-mora {
+  &.card-overdue {
     border-left: 4px solid #ef4444;
   }
-  &.card-pagado {
+  &.card-paid {
     border-left: 4px solid #9ca3af;
   }
 }
@@ -110,15 +110,15 @@
   font-weight: 700;
   text-transform: uppercase;
 
-  &.badge-activo {
+  &.badge-active {
     background: #dcfce7;
     color: #15803d;
   }
-  &.badge-en-mora {
+  &.badge-overdue {
     background: #fee2e2;
     color: #dc2626;
   }
-  &.badge-pagado {
+  &.badge-paid {
     background: #f3f4f6;
     color: #6b7280;
   }

@@ -38,10 +38,20 @@
   }
 
   <!-- Variant count subtitle -->
-  <div class="flex items-center gap-3 mb-4">
+  <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
     <span class="text-sm font-medium" style="color: var(--ff-text-secondary)">
       Variantes ({{ variants.length }})
     </span>
+    @if (variants.length > 0) {
+      <button
+        type="button"
+        class="text-xs font-semibold px-3 h-8 rounded-lg border"
+        style="color: var(--ff-text-secondary); border-color: var(--ff-stroke)"
+        (click)="toggleAllVariantsExpanded()"
+      >
+        {{ areAllVariantsExpanded() ? 'Colapsar todas' : 'Expandir todas' }}
+      </button>
+    }
   </div>
 
   @if (loading) {

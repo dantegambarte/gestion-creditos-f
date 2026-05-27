@@ -32,9 +32,9 @@ export class ClientCreditsComponent {
 
   estadoOptions = [
     { label: 'Todos los estados', value: null },
-    { label: 'Activo', value: 'ACTIVO' },
-    { label: 'En Mora', value: 'EN MORA' },
-    { label: 'Pagado', value: 'PAGADO' },
+    { label: 'Activo', value: 'ACTIVE' },
+    { label: 'En Mora', value: 'OVERDUE' },
+    { label: 'Pagado', value: 'PAID' },
   ];
 
   constructor(private router: Router) {}
@@ -44,9 +44,9 @@ export class ClientCreditsComponent {
       const matchesSearch =
         !this.searchTerm ||
         c.id.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        c.producto.toLowerCase().includes(this.searchTerm.toLowerCase());
+        c.product.toLowerCase().includes(this.searchTerm.toLowerCase());
       const matchesEstado =
-        !this.selectedEstado || c.estado === this.selectedEstado;
+        !this.selectedEstado || c.status === this.selectedEstado;
       return matchesSearch && matchesEstado;
     });
   }

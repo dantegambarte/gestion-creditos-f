@@ -1,51 +1,27 @@
 <header class="app-header">
-  <!-- Izquierda: título o breadcrumbs + acciones -->
-  <div class="flex items-center gap-6">
-    @if (headerService.pageTitle()) {
-      <h1 class="app-header__title">{{ headerService.pageTitle() }}</h1>
-    } @else {
-      <div class="flex items-center gap-1 text-sm">
-        @for (
-          crumb of headerService.breadcrumbs();
-          track crumb.label;
-          let last = $last
-        ) {
-          @if (!last) {
-            <span
-              class="app-header__crumb app-header__crumb--link"
-              (click)="crumb.route && navigate(crumb.route)"
-              >/ {{ crumb.label }}</span
-            >
-          } @else {
-            <span class="app-header__crumb app-header__crumb--current"
-              >/ {{ crumb.label }}</span
-            >
-          }
+  <!-- Izquierda: solo acciones contextuales -->
+  <div class="flex items-center gap-3">
+    @if (headerService.actions().length > 0) {
+      <div class="flex items-center gap-2">
+        @for (action of headerService.actions(); track action.label) {
+          <p-button
+            [label]="action.label"
+            [icon]="action.icon ?? ''"
+            [severity]="action.severity ?? 'secondary'"
+            [outlined]="action.outlined ?? false"
+            [styleClass]="
+              'h-9 px-4 rounded-xl text-sm ' + (action.styleClass ?? '')
+            "
+            (onClick)="action.action()"
+          />
         }
       </div>
-
-      @if (headerService.actions().length > 0) {
-        <div class="flex items-center gap-2">
-          @for (action of headerService.actions(); track action.label) {
-            <p-button
-              [label]="action.label"
-              [icon]="action.icon ?? ''"
-              [severity]="action.severity ?? 'secondary'"
-              [outlined]="action.outlined ?? false"
-              [styleClass]="
-                'h-9 px-4 rounded-xl text-sm ' + (action.styleClass ?? '')
-              "
-              (onClick)="action.action()"
-            />
-          }
-        </div>
-      }
     }
   </div>
 
   <!-- Derecha: fecha + En vivo + campana + usuario -->
-  <div class="flex items-center gap-5">
-    <span class="app-header__date hidden lg:block">{{ today }}</span>
+  <div class="flex items-center gap-3">
+    <span class="app-header__date hidden xl:block">{{ today }}</span>
 
     <!-- Indicador En vivo -->
     <div class="flex items-center gap-2">
@@ -62,7 +38,7 @@
     <!-- Usuario -->
     @if (auth.currentUser$ | async; as user) {
       <div
-        class="flex items-center gap-3 pl-5 app-header__user-section cursor-pointer hover:opacity-80 transition-opacity"
+        class="flex items-center gap-2 pl-3 app-header__user-section cursor-pointer hover:opacity-80 transition-opacity"
       >
         <div class="text-right hidden sm:block">
           <p class="app-header__user-name leading-none">{{ user.name }}</p>

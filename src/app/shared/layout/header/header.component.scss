@@ -1,13 +1,13 @@
 // ─── Header shell ─────────────────────────────────────────────────────────────
 .app-header {
-  height: 56px;
+  height: 44px;
   flex-shrink: 0;
   background: var(--ff-bg);
   border-bottom: 1px solid var(--ff-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 16px;
 }
 
 // ─── Título / breadcrumbs ─────────────────────────────────────────────────────
@@ -38,17 +38,24 @@
   }
 }
 
+.app-header__crumb-separator {
+  font-family: var(--ff-font-ui);
+  font-size: 12px;
+  color: var(--ff-text-muted);
+  padding: 0 2px;
+}
+
 // ─── Fecha ───────────────────────────────────────────────────────────────────
 .app-header__date {
   font-family: var(--ff-font-ui);
-  font-size: 13px;
+  font-size: 11px;
   color: var(--ff-text-secondary);
 }
 
 // ─── Dot "En vivo" ────────────────────────────────────────────────────────────
 .live-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--ff-success);
   flex-shrink: 0;
@@ -69,7 +76,7 @@
 
 .app-header__live-text {
   font-family: var(--ff-font-ui);
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--ff-success);
 }
@@ -77,7 +84,7 @@
 // ─── Campana ──────────────────────────────────────────────────────────────────
 .app-header__bell {
   position: relative;
-  padding: 8px;
+  padding: 5px;
   border-radius: 50%;
   background: transparent;
   border: none;
@@ -95,10 +102,10 @@
 
 .app-header__bell-dot {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
   background: var(--ff-danger);
   border-radius: 50%;
   border: 2px solid var(--ff-bg);
@@ -111,25 +118,25 @@
 
 .app-header__user-name {
   font-family: var(--ff-font-ui);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--ff-text-primary);
 }
 
 .app-header__user-role {
   font-family: var(--ff-font-ui);
-  font-size: 11px;
+  font-size: 9px;
   color: var(--ff-text-secondary);
 }
 
 .app-header__avatar {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: rgba(79, 110, 247, 0.2);
   color: var(--ff-accent);
   font-family: var(--ff-font-mono);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   display: flex;
   align-items: center;

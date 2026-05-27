@@ -91,12 +91,12 @@ export class ProductUnitsComponent implements OnInit {
   singleForm!: FormGroup;
   bulkForm!: FormGroup;
 
-  // TODO: agregar documentacion de las funciones
-
+  /** Indica si el usuario autenticado tiene rol de administrador. */
   get isAdmin(): boolean {
     return this.auth.hasRole(UserRoleEnum.ADMIN);
   }
 
+  /** Filtra las unidades según el estado seleccionado en el dropdown. */
   get filteredUnits(): ProductUnit[] {
     if (!this.statusFilter) return this.units;
     return this.units.filter((u) => u.status === this.statusFilter);
@@ -120,10 +120,12 @@ export class ProductUnitsComponent implements OnInit {
     this.loadUnits();
   }
 
+  /** Vuelve a la pantalla anterior del historial de navegación. */
   goBack(): void {
     this.location.back();
   }
 
+  /** Abre el diálogo de alta individual con el formulario limpio. */
   openCreate(): void {
     this.editingUnit = null;
     this.singleForm.reset({ unitCode: '', notes: '' });
@@ -131,6 +133,7 @@ export class ProductUnitsComponent implements OnInit {
     this.showSingleDialog = true;
   }
 
+  /** Abre el diálogo de edición con los datos de la unidad precargados. */
   openEdit(unit: ProductUnit): void {
     this.editingUnit = unit;
     this.singleForm.patchValue({
@@ -141,6 +144,7 @@ export class ProductUnitsComponent implements OnInit {
     this.showSingleDialog = true;
   }
 
+  /** Abre el diálogo de carga masiva con el textarea y preview limpios. */
   openBulk(): void {
     this.bulkForm.reset({ rawCodes: '' });
     this.bulkPreview = [];
@@ -148,6 +152,7 @@ export class ProductUnitsComponent implements OnInit {
     this.showBulkDialog = true;
   }
 
+  /** Actualiza el preview de códigos parseando el textarea línea por línea. */
   onBulkCodesChange(): void {
     const raw: string = this.bulkForm.get('rawCodes')?.value ?? '';
     this.bulkPreview = raw
@@ -156,6 +161,7 @@ export class ProductUnitsComponent implements OnInit {
       .filter((s: string) => s.length > 0);
   }
 
+  /** Guarda o actualiza una unidad individual según si hay una en edición. */
   saveSingle(): void {
     if (this.singleForm.invalid) {
       this.singleForm.markAllAsTouched();
@@ -211,6 +217,7 @@ export class ProductUnitsComponent implements OnInit {
     }
   }
 
+  /** Envía los códigos del preview como un lote de unidades nuevas. */
   saveBulk(): void {
     if (this.bulkPreview.length === 0) return;
     this.dialogSubmitting = true;
@@ -237,6 +244,7 @@ export class ProductUnitsComponent implements OnInit {
       });
   }
 
+  /** Solicita confirmación antes de dar de baja la unidad indicada. */
   confirmDeactivate(unit: ProductUnit): void {
     this.confirmationService.confirm({
       header: 'Dar de baja unidad',
@@ -261,6 +269,7 @@ export class ProductUnitsComponent implements OnInit {
     });
   }
 
+  /** Mapea el estado de la unidad a la severidad del tag visual de PrimeNG. */
   statusSeverity(
     status: ProductUnitStatus,
   ): 'success' | 'warning' | 'secondary' | 'danger' {
@@ -276,6 +285,7 @@ export class ProductUnitsComponent implements OnInit {
     }
   }
 
+  /** Mapea el estado de la unidad a su etiqueta en español. */
   statusLabel(status: ProductUnitStatus): string {
     switch (status) {
       case 'AVAILABLE':
@@ -289,11 +299,13 @@ export class ProductUnitsComponent implements OnInit {
     }
   }
 
+  /** Indica si un campo del formulario individual tiene errores visibles. */
   isInvalid(field: string): boolean {
     const c = this.singleForm.get(field);
     return !!(c && c.invalid && (c.dirty || c.touched));
   }
 
+  /** Construye los formularios reactivos de alta individual y carga masiva. */
   private buildForms(): void {
     this.singleForm = this.fb.group({
       unitCode: [
@@ -312,6 +324,7 @@ export class ProductUnitsComponent implements OnInit {
     });
   }
 
+  /** Carga el nombre del producto y la etiqueta de la variante para el breadcrumb. */
   private loadContext(): void {
     this.productsService.getById(this.productId).subscribe({
       next: (p) => {
@@ -334,6 +347,7 @@ export class ProductUnitsComponent implements OnInit {
     return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
   }
 
+  /** Actualiza el breadcrumb del header con el contexto de producto y variante disponible. */
   private updateHeader(): void {
     this.header.set([
       { label: 'Productos', route: `/${this.routePrefix}/products` },
@@ -349,6 +363,7 @@ export class ProductUnitsComponent implements OnInit {
     ]);
   }
 
+  /** Carga las unidades de la variante actual desde el backend. */
   private loadUnits(): void {
     this.loading = true;
     this.error = null;
@@ -364,6 +379,7 @@ export class ProductUnitsComponent implements OnInit {
     });
   }
 
+  /** Muestra un toast de conflicto o error según el código HTTP de la respuesta. */
   private handleError(err: AppError): void {
     this.messageService.add({
       severity: err.status === 409 ? 'warn' : 'error',

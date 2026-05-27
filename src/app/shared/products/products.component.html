@@ -149,6 +149,7 @@
         <label class="text-xs font-bold text-gray-500 uppercase">Categoría</label>
         <p-dropdown [options]="categoryOptions" formControlName="categoria"
           optionLabel="label" optionValue="value" placeholder="Seleccionar..."
+          [loading]="categoriesLoading"
           appendTo="body"
           styleClass="w-full h-14 rounded-xl flex items-center bg-gray-50" />
       </div>

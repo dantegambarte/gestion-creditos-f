@@ -559,6 +559,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
       filterUsed: result.sheet.filterUsed,
       status: result.sheet.status,
       createdAt: result.sheet.createdAt,
+      sentAt: result.sheet.sentAt,
       collectorId: result.sheet.collectorId,
       collectorName: result.sheet.collectorName,
       totalItems: result.sheet.totalItems,

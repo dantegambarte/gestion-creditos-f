@@ -901,6 +901,16 @@ Módulo Cobro
 
 ---
 
+**Módulo:** [Cobro]
+**ID de Prueba:** [CO-04]
+**Título / Descripción:** [Registrar Cobro - Collector]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cobrar" en la cuota de la planilla generada.]
+* **Resultado Esperado:** [Debería solo poner números en el campo.]
+* **Resultado Obtenido (Error):** [El campo me permite ingresar la letra "e".]
+
+---
+
 
 ## Resumen de correcciones ya validadas
 

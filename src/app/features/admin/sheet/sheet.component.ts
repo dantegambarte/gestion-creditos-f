@@ -368,16 +368,33 @@ export class SheetComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Confirma el envío de la planilla por un canal externo (por ejemplo, email o WhatsApp). Actualmente, esta función muestra un mensaje de advertencia indicando que la funcionalidad no está implementada, pero en el futuro se puede integrar con un endpoint del backend para realizar el envío real de la planilla a través del canal deseado.
+   * Marca la planilla indicada como enviada al cobrador.
+   * Acepta ID explícito (desde tabla) o usa reviewSheetDetail si está abierto.
+   * @param sheetId - ID de la planilla a enviar.
    */
-  confirmSend(): void {
-    // TODO: integrar con endpoint de envío cuando esté disponible en el backend
-    this.msg.add({
-      severity: 'warn',
-      summary: 'No disponible',
-      detail: 'El envío por canal externo no está implementado aún.',
-      life: 5000,
-    });
+  confirmSend(sheetId?: string): void {
+    const id = sheetId ?? this.reviewSheetDetail?.id;
+    if (!id) return;
+    this.collectionsService
+      .send(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.msg.add({
+            severity: 'success',
+            summary: 'Planilla enviada',
+            detail: 'La planilla fue marcada como enviada correctamente.',
+          });
+          this.loadHistorial();
+        },
+        error: (err: AppError) => {
+          this.msg.add({
+            severity: err.status === 409 ? 'warn' : 'error',
+            summary: err.status === 409 ? 'Aviso' : 'Error',
+            detail: err.message ?? 'No se pudo marcar la planilla como enviada.',
+          });
+        },
+      });
   }
 
   /**
@@ -390,7 +407,7 @@ export class SheetComponent implements OnInit, OnDestroy {
   ): GeneratedPlanillaResult {
     const entries: PlanillaEntry[] = detail.items.map((item) => ({
       clientName: item.customerName,
-      clientDni: 'N/D', // TODO: customer_dni not included in collection items — consider adding to backend
+      clientDni: item.customerDni ?? 'N/D',
       clientPhone: item.customerPhone,
       clientAddress: item.customerAddress,
       creditId: item.creditId,

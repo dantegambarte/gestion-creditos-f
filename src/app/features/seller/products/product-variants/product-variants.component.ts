@@ -81,7 +81,7 @@ export class ProductVariantsComponent implements OnInit {
   bulkSubmitting = false;
   bulkError: string | null = null;
   bulkRowErrors: Record<number, Partial<Record<'color' | 'size' | 'capacity' | 'currentPrice' | 'attributes', string>>> = {};
-  expandedVariantId: string | null = null;
+  expandedVariantIds = new Set<string>();
 
   get isAdmin(): boolean {
     return this.auth.hasRole(UserRoleEnum.ADMIN);
@@ -111,8 +111,7 @@ export class ProductVariantsComponent implements OnInit {
     this.loadVariants();
   }
 
-  // TODO: agregar documentacion de las funciones
-
+  /** Vuelve a la pantalla anterior del historial de navegación. */
   goBack(): void {
     this.location.back();
   }
@@ -139,6 +138,7 @@ export class ProductVariantsComponent implements OnInit {
     this.resetBulkRows();
   }
 
+  /** Abre el panel lateral con los datos de la variante precargados para edición. */
   openEdit(variant: ProductVariant): void {
     this.editingVariant = variant;
     this.form.patchValue({
@@ -426,7 +426,11 @@ export class ProductVariantsComponent implements OnInit {
    * @param {ProductVariant} variant - Variante objetivo del toggle.
    */
   toggleVariantExpanded(variant: ProductVariant): void {
-    this.expandedVariantId = this.expandedVariantId === variant.id ? null : variant.id;
+    if (this.expandedVariantIds.has(variant.id)) {
+      this.expandedVariantIds.delete(variant.id);
+      return;
+    }
+    this.expandedVariantIds.add(variant.id);
   }
 
   /**
@@ -435,7 +439,27 @@ export class ProductVariantsComponent implements OnInit {
    * @returns {boolean} True cuando la fila está desplegada.
    */
   isVariantExpanded(variant: ProductVariant): boolean {
-    return this.expandedVariantId === variant.id;
+    return this.expandedVariantIds.has(variant.id);
+  }
+
+  /**
+   * Indica si todas las filas visibles están expandidas.
+   * @returns {boolean} True cuando no hay filas colapsadas.
+   */
+  areAllVariantsExpanded(): boolean {
+    if (this.variants.length === 0) return false;
+    return this.variants.every((variant) => this.expandedVariantIds.has(variant.id));
+  }
+
+  /**
+   * Expande o colapsa todas las variantes de la tabla.
+   */
+  toggleAllVariantsExpanded(): void {
+    if (this.areAllVariantsExpanded()) {
+      this.expandedVariantIds.clear();
+      return;
+    }
+    this.expandedVariantIds = new Set(this.variants.map((variant) => variant.id));
   }
 
   /**
@@ -484,6 +508,7 @@ export class ProductVariantsComponent implements OnInit {
     }, 0);
   }
 
+  /** Solicita confirmación antes de desactivar la variante indicada. */
   confirmDeactivate(variant: ProductVariant): void {
     this.confirmationService.confirm({
       header: 'Desactivar variante',
@@ -508,6 +533,7 @@ export class ProductVariantsComponent implements OnInit {
     });
   }
 
+  /** Solicita confirmación antes de activar la variante indicada. */
   confirmActivate(variant: ProductVariant): void {
     this.confirmationService.confirm({
       header: 'Activar variante',
@@ -531,6 +557,7 @@ export class ProductVariantsComponent implements OnInit {
     });
   }
 
+  /** Navega al listado de unidades de la variante indicada. */
   navigateToUnits(variant: ProductVariant): void {
     this.router.navigate([
       `/${this.routePrefix}/products`,
@@ -545,11 +572,13 @@ export class ProductVariantsComponent implements OnInit {
     return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
   }
 
+  /** Indica si un campo del formulario individual tiene errores visibles. */
   isInvalid(field: string): boolean {
     const c = this.form.get(field);
     return !!(c && c.invalid && (c.dirty || c.touched));
   }
 
+  /** Construye el formulario reactivo de alta/edición de variante individual. */
   private buildForm(): void {
     this.form = this.fb.group({
       color: [''],
@@ -693,6 +722,7 @@ export class ProductVariantsComponent implements OnInit {
     this.bulkRowErrors = next;
   }
 
+  /** Carga el nombre del producto para construir el breadcrumb. */
   private loadProduct(): void {
     this.productsService.getById(this.productId).subscribe({
       next: (p) => {
@@ -710,6 +740,7 @@ export class ProductVariantsComponent implements OnInit {
     });
   }
 
+  /** Carga todas las variantes del producto actual desde el backend. */
   private loadVariants(): void {
     this.loading = true;
     this.error = null;
@@ -725,6 +756,7 @@ export class ProductVariantsComponent implements OnInit {
     });
   }
 
+  /** Muestra un toast de conflicto o error según el código HTTP de la respuesta. */
   private handleError(err: AppError): void {
     this.messageService.add({
       severity: err.status === 409 ? 'warn' : 'error',

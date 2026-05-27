@@ -14,6 +14,7 @@ export interface AuthUser {
   is_temp_password: boolean;
   force_relogin_at: string | null;
   token: string;
+  pending_approvals_count?: number;
   /** Opcional: solo presente en mock para acceso rápido. */
   email?: string;
 }

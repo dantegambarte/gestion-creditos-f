@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -22,6 +22,7 @@ import { ToastModule } from 'primeng/toast';
 
 import { AuthServiceBase } from '../../core/auth/auth-service.base';
 import { UserRoleEnum } from '../../core/models/types/user-role';
+import { HeaderService } from '../../core/services/header.service';
 import { UsersService } from '../../features/admin/users/users.service';
 import { CustomersService } from '../../features/seller/clients/customers.service';
 import { Customer } from '../../features/seller/models/customer.model';
@@ -81,11 +82,12 @@ function toClient(c: Customer): Client {
   templateUrl: './clients.component.html',
   styleUrl: './clients.component.scss',
 })
-export class ClientsComponent implements OnInit {
+export class ClientsComponent implements OnInit, OnDestroy {
   private readonly customersService = inject(CustomersService);
   private readonly usersService = inject(UsersService);
   private readonly auth = inject(AuthServiceBase);
   private readonly messageService = inject(MessageService);
+  private readonly header = inject(HeaderService);
 
   clients: Client[] = [];
   loading = false;
@@ -120,9 +122,20 @@ export class ClientsComponent implements OnInit {
     this.editForm = this.buildEditForm(null);
   }
 
+  /**
+   * Inicializa catálogos, carga de datos y el estado visual del header para esta pantalla.
+   */
   ngOnInit(): void {
+    this.header.set([{ label: 'Clientes' }]);
     this.loadCollectors();
     this.loadClients();
+  }
+
+  /**
+   * Restaura el header al salir de la pantalla para evitar arrastre de estado entre rutas.
+   */
+  ngOnDestroy(): void {
+    this.header.reset();
   }
 
   /**
@@ -202,7 +215,11 @@ export class ClientsComponent implements OnInit {
   /** DNI muestra error inmediatamente al tipear (dirty) para guiar al usuario. */
   isDniInvalid(): boolean {
     const control = this.form.get('dni');
-    return !!control && control.invalid && (control.dirty || control.touched || this.submitted);
+    return (
+      !!control &&
+      control.invalid &&
+      (control.dirty || control.touched || this.submitted)
+    );
   }
 
   /**

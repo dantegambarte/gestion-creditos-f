@@ -6,22 +6,32 @@ import { ProductCategory, ProductCategoryRaw } from '../models/interfaces/produc
 
 
 
+function parseActive(value: unknown): boolean {
+  return value === true || value === 'true' || value === 1 || value === '1';
+}
+
 function toCategory(r: ProductCategoryRaw): ProductCategory {
-  return { id: r.id, name: r.name, active: r.active, createdAt: r.created_at };
+  return {
+    id: r.id,
+    name: r.name,
+    active: parseActive(r.active),
+    createdAt: r.created_at,
+  };
 }
 
 @Injectable({ providedIn: 'root' })
 export class ProductCategoriesService {
   private readonly api = inject(ApiHttpService);
 
-  // TODO: agregar documentacion de las funciones
-
-  getAll(): Observable<ProductCategory[]> {
+  /** Obtiene todas las categorías de producto, incluyendo inactivas cuando se usa en administración. */
+  getAll(includeInactive = false): Observable<ProductCategory[]> {
+    const params = includeInactive ? { include_inactive: 'true' } : undefined;
     return this.api
-      .get<ProductCategoryRaw[]>('product-categories')
+      .get<ProductCategoryRaw[]>('product-categories', params)
       .pipe(map((items) => items.map(toCategory)));
   }
 
+  /** Crea una nueva categoría con el nombre indicado. */
   create(name: string): Observable<ProductCategory> {
     return this.api
       .post<ProductCategoryRaw>('product-categories', { name })
@@ -39,12 +49,14 @@ export class ProductCategoriesService {
       .pipe(map(toCategory));
   }
 
+  /** Activa una categoría de producto. */
   activate(id: string): Observable<void> {
     return this.api
       .patch<void>(`product-categories/${id}/activate`)
       .pipe(map(() => undefined));
   }
 
+  /** Desactiva una categoría de producto. */
   deactivate(id: string): Observable<void> {
     return this.api
       .patch<void>(`product-categories/${id}/deactivate`)

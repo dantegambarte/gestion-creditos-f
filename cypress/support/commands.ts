@@ -7,6 +7,17 @@ type RealCredentials = {
   password: string;
 };
 
+const AUTH_TOKEN_CACHE: Partial<Record<InternalRole, string>> = {};
+
+type LoginResponseBody = {
+  ok?: boolean;
+  data?: {
+    token?: string;
+    user?: Record<string, unknown>;
+  };
+  message?: string;
+};
+
 type PortalSession = {
   token: string;
   customer: {
@@ -260,6 +271,49 @@ function getRealCredentials(role: InternalRole): RealCredentials {
 }
 
 /**
+ * Ejecuta login real por API con reintentos ante 429 (rate limit).
+ * @param creds Credenciales reales.
+ * @param retries Cantidad de reintentos restantes.
+ * @returns Respuesta del endpoint /auth/login.
+ */
+function requestLoginWithRetry(
+  creds: RealCredentials,
+  retries = 20,
+): Cypress.Chainable<Cypress.Response<LoginResponseBody>> {
+  return cy
+    .request<LoginResponseBody>({
+      method: 'POST',
+      url: `${String(Cypress.env('apiBaseUrl'))}/auth/login`,
+      body: { dni: creds.dni, password: creds.password },
+      failOnStatusCode: false,
+    })
+    .then((res) => {
+      if (res.status !== 429) {
+        return res;
+      }
+
+      if (retries <= 0) {
+        throw new Error(
+          '[cypress][auth] Backend sigue respondiendo 429 (rate limit) tras varios reintentos.',
+        );
+      }
+
+      const retryAfterRaw = res.headers?.['retry-after'];
+      const retryAfterSeconds = Number(
+        Array.isArray(retryAfterRaw) ? retryAfterRaw[0] : retryAfterRaw,
+      );
+
+      const waitMs =
+        Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+          ? retryAfterSeconds * 1000
+          : 5000;
+
+      cy.wait(waitMs);
+      return requestLoginWithRetry(creds, retries - 1);
+    });
+}
+
+/**
  * Exige el flag de habilitación de modo real para evitar mezcla accidental.
  */
 function assertRealAuthEnabled(): void {
@@ -307,37 +361,73 @@ Cypress.Commands.add('loginAs', (role: InternalRole, destination?: string) => {
  * @param destination Ruta protegida de destino opcional. Si el redirect real
  * post-login cae en home del rol, este helper navega explícitamente al destino.
  */
-Cypress.Commands.add('loginReal', (role: InternalRole, destination?: string) => {
-  assertRealAuthEnabled();
-  const { dni, password } = getRealCredentials(role);
-  const roleHome = REAL_ROLE_HOME[role];
-  const normalizedDestination = destination ? normalizePath(destination) : undefined;
+Cypress.Commands.add(
+  'loginReal',
+  (role: InternalRole, destination?: string) => {
+    assertRealAuthEnabled();
+    const { dni, password } = getRealCredentials(role);
+    const roleHome = REAL_ROLE_HOME[role];
+    const normalizedDestination = destination
+      ? normalizePath(destination)
+      : undefined;
 
-  cy.clearAllLocalStorage();
-  cy.visit('/login');
+    cy.clearAllLocalStorage();
 
-  cy.get('[data-testid="input-dni"]').clear().type(dni);
-  cy.get('[data-testid="input-password"] input').clear().type(password);
-  cy.get('[data-testid="btn-login"]').click();
+    const cachedToken = AUTH_TOKEN_CACHE[role];
 
-  cy.url({ timeout: 15000 }).should('include', roleHome);
+    const visitWithToken = (
+      token: string,
+      user: Record<string, unknown> | null,
+    ) => {
+      cy.visit(normalizedDestination ?? roleHome, {
+        onBeforeLoad(win) {
+          win.localStorage.setItem(INTERNAL_TOKEN_KEY, token);
+          if (user) {
+            win.localStorage.setItem(INTERNAL_USER_KEY, JSON.stringify(user));
+          }
+        },
+      });
+    };
 
-  if (!normalizedDestination) {
-    return;
-  }
+    if (cachedToken) {
+      visitWithToken(cachedToken, null);
+    } else {
+      requestLoginWithRetry({ dni, password }).then((res) => {
+        expect(res.status, `[cypress][loginReal] login ${role}`).to.eq(200);
+        const token = res.body?.data?.token;
+        const user =
+          (res.body?.data?.user as Record<string, unknown> | undefined) ?? null;
 
-  cy.location('pathname', { timeout: 15000 }).then((pathname) => {
-    const normalizedCurrentPath = normalizePath(pathname);
-    if (normalizedCurrentPath !== normalizedDestination) {
-      cy.visit(normalizedDestination);
+        expect(token, '[cypress][loginReal] token backend').to.be.a('string')
+          .and.not.be.empty;
+
+        AUTH_TOKEN_CACHE[role] = token as string;
+        visitWithToken(token as string, user);
+      });
     }
-  });
 
-  cy.location('pathname', { timeout: 15000 }).should(
-    'eq',
-    normalizedDestination,
-  );
-});
+    cy.url({ timeout: 15000 }).should(
+      'include',
+      normalizedDestination ?? roleHome,
+    );
+
+    if (!normalizedDestination) {
+      return;
+    }
+
+    cy.location('pathname', { timeout: 15000 }).then((pathname) => {
+      const normalizedCurrentPath = normalizePath(pathname);
+      if (normalizedCurrentPath !== normalizedDestination) {
+        cy.visit(normalizedDestination);
+      }
+    });
+
+    cy.location('pathname', { timeout: 15000 }).should(
+      'eq',
+      normalizedDestination,
+    );
+  },
+);
 
 /**
  * Inyecta sesión portal usando las claves reales del contrato de la app.
@@ -365,9 +455,149 @@ Cypress.Commands.add(
 
 /** Limpia estado de auth y navega a /login */
 Cypress.Commands.add('logout', () => {
+  delete AUTH_TOKEN_CACHE.ADMIN;
+  delete AUTH_TOKEN_CACHE.SELLER;
+  delete AUTH_TOKEN_CACHE.COLLECTOR;
   cy.clearAllLocalStorage();
   cy.visit('/login');
 });
+
+// ── API Helpers — para E2E real sin mocks ────────────────────────────────────
+// Todos usan la URL del backend directamente (no pasan por el proxy Angular).
+
+const API_BASE = () => Cypress.env('apiBaseUrl') as string;
+
+type ApiRole = InternalRole;
+
+/**
+ * Obtiene un token real haciendo POST /auth/login con las credenciales
+ * configuradas en Cypress.env para el rol indicado.
+ */
+Cypress.Commands.add(
+  'getAuthToken',
+  (role: ApiRole): Cypress.Chainable<string> => {
+    const dniKey = `real${role.charAt(0) + role.slice(1).toLowerCase()}Dni`;
+    const passKey = `real${role.charAt(0) + role.slice(1).toLowerCase()}Password`;
+
+    const dni = String(Cypress.env(dniKey) ?? '').trim();
+    const password = String(Cypress.env(passKey) ?? '').trim();
+
+    const cachedToken = AUTH_TOKEN_CACHE[role];
+    if (cachedToken) {
+      return cy.wrap(cachedToken, { log: false });
+    }
+
+    return requestLoginWithRetry({ dni, password }).then((res) => {
+      expect(res.status, `login ${role}`).to.eq(200);
+      const token = res.body.data?.token as string;
+      AUTH_TOKEN_CACHE[role] = token;
+      return token;
+    });
+  },
+);
+
+/**
+ * Helper genérico: petición autenticada al backend.
+ */
+Cypress.Commands.add(
+  'apiRequest',
+  (
+    method: string,
+    path: string,
+    body: object | null,
+    token: string,
+  ): Cypress.Chainable<Cypress.Response<unknown>> => {
+    return cy.request({
+      method,
+      url: `${API_BASE()}${path}`,
+      headers: { Authorization: `Bearer ${token}` },
+      body: body ?? undefined,
+      failOnStatusCode: false,
+    });
+  },
+);
+
+/**
+ * Crea un cliente vía API con el token del Admin.
+ * Devuelve el objeto customer creado ({ id, dni, full_name, ... }).
+ */
+Cypress.Commands.add(
+  'apiCreateCustomer',
+  (data: {
+    full_name: string;
+    dni: string;
+    address: string;
+    phone: string;
+    email?: string;
+  }): Cypress.Chainable<Record<string, unknown>> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy.apiRequest('POST', '/customers', data, token).then((res) => {
+        expect(res.status, 'crear cliente').to.eq(201);
+        return res.body.data as Record<string, unknown>;
+      }),
+    );
+  },
+);
+
+/**
+ * Crea un usuario interno vía API con el token del Admin.
+ * Devuelve { user: { id, dni, ... }, tempPassword } tal como lo devuelve el backend.
+ */
+Cypress.Commands.add(
+  'apiCreateUser',
+  (data: {
+    full_name: string;
+    dni: string;
+    email: string;
+    address: string;
+    role: string;
+  }): Cypress.Chainable<Record<string, unknown>> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy.apiRequest('POST', '/users', data, token).then((res) => {
+        expect(res.status, 'crear usuario').to.eq(201);
+        return res.body.data as Record<string, unknown>;
+      }),
+    );
+  },
+);
+
+/**
+ * Desbloquea un usuario vía API (Admin).
+ * Útil para limpiar estado de bloqueo tras tests de intentos fallidos.
+ */
+Cypress.Commands.add(
+  'apiUnlockUser',
+  (userId: string): Cypress.Chainable<void> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest('PATCH', `/users/${userId}/unlock`, null, token)
+        .then((res) => {
+          expect(
+            [200, 409],
+            'desbloquear usuario (ok o ya desbloqueado)',
+          ).to.include(res.status);
+        }),
+    );
+  },
+);
+
+/**
+ * Aprueba un crédito por id usando el token Admin.
+ * Devuelve el crédito actualizado.
+ */
+Cypress.Commands.add(
+  'apiApproveCredit',
+  (creditId: string): Cypress.Chainable<Record<string, unknown>> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest('PATCH', `/credits/${creditId}/approve`, null, token)
+        .then((res) => {
+          expect(res.status, 'aprobar crédito').to.eq(200);
+          return res.body.data as Record<string, unknown>;
+        }),
+    );
+  },
+);
 
 declare global {
   namespace Cypress {
@@ -379,6 +609,31 @@ declare global {
         overrides?: Partial<PortalSession>,
       ): Chainable<void>;
       logout(): Chainable<void>;
+
+      // ── API Helpers ───────────────────────────────────────────────────
+      getAuthToken(role: ApiRole): Chainable<string>;
+      apiRequest(
+        method: string,
+        path: string,
+        body: object | null,
+        token: string,
+      ): Chainable<Cypress.Response<unknown>>;
+      apiCreateCustomer(data: {
+        full_name: string;
+        dni: string;
+        address: string;
+        phone: string;
+        email?: string;
+      }): Chainable<Record<string, unknown>>;
+      apiCreateUser(data: {
+        full_name: string;
+        dni: string;
+        email: string;
+        address: string;
+        role: string;
+      }): Chainable<Record<string, unknown>>;
+      apiUnlockUser(userId: string): Chainable<void>;
+      apiApproveCredit(creditId: string): Chainable<Record<string, unknown>>;
     }
   }
 }
