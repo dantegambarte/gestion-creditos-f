@@ -6,18 +6,28 @@ import { ProductCategory, ProductCategoryRaw } from '../models/interfaces/produc
 
 
 
+function parseActive(value: unknown): boolean {
+  return value === true || value === 'true' || value === 1 || value === '1';
+}
+
 function toCategory(r: ProductCategoryRaw): ProductCategory {
-  return { id: r.id, name: r.name, active: r.active, createdAt: r.created_at };
+  return {
+    id: r.id,
+    name: r.name,
+    active: parseActive(r.active),
+    createdAt: r.created_at,
+  };
 }
 
 @Injectable({ providedIn: 'root' })
 export class ProductCategoriesService {
   private readonly api = inject(ApiHttpService);
 
-  /** Obtiene todas las categorías de producto. */
-  getAll(): Observable<ProductCategory[]> {
+  /** Obtiene todas las categorías de producto, incluyendo inactivas cuando se usa en administración. */
+  getAll(includeInactive = false): Observable<ProductCategory[]> {
+    const params = includeInactive ? { include_inactive: 'true' } : undefined;
     return this.api
-      .get<ProductCategoryRaw[]>('product-categories')
+      .get<ProductCategoryRaw[]>('product-categories', params)
       .pipe(map((items) => items.map(toCategory)));
   }
 

@@ -64,7 +64,7 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
   load(): void {
     this.loading = true;
     this.svc
-      .getAll()
+      .getAll(true)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.loading = false)),
@@ -186,12 +186,13 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
       : this.svc.activate(brand.id);
     call.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
+        brand.active = !brand.active;
+        this.rows = [...this.rows];
         this.msg.add({
           severity: 'success',
-          summary: brand.active ? 'Desactivada' : 'Activada',
+          summary: brand.active ? 'Activada' : 'Desactivada',
           detail: brand.name,
         });
-        this.load();
       },
       error: (err: AppError) =>
         this.msg.add({

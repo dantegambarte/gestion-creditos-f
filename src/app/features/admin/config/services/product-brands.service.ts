@@ -4,18 +4,28 @@ import { map } from 'rxjs/operators';
 import { ApiHttpService } from '../../../../core/http/api-http.service';
 import { ProductBrand, ProductBrandRaw } from '../models/interfaces/product';
 
+function parseActive(value: unknown): boolean {
+  return value === true || value === 'true' || value === 1 || value === '1';
+}
+
 function toBrand(r: ProductBrandRaw): ProductBrand {
-  return { id: r.id, name: r.name, active: r.active, createdAt: r.created_at };
+  return {
+    id: r.id,
+    name: r.name,
+    active: parseActive(r.active),
+    createdAt: r.created_at,
+  };
 }
 
 @Injectable({ providedIn: 'root' })
 export class ProductBrandsService {
   private readonly api = inject(ApiHttpService);
 
-  /** Obtiene todas las marcas de producto. */
-  getAll(): Observable<ProductBrand[]> {
+  /** Obtiene todas las marcas de producto, incluyendo inactivas cuando se usa en administración. */
+  getAll(includeInactive = false): Observable<ProductBrand[]> {
+    const params = includeInactive ? { include_inactive: 'true' } : undefined;
     return this.api
-      .get<ProductBrandRaw[]>('product-brands')
+      .get<ProductBrandRaw[]>('product-brands', params)
       .pipe(map((items) => items.map(toBrand)));
   }
 

@@ -338,15 +338,19 @@
 
     <div class="flex flex-col gap-1">
       <label class="text-sm font-medium text-gray-700">Monto recibido</label>
-      <input
-        type="number"
+      <p-inputNumber
+        appCurrencyAmountInput
         [(ngModel)]="paymentAmount"
         (ngModelChange)="onPaymentAmountChange()"
-        min="0.01"
-        step="0.01"
+        mode="currency"
+        currency="ARS"
+        locale="es-AR"
+        [minFractionDigits]="0"
+        [min]="0.01"
         [max]="dialogItem ? availableBalance(dialogItem) : null"
-        class="w-full h-11 rounded-xl border border-gray-300 bg-gray-50 px-3 text-sm text-gray-700 outline-none focus:border-blue-500"
-        placeholder="0.00"
+        styleClass="w-full"
+        inputStyleClass="w-full h-11 rounded-xl bg-gray-50 px-3 text-sm text-gray-700"
+        placeholder="$ 0"
       />
     </div>
 

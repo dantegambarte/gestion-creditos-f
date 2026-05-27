@@ -9,6 +9,7 @@ import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -42,6 +43,7 @@ import {
 import { PaymentCreatePayload } from '../models/payment.model';
 import { PaymentsService } from '../payments.service';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
+import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 
 @Component({
   selector: 'app-collection-sheet-detail',
@@ -57,8 +59,10 @@ import { AppRoutes } from '../../../shared/models/enums/routes.enum';
     ToastModule,
     DialogModule,
     DropdownModule,
+    InputNumberModule,
     InputTextModule,
     InputTextareaModule,
+    CurrencyAmountInputDirective,
     ProgressSpinnerModule,
     TooltipModule,
     LoadingStateComponent,
