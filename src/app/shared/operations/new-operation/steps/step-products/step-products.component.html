@@ -100,6 +100,7 @@
                     @for (product of filteredCatalogProducts; track product.productoId) {
                       <button
                         type="button"
+                        [attr.data-cy]="'sale-product-' + product.productoId"
                         class="w-full rounded-xl border px-3 py-3 text-left transition-colors"
                         [class]="selectedProductId === product.productoId
                           ? 'border-[#4F6BFF] bg-[#232943] shadow-[0_0_0_1px_rgba(79,107,255,0.12)]'
@@ -130,6 +131,7 @@
                       </div>
                       <button
                         type="button"
+                        data-cy="sale-reset-product"
                         class="shrink-0 rounded-lg border border-[#3A4562] px-3 py-2 text-[11px] font-semibold text-[#AFC2FF] transition-colors hover:bg-[#2A334A] hover:text-white"
                         (click)="resetSelection()"
                       >
@@ -141,6 +143,7 @@
                       @for (variant of selectedProduct.variants; track variant.variantId) {
                         <button
                           type="button"
+                          [attr.data-cy]="'sale-variant-' + variant.variantId"
                           class="flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left transition-colors"
                           [class]="selectedVariantId === variant.variantId
                             ? 'border-[#4F6BFF] bg-[#232943] shadow-[0_0_0_1px_rgba(79,107,255,0.12)]'
@@ -182,6 +185,7 @@
                           } @else {
                             <button
                               type="button"
+                              data-cy="sale-add-unit"
                               class="rounded-md border border-[#3553FF]/40 bg-[#3553FF]/10 px-3 py-1 text-[11px] font-semibold text-[#8EA5FF] transition-colors hover:bg-[#3553FF]/20"
                               [disabled]="isVariantOutOfStock(selectedVariant)"
                               (click)="addSelectedVariant()"

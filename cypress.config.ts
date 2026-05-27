@@ -18,6 +18,8 @@ export default defineConfig({
     realSellerPassword:     '123456',
     realCollectorDni:       '22222222',
     realCollectorPassword:  '123456',
+    realSellerCollectorDni:      '33333333',
+    realSellerCollectorPassword: '123456',
 
     // ── URL base del backend (usada por los helpers cy.api*) ──────────
     apiBaseUrl: API_BASE,

@@ -12,7 +12,7 @@ Viewports: 1280×720 (desktop)
 |---------|-------|-------|
 | `01-auth.cy.ts` | Autenticación | 9 |
 | `02-sidebar-navigation.cy.ts` | Sidebar / Guardias de ruta | 16 |
-| `03-nueva-operacion.cy.ts` | Wizard Nueva Operación | 17 |
+| `03-nueva-operacion-real.cy.ts` | Wizard Nueva Operación (real) | 4 |
 | `04-clientes.cy.ts` | Gestión de Clientes (shared/admin) | 20 |
 | `05-negative-auth.cy.ts` | Auth — casos negativos | ~10 |
 | `06-negative-clientes.cy.ts` | Clientes — casos negativos | ~10 |
@@ -20,7 +20,7 @@ Viewports: 1280×720 (desktop)
 | `08-negative-guards.cy.ts` | Guards — rol incorrecto / sin sesión | ~10 |
 | `09-admin-usuarios.cy.ts` | Admin — Gestión de Usuarios | 18 |
 | `09-cobranzas-collector.cy.ts` | Collector — Ruta y Cobros | ~10 |
-| `10-admin-aprobaciones.cy.ts` | Admin — Aprobaciones | ~10 |
+| `10-admin-aprobaciones-real.cy.ts` | Admin — Aprobaciones (real) | 3 |
 | `11-caja-tesoreria.cy.ts` | Admin — Caja y Tesorería | ~15 |
 | `12-portal-clientes.cy.ts` | Portal Cliente | ~12 |
 | `13-admin-dashboard.cy.ts` | Admin — Dashboard | 7 |
@@ -31,7 +31,7 @@ Viewports: 1280×720 (desktop)
 | `18-admin-reportes-mora.cy.ts` | Admin — Reportes y Morosidad | 10 |
 | `19-public-password.cy.ts` | Recuperar / Cambiar Contraseña | 15 |
 | `20-admin-config-sheet.cy.ts` | Admin — Configuración y Planilla Legacy | 15 |
-| `21-seller-clientes-nuevo.cy.ts` | Seller — Lista y Crear Cliente | 15 |
+| `21-seller-clientes-nuevo-real.cy.ts` | Seller — Lista y Crear Cliente (real) | 5 |
 | `22-admin-generar-planilla.cy.ts` | Admin — Generar Planilla (/collections/new) | 8 |
 | `23-credit-detail.cy.ts` | Detalle de Crédito (Seller/Admin + carga/error) | 12 |
 | `24-producto-detalle-editar.cy.ts` | Producto: Detalle, Editar, Variantes, Unidades | 21 |

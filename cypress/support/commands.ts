@@ -1,6 +1,6 @@
 // ── Custom Commands ────────────────────────────────────────────────────────────
 
-type InternalRole = 'ADMIN' | 'SELLER' | 'COLLECTOR';
+type InternalRole = 'ADMIN' | 'SELLER' | 'COLLECTOR' | 'SELLER_COLLECTOR';
 
 type RealCredentials = {
   dni: string;
@@ -192,6 +192,7 @@ const REAL_ROLE_HOME: Record<InternalRole, string> = {
   ADMIN: '/admin/dashboard',
   SELLER: '/seller/operations',
   COLLECTOR: '/collector/route',
+  SELLER_COLLECTOR: '/seller/operations',
 };
 
 /**
@@ -255,6 +256,7 @@ function getRealCredentials(role: InternalRole): RealCredentials {
     ADMIN: { dniKey: 'realAdminDni', passKey: 'realAdminPassword' },
     SELLER: { dniKey: 'realSellerDni', passKey: 'realSellerPassword' },
     COLLECTOR: { dniKey: 'realCollectorDni', passKey: 'realCollectorPassword' },
+    SELLER_COLLECTOR: { dniKey: 'realSellerCollectorDni', passKey: 'realSellerCollectorPassword' },
   };
 
   const keys = envByRole[role];

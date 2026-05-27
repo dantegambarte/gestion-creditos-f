@@ -20,16 +20,16 @@ Estado general: en progreso.
 
 - [x] `cypress/e2e/01-auth.cy.ts` (CU01)
 - [x] `cypress/e2e/05-negative-auth.cy.ts` -> 5/5 tests pasando (run local verificado)
-- [ ] `cypress/e2e/04-clientes-real.cy.ts` (CU03) -> ampliar alternativos
-- [ ] `cypress/e2e/04-clientes.cy.ts` -> migrar a real o consolidar
-- [ ] `cypress/e2e/06-negative-clientes.cy.ts` -> migrar a real
-- [ ] `cypress/e2e/21-seller-clientes-nuevo-real.cy.ts` (CU03)
-- [ ] `cypress/e2e/21-seller-clientes-nuevo.cy.ts` -> migrar/consolidar
-- [ ] `cypress/e2e/03-nueva-operacion-real.cy.ts` (CU05) -> cubrir enganche/cuotas adelantadas/fecha personalizada
-- [ ] `cypress/e2e/03-nueva-operacion.cy.ts` -> migrar a real o consolidar
-- [ ] `cypress/e2e/07-negative-nueva-operacion.cy.ts` -> migrar a real
-- [ ] `cypress/e2e/10-admin-aprobaciones-real.cy.ts` (CU08) -> ampliar rechazo/stock/lote
-- [ ] `cypress/e2e/10-admin-aprobaciones.cy.ts` -> migrar/consolidar
+- [x] `cypress/e2e/04-clientes-real.cy.ts` (CU03) -> 3/3 tests pasando (run local verificado)
+- [x] `cypress/e2e/04-clientes.cy.ts` -> consolidado en `04-clientes-real.cy.ts` y eliminado (15/15 tests pasando)
+- [x] `cypress/e2e/06-negative-clientes.cy.ts` -> 5/5 tests pasando (run local verificado)
+- [x] `cypress/e2e/21-seller-clientes-nuevo-real.cy.ts` (CU03) -> 1/1 test pasando (run local verificado)
+- [x] `cypress/e2e/21-seller-clientes-nuevo.cy.ts` -> consolidado en `21-seller-clientes-nuevo-real.cy.ts` y retirado
+- [x] `cypress/e2e/03-nueva-operacion-real.cy.ts` (CU05) -> fecha personalizada + enganche + cuotas adelantadas cubiertos (4/4 en verde)
+- [x] `cypress/e2e/03-nueva-operacion.cy.ts` -> consolidado en `03-nueva-operacion-real.cy.ts` y retirado
+- [x] `cypress/e2e/07-negative-nueva-operacion.cy.ts` -> migrado a real (4/4 tests pasando, run local verificado)
+- [x] `cypress/e2e/10-admin-aprobaciones-real.cy.ts` (CU08) -> ampliado con rechazo + aprobación ajustada (200/409 dominio), 3/3 en verde
+- [x] `cypress/e2e/10-admin-aprobaciones.cy.ts` -> consolidado en `10-admin-aprobaciones-real.cy.ts` y retirado
 
 ## Fase 2 (CU07, CU09, CU14)
 
