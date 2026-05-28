@@ -20,12 +20,14 @@
         </span>
       }
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-3">
       <p-button
         data-cy="admin-cash-register-refresh-action"
+        label="Actualizar"
         icon="pi pi-refresh"
         severity="secondary"
         [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl"
         [loading]="loadingDashboard"
         (onClick)="loadDashboard()"
       />
@@ -34,8 +36,9 @@
           data-cy="admin-cash-register-close-day-cta"
           label="Cerrar caja del día"
           icon="pi pi-lock"
-          severity="danger"
-          (onClick)="openCloseDialog()"
+          severity="primary"
+          styleClass="h-11 px-5 rounded-xl shadow-sm"
+          (onClick)="toggleInlineClosePanel()"
           [disabled]="!dashboard"
         />
       }
@@ -49,9 +52,15 @@
     <app-error-state />
   } @else if (dashboard) {
     <div
-      class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4"
+      class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"
       data-cy="admin-cash-register-kpis"
     >
+      <div class="cr-kpi">
+        <p class="cr-kpi__label">Recaudado hoy</p>
+        <p class="cr-kpi__value ff-mono">
+          {{ formatCurrency(dashboard.totalCollected) }}
+        </p>
+      </div>
       <div class="cr-kpi">
         <p class="cr-kpi__label">Efectivo</p>
         <p class="cr-kpi__value ff-mono">
@@ -59,38 +68,9 @@
         </p>
       </div>
       <div class="cr-kpi">
-        <p class="cr-kpi__label">Transferencia</p>
+        <p class="cr-kpi__label">Transferencias</p>
         <p class="cr-kpi__value ff-mono">
           {{ formatCurrency(dashboard.transferAmount) }}
-        </p>
-      </div>
-      <div
-        class="cr-kpi md:col-span-2"
-        style="
-          background: rgba(52, 211, 153, 0.08);
-          border-color: rgba(52, 211, 153, 0.2);
-        "
-      >
-        <p class="cr-kpi__label" style="color: var(--ff-success)">
-          Total recaudado
-        </p>
-        <p
-          class="cr-kpi__value ff-mono text-2xl font-extrabold"
-          style="color: var(--ff-success)"
-        >
-          {{ formatCurrency(dashboard.totalCollected) }}
-        </p>
-      </div>
-      <div
-        class="cr-kpi"
-        style="
-          background: rgba(248, 113, 113, 0.08);
-          border-color: rgba(248, 113, 113, 0.2);
-        "
-      >
-        <p class="cr-kpi__label" style="color: var(--ff-danger)">Egresos</p>
-        <p class="cr-kpi__value ff-mono" style="color: var(--ff-danger)">
-          {{ formatCurrency(dashboard.totalOutflows) }}
         </p>
       </div>
       <div
@@ -122,6 +102,9 @@
         >
           {{ formatCurrency(dashboard.netBalance) }}
         </p>
+        <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
+          Recaudado - egresos
+        </p>
       </div>
       <div
         class="cr-kpi"
@@ -131,194 +114,499 @@
         "
       >
         <p class="cr-kpi__label" style="color: var(--ff-warning)">
-          Cobros pend.
+          Cobros pendientes
         </p>
         <p class="cr-kpi__value ff-mono" style="color: var(--ff-warning)">
           {{ formatCurrency(dashboard.pendingAmount) }}
         </p>
-      </div>
-      <div class="cr-kpi">
-        <p class="cr-kpi__label">Enganches hoy</p>
-        <p class="cr-kpi__value ff-mono">
-          {{ formatCurrency(dashboard.downPaymentsTotal) }}
-        </p>
-        <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
-          {{ dashboard.downPaymentsCount }} operaciones
+        <p class="text-xs mt-0.5" style="color: var(--ff-warning)">
+          Sin aprobar
         </p>
       </div>
-      <div class="cr-kpi">
-        <p class="cr-kpi__label">Cobros</p>
-        <p class="text-sm font-bold mt-1">
-          <span style="color: var(--ff-success)"
-            >{{ dashboard.approvedCount }} aprobados</span
-          >
-          <span style="color: var(--ff-border)">&nbsp;·&nbsp;</span>
-          <span style="color: var(--ff-warning)"
-            >{{ dashboard.pendingCount }} pendientes</span
-          >
+      <div
+        class="cr-kpi"
+        style="
+          background: rgba(248, 113, 113, 0.08);
+          border-color: rgba(248, 113, 113, 0.2);
+        "
+      >
+        <p class="cr-kpi__label" style="color: var(--ff-danger)">
+          Egresos del día
+        </p>
+        <p class="cr-kpi__value ff-mono" style="color: var(--ff-danger)">
+          {{ formatCurrency(dashboard.totalOutflows) }}
+        </p>
+        <p class="text-xs mt-0.5" style="color: var(--ff-danger)">
+          Gastos + liquidaciones
         </p>
       </div>
     </div>
   }
 
-  <!-- Historial de cierres -->
-  <div class="ff-panel" data-cy="admin-cash-register-history-section">
-    <div class="ff-list-header">
-      <span
-        class="ff-list-header__title"
-        data-cy="admin-cash-register-history-title"
-        >Historial de cierres</span
-      >
-    </div>
-
+  @if ((preClose?.pendientes?.count ?? 0) > 0) {
     <div
-      class="cr-history-filters flex flex-wrap gap-3 px-4 py-3 items-end"
-      style="border-bottom: 1px solid var(--ff-border)"
+      class="auth-warning-banner"
+      data-cy="admin-cash-register-inline-pending-warning"
     >
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Desde</label>
-        <p-calendar
-          data-cy="admin-cash-register-filter-from"
-          [(ngModel)]="filterDateFrom"
-          dataType="string"
-          dateFormat="yy-mm-dd"
-          [showIcon]="true"
-          iconDisplay="input"
-          appendTo="body"
-          styleClass="w-44"
-          inputStyleClass="native-date-input h-10 w-full"
-        />
+      <i class="pi pi-exclamation-triangle"></i>
+      <p>
+        Hay <strong>{{ preClose?.pendientes?.count }}</strong> cobro(s)
+        pendientes por
+        <strong>{{ formatCurrency(preClose?.pendientes?.amount || 0) }}</strong
+        >. Aprobá o rechazá antes de cerrar, o cerrá con
+        <code>force=true</code>.
+      </p>
+    </div>
+  }
+
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+    <div
+      [class]="
+        showInlineClosePanel
+          ? 'ff-panel xl:col-span-8'
+          : 'ff-panel xl:col-span-12'
+      "
+      data-cy="admin-cash-register-history-section"
+    >
+      <div class="ff-list-header">
+        <span
+          class="ff-list-header__title"
+          data-cy="admin-cash-register-history-title"
+          >Historial de cierres</span
+        >
       </div>
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Hasta</label>
-        <p-calendar
-          data-cy="admin-cash-register-filter-to"
-          [(ngModel)]="filterDateTo"
-          dataType="string"
-          dateFormat="yy-mm-dd"
-          [showIcon]="true"
-          iconDisplay="input"
-          appendTo="body"
-          styleClass="w-44"
-          inputStyleClass="native-date-input h-10 w-full"
-        />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Estado</label>
-        <p-dropdown
-          data-cy="admin-cash-register-filter-status"
-          [options]="differenceStatusOptions"
-          [(ngModel)]="filterDifferenceStatus"
-          optionLabel="label"
-          optionValue="value"
-          styleClass="text-sm w-56"
-          appendTo="body"
-        />
-      </div>
-      <p-button
-        data-cy="admin-cash-register-filter-apply"
-        label="Filtrar"
-        icon="pi pi-search"
-        severity="secondary"
-        [outlined]="true"
-        styleClass="ff-filter-btn"
-        (onClick)="applyFilters()"
-      />
-      @if (filterDateFrom || filterDateTo || filterDifferenceStatus) {
+
+      <div
+        class="cr-history-filters flex flex-wrap gap-3 px-4 py-3 items-end"
+        style="border-bottom: 1px solid var(--ff-border)"
+      >
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Desde</label>
+          <p-calendar
+            data-cy="admin-cash-register-filter-from"
+            [(ngModel)]="filterDateFrom"
+            dataType="string"
+            dateFormat="yy-mm-dd"
+            [showIcon]="true"
+            iconDisplay="input"
+            appendTo="body"
+            styleClass="w-44"
+            inputStyleClass="native-date-input h-10 w-full"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Hasta</label>
+          <p-calendar
+            data-cy="admin-cash-register-filter-to"
+            [(ngModel)]="filterDateTo"
+            dataType="string"
+            dateFormat="yy-mm-dd"
+            [showIcon]="true"
+            iconDisplay="input"
+            appendTo="body"
+            styleClass="w-44"
+            inputStyleClass="native-date-input h-10 w-full"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Estado</label>
+          <p-dropdown
+            data-cy="admin-cash-register-filter-status"
+            [options]="differenceStatusOptions"
+            [(ngModel)]="filterDifferenceStatus"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="text-sm w-56"
+            appendTo="body"
+          />
+        </div>
         <p-button
-          data-cy="admin-cash-register-filter-clear"
-          label="Limpiar"
-          icon="pi pi-times"
+          data-cy="admin-cash-register-filter-apply"
+          label="Filtrar"
+          icon="pi pi-search"
           severity="secondary"
-          [text]="true"
-          (onClick)="clearFilters()"
+          [outlined]="true"
+          styleClass="ff-filter-btn"
+          (onClick)="applyFilters()"
         />
+        @if (filterDateFrom || filterDateTo || filterDifferenceStatus) {
+          <p-button
+            data-cy="admin-cash-register-filter-clear"
+            label="Limpiar"
+            icon="pi pi-times"
+            severity="secondary"
+            [text]="true"
+            (onClick)="clearFilters()"
+          />
+        }
+      </div>
+
+      @if (loadingHistory) {
+        <app-loading-state />
+      } @else if (errorHistory) {
+        <app-error-state />
+      } @else if (history.length === 0) {
+        <div
+          class="ff-empty-state"
+          data-cy="admin-cash-register-history-empty-state"
+        >
+          <i class="pi pi-inbox"></i>
+          Sin cierres registrados.
+        </div>
+      } @else {
+        <p-table
+          data-cy="admin-cash-register-history-table"
+          [value]="history"
+          [paginator]="true"
+          [rows]="15"
+          styleClass="p-datatable-sm p-datatable-hoverable-rows"
+          responsiveLayout="scroll"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Fecha y hora</th>
+              <th class="text-right">
+                <span
+                  pTooltip="Cobros + enganches del día sin descontar egresos"
+                  tooltipPosition="top"
+                >
+                  Recaudado bruto
+                </span>
+              </th>
+              <th class="text-right" style="color: var(--ff-danger)">
+                <span
+                  pTooltip="Gastos + comisiones pagadas en el día"
+                  tooltipPosition="top"
+                >
+                  Egresos
+                </span>
+              </th>
+              <th class="text-right">
+                <span
+                  pTooltip="Recaudado bruto menos egresos del día"
+                  tooltipPosition="top"
+                >
+                  Recaudado neto
+                </span>
+              </th>
+              <th class="text-right">Diferencia</th>
+              <th class="text-center">Estado</th>
+              <th>Cerrado por</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-reg>
+            <tr
+              class="cursor-pointer"
+              (click)="openDetail(reg)"
+              data-cy="admin-cash-register-history-row"
+            >
+              <td>
+                <p class="font-medium">{{ formatDate(reg.registerDate) }}</p>
+                <p class="text-xs" style="color: var(--ff-text-muted)">
+                  {{ formatDateTime(reg.createdAt) }}
+                </p>
+              </td>
+              <td
+                class="text-right ff-mono font-semibold"
+                style="color: var(--ff-accent)"
+              >
+                {{ formatCurrency(reg.totalCollected) }}
+              </td>
+              <td
+                class="text-right ff-mono font-medium"
+                style="color: var(--ff-danger)"
+              >
+                @if (reg.totalOutflows > 0) {
+                  - {{ formatCurrency(reg.totalOutflows) }}
+                } @else {
+                  <span style="color: var(--ff-text-muted)">—</span>
+                }
+              </td>
+              <td class="text-right ff-mono font-semibold">
+                {{ formatCurrency(reg.cashAmount + reg.transferAmount) }}
+              </td>
+              <td
+                class="text-right ff-mono font-semibold"
+                [style.color]="
+                  reg.difference >= 0 ? 'var(--ff-success)' : 'var(--ff-danger)'
+                "
+              >
+                {{ formatCurrency(reg.difference) }}
+              </td>
+              <td class="text-center">
+                <p-tag
+                  [value]="differenceLabel(reg.differenceStatus)"
+                  [severity]="differenceSeverity(reg.differenceStatus)"
+                />
+              </td>
+              <td style="color: var(--ff-text-secondary)">
+                {{ reg.closedByName }}
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       }
     </div>
 
-    @if (loadingHistory) {
-      <app-loading-state />
-    } @else if (errorHistory) {
-      <app-error-state />
-    } @else if (history.length === 0) {
+    @if (showInlineClosePanel) {
       <div
-        class="ff-empty-state"
-        data-cy="admin-cash-register-history-empty-state"
+        class="xl:col-span-4 ff-panel p-4 space-y-4"
+        data-cy="admin-cash-register-close-section"
       >
-        <i class="pi pi-inbox"></i>
-        Sin cierres registrados.
-      </div>
-    } @else {
-      <p-table
-        data-cy="admin-cash-register-history-table"
-        [value]="history"
-        [paginator]="true"
-        [rows]="15"
-        styleClass="p-datatable-sm p-datatable-hoverable-rows"
-        responsiveLayout="scroll"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Fecha y hora</th>
-            <th class="text-right">
-              <span pTooltip="Cobros + enganches del día sin descontar egresos" tooltipPosition="top">
-                Recaudado bruto
-              </span>
-            </th>
-            <th class="text-right" style="color: var(--ff-danger)">
-              <span pTooltip="Gastos + comisiones pagadas en el día" tooltipPosition="top">
-                Egresos
-              </span>
-            </th>
-            <th class="text-right">
-              <span pTooltip="Recaudado bruto menos egresos del día" tooltipPosition="top">
-                Recaudado neto
-              </span>
-            </th>
-            <th class="text-right">Diferencia</th>
-            <th class="text-center">Estado</th>
-            <th>Cerrado por</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-reg>
-          <tr
-            class="cursor-pointer"
-            (click)="openDetail(reg)"
-            data-cy="admin-cash-register-history-row"
+        <div class="flex items-center justify-between">
+          <h3
+            class="text-sm font-semibold"
+            style="color: var(--ff-text-primary)"
           >
-            <td>
-              <p class="font-medium">{{ formatDate(reg.registerDate) }}</p>
-              <p class="text-xs" style="color: var(--ff-text-muted)">{{ formatDateTime(reg.createdAt) }}</p>
-            </td>
-            <td class="text-right ff-mono font-semibold" style="color: var(--ff-accent)">
-              {{ formatCurrency(reg.totalCollected) }}
-            </td>
-            <td class="text-right ff-mono font-medium" style="color: var(--ff-danger)">
-              @if (reg.totalOutflows > 0) {
-                - {{ formatCurrency(reg.totalOutflows) }}
-              } @else {
-                <span style="color: var(--ff-text-muted)">—</span>
-              }
-            </td>
-            <td class="text-right ff-mono font-semibold">
-              {{ formatCurrency(reg.cashAmount + reg.transferAmount) }}
-            </td>
-            <td
-              class="text-right ff-mono font-semibold"
-              [style.color]="reg.difference >= 0 ? 'var(--ff-success)' : 'var(--ff-danger)'"
+            Cierre del día
+          </h3>
+          <div class="flex items-center gap-1">
+            <p-button
+              icon="pi pi-refresh"
+              severity="secondary"
+              [text]="true"
+              [loading]="loadingPreClose"
+              (onClick)="loadPreClose()"
+            />
+            <p-button
+              icon="pi pi-times"
+              severity="secondary"
+              [text]="true"
+              (onClick)="showInlineClosePanel = false"
+            />
+          </div>
+        </div>
+
+        @if (loadingPreClose) {
+          <app-loading-state />
+        } @else if (preClose) {
+          <div
+            class="rounded-xl overflow-hidden"
+            style="border: 1px solid rgba(52, 211, 153, 0.25)"
+            data-cy="admin-cash-register-close-ingresos-inline"
+          >
+            <div
+              class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+              style="
+                background: rgba(52, 211, 153, 0.1);
+                color: var(--ff-success);
+              "
             >
-              {{ formatCurrency(reg.difference) }}
-            </td>
-            <td class="text-center">
-              <p-tag
-                [value]="differenceLabel(reg.differenceStatus)"
-                [severity]="differenceSeverity(reg.differenceStatus)"
-              />
-            </td>
-            <td style="color: var(--ff-text-secondary)">{{ reg.closedByName }}</td>
-          </tr>
-        </ng-template>
-      </p-table>
+              Ingresos del día
+            </div>
+            <div class="divide-y" style="border-color: var(--ff-border)">
+              <div class="flex justify-between px-3 py-2 text-sm">
+                <span style="color: var(--ff-text-secondary)"
+                  >Cobros en efectivo</span
+                >
+                <span class="ff-mono font-medium">{{
+                  formatCurrency(preClose.ingresos.cobrosEfectivo)
+                }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-sm">
+                <span style="color: var(--ff-text-secondary)"
+                  >Cobros en transferencia</span
+                >
+                <span class="ff-mono font-medium">{{
+                  formatCurrency(preClose.ingresos.cobrosTransferencia)
+                }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-sm">
+                <span style="color: var(--ff-text-secondary)"
+                  >Enganches en efectivo</span
+                >
+                <span class="ff-mono font-medium">{{
+                  formatCurrency(preClose.ingresos.enganchesEfectivo)
+                }}</span>
+              </div>
+              <div class="flex justify-between px-3 py-2 text-sm">
+                <span style="color: var(--ff-text-secondary)"
+                  >Enganches en transferencia</span
+                >
+                <span class="ff-mono font-medium">{{
+                  formatCurrency(preClose.ingresos.enganchesTransferencia)
+                }}</span>
+              </div>
+              <div
+                class="flex justify-between px-3 py-2 text-sm font-semibold"
+                style="background: rgba(52, 211, 153, 0.05)"
+              >
+                <span>Total bruto recaudado</span>
+                <span class="ff-mono" style="color: var(--ff-success)">{{
+                  formatCurrency(preClose.ingresos.totalBruto)
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          @if (preClose.egresos.total > 0) {
+            <div
+              class="rounded-xl overflow-hidden"
+              style="border: 1px solid rgba(248, 113, 113, 0.25)"
+              data-cy="admin-cash-register-close-egresos-inline"
+            >
+              <div
+                class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+                style="
+                  background: rgba(248, 113, 113, 0.1);
+                  color: var(--ff-danger);
+                "
+              >
+                Egresos del día
+              </div>
+              <div class="divide-y" style="border-color: var(--ff-border)">
+                <div
+                  class="flex justify-between px-3 py-2 text-sm font-semibold"
+                  style="background: rgba(248, 113, 113, 0.05)"
+                >
+                  <span>Total egresos</span>
+                  <span class="ff-mono" style="color: var(--ff-danger)"
+                    >- {{ formatCurrency(preClose.egresos.total) }}</span
+                  >
+                </div>
+              </div>
+            </div>
+          }
+
+          <div
+            class="rounded-lg px-3 py-2 text-sm"
+            style="
+              background: rgba(79, 110, 247, 0.1);
+              color: var(--ff-text-secondary);
+            "
+          >
+            El sistema registra
+            <strong>{{ formatCurrency(preClose.efectivo.esperado) }}</strong> en
+            efectivo.
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div
+              class="rounded-xl p-3 space-y-2 min-h-[104px]"
+              style="border: 1px solid var(--ff-border)"
+            >
+              <p
+                class="text-xs font-semibold uppercase tracking-wide"
+                style="color: var(--ff-text-muted)"
+              >
+                Balance efectivo
+              </p>
+              <div class="flex justify-between text-sm">
+                <span style="color: var(--ff-text-secondary)"
+                  >Esperado en caja</span
+                >
+                <span class="ff-mono font-semibold">{{
+                  formatCurrency(preClose.efectivo.esperado)
+                }}</span>
+              </div>
+            </div>
+            <div
+              class="rounded-xl p-3 space-y-2 min-h-[104px]"
+              style="border: 1px solid var(--ff-border)"
+            >
+              <p
+                class="text-xs font-semibold uppercase tracking-wide"
+                style="color: var(--ff-text-muted)"
+              >
+                Balance transferencias
+              </p>
+              <div class="flex justify-between text-sm">
+                <span style="color: var(--ff-text-secondary)"
+                  >Esperado en banco</span
+                >
+                <span class="ff-mono font-semibold">{{
+                  formatCurrency(preClose.transferencias.esperado)
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <label class="auth-label">Efectivo declarado en caja</label>
+            <p-inputNumber
+              appCurrencyAmountInput
+              data-cy="admin-cash-register-declared-cash-input-inline"
+              [(ngModel)]="declaredCash"
+              mode="currency"
+              currency="ARS"
+              locale="es-AR"
+              [minFractionDigits]="0"
+              [min]="0"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+            />
+          </div>
+
+          @if (declaredCash != null) {
+            <p
+              class="text-sm font-semibold"
+              [style.color]="
+                closeDifference === 0
+                  ? 'var(--ff-success)'
+                  : closeDifference > 0
+                    ? 'var(--ff-warning)'
+                    : 'var(--ff-danger)'
+              "
+            >
+              {{
+                closeDifference === 0
+                  ? "Sin diferencia"
+                  : closeDifference > 0
+                    ? "Sobrante"
+                    : "Faltante"
+              }}
+              <span class="ff-mono">{{ formatCurrency(closeDifference) }}</span>
+            </p>
+          }
+
+          <div class="flex flex-col gap-1.5">
+            <label class="auth-label">Observaciones (opcional)</label>
+            <textarea
+              data-cy="admin-cash-register-observations-input-inline"
+              pInputTextarea
+              [(ngModel)]="observations"
+              rows="4"
+              maxlength="500"
+              placeholder="Ej: Se recibieron $5.000 adicionales por devolución..."
+              class="w-full resize-none"
+            ></textarea>
+          </div>
+
+          @if (closePendingError) {
+            <div class="auth-danger-banner">
+              <i class="pi pi-exclamation-circle shrink-0"></i>
+              <p>{{ closePendingError }}</p>
+            </div>
+          }
+
+          <div class="pt-3 flex flex-col gap-3">
+            <p-button
+              data-cy="admin-cash-register-close-confirm-action-inline"
+              label="Registrar cierre"
+              severity="primary"
+              styleClass="w-full justify-center h-11"
+              [loading]="closing"
+              [disabled]="declaredCash == null || loadingPreClose"
+              (onClick)="confirmClose(false)"
+            />
+
+            <p-button
+              data-cy="admin-cash-register-close-force-action-inline"
+              label="Cerrar de todas formas (force)"
+              icon="pi pi-unlock"
+              severity="danger"
+              [outlined]="true"
+              styleClass="w-full justify-center h-11"
+              [loading]="closing"
+              (onClick)="confirmClose(true)"
+            />
+            <p class="text-xs" style="color: var(--ff-text-muted)">
+              Cierra la caja ignorando cobros pendientes. Usá solo en casos
+              excepcionales.
+            </p>
+          </div>
+        }
+      </div>
     }
   </div>
 </div>
@@ -336,15 +624,19 @@
     <app-loading-state />
   } @else if (preClose) {
     <div class="space-y-4">
-
       <!-- Cobros pendientes sin aprobar -->
       @if (preClose.pendientes.count > 0) {
-        <div class="auth-warning-banner" data-cy="admin-cash-register-close-pending-warning">
+        <div
+          class="auth-warning-banner"
+          data-cy="admin-cash-register-close-pending-warning"
+        >
           <i class="pi pi-exclamation-triangle shrink-0"></i>
           <p>
-            Hay <strong>{{ preClose.pendientes.count }}</strong> cobro(s) pendiente(s) sin aprobar
-            por <strong>{{ formatCurrency(preClose.pendientes.amount) }}</strong>.
-            Aprobá o rechazá antes de cerrar, o fuerza el cierre de caja, las aprobaciones pasan para mañana.
+            Hay <strong>{{ preClose.pendientes.count }}</strong> cobro(s)
+            pendiente(s) sin aprobar por
+            <strong>{{ formatCurrency(preClose.pendientes.amount) }}</strong
+            >. Aprobá o rechazá antes de cerrar, o fuerza el cierre de caja, las
+            aprobaciones pasan para mañana.
           </p>
         </div>
       }
@@ -353,7 +645,10 @@
         <div class="auth-danger-banner">
           <i class="pi pi-exclamation-circle shrink-0"></i>
           <div class="space-y-2">
-            <p class="font-semibold">Hay operaciones pendientes que bloquean el cierre. Aprueba o rechaza, o fuerza el cierre de la caja si es necesario.</p>
+            <p class="font-semibold">
+              Hay operaciones pendientes que bloquean el cierre. Aprueba o
+              rechaza, o fuerza el cierre de la caja si es necesario.
+            </p>
             <p-button
               data-cy="admin-cash-register-close-force-action"
               label="🔓 Forzar cierre de caja"
@@ -370,35 +665,56 @@
       <!-- Ingresos del día -->
       <div
         class="rounded-xl overflow-hidden"
-        style="border: 1px solid rgba(52,211,153,0.25)"
+        style="border: 1px solid rgba(52, 211, 153, 0.25)"
         data-cy="admin-cash-register-close-ingresos"
       >
         <div
           class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
-          style="background: rgba(52,211,153,0.1); color: var(--ff-success)"
+          style="background: rgba(52, 211, 153, 0.1); color: var(--ff-success)"
         >
           Ingresos del día
         </div>
         <div class="divide-y" style="border-color: var(--ff-border)">
           <div class="flex justify-between px-3 py-2 text-sm">
-            <span style="color: var(--ff-text-secondary)">Cobros en efectivo</span>
-            <span class="ff-mono font-medium">{{ formatCurrency(preClose.ingresos.cobrosEfectivo) }}</span>
+            <span style="color: var(--ff-text-secondary)"
+              >Cobros en efectivo</span
+            >
+            <span class="ff-mono font-medium">{{
+              formatCurrency(preClose.ingresos.cobrosEfectivo)
+            }}</span>
           </div>
           <div class="flex justify-between px-3 py-2 text-sm">
-            <span style="color: var(--ff-text-secondary)">Cobros en transferencia</span>
-            <span class="ff-mono font-medium">{{ formatCurrency(preClose.ingresos.cobrosTransferencia) }}</span>
+            <span style="color: var(--ff-text-secondary)"
+              >Cobros en transferencia</span
+            >
+            <span class="ff-mono font-medium">{{
+              formatCurrency(preClose.ingresos.cobrosTransferencia)
+            }}</span>
           </div>
           <div class="flex justify-between px-3 py-2 text-sm">
-            <span style="color: var(--ff-text-secondary)">Enganches en efectivo</span>
-            <span class="ff-mono font-medium">{{ formatCurrency(preClose.ingresos.enganchesEfectivo) }}</span>
+            <span style="color: var(--ff-text-secondary)"
+              >Enganches en efectivo</span
+            >
+            <span class="ff-mono font-medium">{{
+              formatCurrency(preClose.ingresos.enganchesEfectivo)
+            }}</span>
           </div>
           <div class="flex justify-between px-3 py-2 text-sm">
-            <span style="color: var(--ff-text-secondary)">Enganches en transferencia</span>
-            <span class="ff-mono font-medium">{{ formatCurrency(preClose.ingresos.enganchesTransferencia) }}</span>
+            <span style="color: var(--ff-text-secondary)"
+              >Enganches en transferencia</span
+            >
+            <span class="ff-mono font-medium">{{
+              formatCurrency(preClose.ingresos.enganchesTransferencia)
+            }}</span>
           </div>
-          <div class="flex justify-between px-3 py-2 text-sm font-semibold" style="background: rgba(52,211,153,0.05)">
+          <div
+            class="flex justify-between px-3 py-2 text-sm font-semibold"
+            style="background: rgba(52, 211, 153, 0.05)"
+          >
             <span>Total bruto recaudado</span>
-            <span class="ff-mono" style="color: var(--ff-success)">{{ formatCurrency(preClose.ingresos.totalBruto) }}</span>
+            <span class="ff-mono" style="color: var(--ff-success)">{{
+              formatCurrency(preClose.ingresos.totalBruto)
+            }}</span>
           </div>
         </div>
       </div>
@@ -407,58 +723,112 @@
       @if (preClose.egresos.total > 0) {
         <div
           class="rounded-xl overflow-hidden"
-          style="border: 1px solid rgba(248,113,113,0.25)"
+          style="border: 1px solid rgba(248, 113, 113, 0.25)"
           data-cy="admin-cash-register-close-egresos"
         >
           <div
             class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
-            style="background: rgba(248,113,113,0.1); color: var(--ff-danger)"
+            style="
+              background: rgba(248, 113, 113, 0.1);
+              color: var(--ff-danger);
+            "
           >
             Egresos del día
           </div>
           <div class="divide-y" style="border-color: var(--ff-border)">
             @if (preClose.egresos.gastosEfectivo > 0) {
               <div class="flex justify-between px-3 py-2 text-sm">
-                <span style="color: var(--ff-text-secondary)">Gastos en efectivo</span>
-                <span class="ff-mono font-medium" style="color: var(--ff-danger)">- {{ formatCurrency(preClose.egresos.gastosEfectivo) }}</span>
+                <span style="color: var(--ff-text-secondary)"
+                  >Gastos en efectivo</span
+                >
+                <span
+                  class="ff-mono font-medium"
+                  style="color: var(--ff-danger)"
+                  >- {{ formatCurrency(preClose.egresos.gastosEfectivo) }}</span
+                >
               </div>
             }
             @if (preClose.egresos.gastosTransferencia > 0) {
               <div class="flex justify-between px-3 py-2 text-sm">
-                <span style="color: var(--ff-text-secondary)">Gastos en transferencia</span>
-                <span class="ff-mono font-medium" style="color: var(--ff-danger)">- {{ formatCurrency(preClose.egresos.gastosTransferencia) }}</span>
+                <span style="color: var(--ff-text-secondary)"
+                  >Gastos en transferencia</span
+                >
+                <span
+                  class="ff-mono font-medium"
+                  style="color: var(--ff-danger)"
+                  >-
+                  {{
+                    formatCurrency(preClose.egresos.gastosTransferencia)
+                  }}</span
+                >
               </div>
             }
             @if (preClose.egresos.comisionesEfectivo > 0) {
               <div class="flex justify-between px-3 py-2 text-sm">
-                <span style="color: var(--ff-text-secondary)">Comisiones en efectivo</span>
-                <span class="ff-mono font-medium" style="color: var(--ff-danger)">- {{ formatCurrency(preClose.egresos.comisionesEfectivo) }}</span>
+                <span style="color: var(--ff-text-secondary)"
+                  >Comisiones en efectivo</span
+                >
+                <span
+                  class="ff-mono font-medium"
+                  style="color: var(--ff-danger)"
+                  >-
+                  {{
+                    formatCurrency(preClose.egresos.comisionesEfectivo)
+                  }}</span
+                >
               </div>
             }
             @if (preClose.egresos.comisionesTransferencia > 0) {
               <div class="flex justify-between px-3 py-2 text-sm">
-                <span style="color: var(--ff-text-secondary)">Comisiones en transferencia</span>
-                <span class="ff-mono font-medium" style="color: var(--ff-danger)">- {{ formatCurrency(preClose.egresos.comisionesTransferencia) }}</span>
+                <span style="color: var(--ff-text-secondary)"
+                  >Comisiones en transferencia</span
+                >
+                <span
+                  class="ff-mono font-medium"
+                  style="color: var(--ff-danger)"
+                  >-
+                  {{
+                    formatCurrency(preClose.egresos.comisionesTransferencia)
+                  }}</span
+                >
               </div>
             }
-            <div class="flex justify-between px-3 py-2 text-sm font-semibold" style="background: rgba(248,113,113,0.05)">
+            <div
+              class="flex justify-between px-3 py-2 text-sm font-semibold"
+              style="background: rgba(248, 113, 113, 0.05)"
+            >
               <span>Total egresos</span>
-              <span class="ff-mono" style="color: var(--ff-danger)">- {{ formatCurrency(preClose.egresos.total) }}</span>
+              <span class="ff-mono" style="color: var(--ff-danger)"
+                >- {{ formatCurrency(preClose.egresos.total) }}</span
+              >
             </div>
           </div>
         </div>
       }
 
       <!-- Balances netos -->
-      <div class="grid grid-cols-2 gap-3" data-cy="admin-cash-register-close-balances">
+      <div
+        class="grid grid-cols-2 gap-3"
+        data-cy="admin-cash-register-close-balances"
+      >
         <!-- Efectivo -->
-        <div class="rounded-xl p-3 space-y-2" style="border: 1px solid var(--ff-border)">
-          <p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-text-muted)">
+        <div
+          class="rounded-xl p-3 space-y-2"
+          style="border: 1px solid var(--ff-border)"
+        >
+          <p
+            class="text-xs font-semibold uppercase tracking-wide"
+            style="color: var(--ff-text-muted)"
+          >
             Balance Efectivo
           </p>
           <div class="flex justify-between text-sm">
-            <span style="color: var(--ff-text-secondary)">Esperado en caja</span>
-            <span class="ff-mono font-semibold">{{ formatCurrency(preClose.efectivo.esperado) }}</span>
+            <span style="color: var(--ff-text-secondary)"
+              >Esperado en caja</span
+            >
+            <span class="ff-mono font-semibold">{{
+              formatCurrency(preClose.efectivo.esperado)
+            }}</span>
           </div>
           <div class="flex flex-col gap-1">
             <label class="auth-label">Contado físicamente (ARS)</label>
@@ -478,23 +848,54 @@
           @if (declaredCash != null) {
             <div
               class="flex justify-between text-sm font-bold rounded-lg px-2 py-1.5"
-              [style.background]="closeDifference === 0 ? 'rgba(52,211,153,0.1)' : (closeDifference > 0 ? 'rgba(251,176,64,0.1)' : 'rgba(248,113,113,0.1)')"
-              [style.color]="closeDifference === 0 ? 'var(--ff-success)' : (closeDifference > 0 ? 'var(--ff-warning)' : 'var(--ff-danger)')"
+              [style.background]="
+                closeDifference === 0
+                  ? 'rgba(52,211,153,0.1)'
+                  : closeDifference > 0
+                    ? 'rgba(251,176,64,0.1)'
+                    : 'rgba(248,113,113,0.1)'
+              "
+              [style.color]="
+                closeDifference === 0
+                  ? 'var(--ff-success)'
+                  : closeDifference > 0
+                    ? 'var(--ff-warning)'
+                    : 'var(--ff-danger)'
+              "
             >
-              <span>{{ closeDifference === 0 ? 'Cuadra exacto' : (closeDifference > 0 ? 'Sobrante' : 'Faltante') }}</span>
+              <span>{{
+                closeDifference === 0
+                  ? "Cuadra exacto"
+                  : closeDifference > 0
+                    ? "Sobrante"
+                    : "Faltante"
+              }}</span>
               <span class="ff-mono">{{ formatCurrency(closeDifference) }}</span>
             </div>
           }
         </div>
 
         <!-- Transferencias -->
-        <div class="rounded-xl p-3 space-y-2" style="border: 1px solid var(--ff-border); background: rgba(79,110,247,0.03)">
-          <p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-text-muted)">
+        <div
+          class="rounded-xl p-3 space-y-2"
+          style="
+            border: 1px solid var(--ff-border);
+            background: rgba(79, 110, 247, 0.03);
+          "
+        >
+          <p
+            class="text-xs font-semibold uppercase tracking-wide"
+            style="color: var(--ff-text-muted)"
+          >
             Balance Transferencias
           </p>
           <div class="flex justify-between text-sm">
-            <span style="color: var(--ff-text-secondary)">Esperado en banco</span>
-            <span class="ff-mono font-semibold">{{ formatCurrency(preClose.transferencias.esperado) }}</span>
+            <span style="color: var(--ff-text-secondary)"
+              >Esperado en banco</span
+            >
+            <span class="ff-mono font-semibold">{{
+              formatCurrency(preClose.transferencias.esperado)
+            }}</span>
           </div>
           <p class="text-xs mt-2" style="color: var(--ff-text-muted)">
             <i class="pi pi-info-circle mr-1"></i>
@@ -515,9 +916,10 @@
           placeholder="Novedades, faltantes, aclaraciones..."
           class="w-full resize-none"
         ></textarea>
-        <span class="text-xs text-right" style="color: var(--ff-text-muted)">{{ observations.length }}/500</span>
+        <span class="text-xs text-right" style="color: var(--ff-text-muted)"
+          >{{ observations.length }}/500</span
+        >
       </div>
-
     </div>
   }
 
@@ -536,7 +938,9 @@
       icon="pi pi-lock"
       severity="danger"
       [loading]="closing"
-      [disabled]="declaredCash == null || loadingPreClose || !!closePendingError"
+      [disabled]="
+        declaredCash == null || loadingPreClose || !!closePendingError
+      "
       (onClick)="confirmClose(false)"
     />
   </ng-template>
@@ -555,31 +959,44 @@
     <app-loading-state />
   } @else if (selectedRegister) {
     <div class="space-y-4">
-
       <!-- Encabezado: fecha, hora y responsable -->
       <div class="grid grid-cols-3 gap-3">
         <div class="cr-detail-cell">
           <p class="ud-label">Fecha</p>
-          <p class="ud-value font-semibold">{{ formatDate(selectedRegister.registerDate) }}</p>
+          <p class="ud-value font-semibold">
+            {{ formatDate(selectedRegister.registerDate) }}
+          </p>
         </div>
         <div class="cr-detail-cell">
           <p class="ud-label">Hora de cierre</p>
-          <p class="ud-value font-semibold">{{ formatDateTime(selectedRegister.createdAt).split(' ')[1] }}</p>
+          <p class="ud-value font-semibold">
+            {{ formatDateTime(selectedRegister.createdAt).split(" ")[1] }}
+          </p>
         </div>
         <div class="cr-detail-cell">
           <p class="ud-label">Cerrado por</p>
-          <p class="ud-value font-semibold">{{ selectedRegister.closedByName }}</p>
+          <p class="ud-value font-semibold">
+            {{ selectedRegister.closedByName }}
+          </p>
         </div>
       </div>
 
       <!-- Ingresos brutos -->
-      <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(52,211,153,0.25)">
-        <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(52,211,153,0.1); color: var(--ff-success)">
+      <div
+        class="rounded-xl overflow-hidden"
+        style="border: 1px solid rgba(52, 211, 153, 0.25)"
+      >
+        <div
+          class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+          style="background: rgba(52, 211, 153, 0.1); color: var(--ff-success)"
+        >
           Ingresos brutos del día
         </div>
         <div class="divide-y" style="border-color: var(--ff-border)">
           <div class="flex justify-between px-3 py-2 text-sm">
-            <span style="color: var(--ff-text-secondary)">Cobros aprobados</span>
+            <span style="color: var(--ff-text-secondary)"
+              >Cobros aprobados</span
+            >
             <div class="flex gap-3 text-right">
               <span class="ff-mono text-xs" style="color: var(--ff-text-muted)">
                 {{ selectedRegister.breakdown.payments.length }} cobros
@@ -600,17 +1017,31 @@
               </span>
             </div>
           </div>
-          <div class="flex justify-between px-3 py-2 text-sm font-semibold" style="background: rgba(52,211,153,0.05)">
+          <div
+            class="flex justify-between px-3 py-2 text-sm font-semibold"
+            style="background: rgba(52, 211, 153, 0.05)"
+          >
             <span>Total bruto recaudado</span>
-            <span class="ff-mono" style="color: var(--ff-success)">{{ formatCurrency(selectedRegister.totalCollected) }}</span>
+            <span class="ff-mono" style="color: var(--ff-success)">{{
+              formatCurrency(selectedRegister.totalCollected)
+            }}</span>
           </div>
         </div>
       </div>
 
       <!-- Egresos -->
       @if (selectedRegister.totalOutflows > 0) {
-        <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(248,113,113,0.25)">
-          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(248,113,113,0.1); color: var(--ff-danger)">
+        <div
+          class="rounded-xl overflow-hidden"
+          style="border: 1px solid rgba(248, 113, 113, 0.25)"
+        >
+          <div
+            class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+            style="
+              background: rgba(248, 113, 113, 0.1);
+              color: var(--ff-danger);
+            "
+          >
             Egresos del día
           </div>
           <div class="divide-y" style="border-color: var(--ff-border)">
@@ -618,8 +1049,18 @@
               <div class="flex justify-between px-3 py-2 text-sm">
                 <span style="color: var(--ff-text-secondary)">Gastos</span>
                 <div class="flex gap-3 text-right">
-                  <span class="ff-mono text-xs" style="color: var(--ff-text-muted)">{{ selectedRegister.breakdown.expenses.length }} gastos</span>
-                  <span class="ff-mono font-medium" style="color: var(--ff-danger)">
+                  <span
+                    class="ff-mono text-xs"
+                    style="color: var(--ff-text-muted)"
+                    >{{
+                      selectedRegister.breakdown.expenses.length
+                    }}
+                    gastos</span
+                  >
+                  <span
+                    class="ff-mono font-medium"
+                    style="color: var(--ff-danger)"
+                  >
                     - {{ formatCurrency(detailExpensesTotal) }}
                   </span>
                 </div>
@@ -627,18 +1068,35 @@
             }
             @if (selectedRegister.breakdown.liquidations.length > 0) {
               <div class="flex justify-between px-3 py-2 text-sm">
-                <span style="color: var(--ff-text-secondary)">Liquidaciones de comisiones</span>
+                <span style="color: var(--ff-text-secondary)"
+                  >Liquidaciones de comisiones</span
+                >
                 <div class="flex gap-3 text-right">
-                  <span class="ff-mono text-xs" style="color: var(--ff-text-muted)">{{ selectedRegister.breakdown.liquidations.length }} liquidaciones</span>
-                  <span class="ff-mono font-medium" style="color: var(--ff-danger)">
+                  <span
+                    class="ff-mono text-xs"
+                    style="color: var(--ff-text-muted)"
+                    >{{
+                      selectedRegister.breakdown.liquidations.length
+                    }}
+                    liquidaciones</span
+                  >
+                  <span
+                    class="ff-mono font-medium"
+                    style="color: var(--ff-danger)"
+                  >
                     - {{ formatCurrency(detailLiquidationsTotal) }}
                   </span>
                 </div>
               </div>
             }
-            <div class="flex justify-between px-3 py-2 text-sm font-semibold" style="background: rgba(248,113,113,0.05)">
+            <div
+              class="flex justify-between px-3 py-2 text-sm font-semibold"
+              style="background: rgba(248, 113, 113, 0.05)"
+            >
               <span>Total egresos</span>
-              <span class="ff-mono" style="color: var(--ff-danger)">- {{ formatCurrency(selectedRegister.totalOutflows) }}</span>
+              <span class="ff-mono" style="color: var(--ff-danger)"
+                >- {{ formatCurrency(selectedRegister.totalOutflows) }}</span
+              >
             </div>
           </div>
         </div>
@@ -646,42 +1104,96 @@
 
       <!-- Arqueo de efectivo -->
       <div class="grid grid-cols-2 gap-3">
-        <div class="rounded-xl overflow-hidden" style="border: 1px solid var(--ff-border)">
-          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(79,110,247,0.07); color: var(--ff-accent)">
+        <div
+          class="rounded-xl overflow-hidden"
+          style="border: 1px solid var(--ff-border)"
+        >
+          <div
+            class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+            style="
+              background: rgba(79, 110, 247, 0.07);
+              color: var(--ff-accent);
+            "
+          >
             Arqueo efectivo
           </div>
           <div class="divide-y" style="border-color: var(--ff-border)">
             <div class="flex justify-between px-3 py-2 text-sm">
-              <span style="color: var(--ff-text-secondary)">Esperado en caja</span>
-              <span class="ff-mono font-medium">{{ formatCurrency(selectedRegister.cashAmount) }}</span>
+              <span style="color: var(--ff-text-secondary)"
+                >Esperado en caja</span
+              >
+              <span class="ff-mono font-medium">{{
+                formatCurrency(selectedRegister.cashAmount)
+              }}</span>
             </div>
             <div class="flex justify-between px-3 py-2 text-sm">
-              <span style="color: var(--ff-text-secondary)">Declarado (contado)</span>
-              <span class="ff-mono font-medium">{{ formatCurrency(selectedRegister.declaredCash) }}</span>
+              <span style="color: var(--ff-text-secondary)"
+                >Declarado (contado)</span
+              >
+              <span class="ff-mono font-medium">{{
+                formatCurrency(selectedRegister.declaredCash)
+              }}</span>
             </div>
             <div
               class="flex justify-between px-3 py-2 text-sm font-bold"
-              [style.background]="selectedRegister.difference === 0 ? 'rgba(52,211,153,0.08)' : (selectedRegister.difference > 0 ? 'rgba(251,176,64,0.08)' : 'rgba(248,113,113,0.08)')"
-              [style.color]="selectedRegister.difference === 0 ? 'var(--ff-success)' : (selectedRegister.difference > 0 ? 'var(--ff-warning)' : 'var(--ff-danger)')"
+              [style.background]="
+                selectedRegister.difference === 0
+                  ? 'rgba(52,211,153,0.08)'
+                  : selectedRegister.difference > 0
+                    ? 'rgba(251,176,64,0.08)'
+                    : 'rgba(248,113,113,0.08)'
+              "
+              [style.color]="
+                selectedRegister.difference === 0
+                  ? 'var(--ff-success)'
+                  : selectedRegister.difference > 0
+                    ? 'var(--ff-warning)'
+                    : 'var(--ff-danger)'
+              "
             >
-              <span>{{ selectedRegister.difference === 0 ? 'Cuadra exacto' : (selectedRegister.difference > 0 ? 'Sobrante' : 'Faltante') }}</span>
-              <span class="ff-mono">{{ formatCurrency(selectedRegister.difference) }}</span>
+              <span>{{
+                selectedRegister.difference === 0
+                  ? "Cuadra exacto"
+                  : selectedRegister.difference > 0
+                    ? "Sobrante"
+                    : "Faltante"
+              }}</span>
+              <span class="ff-mono">{{
+                formatCurrency(selectedRegister.difference)
+              }}</span>
             </div>
           </div>
         </div>
 
-        <div class="rounded-xl overflow-hidden" style="border: 1px solid var(--ff-border); background: rgba(79,110,247,0.03)">
-          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(79,110,247,0.07); color: var(--ff-accent)">
+        <div
+          class="rounded-xl overflow-hidden"
+          style="
+            border: 1px solid var(--ff-border);
+            background: rgba(79, 110, 247, 0.03);
+          "
+        >
+          <div
+            class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+            style="
+              background: rgba(79, 110, 247, 0.07);
+              color: var(--ff-accent);
+            "
+          >
             Balance transferencias
           </div>
           <div class="divide-y" style="border-color: var(--ff-border)">
             <div class="flex justify-between px-3 py-2 text-sm">
-              <span style="color: var(--ff-text-secondary)">Esperado en banco</span>
-              <span class="ff-mono font-medium">{{ formatCurrency(selectedRegister.transferAmount) }}</span>
+              <span style="color: var(--ff-text-secondary)"
+                >Esperado en banco</span
+              >
+              <span class="ff-mono font-medium">{{
+                formatCurrency(selectedRegister.transferAmount)
+              }}</span>
             </div>
             <div class="px-3 py-2">
               <p class="text-xs" style="color: var(--ff-text-muted)">
-                <i class="pi pi-info-circle mr-1"></i>Validar contra extracto bancario.
+                <i class="pi pi-info-circle mr-1"></i>Validar contra extracto
+                bancario.
               </p>
             </div>
           </div>
@@ -691,48 +1203,125 @@
       <!-- Total neto del día -->
       <div
         class="rounded-xl px-4 py-3 flex items-center justify-between"
-        style="background: rgba(79,110,247,0.08); border: 1px solid rgba(79,110,247,0.2)"
+        style="
+          background: rgba(79, 110, 247, 0.08);
+          border: 1px solid rgba(79, 110, 247, 0.2);
+        "
       >
         <div>
-          <p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-accent)">Total neto del día</p>
-          <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">Efectivo neto + Transferencias netas</p>
+          <p
+            class="text-xs font-semibold uppercase tracking-wide"
+            style="color: var(--ff-accent)"
+          >
+            Total neto del día
+          </p>
+          <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
+            Efectivo neto + Transferencias netas
+          </p>
         </div>
-        <span class="ff-mono text-xl font-extrabold" style="color: var(--ff-accent)">
-          {{ formatCurrency(selectedRegister.cashAmount + selectedRegister.transferAmount) }}
+        <span
+          class="ff-mono text-xl font-extrabold"
+          style="color: var(--ff-accent)"
+        >
+          {{
+            formatCurrency(
+              selectedRegister.cashAmount + selectedRegister.transferAmount
+            )
+          }}
         </span>
       </div>
 
       <!-- Detalle cobros -->
       @if (selectedRegister.breakdown.payments.length > 0) {
-        <div class="rounded-xl overflow-hidden" style="border: 1px solid var(--ff-border)">
-          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(0,0,0,0.03); color: var(--ff-text-secondary)">
+        <div
+          class="rounded-xl overflow-hidden"
+          style="border: 1px solid var(--ff-border)"
+        >
+          <div
+            class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+            style="
+              background: rgba(0, 0, 0, 0.03);
+              color: var(--ff-text-secondary);
+            "
+          >
             Cobros aprobados ({{ selectedRegister.breakdown.payments.length }})
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
               <thead>
-                <tr style="border-bottom: 1px solid var(--ff-border); background: rgba(0,0,0,0.02)">
-                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Cliente</th>
-                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Cobrador</th>
-                  <th class="text-center px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Cuota</th>
-                  <th class="text-center px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Método</th>
-                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Monto</th>
+                <tr
+                  style="
+                    border-bottom: 1px solid var(--ff-border);
+                    background: rgba(0, 0, 0, 0.02);
+                  "
+                >
+                  <th
+                    class="text-left px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Cliente
+                  </th>
+                  <th
+                    class="text-left px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Cobrador
+                  </th>
+                  <th
+                    class="text-center px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Cuota
+                  </th>
+                  <th
+                    class="text-center px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Método
+                  </th>
+                  <th
+                    class="text-right px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Monto
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 @for (p of selectedRegister.breakdown.payments; track p.id) {
                   <tr style="border-bottom: 1px solid var(--ff-border)">
                     <td class="px-3 py-2">{{ p.customerName }}</td>
-                    <td class="px-3 py-2" style="color: var(--ff-text-secondary)">{{ p.collectorName }}</td>
-                    <td class="px-3 py-2 text-center" style="color: var(--ff-text-secondary)">N° {{ p.installmentNumber }}</td>
+                    <td
+                      class="px-3 py-2"
+                      style="color: var(--ff-text-secondary)"
+                    >
+                      {{ p.collectorName }}
+                    </td>
+                    <td
+                      class="px-3 py-2 text-center"
+                      style="color: var(--ff-text-secondary)"
+                    >
+                      N° {{ p.installmentNumber }}
+                    </td>
                     <td class="px-3 py-2 text-center">
                       <span
                         class="text-xs font-semibold px-1.5 py-0.5 rounded-full"
-                        [style.background]="p.paymentMethod === 'CASH' ? 'rgba(52,211,153,0.12)' : 'rgba(79,110,247,0.12)'"
-                        [style.color]="p.paymentMethod === 'CASH' ? 'var(--ff-success)' : 'var(--ff-accent)'"
-                      >{{ paymentMethodLabel(p.paymentMethod) }}</span>
+                        [style.background]="
+                          p.paymentMethod === 'CASH'
+                            ? 'rgba(52,211,153,0.12)'
+                            : 'rgba(79,110,247,0.12)'
+                        "
+                        [style.color]="
+                          p.paymentMethod === 'CASH'
+                            ? 'var(--ff-success)'
+                            : 'var(--ff-accent)'
+                        "
+                        >{{ paymentMethodLabel(p.paymentMethod) }}</span
+                      >
                     </td>
-                    <td class="px-3 py-2 text-right ff-mono font-medium">{{ formatCurrency(p.amountReceived) }}</td>
+                    <td class="px-3 py-2 text-right ff-mono font-medium">
+                      {{ formatCurrency(p.amountReceived) }}
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -743,33 +1332,86 @@
 
       <!-- Detalle enganches -->
       @if (selectedRegister.breakdown.downPayments.length > 0) {
-        <div class="rounded-xl overflow-hidden" style="border: 1px solid var(--ff-border)">
-          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(0,0,0,0.03); color: var(--ff-text-secondary)">
+        <div
+          class="rounded-xl overflow-hidden"
+          style="border: 1px solid var(--ff-border)"
+        >
+          <div
+            class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+            style="
+              background: rgba(0, 0, 0, 0.03);
+              color: var(--ff-text-secondary);
+            "
+          >
             Enganches ({{ selectedRegister.breakdown.downPayments.length }})
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
               <thead>
-                <tr style="border-bottom: 1px solid var(--ff-border); background: rgba(0,0,0,0.02)">
-                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Cliente</th>
-                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Aprobado por</th>
-                  <th class="text-center px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Método</th>
-                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Monto</th>
+                <tr
+                  style="
+                    border-bottom: 1px solid var(--ff-border);
+                    background: rgba(0, 0, 0, 0.02);
+                  "
+                >
+                  <th
+                    class="text-left px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Cliente
+                  </th>
+                  <th
+                    class="text-left px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Aprobado por
+                  </th>
+                  <th
+                    class="text-center px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Método
+                  </th>
+                  <th
+                    class="text-right px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Monto
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                @for (dp of selectedRegister.breakdown.downPayments; track dp.id) {
+                @for (
+                  dp of selectedRegister.breakdown.downPayments;
+                  track dp.id
+                ) {
                   <tr style="border-bottom: 1px solid var(--ff-border)">
                     <td class="px-3 py-2">{{ dp.customerName }}</td>
-                    <td class="px-3 py-2" style="color: var(--ff-text-secondary)">{{ dp.approvedByName }}</td>
+                    <td
+                      class="px-3 py-2"
+                      style="color: var(--ff-text-secondary)"
+                    >
+                      {{ dp.approvedByName }}
+                    </td>
                     <td class="px-3 py-2 text-center">
                       <span
                         class="text-xs font-semibold px-1.5 py-0.5 rounded-full"
-                        [style.background]="dp.paymentMethod === 'CASH' ? 'rgba(52,211,153,0.12)' : 'rgba(79,110,247,0.12)'"
-                        [style.color]="dp.paymentMethod === 'CASH' ? 'var(--ff-success)' : 'var(--ff-accent)'"
-                      >{{ paymentMethodLabel(dp.paymentMethod) }}</span>
+                        [style.background]="
+                          dp.paymentMethod === 'CASH'
+                            ? 'rgba(52,211,153,0.12)'
+                            : 'rgba(79,110,247,0.12)'
+                        "
+                        [style.color]="
+                          dp.paymentMethod === 'CASH'
+                            ? 'var(--ff-success)'
+                            : 'var(--ff-accent)'
+                        "
+                        >{{ paymentMethodLabel(dp.paymentMethod) }}</span
+                      >
                     </td>
-                    <td class="px-3 py-2 text-right ff-mono font-medium">{{ formatCurrency(dp.amount) }}</td>
+                    <td class="px-3 py-2 text-right ff-mono font-medium">
+                      {{ formatCurrency(dp.amount) }}
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -780,35 +1422,97 @@
 
       <!-- Detalle liquidaciones -->
       @if (selectedRegister.breakdown.liquidations.length > 0) {
-        <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(248,113,113,0.2)">
-          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(248,113,113,0.07); color: var(--ff-danger)">
-            Liquidaciones de comisiones ({{ selectedRegister.breakdown.liquidations.length }})
+        <div
+          class="rounded-xl overflow-hidden"
+          style="border: 1px solid rgba(248, 113, 113, 0.2)"
+        >
+          <div
+            class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+            style="
+              background: rgba(248, 113, 113, 0.07);
+              color: var(--ff-danger);
+            "
+          >
+            Liquidaciones de comisiones ({{
+              selectedRegister.breakdown.liquidations.length
+            }})
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
               <thead>
-                <tr style="border-bottom: 1px solid var(--ff-border); background: rgba(0,0,0,0.02)">
-                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Empleado</th>
-                  <th class="text-center px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Método</th>
-                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Comisiones</th>
-                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Sueldo</th>
-                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Total pagado</th>
+                <tr
+                  style="
+                    border-bottom: 1px solid var(--ff-border);
+                    background: rgba(0, 0, 0, 0.02);
+                  "
+                >
+                  <th
+                    class="text-left px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Empleado
+                  </th>
+                  <th
+                    class="text-center px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Método
+                  </th>
+                  <th
+                    class="text-right px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Comisiones
+                  </th>
+                  <th
+                    class="text-right px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Sueldo
+                  </th>
+                  <th
+                    class="text-right px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Total pagado
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                @for (l of selectedRegister.breakdown.liquidations; track l.id) {
+                @for (
+                  l of selectedRegister.breakdown.liquidations;
+                  track l.id
+                ) {
                   <tr style="border-bottom: 1px solid var(--ff-border)">
                     <td class="px-3 py-2">{{ l.employeeName }}</td>
                     <td class="px-3 py-2 text-center">
                       <span
                         class="text-xs font-semibold px-1.5 py-0.5 rounded-full"
-                        [style.background]="l.paymentMethod === 'CASH' ? 'rgba(52,211,153,0.12)' : 'rgba(79,110,247,0.12)'"
-                        [style.color]="l.paymentMethod === 'CASH' ? 'var(--ff-success)' : 'var(--ff-accent)'"
-                      >{{ paymentMethodLabel(l.paymentMethod) }}</span>
+                        [style.background]="
+                          l.paymentMethod === 'CASH'
+                            ? 'rgba(52,211,153,0.12)'
+                            : 'rgba(79,110,247,0.12)'
+                        "
+                        [style.color]="
+                          l.paymentMethod === 'CASH'
+                            ? 'var(--ff-success)'
+                            : 'var(--ff-accent)'
+                        "
+                        >{{ paymentMethodLabel(l.paymentMethod) }}</span
+                      >
                     </td>
-                    <td class="px-3 py-2 text-right ff-mono">{{ formatCurrency(l.commissionsTotal) }}</td>
-                    <td class="px-3 py-2 text-right ff-mono">{{ formatCurrency(l.salaryAmount) }}</td>
-                    <td class="px-3 py-2 text-right ff-mono font-semibold" style="color: var(--ff-danger)">{{ formatCurrency(l.totalPaid) }}</td>
+                    <td class="px-3 py-2 text-right ff-mono">
+                      {{ formatCurrency(l.commissionsTotal) }}
+                    </td>
+                    <td class="px-3 py-2 text-right ff-mono">
+                      {{ formatCurrency(l.salaryAmount) }}
+                    </td>
+                    <td
+                      class="px-3 py-2 text-right ff-mono font-semibold"
+                      style="color: var(--ff-danger)"
+                    >
+                      {{ formatCurrency(l.totalPaid) }}
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -819,33 +1523,86 @@
 
       <!-- Detalle gastos -->
       @if (selectedRegister.breakdown.expenses.length > 0) {
-        <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(248,113,113,0.2)">
-          <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wide" style="background: rgba(248,113,113,0.07); color: var(--ff-danger)">
+        <div
+          class="rounded-xl overflow-hidden"
+          style="border: 1px solid rgba(248, 113, 113, 0.2)"
+        >
+          <div
+            class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+            style="
+              background: rgba(248, 113, 113, 0.07);
+              color: var(--ff-danger);
+            "
+          >
             Gastos ({{ selectedRegister.breakdown.expenses.length }})
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-xs">
               <thead>
-                <tr style="border-bottom: 1px solid var(--ff-border); background: rgba(0,0,0,0.02)">
-                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Descripción</th>
-                  <th class="text-left px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Registrado por</th>
-                  <th class="text-center px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Método</th>
-                  <th class="text-right px-3 py-2 font-semibold" style="color: var(--ff-text-muted)">Monto</th>
+                <tr
+                  style="
+                    border-bottom: 1px solid var(--ff-border);
+                    background: rgba(0, 0, 0, 0.02);
+                  "
+                >
+                  <th
+                    class="text-left px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Descripción
+                  </th>
+                  <th
+                    class="text-left px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Registrado por
+                  </th>
+                  <th
+                    class="text-center px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Método
+                  </th>
+                  <th
+                    class="text-right px-3 py-2 font-semibold"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    Monto
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 @for (e of selectedRegister.breakdown.expenses; track e.id) {
                   <tr style="border-bottom: 1px solid var(--ff-border)">
                     <td class="px-3 py-2">{{ e.description }}</td>
-                    <td class="px-3 py-2" style="color: var(--ff-text-secondary)">{{ e.createdByName }}</td>
+                    <td
+                      class="px-3 py-2"
+                      style="color: var(--ff-text-secondary)"
+                    >
+                      {{ e.createdByName }}
+                    </td>
                     <td class="px-3 py-2 text-center">
                       <span
                         class="text-xs font-semibold px-1.5 py-0.5 rounded-full"
-                        [style.background]="e.paymentMethod === 'CASH' ? 'rgba(52,211,153,0.12)' : 'rgba(79,110,247,0.12)'"
-                        [style.color]="e.paymentMethod === 'CASH' ? 'var(--ff-success)' : 'var(--ff-accent)'"
-                      >{{ paymentMethodLabel(e.paymentMethod) }}</span>
+                        [style.background]="
+                          e.paymentMethod === 'CASH'
+                            ? 'rgba(52,211,153,0.12)'
+                            : 'rgba(79,110,247,0.12)'
+                        "
+                        [style.color]="
+                          e.paymentMethod === 'CASH'
+                            ? 'var(--ff-success)'
+                            : 'var(--ff-accent)'
+                        "
+                        >{{ paymentMethodLabel(e.paymentMethod) }}</span
+                      >
                     </td>
-                    <td class="px-3 py-2 text-right ff-mono font-semibold" style="color: var(--ff-danger)">{{ formatCurrency(e.amount) }}</td>
+                    <td
+                      class="px-3 py-2 text-right ff-mono font-semibold"
+                      style="color: var(--ff-danger)"
+                    >
+                      {{ formatCurrency(e.amount) }}
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -856,12 +1613,19 @@
 
       <!-- Observaciones -->
       @if (selectedRegister.observations) {
-        <div class="cr-detail-cell" style="background: rgba(251,176,64,0.08); border-color: rgba(251,176,64,0.2)">
+        <div
+          class="cr-detail-cell"
+          style="
+            background: rgba(251, 176, 64, 0.08);
+            border-color: rgba(251, 176, 64, 0.2);
+          "
+        >
           <p class="ud-label" style="color: var(--ff-warning)">Observaciones</p>
-          <p class="text-sm" style="color: var(--ff-text-primary)">{{ selectedRegister.observations }}</p>
+          <p class="text-sm" style="color: var(--ff-text-primary)">
+            {{ selectedRegister.observations }}
+          </p>
         </div>
       }
-
     </div>
   }
 
