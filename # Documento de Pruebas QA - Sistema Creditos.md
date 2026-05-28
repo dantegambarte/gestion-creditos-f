@@ -124,6 +124,14 @@
 | **CO-04** | Registrar Cobro - Collector | Se hizo click en "Cobrar" en la cuota de la planilla generada. | El form debería permitir solo ingresar números. | El form me permite ingresar la letra "e" | Error |
 
 
+## 🟢 Módulo: Liquidación
+
+| ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
+| :--- | :--- | :--- | :--- | :--- |
+| **LI-01** | Sueldo Fijo | Se hizo click en "Sueldo Fijo" en Liquidaciones. | Al poner un nuevo valor la página se debe actualizar. | La página no se actualiza, hay que refrescar manual, lo mismo en "Resumen Semanal". | Error |
+| **LI-02** | Sueldo Fijo | Se hizo click en "Sueldo Fijo" en Liquidaciones. | Al poner un importe en "Sueldo Fijo" el editor de sueldo debería limpiarse. | El editor de sueldo sigue mostrando los valores. | Error |
+| **LI-03** | Liquidar | Se hizo click en "Liquidar". | Debería mostrar cuáles fueron las ventas de la liquidación. | No muestra las ventas para corroborar la liquidación. | Error |
+
 ---
 
 ## ✅ Correcciones validadas en esta sesión (Grupos A-E + Backend)
