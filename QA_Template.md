@@ -907,7 +907,7 @@ Módulo Cobro
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Cobrar" en la cuota de la planilla generada.]
 * **Resultado Esperado:** [Debería solo poner números en el campo.]
-* **Resultado Obtenido (Error):** [El campo me permite ingresar la letra "e".]
+* **Resultado Obtenido (Actual):** [Corregido. `@HostListener('keydown')` agregado a `CurrencyAmountInputDirective` bloquea `e`, `E` y `+` antes de que `p-inputNumber` los procese. Aplica a todos los inputs monetarios del sistema. Validado con semilla 08 + sesión manual como COLLECTOR.]
 
 ---
 
@@ -919,7 +919,7 @@ Módulo Liquidaciones
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Sueldo Fijo".]
 * **Resultado Esperado:** [Al poner un importe en "Sueldo Fijo" de un empleado debería mostrarse el nuevo valor.]
-* **Resultado Obtenido (Error):** [No se actualiza automáticamente el nuevo valor, hay que refrescar la página para que impacte, tampoco se refresca en "Resumen Semanal".]
+* **Resultado Obtenido (Actual):** [Corregido. `saveSalary()` en `commissions.facade.ts` ahora llama `loadSummary()` tras el PUT exitoso. `salaryRows` es un `computed()` derivado de `employees()` que se recalcula al volver la segunda llamada a `weekly-summary` con los datos actualizados.]
 
 ---
 
@@ -929,7 +929,7 @@ Módulo Liquidaciones
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Sueldo Fijo".]
 * **Resultado Esperado:** [Al poner un importe en "Sueldo Fijo" de un empleado el editor de sueldo debería limpiarse.]
-* **Resultado Obtenido (Error):** [El editor de sueldo sigue mostrando el valor y el empleado.]
+* **Resultado Obtenido (Actual):** [Corregido. Tras el save exitoso, `selectedCollectorId`, `currentSalary` y `newWeeklyAmount` se resetean a `null`. El `p-inputNumber` desaparece y el dropdown vuelve a mostrar el placeholder "Seleccioná un cobrador".]
 
 ---
 
@@ -939,7 +939,7 @@ Módulo Liquidaciones
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Liquidar".]
 * **Resultado Esperado:** [Al hacer click en "Liquidar" debería mostrar cuáles fueron las ventas para corroborar la liquidación.]
-* **Resultado Obtenido (Error):** [No muestra las ventas para corroborar que la liquidación sea la correcta.]
+* **Resultado Obtenido (Actual):** [Corregido. `openLiquidateDialog()` carga las comisiones PENDING del empleado vía `getCommissions({ userId, status: 'PENDING' })` y las guarda en `employeeCommissions` signal. El dialog muestra una tabla "Ventas incluidas" con columnas Cliente / Venta / Comisión, y un estado vacío "Sin ventas pendientes." cuando no hay comisiones.]
 
 ---
 
@@ -1059,5 +1059,18 @@ Módulo Liquidaciones
 - `src/app/features/admin/users/user-create/user-create.component.spec.ts` → US-03: validators fullName y DNI
 - `src/app/features/seller/products/product-edit/product-edit.component.spec.ts` → PR-10: dirty check (actualizado)
 - `src/app/shared/clients/clients.component.spec.ts` → CL-11/12/13/14: validators y mapeo delinquency (actualizado)
+
+### Sesión 6 (CO-04 aislado)
+- **CO-04** → Corregido / validado — `@HostListener('keydown')` en `CurrencyAmountInputDirective` bloquea `e`, `E`, `+`; aplica globalmente a todos los inputs monetarios
+
+### Sesión 7 (LI-01, LI-02, LI-03)
+- **LI-01** → Corregido / validado — `saveSalary()` llama `loadSummary()` tras el PUT; tabla se actualiza sin refresh manual
+- **LI-02** → Corregido / validado — signals `selectedCollectorId`, `currentSalary`, `newWeeklyAmount` reseteados a `null` tras save; editor queda limpio
+- **LI-03** → Corregido / validado — `openLiquidateDialog()` carga comisiones PENDING vía `getCommissions`; dialog muestra tabla "Ventas incluidas" con Cliente / Venta / Comisión
+- Tests Cypress → `cypress/e2e/45-liquidaciones-regression.cy.ts` — 4 tests automatizados (LI-01, LI-02, LI-03 ×2)
+
+### Sesión 8 (CO-01)
+- **CO-01** → Corregido / validado — backend `restoreInstallmentFromReversal` actualiza `installment.status` a PENDING/OVERDUE/PARTIAL tras reversión; UI muestra "Revertido" en lista de cobros y "Pendiente" en planilla
+- Tests Cypress → `cypress/e2e/46-cobros-regression.cy.ts` — 4 tests automatizados (CO-01a: tag "Revertido", CO-01b: tag "Pendiente" en planilla)
 
 ---

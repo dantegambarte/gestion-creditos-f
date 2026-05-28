@@ -114,6 +114,8 @@
   [liquidateTransferReference]="vm.liquidateTransferReference()"
   [paymentMethodOptions]="vm.paymentMethodOptions"
   [formatCurrency]="vm.formatCurrency.bind(vm)"
+  [employeeCommissions]="vm.employeeCommissions()"
+  [loadingCommissions]="vm.loadingCommissions()"
   (showLiquidateDialogChange)="vm.setShowLiquidateDialog($event)"
   (showConfirmDialogChange)="vm.setShowConfirmDialog($event)"
   (liquidatePaymentMethodChange)="vm.setLiquidatePaymentMethod($event)"

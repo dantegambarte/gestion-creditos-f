@@ -121,16 +121,16 @@
 | **CO-01** | Reversión de cuota | Se hizo click en "Revertir Cuota". | Debería volver al estado pendiente en la planilla de "Cobros". | Corregido / Validado — cobro original muestra tag "Aprobado" + "Revertido" (warning); payment de reversión muestra "Aprobado" + "Reversión" (danger); toast confirma la operación; `reversalPaymentId` mapeado en model + service; `reloadDetail()` agregado en planilla de cobros |
 | **CO-02** | Cobro directo - Admin | Se hizo click en "Cobro directo" y se completaron los campos. | Debería registrar y aprobar el cobro en el mismo paso (`admin_direct: true`, `status: APPROVED`). | Corregido / Validado — `processDirectPayment()` llamaba a `create` (PENDING) en vez de `adminDirect` (APPROVED); corregido en `admin-payments.component.ts` |
 | **CO-03** | Cobro directo parcial - Admin | Se intentó registrar un cobro con monto menor al de la cuota. | El form debería pedir "Fecha de próxima visita" para cobros parciales. | Corregido / Validado — campo `p-calendar` agregado al dialog con `[minDate]="todayDate"`; `nextVisitDate` agregado a `AdminDirectPayload`, mapeado en service y enviado al backend |
-| **CO-04** | Registrar Cobro - Collector | Se hizo click en "Cobrar" en la cuota de la planilla generada. | El form debería permitir solo ingresar números. | El form me permite ingresar la letra "e" | Error |
+| **CO-04** | Registrar Cobro - Collector | Se hizo click en "Cobrar" en la cuota de la planilla generada. | El form debería permitir solo ingresar números. | Corregido / Validado — `@HostListener('keydown')` en `CurrencyAmountInputDirective` bloquea `e`, `E` y `+`; aplica a todos los `p-inputNumber[appCurrencyAmountInput]` del sistema |
 
 
 ## 🟢 Módulo: Liquidación
 
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
-| **LI-01** | Sueldo Fijo | Se hizo click en "Sueldo Fijo" en Liquidaciones. | Al poner un nuevo valor la página se debe actualizar. | La página no se actualiza, hay que refrescar manual, lo mismo en "Resumen Semanal". | Error |
-| **LI-02** | Sueldo Fijo | Se hizo click en "Sueldo Fijo" en Liquidaciones. | Al poner un importe en "Sueldo Fijo" el editor de sueldo debería limpiarse. | El editor de sueldo sigue mostrando los valores. | Error |
-| **LI-03** | Liquidar | Se hizo click en "Liquidar". | Debería mostrar cuáles fueron las ventas de la liquidación. | No muestra las ventas para corroborar la liquidación. | Error |
+| **LI-01** | Sueldo Fijo | Se hizo click en "Sueldo Fijo" en Liquidaciones. | Al poner un nuevo valor la página se debe actualizar. | La página no se actualiza, hay que refrescar manual, lo mismo en "Resumen Semanal". | Corregido / Validado — `saveSalary()` ahora llama `loadSummary()` tras el PUT; `salaryRows` se recalcula desde `employees()` que se actualiza con la segunda llamada a `weekly-summary` |
+| **LI-02** | Sueldo Fijo | Se hizo click en "Sueldo Fijo" en Liquidaciones. | Al poner un importe en "Sueldo Fijo" el editor de sueldo debería limpiarse. | El editor de sueldo sigue mostrando los valores. | Corregido / Validado — tras el save, `selectedCollectorId`, `currentSalary` y `newWeeklyAmount` se resetean a `null`; el `p-inputNumber` desaparece y el dropdown vuelve al placeholder |
+| **LI-03** | Liquidar | Se hizo click en "Liquidar". | Debería mostrar cuáles fueron las ventas de la liquidación. | No muestra las ventas para corroborar la liquidación. | Corregido / Validado — `openLiquidateDialog()` carga comisiones PENDING del empleado vía `getCommissions({ userId, status: 'PENDING' })`; dialog muestra tabla "Ventas incluidas" con columnas Cliente / Venta / Comisión |
 
 ---
 
@@ -245,7 +245,6 @@
 | :--- | :--- | :--- |
 | **CA-02** | Cierre de caja pasadas 00:00 | A definir approach — diferido |
 | **CA-02** | Cierre de caja pasadas las 00:00 | Backend debe aceptar `date=yesterday` cuando no hay caja abierta para hoy |
-| **CO-01** | Reversión de cuota queda en "Aprobada" | Backend debe actualizar installment a `PENDING` al revertir |
 
 ---
 
@@ -277,3 +276,6 @@
 - `cypress/e2e/40-contrast-color-regression.cy.ts` → CL-02b, CR-13, PR-09 (Grupo C)
 - `cypress/e2e/41-pagination-regression.cy.ts` → CR-17, CL-08 (Grupo D)
 - `cypress/e2e/42-group-e-regression.cy.ts` → CL-10, PR-07, PR-08, CR-09 (Grupo E)
+- `cypress/e2e/43-session-changes-regression.cy.ts` → CO-02, CO-03, CO-04, PR-11, PR-13 (Sesión 5)
+- `cypress/e2e/45-liquidaciones-regression.cy.ts` → LI-01, LI-02, LI-03 (Sesión 7) — 4 tests
+- `cypress/e2e/46-cobros-regression.cy.ts` → CO-01a, CO-01b (Sesión 8) — 4 tests
