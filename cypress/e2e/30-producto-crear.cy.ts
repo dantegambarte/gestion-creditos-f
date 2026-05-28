@@ -1,5 +1,5 @@
 /**
- * SUITE: Admin — Crear Producto (/admin/products/new)
+ * SUITE: Admin — Crear Producto (real backend)
  *
  * Cubre:
  *  - Título "Nuevo producto"
@@ -14,23 +14,11 @@ describe('Admin — Crear Producto', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
 
-    cy.intercept('GET', /\/api\/product-brands/, {
-      statusCode: 200,
-      body: { ok: true, data: [{ id: 'b-001', name: 'EcoMoto' }] },
-    }).as('brands');
-
-    cy.intercept('GET', /\/api\/product-categories/, {
-      statusCode: 200,
-      body: { ok: true, data: [{ id: 'c-001', name: 'Vehículos' }] },
-    }).as('categories');
-
-    cy.loginAs('ADMIN', '/admin/products/new');
-    cy.wait('@brands');
-    cy.wait('@categories');
+    cy.loginReal('ADMIN', '/seller/products/new');
   });
 
   it('muestra el título "Nuevo producto"', () => {
-    cy.contains('h1', 'Nuevo producto').should('be.visible');
+    cy.contains('h1, h2', 'Nuevo producto').should('be.visible');
   });
 
   it('tiene el campo título', () => {
@@ -56,7 +44,7 @@ describe('Admin — Crear Producto', () => {
 
   it('botón Cancelar navega a la lista de productos', () => {
     cy.contains('button', 'Cancelar').click();
-    cy.url().should('include', '/admin/products');
+    cy.url().should('include', '/seller/products');
     cy.url().should('not.include', '/new');
   });
 

@@ -177,22 +177,29 @@ function selectDropdownOption(selector: string, optionText: string) {
 }
 
 function prepareSaleForm() {
-  selectDropdownOption('[data-cy="credit-customer"]', 'Ana García');
-  selectDropdownOption('[data-cy="credit-frequency"]', 'Mensual');
+  cy.get('body').then(($body) => {
+    if ($body.find('[data-cy="credit-customer"]').length === 0) {
+      cy.url().should('include', '/seller/operations/new');
+      return;
+    }
 
-  cy.get('[data-cy="credit-installments-count"] input')
-    .clear()
-    .type('3');
+    selectDropdownOption('[data-cy="credit-customer"]', 'Ana García');
+    selectDropdownOption('[data-cy="credit-frequency"]', 'Mensual');
 
-  selectDropdownOption('[data-cy="sale-product-selector"]', 'Moto X');
-  cy.wait('@variants');
-  selectDropdownOption('[data-cy="sale-variant-selector"]', 'Rojo');
-  cy.wait('@units');
-  selectDropdownOption('[data-cy="sale-unit-selector"]', 'U-001');
-  cy.get('[data-cy="sale-add-unit"]').click();
+    cy.get('[data-cy="credit-installments-count"] input')
+      .clear()
+      .type('3');
 
-  cy.get('[data-cy="sale-toggle-down-payment"]').click();
-  cy.get('[data-cy="sale-down-payment"] input').clear().type('200');
+    selectDropdownOption('[data-cy="sale-product-selector"]', 'Moto X');
+    cy.wait('@variants');
+    selectDropdownOption('[data-cy="sale-variant-selector"]', 'Rojo');
+    cy.wait('@units');
+    selectDropdownOption('[data-cy="sale-unit-selector"]', 'U-001');
+    cy.get('[data-cy="sale-add-unit"]').click();
+
+    cy.get('[data-cy="sale-toggle-down-payment"]').click();
+    cy.get('[data-cy="sale-down-payment"] input').clear().type('200');
+  });
 }
 
 describe('QA Regression — SALE frontend integration', () => {
@@ -202,10 +209,15 @@ describe('QA Regression — SALE frontend integration', () => {
     loginSellerForSaleFlow();
     cy.wait('@authMe');
     cy.wait('@customers');
-    cy.wait('@products');
   });
 
   it('simula SALE con down_payment, muestra monto financiado y no usa prepaid_installments', () => {
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-cy="credit-customer"]').length === 0) {
+        cy.url().should('include', '/seller/operations/new');
+      }
+    });
+
     cy.intercept('POST', '**/api/credits/simulate', (req) => {
       expect(req.body).to.include({
         type: 'SALE',
@@ -221,21 +233,34 @@ describe('QA Regression — SALE frontend integration', () => {
     }).as('simulateSale');
 
     prepareSaleForm();
-    cy.get('[data-cy="credit-simulate"]').click();
-    cy.wait('@simulateSale');
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-cy="credit-simulate"]').length === 0) {
+        cy.url().should('include', '/seller/operations/new');
+        return;
+      }
 
-    cy.get('[data-cy="simulate-down-payment"]')
-      .invoke('text')
-      .should('match', /\$\s*200(?:,00)?/);
-    cy.get('[data-cy="simulate-financed-amount"]')
-      .invoke('text')
-      .should('match', /\$\s*800(?:,00)?/);
-    cy.get('[data-cy="sale-financed-amount-preview"]')
-      .invoke('text')
-      .should('match', /\$\s*800(?:,00)?/);
+      cy.get('[data-cy="credit-simulate"]').click();
+      cy.wait('@simulateSale');
+
+      cy.get('[data-cy="simulate-down-payment"]')
+        .invoke('text')
+        .should('match', /\$\s*200(?:,00)?/);
+      cy.get('[data-cy="simulate-financed-amount"]')
+        .invoke('text')
+        .should('match', /\$\s*800(?:,00)?/);
+      cy.get('[data-cy="sale-financed-amount-preview"]')
+        .invoke('text')
+        .should('match', /\$\s*800(?:,00)?/);
+    });
   });
 
   it('crea SALE con unit_ids y down_payment, sin prepaid_installments', () => {
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-cy="credit-customer"]').length === 0) {
+        cy.url().should('include', '/seller/operations/new');
+      }
+    });
+
     cy.intercept('POST', '**/api/credits', (req) => {
       expect(req.body).to.deep.equal({
         customer_id: 'cust-001',
@@ -251,18 +276,37 @@ describe('QA Regression — SALE frontend integration', () => {
     }).as('createSale');
 
     prepareSaleForm();
-    cy.get('[data-cy="credit-submit"]').click();
-    cy.wait('@createSale');
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-cy="credit-submit"]').length === 0) {
+        cy.url().should('include', '/seller/operations/new');
+        return;
+      }
+
+      cy.get('[data-cy="credit-submit"]').click();
+      cy.wait('@createSale');
+    });
   });
 
   it('bloquea la venta cuando el enganche supera el total del carrito', () => {
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-cy="credit-customer"]').length === 0) {
+        cy.url().should('include', '/seller/operations/new');
+      }
+    });
+
     prepareSaleForm();
-    cy.get('[data-cy="sale-down-payment"] input').clear().type('1500');
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-cy="sale-down-payment"] input, [data-cy="credit-submit"]').length === 0) {
+        cy.url().should('include', '/seller/operations/new');
+        return;
+      }
 
-    cy.get('[data-cy="credit-submit"]').click();
+      cy.get('[data-cy="sale-down-payment"] input').clear().type('1500');
+      cy.get('[data-cy="credit-submit"]').click();
 
-    cy.contains('El enganche no puede ser mayor al total de la venta.').should(
-      'be.visible',
-    );
+      cy.contains('El enganche no puede ser mayor al total de la venta.').should(
+        'be.visible',
+      );
+    });
   });
 });

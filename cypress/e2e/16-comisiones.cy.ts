@@ -1,5 +1,5 @@
 /**
- * SUITE: Comisiones — Seller y Collector
+ * SUITE: Comisiones — Seller, Collector y Admin (real backend)
  *
  * Cubre:
  *  - Título "Mis comisiones" en ambos roles
@@ -12,7 +12,7 @@
 describe('Seller — Mis Comisiones', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-    cy.loginAs('SELLER', '/seller/commissions');
+    cy.loginReal('SELLER', '/seller/commissions');
   });
 
   it('muestra el título "Mis comisiones"', () => {
@@ -23,8 +23,8 @@ describe('Seller — Mis Comisiones', () => {
     cy.contains('ventas').should('exist');
   });
 
-  it('existe el botón de refresh', () => {
-    cy.get('p-button[icon="pi pi-refresh"]').should('exist');
+  it('existe acción de refresh', () => {
+    cy.get('p-button[icon*="refresh"], p-button[icon*="sync"], button .pi-refresh, button .pi-sync').should('exist');
   });
 
   it('muestra dropdown de filtro por estado', () => {
@@ -40,7 +40,7 @@ describe('Seller — Mis Comisiones', () => {
 describe('Collector — Mis Comisiones', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-    cy.loginAs('COLLECTOR', '/collector/commissions');
+    cy.loginReal('COLLECTOR', '/collector/commissions');
   });
 
   it('muestra el título "Mis comisiones"', () => {
@@ -51,8 +51,8 @@ describe('Collector — Mis Comisiones', () => {
     cy.contains('cobros').should('exist');
   });
 
-  it('existe el botón de refresh', () => {
-    cy.get('p-button[icon="pi pi-refresh"]').should('exist');
+  it('existe acción de refresh', () => {
+    cy.get('p-button[icon*="refresh"], p-button[icon*="sync"], button .pi-refresh, button .pi-sync').should('exist');
   });
 
   it('muestra tabla, vacío o loading (no error)', () => {
@@ -64,7 +64,7 @@ describe('Collector — Mis Comisiones', () => {
 describe('Admin — Gestión de Comisiones (liquidaciones)', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-    cy.loginAs('ADMIN', '/admin/commissions');
+    cy.loginReal('ADMIN', '/admin/commissions');
   });
 
   it('renderiza sin error', () => {
