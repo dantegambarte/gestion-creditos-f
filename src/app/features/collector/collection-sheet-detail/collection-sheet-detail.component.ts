@@ -90,6 +90,9 @@ export class CollectionSheetDetailComponent implements OnInit {
   loading = true;
   error: AppError | null = null;
 
+  /** Tab activa del listado: todas, con mora, o con pre-carga pendiente. */
+  activeTab: 'ALL' | 'OVERDUE' | 'PENDING_PAYMENT' = 'ALL';
+
   /** ID de la cuota cuyo refresh silencioso está en curso (spinner local). */
   processingItemId: string | null = null;
 
@@ -218,6 +221,11 @@ export class CollectionSheetDetailComponent implements OnInit {
   /** Monto ya pagado vivo. Snapshot como fallback. */
   displayAmountPaid(item: CollectionSheetItem): number {
     return item.live?.amountPaid ?? item.amountPaid;
+  }
+
+  /** Capital de la cuota sin mora (monto vivo − mora viva). */
+  displayCapital(item: CollectionSheetItem): number {
+    return Math.max(0, this.displayAmountDue(item) - this.displayPenalty(item));
   }
 
   availableBalance(item: CollectionSheetItem): number {
@@ -360,11 +368,45 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   /**
-   * Devuelve cuántas cuotas están en estado vencida dentro de la planilla.
-   * @returns Cantidad total de cuotas vencidas.
+   * Estado de mora derivado: una cuota está "con mora" si su vencimiento es
+   * anterior a la fecha de la planilla y no está saldada/parcial. Se deriva de
+   * la fecha (no del flag installment_status, que puede quedar atrasado si el
+   * cron no corrió).
+   */
+  isOverdue(item: CollectionSheetItem): boolean {
+    const status = item.live?.installmentStatus ?? item.installmentStatus;
+    if (status === 'PAID' || status === 'PARTIAL') return false;
+    const ref = this.sheet?.sheetDate ?? this.todayIso;
+    return item.dueDate < ref;
+  }
+
+  /** True si la cuota tiene una pre-carga viva pendiente de aprobación. */
+  hasPendingPaymentLive(item: CollectionSheetItem): boolean {
+    return item.live?.hasPendingPayment ?? item.hasPendingPayment;
+  }
+
+  /** Items visibles según la tab activa. */
+  get filteredItems(): CollectionSheetItem[] {
+    switch (this.activeTab) {
+      case 'OVERDUE':
+        return this.items.filter((i) => this.isOverdue(i));
+      case 'PENDING_PAYMENT':
+        return this.items.filter((i) => this.hasPendingPaymentLive(i));
+      default:
+        return this.items;
+    }
+  }
+
+  /** Cambia la tab activa del listado. */
+  setTab(tab: 'ALL' | 'OVERDUE' | 'PENDING_PAYMENT'): void {
+    this.activeTab = tab;
+  }
+
+  /**
+   * Devuelve cuántas cuotas están "con mora" (derivado por fecha) en la planilla.
    */
   overdueCount(): number {
-    return this.items.filter((item) => item.installmentStatus === 'OVERDUE').length;
+    return this.items.filter((item) => this.isOverdue(item)).length;
   }
 
   /**
@@ -372,7 +414,7 @@ export class CollectionSheetDetailComponent implements OnInit {
    * @returns Cantidad de cuotas con cobro pendiente.
    */
   pendingPaymentCount(): number {
-    return this.items.filter((item) => item.live?.hasPendingPayment ?? item.hasPendingPayment).length;
+    return this.items.filter((item) => this.hasPendingPaymentLive(item)).length;
   }
 
   /**
@@ -669,6 +711,17 @@ export class CollectionSheetDetailComponent implements OnInit {
         const stillPresent = newItems.some((i) => i.installmentId === expectedItemId);
         this.sheet = data;
         this.items = newItems;
+        // Re-apuntar selectedItem al objeto fresco: el panel lateral lo lee, y si
+        // quedara con la referencia vieja mostraría estado stale (botón anular
+        // pegado, gestión que ya se anuló, etc.). Si la cuota desapareció del
+        // listado (reprogramada), cerramos el panel.
+        if (this.selectedItem) {
+          const refreshed = newItems.find(
+            (i) => i.installmentId === this.selectedItem!.installmentId,
+          );
+          this.selectedItem = refreshed ?? null;
+          if (!this.selectedItem) this.sidePanelOpen = false;
+        }
         this.processingItemId = null;
         if (this.expandedLogItemId === expectedItemId && stillPresent) {
           this.loadLog(expectedItemId);

@@ -41,9 +41,9 @@
     <div class="sheet-layout" [class.sheet-layout--panel-open]="sidePanelOpen">
       <section class="sheet-table-wrap">
         <div class="sheet-tabs mb-2">
-          <button type="button" class="sheet-tab sheet-tab--active">Todas ({{ items.length }})</button>
-          <button type="button" class="sheet-tab">Con mora ({{ overdueCount() }})</button>
-          <button type="button" class="sheet-tab">Pendiente cobro ({{ pendingPaymentCount() }})</button>
+          <button type="button" class="sheet-tab" [class.sheet-tab--active]="activeTab === 'ALL'" (click)="setTab('ALL')">Todas ({{ items.length }})</button>
+          <button type="button" class="sheet-tab" [class.sheet-tab--active]="activeTab === 'OVERDUE'" (click)="setTab('OVERDUE')">Con mora ({{ overdueCount() }})</button>
+          <button type="button" class="sheet-tab" [class.sheet-tab--active]="activeTab === 'PENDING_PAYMENT'" (click)="setTab('PENDING_PAYMENT')">Pendiente cobro ({{ pendingPaymentCount() }})</button>
         </div>
 
         <div class="sheet-table-scroll">
@@ -62,7 +62,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (item of items; track item.installmentId) {
+              @for (item of filteredItems; track item.installmentId) {
                 <tr [class.row-selected]="selectedItem?.installmentId === item.installmentId" (click)="selectItem(item)">
                   <td>{{ item.orderNumber }}</td>
                   <td>
@@ -118,8 +118,11 @@
           <div class="side-summary">
             <p><span>Cuota</span><strong>{{ installmentProgress(selectedItem) }}</strong></p>
             <p><span>Vencimiento</span><strong>{{ selectedItem.dueDate | date: "dd/MM/yy" }}</strong></p>
-            <p><span>Monto cuota</span><strong>{{ displayAmountDue(selectedItem) | currencyArs: 2 }}</strong></p>
+            <p><span>Monto cuota</span><strong>{{ displayCapital(selectedItem) | currencyArs: 2 }}</strong></p>
             <p><span>Mora aplicada</span><strong class="mora">{{ displayPenalty(selectedItem) | currencyArs: 2 }}</strong></p>
+            @if (displayAmountPaid(selectedItem) > 0) {
+              <p><span>Pagado</span><strong>{{ displayAmountPaid(selectedItem) | currencyArs: 2 }}</strong></p>
+            }
             <p class="total"><span>Saldo total</span><strong>{{ availableBalance(selectedItem) | currencyArs: 2 }}</strong></p>
           </div>
 
@@ -174,6 +177,62 @@
               <p class="side-help__title">i ¿Qué es una pre-carga?</p>
               <p class="side-help__text">El cobro queda en estado "Pendiente" hasta que un administrador lo apruebe o rechace.</p>
             </div>
+          </div>
+
+          <!-- Historial de gestiones (incluye anuladas marcadas ANULADO) -->
+          <div class="side-log mt-3">
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"
+              (click)="toggleLog(selectedItem)"
+            >
+              <i class="pi text-[10px]" [class.pi-chevron-down]="!isLogExpanded(selectedItem)" [class.pi-chevron-up]="isLogExpanded(selectedItem)"></i>
+              {{ isLogExpanded(selectedItem) ? "Ocultar historial" : "Ver historial de gestiones" }}
+            </button>
+            @if (isLogExpanded(selectedItem)) {
+              <div class="mt-2">
+                @if (loadingLogItemId === selectedItem.installmentId && !managementLogs[selectedItem.installmentId]) {
+                  <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <p-progressSpinner [style]="{ width: '16px', height: '16px' }" strokeWidth="4" />
+                    <span>Cargando...</span>
+                  </div>
+                } @else if (managementLogs[selectedItem.installmentId] && managementLogs[selectedItem.installmentId].length === 0) {
+                  <p class="text-xs text-gray-500">Sin gestiones registradas.</p>
+                } @else if (managementLogs[selectedItem.installmentId]) {
+                  <ul class="flex flex-col gap-2">
+                    @for (entry of managementLogs[selectedItem.installmentId]; track entry.eventId) {
+                      <li class="flex items-start gap-2 text-xs" [class.opacity-50]="!!entry.voidedAt" [class.line-through]="!!entry.voidedAt">
+                        <p-tag
+                          [value]="eventTypeLabel(entry.eventType)"
+                          [severity]="entry.voidedAt ? 'secondary' : eventSeverity(entry.eventType)"
+                          styleClass="!text-[10px] !py-0.5"
+                        />
+                        <div class="flex-1 min-w-0">
+                          <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span class="text-gray-700">{{ entry.createdAt | date: "dd/MM/yyyy HH:mm" }}</span>
+                            @if (entry.voidedAt) {
+                              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800" style="text-decoration: none;">ANULADO</span>
+                            }
+                            @if (entry.eventType === "PAYMENT" && entry.amount !== null) {
+                              <span class="font-semibold text-green-700">{{ entry.amount | currencyArs: 2 }}</span>
+                            }
+                            @if (entry.nextVisitDate) {
+                              <span class="text-purple-700">→ próx. visita {{ entry.nextVisitDate | date: "dd/MM/yyyy" }}</span>
+                            }
+                          </div>
+                          @if (entry.reason) {
+                            <p class="text-gray-700 mt-0.5">{{ entry.reason }}</p>
+                          }
+                          @if (entry.notes) {
+                            <p class="text-gray-500 mt-0.5 italic">"{{ entry.notes }}"</p>
+                          }
+                        </div>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
           </div>
         } @else {
           <p class="cell-sub">Seleccioná una cuota para ver el detalle.</p>
