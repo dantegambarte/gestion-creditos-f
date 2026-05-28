@@ -30,6 +30,7 @@ import {
   COLLECTION_FILTER_LABELS,
   CollectionSheetDetail,
   CollectionSheetItem,
+  ManagementStatus,
 } from '../models/collection.model';
 import {
   CollectionAttemptCreatePayload,
@@ -160,6 +161,18 @@ export class CollectionSheetDetailComponent implements OnInit {
     return ANTECEDENT_TYPE_LABELS[t];
   }
 
+  /** Etiqueta de la gestión del día derivada del management_status vivo. */
+  managementLabel(status: ManagementStatus): string {
+    const map: Record<ManagementStatus, string> = {
+      PENDING: 'Pendiente',
+      VISITED: 'Cobro registrado',
+      PAID: 'Cobrada',
+      NO_PAYMENT: 'No pagó',
+      NOT_FOUND: 'No encontrado',
+    };
+    return map[status] ?? status;
+  }
+
   installmentSeverity(
     status: InstallmentStatus,
   ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
@@ -185,8 +198,30 @@ export class CollectionSheetDetailComponent implements OnInit {
     return map[status] ?? status;
   }
 
+  // ── Montos a mostrar/cobrar ──────────────────────────────────────────────────
+  // El cobro es una operación VIVA: se cobra el saldo actual de la cuota (con
+  // mora), no el snapshot congelado al generar. Si usáramos el snapshot, el
+  // cobrador pagaría un monto que el backend ve como parcial (la mora subió el
+  // saldo) y rechazaría con 422. En planillas read-only (live=null) caemos al
+  // snapshot, correcto para el documento histórico.
+
+  /** Monto a cobrar vivo de la cuota (con mora). Snapshot como fallback. */
+  displayAmountDue(item: CollectionSheetItem): number {
+    return item.live?.amountDue ?? item.amountDue;
+  }
+
+  /** Mora viva acumulada. Snapshot como fallback. */
+  displayPenalty(item: CollectionSheetItem): number {
+    return item.live?.penaltyAmount ?? item.penaltyAmount;
+  }
+
+  /** Monto ya pagado vivo. Snapshot como fallback. */
+  displayAmountPaid(item: CollectionSheetItem): number {
+    return item.live?.amountPaid ?? item.amountPaid;
+  }
+
   availableBalance(item: CollectionSheetItem): number {
-    return Math.max(0, item.amountDue - item.amountPaid);
+    return Math.max(0, this.displayAmountDue(item) - this.displayAmountPaid(item));
   }
 
   /** True si una acción está en curso sobre esta cuota (refresh silencioso). */
@@ -195,25 +230,35 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   /**
+   * True si la planilla es operable hoy. El backend adjunta la capa `live` solo
+   * a planillas ACTIVE del día; si es null, es un documento read-only (cerrada,
+   * regenerada o de otra fecha) y no se permite ninguna gestión.
+   */
+  isOperable(item: CollectionSheetItem): boolean {
+    return item.live !== null;
+  }
+
+  /**
    * Reglas para "Cobrar":
-   *  - planilla activa, cuota no pagada, no en procesamiento, sin pre-carga pendiente.
-   *  - Mantenido habilitado incluso tras un intento del día: si el cliente aparece
-   *    con plata después de marcar "no pagó/no encontrado", el cobrador debe
-   *    poder registrar el cobro.
+   *  - planilla operable hoy, cuota no saldada, no en procesamiento, sin
+   *    pre-carga viva pendiente.
+   *  - Mantenido habilitado incluso tras un intento del día: si el cliente
+   *    aparece con plata después de marcar "no pagó/no encontrado", el cobrador
+   *    debe poder registrar el cobro.
    */
   canRegisterPayment(item: CollectionSheetItem): boolean {
-    if (this.sheet?.status === 'REGENERATED') return false;
-    if (item.installmentStatus === 'PAID') return false;
+    if (!this.isOperable(item)) return false;
+    if (item.managementStatus === 'PAID') return false;
     if (this.isItemProcessing(item)) return false;
-    if (item.hasPendingPayment) return false;
+    if (item.live!.hasPendingPayment) return false;
     return true;
   }
 
   /**
    * Reglas para "No pagó" / "No encontrado":
    *  - todas las del cobro, PLUS no se permite si ya hubo una gestión del día.
-   *  - Tras un cobro parcial del día, también se bloquean (la reversión va por
-   *    el flujo admin existente).
+   *  - Tras un cobro (parcial o total) del día, también se bloquean (la
+   *    reversión va por el flujo admin existente).
    */
   canRegisterAttempt(item: CollectionSheetItem): boolean {
     if (!this.canRegisterPayment(item)) return false;
@@ -221,20 +266,24 @@ export class CollectionSheetDetailComponent implements OnInit {
     return true;
   }
 
-  /** True si esta cuota ya tiene una gestión registrada en la fecha actual. */
+  /**
+   * True si esta cuota ya tiene una gestión registrada hoy. Se deriva del
+   * management_status vivo: deja de ser PENDING cuando hubo cobro o intento.
+   */
   alreadyManagedToday(item: CollectionSheetItem): boolean {
-    return !!item.antecedentDate && item.antecedentDate === this.todayIso;
+    return item.managementStatus !== 'PENDING';
   }
 
   /**
-   * True si el antecedente del día es un intento (no un cobro parcial) y por lo
-   * tanto puede anularse desde la UI del cobrador. Los cobros parciales se
-   * revierten desde el flujo de admin, no acá.
+   * True si la gestión viva del día es un intento (NO_PAYMENT/NOT_FOUND) y por
+   * lo tanto puede anularse desde la UI del cobrador. Los cobros se revierten
+   * desde el flujo de admin. Usa la capa live (today_attempt_id), no el
+   * antecedente congelado del snapshot.
    */
   canVoidTodayAttempt(item: CollectionSheetItem): boolean {
-    if (!this.alreadyManagedToday(item)) return false;
-    if (!item.antecedentId) return false;
-    return item.antecedentType === 'NO_PAYMENT' || item.antecedentType === 'NOT_FOUND';
+    const live = item.live;
+    if (!live?.todayAttemptId) return false;
+    return live.todayAttemptType === 'NO_PAYMENT' || live.todayAttemptType === 'NOT_FOUND';
   }
 
   /** True si el monto ingresado dejaría la cuota parcial (saldo > 0 después del cobro). */
@@ -323,7 +372,7 @@ export class CollectionSheetDetailComponent implements OnInit {
    * @returns Cantidad de cuotas con cobro pendiente.
    */
   pendingPaymentCount(): number {
-    return this.items.filter((item) => item.hasPendingPayment).length;
+    return this.items.filter((item) => item.live?.hasPendingPayment ?? item.hasPendingPayment).length;
   }
 
   /**
@@ -569,7 +618,7 @@ export class CollectionSheetDetailComponent implements OnInit {
     if (this.processingVoid) return;
     const item = this.voidItem;
     if (!item) return;
-    const antecedentId = item.antecedentId;
+    const antecedentId = item.live?.todayAttemptId;
     if (!antecedentId) return;
     this.processingVoid = true;
     this.attemptsService.void(antecedentId).subscribe({

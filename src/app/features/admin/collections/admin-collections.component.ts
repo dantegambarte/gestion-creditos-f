@@ -36,6 +36,7 @@ import {
   CollectionSheetItem,
   INCLUSION_REASON_LABELS,
   InclusionReason,
+  ManagementStatus,
   SHEET_STATUS_LABELS,
 } from '../../collector/models/collection.model';
 import {
@@ -185,14 +186,34 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Items del detalle filtrados por tab activa.
+   * Items del detalle filtrados por tab activa. Filtra por el estado DERIVADO
+   * (live + due_date), no por el installment_status del snapshot — sino las tabs
+   * Cob. pend. / Cobrado quedan siempre vacías (en el snapshot ninguna cuota
+   * nace PARTIAL/PAID).
    */
   get filteredItems(): CollectionSheetItem[] {
     if (!this.selectedSheet) return [];
     if (this.activeTab === 'ALL') return this.selectedSheet.items;
     return this.selectedSheet.items.filter(
-      (i) => i.installmentStatus === this.activeTab,
+      (i) => this.derivedStatus(i) === this.activeTab,
     );
+  }
+
+  /**
+   * Estado REAL de la cuota para mostrar/filtrar. Usa la capa live (estado vivo)
+   * cuando está disponible; cae al snapshot en planillas read-only (cerradas/
+   * pasadas). La mora se deriva de due_date < sheet_date — robusto ante un cron
+   * que no marcó OVERDUE — en lugar del flag installment_status que puede estar
+   * atrasado.
+   */
+  derivedStatus(
+    item: CollectionSheetItem,
+  ): 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID' {
+    const status = item.live?.installmentStatus ?? item.installmentStatus;
+    if (status === 'PAID') return 'PAID';
+    if (status === 'PARTIAL') return 'PARTIAL';
+    const ref = this.selectedSheet?.sheetDate ?? this.todayIsoDate;
+    return item.dueDate < ref ? 'OVERDUE' : 'PENDING';
   }
 
   /**
@@ -211,7 +232,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   countByStatus(status: string): number {
     if (!this.selectedSheet) return 0;
     return this.selectedSheet.items.filter(
-      (i) => i.installmentStatus === status,
+      (i) => this.derivedStatus(i) === status,
     ).length;
   }
 
@@ -1185,28 +1206,49 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
     return INCLUSION_REASON_LABELS[reason] ?? '';
   }
 
-  /** Color de fondo del chip según el motivo. Sutil, paleta consistente. */
-  inclusionReasonBg(reason: InclusionReason | null | undefined): string {
-    switch (reason) {
-      case 'OVERDUE':
-      case 'OVERDUE_UNSCHEDULED': return '#fee2e2'; // rojo claro
-      case 'DUE_TODAY':           return '#dbeafe'; // azul claro
-      case 'SCHEDULED_VISIT':     return '#ede9fe'; // violeta claro
-      case 'ALL_PENDING':         return '#f3f4f6'; // gris claro
-      default:                    return '#f3f4f6';
-    }
+  /**
+   * Tooltip del chip único de estado: explica por qué la cuota entró en la
+   * planilla (motivo de inclusión snapshot), info que antes vivía en un chip
+   * aparte que se confundía con el estado de la cuota.
+   */
+  cuotaStateTooltip(item: CollectionSheetItem): string {
+    return item.inclusionReason
+      ? `Incluida por: ${this.inclusionReasonLabel(item.inclusionReason)}`
+      : '';
   }
 
-  /** Color de texto del chip — combinado con el fondo da contraste accesible. */
-  inclusionReasonFg(reason: InclusionReason | null | undefined): string {
-    switch (reason) {
-      case 'OVERDUE':
-      case 'OVERDUE_UNSCHEDULED': return '#991b1b';
-      case 'DUE_TODAY':           return '#1e40af';
-      case 'SCHEDULED_VISIT':     return '#6d28d9';
-      case 'ALL_PENDING':         return '#4b5563';
-      default:                    return '#4b5563';
-    }
+  /** True si la cuota tuvo gestión del cobrador (management_status ≠ PENDING). */
+  hasManagement(item: CollectionSheetItem): boolean {
+    return item.managementStatus !== 'PENDING';
+  }
+
+  /** Etiqueta de la gestión del cobrador para el badge de gestión. */
+  managementLabel(status: ManagementStatus): string {
+    const map: Record<ManagementStatus, string> = {
+      PENDING: 'Sin gestionar',
+      VISITED: 'Cobró',
+      PAID: 'Cobró total',
+      NO_PAYMENT: 'No pagó',
+      NOT_FOUND: 'No encontrado',
+    };
+    return map[status] ?? status;
+  }
+
+  /** Severity del badge de gestión. */
+  managementSeverity(
+    status: ManagementStatus,
+  ): 'success' | 'info' | 'warning' | 'secondary' {
+    const map: Record<
+      ManagementStatus,
+      'success' | 'info' | 'warning' | 'secondary'
+    > = {
+      PENDING: 'secondary',
+      VISITED: 'info',
+      PAID: 'success',
+      NO_PAYMENT: 'warning',
+      NOT_FOUND: 'secondary',
+    };
+    return map[status] ?? 'secondary';
   }
 
   /**

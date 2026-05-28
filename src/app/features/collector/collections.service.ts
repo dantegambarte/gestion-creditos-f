@@ -89,6 +89,18 @@ function toSheetItem(raw: CollectionSheetItemRaw): CollectionSheetItem {
     customerPhone: raw.customer_phone,
     customerAddress: raw.customer_address,
     customerDni: raw.customer_dni,
+    managementStatus: raw.management_status,
+    live: raw.live
+      ? {
+          installmentStatus: raw.live.installment_status,
+          amountDue: raw.live.amount_due,
+          amountPaid: raw.live.amount_paid,
+          penaltyAmount: raw.live.penalty_amount,
+          hasPendingPayment: !!raw.live.has_pending_payment,
+          todayAttemptId: raw.live.today_attempt_id,
+          todayAttemptType: raw.live.today_attempt_type,
+        }
+      : null,
   };
 }
 

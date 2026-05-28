@@ -328,7 +328,7 @@
             <ng-template pTemplate="header">
               <tr>
                 <th class="w-8">#</th>
-                <th>Cliente / Contacto</th>
+                <th>Gestión</th>
                 <th>Detalle</th>
                 <th>Vencimiento</th>
                 <th class="text-right">Monto</th>
@@ -373,24 +373,14 @@
                   {{ item.orderNumber }}
                 </td>
                 <td>
-                  @if (item.inclusionReason) {
-                    <p
-                      class="text-[11px] mt-1 px-1.5 py-0.5 inline-block rounded font-medium"
-                      [style.background]="inclusionReasonBg(item.inclusionReason)"
-                      [style.color]="inclusionReasonFg(item.inclusionReason)"
-                      pTooltip="Motivo de inclusión en la planilla"
-                      tooltipPosition="top"
-                    >
-                      {{ inclusionReasonLabel(item.inclusionReason) }}
-                    </p>
-                  }
-                  @if (item.antecedentType) {
-                    <p class="text-[11px] mt-1 ml-1 px-1.5 py-0.5 inline-block rounded" style="background: #fef3c7; color: #92400e;">
-                      Última gestión: {{ item.antecedentType === "PARTIAL_PAYMENT" ? "Cobro parcial" : item.antecedentType === "NO_PAYMENT" ? "No pagó" : "No encontrado" }}
-                      @if (item.antecedentDate) {
-                        · {{ item.antecedentDate | date: "dd/MM/yyyy" }}
-                      }
-                    </p>
+                  @if (hasManagement(item)) {
+                    <p-tag
+                      [value]="'Gestión: ' + managementLabel(item.managementStatus)"
+                      [severity]="managementSeverity(item.managementStatus)"
+                      styleClass="!text-[10px]"
+                    />
+                  } @else {
+                    <span class="text-[11px]" style="color: var(--ff-text-muted)">Sin gestionar</span>
                   }
                   @if (item.nextVisitDate && item.inclusionCriteria === "VISIT_DATE") {
                     <p class="text-[11px] mt-1 px-1.5 py-0.5 inline-block rounded" style="background: #ede9fe; color: #6d28d9;">
@@ -431,8 +421,10 @@
                 </td>
                 <td>
                   <p-tag
-                    [value]="installmentLabel(item.installmentStatus)"
-                    [severity]="installmentSeverity(item.installmentStatus)"
+                    [value]="installmentLabel(derivedStatus(item))"
+                    [severity]="installmentSeverity(derivedStatus(item))"
+                    [pTooltip]="cuotaStateTooltip(item)"
+                    tooltipPosition="top"
                   />
                 </td>
                 <td>

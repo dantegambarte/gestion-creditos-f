@@ -16,6 +16,36 @@ export type InclusionReason =
   | 'ALL_PENDING';
 export type AntecedentType = 'PARTIAL_PAYMENT' | 'NO_PAYMENT' | 'NOT_FOUND';
 
+/** Estado de gestión por fila de planilla (lo que hizo el cobrador hoy). */
+export type ManagementStatus =
+  | 'PENDING'
+  | 'VISITED'
+  | 'PAID'
+  | 'NO_PAYMENT'
+  | 'NOT_FOUND';
+
+/**
+ * Capa viva adjuntada por el backend SOLO cuando la planilla es operable hoy
+ * (ACTIVE + sheet_date = hoy). null en planillas cerradas/regeneradas/pasadas.
+ * Refleja el estado vivo de la gestión, separado del snapshot inmutable.
+ */
+export interface CollectionSheetItemLive {
+  /** Estado VIVO de la cuota (no el snapshot congelado). null en planilla read-only. */
+  installmentStatus: InstallmentStatus | null;
+  /** Monto a cobrar vivo (con mora aplicada). */
+  amountDue: number | null;
+  /** Monto pagado vivo. */
+  amountPaid: number | null;
+  /** Mora viva acumulada. */
+  penaltyAmount: number | null;
+  /** Pre-carga PENDING viva sobre la cuota (no el snapshot congelado). */
+  hasPendingPayment: boolean;
+  /** Id del último intento (no anulado) del día — habilita "Deshacer". */
+  todayAttemptId: string | null;
+  /** Tipo del último intento del día (solo NO_PAYMENT/NOT_FOUND son anulables). */
+  todayAttemptType: Exclude<AntecedentType, 'PARTIAL_PAYMENT'> | null;
+}
+
 /** Etiquetas amigables para mostrar en UI admin (no se muestra al cobrador). */
 export const INCLUSION_REASON_LABELS: Record<InclusionReason, string> = {
   OVERDUE: 'Vencida',
@@ -68,6 +98,10 @@ export interface CollectionSheetItem {
   customerPhone: string | null;
   customerAddress: string | null;
   customerDni: string | null;
+  /** Estado de gestión del día (snapshot del campo editable management_status). */
+  managementStatus: ManagementStatus;
+  /** Capa viva de gestión; null si la planilla no es operable hoy. */
+  live: CollectionSheetItemLive | null;
 }
 
 export interface CollectionSheetDetail extends CollectionSheet {
@@ -172,6 +206,18 @@ export interface CollectionSheetItemRaw {
   customer_phone: string | null;
   customer_address: string | null;
   customer_dni: string | null;
+  management_status: ManagementStatus;
+  live: CollectionSheetItemLiveRaw | null;
+}
+
+export interface CollectionSheetItemLiveRaw {
+  installment_status: InstallmentStatus | null;
+  amount_due: number | null;
+  amount_paid: number | null;
+  penalty_amount: number | null;
+  has_pending_payment: boolean;
+  today_attempt_id: string | null;
+  today_attempt_type: Exclude<AntecedentType, 'PARTIAL_PAYMENT'> | null;
 }
 
 export interface CollectionSheetDetailRaw extends CollectionSheetRaw {
