@@ -92,6 +92,18 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   closing = false;
   closePendingError: string | null = null;
 
+  /**
+   * Indica si la jornada activa pertenece a un día calendario anterior al actual.
+   * Ocurre cuando se trabaja pasada la medianoche sin haber cerrado la caja del día anterior.
+   */
+  get isPostMidnightJornada(): boolean {
+    if (!this.dashboard) return false;
+    const today = new Date().toLocaleDateString('en-CA', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+    });
+    return this.dashboard.date < today;
+  }
+
   /** Diferencia calculada en tiempo real: efectivo declarado - efectivo esperado. */
   get closeDifference(): number {
     if (this.declaredCash == null || !this.preClose) return 0;

@@ -19,6 +19,16 @@
           <i class="pi pi-lock text-xs"></i> Caja cerrada hoy
         </span>
       }
+      @if (isPostMidnightJornada && !closedToday) {
+        <span
+          class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full mt-1"
+          style="color: var(--ff-warning); background: rgba(251, 176, 64, 0.12)"
+          data-cy="jornada-post-midnight-badge"
+        >
+          <i class="pi pi-exclamation-triangle text-xs"></i>
+          Jornada del {{ formatDate(dashboard!.date) }}
+        </span>
+      }
     </div>
     <div class="flex gap-3">
       <p-button

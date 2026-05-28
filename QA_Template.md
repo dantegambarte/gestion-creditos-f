@@ -1073,4 +1073,13 @@ Módulo Liquidaciones
 - **CO-01** → Corregido / validado — backend `restoreInstallmentFromReversal` actualiza `installment.status` a PENDING/OVERDUE/PARTIAL tras reversión; UI muestra "Revertido" en lista de cobros y "Pendiente" en planilla
 - Tests Cypress → `cypress/e2e/46-cobros-regression.cy.ts` — 4 tests automatizados (CO-01a: tag "Revertido", CO-01b: tag "Pendiente" en planilla)
 
+### Sesión 9 (CA-02)
+- **CA-02** → Corregido — implementado concepto de Jornada Comercial para corregir el cierre de caja pasada la medianoche
+  - Backend: `findUnclosedJornadaDate()` en cashRegister.queries.js busca la fecha más reciente con actividad sin cierre (hasta 14 días atrás)
+  - Backend: `getActiveJornadaDate()` en cashRegister.service.js determina la jornada activa; `getDashboard`, `getPreClose`, `close` usan esta fecha cuando no reciben fecha explícita
+  - Backend: `approve` y `adminDirect` en payments.service.js usan `getActiveJornadaDate()` para `_validateCajaOpen` y `registerDate` del movimiento de caja
+  - Backend: `reverse` simplificado — valida y registra contra `movement.register_date` (la jornada del cobro original)
+  - Frontend: getter `isPostMidnightJornada` y badge de advertencia `[data-cy="jornada-post-midnight-badge"]` en el panel de caja
+- Tests Cypress → `cypress/e2e/47-jornada-regression.cy.ts` — 8 tests automatizados (CA-02a: badge jornada, CA-02b: cierre post-medianoche, CA-02c: aprobación post-medianoche, CA-02d: reversión post-medianoche)
+
 ---

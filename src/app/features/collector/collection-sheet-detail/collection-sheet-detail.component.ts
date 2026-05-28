@@ -70,6 +70,7 @@ import { CurrencyAmountInputDirective } from '../../../shared/directives/currenc
   ],
   providers: [MessageService],
   templateUrl: './collection-sheet-detail.component.html',
+  styleUrl: './collection-sheet-detail.component.scss',
 })
 export class CollectionSheetDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -83,6 +84,8 @@ export class CollectionSheetDetailComponent implements OnInit {
 
   sheet: CollectionSheetDetail | null = null;
   items: CollectionSheetItem[] = [];
+  selectedItem: CollectionSheetItem | null = null;
+  sidePanelOpen = false;
   loading = true;
   error: AppError | null = null;
 
@@ -282,6 +285,59 @@ export class CollectionSheetDetailComponent implements OnInit {
   /** Cantidad de cuotas del cliente dado dentro de la planilla actual. */
   customerCuotasCount(customerName: string): number {
     return this.items.filter((i) => i.customerName === customerName).length;
+  }
+
+  /**
+   * Selecciona una cuota para mostrar su detalle en el panel lateral.
+   * @param item Cuota elegida en la tabla principal.
+   */
+  selectItem(item: CollectionSheetItem): void {
+    this.selectedItem = item;
+    this.sidePanelOpen = true;
+  }
+
+  /**
+   * Abre el panel lateral de registro usando la cuota ya seleccionada.
+   */
+  openSidePanel(): void {
+    this.sidePanelOpen = true;
+  }
+
+  /**
+   * Cierra el panel lateral sin perder la cuota seleccionada.
+   */
+  closeSidePanel(): void {
+    this.sidePanelOpen = false;
+  }
+
+  /**
+   * Devuelve cuántas cuotas están en estado vencida dentro de la planilla.
+   * @returns Cantidad total de cuotas vencidas.
+   */
+  overdueCount(): number {
+    return this.items.filter((item) => item.installmentStatus === 'OVERDUE').length;
+  }
+
+  /**
+   * Cuenta cuántas cuotas ya tienen una pre-carga pendiente de aprobación.
+   * @returns Cantidad de cuotas con cobro pendiente.
+   */
+  pendingPaymentCount(): number {
+    return this.items.filter((item) => item.hasPendingPayment).length;
+  }
+
+  /**
+   * Devuelve la cuota en formato "X de N" usando el texto de referencia.
+   * @param item Cuota seleccionada dentro de la planilla.
+   * @returns Texto de progreso de cuota para el panel lateral.
+   */
+  installmentProgress(item: CollectionSheetItem): string {
+    const ref = item.collectionReference ?? '';
+    const match = ref.match(/cuota\s+(\d+)\s+de\s+(\d+)/i);
+    if (match) {
+      return `${match[1]} de ${match[2]}`;
+    }
+    return `${item.installmentNumber}`;
   }
 
   /** Severity para el tag del evento en el log. */
@@ -606,6 +662,7 @@ export class CollectionSheetDetailComponent implements OnInit {
       next: (data) => {
         this.sheet = data;
         this.items = [...data.items].sort((a, b) => a.orderNumber - b.orderNumber);
+        this.selectedItem = this.items[0] ?? null;
         this.header.set([
           { label: 'Mi Ruta', route: '/collector/route' },
           {
