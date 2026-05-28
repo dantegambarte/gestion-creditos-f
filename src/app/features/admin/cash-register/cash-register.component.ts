@@ -18,9 +18,9 @@ import { finalize, switchMap, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
+import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
-import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 import {
   CashRegister,
   CashRegisterClosePayload,
@@ -84,12 +84,25 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   ];
 
   showCloseDialog = false;
+  showInlineClosePanel = false;
   preClose: CashRegisterPreClose | null = null;
   loadingPreClose = false;
   declaredCash: number | null = null;
   observations = '';
   closing = false;
   closePendingError: string | null = null;
+
+  /**
+   * Indica si la jornada activa pertenece a un día calendario anterior al actual.
+   * Ocurre cuando se trabaja pasada la medianoche sin haber cerrado la caja del día anterior.
+   */
+  get isPostMidnightJornada(): boolean {
+    if (!this.dashboard) return false;
+    const today = new Date().toLocaleDateString('en-CA', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+    });
+    return this.dashboard.date < today;
+  }
 
   /** Diferencia calculada en tiempo real: efectivo declarado - efectivo esperado. */
   get closeDifference(): number {
@@ -105,6 +118,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     this.header.set([{ label: 'Caja' }]);
     this.loadDashboard();
     this.loadHistory();
+    this.loadPreClose();
     this.startPolling();
   }
 
@@ -186,15 +200,14 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abre el diálogo de cierre cargando el resumen pre-cierre desde el servidor.
+   * Carga el resumen de pre-cierre para el panel lateral.
    */
-  openCloseDialog(): void {
+  loadPreClose(): void {
     this.declaredCash = null;
     this.observations = '';
     this.closePendingError = null;
     this.preClose = null;
     this.loadingPreClose = true;
-    this.showCloseDialog = true;
     this.service
       .getPreClose()
       .pipe(takeUntil(this.destroy$))
@@ -207,6 +220,24 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           this.loadingPreClose = false;
         },
       });
+  }
+
+  /**
+   * Muestra/oculta el panel lateral de cierre y carga los datos al abrir.
+   */
+  toggleInlineClosePanel(): void {
+    this.showInlineClosePanel = !this.showInlineClosePanel;
+    if (this.showInlineClosePanel) {
+      this.loadPreClose();
+    }
+  }
+
+  /**
+   * Abre el diálogo de cierre cargando el resumen pre-cierre desde el servidor.
+   */
+  openCloseDialog(): void {
+    this.showCloseDialog = true;
+    this.loadPreClose();
   }
 
   /**
@@ -234,8 +265,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (reg) => {
-          this.showCloseDialog = false;
           this.closedToday = true;
+          this.showInlineClosePanel = false;
           this.history = [reg, ...this.history];
           this.msg.add({
             severity: 'success',
@@ -244,6 +275,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
             life: 5000,
           });
           this.loadDashboard();
+          this.loadPreClose();
           this.openDetail(reg);
         },
         error: (err: AppError) => {
@@ -294,7 +326,12 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
         error: () => {
           this.loadingDetail = false;
           this.showDetailDialog = false;
-          this.msg.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el detalle.', life: 4000 });
+          this.msg.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo cargar el detalle.',
+            life: 4000,
+          });
         },
       });
   }
@@ -368,8 +405,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   formatDateTime(iso: string): string {
     if (!iso) return '—';
     const dt = new Date(iso);
-    const date = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
-    const time = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+    const date = `${String(dt.getDate()).padStart(2, '0')}/${String(dt.getMonth() + 1).padStart(2, '0')}/${dt.getFullYear()}`;
+    const time = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
     return `${date} ${time}`;
   }
 
@@ -386,27 +423,47 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * Suma amountReceived de todos los cobros del detalle seleccionado.
    */
   get detailPaymentsTotal(): number {
-    return this.selectedRegister?.breakdown.payments.reduce((s, p) => s + p.amountReceived, 0) ?? 0;
+    return (
+      this.selectedRegister?.breakdown.payments.reduce(
+        (s, p) => s + p.amountReceived,
+        0,
+      ) ?? 0
+    );
   }
 
   /**
    * Suma amount de todos los enganches del detalle seleccionado.
    */
   get detailDownPaymentsTotal(): number {
-    return this.selectedRegister?.breakdown.downPayments.reduce((s, p) => s + p.amount, 0) ?? 0;
+    return (
+      this.selectedRegister?.breakdown.downPayments.reduce(
+        (s, p) => s + p.amount,
+        0,
+      ) ?? 0
+    );
   }
 
   /**
    * Suma amount de todos los gastos del detalle seleccionado.
    */
   get detailExpensesTotal(): number {
-    return this.selectedRegister?.breakdown.expenses.reduce((s, e) => s + e.amount, 0) ?? 0;
+    return (
+      this.selectedRegister?.breakdown.expenses.reduce(
+        (s, e) => s + e.amount,
+        0,
+      ) ?? 0
+    );
   }
 
   /**
    * Suma totalPaid de todas las liquidaciones del detalle seleccionado.
    */
   get detailLiquidationsTotal(): number {
-    return this.selectedRegister?.breakdown.liquidations.reduce((s, l) => s + l.totalPaid, 0) ?? 0;
+    return (
+      this.selectedRegister?.breakdown.liquidations.reduce(
+        (s, l) => s + l.totalPaid,
+        0,
+      ) ?? 0
+    );
   }
 }

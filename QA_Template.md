@@ -851,6 +851,39 @@ Módulo Caja
 
 ---
 
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-04]
+**Título / Descripción:** [Enganche post-medianoche no aparece en la jornada activa]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [El Admin aprueba una operación con enganche pasada la medianoche (ej: 01:30 AM del día siguiente), cuando la jornada comercial activa sigue siendo el día anterior.]
+* **Resultado Esperado:** [El enganche debería figurar en el dashboard y el cierre de la jornada activa (el día anterior).]
+* **Resultado Obtenido (Error):** [El enganche queda con `created_at::date` del nuevo día calendario. El dashboard de la jornada activa no lo incluye en sus totales. Al cerrar la caja de la jornada activa, el monto del enganche no es contabilizado.]
+### 2. Causa Raíz Identificada
+* `credit_down_payments` no tiene columna `register_date`. El INSERT usa `DEFAULT NOW()` (timestamp del servidor). Las queries del dashboard y cierre filtran por `created_at::date = jornada_date`, pero el enganche fue creado con `created_at::date = hoy` (nuevo día).
+* La tabla `cash_movements` sí tiene `register_date` separado del timestamp — por eso los cobros (payments) ya fueron corregidos en CA-02. Los enganches necesitan el mismo tratamiento.
+### 3. Fix Requerido (deuda técnica)
+* Agregar columna `register_date DATE` a `credit_down_payments`.
+* En `credits.service.js`, al crear el registro de enganche, setear `register_date = getActiveJornadaDate()`.
+* Actualizar todas las queries de `cashRegister.queries.js` que filtran `credit_down_payments` por `created_at::date` para usar `register_date` en su lugar.
+
+---
+
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-05]
+**Título / Descripción:** [Gasto post-medianoche no aparece en la jornada activa]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [El Admin registra un gasto pasada la medianoche (ej: 01:30 AM del día siguiente), cuando la jornada comercial activa sigue siendo el día anterior.]
+* **Resultado Esperado:** [El gasto debería descontarse del efectivo esperado en el cierre de la jornada activa (el día anterior).]
+* **Resultado Obtenido (Error):** [El gasto queda con `created_at::date` del nuevo día calendario y no aparece en los totales del cierre de la jornada activa.]
+### 2. Causa Raíz Identificada
+* Mismo problema que CA-04: `expenses` no tiene columna `register_date`. El INSERT usa `DEFAULT NOW()`. Las queries del dashboard y cierre filtran por `created_at::date = jornada_date`.
+### 3. Fix Requerido (deuda técnica)
+* Agregar columna `register_date DATE` a `expenses`.
+* En `expenses.service.js`, al crear el gasto, setear `register_date = getActiveJornadaDate()`.
+* Actualizar las queries de `cashRegister.queries.js` que filtran `expenses` por `created_at::date` para usar `register_date`.
+
+---
+
 
 Módulo Cobro
 
@@ -907,7 +940,7 @@ Módulo Cobro
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Cobrar" en la cuota de la planilla generada.]
 * **Resultado Esperado:** [Debería solo poner números en el campo.]
-* **Resultado Obtenido (Error):** [El campo me permite ingresar la letra "e".]
+* **Resultado Obtenido (Actual):** [Corregido. `@HostListener('keydown')` agregado a `CurrencyAmountInputDirective` bloquea `e`, `E` y `+` antes de que `p-inputNumber` los procese. Aplica a todos los inputs monetarios del sistema. Validado con semilla 08 + sesión manual como COLLECTOR.]
 
 ---
 
@@ -919,7 +952,7 @@ Módulo Liquidaciones
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Sueldo Fijo".]
 * **Resultado Esperado:** [Al poner un importe en "Sueldo Fijo" de un empleado debería mostrarse el nuevo valor.]
-* **Resultado Obtenido (Error):** [No se actualiza automáticamente el nuevo valor, hay que refrescar la página para que impacte, tampoco se refresca en "Resumen Semanal".]
+* **Resultado Obtenido (Actual):** [Corregido. `saveSalary()` en `commissions.facade.ts` ahora llama `loadSummary()` tras el PUT exitoso. `salaryRows` es un `computed()` derivado de `employees()` que se recalcula al volver la segunda llamada a `weekly-summary` con los datos actualizados.]
 
 ---
 
@@ -929,7 +962,7 @@ Módulo Liquidaciones
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Sueldo Fijo".]
 * **Resultado Esperado:** [Al poner un importe en "Sueldo Fijo" de un empleado el editor de sueldo debería limpiarse.]
-* **Resultado Obtenido (Error):** [El editor de sueldo sigue mostrando el valor y el empleado.]
+* **Resultado Obtenido (Actual):** [Corregido. Tras el save exitoso, `selectedCollectorId`, `currentSalary` y `newWeeklyAmount` se resetean a `null`. El `p-inputNumber` desaparece y el dropdown vuelve a mostrar el placeholder "Seleccioná un cobrador".]
 
 ---
 
@@ -939,7 +972,7 @@ Módulo Liquidaciones
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Liquidar".]
 * **Resultado Esperado:** [Al hacer click en "Liquidar" debería mostrar cuáles fueron las ventas para corroborar la liquidación.]
-* **Resultado Obtenido (Error):** [No muestra las ventas para corroborar que la liquidación sea la correcta.]
+* **Resultado Obtenido (Actual):** [Corregido. `openLiquidateDialog()` carga las comisiones PENDING del empleado vía `getCommissions({ userId, status: 'PENDING' })` y las guarda en `employeeCommissions` signal. El dialog muestra una tabla "Ventas incluidas" con columnas Cliente / Venta / Comisión, y un estado vacío "Sin ventas pendientes." cuando no hay comisiones.]
 
 ---
 
@@ -1059,5 +1092,29 @@ Módulo Liquidaciones
 - `src/app/features/admin/users/user-create/user-create.component.spec.ts` → US-03: validators fullName y DNI
 - `src/app/features/seller/products/product-edit/product-edit.component.spec.ts` → PR-10: dirty check (actualizado)
 - `src/app/shared/clients/clients.component.spec.ts` → CL-11/12/13/14: validators y mapeo delinquency (actualizado)
+
+### Sesión 6 (CO-04 aislado)
+- **CO-04** → Corregido / validado — `@HostListener('keydown')` en `CurrencyAmountInputDirective` bloquea `e`, `E`, `+`; aplica globalmente a todos los inputs monetarios
+
+### Sesión 7 (LI-01, LI-02, LI-03)
+- **LI-01** → Corregido / validado — `saveSalary()` llama `loadSummary()` tras el PUT; tabla se actualiza sin refresh manual
+- **LI-02** → Corregido / validado — signals `selectedCollectorId`, `currentSalary`, `newWeeklyAmount` reseteados a `null` tras save; editor queda limpio
+- **LI-03** → Corregido / validado — `openLiquidateDialog()` carga comisiones PENDING vía `getCommissions`; dialog muestra tabla "Ventas incluidas" con Cliente / Venta / Comisión
+- Tests Cypress → `cypress/e2e/45-liquidaciones-regression.cy.ts` — 4 tests automatizados (LI-01, LI-02, LI-03 ×2)
+
+### Sesión 8 (CO-01)
+- **CO-01** → Corregido / validado — backend `restoreInstallmentFromReversal` actualiza `installment.status` a PENDING/OVERDUE/PARTIAL tras reversión; UI muestra "Revertido" en lista de cobros y "Pendiente" en planilla
+- Tests Cypress → `cypress/e2e/46-cobros-regression.cy.ts` — 4 tests automatizados (CO-01a: tag "Revertido", CO-01b: tag "Pendiente" en planilla)
+
+### Sesión 9 (CA-02 / CA-04 / CA-05)
+- **CA-02** → Corregido — implementado concepto de Jornada Comercial para corregir el cierre de caja pasada la medianoche
+  - Backend: `findUnclosedJornadaDate()` en cashRegister.queries.js busca la fecha más reciente con actividad sin cierre (hasta 14 días atrás)
+  - Backend: `getActiveJornadaDate()` en cashRegister.service.js determina la jornada activa; `getDashboard`, `getPreClose`, `close` usan esta fecha cuando no reciben fecha explícita
+  - Backend: `approve` y `adminDirect` en payments.service.js usan `getActiveJornadaDate()` para `_validateCajaOpen` y `registerDate` del movimiento de caja
+  - Backend: `reverse` simplificado — valida y registra contra `movement.register_date` (la jornada del cobro original)
+  - Frontend: getter `isPostMidnightJornada` y badge de advertencia `[data-cy="jornada-post-midnight-badge"]` en el panel de caja
+- Tests Cypress → `cypress/e2e/47-jornada-regression.cy.ts` — 8 tests automatizados (CA-02a: badge jornada, CA-02b: cierre post-medianoche, CA-02c: aprobación post-medianoche, CA-02d: reversión post-medianoche)
+- **CA-04** → Pendiente (deuda técnica) — enganches post-medianoche no se contabilizan en la jornada activa por falta de `register_date` en `credit_down_payments`
+- **CA-05** → Pendiente (deuda técnica) — gastos post-medianoche no se contabilizan en la jornada activa por falta de `register_date` en `expenses`
 
 ---

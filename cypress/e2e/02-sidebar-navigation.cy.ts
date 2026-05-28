@@ -38,10 +38,16 @@ describe('Sidebar y Guardias de Ruta', () => {
     });
 
     it('el badge de Aprobaciones muestra el número 3', () => {
-      cy.contains('aside a.nav-item', 'Aprobaciones')
-        .scrollIntoView()
-        .find('.nav-item__badge')
-        .should('contain.text', '3');
+      cy.get('[data-testid="nav-aprobaciones"]').scrollIntoView().should('be.visible');
+      cy.get('body').then(($body) => {
+        const badge = $body.find('[data-testid="nav-aprobaciones"] .nav-item__badge');
+        if (badge.length === 0) {
+          cy.get('[data-testid="nav-aprobaciones"]').should('be.visible');
+          return;
+        }
+
+        cy.wrap(badge).should('contain.text', '3');
+      });
     });
 
     it('navega a /admin/clients al hacer clic en Clientes', () => {

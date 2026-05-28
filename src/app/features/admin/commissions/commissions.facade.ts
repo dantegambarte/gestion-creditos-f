@@ -7,6 +7,7 @@ import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { CashRegisterService } from '../cash-register/cash-register.service';
 import {
+  Commission,
   LiquidatePayload,
   Liquidation,
   PaymentMethod,
@@ -45,6 +46,8 @@ export class CommissionsFacade {
   readonly liquidateTransferReference = signal('');
   readonly liquidating = signal(false);
   readonly showConfirmDialog = signal(false);
+  readonly employeeCommissions = signal<Commission[]>([]);
+  readonly loadingCommissions = signal(false);
   readonly collectors = signal<User[]>([]);
   readonly selectedCollectorId = signal<string | null>(null);
   readonly currentSalary = signal<Salary | null>(null);
@@ -327,14 +330,28 @@ export class CommissionsFacade {
   }
 
   /**
-   * Abre el diálogo de liquidación inicializando método y referencia.
+   * Abre el diálogo de liquidación inicializando método, referencia y cargando las
+   * comisiones pendientes del empleado para mostrar el detalle de ventas (LI-03).
    * @param employee
    */
   openLiquidateDialog(employee: WeeklySummaryEmployee): void {
     this.selectedEmployee.set(employee);
     this.liquidatePaymentMethod.set('CASH');
     this.liquidateTransferReference.set('');
+    this.employeeCommissions.set([]);
     this.showLiquidateDialog.set(true);
+
+    this.loadingCommissions.set(true);
+    this.commissionsService
+      .getCommissions({ userId: employee.userId, status: 'PENDING' })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.loadingCommissions.set(false)),
+      )
+      .subscribe({
+        next: (commissions) => this.employeeCommissions.set(commissions),
+        error: () => this.employeeCommissions.set([]),
+      });
   }
 
   /**
@@ -480,14 +497,18 @@ export class CommissionsFacade {
       )
       .subscribe({
         next: (salary) => {
-          this.currentSalary.set(salary);
-          this.newWeeklyAmount.set(salary.weeklyAmount);
           this.msg.add({
             severity: 'success',
             summary: 'Sueldo actualizado',
             detail: `Nuevo sueldo semanal: ${this.formatCurrency(salary.weeklyAmount)}`,
             life: 3000,
           });
+          // LI-01: refresca la tabla y el Resumen Semanal
+          this.loadSummary();
+          // LI-02: limpia el editor después de guardar
+          this.selectedCollectorId.set(null);
+          this.currentSalary.set(null);
+          this.newWeeklyAmount.set(null);
         },
         error: (err: AppError) => {
           this.msg.add({

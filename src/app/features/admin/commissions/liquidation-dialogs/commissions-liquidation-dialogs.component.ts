@@ -3,7 +3,9 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { TableModule } from 'primeng/table';
 import {
+  Commission,
   PaymentMethod,
   WeeklySummaryEmployee,
 } from '../../models/commission.model';
@@ -11,7 +13,13 @@ import {
 @Component({
   selector: 'app-commissions-liquidation-dialogs',
   standalone: true,
-  imports: [FormsModule, ButtonModule, DialogModule, DropdownModule],
+  imports: [
+    FormsModule,
+    ButtonModule,
+    DialogModule,
+    DropdownModule,
+    TableModule,
+  ],
   templateUrl: './commissions-liquidation-dialogs.component.html',
 })
 export class CommissionsLiquidationDialogsComponent {
@@ -26,6 +34,8 @@ export class CommissionsLiquidationDialogsComponent {
     value: PaymentMethod;
   }> = [];
   @Input() formatCurrency!: (value: number) => string;
+  @Input() employeeCommissions: Commission[] = [];
+  @Input() loadingCommissions = false;
 
   @Output() showLiquidateDialogChange = new EventEmitter<boolean>();
   @Output() showConfirmDialogChange = new EventEmitter<boolean>();

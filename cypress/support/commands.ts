@@ -1,19 +1,39 @@
 // ── Custom Commands ────────────────────────────────────────────────────────────
 
-type InternalRole = 'ADMIN' | 'SELLER' | 'COLLECTOR';
+type InternalRole = 'ADMIN' | 'SELLER' | 'COLLECTOR' | 'SELLER_COLLECTOR';
 
 type RealCredentials = {
   dni: string;
   password: string;
 };
 
+type PortalRealCredentials = {
+  dni: string;
+  password: string;
+};
+
 const AUTH_TOKEN_CACHE: Partial<Record<InternalRole, string>> = {};
+let PORTAL_SESSION_CACHE: PortalSession | null = null;
 
 type LoginResponseBody = {
   ok?: boolean;
   data?: {
     token?: string;
     user?: Record<string, unknown>;
+  };
+  message?: string;
+};
+
+type PortalLoginResponseBody = {
+  ok?: boolean;
+  data?: {
+    token?: string;
+    customer?: {
+      id?: string;
+      full_name?: string;
+      dni?: string;
+      portal_is_temp_password?: boolean;
+    };
   };
   message?: string;
 };
@@ -192,6 +212,7 @@ const REAL_ROLE_HOME: Record<InternalRole, string> = {
   ADMIN: '/admin/dashboard',
   SELLER: '/seller/operations',
   COLLECTOR: '/collector/route',
+  SELLER_COLLECTOR: '/seller/operations',
 };
 
 /**
@@ -255,6 +276,7 @@ function getRealCredentials(role: InternalRole): RealCredentials {
     ADMIN: { dniKey: 'realAdminDni', passKey: 'realAdminPassword' },
     SELLER: { dniKey: 'realSellerDni', passKey: 'realSellerPassword' },
     COLLECTOR: { dniKey: 'realCollectorDni', passKey: 'realCollectorPassword' },
+    SELLER_COLLECTOR: { dniKey: 'realSellerCollectorDni', passKey: 'realSellerCollectorPassword' },
   };
 
   const keys = envByRole[role];
@@ -310,6 +332,66 @@ function requestLoginWithRetry(
 
       cy.wait(waitMs);
       return requestLoginWithRetry(creds, retries - 1);
+    });
+}
+
+/**
+ * Obtiene credenciales reales de portal desde Cypress.env.
+ * @returns Credenciales DNI/password del cliente portal.
+ */
+function getPortalRealCredentials(): PortalRealCredentials {
+  const dni = String(Cypress.env('realPortalDni') ?? '40567890').trim();
+  const password = String(Cypress.env('realPortalPassword') ?? '1234').trim();
+
+  if (!dni || !password) {
+    throw new Error(
+      '[cypress][loginPortalReal] Faltan credenciales de portal. Configurá realPortalDni y realPortalPassword.',
+    );
+  }
+
+  return { dni, password };
+}
+
+/**
+ * Ejecuta login real de portal por API con reintentos ante 429.
+ * @param creds Credenciales reales del portal.
+ * @param retries Cantidad de reintentos restantes.
+ * @returns Respuesta del endpoint /auth/portal/login.
+ */
+function requestPortalLoginWithRetry(
+  creds: PortalRealCredentials,
+  retries = 20,
+): Cypress.Chainable<Cypress.Response<PortalLoginResponseBody>> {
+  return cy
+    .request<PortalLoginResponseBody>({
+      method: 'POST',
+      url: `${String(Cypress.env('apiBaseUrl'))}/auth/portal/login`,
+      body: { dni: creds.dni, password: creds.password },
+      failOnStatusCode: false,
+    })
+    .then((res) => {
+      if (res.status !== 429) {
+        return res;
+      }
+
+      if (retries <= 0) {
+        throw new Error(
+          '[cypress][portal-auth] Backend sigue respondiendo 429 (rate limit) tras varios reintentos.',
+        );
+      }
+
+      const retryAfterRaw = res.headers?.['retry-after'];
+      const retryAfterSeconds = Number(
+        Array.isArray(retryAfterRaw) ? retryAfterRaw[0] : retryAfterRaw,
+      );
+
+      const waitMs =
+        Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
+          ? retryAfterSeconds * 1000
+          : 5000;
+
+      cy.wait(waitMs);
+      return requestPortalLoginWithRetry(creds, retries - 1);
     });
 }
 
@@ -453,11 +535,74 @@ Cypress.Commands.add(
   },
 );
 
+/**
+ * Inicia sesión real de portal por API y navega al destino solicitado.
+ * @param destination Ruta destino del portal (por defecto dashboard).
+ */
+Cypress.Commands.add('loginPortalReal', (destination?: string) => {
+  assertRealAuthEnabled();
+  const { dni, password } = getPortalRealCredentials();
+  const normalizedDestination = normalizePath(destination ?? PORTAL_DEFAULT_HOME);
+
+  cy.clearAllLocalStorage();
+
+  if (PORTAL_SESSION_CACHE) {
+    cy.visit(normalizedDestination, {
+      onBeforeLoad(win) {
+        seedPortalSession(win, PORTAL_SESSION_CACHE as PortalSession);
+      },
+    });
+
+    cy.location('pathname', { timeout: 15000 }).should('eq', normalizedDestination);
+    return;
+  }
+
+  requestPortalLoginWithRetry({ dni, password }).then((res) => {
+    expect(res.status, '[cypress][loginPortalReal] login portal').to.eq(200);
+
+    const token = res.body?.data?.token;
+    const customer = res.body?.data?.customer;
+
+    expect(token, '[cypress][loginPortalReal] token backend').to.be.a('string').and.not.be.empty;
+    expect(customer?.id, '[cypress][loginPortalReal] customer.id').to.be.a('string').and.not.be.empty;
+
+    const customerFullName =
+      typeof customer?.full_name === 'string' && customer.full_name.length > 0
+        ? customer.full_name
+        : 'Cliente Portal';
+    const customerDni =
+      typeof customer?.dni === 'string' && customer.dni.length > 0
+        ? customer.dni
+        : dni;
+
+    const session: PortalSession = {
+      token: token as string,
+      customer: {
+        id: customer?.id as string,
+        fullName: customerFullName,
+        dni: customerDni,
+        portalIsTempPassword: Boolean(customer?.portal_is_temp_password),
+      },
+    };
+
+    PORTAL_SESSION_CACHE = session;
+
+    cy.visit(normalizedDestination, {
+      onBeforeLoad(win) {
+        seedPortalSession(win, session);
+      },
+    });
+  });
+
+  cy.location('pathname', { timeout: 15000 }).should('eq', normalizedDestination);
+});
+
 /** Limpia estado de auth y navega a /login */
 Cypress.Commands.add('logout', () => {
   delete AUTH_TOKEN_CACHE.ADMIN;
   delete AUTH_TOKEN_CACHE.SELLER;
   delete AUTH_TOKEN_CACHE.COLLECTOR;
+  PORTAL_SESSION_CACHE = null;
   cy.clearAllLocalStorage();
   cy.visit('/login');
 });
@@ -608,6 +753,7 @@ declare global {
         destination?: string,
         overrides?: Partial<PortalSession>,
       ): Chainable<void>;
+      loginPortalReal(destination?: string): Chainable<void>;
       logout(): Chainable<void>;
 
       // ── API Helpers ───────────────────────────────────────────────────
