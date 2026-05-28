@@ -851,6 +851,39 @@ Módulo Caja
 
 ---
 
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-04]
+**Título / Descripción:** [Enganche post-medianoche no aparece en la jornada activa]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [El Admin aprueba una operación con enganche pasada la medianoche (ej: 01:30 AM del día siguiente), cuando la jornada comercial activa sigue siendo el día anterior.]
+* **Resultado Esperado:** [El enganche debería figurar en el dashboard y el cierre de la jornada activa (el día anterior).]
+* **Resultado Obtenido (Error):** [El enganche queda con `created_at::date` del nuevo día calendario. El dashboard de la jornada activa no lo incluye en sus totales. Al cerrar la caja de la jornada activa, el monto del enganche no es contabilizado.]
+### 2. Causa Raíz Identificada
+* `credit_down_payments` no tiene columna `register_date`. El INSERT usa `DEFAULT NOW()` (timestamp del servidor). Las queries del dashboard y cierre filtran por `created_at::date = jornada_date`, pero el enganche fue creado con `created_at::date = hoy` (nuevo día).
+* La tabla `cash_movements` sí tiene `register_date` separado del timestamp — por eso los cobros (payments) ya fueron corregidos en CA-02. Los enganches necesitan el mismo tratamiento.
+### 3. Fix Requerido (deuda técnica)
+* Agregar columna `register_date DATE` a `credit_down_payments`.
+* En `credits.service.js`, al crear el registro de enganche, setear `register_date = getActiveJornadaDate()`.
+* Actualizar todas las queries de `cashRegister.queries.js` que filtran `credit_down_payments` por `created_at::date` para usar `register_date` en su lugar.
+
+---
+
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-05]
+**Título / Descripción:** [Gasto post-medianoche no aparece en la jornada activa]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [El Admin registra un gasto pasada la medianoche (ej: 01:30 AM del día siguiente), cuando la jornada comercial activa sigue siendo el día anterior.]
+* **Resultado Esperado:** [El gasto debería descontarse del efectivo esperado en el cierre de la jornada activa (el día anterior).]
+* **Resultado Obtenido (Error):** [El gasto queda con `created_at::date` del nuevo día calendario y no aparece en los totales del cierre de la jornada activa.]
+### 2. Causa Raíz Identificada
+* Mismo problema que CA-04: `expenses` no tiene columna `register_date`. El INSERT usa `DEFAULT NOW()`. Las queries del dashboard y cierre filtran por `created_at::date = jornada_date`.
+### 3. Fix Requerido (deuda técnica)
+* Agregar columna `register_date DATE` a `expenses`.
+* En `expenses.service.js`, al crear el gasto, setear `register_date = getActiveJornadaDate()`.
+* Actualizar las queries de `cashRegister.queries.js` que filtran `expenses` por `created_at::date` para usar `register_date`.
+
+---
+
 
 Módulo Cobro
 
@@ -1073,7 +1106,7 @@ Módulo Liquidaciones
 - **CO-01** → Corregido / validado — backend `restoreInstallmentFromReversal` actualiza `installment.status` a PENDING/OVERDUE/PARTIAL tras reversión; UI muestra "Revertido" en lista de cobros y "Pendiente" en planilla
 - Tests Cypress → `cypress/e2e/46-cobros-regression.cy.ts` — 4 tests automatizados (CO-01a: tag "Revertido", CO-01b: tag "Pendiente" en planilla)
 
-### Sesión 9 (CA-02)
+### Sesión 9 (CA-02 / CA-04 / CA-05)
 - **CA-02** → Corregido — implementado concepto de Jornada Comercial para corregir el cierre de caja pasada la medianoche
   - Backend: `findUnclosedJornadaDate()` en cashRegister.queries.js busca la fecha más reciente con actividad sin cierre (hasta 14 días atrás)
   - Backend: `getActiveJornadaDate()` en cashRegister.service.js determina la jornada activa; `getDashboard`, `getPreClose`, `close` usan esta fecha cuando no reciben fecha explícita
@@ -1081,5 +1114,7 @@ Módulo Liquidaciones
   - Backend: `reverse` simplificado — valida y registra contra `movement.register_date` (la jornada del cobro original)
   - Frontend: getter `isPostMidnightJornada` y badge de advertencia `[data-cy="jornada-post-midnight-badge"]` en el panel de caja
 - Tests Cypress → `cypress/e2e/47-jornada-regression.cy.ts` — 8 tests automatizados (CA-02a: badge jornada, CA-02b: cierre post-medianoche, CA-02c: aprobación post-medianoche, CA-02d: reversión post-medianoche)
+- **CA-04** → Pendiente (deuda técnica) — enganches post-medianoche no se contabilizan en la jornada activa por falta de `register_date` en `credit_down_payments`
+- **CA-05** → Pendiente (deuda técnica) — gastos post-medianoche no se contabilizan en la jornada activa por falta de `register_date` en `expenses`
 
 ---
