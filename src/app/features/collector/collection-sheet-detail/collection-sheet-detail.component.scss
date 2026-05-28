@@ -21,15 +21,15 @@
 :host ::ng-deep .sheet-back-btn.p-button {
   min-height: 2.1rem;
   padding: 0 0.65rem;
-  border-color: #4f5f81;
-  background: rgba(37, 47, 71, 0.52);
+  border-color: #465477;
+  background: rgba(31, 40, 61, 0.4);
   color: #eef2fb;
   font-weight: 700;
 }
 
 :host ::ng-deep .sheet-back-btn.p-button:not(:disabled):hover {
-  background: rgba(58, 70, 99, 0.72);
-  border-color: #65769e;
+  background: rgba(50, 62, 88, 0.56);
+  border-color: #5c6d94;
 }
 
 .sheet-topbar__crumb {
