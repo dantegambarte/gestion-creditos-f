@@ -199,9 +199,19 @@
       <article
         class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-6 shadow-[0_12px_36px_rgba(0,0,0,0.2)]"
       >
-        <h3 class="mb-5 text-xl font-semibold text-white">
-          Declaraciones y Autorizaciones
-        </h3>
+        <div class="mb-5 flex items-center justify-between">
+          <h3 class="text-xl font-semibold text-white">Declaraciones y Autorizaciones</h3>
+          <div>
+            <button
+              type="button"
+              class="text-sm font-semibold text-[#37F0A4] hover:underline"
+              (click)="setAllDeclarations(true)"
+              data-cy="btn-mark-all"
+            >
+              Marcar todas
+            </button>
+          </div>
+        </div>
 
         <div class="space-y-4">
           <label class="flex items-center gap-3">
