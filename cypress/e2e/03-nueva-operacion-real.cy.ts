@@ -99,10 +99,12 @@ const addOneSaleUnitAndGoToConditions = (): void => {
 const submitOperationForApproval = (): void => {
   cy.contains('Declaraciones y Autorizaciones').should('be.visible');
 
-  cy.get('[data-cy="chk-identity"] .p-checkbox-box').click({ force: true });
-  cy.get('[data-cy="chk-conditions"] .p-checkbox-box').click({ force: true });
-  cy.get('[data-cy="chk-disbursement"] .p-checkbox-box').click({ force: true });
-  cy.get('[data-cy="chk-capacity"] .p-checkbox-box').click({ force: true });
+  // Usar el nuevo botón 'Marcar todas' y verificar estado.
+  cy.get('[data-cy="btn-mark-all"]').click({ force: true });
+  cy.get('[data-cy="chk-identity"] input').should('be.checked');
+  cy.get('[data-cy="chk-conditions"] input').should('be.checked');
+  cy.get('[data-cy="chk-disbursement"] input').should('be.checked');
+  cy.get('[data-cy="chk-capacity"] input').should('be.checked');
 
   cy.get('[data-cy="btn-enviar-aprobacion"] button')
     .should('not.be.disabled')
