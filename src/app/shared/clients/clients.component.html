@@ -235,7 +235,7 @@
       <input pInputText formControlName="direccion" placeholder="Ej: Av. Corrientes 1234" class="client-input" />
     </div>
     <div class="flex flex-col gap-1">
-      <label class="auth-label">Cobrador asignado</label>
+      <label class="auth-label">Cobrador asignado *</label>
       <p-dropdown
         formControlName="assignedCollectorId"
         [options]="collectorOptions"
@@ -247,6 +247,9 @@
         styleClass="w-full"
         appendTo="body"
       />
+      @if (isInvalid("assignedCollectorId")) {
+        <span class="auth-error">{{ getError("assignedCollectorId") }}</span>
+      }
     </div>
   </form>
   <ng-template pTemplate="footer">

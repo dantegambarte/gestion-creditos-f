@@ -520,7 +520,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
       telefonoAlterno: ['', [Validators.pattern(/^[\d\s\+\-]*$/)]],
       email: ['', [Validators.email]],
       direccion: ['', [Validators.required]],
-      assignedCollectorId: [''],
+      assignedCollectorId: ['', [Validators.required]],
     });
     return form;
   }
