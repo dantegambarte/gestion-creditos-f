@@ -80,7 +80,7 @@
     </div>
 
     <div class="flex flex-col gap-1">
-      <label for="assignedCollectorId" class="auth-label">Cobrador asignado</label>
+      <label for="assignedCollectorId" class="auth-label">Cobrador asignado *</label>
       <p-dropdown
         inputId="assignedCollectorId"
         formControlName="assignedCollectorId"
@@ -101,9 +101,9 @@
         [class.ng-invalid]="isInvalid('assignedCollectorId')"
         [class.ng-dirty]="isInvalid('assignedCollectorId')"
       />
-      @if (isInvalid("assignedCollectorId")) {
-        <small class="text-red-500">{{ getError("assignedCollectorId") }}</small>
-      }
+        @if (isInvalid("assignedCollectorId")) {
+          <small class="text-red-500">{{ getError("assignedCollectorId") }}</small>
+        }
     </div>
 
     <div class="flex gap-3 pt-2">

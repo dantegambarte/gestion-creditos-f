@@ -65,7 +65,7 @@ export class ClientCreateComponent implements OnInit {
       address: ['', [Validators.maxLength(255)]],
       phone: [''],
       email: ['', [Validators.email]],
-      assignedCollectorId: [''],
+      assignedCollectorId: ['', [Validators.required]],
     });
 
     this.loadCollectors();
