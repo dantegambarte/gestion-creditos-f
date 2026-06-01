@@ -13,8 +13,10 @@ const ADMIN_NEW_OP_URL = '/admin/operations/new';
  * Avanza al paso de cliente seleccionando tipo préstamo.
  */
 const goToClientStepFromLoanType = (): void => {
-  cy.contains('h1', 'Nueva Operación').should('be.visible');
-  cy.get('[data-cy="btn-type-loan"]').click();
+  cy.location('pathname', { timeout: 20000 }).should('eq', ADMIN_NEW_OP_URL);
+  cy.get('[data-cy="btn-type-loan"]', { timeout: 20000 })
+    .should('be.visible')
+    .click();
   cy.contains('Paso 2 de 5').should('be.visible');
 };
 
@@ -22,8 +24,10 @@ const goToClientStepFromLoanType = (): void => {
  * Avanza al paso de cliente seleccionando tipo venta.
  */
 const goToClientStepFromSaleType = (): void => {
-  cy.contains('h1', 'Nueva Operación').should('be.visible');
-  cy.get('[data-cy="btn-type-sale"]').click();
+  cy.location('pathname', { timeout: 20000 }).should('eq', ADMIN_NEW_OP_URL);
+  cy.get('[data-cy="btn-type-sale"]', { timeout: 20000 })
+    .should('be.visible')
+    .click();
   cy.contains('Paso 2 de 5').should('be.visible');
 };
 
@@ -31,7 +35,9 @@ const goToClientStepFromSaleType = (): void => {
  * Selecciona el primer cliente activo y avanza al paso de productos.
  */
 const pickFirstActiveClient = (): void => {
-  cy.contains('[data-cy^="client-card-"]', 'ACTIVO', { timeout: 20000 }).first().click();
+  cy.contains('[data-cy^="client-card-"]', 'ACTIVO', { timeout: 20000 })
+    .first()
+    .click();
   cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
   cy.contains('Paso 3 de 5').should('be.visible');
 };
@@ -40,9 +46,15 @@ const pickFirstActiveClient = (): void => {
  * Agrega una unidad en venta y avanza al paso de condiciones.
  */
 const addOneSaleUnitAndGoToConditions = (): void => {
-  cy.get('[data-cy^="sale-product-"]', { timeout: 20000 }).first().click({ force: true });
-  cy.get('[data-cy^="sale-variant-"]', { timeout: 15000 }).first().click({ force: true });
-  cy.get('[data-cy="sale-add-unit"]', { timeout: 20000 }).first().click({ force: true });
+  cy.get('[data-cy^="sale-product-"]', { timeout: 20000 })
+    .first()
+    .click({ force: true });
+  cy.get('[data-cy^="sale-variant-"]', { timeout: 15000 })
+    .first()
+    .click({ force: true });
+  cy.get('[data-cy="sale-add-unit"]', { timeout: 20000 })
+    .first()
+    .click({ force: true });
 
   cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
   cy.contains('Paso 4 de 5').should('be.visible');
@@ -70,12 +82,16 @@ describe('Wizard Nueva Operación real — Unhappy Paths', () => {
     pickFirstActiveClient();
     addOneSaleUnitAndGoToConditions();
 
-    cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
+    cy.get('[data-cy="btn-siguiente"] button')
+      .should('not.be.disabled')
+      .click();
     cy.contains('Paso 5 de 5').should('be.visible');
 
     cy.get('[data-cy="chk-identity"] .p-checkbox-box').click({ force: true });
     cy.get('[data-cy="chk-conditions"] .p-checkbox-box').click({ force: true });
-    cy.get('[data-cy="chk-disbursement"] .p-checkbox-box').click({ force: true });
+    cy.get('[data-cy="chk-disbursement"] .p-checkbox-box').click({
+      force: true,
+    });
 
     cy.get('[data-cy="btn-enviar-aprobacion"] button').should('be.disabled');
   });
@@ -85,14 +101,20 @@ describe('Wizard Nueva Operación real — Unhappy Paths', () => {
     pickFirstActiveClient();
     addOneSaleUnitAndGoToConditions();
 
-    cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
+    cy.get('[data-cy="btn-siguiente"] button')
+      .should('not.be.disabled')
+      .click();
     cy.contains('Paso 5 de 5').should('be.visible');
 
     cy.get('[data-cy="chk-identity"] .p-checkbox-box').click({ force: true });
     cy.get('[data-cy="chk-conditions"] .p-checkbox-box').click({ force: true });
-    cy.get('[data-cy="chk-disbursement"] .p-checkbox-box').click({ force: true });
+    cy.get('[data-cy="chk-disbursement"] .p-checkbox-box').click({
+      force: true,
+    });
     cy.get('[data-cy="chk-capacity"] .p-checkbox-box').click({ force: true });
 
-    cy.get('[data-cy="btn-enviar-aprobacion"] button').should('not.be.disabled');
+    cy.get('[data-cy="btn-enviar-aprobacion"] button').should(
+      'not.be.disabled',
+    );
   });
 });

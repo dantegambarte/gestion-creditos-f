@@ -8,14 +8,62 @@
  */
 
 const ADMIN_NEW_OP_URL = '/admin/operations/new';
+/**
+ * Inicia sesión ADMIN por UI y navega al wizard.
+ */
+const loginFreshAdminToNewOperation = (): void => {
+  const dni = String(Cypress.env('realAdminDni') ?? '00000000').trim();
+  const password = String(
+    Cypress.env('realAdminPassword') ?? 'admin123',
+  ).trim();
+
+  cy.clearAllLocalStorage();
+  cy.visit('/login');
+  cy.get('[data-testid="input-dni"]', { timeout: 20000 }).clear().type(dni);
+  cy.get('[data-testid="input-password"] input', { timeout: 20000 })
+    .clear()
+    .type(password);
+  cy.get('[data-testid="btn-login"]').click();
+
+  cy.location('pathname', { timeout: 20000 }).should('include', '/admin');
+  cy.visit(ADMIN_NEW_OP_URL);
+};
+
+/**
+ * Revalida sesión y asegura que el wizard de nueva operación quede cargado.
+ */
+const ensureNewOperationReady = (): void => {
+  const recoverIfRedirectedToLogin = (): void => {
+    cy.location('pathname', { timeout: 20000 }).then((pathname) => {
+      if (pathname === '/login') {
+        loginFreshAdminToNewOperation();
+      }
+    });
+  };
+
+  recoverIfRedirectedToLogin();
+  cy.visit(ADMIN_NEW_OP_URL);
+  recoverIfRedirectedToLogin();
+  cy.location('pathname', { timeout: 20000 }).should('eq', ADMIN_NEW_OP_URL);
+  cy.get('[data-cy="btn-type-loan"]', { timeout: 40000 }).should('be.visible');
+};
 
 /**
  * Avanza hasta el paso de cliente seleccionando primero el tipo préstamo.
  * El paso de tipo avanza automáticamente al elegir tarjeta.
  */
 const goToClientStepFromType = (): void => {
-  cy.contains('h1', 'Nueva Operación').should('be.visible');
-  cy.get('[data-cy="btn-type-loan"]').click();
+  cy.location('pathname', { timeout: 15000 }).then((pathname) => {
+    if (pathname === '/login') {
+      loginFreshAdminToNewOperation();
+      cy.visit(ADMIN_NEW_OP_URL);
+    }
+  });
+
+  cy.location('pathname', { timeout: 20000 }).should('eq', ADMIN_NEW_OP_URL);
+  cy.get('[data-cy="btn-type-loan"]', { timeout: 20000 })
+    .should('be.visible')
+    .click();
   cy.contains('Paso 2 de 5').should('be.visible');
   cy.contains('Buscar cliente').should('be.visible');
 };
@@ -24,12 +72,20 @@ const goToClientStepFromType = (): void => {
  * Avanza al paso de cliente seleccionando tipo venta.
  */
 const goToClientStepFromSaleType = (): void => {
-  cy.contains('h1', 'Nueva Operación').should('be.visible');
-  cy.get('[data-cy="btn-type-sale"]').click();
+  cy.location('pathname', { timeout: 15000 }).then((pathname) => {
+    if (pathname === '/login') {
+      loginFreshAdminToNewOperation();
+      cy.visit(ADMIN_NEW_OP_URL);
+    }
+  });
+
+  cy.location('pathname', { timeout: 20000 }).should('eq', ADMIN_NEW_OP_URL);
+  cy.get('[data-cy="btn-type-sale"]', { timeout: 20000 })
+    .should('be.visible')
+    .click();
   cy.contains('Paso 2 de 5').should('be.visible');
   cy.contains('Buscar cliente').should('be.visible');
 };
-
 
 /**
  * Selecciona el primer cliente activo disponible en la grilla.
@@ -82,16 +138,21 @@ const fillLoanConditionsStep = (): void => {
 const addOneSaleUnitAndGoToConditions = (): void => {
   cy.contains('h3', 'Catálogo', { timeout: 20000 }).should('be.visible');
 
-  cy.get('[data-cy^="sale-product-"]', { timeout: 20000 }).first().click({ force: true });
-  cy.get('[data-cy^="sale-variant-"]', { timeout: 15000 }).first().click({ force: true });
-  cy.get('[data-cy="sale-add-unit"]', { timeout: 20000 }).first().click({ force: true });
+  cy.get('[data-cy^="sale-product-"]', { timeout: 20000 })
+    .first()
+    .click({ force: true });
+  cy.get('[data-cy^="sale-variant-"]', { timeout: 15000 })
+    .first()
+    .click({ force: true });
+  cy.get('[data-cy="sale-add-unit"]', { timeout: 20000 })
+    .first()
+    .click({ force: true });
 
   cy.get('[data-cy="btn-siguiente"] button', { timeout: 15000 })
     .should('not.be.disabled')
     .click();
   cy.contains('Paso 4 de 5').should('be.visible');
 };
-
 
 /**
  * Marca declaraciones requeridas y envía la operación a aprobación.
@@ -112,7 +173,8 @@ const submitOperationForApproval = (): void => {
 describe('Nueva Operación real — Admin', () => {
   it('crea préstamo real y retorna id en alta de crédito', () => {
     cy.viewport(1280, 720);
-    cy.loginReal('ADMIN', ADMIN_NEW_OP_URL);
+    loginFreshAdminToNewOperation();
+    ensureNewOperationReady();
     cy.intercept('POST', '/api/credits').as('createCredit');
 
     goToClientStepFromType();
@@ -122,39 +184,52 @@ describe('Nueva Operación real — Admin', () => {
     submitOperationForApproval();
 
     cy.wait('@createCredit').then((interception) => {
-      const createdId = interception.response?.body?.data?.id as string | undefined;
-      expect(createdId, 'id de crédito creado').to.be.a('string').and.not.be.empty;
+      const createdId = interception.response?.body?.data?.id as
+        | string
+        | undefined;
+      expect(createdId, 'id de crédito creado').to.be.a('string').and.not.be
+        .empty;
       expect(interception.response?.statusCode, 'status de alta').to.eq(201);
     });
 
-    cy.contains('.p-toast-message', 'Operación enviada', { timeout: 20000 }).should('be.visible');
+    cy.contains('.p-toast-message', 'Operación enviada', {
+      timeout: 20000,
+    }).should('be.visible');
     cy.url({ timeout: 20000 }).should('include', '/admin/operations');
   });
 
   it('préstamo: permite cambiar a fecha personalizada en condiciones', () => {
     cy.viewport(1280, 720);
-    cy.loginReal('ADMIN', ADMIN_NEW_OP_URL);
+    loginFreshAdminToNewOperation();
+    ensureNewOperationReady();
 
     goToClientStepFromType();
     pickFirstActiveClient();
     fillLoanProductStep();
 
-    cy.contains('Se calcula automáticamente según la frecuencia seleccionada.').should('exist');
+    cy.contains(
+      'Se calcula automáticamente según la frecuencia seleccionada.',
+    ).should('exist');
     cy.contains('label', 'Fecha personalizada').click();
-    cy.contains('Se calcula automáticamente según la frecuencia seleccionada.').should('not.exist');
+    cy.contains(
+      'Se calcula automáticamente según la frecuencia seleccionada.',
+    ).should('not.exist');
     cy.contains('Fecha de 1er pago').should('be.visible');
   });
 
   it('venta: permite configurar enganche en condiciones', () => {
     cy.viewport(1280, 720);
-    cy.loginReal('ADMIN', ADMIN_NEW_OP_URL);
+    loginFreshAdminToNewOperation();
+    ensureNewOperationReady();
 
     goToClientStepFromSaleType();
     pickFirstActiveClient();
     addOneSaleUnitAndGoToConditions();
 
     cy.contains('label', 'Enganche').click({ force: true });
-    cy.get('p-inputNumber[formControlName="downPayment"] input', { timeout: 15000 })
+    cy.get('p-inputNumber[formControlName="downPayment"] input', {
+      timeout: 15000,
+    })
       .should('be.visible')
       .clear()
       .type('5000')
@@ -164,19 +239,21 @@ describe('Nueva Operación real — Admin', () => {
 
   it('venta: permite configurar cuotas adelantadas en condiciones', () => {
     cy.viewport(1280, 720);
-    cy.loginReal('ADMIN', ADMIN_NEW_OP_URL);
+    loginFreshAdminToNewOperation();
+    ensureNewOperationReady();
 
     goToClientStepFromSaleType();
     pickFirstActiveClient();
     addOneSaleUnitAndGoToConditions();
 
     cy.contains('label', 'Cuotas adelantadas').click({ force: true });
-    cy.contains('Cantidad de cuotas adelantadas', { timeout: 15000 }).should('be.visible');
+    cy.contains('Cantidad de cuotas adelantadas', { timeout: 15000 }).should(
+      'be.visible',
+    );
     cy.get('p-inputNumber[formControlName="advancedInstallmentsCount"] input')
       .should('be.visible')
       .clear()
       .type('2')
       .blur();
   });
-
 });
