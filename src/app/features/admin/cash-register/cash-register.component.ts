@@ -4,11 +4,7 @@ import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
-import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextareaModule } from 'primeng/inputtextarea';
-import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -18,18 +14,17 @@ import { finalize, switchMap, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
-import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import {
   CashRegister,
-  CashRegisterClosePayload,
   CashRegisterDashboard,
-  CashRegisterDetail,
   CashRegisterFilters,
-  CashRegisterPreClose,
   DifferenceStatus,
 } from '../models/cash-register.model';
+import { CashRegisterCloseDialogComponent } from './components/cash-register-close-dialog/cash-register-close-dialog.component';
+import { CashRegisterClosePanelComponent } from './components/cash-register-close-panel/cash-register-close-panel.component';
+import { CashRegisterDetailDialogComponent } from './components/cash-register-detail-dialog/cash-register-detail-dialog.component';
 import { CashRegisterService } from './cash-register.service';
 
 @Component({
@@ -40,18 +35,16 @@ import { CashRegisterService } from './cash-register.service';
     ButtonModule,
     CalendarModule,
     CardModule,
-    DialogModule,
     DropdownModule,
-    InputNumberModule,
-    InputTextareaModule,
-    SkeletonModule,
     TableModule,
     TagModule,
     ToastModule,
     TooltipModule,
-    CurrencyAmountInputDirective,
     LoadingStateComponent,
     ErrorStateComponent,
+    CashRegisterClosePanelComponent,
+    CashRegisterCloseDialogComponent,
+    CashRegisterDetailDialogComponent,
   ],
   providers: [MessageService],
   templateUrl: './cash-register.component.html',
@@ -85,12 +78,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   showCloseDialog = false;
   showInlineClosePanel = false;
-  preClose: CashRegisterPreClose | null = null;
-  loadingPreClose = false;
-  declaredCash: number | null = null;
-  observations = '';
-  closing = false;
-  closePendingError: string | null = null;
+
+  showDetailDialog = false;
+  selectedRegisterId: string | null = null;
 
   /**
    * Indica si la jornada activa pertenece a un día calendario anterior al actual.
@@ -104,21 +94,10 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     return this.dashboard.date < today;
   }
 
-  /** Diferencia calculada en tiempo real: efectivo declarado - efectivo esperado. */
-  get closeDifference(): number {
-    if (this.declaredCash == null || !this.preClose) return 0;
-    return this.declaredCash - this.preClose.efectivo.esperado;
-  }
-
-  showDetailDialog = false;
-  selectedRegister: CashRegisterDetail | null = null;
-  loadingDetail = false;
-
   ngOnInit(): void {
     this.header.set([{ label: 'Caja' }]);
     this.loadDashboard();
     this.loadHistory();
-    this.loadPreClose();
     this.startPolling();
   }
 
@@ -129,7 +108,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Inicia el polling para actualizar el dashboard cada minuto. Se detiene automáticamente al destruir el componente.
+   * Inicia el polling para actualizar el dashboard cada minuto.
    */
   private startPolling(): void {
     interval(60_000)
@@ -146,7 +125,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga los datos del dashboard desde el servidor, mostrando estados de carga y error según corresponda.
+   * Carga los datos del dashboard desde el servidor.
    */
   loadDashboard(): void {
     this.loadingDashboard = true;
@@ -171,7 +150,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga el historial de registros de caja desde el servidor, mostrando estados de carga y error según corresponda.
+   * Carga el historial de registros de caja desde el servidor.
    */
   loadHistory(): void {
     this.loadingHistory = true;
@@ -200,151 +179,49 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga el resumen de pre-cierre para el panel lateral.
-   */
-  loadPreClose(): void {
-    this.declaredCash = null;
-    this.observations = '';
-    this.closePendingError = null;
-    this.preClose = null;
-    this.loadingPreClose = true;
-    this.service
-      .getPreClose()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (pc) => {
-          this.preClose = pc;
-          this.loadingPreClose = false;
-        },
-        error: () => {
-          this.loadingPreClose = false;
-        },
-      });
-  }
-
-  /**
-   * Muestra/oculta el panel lateral de cierre y carga los datos al abrir.
+   * Muestra/oculta el panel lateral de cierre.
    */
   toggleInlineClosePanel(): void {
     this.showInlineClosePanel = !this.showInlineClosePanel;
-    if (this.showInlineClosePanel) {
-      this.loadPreClose();
-    }
   }
 
   /**
-   * Abre el diálogo de cierre cargando el resumen pre-cierre desde el servidor.
+   * Abre el diálogo modal de cierre de caja.
    */
   openCloseDialog(): void {
     this.showCloseDialog = true;
-    this.loadPreClose();
   }
 
   /**
-   * Confirma el cierre de la caja.
-   * @param force - Si es true, fuerza el cierre incluso si hay pendientes.
+   * Callback tras cierre exitoso desde el panel o el dialog.
+   * @param reg registro generado por el cierre
    */
-  confirmClose(force = false): void {
-    if (this.declaredCash == null) return;
-    const payload: CashRegisterClosePayload = {
-      declaredCash: this.declaredCash,
-    };
-    if (this.observations.trim())
-      payload.observations = this.observations.trim();
-    if (force) payload.force = true;
-
-    this.closing = true;
-    this.closePendingError = null;
-    this.service
-      .close(payload)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => {
-          this.closing = false;
-        }),
-      )
-      .subscribe({
-        next: (reg) => {
-          this.closedToday = true;
-          this.showInlineClosePanel = false;
-          this.history = [reg, ...this.history];
-          this.msg.add({
-            severity: 'success',
-            summary: 'Caja cerrada',
-            detail: 'Cierre de caja registrado correctamente.',
-            life: 5000,
-          });
-          this.loadDashboard();
-          this.loadPreClose();
-          this.openDetail(reg);
-        },
-        error: (err: AppError) => {
-          if (err.status === 409) {
-            const isPendingCredits =
-              err.message?.includes('pre-carga') ||
-              err.message?.includes('pendiente');
-            if (isPendingCredits) {
-              this.closePendingError = err.message;
-            } else {
-              this.closedToday = true;
-              this.showCloseDialog = false;
-              this.msg.add({
-                severity: 'warn',
-                summary: 'Caja ya cerrada',
-                detail: err.message,
-                life: 5000,
-              });
-            }
-          } else {
-            this.msg.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: err.message ?? 'No se pudo cerrar la caja.',
-              life: 5000,
-            });
-          }
-        },
-      });
+  onClosedSuccessfully(reg: CashRegister): void {
+    this.closedToday = true;
+    this.showInlineClosePanel = false;
+    this.history = [reg, ...this.history];
+    this.loadDashboard();
+    this.openDetail(reg);
   }
 
   /**
-   * Abre el diálogo de detalle cargando el breakdown completo desde el servidor.
-   * @param reg - El registro de caja de la lista (se usa su id para el fetch).
+   * Abre el diálogo de detalle para el registro indicado.
+   * @param reg registro de caja a ver
    */
   openDetail(reg: CashRegister): void {
-    this.selectedRegister = null;
-    this.loadingDetail = true;
+    this.selectedRegisterId = reg.id;
     this.showDetailDialog = true;
-    this.service
-      .getById(reg.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (detail) => {
-          this.selectedRegister = detail;
-          this.loadingDetail = false;
-        },
-        error: () => {
-          this.loadingDetail = false;
-          this.showDetailDialog = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudo cargar el detalle.',
-            life: 4000,
-          });
-        },
-      });
   }
 
   /**
-   * Aplica los filtros seleccionados y recarga el historial de registros.
+   * Aplica los filtros seleccionados y recarga el historial.
    */
   applyFilters(): void {
     this.loadHistory();
   }
 
   /**
-   * Limpia los filtros y recarga el historial de registros sin ningún filtro aplicado.
+   * Limpia los filtros y recarga el historial sin ningún filtro aplicado.
    */
   clearFilters(): void {
     this.filterDateFrom = null;
@@ -355,8 +232,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   /**
    * Devuelve la etiqueta correspondiente al estado de diferencia.
-   * @param status
-   * @returns
+   * @param status estado de diferencia
    */
   differenceLabel(status: DifferenceStatus): string {
     return { EXACT: 'Exacta', SURPLUS: 'Sobrante', SHORTAGE: 'Faltante' }[
@@ -365,9 +241,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Devuelve el severity correspondiente al estado de diferencia.
-   * @param status
-   * @returns
+   * Devuelve el severity de PrimeNG para el estado de diferencia.
+   * @param status estado de diferencia
    */
   differenceSeverity(
     status: DifferenceStatus,
@@ -379,8 +254,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   /**
    * Formatea un valor como moneda.
-   * @param value
-   * @returns
+   * @param value monto a formatear
    */
   formatCurrency(value: number): string {
     return this.format.currency(value);
@@ -388,8 +262,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   /**
    * Formatea una fecha en el formato dd/mm/yyyy.
-   * @param iso
-   * @returns
+   * @param iso fecha en formato ISO
    */
   formatDate(iso: string): string {
     if (!iso) return '—';
@@ -399,8 +272,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   /**
    * Formatea una fecha ISO con hora en el formato dd/mm/yyyy HH:mm.
-   * @param iso
-   * @returns
+   * @param iso fecha con hora en formato ISO
    */
   formatDateTime(iso: string): string {
     if (!iso) return '—';
@@ -412,58 +284,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   /**
    * Devuelve la etiqueta de método de pago.
-   * @param method
-   * @returns
+   * @param method CASH o TRANSFER
    */
   paymentMethodLabel(method: string): string {
     return method === 'CASH' ? 'Efectivo' : 'Transferencia';
-  }
-
-  /**
-   * Suma amountReceived de todos los cobros del detalle seleccionado.
-   */
-  get detailPaymentsTotal(): number {
-    return (
-      this.selectedRegister?.breakdown.payments.reduce(
-        (s, p) => s + p.amountReceived,
-        0,
-      ) ?? 0
-    );
-  }
-
-  /**
-   * Suma amount de todos los enganches del detalle seleccionado.
-   */
-  get detailDownPaymentsTotal(): number {
-    return (
-      this.selectedRegister?.breakdown.downPayments.reduce(
-        (s, p) => s + p.amount,
-        0,
-      ) ?? 0
-    );
-  }
-
-  /**
-   * Suma amount de todos los gastos del detalle seleccionado.
-   */
-  get detailExpensesTotal(): number {
-    return (
-      this.selectedRegister?.breakdown.expenses.reduce(
-        (s, e) => s + e.amount,
-        0,
-      ) ?? 0
-    );
-  }
-
-  /**
-   * Suma totalPaid de todas las liquidaciones del detalle seleccionado.
-   */
-  get detailLiquidationsTotal(): number {
-    return (
-      this.selectedRegister?.breakdown.liquidations.reduce(
-        (s, l) => s + l.totalPaid,
-        0,
-      ) ?? 0
-    );
   }
 }

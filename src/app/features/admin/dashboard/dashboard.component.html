@@ -10,11 +10,7 @@
 
   <!-- Alert banner -->
   @if (showAlert) {
-    <p-message
-      severity="error"
-      [text]="alertMessage"
-      styleClass="w-full"
-    />
+    <p-message severity="error" [text]="alertMessage" styleClass="w-full" />
   }
 
   <!-- KPI Cards -->
@@ -38,7 +34,9 @@
           }
           <span
             class="db-kpi__trend"
-            [style.color]="kpi.trendUp ? 'var(--ff-success)' : 'var(--ff-danger)'"
+            [style.color]="
+              kpi.trendUp ? 'var(--ff-success)' : 'var(--ff-danger)'
+            "
           >
             <i
               [class]="
@@ -52,115 +50,27 @@
     }
   </div>
 
-  <!-- Pending by role row -->
-  <div class="db-pending-row">
-    <!-- Pending Credits -->
-    <div class="db-pending-col">
-      <div class="db-panel__header">
-        <span>Créditos por aprobar</span>
-        <span class="db-badge">{{ getTotalCredits() }}</span>
-      </div>
-      <div class="db-pending-body">
-        @if (loadingPending) {
-          @for (i of [1, 2]; track i) {
-            <div class="db-pending-group">
-              <p-skeleton width="80%" height="0.75rem" styleClass="mb-2" />
-              <p-skeleton width="60%" height="0.65rem" />
-            </div>
-          }
-        } @else if (pendingCredits.length === 0) {
-          <span class="db-placeholder">Sin créditos pendientes</span>
-        } @else {
-          @for (group of pendingCredits; track group.sellerName) {
-            <div class="db-pending-group">
-              <div class="db-pending-group-header">
-                <span class="db-pending-seller">{{ group.sellerName }}</span>
-                <span class="db-pending-meta">{{ group.count }} · {{ group.totalAmount | currencyArs }}</span>
-              </div>
-              <span class="db-pending-time">{{ timeAgo(group.oldestDate) }}</span>
-              <div class="db-pending-items">
-                @for (credit of group.credits; track credit.id) {
-                  <div class="db-pending-item">
-                    <span class="db-pending-type">{{ credit.type === 'SALE' ? 'VENTA' : 'PRÉSTAMO' }}</span>
-                    <span class="db-pending-customer">{{ credit.customerName }}</span>
-                    <span class="db-pending-amount">{{ credit.totalAmount | currencyArs }}</span>
-                    <span class="db-pending-installments">{{ credit.installmentsCount }} cuotas</span>
-                    <button
-                      class="db-pending-btn"
-                      [disabled]="isCashClosed"
-                      [class.db-pending-btn--disabled]="isCashClosed"
-                      (click)="reviewCredit(credit.id)"
-                      [title]="isCashClosed ? 'La caja está cerrada' : 'Revisar crédito'"
-                    >
-                      Revisar
-                    </button>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        }
-      </div>
-    </div>
-
-    <!-- Pending Payments -->
-    <div class="db-pending-col">
-      <div class="db-panel__header">
-        <span>Cobros por aprobar</span>
-        <span class="db-badge">{{ getTotalPayments() }}</span>
-      </div>
-      <div class="db-pending-body">
-        @if (loadingPending) {
-          @for (i of [1, 2]; track i) {
-            <div class="db-pending-group">
-              <p-skeleton width="80%" height="0.75rem" styleClass="mb-2" />
-              <p-skeleton width="60%" height="0.65rem" />
-            </div>
-          }
-        } @else if (pendingPayments.length === 0) {
-          <span class="db-placeholder">Sin cobros pendientes</span>
-        } @else {
-          @for (group of pendingPayments; track group.collectorName) {
-            <div class="db-pending-group">
-              <div class="db-pending-group-header">
-                <span class="db-pending-seller">{{ group.collectorName }}</span>
-                <span class="db-pending-meta">{{ group.count }} · {{ group.totalAmount | currencyArs }}</span>
-              </div>
-              <span class="db-pending-time">{{ timeAgo(group.oldestDate) }}</span>
-              <div class="db-pending-items">
-                @for (payment of group.payments; track payment.id) {
-                  <div class="db-pending-item">
-                    <span class="db-pending-type">{{ payment.paymentMethod === 'CASH' ? 'EFECTIVO' : 'TRANSF.' }}</span>
-                    <span class="db-pending-customer">{{ payment.customerName }}</span>
-                    <span class="db-pending-amount">{{ payment.amountReceived | currencyArs }}</span>
-                    <span class="db-pending-installments">Cuota {{ payment.installmentNumber }}</span>
-                    <button
-                      class="db-pending-btn"
-                      [disabled]="isCashClosed"
-                      [class.db-pending-btn--disabled]="isCashClosed"
-                      (click)="approvePayment(payment.id)"
-                      [title]="isCashClosed ? 'La caja está cerrada' : 'Aprobar cobro'"
-                    >
-                      Aprobar
-                    </button>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        }
-      </div>
-    </div>
-  </div>
+  <!-- Pending section -->
+  <app-dashboard-pending
+    [isCashClosed]="isCashClosed"
+    (alertUpdated)="onAlertUpdated($event)"
+    (paymentApproved)="onPaymentApproved()"
+  />
 
   <!-- Overdue row -->
   <div class="db-overdue-row">
     <!-- Ranking cuotas vencidas -->
     <div class="db-panel">
       <div class="db-panel__header">
-        <div style="display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: flex; flex-direction: column; gap: 4px">
           <span>Ranking de cuotas vencidas</span>
-          <span style="font-size: 0.75rem; color: var(--text-color-secondary); font-weight: normal;">
+          <span
+            style="
+              font-size: 0.75rem;
+              color: var(--text-color-secondary);
+              font-weight: normal;
+            "
+          >
             Cuota más antigua por cliente. Puede haber más vencidas.
           </span>
         </div>
@@ -186,11 +96,11 @@
 
           <ng-template pTemplate="body" let-inst>
             <tr>
-              <td>{{ inst.dueDate | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ inst.dueDate | date: "dd/MM/yyyy" }}</td>
               <td>
-                <span style="color: var(--ff-danger)">
-                  {{ inst.daysOverdue }} días
-                </span>
+                <span style="color: var(--ff-danger)"
+                  >{{ inst.daysOverdue }} días</span
+                >
               </td>
               <td class="db-td--client">{{ inst.customerName }}</td>
               <td>{{ inst.installmentNumber }}</td>
@@ -222,12 +132,15 @@
       </div>
     </div>
 
-    <!-- Quick access (reduced) -->
+    <!-- Quick access -->
     <div class="db-panel">
       <div class="db-panel__header">
         <span>Accesos rápidos</span>
       </div>
-      <div class="db-panel__body" style="display: flex; flex-direction: column; gap: 12px;">
+      <div
+        class="db-panel__body"
+        style="display: flex; flex-direction: column; gap: 12px"
+      >
         <button class="db-quick-btn" (click)="navigateNewCredit()">
           <i class="pi pi-plus"></i>
           <span>Nuevo crédito</span>
@@ -248,49 +161,6 @@
     </div>
   </div>
 
-  <!-- Analysis row (3 charts) -->
-  <div class="db-analysis-row">
-    <!-- Weekly collection -->
-    <div class="db-chart-panel">
-      <div class="db-panel__header">
-        <span>Recaudación semana</span>
-      </div>
-      @if (loadingCharts) {
-        <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
-          <p-skeleton width="100%" height="250px" />
-        </div>
-      } @else {
-        <p-chart type="bar" [data]="chartWeeklyData" [options]="chartWeeklyOptions" style="height: 250px;" />
-      }
-    </div>
-
-    <!-- Collectors ranking -->
-    <div class="db-chart-panel">
-      <div class="db-panel__header">
-        <span>Top 5 cobradores</span>
-      </div>
-      @if (loadingCharts) {
-        <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
-          <p-skeleton width="100%" height="250px" />
-        </div>
-      } @else {
-        <p-chart type="bar" [data]="chartCollectorsData" [options]="chartCollectorsOptions" style="height: 250px;" />
-      }
-    </div>
-
-    <!-- Sellers ranking -->
-    <div class="db-chart-panel">
-      <div class="db-panel__header">
-        <span>Top 5 vendedores</span>
-      </div>
-      @if (loadingCharts) {
-        <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
-          <p-skeleton width="100%" height="250px" />
-        </div>
-      } @else {
-        <p-chart type="bar" [data]="chartSellersData" [options]="chartSellersOptions" style="height: 250px;" />
-      }
-    </div>
-
-  </div>
+  <!-- Charts section -->
+  <app-dashboard-charts [monthlyDailyData]="monthlyDailyData" />
 </div>

@@ -1,0 +1,194 @@
+<div class="ff-panel p-4 space-y-4" data-cy="admin-cash-register-close-section">
+  <div class="flex items-center justify-between">
+    <h3 class="text-sm font-semibold" style="color: var(--ff-text-primary)">
+      Cierre del día
+    </h3>
+    <div class="flex items-center gap-1">
+      <p-button
+        icon="pi pi-refresh"
+        severity="secondary"
+        [text]="true"
+        [loading]="loadingPreClose"
+        (onClick)="loadPreClose()"
+      />
+      <p-button
+        icon="pi pi-times"
+        severity="secondary"
+        [text]="true"
+        (onClick)="closed.emit()"
+      />
+    </div>
+  </div>
+
+  @if (loadingPreClose) {
+    <app-loading-state />
+  } @else if (preClose) {
+    <div
+      class="rounded-xl overflow-hidden"
+      style="border: 1px solid rgba(52, 211, 153, 0.25)"
+      data-cy="admin-cash-register-close-ingresos-inline"
+    >
+      <div
+        class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+        style="background: rgba(52, 211, 153, 0.1); color: var(--ff-success)"
+      >
+        Ingresos del día
+      </div>
+      <div class="divide-y" style="border-color: var(--ff-border)">
+        <div class="flex justify-between px-3 py-2 text-sm">
+          <span style="color: var(--ff-text-secondary)">Cobros en efectivo</span>
+          <span class="ff-mono font-medium">{{ formatCurrency(preClose.ingresos.cobrosEfectivo) }}</span>
+        </div>
+        <div class="flex justify-between px-3 py-2 text-sm">
+          <span style="color: var(--ff-text-secondary)">Cobros en transferencia</span>
+          <span class="ff-mono font-medium">{{ formatCurrency(preClose.ingresos.cobrosTransferencia) }}</span>
+        </div>
+        <div class="flex justify-between px-3 py-2 text-sm">
+          <span style="color: var(--ff-text-secondary)">Enganches en efectivo</span>
+          <span class="ff-mono font-medium">{{ formatCurrency(preClose.ingresos.enganchesEfectivo) }}</span>
+        </div>
+        <div class="flex justify-between px-3 py-2 text-sm">
+          <span style="color: var(--ff-text-secondary)">Enganches en transferencia</span>
+          <span class="ff-mono font-medium">{{ formatCurrency(preClose.ingresos.enganchesTransferencia) }}</span>
+        </div>
+        <div
+          class="flex justify-between px-3 py-2 text-sm font-semibold"
+          style="background: rgba(52, 211, 153, 0.05)"
+        >
+          <span>Total bruto recaudado</span>
+          <span class="ff-mono" style="color: var(--ff-success)">{{ formatCurrency(preClose.ingresos.totalBruto) }}</span>
+        </div>
+      </div>
+    </div>
+
+    @if (preClose.egresos.total > 0) {
+      <div
+        class="rounded-xl overflow-hidden"
+        style="border: 1px solid rgba(248, 113, 113, 0.25)"
+        data-cy="admin-cash-register-close-egresos-inline"
+      >
+        <div
+          class="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+          style="background: rgba(248, 113, 113, 0.1); color: var(--ff-danger)"
+        >
+          Egresos del día
+        </div>
+        <div class="divide-y" style="border-color: var(--ff-border)">
+          <div
+            class="flex justify-between px-3 py-2 text-sm font-semibold"
+            style="background: rgba(248, 113, 113, 0.05)"
+          >
+            <span>Total egresos</span>
+            <span class="ff-mono" style="color: var(--ff-danger)">- {{ formatCurrency(preClose.egresos.total) }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div
+      class="rounded-lg px-3 py-2 text-sm"
+      style="background: rgba(79, 110, 247, 0.1); color: var(--ff-text-secondary)"
+    >
+      El sistema registra
+      <strong>{{ formatCurrency(preClose.efectivo.esperado) }}</strong> en efectivo.
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="rounded-xl p-3 space-y-2 min-h-[104px]" style="border: 1px solid var(--ff-border)">
+        <p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-text-muted)">
+          Balance efectivo
+        </p>
+        <div class="flex justify-between text-sm">
+          <span style="color: var(--ff-text-secondary)">Esperado en caja</span>
+          <span class="ff-mono font-semibold">{{ formatCurrency(preClose.efectivo.esperado) }}</span>
+        </div>
+      </div>
+      <div class="rounded-xl p-3 space-y-2 min-h-[104px]" style="border: 1px solid var(--ff-border)">
+        <p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--ff-text-muted)">
+          Balance transferencias
+        </p>
+        <div class="flex justify-between text-sm">
+          <span style="color: var(--ff-text-secondary)">Esperado en banco</span>
+          <span class="ff-mono font-semibold">{{ formatCurrency(preClose.transferencias.esperado) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="auth-label">Efectivo declarado en caja</label>
+      <p-inputNumber
+        appCurrencyAmountInput
+        data-cy="admin-cash-register-declared-cash-input-inline"
+        [(ngModel)]="declaredCash"
+        mode="currency"
+        currency="ARS"
+        locale="es-AR"
+        [minFractionDigits]="0"
+        [min]="0"
+        styleClass="w-full"
+        inputStyleClass="w-full"
+      />
+    </div>
+
+    @if (declaredCash != null) {
+      <p
+        class="text-sm font-semibold"
+        [style.color]="
+          closeDifference === 0
+            ? 'var(--ff-success)'
+            : closeDifference > 0
+              ? 'var(--ff-warning)'
+              : 'var(--ff-danger)'
+        "
+      >
+        {{ closeDifference === 0 ? 'Sin diferencia' : closeDifference > 0 ? 'Sobrante' : 'Faltante' }}
+        <span class="ff-mono">{{ formatCurrency(closeDifference) }}</span>
+      </p>
+    }
+
+    <div class="flex flex-col gap-1.5">
+      <label class="auth-label">Observaciones (opcional)</label>
+      <textarea
+        data-cy="admin-cash-register-observations-input-inline"
+        pInputTextarea
+        [(ngModel)]="observations"
+        rows="4"
+        maxlength="500"
+        placeholder="Ej: Se recibieron $5.000 adicionales por devolución..."
+        class="w-full resize-none"
+      ></textarea>
+    </div>
+
+    @if (closePendingError) {
+      <div class="auth-danger-banner">
+        <i class="pi pi-exclamation-circle shrink-0"></i>
+        <p>{{ closePendingError }}</p>
+      </div>
+    }
+
+    <div class="pt-3 flex flex-col gap-3">
+      <p-button
+        data-cy="admin-cash-register-close-confirm-action-inline"
+        label="Registrar cierre"
+        severity="primary"
+        styleClass="w-full justify-center h-11"
+        [loading]="closing"
+        [disabled]="declaredCash == null || loadingPreClose"
+        (onClick)="confirmClose(false)"
+      />
+      <p-button
+        data-cy="admin-cash-register-close-force-action-inline"
+        label="Cerrar de todas formas (force)"
+        icon="pi pi-unlock"
+        severity="danger"
+        [outlined]="true"
+        styleClass="w-full justify-center h-11"
+        [loading]="closing"
+        (onClick)="confirmClose(true)"
+      />
+      <p class="text-xs" style="color: var(--ff-text-muted)">
+        Cierra la caja ignorando cobros pendientes. Usá solo en casos excepcionales.
+      </p>
+    </div>
+  }
+</div>
