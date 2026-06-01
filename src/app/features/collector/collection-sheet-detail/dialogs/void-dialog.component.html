@@ -1,0 +1,55 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Anular gestión"
+  [modal]="true"
+  [style]="{ width: '420px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-3 py-2">
+    @if (item && item.antecedentType) {
+      <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
+        <p class="text-sm font-semibold text-gray-800">
+          {{ item.customerName }}
+        </p>
+        <p class="text-xs text-gray-600 mt-0.5">
+          {{ item.collectionReference }}
+        </p>
+        <p class="text-sm text-gray-500 mt-1">
+          Gestión a anular:
+          <strong>{{ antecedentLabel(item.antecedentType) }}</strong>
+        </p>
+      </div>
+      <p class="text-sm text-gray-700">
+        Se va a anular la gestión registrada hoy. El evento queda en el
+        historial marcado como
+        <strong>ANULADO</strong> (no se borra) y vas a poder volver a registrar
+        la gestión correcta.
+      </p>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+        [disabled]="processingVoid"
+      />
+      <p-button
+        label="Anular"
+        icon="pi pi-undo"
+        severity="danger"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirmVoid()"
+        [loading]="processingVoid"
+        [disabled]="!!processingVoid"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

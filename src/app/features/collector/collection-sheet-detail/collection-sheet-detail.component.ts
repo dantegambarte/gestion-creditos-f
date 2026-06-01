@@ -6,12 +6,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
-import { CalendarModule } from 'primeng/calendar';
-import { DialogModule } from 'primeng/dialog';
-import { DropdownModule } from 'primeng/dropdown';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputTextareaModule } from 'primeng/inputtextarea';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -22,28 +16,23 @@ import { ErrorStateComponent } from '../../../shared/states/error-state/error-st
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { InstallmentStatus } from '../../seller/models/installment.model';
 import { InstallmentsService } from '../../seller/operations/installments.service';
-import { CollectionAttemptsService } from '../collection-attempts.service';
 import { CollectionsService } from '../collections.service';
 import {
-  ANTECEDENT_TYPE_LABELS,
-  AntecedentType,
   COLLECTION_FILTER_LABELS,
   CollectionSheetDetail,
   CollectionSheetItem,
 } from '../models/collection.model';
-import {
-  CollectionAttemptCreatePayload,
-  CollectionAttemptType,
-} from '../models/collection-attempt.model';
+import { CollectionAttemptType } from '../models/collection-attempt.model';
 import {
   MANAGEMENT_EVENT_LABELS,
   ManagementEventType,
   ManagementLogEntry,
 } from '../models/management-log.model';
-import { PaymentCreatePayload } from '../models/payment.model';
-import { PaymentsService } from '../payments.service';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
-import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
+import { AttemptDialogComponent } from './dialogs/attempt-dialog.component';
+import { PaymentDialogComponent } from './dialogs/payment-dialog.component';
+import { CollectionDialogSuccess } from './dialogs/sheet-dialog.model';
+import { VoidDialogComponent } from './dialogs/void-dialog.component';
 
 @Component({
   selector: 'app-collection-sheet-detail',
@@ -53,20 +42,16 @@ import { CurrencyAmountInputDirective } from '../../../shared/directives/currenc
     DatePipe,
     FormsModule,
     ButtonModule,
-    CalendarModule,
     TagModule,
     BadgeModule,
     ToastModule,
-    DialogModule,
-    DropdownModule,
-    InputNumberModule,
-    InputTextModule,
-    InputTextareaModule,
-    CurrencyAmountInputDirective,
     ProgressSpinnerModule,
     TooltipModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    PaymentDialogComponent,
+    AttemptDialogComponent,
+    VoidDialogComponent,
   ],
   providers: [MessageService],
   templateUrl: './collection-sheet-detail.component.html',
@@ -75,8 +60,6 @@ import { CurrencyAmountInputDirective } from '../../../shared/directives/currenc
 export class CollectionSheetDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly collectionsService = inject(CollectionsService);
-  private readonly paymentsService = inject(PaymentsService);
-  private readonly attemptsService = inject(CollectionAttemptsService);
   private readonly installmentsService = inject(InstallmentsService);
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
@@ -93,45 +76,21 @@ export class CollectionSheetDetailComponent implements OnInit {
   processingItemId: string | null = null;
 
   // ── Panel cronológico (management log) por cuota ─────────────────────────────
-  /** installmentId cuyo log está abierto en el panel expandido (uno a la vez). */
   expandedLogItemId: string | null = null;
-  /** Cache de logs ya descargados, por installmentId. */
   managementLogs: Record<string, ManagementLogEntry[]> = {};
-  /** installmentId del log que está cargándose en este momento. */
   loadingLogItemId: string | null = null;
 
-  // ── Diálogo de cobro ─────────────────────────────────────────────────────────
+  // ── Estado de dialogs ────────────────────────────────────────────────────────
   showPaymentDialog = false;
-  dialogItem: CollectionSheetItem | null = null;
-  paymentAmount: number | null = null;
-  paymentMethod: 'CASH' | 'TRANSFER' = 'CASH';
-  transferReference = '';
-  paymentNotes = '';
-  /** Fecha ISO 'YYYY-MM-DD' del input nativo type="date". */
-  paymentNextVisitDate = '';
-  processingPayment = false;
+  paymentDialogItem: CollectionSheetItem | null = null;
 
-  // ── Diálogo de intento (NO_PAYMENT / NOT_FOUND) ──────────────────────────────
   showAttemptDialog = false;
-  attemptItem: CollectionSheetItem | null = null;
-  attemptType: CollectionAttemptType = 'NO_PAYMENT';
-  attemptReason = '';
-  attemptNextVisitDate = '';
-  attemptNotes = '';
-  processingAttempt = false;
-  readonly todayDate = new Date();
+  attemptDialogItem: CollectionSheetItem | null = null;
+  attemptDialogType: CollectionAttemptType = 'NO_PAYMENT';
 
-  // ── Diálogo de anulación (void) ──────────────────────────────────────────────
   showVoidDialog = false;
-  voidItem: CollectionSheetItem | null = null;
-  processingVoid = false;
+  voidDialogItem: CollectionSheetItem | null = null;
 
-  readonly PAYMENT_METHOD_OPTIONS = [
-    { label: 'Efectivo', value: 'CASH' },
-    { label: 'Transferencia', value: 'TRANSFER' },
-  ];
-
-  /** Hoy en formato 'YYYY-MM-DD' — bloquea fechas pasadas en input type="date". */
   readonly todayIso = new Date().toISOString().split('T')[0];
 
   private get sheetId(): string {
@@ -154,10 +113,6 @@ export class CollectionSheetDetailComponent implements OnInit {
     return (
       COLLECTION_FILTER_LABELS[f as keyof typeof COLLECTION_FILTER_LABELS] ?? f
     );
-  }
-
-  antecedentLabel(t: AntecedentType): string {
-    return ANTECEDENT_TYPE_LABELS[t];
   }
 
   installmentSeverity(
@@ -185,6 +140,10 @@ export class CollectionSheetDetailComponent implements OnInit {
     return map[status] ?? status;
   }
 
+  /**
+   * Devuelve el saldo pendiente de la cuota (monto - pagado).
+   * @param item Cuota a evaluar.
+   */
   availableBalance(item: CollectionSheetItem): number {
     return Math.max(0, item.amountDue - item.amountPaid);
   }
@@ -197,9 +156,6 @@ export class CollectionSheetDetailComponent implements OnInit {
   /**
    * Reglas para "Cobrar":
    *  - planilla activa, cuota no pagada, no en procesamiento, sin pre-carga pendiente.
-   *  - Mantenido habilitado incluso tras un intento del día: si el cliente aparece
-   *    con plata después de marcar "no pagó/no encontrado", el cobrador debe
-   *    poder registrar el cobro.
    */
   canRegisterPayment(item: CollectionSheetItem): boolean {
     if (this.sheet?.status === 'REGENERATED') return false;
@@ -212,8 +168,6 @@ export class CollectionSheetDetailComponent implements OnInit {
   /**
    * Reglas para "No pagó" / "No encontrado":
    *  - todas las del cobro, PLUS no se permite si ya hubo una gestión del día.
-   *  - Tras un cobro parcial del día, también se bloquean (la reversión va por
-   *    el flujo admin existente).
    */
   canRegisterAttempt(item: CollectionSheetItem): boolean {
     if (!this.canRegisterPayment(item)) return false;
@@ -227,28 +181,55 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   /**
-   * True si el antecedente del día es un intento (no un cobro parcial) y por lo
-   * tanto puede anularse desde la UI del cobrador. Los cobros parciales se
-   * revierten desde el flujo de admin, no acá.
+   * True si el antecedente del día es un intento (no un cobro parcial) y puede anularse.
    */
   canVoidTodayAttempt(item: CollectionSheetItem): boolean {
     if (!this.alreadyManagedToday(item)) return false;
     if (!item.antecedentId) return false;
-    return item.antecedentType === 'NO_PAYMENT' || item.antecedentType === 'NOT_FOUND';
+    return (
+      item.antecedentType === 'NO_PAYMENT' ||
+      item.antecedentType === 'NOT_FOUND'
+    );
   }
 
-  /** True si el monto ingresado dejaría la cuota parcial (saldo > 0 después del cobro). */
-  isPartialPayment(): boolean {
-    if (!this.dialogItem || !this.paymentAmount) return false;
-    return this.paymentAmount < this.availableBalance(this.dialogItem);
+  // ── Apertura de dialogs ──────────────────────────────────────────────────────
+
+  openPaymentDialog(item: CollectionSheetItem): void {
+    if (!this.canRegisterPayment(item)) return;
+    this.paymentDialogItem = item;
+    this.showPaymentDialog = true;
+  }
+
+  openAttemptDialog(
+    item: CollectionSheetItem,
+    type: CollectionAttemptType,
+  ): void {
+    if (!this.canRegisterAttempt(item)) return;
+    this.attemptDialogItem = item;
+    this.attemptDialogType = type;
+    this.showAttemptDialog = true;
+  }
+
+  openVoidDialog(item: CollectionSheetItem): void {
+    if (!this.canVoidTodayAttempt(item)) return;
+    this.voidDialogItem = item;
+    this.showVoidDialog = true;
+  }
+
+  /**
+   * Punto de entrada unificado para todos los dialogs de gestión.
+   * Ejecuta el refresh silencioso con el toast que el dialog calcula.
+   * @param event Resultado emitido por el dialog hijo.
+   */
+  onDialogActionDone(event: CollectionDialogSuccess): void {
+    this.silentReload(event.itemId, event.toast);
   }
 
   // ── Panel cronológico (management log) ──────────────────────────────────────
 
   /**
    * Abre/cierra el panel del log para una cuota. Si se abre y no hay cache
-   * previo, dispara la carga. Solo se mantiene abierto un panel a la vez para
-   * no sobrecargar la UI en móvil.
+   * previo, dispara la carga.
    */
   toggleLog(item: CollectionSheetItem): void {
     if (this.expandedLogItemId === item.installmentId) {
@@ -270,9 +251,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   /**
-   * True si el item en `index` es la primera cuota de su cliente (la anterior
-   * es de otro cliente o no existe). Usado para insertar el header de
-   * agrupación entre cards. Asume orden por cliente desde backend.
+   * True si el item en `index` es la primera cuota de su cliente.
    */
   isFirstOfCustomer(items: CollectionSheetItem[], index: number): boolean {
     if (index === 0) return true;
@@ -287,49 +266,37 @@ export class CollectionSheetDetailComponent implements OnInit {
     return this.items.filter((i) => i.customerName === customerName).length;
   }
 
-  /**
-   * Selecciona una cuota para mostrar su detalle en el panel lateral.
-   * @param item Cuota elegida en la tabla principal.
-   */
   selectItem(item: CollectionSheetItem): void {
     this.selectedItem = item;
     this.sidePanelOpen = true;
   }
 
-  /**
-   * Abre el panel lateral de registro usando la cuota ya seleccionada.
-   */
   openSidePanel(): void {
     this.sidePanelOpen = true;
   }
 
-  /**
-   * Cierra el panel lateral sin perder la cuota seleccionada.
-   */
   closeSidePanel(): void {
     this.sidePanelOpen = false;
   }
 
   /**
-   * Devuelve cuántas cuotas están en estado vencida dentro de la planilla.
-   * @returns Cantidad total de cuotas vencidas.
+   * Devuelve cuántas cuotas están vencidas en la planilla.
    */
   overdueCount(): number {
-    return this.items.filter((item) => item.installmentStatus === 'OVERDUE').length;
+    return this.items.filter((item) => item.installmentStatus === 'OVERDUE')
+      .length;
   }
 
   /**
-   * Cuenta cuántas cuotas ya tienen una pre-carga pendiente de aprobación.
-   * @returns Cantidad de cuotas con cobro pendiente.
+   * Cuenta cuántas cuotas tienen una pre-carga pendiente de aprobación.
    */
   pendingPaymentCount(): number {
     return this.items.filter((item) => item.hasPendingPayment).length;
   }
 
   /**
-   * Devuelve la cuota en formato "X de N" usando el texto de referencia.
+   * Devuelve el progreso de la cuota en formato "X de N".
    * @param item Cuota seleccionada dentro de la planilla.
-   * @returns Texto de progreso de cuota para el panel lateral.
    */
   installmentProgress(item: CollectionSheetItem): string {
     const ref = item.collectionReference ?? '';
@@ -341,8 +308,13 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   /** Severity para el tag del evento en el log. */
-  eventSeverity(type: ManagementEventType): 'success' | 'warning' | 'secondary' {
-    const map: Record<ManagementEventType, 'success' | 'warning' | 'secondary'> = {
+  eventSeverity(
+    type: ManagementEventType,
+  ): 'success' | 'warning' | 'secondary' {
+    const map: Record<
+      ManagementEventType,
+      'success' | 'warning' | 'secondary'
+    > = {
       PAYMENT: 'success',
       NO_PAYMENT: 'warning',
       NOT_FOUND: 'secondary',
@@ -369,255 +341,29 @@ export class CollectionSheetDetailComponent implements OnInit {
     });
   }
 
-  // ── Diálogo de cobro ─────────────────────────────────────────────────────────
-
-  openPaymentDialog(item: CollectionSheetItem): void {
-    if (!this.canRegisterPayment(item)) return;
-    this.dialogItem = item;
-    this.paymentAmount = this.availableBalance(item);
-    this.paymentMethod = 'CASH';
-    this.transferReference = '';
-    this.paymentNotes = '';
-    this.paymentNextVisitDate = '';
-    this.showPaymentDialog = true;
-  }
-
-  /** Limpia next_visit_date si el monto cubre el saldo completo (validación UX). */
-  onPaymentAmountChange(): void {
-    if (!this.isPartialPayment()) {
-      this.paymentNextVisitDate = '';
-    }
-  }
-
-  confirmPayment(): void {
-    if (this.processingPayment) return;
-    if (!this.dialogItem || !this.paymentAmount || this.paymentAmount <= 0)
-      return;
-
-    const balance = this.availableBalance(this.dialogItem);
-    if (this.paymentAmount > balance) {
-      this.msg.add({
-        severity: 'warn',
-        summary: 'Monto inválido',
-        detail: `El monto no puede superar el saldo disponible ($${balance.toFixed(2)})`,
-      });
-      return;
-    }
-
-    const isPartial = this.paymentAmount < balance;
-    const partialDateIso = isPartial ? this.paymentNextVisitDate : '';
-    if (isPartial && !partialDateIso) {
-      this.msg.add({
-        severity: 'warn',
-        summary: 'Fecha requerida',
-        detail: 'Indicá la fecha de próxima visita para el cobro parcial.',
-      });
-      return;
-    }
-    if (isPartial && partialDateIso < this.todayIso) {
-      this.msg.add({
-        severity: 'warn',
-        summary: 'Fecha inválida',
-        detail: 'La próxima visita no puede ser una fecha pasada.',
-      });
-      return;
-    }
-
-    this.processingPayment = true;
-    const payload: PaymentCreatePayload = {
-      installmentId: this.dialogItem.installmentId,
-      amountReceived: this.paymentAmount,
-      paymentMethod: this.paymentMethod,
-    };
-    if (this.paymentMethod === 'TRANSFER' && this.transferReference) {
-      payload.transferReference = this.transferReference;
-    }
-    if (this.paymentNotes) payload.notes = this.paymentNotes;
-    if (isPartial) payload.nextVisitDate = partialDateIso;
-
-    const itemId = this.dialogItem.installmentId;
-    const itemNumber = this.dialogItem.installmentNumber;
-
-    this.paymentsService.create(payload).subscribe({
-      next: (result) => {
-        this.processingPayment = false;
-        this.showPaymentDialog = false;
-        const successMsg = result.warning
-          ? { severity: 'warn' as const, summary: 'Cobro registrado con advertencia', detail: result.warning }
-          : isPartial
-            ? { severity: 'success' as const, summary: 'Cobro parcial registrado', detail: `Pre-carga registrada. Próxima visita: ${this.formatDate(partialDateIso)}.` }
-            : { severity: 'success' as const, summary: 'Cobro registrado', detail: `Pre-carga registrada para la cuota ${itemNumber}. Pendiente de aprobación.` };
-        this.silentReload(itemId, successMsg);
-      },
-      error: (err: AppError) => {
-        this.processingPayment = false;
-        const severity = err.status === 409 || err.status === 422 ? 'warn' : 'error';
-        this.msg.add({
-          severity,
-          summary:
-            err.status === 422
-              ? 'Datos inválidos'
-              : err.status === 409
-                ? 'Advertencia'
-                : 'Error',
-          detail: err.message ?? 'No se pudo registrar el cobro.',
-        });
-      },
-    });
-  }
-
-  // ── Diálogo de intento (NO_PAYMENT / NOT_FOUND) ──────────────────────────────
-
-  openAttemptDialog(item: CollectionSheetItem, type: CollectionAttemptType): void {
-    if (!this.canRegisterAttempt(item)) return;
-    this.attemptItem = item;
-    this.attemptType = type;
-    this.attemptReason = '';
-    this.attemptNextVisitDate = '';
-    this.attemptNotes = '';
-    this.showAttemptDialog = true;
-  }
-
-  attemptTitle(): string {
-    return this.attemptType === 'NO_PAYMENT' ? 'Cliente no pagó' : 'Cliente no encontrado';
-  }
-
-  confirmAttempt(): void {
-    if (this.processingAttempt) return;
-    if (!this.attemptItem) return;
-
-    const attemptDateIso =
-      this.attemptType === 'NO_PAYMENT' ? this.attemptNextVisitDate : '';
-
-    if (this.attemptType === 'NO_PAYMENT') {
-      if (!this.attemptReason.trim()) {
-        this.msg.add({
-          severity: 'warn',
-          summary: 'Motivo requerido',
-          detail: 'Ingresá el motivo por el que el cliente no pagó.',
-        });
-        return;
-      }
-      if (!attemptDateIso) {
-        this.msg.add({
-          severity: 'warn',
-          summary: 'Fecha requerida',
-          detail: 'Indicá la fecha de próxima visita.',
-        });
-        return;
-      }
-      if (attemptDateIso < this.todayIso) {
-        this.msg.add({
-          severity: 'warn',
-          summary: 'Fecha inválida',
-          detail: 'La próxima visita no puede ser una fecha pasada.',
-        });
-        return;
-      }
-    }
-
-    this.processingAttempt = true;
-    const payload: CollectionAttemptCreatePayload = {
-      installmentId: this.attemptItem.installmentId,
-      attemptType: this.attemptType,
-    };
-    if (this.attemptType === 'NO_PAYMENT') {
-      payload.reason = this.attemptReason.trim();
-      payload.nextVisitDate = attemptDateIso;
-    }
-    if (this.attemptNotes) payload.notes = this.attemptNotes;
-
-    const itemId = this.attemptItem.installmentId;
-    const isNoPayment = this.attemptType === 'NO_PAYMENT';
-    const nextVisitForToast = attemptDateIso;
-
-    this.attemptsService.create(payload).subscribe({
-      next: () => {
-        this.processingAttempt = false;
-        this.showAttemptDialog = false;
-        const successMsg = isNoPayment
-          ? { severity: 'success' as const, summary: 'Intento registrado', detail: `Próxima visita: ${this.formatDate(nextVisitForToast)}.` }
-          : { severity: 'success' as const, summary: 'Intento registrado', detail: 'Cliente no encontrado.' };
-        this.silentReload(itemId, successMsg);
-      },
-      error: (err: AppError) => {
-        this.processingAttempt = false;
-        const severity = err.status === 409 || err.status === 422 ? 'warn' : 'error';
-        this.msg.add({
-          severity,
-          summary:
-            err.status === 403
-              ? 'Sin acceso'
-              : err.status === 422
-                ? 'Datos inválidos'
-                : 'Error',
-          detail: err.message ?? 'No se pudo registrar el intento.',
-        });
-      },
-    });
-  }
-
-  // ── Anulación del intento del día (supersede) ────────────────────────────────
-
-  openVoidDialog(item: CollectionSheetItem): void {
-    if (!this.canVoidTodayAttempt(item)) return;
-    this.voidItem = item;
-    this.showVoidDialog = true;
-  }
-
-  confirmVoid(): void {
-    if (this.processingVoid) return;
-    const item = this.voidItem;
-    if (!item) return;
-    const antecedentId = item.antecedentId;
-    if (!antecedentId) return;
-    this.processingVoid = true;
-    this.attemptsService.void(antecedentId).subscribe({
-      next: () => {
-        this.processingVoid = false;
-        this.showVoidDialog = false;
-        this.silentReload(item.installmentId, {
-          severity: 'success',
-          summary: 'Gestión anulada',
-          detail: 'Podés volver a registrar la gestión de la cuota.',
-        });
-      },
-      error: (err: AppError) => {
-        this.processingVoid = false;
-        const severity = err.status === 403 || err.status === 409 ? 'warn' : 'error';
-        this.msg.add({
-          severity,
-          summary:
-            err.status === 403
-              ? 'No autorizado'
-              : err.status === 409
-                ? 'No se pudo anular'
-                : 'Error',
-          detail: err.message ?? 'No se pudo anular la gestión.',
-        });
-      },
-    });
-  }
-
-  // ── Refresh silencioso preservando scroll/estado ─────────────────────────────
-
   /**
-   * Refresca la planilla sin spinner global. Marca la cuota como en procesamiento
-   * para mostrar spinner local. Si el item desaparece tras el refresh (porque se
-   * reprogramó a una fecha futura), muestra un toast con un mensaje específico
-   * para evitar que el cobrador piense que falló.
+   * Refresca la planilla sin spinner global. Muestra spinner local en la cuota
+   * procesada. Si la cuota desaparece tras el refresh (reprogramada), muestra
+   * un mensaje específico para evitar confusión.
    */
   private silentReload(
     expectedItemId: string,
-    onSuccessToast: { severity: 'success' | 'warn'; summary: string; detail: string },
+    onSuccessToast: {
+      severity: 'success' | 'warn';
+      summary: string;
+      detail: string;
+    },
   ): void {
     this.processingItemId = expectedItemId;
-    // Invalida el log cacheado: si el panel queda abierto, se recargará al verlo.
     delete this.managementLogs[expectedItemId];
     this.collectionsService.getById(this.sheetId).subscribe({
       next: (data) => {
-        const newItems = [...data.items].sort((a, b) => a.orderNumber - b.orderNumber);
-        const stillPresent = newItems.some((i) => i.installmentId === expectedItemId);
+        const newItems = [...data.items].sort(
+          (a, b) => a.orderNumber - b.orderNumber,
+        );
+        const stillPresent = newItems.some(
+          (i) => i.installmentId === expectedItemId,
+        );
         this.sheet = data;
         this.items = newItems;
         this.processingItemId = null;
@@ -629,7 +375,8 @@ export class CollectionSheetDetailComponent implements OnInit {
           this.msg.add({
             severity: 'success',
             summary: 'Gestión registrada',
-            detail: 'La cuota fue reprogramada para una próxima visita y ya no figura en esta planilla.',
+            detail:
+              'La cuota fue reprogramada para una próxima visita y ya no figura en esta planilla.',
             life: 5000,
           });
         } else {
@@ -641,27 +388,22 @@ export class CollectionSheetDetailComponent implements OnInit {
         this.msg.add({
           severity: 'warn',
           summary: 'Gestión registrada',
-          detail: 'No pudimos refrescar la planilla. Tirá del listado o recargá la página.',
+          detail:
+            'No pudimos refrescar la planilla. Tirá del listado o recargá la página.',
           life: 5000,
         });
       },
     });
   }
 
-  private formatDate(iso: string): string {
-    if (!iso) return '';
-    const [y, m, d] = iso.split('-');
-    return `${d}/${m}/${y}`;
-  }
-
-  // ── Carga inicial ────────────────────────────────────────────────────────────
-
   private load(): void {
     this.loading = true;
     this.collectionsService.getById(this.sheetId).subscribe({
       next: (data) => {
         this.sheet = data;
-        this.items = [...data.items].sort((a, b) => a.orderNumber - b.orderNumber);
+        this.items = [...data.items].sort(
+          (a, b) => a.orderNumber - b.orderNumber,
+        );
         this.selectedItem = this.items[0] ?? null;
         this.header.set([
           { label: 'Mi Ruta', route: '/collector/route' },
