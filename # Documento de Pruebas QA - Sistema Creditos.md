@@ -27,6 +27,7 @@
 | **CR-18** | Operaciones - Admin. | Se hizo click en "Ver" en una operación pendiente de aprobación. | Debería mostrar la tasa de interés | Corregido / Validado — `!= null` para capturar `undefined`; tasa multiplicada ×100 para display como %; tipo SALE muestra "N/A (Venta)"; status EXPIRED agregado al tipo y mapas de label/severity |
 | **CR-19** | Cancelación Anticipada - Admin. | Se hizo click en "Cancelación Anticipada" en una operación aprobada. | Debería poder adelantar cuotas. | Corregido / Validado — botón renombrado a "Cancelación total anticipada"; diálogo explica que es pago total de todas las cuotas y menciona la opción de pago anticipado por cuota individual |
 | **CR-20** | Nueva Operación. | Se hizo click en "Nueva Operación". | Debería estar debajo la cantidad de cuotas al elegir el plan de pago. | Corregido / Validado — panel "Cantidad de cuotas" movido arriba de "Fecha de inicio de pago" para LOAN; `mt-6` para separación visual |
+| **CR-21** | Operación Crédito - Declaraciones y Autorizaciones | Faltaba un control para marcar todas las declaraciones en la pantalla de confirmación | Debe existir un botón para marcar todas las declaraciones y que las casillas queden efectivamente marcadas | Corregido / Validado — agregado botón "Marcar todas" (`data-cy="btn-mark-all"`) en `step-confirm.component.html`; método `setAllDeclarations` añadido en `step-confirm.component.ts`; test E2E `cypress/e2e/03-nueva-operacion-real.cy.ts` actualizado para usar el nuevo botón |
 
 
 ## 🟢 2. Módulo: Cliente
