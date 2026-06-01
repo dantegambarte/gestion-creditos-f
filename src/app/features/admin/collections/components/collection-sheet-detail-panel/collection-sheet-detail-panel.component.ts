@@ -54,6 +54,7 @@ export type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
     LoadingStateComponent,
   ],
   templateUrl: './collection-sheet-detail-panel.component.html',
+  styleUrl: './collection-sheet-detail-panel.component.scss',
 })
 export class CollectionSheetDetailPanelComponent
   implements OnChanges, OnDestroy

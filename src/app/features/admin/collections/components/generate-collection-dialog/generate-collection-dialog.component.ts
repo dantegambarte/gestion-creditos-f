@@ -43,6 +43,7 @@ import { User } from '../../../users/user.model';
     TooltipModule,
   ],
   templateUrl: './generate-collection-dialog.component.html',
+  styleUrl: './generate-collection-dialog.component.scss',
 })
 export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   @Input() visible = false;

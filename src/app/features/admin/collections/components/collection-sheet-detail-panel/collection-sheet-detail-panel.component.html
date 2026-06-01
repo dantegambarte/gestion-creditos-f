@@ -1,4 +1,4 @@
-<div class="flex-1 overflow-y-auto">
+<div class="flex flex-col flex-1 min-h-0 overflow-hidden">
   @if (loadingDetail) {
     <app-loading-state />
   } @else if (selectedSheet) {
@@ -119,19 +119,20 @@
     </div>
 
     <!-- Tabla de items -->
-    @if (filteredItems.length === 0) {
-      <div
-        class="flex items-center justify-center h-32"
-        style="color: var(--ff-text-muted)"
-      >
-        <span class="text-sm">Sin cuotas en esta categoría.</span>
-      </div>
-    } @else {
-      <p-table
-        [value]="filteredItems"
-        styleClass="p-datatable-sm p-datatable-hoverable-rows admin-detail-table"
-        responsiveLayout="scroll"
-      >
+    <div class="flex-1 min-h-0 overflow-auto">
+      @if (filteredItems.length === 0) {
+        <div
+          class="flex items-center justify-center h-32"
+          style="color: var(--ff-text-muted)"
+        >
+          <span class="text-sm">Sin cuotas en esta categoría.</span>
+        </div>
+      } @else {
+        <p-table
+          [value]="filteredItems"
+          styleClass="p-datatable-sm p-datatable-hoverable-rows admin-detail-table"
+          responsiveLayout="scroll"
+        >
         <ng-template pTemplate="header">
           <tr>
             <th class="w-8">#</th>
@@ -319,7 +320,8 @@
             </tr>
           }
         </ng-template>
-      </p-table>
-    }
+        </p-table>
+      }
+    </div>
   }
 </div>

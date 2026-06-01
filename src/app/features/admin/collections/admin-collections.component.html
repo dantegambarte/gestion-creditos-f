@@ -1,9 +1,9 @@
 <p-toast />
 
-<div class="flex h-full overflow-hidden">
+<div class="flex h-full min-h-0 overflow-hidden">
   <!-- LEFT PANEL: lista -->
   <div
-    class="flex flex-col transition-all duration-300 overflow-hidden shrink-0"
+    class="flex flex-col transition-all duration-300 overflow-hidden shrink-0 min-h-0"
     [class.border-r]="!!selectedSheetMeta && !leftPanelCollapsed"
     [style.width]="
       !selectedSheetMeta ? '100%' : leftPanelCollapsed ? '0px' : '420px'
@@ -161,6 +161,7 @@
   <!-- RIGHT PANEL: detalle -->
   @if (selectedSheetMeta) {
     <app-collection-sheet-detail-panel
+      class="flex-1 min-h-0 overflow-hidden"
       [sheetMeta]="selectedSheetMeta"
       [openTab]="openTabForPanel"
       [(collapsed)]="leftPanelCollapsed"
