@@ -276,7 +276,10 @@ function getRealCredentials(role: InternalRole): RealCredentials {
     ADMIN: { dniKey: 'realAdminDni', passKey: 'realAdminPassword' },
     SELLER: { dniKey: 'realSellerDni', passKey: 'realSellerPassword' },
     COLLECTOR: { dniKey: 'realCollectorDni', passKey: 'realCollectorPassword' },
-    SELLER_COLLECTOR: { dniKey: 'realSellerCollectorDni', passKey: 'realSellerCollectorPassword' },
+    SELLER_COLLECTOR: {
+      dniKey: 'realSellerCollectorDni',
+      passKey: 'realSellerCollectorPassword',
+    },
   };
 
   const keys = envByRole[role];
@@ -300,7 +303,7 @@ function getRealCredentials(role: InternalRole): RealCredentials {
  */
 function requestLoginWithRetry(
   creds: RealCredentials,
-  retries = 20,
+  retries = Number(Cypress.env('realAuth429MaxRetries') ?? 4),
 ): Cypress.Chainable<Cypress.Response<LoginResponseBody>> {
   return cy
     .request<LoginResponseBody>({
@@ -330,7 +333,12 @@ function requestLoginWithRetry(
           ? retryAfterSeconds * 1000
           : 5000;
 
-      cy.wait(waitMs);
+      const cappedWaitMs = Math.min(
+        waitMs,
+        Number(Cypress.env('realAuth429MaxWaitMs') ?? 3000),
+      );
+
+      cy.wait(cappedWaitMs);
       return requestLoginWithRetry(creds, retries - 1);
     });
 }
@@ -360,7 +368,7 @@ function getPortalRealCredentials(): PortalRealCredentials {
  */
 function requestPortalLoginWithRetry(
   creds: PortalRealCredentials,
-  retries = 20,
+  retries = Number(Cypress.env('realAuth429MaxRetries') ?? 4),
 ): Cypress.Chainable<Cypress.Response<PortalLoginResponseBody>> {
   return cy
     .request<PortalLoginResponseBody>({
@@ -390,7 +398,12 @@ function requestPortalLoginWithRetry(
           ? retryAfterSeconds * 1000
           : 5000;
 
-      cy.wait(waitMs);
+      const cappedWaitMs = Math.min(
+        waitMs,
+        Number(Cypress.env('realAuth429MaxWaitMs') ?? 3000),
+      );
+
+      cy.wait(cappedWaitMs);
       return requestPortalLoginWithRetry(creds, retries - 1);
     });
 }
@@ -439,6 +452,7 @@ Cypress.Commands.add('loginAs', (role: InternalRole, destination?: string) => {
 
 /**
  * Inicia sesión real por UI y navega de forma robusta al destino solicitado.
+ * Reutiliza sesión con cy.session para reducir relogueos y rate limit.
  * @param role Rol a autenticar contra backend real.
  * @param destination Ruta protegida de destino opcional. Si el redirect real
  * post-login cae en home del rol, este helper navega explícitamente al destino.
@@ -453,40 +467,64 @@ Cypress.Commands.add(
       ? normalizePath(destination)
       : undefined;
 
-    cy.clearAllLocalStorage();
+    cy.session(
+      `internal-real-${role}-${dni}`,
+      () => {
+        cy.clearAllLocalStorage();
 
-    const cachedToken = AUTH_TOKEN_CACHE[role];
+        const visitWithToken = (
+          token: string,
+          user: Record<string, unknown> | null,
+        ) => {
+          cy.visit(roleHome, {
+            onBeforeLoad(win) {
+              win.localStorage.setItem(INTERNAL_TOKEN_KEY, token);
+              if (user) {
+                win.localStorage.setItem(
+                  INTERNAL_USER_KEY,
+                  JSON.stringify(user),
+                );
+              }
+            },
+          });
+        };
 
-    const visitWithToken = (
-      token: string,
-      user: Record<string, unknown> | null,
-    ) => {
-      cy.visit(normalizedDestination ?? roleHome, {
-        onBeforeLoad(win) {
-          win.localStorage.setItem(INTERNAL_TOKEN_KEY, token);
-          if (user) {
-            win.localStorage.setItem(INTERNAL_USER_KEY, JSON.stringify(user));
-          }
+        requestLoginWithRetry({ dni, password }).then((res) => {
+          expect(res.status, `[cypress][loginReal] login ${role}`).to.eq(200);
+          const token = res.body?.data?.token;
+          const user =
+            (res.body?.data?.user as Record<string, unknown> | undefined) ??
+            null;
+
+          expect(token, '[cypress][loginReal] token backend').to.be.a('string')
+            .and.not.be.empty;
+
+          AUTH_TOKEN_CACHE[role] = token as string;
+          visitWithToken(token as string, user);
+        });
+      },
+      {
+        validate: () => {
+          cy.window().then((win) => {
+            const token = win.localStorage.getItem(INTERNAL_TOKEN_KEY);
+            expect(token, '[cypress][loginReal] sesión restaurada').to.be.a(
+              'string',
+            ).and.not.be.empty;
+
+            cy.request({
+              method: 'GET',
+              url: `${String(Cypress.env('apiBaseUrl'))}/auth/me`,
+              headers: { Authorization: `Bearer ${token}` },
+              failOnStatusCode: false,
+            })
+              .its('status')
+              .should('eq', 200);
+          });
         },
-      });
-    };
+      },
+    );
 
-    if (cachedToken) {
-      visitWithToken(cachedToken, null);
-    } else {
-      requestLoginWithRetry({ dni, password }).then((res) => {
-        expect(res.status, `[cypress][loginReal] login ${role}`).to.eq(200);
-        const token = res.body?.data?.token;
-        const user =
-          (res.body?.data?.user as Record<string, unknown> | undefined) ?? null;
-
-        expect(token, '[cypress][loginReal] token backend').to.be.a('string')
-          .and.not.be.empty;
-
-        AUTH_TOKEN_CACHE[role] = token as string;
-        visitWithToken(token as string, user);
-      });
-    }
+    cy.visit(normalizedDestination ?? roleHome);
 
     cy.url({ timeout: 15000 }).should(
       'include',
@@ -537,64 +575,166 @@ Cypress.Commands.add(
 
 /**
  * Inicia sesión real de portal por API y navega al destino solicitado.
+ * Reutiliza sesión con cy.session para reducir relogueos y rate limit.
  * @param destination Ruta destino del portal (por defecto dashboard).
  */
 Cypress.Commands.add('loginPortalReal', (destination?: string) => {
   assertRealAuthEnabled();
   const { dni, password } = getPortalRealCredentials();
-  const normalizedDestination = normalizePath(destination ?? PORTAL_DEFAULT_HOME);
+  const normalizedDestination = normalizePath(
+    destination ?? PORTAL_DEFAULT_HOME,
+  );
 
-  cy.clearAllLocalStorage();
+  cy.session(
+    `portal-real-${dni}`,
+    () => {
+      cy.clearAllLocalStorage();
 
-  if (PORTAL_SESSION_CACHE) {
-    cy.visit(normalizedDestination, {
-      onBeforeLoad(win) {
-        seedPortalSession(win, PORTAL_SESSION_CACHE as PortalSession);
+      if (PORTAL_SESSION_CACHE) {
+        cy.visit(PORTAL_DEFAULT_HOME, {
+          onBeforeLoad(win) {
+            seedPortalSession(win, PORTAL_SESSION_CACHE as PortalSession);
+          },
+        });
+        return;
+      }
+
+      requestPortalLoginWithRetry({ dni, password }).then((res) => {
+        if (res.status === 401) {
+          cy.task('db:seed:e2e')
+            .then((result) => {
+              const taskResult = result as { ok?: boolean; error?: string };
+              expect(
+                taskResult?.ok,
+                '[cypress][loginPortalReal] db:seed:e2e',
+              ).to.eq(true);
+
+              return requestPortalLoginWithRetry({ dni, password }).then(
+                (retryRes) => {
+                  expect(
+                    retryRes.status,
+                    '[cypress][loginPortalReal] login portal tras seed',
+                  ).to.eq(200);
+                  return retryRes;
+                },
+              );
+            })
+            .then((retryRes) => {
+              const token = retryRes.body?.data?.token;
+              const customer = retryRes.body?.data?.customer;
+
+              expect(token, '[cypress][loginPortalReal] token backend').to.be.a(
+                'string',
+              ).and.not.be.empty;
+              expect(
+                customer?.id,
+                '[cypress][loginPortalReal] customer.id',
+              ).to.be.a('string').and.not.be.empty;
+
+              const customerFullName =
+                typeof customer?.full_name === 'string' &&
+                customer.full_name.length > 0
+                  ? customer.full_name
+                  : 'Cliente Portal';
+              const customerDni =
+                typeof customer?.dni === 'string' && customer.dni.length > 0
+                  ? customer.dni
+                  : dni;
+
+              const session: PortalSession = {
+                token: token as string,
+                customer: {
+                  id: customer?.id as string,
+                  fullName: customerFullName,
+                  dni: customerDni,
+                  portalIsTempPassword: Boolean(
+                    customer?.portal_is_temp_password,
+                  ),
+                },
+              };
+
+              PORTAL_SESSION_CACHE = session;
+
+              cy.visit(PORTAL_DEFAULT_HOME, {
+                onBeforeLoad(win) {
+                  seedPortalSession(win, session);
+                },
+              });
+            });
+
+          return;
+        }
+
+        expect(res.status, '[cypress][loginPortalReal] login portal').to.eq(
+          200,
+        );
+
+        const token = res.body?.data?.token;
+        const customer = res.body?.data?.customer;
+
+        expect(token, '[cypress][loginPortalReal] token backend').to.be.a(
+          'string',
+        ).and.not.be.empty;
+        expect(customer?.id, '[cypress][loginPortalReal] customer.id').to.be.a(
+          'string',
+        ).and.not.be.empty;
+
+        const customerFullName =
+          typeof customer?.full_name === 'string' &&
+          customer.full_name.length > 0
+            ? customer.full_name
+            : 'Cliente Portal';
+        const customerDni =
+          typeof customer?.dni === 'string' && customer.dni.length > 0
+            ? customer.dni
+            : dni;
+
+        const session: PortalSession = {
+          token: token as string,
+          customer: {
+            id: customer?.id as string,
+            fullName: customerFullName,
+            dni: customerDni,
+            portalIsTempPassword: Boolean(customer?.portal_is_temp_password),
+          },
+        };
+
+        PORTAL_SESSION_CACHE = session;
+
+        cy.visit(PORTAL_DEFAULT_HOME, {
+          onBeforeLoad(win) {
+            seedPortalSession(win, session);
+          },
+        });
+      });
+    },
+    {
+      validate: () => {
+        cy.window().then((win) => {
+          const token = win.localStorage.getItem(PORTAL_TOKEN_KEY);
+          expect(token, '[cypress][loginPortalReal] sesión restaurada').to.be.a(
+            'string',
+          ).and.not.be.empty;
+
+          cy.request({
+            method: 'GET',
+            url: `${String(Cypress.env('apiBaseUrl'))}/portal/me`,
+            headers: { Authorization: `Bearer ${token}` },
+            failOnStatusCode: false,
+          })
+            .its('status')
+            .should('eq', 200);
+        });
       },
-    });
+    },
+  );
 
-    cy.location('pathname', { timeout: 15000 }).should('eq', normalizedDestination);
-    return;
-  }
+  cy.visit(normalizedDestination);
 
-  requestPortalLoginWithRetry({ dni, password }).then((res) => {
-    expect(res.status, '[cypress][loginPortalReal] login portal').to.eq(200);
-
-    const token = res.body?.data?.token;
-    const customer = res.body?.data?.customer;
-
-    expect(token, '[cypress][loginPortalReal] token backend').to.be.a('string').and.not.be.empty;
-    expect(customer?.id, '[cypress][loginPortalReal] customer.id').to.be.a('string').and.not.be.empty;
-
-    const customerFullName =
-      typeof customer?.full_name === 'string' && customer.full_name.length > 0
-        ? customer.full_name
-        : 'Cliente Portal';
-    const customerDni =
-      typeof customer?.dni === 'string' && customer.dni.length > 0
-        ? customer.dni
-        : dni;
-
-    const session: PortalSession = {
-      token: token as string,
-      customer: {
-        id: customer?.id as string,
-        fullName: customerFullName,
-        dni: customerDni,
-        portalIsTempPassword: Boolean(customer?.portal_is_temp_password),
-      },
-    };
-
-    PORTAL_SESSION_CACHE = session;
-
-    cy.visit(normalizedDestination, {
-      onBeforeLoad(win) {
-        seedPortalSession(win, session);
-      },
-    });
-  });
-
-  cy.location('pathname', { timeout: 15000 }).should('eq', normalizedDestination);
+  cy.location('pathname', { timeout: 15000 }).should(
+    'eq',
+    normalizedDestination,
+  );
 });
 
 /** Limpia estado de auth y navega a /login */

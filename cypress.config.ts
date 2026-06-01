@@ -2,8 +2,11 @@ import { defineConfig } from 'cypress';
 import { execSync } from 'child_process';
 import * as path from 'path';
 
-const BACKEND_DIR = path.resolve(__dirname, '../../backend/gestion_creditos_backend');
-const API_BASE    = 'http://localhost:3000/api';
+const BACKEND_DIR = path.resolve(
+  __dirname,
+  '../../backend/gestion_creditos_backend',
+);
+const API_BASE = 'http://localhost:3000/api';
 
 export default defineConfig({
   env: {
@@ -12,25 +15,27 @@ export default defineConfig({
     realAuthEnabled: true,
 
     // ── Credenciales reales (seeds 01 + 04) ───────────────────────────
-    realAdminDni:           '00000000',
-    realAdminPassword:      'admin123',
-    realSellerDni:          '11111111',
-    realSellerPassword:     '123456',
-    realCollectorDni:       '22222222',
-    realCollectorPassword:  '123456',
-    realSellerCollectorDni:      '33333333',
+    realAdminDni: '00000000',
+    realAdminPassword: 'admin123',
+    realSellerDni: '11111111',
+    realSellerPassword: '123456',
+    realCollectorDni: '22222222',
+    realCollectorPassword: '123456',
+    realSellerCollectorDni: '33333333',
     realSellerCollectorPassword: '123456',
+    realPortalDni: '40567890',
+    realPortalPassword: '1234',
 
     // ── URL base del backend (usada por los helpers cy.api*) ──────────
     apiBaseUrl: API_BASE,
   },
 
   e2e: {
-    baseUrl:     'http://localhost:4200',
+    baseUrl: 'http://localhost:4200',
     specPattern: 'cypress/e2e/**/*.cy.ts',
     supportFile: 'cypress/support/e2e.ts',
 
-    viewportWidth:  1280,
+    viewportWidth: 1280,
     viewportHeight: 720,
     defaultCommandTimeout: 8000,
     video: false,
@@ -38,11 +43,11 @@ export default defineConfig({
 
     reporter: 'mochawesome',
     reporterOptions: {
-      reportDir:  'cypress/reports/mocha',
-      quite:      true,
-      overwrite:  false,
-      html:       false,
-      json:       true,
+      reportDir: 'cypress/reports/mocha',
+      quite: true,
+      overwrite: false,
+      html: false,
+      json: true,
     },
 
     setupNodeEvents(on) {
@@ -54,7 +59,7 @@ export default defineConfig({
         'db:seed:e2e'() {
           try {
             execSync('node src/seeds/05_e2e.seed.js', {
-              cwd:   BACKEND_DIR,
+              cwd: BACKEND_DIR,
               stdio: 'pipe',
             });
             return { ok: true };
@@ -71,7 +76,7 @@ export default defineConfig({
         'db:reset:full'() {
           try {
             execSync('npm run db:reset', {
-              cwd:   BACKEND_DIR,
+              cwd: BACKEND_DIR,
               stdio: 'pipe',
               timeout: 120_000,
             });

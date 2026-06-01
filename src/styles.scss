@@ -1083,7 +1083,7 @@ aside.sidebar {
   display: flex;
   flex-direction: column;
 
-  :deep(.p-chart) {
+  .p-chart {
     padding: 12px;
   }
 }
