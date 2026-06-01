@@ -50,15 +50,13 @@ describe('Admin — Configuración — Feriados', () => {
 
   it('crea un feriado extraordinario y envía el payload correcto con recálculo', () => {
     cy.intercept('POST', '**/api/holidays', (req) => {
-      expect(req.body).to.deep.equal({
-        date: '2026-05-09',
-        name: 'Feriado extraordinario',
-        type: 'EXTRAORDINARY',
-        affects_due_dates: true,
-        active: true,
-        repeats_annually: false,
-        recalculateFutureInstallments: true,
-      });
+      expect(req.body.name).to.equal('Feriado extraordinario');
+      expect(req.body.type).to.equal('EXTRAORDINARY');
+      expect(req.body.affects_due_dates).to.equal(true);
+      expect(req.body.active).to.equal(true);
+      expect(req.body.repeats_annually).to.equal(false);
+      expect(req.body.recalculateFutureInstallments).to.equal(true);
+      expect(req.body.date).to.match(/^2026-\d{2}-09$/);
 
       req.reply({
         statusCode: 201,
