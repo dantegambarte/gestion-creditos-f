@@ -240,15 +240,15 @@ describe('CO-01b — Cuota revertida muestra "Pendiente" en planilla de cobros (
     cy.contains('td', 'Juan Cobrador').click();
     cy.wait('@getSheetDetail');
 
-    // La cuota debe mostrar "Pendiente" (p-tag renderiza el value en .p-tag-label)
-    cy.contains('.p-tag', 'Pendiente').should('exist');
+    // La cuota debe mostrar estado pendiente en el panel de detalle
+    cy.contains('.detail-status, .p-tag', 'Pendiente').should('exist');
   });
 
   it('CO-01b — planilla con installment_status PENDING NO muestra tag "Cobrado"', () => {
     cy.contains('td', 'Juan Cobrador').click();
     cy.wait('@getSheetDetail');
 
-    cy.contains('.p-tag', 'Cobrado').should('not.exist');
-    cy.contains('.p-tag', 'Pagada').should('not.exist');
+    cy.contains('.detail-status, .p-tag', 'Cobrado').should('not.exist');
+    cy.contains('.detail-status, .p-tag', 'Pagada').should('not.exist');
   });
 });

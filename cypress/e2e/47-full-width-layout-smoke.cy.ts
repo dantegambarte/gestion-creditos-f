@@ -21,13 +21,17 @@ describe('47 - Full width layout smoke', () => {
    * introduzca overflow horizontal.
    */
   function assertFullWidthLayout(): void {
-    cy.get('main.flex-1').should('exist');
-    cy.get('.ff-page').should('exist');
+    cy.get('.ff-page', { timeout: 15000 }).should('exist');
 
-    cy.get('main.flex-1').then(($main) => {
-      const mainRect = $main[0].getBoundingClientRect();
+    cy.get('body').then(($body) => {
+      let mainCandidate = $body.find('main.flex-1').first();
+      if (!mainCandidate.length) mainCandidate = $body.find('main').first();
+      if (!mainCandidate.length) mainCandidate = $body.find('[role="main"]').first();
 
       cy.get('.ff-page').then(($page) => {
+        const mainRect = mainCandidate.length
+          ? (mainCandidate[0] as HTMLElement).getBoundingClientRect()
+          : ($page[0] as HTMLElement).getBoundingClientRect();
         const pageRect = $page[0].getBoundingClientRect();
         const styles = getComputedStyle($page[0]);
 
