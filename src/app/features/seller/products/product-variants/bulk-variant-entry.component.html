@@ -1,0 +1,111 @@
+<div class="space-y-3">
+  <p class="text-xs" style="color: var(--ff-text-muted)">
+    Completá las filas que necesites. Dejá vacías las que no apliquen.
+  </p>
+
+  <div class="grid gap-2 text-[10px] uppercase font-semibold" style="color: var(--ff-text-muted); grid-template-columns: 24px minmax(0, 1.3fr) minmax(0, 0.95fr) minmax(0, 0.95fr) minmax(0, 1.5fr) 52px 24px;">
+    <span>#</span>
+    <span>Color</span>
+    <span>Talle</span>
+    <span class="text-center">Capacidad</span>
+    <span class="text-center">Precio (ARS)</span>
+    <span class="text-center">Units</span>
+    <span></span>
+  </div>
+
+  @for (row of bulkRows; track $index) {
+    <div class="space-y-1">
+      <div class="grid gap-2.5 items-start" style="grid-template-columns: 24px minmax(0, 1.3fr) minmax(0, 0.95fr) minmax(0, 0.95fr) minmax(0, 1.5fr) 52px 24px;">
+        <span class="text-xs pt-2" style="color: var(--ff-text-muted)">{{ $index + 1 }}</span>
+        <input pInputText [(ngModel)]="row.color" (ngModelChange)="onBulkRowChange($index)" [ngModelOptions]="{ standalone: true }" class="h-9 rounded-xl px-3 min-w-0" placeholder="Ej: Negro" [class.ng-invalid]="!!getBulkFieldError($index, 'color') || !!getBulkFieldError($index, 'attributes')" />
+        <input pInputText [(ngModel)]="row.size" (ngModelChange)="onBulkRowChange($index)" [ngModelOptions]="{ standalone: true }" class="h-9 rounded-xl px-3 min-w-0" placeholder="Ej: M" [class.ng-invalid]="!!getBulkFieldError($index, 'size') || !!getBulkFieldError($index, 'attributes')" />
+        <input pInputText [(ngModel)]="row.capacity" (ngModelChange)="onBulkRowChange($index)" [ngModelOptions]="{ standalone: true }" class="h-9 rounded-xl px-3 min-w-0" placeholder="Ej: 128 GB" [class.ng-invalid]="!!getBulkFieldError($index, 'capacity') || !!getBulkFieldError($index, 'attributes')" />
+        <div>
+          <p-inputNumber
+            appCurrencyAmountInput
+            [(ngModel)]="row.currentPrice"
+            (ngModelChange)="onBulkRowChange($index)"
+            [ngModelOptions]="{ standalone: true }"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-9 rounded-xl min-w-0 text-right px-2"
+            [class.ng-invalid]="!!getBulkFieldError($index, 'currentPrice')"
+          />
+        </div>
+        <div>
+          <p-inputNumber
+            [(ngModel)]="row.initialUnits"
+            (ngModelChange)="onBulkRowChange($index)"
+            [ngModelOptions]="{ standalone: true }"
+            mode="decimal"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            [useGrouping]="false"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-9 rounded-xl min-w-0 text-center px-1"
+          />
+        </div>
+        <div class="flex justify-end pt-1">
+          <button
+            type="button"
+            class="text-xs"
+            style="color: var(--ff-text-muted)"
+            (click)="removeBulkRow($index)"
+            [disabled]="bulkRows.length === 1"
+            title="Quitar fila"
+          >
+            <i class="pi pi-times"></i>
+          </button>
+        </div>
+      </div>
+
+      @if (getBulkFieldError($index, 'attributes')) {
+        <small style="color: var(--ff-danger)">{{ getBulkFieldError($index, 'attributes') }}</small>
+      }
+      @if (getBulkFieldError($index, 'currentPrice')) {
+        <small style="color: var(--ff-danger)">{{ getBulkFieldError($index, 'currentPrice') }}</small>
+      }
+    </div>
+  }
+
+  <button type="button" class="text-xs font-semibold" style="color: var(--ff-accent)" (click)="addBulkRow()">
+    + Agregar fila
+  </button>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+    <div class="rounded-xl border px-3 py-2" style="border-color: var(--ff-stroke); background: rgba(37, 99, 235, 0.06)">
+      <p class="text-[10px] uppercase font-semibold" style="color: var(--ff-text-muted)">Variantes cargadas</p>
+      <p class="text-sm font-bold ff-mono" style="color: var(--ff-text-primary)">{{ getBulkFilledRowsCount() }}</p>
+    </div>
+    <div class="rounded-xl border px-3 py-2" style="border-color: var(--ff-stroke); background: rgba(37, 99, 235, 0.06)">
+      <p class="text-[10px] uppercase font-semibold" style="color: var(--ff-text-muted)">Suma precios</p>
+      <p class="text-sm font-bold ff-mono" style="color: var(--ff-text-primary)">{{ getBulkTotalPrice() | currencyArs: 0 }}</p>
+    </div>
+    <div class="rounded-xl border px-3 py-2" style="border-color: var(--ff-stroke); background: rgba(37, 99, 235, 0.06)">
+      <p class="text-[10px] uppercase font-semibold" style="color: var(--ff-text-muted)">Total estimado</p>
+      <p class="text-sm font-bold ff-mono" style="color: var(--ff-accent)">{{ getBulkEstimatedTotal() | currencyArs: 0 }}</p>
+      <p class="text-[10px]" style="color: var(--ff-text-muted)">{{ getBulkTotalUnits() }} u.</p>
+    </div>
+  </div>
+
+  @if (bulkError) {
+    <p class="text-sm px-3 py-2 rounded-lg" style="color: var(--ff-danger); background: rgba(239, 68, 68, 0.1)">
+      {{ bulkError }}
+    </p>
+  }
+
+  <p-button
+    type="button"
+    [label]="'Confirmar ' + getBulkFilledRowsCount() + ' variantes →'"
+    severity="primary"
+    styleClass="w-full justify-center h-11 rounded-xl mt-2"
+    [loading]="bulkSubmitting"
+    [disabled]="!canSubmitBulk()"
+    (onClick)="saveBulk()"
+  />
+</div>

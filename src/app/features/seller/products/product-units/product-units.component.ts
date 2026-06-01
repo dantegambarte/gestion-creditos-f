@@ -1,20 +1,9 @@
 import { CommonModule, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DialogModule } from 'primeng/dialog';
-import { DropdownModule } from 'primeng/dropdown';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -31,6 +20,8 @@ import {
 import { ProductUnitsService } from '../product-units.service';
 import { ProductVariantsService } from '../product-variants.service';
 import { ProductsService } from '../products.service';
+import { UnitBulkFormComponent } from './unit-bulk-form.component';
+import { UnitSingleFormComponent } from './unit-single-form.component';
 
 @Component({
   selector: 'app-product-units',
@@ -38,19 +29,15 @@ import { ProductsService } from '../products.service';
   providers: [MessageService, ConfirmationService],
   imports: [
     CommonModule,
-    ReactiveFormsModule,
     ButtonModule,
     TableModule,
     TagModule,
     ToastModule,
     ConfirmDialogModule,
-    DialogModule,
-    InputTextModule,
-    InputTextareaModule,
-    DropdownModule,
-    FormsModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    UnitSingleFormComponent,
+    UnitBulkFormComponent,
   ],
   templateUrl: './product-units.component.html',
 })
@@ -58,7 +45,6 @@ export class ProductUnitsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
-  private readonly fb = inject(FormBuilder);
   private readonly productsService = inject(ProductsService);
   private readonly variantsService = inject(ProductVariantsService);
   private readonly unitsService = inject(ProductUnitsService);
@@ -82,32 +68,25 @@ export class ProductUnitsComponent implements OnInit {
     { label: 'Inactiva', value: 'INACTIVE' },
   ];
 
-  showSingleDialog = false;
-  showBulkDialog = false;
   editingUnit: ProductUnit | null = null;
-  dialogSubmitting = false;
-  dialogError: string | null = null;
-  bulkPreview: string[] = [];
-  singleForm!: FormGroup;
-  bulkForm!: FormGroup;
 
   /** Indica si el usuario autenticado tiene rol de administrador. */
   get isAdmin(): boolean {
     return this.auth.hasRole(UserRoleEnum.ADMIN);
   }
 
-  /** Filtra las unidades según el estado seleccionado en el dropdown. */
+  /** Filtra las unidades según el estado seleccionado. */
   get filteredUnits(): ProductUnit[] {
     if (!this.statusFilter) return this.units;
     return this.units.filter((u) => u.status === this.statusFilter);
   }
 
-  private get productId(): string {
-    return this.route.snapshot.paramMap.get('id')!;
+  get variantId(): string {
+    return this.route.snapshot.paramMap.get('variantId')!;
   }
 
-  private get variantId(): string {
-    return this.route.snapshot.paramMap.get('variantId')!;
+  private get productId(): string {
+    return this.route.snapshot.paramMap.get('id')!;
   }
 
   ngOnInit(): void {
@@ -115,7 +94,6 @@ export class ProductUnitsComponent implements OnInit {
       { label: 'Productos', route: `/${this.routePrefix}/products` },
       { label: 'Unidades' },
     ]);
-    this.buildForms();
     this.loadContext();
     this.loadUnits();
   }
@@ -125,148 +103,23 @@ export class ProductUnitsComponent implements OnInit {
     this.location.back();
   }
 
-  /** Abre el diálogo de alta individual con el formulario limpio. */
-  openCreate(): void {
+  /** Pone el panel individual en modo alta limpiando la unidad en edición. */
+  clearEdit(): void {
     this.editingUnit = null;
-    this.singleForm.reset({ unitCode: '', notes: '' });
-    this.dialogError = null;
-    this.showSingleDialog = true;
   }
 
-  /** Abre el diálogo de edición con los datos de la unidad precargados. */
+  /**
+   * Pone el panel individual en modo edición con los datos de la unidad.
+   * @param unit - Unidad a editar.
+   */
   openEdit(unit: ProductUnit): void {
     this.editingUnit = unit;
-    this.singleForm.patchValue({
-      unitCode: unit.unitCode,
-      notes: unit.notes ?? '',
-    });
-    this.dialogError = null;
-    this.showSingleDialog = true;
   }
 
-  /** Abre el diálogo de carga masiva con el textarea y preview limpios. */
-  openBulk(): void {
-    this.bulkForm.reset({ rawCodes: '' });
-    this.bulkPreview = [];
-    this.dialogError = null;
-    this.showBulkDialog = true;
-  }
-
-  /** Actualiza el preview de códigos parseando el textarea línea por línea. */
-  onBulkCodesChange(): void {
-    const raw: string = this.bulkForm.get('rawCodes')?.value ?? '';
-    this.bulkPreview = raw
-      .split('\n')
-      .map((s: string) => s.trim())
-      .filter((s: string) => s.length > 0);
-  }
-
-  /** Guarda o actualiza una unidad individual según si hay una en edición. */
-  saveSingle(): void {
-    if (this.singleForm.invalid) {
-      this.singleForm.markAllAsTouched();
-      return;
-    }
-    const v = this.singleForm.getRawValue();
-    this.dialogSubmitting = true;
-    this.dialogError = null;
-
-    if (this.editingUnit) {
-      this.unitsService
-        .update(this.editingUnit.id, {
-          unitCode: v.unitCode,
-          notes: v.notes || undefined,
-        })
-        .subscribe({
-          next: () => {
-            this.dialogSubmitting = false;
-            this.showSingleDialog = false;
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Unidad actualizada',
-            });
-            this.loadUnits();
-          },
-          error: (err: AppError) => {
-            this.dialogSubmitting = false;
-            this.dialogError = err.message;
-          },
-        });
-    } else {
-      this.unitsService
-        .create({
-          variantId: this.variantId,
-          unitCode: v.unitCode,
-          notes: v.notes || undefined,
-        })
-        .subscribe({
-          next: () => {
-            this.dialogSubmitting = false;
-            this.showSingleDialog = false;
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Unidad creada',
-            });
-            this.loadUnits();
-          },
-          error: (err: AppError) => {
-            this.dialogSubmitting = false;
-            this.dialogError = err.message;
-          },
-        });
-    }
-  }
-
-  /** Envía los códigos del preview como un lote de unidades nuevas. */
-  saveBulk(): void {
-    if (this.bulkPreview.length === 0) return;
-    this.dialogSubmitting = true;
-    this.dialogError = null;
-    this.unitsService
-      .createBulk({
-        variantId: this.variantId,
-        units: this.bulkPreview.map((code) => ({ unitCode: code })),
-      })
-      .subscribe({
-        next: (result) => {
-          this.dialogSubmitting = false;
-          this.showBulkDialog = false;
-          this.messageService.add({
-            severity: 'success',
-            summary: `${result.created} unidades creadas`,
-          });
-          this.loadUnits();
-        },
-        error: (err: AppError) => {
-          this.dialogSubmitting = false;
-          this.dialogError = err.message;
-        },
-      });
-  }
-
-  /** Solicita confirmación antes de dar de baja la unidad indicada. */
-  confirmDeactivate(unit: ProductUnit): void {
-    this.confirmationService.confirm({
-      header: 'Dar de baja unidad',
-      message: `¿Dar de baja la unidad <strong>${unit.unitCode}</strong>?`,
-      acceptLabel: 'Dar de baja',
-      rejectLabel: 'Cancelar',
-      acceptButtonStyleClass:
-        'p-button-danger p-button-outlined h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
-      accept: () =>
-        this.unitsService.deactivate(unit.id).subscribe({
-          next: () => {
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Unidad desactivada',
-            });
-            this.loadUnits();
-          },
-          error: (err: AppError) => this.handleError(err),
-        }),
-    });
+  /** Recarga las unidades tras una operación exitosa en cualquier panel hijo. */
+  onUnitSaved(): void {
+    this.editingUnit = null;
+    this.loadUnits();
   }
 
   /** Mapea el estado de la unidad a la severidad del tag visual de PrimeNG. */
@@ -299,28 +152,57 @@ export class ProductUnitsComponent implements OnInit {
     }
   }
 
-  /** Indica si un campo del formulario individual tiene errores visibles. */
-  isInvalid(field: string): boolean {
-    const c = this.singleForm.get(field);
-    return !!(c && c.invalid && (c.dirty || c.touched));
+  /** Solicita confirmación antes de dar de baja la unidad indicada. */
+  confirmDeactivate(unit: ProductUnit): void {
+    this.confirmationService.confirm({
+      header: 'Dar de baja unidad',
+      message: `¿Dar de baja la unidad <strong>${unit.unitCode}</strong>?`,
+      acceptLabel: 'Dar de baja',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass:
+        'p-button-danger p-button-outlined h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      accept: () =>
+        this.unitsService.deactivate(unit.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Unidad desactivada',
+            });
+            this.loadUnits();
+          },
+          error: (err: AppError) => this.handleError(err),
+        }),
+    });
   }
 
-  /** Construye los formularios reactivos de alta individual y carga masiva. */
-  private buildForms(): void {
-    this.singleForm = this.fb.group({
-      unitCode: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(2),
-          Validators.maxLength(100),
-          Validators.pattern(/^[A-Za-z0-9\-_]+$/),
-        ],
-      ],
-      notes: ['', Validators.maxLength(500)],
+  /** Carga las unidades de la variante actual desde el backend. */
+  loadUnits(): void {
+    this.loading = true;
+    this.error = null;
+    this.unitsService.getAll({ variantId: this.variantId }).subscribe({
+      next: (data) => {
+        this.units = data;
+        this.loading = false;
+      },
+      error: (err: AppError) => {
+        this.error = err;
+        this.loading = false;
+      },
     });
-    this.bulkForm = this.fb.group({
-      rawCodes: ['', Validators.required],
+  }
+
+  private get routePrefix(): string {
+    return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
+  }
+
+  /** Muestra un toast de conflicto o error según el código HTTP de la respuesta. */
+  private handleError(err: AppError): void {
+    this.messageService.add({
+      severity: err.status === 409 ? 'warn' : 'error',
+      summary: err.status === 409 ? 'Conflicto' : 'Error',
+      detail: err.message,
     });
   }
 
@@ -343,10 +225,6 @@ export class ProductUnitsComponent implements OnInit {
     });
   }
 
-  private get routePrefix(): string {
-    return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
-  }
-
   /** Actualiza el breadcrumb del header con el contexto de producto y variante disponible. */
   private updateHeader(): void {
     this.header.set([
@@ -361,30 +239,5 @@ export class ProductUnitsComponent implements OnInit {
       },
       { label: this.variantLabel || 'Unidades' },
     ]);
-  }
-
-  /** Carga las unidades de la variante actual desde el backend. */
-  private loadUnits(): void {
-    this.loading = true;
-    this.error = null;
-    this.unitsService.getAll({ variantId: this.variantId }).subscribe({
-      next: (data) => {
-        this.units = data;
-        this.loading = false;
-      },
-      error: (err: AppError) => {
-        this.error = err;
-        this.loading = false;
-      },
-    });
-  }
-
-  /** Muestra un toast de conflicto o error según el código HTTP de la respuesta. */
-  private handleError(err: AppError): void {
-    this.messageService.add({
-      severity: err.status === 409 ? 'warn' : 'error',
-      summary: err.status === 409 ? 'Conflicto' : 'Error',
-      detail: err.message,
-    });
   }
 }

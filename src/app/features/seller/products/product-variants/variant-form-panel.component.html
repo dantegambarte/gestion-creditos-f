@@ -1,0 +1,171 @@
+<div class="ff-panel p-6 space-y-4">
+  <div class="flex items-center justify-between">
+    <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
+      {{ isEditMode ? "Editar variante" : "Nueva variante" }}
+    </h3>
+    <button
+      type="button"
+      class="p-1 rounded-lg"
+      style="color: var(--ff-text-muted)"
+      (click)="close()"
+      title="Cerrar"
+    >
+      <i class="pi pi-times text-sm"></i>
+    </button>
+  </div>
+
+  <div class="flex items-center justify-end gap-2">
+    <button
+      type="button"
+      class="h-8 px-3 rounded-lg text-xs border"
+      [style.background]="
+        entryMode === 'individual' ? 'var(--ff-accent)' : 'transparent'
+      "
+      [style.color]="
+        entryMode === 'individual' ? '#fff' : 'var(--ff-text-secondary)'
+      "
+      [style.border-color]="
+        entryMode === 'individual' ? 'var(--ff-accent)' : 'var(--ff-stroke)'
+      "
+      (click)="setEntryMode('individual')"
+    >
+      Ingreso individual
+    </button>
+    <button
+      type="button"
+      class="h-8 px-3 rounded-lg text-xs border"
+      [style.background]="
+        entryMode === 'bulk' ? 'var(--ff-accent)' : 'transparent'
+      "
+      [style.color]="entryMode === 'bulk' ? '#fff' : 'var(--ff-text-secondary)'"
+      [style.border-color]="
+        entryMode === 'bulk' ? 'var(--ff-accent)' : 'var(--ff-stroke)'
+      "
+      (click)="setEntryMode('bulk')"
+    >
+      Ingresar múltiples
+    </button>
+  </div>
+
+  @if (entryMode === "individual") {
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="space-y-4">
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
+            >Color</label
+          >
+          <input
+            pInputText
+            formControlName="color"
+            placeholder="Ej: Negro, Azul marino..."
+            class="w-full h-11"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
+            >Talle</label
+          >
+          <input
+            pInputText
+            formControlName="size"
+            placeholder="Ej: S, M, L, XL, 42..."
+            class="w-full h-11"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
+            >Capacidad</label
+          >
+          <input
+            pInputText
+            formControlName="capacity"
+            placeholder="Ej: 128 GB, 256 GB..."
+            class="w-full h-11"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
+            >Precio de venta *</label
+          >
+          <p-inputNumber
+            appCurrencyAmountInput
+            formControlName="currentPrice"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [minFractionDigits]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 rounded-xl"
+            [class.ng-invalid]="isInvalid('currentPrice')"
+          />
+          <small class="text-xs" style="color: var(--ff-text-muted)"
+            >Completá solo los atributos que aplican. El precio es
+            obligatorio.</small
+          >
+          @if (isInvalid("currentPrice")) {
+            <small style="color: var(--ff-danger)"
+              >Precio requerido y mayor a 0.</small
+            >
+          }
+        </div>
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-xs font-bold uppercase tracking-wider"
+            style="color: var(--ff-text-muted)"
+            >Unidades iniciales</label
+          >
+          <p-inputNumber
+            formControlName="initialUnits"
+            mode="decimal"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            [useGrouping]="false"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 rounded-xl"
+          />
+        </div>
+
+        @if (errorMessage) {
+          <p
+            class="text-sm px-3 py-2 rounded-lg"
+            style="color: var(--ff-danger); background: rgba(239, 68, 68, 0.1)"
+          >
+            {{ errorMessage }}
+          </p>
+        }
+
+        <div class="pt-3 grid grid-cols-2 gap-3">
+          <p-button
+            type="button"
+            label="Cancelar"
+            severity="secondary"
+            [outlined]="true"
+            styleClass="w-full justify-center h-11 rounded-xl border"
+            (onClick)="close()"
+          />
+          <p-button
+            type="submit"
+            [label]="isEditMode ? 'Guardar cambios' : 'Agregar variante'"
+            severity="primary"
+            styleClass="w-full justify-center h-11 rounded-xl"
+            [loading]="submitting"
+          />
+        </div>
+      </div>
+    </form>
+  } @else {
+    <app-bulk-variant-entry
+      [productId]="productId"
+      (variantsCreated)="variantSaved.emit()"
+    />
+  }
+</div>
