@@ -110,6 +110,24 @@ http://localhost:3000/api/credits - POST
 ---
 
 **Módulo:** [Crédito]
+**ID de Prueba:** [CR-21]
+**Título / Descripción:** [Declaraciones y Autorizaciones — Botón "Marcar todas".]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** En el paso "Declaraciones y Autorizaciones" se requería marcar 4 casillas de forma manual; no existía control para marcarlas todas.
+* **Resultado Esperado:** Debe existir un control (botón) que marque todas las declaraciones obligatorias y deje las casillas en estado marcado.
+* **Resultado Obtenido (Error):** No existía un botón; los tests E2E marcaban cada checkbox individualmente.
+
+### 2. Fix implementado
+* **Descripción del Fix:** Se agregó un botón "Marcar todas" en la plantilla del paso de confirmación y un método `setAllDeclarations(value: boolean)` que marca los controles del formulario: `chkIdentity`, `chkConditions`, `chkDisbursement`, `chkCapacity`.
+* **Archivos modificados:**
+    - `src/app/shared/operations/new-operation/steps/step-confirm/step-confirm.component.html` (botón `data-cy="btn-mark-all"`)
+    - `src/app/shared/operations/new-operation/steps/step-confirm/step-confirm.component.ts` (`setAllDeclarations`)
+    - `cypress/e2e/03-nueva-operacion-real.cy.ts` (test actualizado para usar el botón y verificar checkboxes)
+* **Resultado Obtenido (Actual):** [Corregido. Botón "Marcar todas" marca las 4 casillas; E2E actualizado y pasando en local tras validar manualmente.]
+
+---
+
+**Módulo:** [Crédito]
 **ID de Prueba:** [CR-07]
 **Título / Descripción:** [Operaciones.]
 ### 1. Contexto de la Prueba
