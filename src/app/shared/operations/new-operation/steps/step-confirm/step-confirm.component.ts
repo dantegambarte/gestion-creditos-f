@@ -242,25 +242,10 @@ export class StepConfirmComponent {
    * @returns {number} Valor de cuota estimado para mostrar en la UI.
    */
   getCuotaPorLinea(line: CartLine): number {
-    const directCuota = Number(
-      (line as any)?.installmentAmount ?? (line as any)?.valorCuota ?? 0,
-    );
-    if (directCuota > 0) {
-      return directCuota;
-    }
-
     const cuotas = Number(line.selectedInstallments ?? 0);
-    const subtotal = Number(
-      (line as any)?.subtotal ??
-        (line as any)?.total ??
-        (line as any)?.precioTotal ??
-        0,
-    );
-
-    if (cuotas > 0 && subtotal > 0) {
-      return subtotal / cuotas;
+    if (cuotas > 0 && line.subtotal > 0) {
+      return line.subtotal / cuotas;
     }
-
     return 0;
   }
 

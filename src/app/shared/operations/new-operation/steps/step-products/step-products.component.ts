@@ -7,7 +7,8 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../directives/currency-amount-input.directive';
-import { CartLine, CartLineRef, CatalogProduct, CatalogVariant } from '../../operation-form.service';
+import { CartLine, CartLineRef } from '../../operation-form.service';
+import { CatalogProduct, CatalogVariant } from '../../operation-catalog.service';
 
 @Component({
   selector: 'app-step-products',

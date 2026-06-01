@@ -1,0 +1,36 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Condonar Mora"
+  [modal]="true"
+  [style]="{ width: '400px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="py-2">
+    <p class="text-sm" style="color: var(--ff-text-primary)">
+      ¿Confirmar condonación de mora para la cuota #{{
+        installment?.installmentNumber
+      }}?
+    </p>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+      />
+      <p-button
+        label="Condonar"
+        severity="warning"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirm()"
+        [loading]="processing"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

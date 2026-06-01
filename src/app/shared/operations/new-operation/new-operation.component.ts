@@ -4,6 +4,7 @@ import { MenuItem, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { OperationFormService } from './operation-form.service';
+import { OperationCatalogService } from './operation-catalog.service';
 import { StepClientComponent } from './steps/step-client/step-client.component';
 import { StepConditionsComponent } from './steps/step-conditions/step-conditions.component';
 import { StepConfirmComponent } from './steps/step-confirm/step-confirm.component';
@@ -24,7 +25,7 @@ import { CustomerCreatePayload } from '../../../features/seller/models/customer.
     StepConditionsComponent,
     StepConfirmComponent,
   ],
-  providers: [OperationFormService, MessageService],
+  providers: [OperationFormService, OperationCatalogService, MessageService],
   templateUrl: './new-operation.component.html',
   styleUrl: './new-operation.component.scss',
 })

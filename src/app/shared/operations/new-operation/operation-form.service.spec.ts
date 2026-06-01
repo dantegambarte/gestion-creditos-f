@@ -1,8 +1,9 @@
-﻿import { TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
 
 import { OperationFormService } from './operation-form.service';
+import { OperationCatalogService } from './operation-catalog.service';
 import { CreditsService } from '../../../features/seller/operations/credits.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
 import { ProductUnitsService } from '../../../features/seller/products/product-units.service';
@@ -22,6 +23,7 @@ describe('OperationFormService', () => {
     TestBed.configureTestingModule({
       providers: [
         OperationFormService,
+        OperationCatalogService,
         MessageService,
         { provide: CreditsService, useValue: creditsServiceSpy },
         { provide: CustomersService, useValue: { list: () => of([]), getWizardSummary: () => of({ phone: null, email: null, status: 'ACTIVE', address: null, collectorName: null, activeCredits: 0, delinquency: 'sin mora', paymentCapacity: 0, createdAt: '', paidInstallments: 0, pendingInstallments: 0, overdueInstallments: 0, credits: [] }) } },
@@ -34,8 +36,8 @@ describe('OperationFormService', () => {
     service = TestBed.inject(OperationFormService);
   });
 
-  it('agrupa el catÃ¡logo por productId real aunque coincidan nombre y precio', () => {
-    service.availableProducts = [
+  it('agrupa el catálogo por productId real aunque coincidan nombre y precio', () => {
+    service.catalogSvc.availableProducts = [
       {
         id: 'unit-1',
         productId: 'prod-1',
@@ -56,7 +58,7 @@ describe('OperationFormService', () => {
       },
     ];
 
-    const result = service.buildCatalogProducts();
+    const result = service.catalogSvc.buildCatalogProducts();
 
     expect(result.length).toBe(2);
     expect(result.map((item) => item.productoId)).toEqual(['prod-1', 'prod-2']);
@@ -64,7 +66,7 @@ describe('OperationFormService', () => {
     expect(result[1].unitIds).toEqual(['unit-2']);
   });
 
-  it('envÃ­a unidades seleccionadas de SALE usando ids reales del carrito', () => {
+  it('envía unidades seleccionadas de SALE usando ids reales del carrito', () => {
     service.selectClient({
       id: 'client-1',
       name: 'Juan Perez',
@@ -84,7 +86,7 @@ describe('OperationFormService', () => {
         productoId: 'prod-1',
         nombre: 'Heladera',
         variantId: 'var-1',
-        variantLabel: 'Variante estÃ¡ndar',
+        variantLabel: 'Variante estándar',
         cantidad: 1,
         precio: 1000,
         subtotal: 1000,
@@ -96,7 +98,7 @@ describe('OperationFormService', () => {
         selectedInstallments: 1,
       },
     ];
-    service.availableProducts = [
+    service.catalogSvc.availableProducts = [
       {
         id: 'unit-1',
         productId: 'prod-1',
@@ -119,7 +121,7 @@ describe('OperationFormService', () => {
     );
   });
 
-  it('permite avanzar en condiciones con fecha derivada cuando usa fecha de aprobaciÃ³n', () => {
+  it('permite avanzar en condiciones con fecha derivada cuando usa fecha de aprobación', () => {
     service.operationForm.controls.operationType.setValue('SALE');
     service.operationForm.controls.paymentFrequency.setValue('BIWEEKLY');
     service.cartLines = [
@@ -127,7 +129,7 @@ describe('OperationFormService', () => {
         productoId: 'prod-1',
         nombre: 'Heladera',
         variantId: 'var-1',
-        variantLabel: 'Variante estÃ¡ndar',
+        variantLabel: 'Variante estándar',
         cantidad: 1,
         precio: 1000,
         subtotal: 1000,
@@ -156,7 +158,7 @@ describe('OperationFormService', () => {
         productoId: 'prod-1',
         nombre: 'Heladera',
         variantId: 'var-1',
-        variantLabel: 'Variante estÃ¡ndar',
+        variantLabel: 'Variante estándar',
         cantidad: 1,
         precio: 1000,
         subtotal: 1000,
@@ -172,4 +174,3 @@ describe('OperationFormService', () => {
     expect(service.canNext(2)).toBeFalse();
   });
 });
-

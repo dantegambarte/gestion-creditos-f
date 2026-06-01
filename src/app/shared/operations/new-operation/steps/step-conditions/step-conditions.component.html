@@ -212,7 +212,7 @@
       </div>
 
       @if (form.controls["operationType"].value === "SALE") {
-      <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-6">
+        <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-6">
           <div class="space-y-5">
             <div>
               <h3 class="text-base font-semibold text-white">
@@ -428,7 +428,7 @@
               }
             </div>
           </div>
-      </div>
+        </div>
       }
     </div>
 
@@ -554,205 +554,17 @@
   </div>
 
   @if (simulationVisible) {
-    <div
-      class="overflow-hidden rounded-2xl border border-[#1A1D27] bg-[#121520]"
-    >
-      <div class="border-b border-[#1A1D27] bg-[#0F121B] p-5">
-        <div
-          class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div>
-            <h3 class="text-lg font-semibold text-white">
-              Resultado de la simulación
-            </h3>
-            <p class="mt-1 text-sm text-slate-400">
-              Vista estimada del plan financiero según la configuración actual.
-            </p>
-          </div>
-          <div class="flex items-center gap-2">
-            <span
-              class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300"
-            >
-              {{ getSimulationStatusLabel() }}
-            </span>
-            <span
-              class="rounded-full border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-2.5 py-1 text-[11px] font-semibold text-[#93C5FD]"
-            >
-              {{ getSelectedFrequencyLabel() }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div
-        class="grid gap-5 p-5 xl:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]"
-      >
-        <div class="space-y-5">
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3">
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">
-                Cuota estimada
-              </p>
-              <p class="mt-1 text-base font-semibold text-white">
-                {{ valorCuota | currencyArs }}
-              </p>
-            </div>
-            <div class="rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3">
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">
-                Cantidad de cuotas
-              </p>
-              <p class="mt-1 text-base font-semibold text-white">
-                {{ getSelectedInstallmentsCount() }}
-              </p>
-            </div>
-            <div class="rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3">
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">
-                Intereses estimados
-              </p>
-              <p class="mt-1 text-base font-semibold text-white">
-                {{ totalInterestAmount | currencyArs }}
-              </p>
-            </div>
-            <div class="rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-3">
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">
-                Total del plan
-              </p>
-              <p class="mt-1 text-base font-semibold text-white">
-                {{ totalADevolver | currencyArs }}
-              </p>
-            </div>
-          </div>
-
-          <div
-            class="overflow-hidden rounded-xl border border-[#1A1D27] bg-[#0B0D14]"
-          >
-            <div
-              class="flex items-center justify-between border-b border-[#1A1D27] px-4 py-3"
-            >
-              <p class="text-sm font-semibold text-white">
-                Cronograma de pagos
-              </p>
-              <p class="text-xs text-slate-400">
-                {{ getSimulationScheduleRows().length }} filas visibles
-              </p>
-            </div>
-
-            @if (simulationError) {
-              <div class="px-4 py-4 text-sm text-red-300">
-                {{ simulationError }}
-              </div>
-            } @else if (simulationLoading) {
-              <div class="px-4 py-4 text-sm text-slate-300">
-                Calculando cronograma real...
-              </div>
-            } @else if (getSimulationScheduleRows().length === 0) {
-              <div class="px-4 py-4 text-sm text-slate-300">
-                Definí la fecha del primer pago y simulá para ver el cronograma
-                real.
-              </div>
-            } @else {
-              <div
-                class="grid grid-cols-12 gap-2 border-b border-[#1A1D27] px-4 py-2 text-[11px] uppercase tracking-wide text-slate-500"
-              >
-                <p class="col-span-1">N°</p>
-                <p class="col-span-3">Vencimiento</p>
-                <p class="col-span-2 text-right">Cuota</p>
-                <p class="col-span-2 text-right">Capital</p>
-                <p class="col-span-2 text-right">Interés</p>
-                <p class="col-span-2 text-right">Saldo</p>
-              </div>
-
-              <div class="divide-y divide-[#1A1D27]">
-                @for (
-                  item of getSimulationScheduleRows();
-                  track item.installment
-                ) {
-                  <div
-                    class="grid grid-cols-12 items-center gap-2 px-4 py-2.5 text-xs sm:text-sm"
-                  >
-                    <p class="col-span-1 font-medium text-slate-200">
-                      {{ item.installment }}
-                    </p>
-                    <p class="col-span-3 text-slate-300">
-                      {{ getFormattedDate(item.dueDate) }}
-                    </p>
-                    <p
-                      class="col-span-2 text-right font-semibold text-emerald-300"
-                    >
-                      {{ item.amount | currencyArs }}
-                    </p>
-                    <p class="col-span-2 text-right text-white">
-                      {{ item.capital ?? 0 | currencyArs }}
-                    </p>
-                    <p class="col-span-2 text-right text-slate-300">
-                      {{ item.interest ?? 0 | currencyArs }}
-                    </p>
-                    <p class="col-span-2 text-right text-slate-400">
-                      {{ item.remainingEstimated | currencyArs }}
-                    </p>
-                  </div>
-                }
-              </div>
-            }
-
-            @if (hasHiddenScheduleRows()) {
-              <p
-                class="border-t border-[#1A1D27] px-4 py-2 text-xs text-slate-400"
-              >
-                Se muestran las primeras
-                {{ getSimulationScheduleRows().length }} cuotas de
-                {{ getSelectedInstallmentsCount() }}.
-              </p>
-            }
-          </div>
-        </div>
-
-        <div class="rounded-xl border border-[#1A1D27] bg-[#0B0D14] p-4">
-          <p
-            class="text-xs font-semibold uppercase tracking-wide text-slate-400"
-          >
-            Resumen del plan
-          </p>
-          <p class="mt-2 text-sm font-semibold text-white">
-            {{ getPlanSummary() }}
-          </p>
-          <p class="mt-2 text-xs text-slate-300">
-            Si te cierra esta simulación, continuá al paso de confirmación para
-            registrar la operación.
-          </p>
-
-          <div class="mt-4 space-y-2 text-xs text-slate-300">
-            <div class="flex items-center justify-between">
-              <span>Primer vencimiento</span>
-              <span class="font-semibold text-white">{{
-                getFirstSimulationDueDate()
-                  ? getFormattedDate(getFirstSimulationDueDate()!)
-                  : "Sin fecha"
-              }}</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span>Frecuencia</span>
-              <span class="font-semibold text-white">{{
-                getSelectedFrequencyLabel()
-              }}</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            class="mt-5 w-full rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors"
-            [class]="
-              canContinueWithPlan
-                ? 'mt-5 w-full rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/10 px-3 py-2.5 text-sm font-semibold text-[#93C5FD] transition-colors hover:bg-[#3B82F6]/20'
-                : 'mt-5 w-full rounded-xl border border-[#2A3145] bg-[#151A27] px-3 py-2.5 text-sm font-semibold text-[#5E6A82] opacity-60 cursor-not-allowed'
-            "
-            [disabled]="!canContinueWithPlan"
-            (click)="continueFromSimulation()"
-          >
-            Continuar con este plan
-          </button>
-        </div>
-      </div>
-    </div>
+    <app-step-conditions-simulation-panel
+      [form]="form"
+      [simulationResult]="simulationResult"
+      [simulationLoading]="simulationLoading"
+      [simulationError]="simulationError"
+      [valorCuota]="valorCuota"
+      [totalADevolver]="totalADevolver"
+      [totalInterestAmount]="totalInterestAmount"
+      [canContinueWithPlan]="canContinueWithPlan"
+      [selectedInstallmentsCount]="getSelectedInstallmentsCount()"
+      (continueRequested)="continueFromSimulationRequested.emit()"
+    />
   }
 </section>
