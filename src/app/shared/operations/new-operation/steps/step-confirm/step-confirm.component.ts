@@ -307,4 +307,19 @@ export class StepConfirmComponent {
     date.setMonth(date.getMonth() + index);
     return date;
   }
+
+  /**
+   * Marca (o desmarca) todas las declaraciones disponibles en el formulario.
+   * @param {boolean} value - Valor a aplicar a todas las casillas.
+   */
+  setAllDeclarations(value: boolean): void {
+    if (!this.form) return;
+    const names = ['chkIdentity', 'chkConditions', 'chkDisbursement', 'chkCapacity'];
+    names.forEach((n) => {
+      if (this.form.controls[n]) {
+        this.form.controls[n].setValue(value);
+        this.form.controls[n].markAsDirty();
+      }
+    });
+  }
 }
