@@ -81,9 +81,9 @@
                   <span class="db-pending-installments">Cuota {{ payment.installmentNumber }}</span>
                   <button
                     class="db-pending-btn"
-                    [disabled]="isCashClosed"
+                    [disabled]="isCashClosed || approvingPaymentId === payment.id"
                     [class.db-pending-btn--disabled]="isCashClosed"
-                    (click)="approvePayment(payment.id)"
+                    (click)="openApprovePaymentDialog(payment)"
                     [title]="isCashClosed ? 'La caja está cerrada' : 'Aprobar cobro'"
                   >
                     Aprobar
@@ -97,3 +97,12 @@
     </div>
   </div>
 </div>
+
+<app-dashboard-approve-payment-dialog
+  [visible]="approveDialogVisible"
+  [payment]="selectedPaymentToApprove"
+  [processing]="approvingPaymentId !== null"
+  (visibleChange)="onApproveDialogVisibleChange($event)"
+  (cancelled)="closeApprovePaymentDialog()"
+  (confirmed)="confirmApprovePayment()"
+/>

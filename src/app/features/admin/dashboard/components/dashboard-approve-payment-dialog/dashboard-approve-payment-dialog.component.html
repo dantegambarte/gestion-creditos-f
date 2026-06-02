@@ -1,0 +1,66 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Confirmar aprobación"
+  [modal]="true"
+  [style]="{ width: '420px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-3 py-2">
+    <p class="m-0 text-sm" style="color: var(--text-color)">
+      Estás por aprobar este cobro. Esta acción impacta en la caja y en los indicadores del dashboard.
+    </p>
+
+    @if (payment) {
+      <div
+        class="rounded-xl px-3 py-2 text-sm"
+        style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
+      >
+        <div class="flex justify-between gap-3">
+          <span>Cliente</span>
+          <strong>{{ payment.customerName || 'Sin cliente' }}</strong>
+        </div>
+        <div class="flex justify-between gap-3 mt-1">
+          <span>Método</span>
+          <strong>{{ payment.paymentMethod === 'CASH' ? 'Efectivo' : 'Transferencia' }}</strong>
+        </div>
+        <div class="flex justify-between gap-3 mt-1">
+          <span>Importe</span>
+          <strong>{{ payment.amountReceived | currencyArs }}</strong>
+        </div>
+        <div class="flex justify-between gap-3 mt-1">
+          <span>Cuota</span>
+          <strong>{{ payment.installmentNumber ?? '-' }}</strong>
+        </div>
+      </div>
+    }
+
+    <p class="m-0 text-sm font-semibold" style="color: var(--ff-danger)">
+      ¿Confirmás la aprobación?
+    </p>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="cancel()"
+        [disabled]="processing"
+      />
+      <p-button
+        type="button"
+        label="Sí, aprobar"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirm()"
+        [loading]="processing"
+        [disabled]="processing || !payment"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

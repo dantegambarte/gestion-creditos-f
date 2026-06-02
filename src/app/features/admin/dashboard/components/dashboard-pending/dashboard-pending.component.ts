@@ -18,11 +18,16 @@ import { Credit } from '../../../../seller/models/credit.model';
 import { CreditsService } from '../../../../seller/operations/credits.service';
 import { PaymentsService } from '../../../../collector/payments.service';
 import { Payment, PendingCreditGroup, PendingPaymentGroup } from '../../../models/interface/dashboard';
+import { DashboardApprovePaymentDialogComponent } from '../dashboard-approve-payment-dialog/dashboard-approve-payment-dialog.component';
 
 @Component({
   selector: 'app-dashboard-pending',
   standalone: true,
-  imports: [CurrencyArsPipe, SkeletonModule],
+  imports: [
+    CurrencyArsPipe,
+    SkeletonModule,
+    DashboardApprovePaymentDialogComponent,
+  ],
   templateUrl: './dashboard-pending.component.html',
 })
 export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
@@ -37,6 +42,9 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
   @Output() paymentApproved = new EventEmitter<void>();
 
   loadingPending = true;
+  approvingPaymentId: string | null = null;
+  approveDialogVisible = false;
+  selectedPaymentToApprove: Payment | null = null;
   pendingCredits: PendingCreditGroup[] = [];
   pendingPayments: PendingPaymentGroup[] = [];
 
@@ -131,10 +139,11 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Aprueba un cobro pendiente y recarga los datos. Valida que la caja no esté cerrada.
-   * @param paymentId id del cobro
+   * Abre el modal de doble validación para aprobar un cobro pendiente.
+   * Si la caja está cerrada, muestra alerta y no abre el modal.
+   * @param payment cobro seleccionado
    */
-  approvePayment(paymentId: string): void {
+  openApprovePaymentDialog(payment: Payment): void {
     if (this.isCashClosed) {
       this.alertUpdated.emit({
         show: true,
@@ -143,15 +152,50 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
+    this.selectedPaymentToApprove = payment;
+    this.approveDialogVisible = true;
+  }
+
+  /**
+   * Cierra el modal de aprobación y limpia el cobro seleccionado.
+   */
+  closeApprovePaymentDialog(): void {
+    this.approveDialogVisible = false;
+    this.selectedPaymentToApprove = null;
+  }
+
+  /**
+   * Sincroniza el estado de visibilidad del modal desde el diálogo hijo.
+   * Si se cierra, también limpia el cobro seleccionado.
+   * @param visible estado de visibilidad emitido por el diálogo
+   */
+  onApproveDialogVisibleChange(visible: boolean): void {
+    this.approveDialogVisible = visible;
+    if (!visible) this.selectedPaymentToApprove = null;
+  }
+
+  /**
+   * Confirma la aprobación desde el modal de doble validación.
+   * Ejecuta la aprobación, recarga datos y actualiza KPIs del dashboard.
+   */
+  confirmApprovePayment(): void {
+    if (!this.selectedPaymentToApprove) return;
+
+    const paymentId = this.selectedPaymentToApprove.id;
+    this.approvingPaymentId = paymentId;
+
     this.paymentsSvc
       .approve(paymentId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
+          this.closeApprovePaymentDialog();
+          this.approvingPaymentId = null;
           this.loadPending();
           this.paymentApproved.emit();
         },
         error: (err) => {
+          this.approvingPaymentId = null;
           console.error('Error al aprobar pago:', err);
           this.alertUpdated.emit({
             show: true,
