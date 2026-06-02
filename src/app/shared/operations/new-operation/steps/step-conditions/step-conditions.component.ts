@@ -179,6 +179,22 @@ export class StepConditionsComponent implements OnChanges {
   }
 
   /**
+   * Máximo de cuotas que se pueden adelantar sin superar el plan seleccionado.
+   * @returns {number} Límite superior válido para el input de adelanto.
+   */
+  getMaxAdvancedInstallments(): number {
+    return Math.max(this.getSelectedInstallmentsCount() - 1, 0);
+  }
+
+  /**
+   * Indica si el plan actual permite adelantar al menos una cuota.
+   * @returns {boolean} True si existe margen para adelanto.
+   */
+  canAdvanceInstallments(): boolean {
+    return this.getMaxAdvancedInstallments() > 0;
+  }
+
+  /**
    * Calcula el total estimado de intereses a partir del capital financiado y el total a devolver.
    */
   get totalInterestAmount(): number {
