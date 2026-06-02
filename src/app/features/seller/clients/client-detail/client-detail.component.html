@@ -24,14 +24,19 @@
         <div class="xl:col-span-2 space-y-6">
           <div
             class="ff-panel rounded-lg p-6 space-y-6"
-            style="background: var(--ff-panel); border: 1px solid var(--ff-border)"
+            style="
+              background: var(--ff-panel);
+              border: 1px solid var(--ff-border);
+            "
           >
             <div class="flex items-center justify-between flex-wrap gap-3">
               <div class="flex items-center gap-3">
                 <h2 class="text-xl font-semibold">{{ customer.fullName }}</h2>
                 <p-tag
                   [value]="customer.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
-                  [severity]="customer.status === 'ACTIVE' ? 'success' : 'danger'"
+                  [severity]="
+                    customer.status === 'ACTIVE' ? 'success' : 'danger'
+                  "
                 />
               </div>
 
@@ -41,8 +46,9 @@
                     data-cy="seller-client-detail-edit-action"
                     label="Editar"
                     icon="pi pi-pencil"
-                    severity="secondary"
-                    [outlined]="true"
+                    severity="warning"
+                    size="small"
+                    styleClass="px-4 rounded-xl"
                     (onClick)="enterEditMode()"
                   />
                   @if (customer.status === "ACTIVE") {
@@ -51,7 +57,8 @@
                       label="Desactivar"
                       icon="pi pi-ban"
                       severity="danger"
-                      [outlined]="true"
+                      size="small"
+                      styleClass="px-4 rounded-xl"
                       (onClick)="confirmDeactivate()"
                     />
                   } @else {
@@ -59,8 +66,9 @@
                       data-cy="seller-client-detail-status-action"
                       label="Activar"
                       icon="pi pi-check-circle"
-                      severity="secondary"
-                      [outlined]="true"
+                      severity="success"
+                      size="small"
+                      styleClass="px-4 rounded-xl"
                       (onClick)="confirmActivate()"
                     />
                   }
@@ -70,41 +78,55 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span class="text-sm" style="color: var(--ff-text-muted)">DNI</span>
+                <span class="text-sm" style="color: var(--ff-text-muted)"
+                  >DNI</span
+                >
                 <p class="font-medium ff-mono">{{ customer.dni }}</p>
               </div>
 
               @if (customer.address != null) {
                 <div>
-                  <span class="text-sm" style="color: var(--ff-text-muted)">Dirección</span>
+                  <span class="text-sm" style="color: var(--ff-text-muted)"
+                    >Dirección</span
+                  >
                   <p class="font-medium">{{ customer.address }}</p>
                 </div>
               }
 
               @if (customer.phone) {
                 <div>
-                  <span class="text-sm" style="color: var(--ff-text-muted)">Teléfono</span>
+                  <span class="text-sm" style="color: var(--ff-text-muted)"
+                    >Teléfono</span
+                  >
                   <p class="font-medium ff-mono">{{ customer.phone }}</p>
                 </div>
               }
 
               @if (customer.email) {
                 <div>
-                  <span class="text-sm" style="color: var(--ff-text-muted)">Email</span>
+                  <span class="text-sm" style="color: var(--ff-text-muted)"
+                    >Email</span
+                  >
                   <p class="font-medium">{{ customer.email }}</p>
                 </div>
               }
 
               @if (customer.collectorName) {
                 <div>
-                  <span class="text-sm" style="color: var(--ff-text-muted)">Cobrador asignado</span>
+                  <span class="text-sm" style="color: var(--ff-text-muted)"
+                    >Cobrador asignado</span
+                  >
                   <p class="font-medium">{{ customer.collectorName }}</p>
                 </div>
               }
 
               <div>
-                <span class="text-sm" style="color: var(--ff-text-muted)">Fecha de alta</span>
-                <p class="font-medium">{{ customer.createdAt | date: "dd/MM/yyyy HH:mm" }}</p>
+                <span class="text-sm" style="color: var(--ff-text-muted)"
+                  >Fecha de alta</span
+                >
+                <p class="font-medium">
+                  {{ customer.createdAt | date: "dd/MM/yyyy HH:mm" }}
+                </p>
               </div>
             </div>
           </div>

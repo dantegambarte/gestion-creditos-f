@@ -2,13 +2,20 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { Credit, CreditStatus } from '../../models/credit.model';
 
 @Component({
   selector: 'app-client-credits-history-panel',
   standalone: true,
-  imports: [CommonModule, ButtonModule, TagModule, LoadingStateComponent],
+  imports: [
+    CommonModule,
+    ButtonModule,
+    TagModule,
+    TooltipModule,
+    LoadingStateComponent,
+  ],
   templateUrl: './client-credits-history-panel.component.html',
 })
 export class ClientCreditsHistoryPanelComponent {

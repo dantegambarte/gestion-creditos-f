@@ -4,7 +4,9 @@
 >
   <div class="flex items-center justify-between mb-4">
     <h3 class="font-semibold text-base">Historial de créditos</h3>
-    <span class="text-sm" style="color: var(--ff-text-muted)">{{ credits.length }} créditos</span>
+    <span class="text-sm" style="color: var(--ff-text-muted)"
+      >{{ credits.length }} créditos</span
+    >
   </div>
 
   @if (loadingCredits) {
@@ -37,7 +39,9 @@
                 ${{ credit.totalAmount | number: "1.0-0" }}
               </td>
               <td class="py-3 pr-3 ff-mono">{{ credit.installmentsCount }}</td>
-              <td class="py-3 pr-3">{{ creditFrequencyLabel(credit.paymentFrequency) }}</td>
+              <td class="py-3 pr-3">
+                {{ creditFrequencyLabel(credit.paymentFrequency) }}
+              </td>
               <td class="py-3 pr-3">
                 <p-tag
                   [value]="creditStatusLabel(credit.status)"
@@ -50,10 +54,12 @@
               <td class="py-3 text-right">
                 <p-button
                   data-cy="seller-client-detail-credit-view-action"
-                  label="Ver"
+                  icon="pi pi-eye"
+                  severity="info"
+                  [rounded]="true"
                   size="small"
-                  severity="secondary"
-                  [outlined]="true"
+                  pTooltip="Ver detalle"
+                  tooltipPosition="top"
                   (onClick)="creditSelected.emit(credit.id)"
                 />
               </td>

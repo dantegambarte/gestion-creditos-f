@@ -16,12 +16,16 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
     <div>
       <span style="color: var(--ff-text-muted)">Estado</span>
-      <p class="font-medium">{{ customer.portalEnabled ? "Habilitado" : "Deshabilitado" }}</p>
+      <p class="font-medium">
+        {{ customer.portalEnabled ? "Habilitado" : "Deshabilitado" }}
+      </p>
     </div>
     @if (customer.portalEnabled) {
       <div>
         <span style="color: var(--ff-text-muted)">Contraseña temporal</span>
-        <p class="font-medium">{{ customer.portalIsTempPassword ? "Sí" : "No" }}</p>
+        <p class="font-medium">
+          {{ customer.portalIsTempPassword ? "Sí" : "No" }}
+        </p>
       </div>
       <div>
         <span style="color: var(--ff-text-muted)">Intentos fallidos</span>
@@ -35,8 +39,9 @@
       <p-button
         label="Habilitar portal"
         icon="pi pi-globe"
-        severity="secondary"
-        [outlined]="true"
+        severity="success"
+        size="small"
+        styleClass="px-4 rounded-xl"
         (onClick)="confirmEnablePortal()"
       />
     } @else {
@@ -44,22 +49,25 @@
         label="Deshabilitar portal"
         icon="pi pi-eye-slash"
         severity="danger"
-        [outlined]="true"
+        size="small"
+        styleClass="px-4 rounded-xl"
         (onClick)="confirmDisablePortal()"
       />
       <p-button
         label="Resetear contraseña"
         icon="pi pi-refresh"
-        severity="secondary"
-        [outlined]="true"
+        severity="warning"
+        size="small"
+        styleClass="px-4 rounded-xl"
         (onClick)="confirmResetPortalPassword()"
       />
       @if (customer.portalLockedAt) {
         <p-button
           label="Desbloquear"
           icon="pi pi-lock-open"
-          severity="secondary"
-          [outlined]="true"
+          severity="info"
+          size="small"
+          styleClass="px-4 rounded-xl"
           (onClick)="confirmUnlockPortal()"
         />
       }
