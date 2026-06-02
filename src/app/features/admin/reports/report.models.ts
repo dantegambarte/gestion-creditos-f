@@ -176,6 +176,54 @@ export interface UpcomingReportRaw {
   by_customer: UpcomingByCustomerRaw[];
 }
 
+export interface CashConversionReportSummary {
+  totalConversions: number;
+  totalAmount: number;
+  cashToTransfer: number;
+  transferToCash: number;
+}
+
+export interface CashConversionReportRow {
+  id: string;
+  registerDate: string;
+  criteria: 'DAILY' | 'COMPANY';
+  sourceMethod: 'CASH' | 'TRANSFER';
+  targetMethod: 'CASH' | 'TRANSFER';
+  amount: number;
+  notes: string | null;
+  createdByName: string;
+  createdAt: string;
+}
+
+export interface CashConversionReport {
+  summary: CashConversionReportSummary;
+  rows: CashConversionReportRow[];
+}
+
+export interface CashConversionReportSummaryRaw {
+  total_conversions: number;
+  total_amount: number;
+  cash_to_transfer: number;
+  transfer_to_cash: number;
+}
+
+export interface CashConversionReportRowRaw {
+  id: string;
+  register_date: string;
+  criteria: 'DAILY' | 'COMPANY';
+  source_method: 'CASH' | 'TRANSFER';
+  target_method: 'CASH' | 'TRANSFER';
+  amount: number;
+  notes: string | null;
+  created_by_name: string;
+  created_at: string;
+}
+
+export interface CashConversionReportRaw {
+  summary: CashConversionReportSummaryRaw;
+  rows: CashConversionReportRowRaw[];
+}
+
 export type ReportTab =
   | 'summary'
   | 'collection'
@@ -183,7 +231,8 @@ export type ReportTab =
   | 'overdue'
   | 'collectors'
   | 'products'
-  | 'upcoming';
+  | 'upcoming'
+  | 'cashConversions';
 
 export interface CollectionSummaryRaw {
   grand_total: number;

@@ -9,6 +9,12 @@ import {
   CollectionReportRaw,
   CollectionSummary,
   CollectionSummaryRaw,
+  CashConversionReport,
+  CashConversionReportRaw,
+  CashConversionReportRow,
+  CashConversionReportRowRaw,
+  CashConversionReportSummary,
+  CashConversionReportSummaryRaw,
   CollectorReportRow,
   CollectorReportRowRaw,
   OverdueByCustomer,
@@ -75,6 +81,55 @@ function toCollectionReport(r: CollectionReportRaw): CollectionReport {
   return {
     summary: toCollectionSummary(r.summary),
     daily: r.daily.map(toCollectionDaily),
+  };
+}
+
+/**
+ * Convierte un objeto CashConversionReportSummaryRaw a CashConversionReportSummary.
+ * @param r
+ * @returns
+ */
+function toCashConversionSummary(
+  r: CashConversionReportSummaryRaw,
+): CashConversionReportSummary {
+  return {
+    totalConversions: r.total_conversions,
+    totalAmount: r.total_amount,
+    cashToTransfer: r.cash_to_transfer,
+    transferToCash: r.transfer_to_cash,
+  };
+}
+
+/**
+ * Convierte un objeto CashConversionReportRowRaw a CashConversionReportRow.
+ * @param r
+ * @returns
+ */
+function toCashConversionRow(
+  r: CashConversionReportRowRaw,
+): CashConversionReportRow {
+  return {
+    id: r.id,
+    registerDate: r.register_date,
+    criteria: r.criteria,
+    sourceMethod: r.source_method,
+    targetMethod: r.target_method,
+    amount: r.amount,
+    notes: r.notes,
+    createdByName: r.created_by_name,
+    createdAt: r.created_at,
+  };
+}
+
+/**
+ * Convierte un objeto CashConversionReportRaw a CashConversionReport.
+ * @param r
+ * @returns
+ */
+function toCashConversionReport(r: CashConversionReportRaw): CashConversionReport {
+  return {
+    summary: toCashConversionSummary(r.summary),
+    rows: r.rows.map(toCashConversionRow),
   };
 }
 
@@ -321,6 +376,26 @@ export class ReportsService {
     return this.api
       .get<UpcomingReportRaw>('reports/upcoming', params)
       .pipe(map(toUpcomingReport));
+  }
+
+  /**
+   * Obtiene el reporte de conversiones de caja para un rango de fechas.
+   * @param range
+   * @returns
+   */
+  getCashConversionsReport(
+    range: ReportDateRange,
+  ): Observable<CashConversionReport> {
+    if (!range.dateFrom || !range.dateTo) {
+      return throwError(() => ({
+        status: 400,
+        message: 'Los parámetros date_from y date_to son obligatorios.',
+      }));
+    }
+    const params = { date_from: range.dateFrom, date_to: range.dateTo };
+    return this.api
+      .get<CashConversionReportRaw>('reports/cash-conversions', params)
+      .pipe(map(toCashConversionReport));
   }
 }
 

@@ -1510,6 +1510,7 @@ table.ff-table {
     color: var(--ff-text-primary);
     margin-top: 6px;
     line-height: 1.1;
+    white-space: nowrap;
   }
 }
 
@@ -1642,6 +1643,10 @@ table.ff-table {
 .p-datepicker .p-datepicker-prev,
 .p-datepicker .p-datepicker-next {
   color: var(--ff-text-primary);
+}
+
+.p-datepicker .p-datepicker-title .p-datepicker-month {
+  margin-right: 0.35rem;
 }
 
 .p-datepicker .p-datepicker-calendar th {

@@ -41,6 +41,15 @@
         [loading]="loadingDashboard"
         (onClick)="loadDashboard()"
       />
+      <p-button
+        data-cy="admin-cash-register-convert-action"
+        label="Convertir saldo"
+        icon="pi pi-sync"
+        severity="secondary"
+        styleClass="h-11 px-5 rounded-xl shadow-sm cr-convert-cta"
+        [disabled]="!dashboard || closedToday"
+        (onClick)="openConversionDialog()"
+      />
       @if (!closedToday) {
         <p-button
           data-cy="admin-cash-register-close-day-cta"
@@ -62,7 +71,7 @@
     <app-error-state />
   } @else if (dashboard) {
     <div
-      class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"
+      class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6 gap-4"
       data-cy="admin-cash-register-kpis"
     >
       <div class="cr-kpi">
@@ -362,3 +371,147 @@
   [(visible)]="showDetailDialog"
   [registerId]="selectedRegisterId"
 />
+
+<p-dialog
+  [(visible)]="showConversionDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '34rem', maxWidth: '95vw' }"
+  header="Conversión de caja"
+>
+  <div class="space-y-4">
+    <div class="text-sm" style="color: var(--ff-text-secondary)">
+      Convertí saldo entre efectivo y transferencia para la jornada
+      {{ dashboard?.date ? formatDate(dashboard!.date) : 'actual' }}.
+    </div>
+
+    <button
+      type="button"
+      class="inline-flex items-center gap-2 text-sm font-medium transition-colors"
+      style="color: #93c5fd"
+      (click)="goToConversionMovements()"
+    >
+      <i class="pi pi-external-link text-xs"></i>
+      Ver movimientos de conversiones
+    </button>
+
+    <div class="space-y-2">
+      <label class="auth-label">Criterio</label>
+      <div class="grid grid-cols-2 gap-2">
+        @for (opt of conversionCriteriaOptions; track opt.value) {
+          <button
+            type="button"
+            class="h-11 rounded-xl border text-sm font-medium transition-colors"
+            [class]="conversionCriteria === opt.value ? 'bg-blue-500/20 border-blue-400 text-blue-100' : 'border-gray-600 text-gray-300 hover:bg-gray-800'"
+            (click)="selectConversionCriteria(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+      @if (!conversionCriteria) {
+        <p class="text-xs" style="color: var(--ff-text-muted)">
+          Seleccioná primero el criterio para habilitar el resto de campos.
+        </p>
+      }
+    </div>
+
+    <div class="space-y-2">
+      <label class="auth-label">Desde</label>
+      <p-dropdown
+        [options]="[
+          { label: 'Efectivo', value: 'CASH' },
+          { label: 'Transferencia', value: 'TRANSFER' }
+        ]"
+        [(ngModel)]="conversionSourceMethod"
+        optionLabel="label"
+        optionValue="value"
+        appendTo="body"
+        styleClass="w-full"
+        [disabled]="!canEditConversionFields"
+      />
+      @if (canEditConversionFields) {
+        <div
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+          [style.color]="conversionAmountExceedsAvailable ? '#fca5a5' : '#86efac'"
+          [style.background]="conversionAmountExceedsAvailable ? 'rgba(239,68,68,0.16)' : 'rgba(34, 197, 94, 0.16)'"
+          [style.border]="conversionAmountExceedsAvailable ? '1px solid rgba(239,68,68,0.38)' : '1px solid rgba(34, 197, 94, 0.35)'"
+        >
+          <i class="pi pi-wallet text-[10px]"></i>
+          Disponible: {{ formatCurrency(conversionSourceAvailable) }}
+        </div>
+      }
+    </div>
+
+    <div class="space-y-2">
+      <label class="auth-label">Hacia</label>
+      <div class="h-11 px-3 rounded-xl flex items-center border" style="border-color: var(--ff-border); color: var(--ff-text-primary)">
+        {{ paymentMethodLabel(conversionTargetMethod) }}
+      </div>
+      @if (canEditConversionFields) {
+        <div
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+          style="color: #93c5fd; background: rgba(59, 130, 246, 0.16); border: 1px solid rgba(59, 130, 246, 0.35)"
+        >
+          <i class="pi pi-arrow-right-arrow-left text-[10px]"></i>
+          Disponible actual: {{ formatCurrency(conversionTargetMethod === 'CASH' ? (dashboard?.cashAmount ?? 0) : (dashboard?.transferAmount ?? 0)) }}
+        </div>
+      }
+    </div>
+
+    <div class="space-y-2">
+      <label class="auth-label">Monto</label>
+      <p-inputNumber
+        appCurrencyAmountInput
+        [(ngModel)]="conversionAmount"
+        mode="currency"
+        currency="ARS"
+        locale="es-AR"
+        styleClass="w-full"
+        inputStyleClass="w-full h-11"
+        [disabled]="!canEditConversionFields"
+      />
+      @if (conversionAmount && conversionAmountExceedsAvailable) {
+        <p class="text-xs text-red-400">
+          El monto no puede superar {{ formatCurrency(conversionSourceAvailable) }}.
+        </p>
+      }
+      @if (conversionValidationError) {
+        <p class="text-xs text-red-400">{{ conversionValidationError }}</p>
+      }
+    </div>
+
+    <div class="space-y-2">
+      <label class="auth-label">Observación (opcional)</label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="conversionNotes"
+        rows="3"
+        maxlength="300"
+        class="w-full"
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex gap-3 justify-end">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="showConversionDialog = false"
+      />
+      <p-button
+        label="Registrar conversión"
+        icon="pi pi-check"
+        severity="primary"
+        styleClass="h-11 px-5 rounded-xl"
+        [loading]="conversionSubmitting"
+        [disabled]="!canSubmitConversion"
+        (onClick)="submitConversion()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

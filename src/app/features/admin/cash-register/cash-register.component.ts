@@ -1,10 +1,14 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
+import { DialogModule } from 'primeng/dialog';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -18,6 +22,7 @@ import { ErrorStateComponent } from '../../../shared/states/error-state/error-st
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import {
   CashRegister,
+  CashConversionPayload,
   CashRegisterDashboard,
   CashRegisterFilters,
   DifferenceStatus,
@@ -26,6 +31,7 @@ import { CashRegisterCloseDialogComponent } from './components/cash-register-clo
 import { CashRegisterClosePanelComponent } from './components/cash-register-close-panel/cash-register-close-panel.component';
 import { CashRegisterDetailDialogComponent } from './components/cash-register-detail-dialog/cash-register-detail-dialog.component';
 import { CashRegisterService } from './cash-register.service';
+import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 
 @Component({
   selector: 'app-cash-register',
@@ -36,6 +42,9 @@ import { CashRegisterService } from './cash-register.service';
     CalendarModule,
     CardModule,
     DropdownModule,
+    DialogModule,
+    InputNumberModule,
+    InputTextareaModule,
     TableModule,
     TagModule,
     ToastModule,
@@ -45,15 +54,18 @@ import { CashRegisterService } from './cash-register.service';
     CashRegisterClosePanelComponent,
     CashRegisterCloseDialogComponent,
     CashRegisterDetailDialogComponent,
+    CurrencyAmountInputDirective,
   ],
   providers: [MessageService],
   templateUrl: './cash-register.component.html',
+  styleUrl: './cash-register.component.scss',
 })
 export class CashRegisterComponent implements OnInit, OnDestroy {
   private readonly service = inject(CashRegisterService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
   readonly format = inject(FormatService);
+  private readonly router = inject(Router);
   private destroy$ = new Subject<void>();
 
   dashboard: CashRegisterDashboard | null = null;
@@ -81,6 +93,19 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   showDetailDialog = false;
   selectedRegisterId: string | null = null;
+
+  showConversionDialog = false;
+  conversionSourceMethod: 'CASH' | 'TRANSFER' = 'CASH';
+  conversionCriteria: 'DAILY' | 'COMPANY' | null = null;
+  conversionAmount: number | null = null;
+  conversionNotes = '';
+  conversionValidationError = '';
+  conversionSubmitting = false;
+
+  readonly conversionCriteriaOptions = [
+    { label: 'Caja diaria', value: 'DAILY' as const },
+    { label: 'Caja de la empresa', value: 'COMPANY' as const },
+  ];
 
   /**
    * Indica si la jornada activa pertenece a un día calendario anterior al actual.
@@ -211,6 +236,151 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   openDetail(reg: CashRegister): void {
     this.selectedRegisterId = reg.id;
     this.showDetailDialog = true;
+  }
+
+  /**
+   * Abre el modal para registrar una conversión de caja.
+   */
+  openConversionDialog(): void {
+    this.showConversionDialog = true;
+    this.conversionSourceMethod = 'CASH';
+    this.conversionCriteria = null;
+    this.conversionAmount = null;
+    this.conversionNotes = '';
+    this.conversionValidationError = '';
+  }
+
+  /**
+   * Selecciona el criterio de conversión.
+   * @param criteria criterio de caja a registrar
+   */
+  selectConversionCriteria(criteria: 'DAILY' | 'COMPANY'): void {
+    this.conversionCriteria = criteria;
+    this.conversionSourceMethod = 'CASH';
+    this.conversionAmount = null;
+    this.conversionValidationError = '';
+  }
+
+  /**
+   * Devuelve el disponible del método origen para validar la conversión.
+   */
+  get conversionSourceAvailable(): number {
+    if (!this.dashboard || !this.conversionCriteria) return 0;
+    return this.conversionSourceMethod === 'CASH'
+      ? this.dashboard.cashAmount
+      : this.dashboard.transferAmount;
+  }
+
+  /**
+   * Indica si ya se eligió el criterio y se pueden habilitar los demás campos.
+   */
+  get canEditConversionFields(): boolean {
+    return !!this.conversionCriteria;
+  }
+
+  /**
+   * Valida si el monto ingresado respeta el disponible del método origen.
+   */
+  get conversionAmountValid(): boolean {
+    if (!this.canEditConversionFields) return false;
+    if (!this.conversionAmount || this.conversionAmount <= 0) return false;
+    return this.conversionAmount <= this.conversionSourceAvailable;
+  }
+
+  /**
+   * Indica si el monto supera el disponible del método origen.
+   */
+  get conversionAmountExceedsAvailable(): boolean {
+    return !!(
+      this.canEditConversionFields &&
+      this.conversionAmount &&
+      this.conversionAmount > this.conversionSourceAvailable
+    );
+  }
+
+  /**
+   * Devuelve el método de pago destino según el método origen.
+   */
+  get conversionTargetMethod(): 'CASH' | 'TRANSFER' {
+    return this.conversionSourceMethod === 'CASH' ? 'TRANSFER' : 'CASH';
+  }
+
+  /**
+   * Indica si la conversión está lista para ser enviada.
+   */
+  get canSubmitConversion(): boolean {
+    return !!(
+      this.conversionCriteria &&
+      this.conversionAmountValid &&
+      !this.conversionSubmitting
+    );
+  }
+
+  /**
+   * Registra una conversión entre efectivo y transferencia y actualiza la caja.
+   */
+  submitConversion(): void {
+    this.conversionValidationError = '';
+    if (!this.conversionCriteria) {
+      this.conversionValidationError =
+        'Seleccioná primero el criterio de caja para continuar.';
+      return;
+    }
+    if (!this.conversionAmount || this.conversionAmount <= 0) {
+      this.conversionValidationError = 'Ingresá un monto mayor a 0.';
+      return;
+    }
+    if (this.conversionAmount > this.conversionSourceAvailable) {
+      this.conversionValidationError = 'El monto supera el disponible del método seleccionado.';
+      return;
+    }
+    if (!this.canSubmitConversion) return;
+
+    const payload: CashConversionPayload = {
+      criteria: this.conversionCriteria!,
+      sourceMethod: this.conversionSourceMethod,
+      amount: this.conversionAmount!,
+      notes: this.conversionNotes?.trim() || undefined,
+      registerDate: this.dashboard?.date,
+    };
+
+    this.conversionSubmitting = true;
+    this.service
+      .createConversion(payload)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.conversionSubmitting = false;
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.msg.add({
+            severity: 'success',
+            summary: 'Conversión registrada',
+            detail: 'La conversión se aplicó correctamente en la caja del día.',
+          });
+          this.showConversionDialog = false;
+          this.loadDashboard();
+        },
+        error: (err: AppError) => {
+          this.msg.add({
+            severity: 'error',
+            summary: 'No se pudo registrar',
+            detail: err.message || 'Ocurrió un error al registrar la conversión.',
+          });
+        },
+      });
+  }
+
+  /**
+   * Navega a la pestaña de movimientos de conversiones en Reportes.
+   */
+  goToConversionMovements(): void {
+    this.showConversionDialog = false;
+    this.router.navigate(['/admin/reports'], {
+      queryParams: { tab: 'cashConversions', returnTo: '/admin/cash-register' },
+    });
   }
 
   /**
