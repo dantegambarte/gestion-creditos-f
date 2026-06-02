@@ -87,6 +87,8 @@
                 "
                 (productAdded)="state.addProduct($event)"
                 (productVariantAdded)="state.addProductVariant($event.product, $event.variantId)"
+                (unitAdded)="state.addProductUnit($event.product, $event.variantId, $event.unitId)"
+                (unitRemoved)="state.removeProductUnit($event.productoId, $event.variantId, $event.unitId)"
                 (productRemoved)="state.removeFromCart($event)"
                 (quantityIncreased)="state.increaseQuantity($event)"
                 (quantityDecreased)="state.decreaseQuantity($event)"
