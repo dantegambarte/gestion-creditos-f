@@ -135,6 +135,9 @@ export class OperationFormService {
   readonly selectedClient = signal<ClientOperation | null>(null);
   readonly selectedProducts = signal<ProductOperation[]>([]);
 
+  // Cache de resúmenes por cliente dentro del wizard — se destruye con el servicio
+  private readonly summaryCache = new Map<string, ClientOperation>();
+
   // ── Operation type options ────────────────────────────────────────────────
   readonly operationTypeOptions = [
     { label: 'Venta', value: 'SALE' as const },
@@ -501,6 +504,17 @@ export class OperationFormService {
   }
 
   /**
+   * Devuelve la mayor cantidad de cuotas configurada entre las líneas de venta.
+   * @returns {number} Cantidad máxima del plan actual.
+   */
+  getSaleMaxInstallments(): number {
+    return Math.max(
+      0,
+      ...this.cartLines.map((line) => Number(line.selectedInstallments ?? 0)),
+    );
+  }
+
+  /**
    * Capital financiado de una línea descontando el anticipo prorrateado.
    */
   getLineFinancedCapital(line: CartLine): number {
@@ -643,6 +657,26 @@ export class OperationFormService {
     this.operationForm.controls.initialPaymentType.valueChanges.subscribe(() => {
       this.resetSimulationResult();
     });
+
+    this.operationForm.controls.advancedInstallmentsCount.valueChanges.subscribe(
+      (count) => {
+        this.resetSimulationResult();
+        const maxAllowed = Math.max(this.getSaleMaxInstallments() - 1, 0);
+        if (count == null) return;
+        if (maxAllowed <= 0) {
+          this.operationForm.controls.advancedInstallmentsCount.setValue(null, {
+            emitEvent: false,
+          });
+          return;
+        }
+        if (count > maxAllowed) {
+          this.operationForm.controls.advancedInstallmentsCount.setValue(
+            maxAllowed,
+            { emitEvent: false },
+          );
+        }
+      },
+    );
   }
 
   // ── HTTP loaders ──────────────────────────────────────────────────────────
@@ -1060,8 +1094,14 @@ export class OperationFormService {
   selectClient(client: ClientOperation): void {
     this.showQuickClientForm = false;
     this.operationForm.controls.customerId.setValue(client.id);
-    this.selectedClient.set(client);
 
+    const cached = this.summaryCache.get(client.id);
+    if (cached) {
+      this.selectedClient.set(cached);
+      return;
+    }
+
+    this.selectedClient.set(client);
     this.loadingSelectedClientSummary = true;
     this.customersService.getWizardSummary(client.id).pipe(
       finalize(() => {
@@ -1086,6 +1126,7 @@ export class OperationFormService {
           creditsSummary: summary.credits,
         };
 
+        this.summaryCache.set(client.id, enrichedClient);
         this.selectedClient.set(enrichedClient);
         this.clients = this.clients.map((current) =>
           current.id === enrichedClient.id ? enrichedClient : current,
@@ -1406,6 +1447,22 @@ export class OperationFormService {
 
     const selectedUnits = this.selectedProducts();
 
+    const initialPaymentType = this.operationForm.controls.initialPaymentType.value;
+    const advancedInstallmentsCount =
+      this.operationForm.controls.advancedInstallmentsCount.value ?? 0;
+    const downPaymentAmount =
+      initialPaymentType === 'DOWN_PAYMENT'
+        ? this.getValidatedDownPayment()
+        : 0;
+    const paymentMethod =
+      initialPaymentType === 'DOWN_PAYMENT'
+        ? this.operationForm.controls.downPaymentMethod.value
+        : null;
+    const transferReference =
+      initialPaymentType === 'DOWN_PAYMENT'
+        ? this.operationForm.controls.downPaymentTransferReference.value
+        : null;
+
     const payload =
       type === 'SALE'
         ? {
@@ -1426,13 +1483,21 @@ export class OperationFormService {
                 (line.selectedInstallments ?? 0),
             })),
             units: selectedUnits.map((p) => ({ unitId: p.id })),
-            initialPaymentType: this.operationForm.controls.initialPaymentType.value,
-            downPayment: this.getValidatedDownPayment(),
-            downPaymentMethod: this.operationForm.controls.downPaymentMethod.value,
-            downPaymentTransferReference: this.operationForm.controls.downPaymentTransferReference.value,
-            advancedInstallmentsCount: this.operationForm.controls.advancedInstallmentsCount.value,
-            advancedInstallmentsMethod: this.operationForm.controls.advancedInstallmentsMethod.value,
-            advancedInstallmentsTransferReference: this.operationForm.controls.advancedInstallmentsTransferReference.value,
+            downPayment: downPaymentAmount,
+            downPaymentMethod: paymentMethod,
+            downPaymentTransferReference: transferReference,
+            advancedInstallmentsCount:
+              initialPaymentType === 'ADVANCED_INSTALLMENTS'
+                ? advancedInstallmentsCount
+                : undefined,
+            advancedInstallmentsMethod:
+              initialPaymentType === 'ADVANCED_INSTALLMENTS'
+                ? this.operationForm.controls.advancedInstallmentsMethod.value
+                : undefined,
+            advancedInstallmentsTransferReference:
+              initialPaymentType === 'ADVANCED_INSTALLMENTS'
+                ? this.operationForm.controls.advancedInstallmentsTransferReference.value
+                : undefined,
             installmentsCount: Math.max(
               1,
               ...this.cartLines.map((line) => line.selectedInstallments ?? 1),
