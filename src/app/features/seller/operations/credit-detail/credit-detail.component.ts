@@ -89,6 +89,59 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     return this.credit?.installments[0]?.amountDue ?? null;
   }
 
+  /**
+   * Resume cómo debe mostrarse el pago inicial cuando el backend no distingue su origen.
+   * @returns {string} Etiqueta visible para el bloque financiero.
+   */
+  get initialPaymentLabel(): string {
+    if (this.credit?.prepaidInstallments && this.credit.prepaidInstallments > 0) {
+      return 'Cuotas adelantadas';
+    }
+    return 'Enganche';
+  }
+
+  /**
+   * Describe la limitación actual del detalle para pagos iniciales de ventas pendientes.
+   * @returns {string | null} Texto auxiliar si falta metadata para distinguir el origen.
+   */
+  get initialPaymentNote(): string | null {
+    if (!this.credit || this.credit.type !== 'SALE') {
+      return null;
+    }
+
+    if (this.credit.prepaidInstallments > 0) {
+      return `${this.credit.prepaidInstallments} cuota(s) · ${this.paymentMethodLabel(this.credit.prepaidInstallmentsMethod)}`;
+    }
+
+    if (this.credit.downPayment > 0) {
+      return this.paymentMethodLabel(this.credit.downPaymentMethod);
+    }
+
+    return null;
+  }
+
+  /**
+   * Calcula el monto estimado asociado al adelanto de cuotas.
+   * @returns {number} Importe equivalente al adelanto cuando existe.
+   */
+  get prepaidInstallmentsAmount(): number {
+    if (!this.credit || this.credit.prepaidInstallments <= 0) return 0;
+    const installmentsCount = this.credit.installmentsCount || 0;
+    if (installmentsCount <= 0) return 0;
+    return Math.round((this.credit.financedAmount / installmentsCount) * this.credit.prepaidInstallments);
+  }
+
+  /**
+   * Traduce un método de pago interno a su etiqueta visible.
+   * @param {string | null | undefined} method - Código interno del método.
+   * @returns {string} Etiqueta legible para la UI.
+   */
+  paymentMethodLabel(method: string | null | undefined): string {
+    if (method === 'TRANSFER') return 'Transferencia';
+    if (method === 'CASH') return 'Efectivo';
+    return 'Sin especificar';
+  }
+
   get settlementTotalAmount(): number {
     if (!this.credit?.installments) return 0;
     return this.credit.installments

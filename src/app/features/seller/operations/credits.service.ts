@@ -148,6 +148,10 @@ function toCreditDetail(raw: CreditDetailRaw): CreditDetail {
     financedAmount: raw.financed_amount ?? Math.max(raw.total_amount - downPayment, 0),
     downPaymentMethod: raw.down_payment_method,
     downPaymentTransferReference: raw.down_payment_transfer_reference,
+    prepaidInstallments: raw.prepaid_installments ?? 0,
+    prepaidInstallmentsMethod: raw.prepaid_installments_method,
+    prepaidInstallmentsTransferReference:
+      raw.prepaid_installments_transfer_reference,
     settledAt: raw.settled_at,
     settlementAmount: raw.settlement_amount,
     settlementType: raw.settlement_type,
@@ -284,13 +288,33 @@ function toCreateBody(p: CreditCreatePayload): Record<string, unknown> {
   if (p.notes) body['notes'] = p.notes;
   if (p.type === 'SALE') {
     body['unit_ids'] = p.units.map((u) => u.unitId);
-    if (p.downPayment !== undefined && p.downPayment > 0) {
-      body['down_payment'] = p.downPayment;
-      if (p.downPaymentMethod)
+    const hasDownPayment = p.downPayment !== undefined && p.downPayment > 0;
+    const hasAdvancedInstallments =
+      p.advancedInstallmentsCount !== undefined && p.advancedInstallmentsCount > 0;
+
+    if (hasDownPayment || hasAdvancedInstallments) {
+      body['down_payment'] = p.downPayment ?? 0;
+    }
+
+    if (hasDownPayment) {
+      if (p.downPaymentMethod) {
         body['down_payment_method'] = p.downPaymentMethod;
-      if (p.downPaymentTransferReference)
+      }
+      if (p.downPaymentTransferReference) {
         body['down_payment_transfer_reference'] =
           p.downPaymentTransferReference;
+      }
+    }
+
+    if (p.advancedInstallmentsCount !== undefined && p.advancedInstallmentsCount > 0) {
+      body['prepaid_installments'] = p.advancedInstallmentsCount;
+      if (p.advancedInstallmentsMethod) {
+        body['prepaid_installments_method'] = p.advancedInstallmentsMethod;
+      }
+      if (p.advancedInstallmentsTransferReference) {
+        body['prepaid_installments_transfer_reference'] =
+          p.advancedInstallmentsTransferReference;
+      }
     }
   } else {
     body['total_amount'] = p.totalAmount;
