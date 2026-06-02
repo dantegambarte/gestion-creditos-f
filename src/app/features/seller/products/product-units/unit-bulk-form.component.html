@@ -1,0 +1,48 @@
+<div class="ff-panel p-5 space-y-4">
+  <div class="flex items-center gap-2">
+    <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
+      Alta masiva
+    </h3>
+    <span
+      class="ff-badge"
+      style="background: rgba(79, 110, 247, 0.18); color: var(--ff-accent)"
+    >
+      MÚLTIPLES UNIDADES
+    </span>
+  </div>
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="space-y-3">
+      <textarea
+        pInputTextarea
+        formControlName="rawCodes"
+        rows="5"
+        class="w-full ff-mono text-sm"
+        style="color: var(--ff-text-primary)"
+        placeholder="Ingresá un código por línea.&#10;IMEI-353456789012350&#10;IMEI-353456789012351&#10;IMEI-353456789012352"
+        (input)="onCodesChange()"
+      ></textarea>
+
+      @if (errorMessage) {
+        <p
+          class="text-sm px-3 py-2 rounded-lg"
+          style="color: var(--ff-danger); background: rgba(239, 68, 68, 0.1)"
+        >
+          {{ errorMessage }}
+        </p>
+      }
+
+      <p-button
+        type="submit"
+        [label]="
+          preview.length > 0
+            ? 'Registrar ' + preview.length + ' unidades...'
+            : 'Registrar N unidades...'
+        "
+        severity="primary"
+        styleClass="w-full justify-center h-11 rounded-xl"
+        [loading]="submitting"
+        [disabled]="preview.length === 0"
+      />
+    </div>
+  </form>
+</div>

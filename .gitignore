@@ -57,3 +57,4 @@ cypress/screenshots
 cypress/reports
 cypress/downloads
 cypress-report.txt
+e2e-run-monitor.log

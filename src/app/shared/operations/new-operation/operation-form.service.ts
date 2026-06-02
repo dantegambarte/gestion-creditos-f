@@ -10,9 +10,7 @@ import { Observable, map, finalize } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { CreditsService } from '../../../features/seller/operations/credits.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
-import { ProductUnitsService } from '../../../features/seller/products/product-units.service';
 import { InterestRatesService } from '../../../features/admin/config/services/interest-rates.service';
-import { ProductRatesService } from '../../../features/admin/config/services/product-rates.service';
 import { InterestRate } from '../../../features/admin/config/models/interfaces/interest-rate.model';
 import { ProductRate } from '../../../features/admin/config/models/interfaces/product';
 import { ClientOperation } from '../../models/interface/client';
@@ -31,35 +29,14 @@ import {
   findProductRate,
   rateToPercent,
 } from '../../utils/financial-calculator.util';
+import {
+  CatalogProduct,
+  CatalogVariant,
+  SaleInstallmentOption,
+  OperationCatalogService,
+} from './operation-catalog.service';
 
-export type CatalogProduct = {
-  productoId: string;
-  nombre: string;
-  precio: number;
-  stockDisponible: number;
-  unitIds: string[];
-  productIds: string[];
-  variants: CatalogVariant[];
-};
-
-export type CatalogVariant = {
-  variantId: string;
-  label: string;
-  precio: number;
-  stockDisponible: number;
-  unitIds: string[];
-  productIds: string[];
-  unitCodes: string[];
-  color?: string | null;
-  size?: string | null;
-  capacity?: string | null;
-};
-
-export type SaleInstallmentOption = {
-  label: string;
-  value: number;
-  frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY';
-};
+export type { CatalogProduct, CatalogVariant, SaleInstallmentOption };
 
 export type CartLine = {
   productoId: string;
@@ -89,10 +66,9 @@ export class OperationFormService {
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
   private readonly customersService = inject(CustomersService);
-  private readonly productUnitsService = inject(ProductUnitsService);
   private readonly creditsService = inject(CreditsService);
   private readonly interestRatesService = inject(InterestRatesService);
-  private readonly productRatesService = inject(ProductRatesService);
+  readonly catalogSvc = inject(OperationCatalogService);
 
   // ── Form ──────────────────────────────────────────────────────────────────
   readonly operationForm = this.fb.group({
@@ -130,19 +106,20 @@ export class OperationFormService {
 
   // ── Server data ───────────────────────────────────────────────────────────
   clients: ClientOperation[] = [];
-  availableProducts: ProductOperation[] = [];
   interestRates: InterestRate[] = [];
-  productRates: ProductRate[] = [];
+
+  // ── Catalog state (delegated to OperationCatalogService) ─────────────────
+  get availableProducts(): ProductOperation[] { return this.catalogSvc.availableProducts; }
+  get catalogProducts(): CatalogProduct[] { return this.catalogSvc.catalogProducts; }
+  get loadingProductRatesByCatalogId(): Record<string, boolean> { return this.catalogSvc.loadingProductRatesByCatalogId; }
+  get loadingSaleData(): boolean { return this.catalogSvc.loadingSaleData; }
 
   // ── Cart state ────────────────────────────────────────────────────────────
   cartLines: CartLine[] = [];
-  catalogProducts: CatalogProduct[] = [];
-  loadingProductRatesByCatalogId: Record<string, boolean> = {};
 
   // ── UI state ──────────────────────────────────────────────────────────────
   submitting = false;
   loadingLoanData = false;
-  loadingSaleData = false;
   isInstallmentsRefreshing = false;
   loadingSelectedClientSummary = false;
   creatingQuickClient = false;
@@ -152,7 +129,6 @@ export class OperationFormService {
   todayDate = this.getTodayStart();
   dynamicRate = 0;
   private loanRatesLoaded = false;
-  private saleDataLoaded = false;
   simulationResult: SimulateResult | null = null;
 
   // ── Signals (still needed for selectedClient/selectedProducts) ────────────
@@ -706,43 +682,6 @@ export class OperationFormService {
     );
   }
 
-  /**
-   * Carga unidades disponibles para el flujo de venta (SALE).
-   */
-  loadSaleData(): Observable<void> {
-    return this.productUnitsService.getAll({ status: 'AVAILABLE' }).pipe(
-      map((units) => {
-        this.availableProducts = units.map((u) => ({
-          id: u.id,
-          productId: u.productId,
-          variantId: u.variantId,
-          name: u.productName,
-          price: u.currentPrice,
-          stock: 1,
-          unitCode: u.unitCode,
-          historicalPrice: u.currentPrice,
-          color: u.color,
-          size: u.size,
-          capacity: u.capacity,
-        }));
-      }),
-    );
-  }
-
-  /**
-   * Obtiene tasas activas para un producto específico.
-   * @param {string} productId - Identificador del producto.
-   */
-  loadProductRatesByProductId(productId: string): Observable<ProductRate[]> {
-    return this.productRatesService.getAll({ productId }).pipe(
-      map((rates) => {
-        const activeRates = rates.filter((r) => r.active);
-        const kept = this.productRates.filter((r) => r.productId !== productId);
-        this.productRates = [...kept, ...activeRates];
-        return activeRates;
-      }),
-    );
-  }
 
   // ── Cart management ───────────────────────────────────────────────────────
 
@@ -753,7 +692,7 @@ export class OperationFormService {
    */
   addProductVariant(product: CatalogProduct, variantId: string): void {
     const variant = product.variants.find((item) => item.variantId === variantId);
-    if (!variant || this.loadingProductRatesByCatalogId[product.productoId]) return;
+    if (!variant || this.catalogSvc.loadingProductRatesByCatalogId[product.productoId]) return;
 
     const cartKey = this.getCartLineKey(product.productoId, variant.variantId);
     const existing = this.cartLines.find((line) => this.getCartLineKey(line.productoId, line.variantId) === cartKey);
@@ -769,19 +708,17 @@ export class OperationFormService {
       return;
     }
 
-    this.loadingProductRatesByCatalogId[product.productoId] = true;
+    this.catalogSvc.loadingProductRatesByCatalogId[product.productoId] = true;
     const firstProductId = variant.productIds[0] ?? product.productIds[0];
     if (!firstProductId) {
-      this.loadingProductRatesByCatalogId[product.productoId] = false;
+      this.catalogSvc.loadingProductRatesByCatalogId[product.productoId] = false;
       return;
     }
 
-    this.loadProductRatesByProductId(firstProductId)
-      .pipe(
-        finalize(() => {
-          this.loadingProductRatesByCatalogId[product.productoId] = false;
-        }),
-      )
+    this.catalogSvc.loadProductRatesByProductId(firstProductId)
+      .pipe(finalize(() => {
+        this.catalogSvc.loadingProductRatesByCatalogId[product.productoId] = false;
+      }))
       .subscribe((rates) => {
         this.upsertCartLine(product, variant, rates);
       });
@@ -922,7 +859,7 @@ export class OperationFormService {
   clearCart(): void {
     this.resetSimulationResult();
     this.cartLines = [];
-    this.loadingProductRatesByCatalogId = {};
+    this.catalogSvc.resetLoadingStates();
     this.selectedProducts.set([]);
     this.ensureValidFrequencySelection();
     this.ensureValidInstallmentsSelection();
@@ -1251,11 +1188,7 @@ export class OperationFormService {
     if (type === 'LOAN' && !this.loanRatesLoaded) {
       this.loadingLoanData = true;
       this.loadLoanRates()
-        .pipe(
-          finalize(() => {
-            this.loadingLoanData = false;
-          }),
-        )
+        .pipe(finalize(() => { this.loadingLoanData = false; }))
         .subscribe(() => {
           this.loanRatesLoaded = true;
           this.ensureValidFrequencySelection();
@@ -1265,21 +1198,12 @@ export class OperationFormService {
       return;
     }
 
-    if (type === 'SALE' && !this.saleDataLoaded) {
-      this.loadingSaleData = true;
-      this.loadSaleData()
-        .pipe(
-          finalize(() => {
-            this.loadingSaleData = false;
-          }),
-        )
-        .subscribe(() => {
-          this.saleDataLoaded = true;
-          this.catalogProducts = this.buildCatalogProducts();
-          this.ensureValidFrequencySelection();
-          this.ensureValidInstallmentsSelection();
-          this.calculateDynamicRate();
-        });
+    if (type === 'SALE' && !this.catalogSvc.isLoaded) {
+      this.catalogSvc.loadSaleData().subscribe(() => {
+        this.ensureValidFrequencySelection();
+        this.ensureValidInstallmentsSelection();
+        this.calculateDynamicRate();
+      });
     }
   }
 
@@ -1290,61 +1214,8 @@ export class OperationFormService {
    */
   reloadCatalogAfterUnitError(): void {
     this.clearCart();
-    this.saleDataLoaded = false;
-    this.loadSaleData()
-      .pipe(
-        finalize(() => {
-          this.loadingSaleData = false;
-        }),
-      )
-      .subscribe(() => {
-        this.saleDataLoaded = true;
-        this.catalogProducts = this.buildCatalogProducts();
-      });
-  }
-
-  /**
-   * Agrupa unidades disponibles por producto para construir el catálogo del paso 2.
-   */
-  buildCatalogProducts(): CatalogProduct[] {
-    const groups = new Map<string, CatalogProduct>();
-    for (const unit of this.availableProducts) {
-      const price = unit.historicalPrice ?? unit.price ?? 0;
-      const key = this.getCatalogGroupKey(unit, price);
-      const existing = groups.get(key);
-      if (existing) {
-        existing.stockDisponible += 1;
-        existing.unitIds.push(unit.id);
-        if (unit.productId && !existing.productIds.includes(unit.productId)) {
-          existing.productIds.push(unit.productId);
-        }
-        this.upsertCatalogVariant(existing, unit, price);
-      } else {
-        const nextProduct: CatalogProduct = {
-          productoId: unit.productId || key,
-          nombre: unit.name,
-          precio: price,
-          stockDisponible: 1,
-          unitIds: [unit.id],
-          productIds: unit.productId ? [unit.productId] : [],
-          variants: [],
-        };
-        this.upsertCatalogVariant(nextProduct, unit, price);
-        groups.set(key, nextProduct);
-      }
-    }
-    return Array.from(groups.values());
-  }
-
-  /**
-   * Define la clave de agrupación del catálogo priorizando el `productId` real.
-   * Evita mezclar stock de productos distintos que comparten nombre y precio visible.
-   * @param {ProductOperation} unit - Unidad disponible devuelta por backend.
-   * @param {number} price - Precio histórico/actual usado en el catálogo.
-   * @returns {string} Clave estable para agrupar unidades compatibles.
-   */
-  private getCatalogGroupKey(unit: ProductOperation, price: number): string {
-    return unit.productId || `${unit.name}__${price}`;
+    this.catalogSvc.reset();
+    this.catalogSvc.loadSaleData().subscribe();
   }
 
   /**
@@ -1375,55 +1246,6 @@ export class OperationFormService {
    */
   private getDefaultVariant(product: CatalogProduct): CatalogVariant | undefined {
     return [...product.variants].sort((a, b) => b.stockDisponible - a.stockDisponible)[0];
-  }
-
-  /**
-   * Inserta o actualiza una variante dentro del producto agrupado del catálogo.
-   * @param {CatalogProduct} product - Grupo principal del catálogo.
-   * @param {ProductOperation} unit - Unidad concreta recibida del backend.
-   * @param {number} price - Precio visible asociado a la unidad.
-   */
-  private upsertCatalogVariant(
-    product: CatalogProduct,
-    unit: ProductOperation,
-    price: number,
-  ): void {
-    const variantId = unit.variantId || `${product.productoId}__default`;
-    const existing = product.variants.find((item) => item.variantId === variantId);
-    if (existing) {
-      existing.stockDisponible += 1;
-      existing.unitIds.push(unit.id);
-      existing.unitCodes.push(unit.unitCode ?? unit.id);
-      if (unit.productId && !existing.productIds.includes(unit.productId)) {
-        existing.productIds.push(unit.productId);
-      }
-      return;
-    }
-
-    product.variants.push({
-      variantId,
-      label: this.buildVariantLabel(unit),
-      precio: price,
-      stockDisponible: 1,
-      unitIds: [unit.id],
-      unitCodes: [unit.unitCode ?? unit.id],
-      productIds: unit.productId ? [unit.productId] : [],
-      color: unit.color,
-      size: unit.size,
-      capacity: unit.capacity,
-    });
-  }
-
-  /**
-   * Arma una etiqueta humana para una variante a partir de color, tamaño o capacidad.
-   * @param {ProductOperation} unit - Unidad concreta con sus atributos de variante.
-   * @returns {string} Nombre corto para la variante.
-   */
-  private buildVariantLabel(unit: ProductOperation): string {
-    const parts = [unit.color, unit.size, unit.capacity]
-      .map((value) => value?.trim())
-      .filter((value): value is string => Boolean(value));
-    return parts.length > 0 ? parts.join(' · ') : 'Variante estándar';
   }
 
   // ── Reactive consistency helpers ──────────────────────────────────────────
@@ -1524,7 +1346,7 @@ export class OperationFormService {
    */
   syncSelectedProductsFromCart(): void {
     const unitById = new Map(
-      this.availableProducts.map((unit) => [unit.id, unit]),
+      this.catalogSvc.availableProducts.map((unit) => [unit.id, unit]),
     );
     const selectedUnits: ProductOperation[] = [];
     for (const line of this.cartLines) {

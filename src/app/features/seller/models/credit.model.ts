@@ -24,6 +24,7 @@ export interface Credit {
   customerDni: string;
   createdById: string | null;
   createdByName: string | null;
+  downPayment?: number;
 }
 
 export interface CreditInstallment {

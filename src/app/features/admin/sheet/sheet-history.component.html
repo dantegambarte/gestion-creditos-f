@@ -1,0 +1,74 @@
+<div class="ff-panel">
+  <div class="ff-list-header">
+    <div>
+      <span class="ff-list-header__title">Historial de planillas</span>
+      <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
+        Planillas de cobro generadas anteriormente.
+      </p>
+    </div>
+    <p-button
+      icon="pi pi-refresh"
+      severity="secondary"
+      [outlined]="true"
+      [loading]="loading"
+      (onClick)="refresh.emit()"
+    />
+  </div>
+
+  @if (loading) {
+    <app-loading-state />
+  } @else if (historial.length === 0) {
+    <div class="ff-empty-state">
+      <i class="pi pi-inbox"></i>
+      No hay planillas generadas aún.
+    </div>
+  } @else {
+    <p-table
+      [value]="historial"
+      [paginator]="true"
+      [rows]="20"
+      styleClass="p-datatable-sm p-datatable-hoverable-rows"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Fecha</th>
+          <th>Cobrador</th>
+          <th class="text-center">Cuotas</th>
+          <th>Filtro</th>
+          <th class="text-center">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-sheet>
+        <tr>
+          <td>{{ formatDate(sheet.sheetDate) }}</td>
+          <td class="font-medium">{{ sheet.collectorName }}</td>
+          <td class="text-center ff-mono">{{ sheet.totalItems }}</td>
+          <td style="color: var(--ff-text-secondary)">
+            {{ filterLabel(sheet.filterUsed) }}
+          </td>
+          <td class="text-center">
+            <div class="flex justify-center gap-2">
+              <p-button
+                label="Ver detalles"
+                icon="pi pi-eye"
+                size="small"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="viewDetails.emit(sheet.id)"
+              />
+              <p-button
+                label="Reenviar"
+                icon="pi pi-send"
+                size="small"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="send.emit(sheet.id)"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</div>

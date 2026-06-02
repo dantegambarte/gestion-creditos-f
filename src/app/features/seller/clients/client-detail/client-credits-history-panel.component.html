@@ -1,0 +1,66 @@
+<div
+  class="ff-panel rounded-lg p-6"
+  style="background: var(--ff-panel); border: 1px solid var(--ff-border)"
+>
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-semibold text-base">Historial de créditos</h3>
+    <span class="text-sm" style="color: var(--ff-text-muted)">{{ credits.length }} créditos</span>
+  </div>
+
+  @if (loadingCredits) {
+    <app-loading-state message="Cargando historial..." />
+  } @else if (credits.length === 0) {
+    <p class="text-sm" style="color: var(--ff-text-muted)">
+      Este cliente no tiene créditos registrados.
+    </p>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="border-b" style="border-color: var(--ff-border)">
+            <th class="text-left py-2 pr-3">Tipo</th>
+            <th class="text-left py-2 pr-3">Monto</th>
+            <th class="text-left py-2 pr-3">Cuotas</th>
+            <th class="text-left py-2 pr-3">Frecuencia</th>
+            <th class="text-left py-2 pr-3">Estado</th>
+            <th class="text-left py-2 pr-3">Aprobado</th>
+            <th class="text-right py-2">Ver</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (credit of credits; track credit.id) {
+            <tr class="border-b" style="border-color: var(--ff-border)">
+              <td class="py-3 pr-3">
+                {{ credit.type === "SALE" ? "Venta" : "Préstamo" }}
+              </td>
+              <td class="py-3 pr-3 ff-mono">
+                ${{ credit.totalAmount | number: "1.0-0" }}
+              </td>
+              <td class="py-3 pr-3 ff-mono">{{ credit.installmentsCount }}</td>
+              <td class="py-3 pr-3">{{ creditFrequencyLabel(credit.paymentFrequency) }}</td>
+              <td class="py-3 pr-3">
+                <p-tag
+                  [value]="creditStatusLabel(credit.status)"
+                  [severity]="creditStatusSeverity(credit.status)"
+                />
+              </td>
+              <td class="py-3 pr-3 ff-mono">
+                {{ credit.approvedAt ?? credit.createdAt | date: "dd/MM/yyyy" }}
+              </td>
+              <td class="py-3 text-right">
+                <p-button
+                  data-cy="seller-client-detail-credit-view-action"
+                  label="Ver"
+                  size="small"
+                  severity="secondary"
+                  [outlined]="true"
+                  (onClick)="creditSelected.emit(credit.id)"
+                />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

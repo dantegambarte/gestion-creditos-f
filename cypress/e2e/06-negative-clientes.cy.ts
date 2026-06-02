@@ -101,8 +101,10 @@ describe('Gestión de Clientes real — Unhappy Paths', () => {
     getVisibleDialog().find('input[formControlName="nombres"]').clear().type('Duplicado');
     getVisibleDialog().find('input[formControlName="apellidos"]').clear().type('Negativo');
     getVisibleDialog().find('input[formControlName="dni"]').clear().type(duplicateDni);
-    getVisibleDialog().find('input[formControlName="telefonoPrincipal"]').clear().type(`381${stamp}`).blur();
-    getVisibleDialog().find('input[formControlName="direccion"]').clear().type(`Calle Negativa ${stamp}`);
+    getVisibleDialog().find('input[formControlName="telefonoPrincipal"]').clear();
+    getVisibleDialog().find('input[formControlName="telefonoPrincipal"]').type(`381${stamp}`).blur();
+    getVisibleDialog().find('input[formControlName="direccion"]').clear();
+    getVisibleDialog().find('input[formControlName="direccion"]').type(`Calle Negativa ${stamp}`);
 
     getVisibleDialog()
       .contains('button.p-button', 'Crear Cliente')

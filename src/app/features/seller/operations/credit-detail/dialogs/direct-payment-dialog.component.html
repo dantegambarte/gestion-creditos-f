@@ -1,0 +1,103 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Cobro directo"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    <div class="rounded-lg bg-blue-50 border border-blue-200 p-3">
+      <p class="text-xs text-blue-700">
+        <i class="pi pi-info-circle mr-1"></i>
+        El cobro se registra y aprueba en el mismo paso. La caja del día debe
+        estar abierta. Saldo máximo:
+        <strong>{{ maxAmount | currencyArs: 2 }}</strong>
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+        >Monto cobrado</label
+      >
+      <p-inputNumber
+        appCurrencyAmountInput
+        [(ngModel)]="amount"
+        mode="currency"
+        currency="ARS"
+        locale="es-AR"
+        [minFractionDigits]="0"
+        [min]="0.01"
+        [max]="maxAmount"
+        styleClass="w-full"
+        inputStyleClass="w-full h-11 px-3"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+        >Método de pago</label
+      >
+      <p-dropdown
+        [options]="PAYMENT_METHOD_OPTIONS"
+        [(ngModel)]="method"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full h-11"
+        appendTo="body"
+      />
+    </div>
+
+    @if (method === "TRANSFER") {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+          >Referencia de transferencia</label
+        >
+        <input
+          pInputText
+          [(ngModel)]="transferRef"
+          placeholder="N° de operación o referencia"
+          class="w-full h-11 px-3"
+          maxlength="100"
+        />
+      </div>
+    }
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+        >Notas (opcional)</label
+      >
+      <textarea
+        pInputTextarea
+        [(ngModel)]="notes"
+        rows="2"
+        maxlength="500"
+        class="w-full px-3 py-2"
+        placeholder="Observaciones adicionales..."
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+      />
+      <p-button
+        label="Registrar cobro"
+        icon="pi pi-check"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirm()"
+        [loading]="processing"
+        [disabled]="!formValid"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

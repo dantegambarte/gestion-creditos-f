@@ -138,6 +138,26 @@ export interface CashRegisterClosePayload {
   registerDate?: string;
 }
 
+export interface CashConversionPayload {
+  criteria: 'DAILY' | 'COMPANY';
+  sourceMethod: 'CASH' | 'TRANSFER';
+  amount: number;
+  notes?: string;
+  registerDate?: string;
+}
+
+export interface CashConversion {
+  id: string;
+  registerDate: string;
+  criteria: 'DAILY' | 'COMPANY';
+  sourceMethod: 'CASH' | 'TRANSFER';
+  targetMethod: 'CASH' | 'TRANSFER';
+  amount: number;
+  notes: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
 export interface CashRegisterDashboardRaw {
   date: string;
   is_closed: boolean;

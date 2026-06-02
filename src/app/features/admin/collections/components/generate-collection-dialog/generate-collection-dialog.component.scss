@@ -1,0 +1,88 @@
+:host ::ng-deep .generate-sheet-dialog .p-dialog {
+  background: #171d2f;
+  border: 1px solid #2a3456;
+  border-radius: 0.6rem;
+}
+
+:host ::ng-deep .generate-sheet-dialog .p-dialog-header {
+  padding: 0.9rem 1rem 0.8rem;
+  border-bottom: 1px solid #2a3456;
+  background: transparent;
+}
+
+:host ::ng-deep .generate-sheet-dialog .p-dialog-content {
+  background: transparent;
+  padding: 0.95rem 1rem 0.75rem;
+}
+
+:host ::ng-deep .generate-sheet-dialog .p-dialog-footer {
+  background: transparent;
+  border-top: 1px solid #2a3456;
+  padding: 0.85rem 1rem 0.95rem;
+}
+
+:host ::ng-deep .generate-sheet-dialog .p-dropdown,
+:host ::ng-deep .generate-sheet-dialog .p-calendar .p-inputtext {
+  height: 2.45rem;
+  background: #232b45;
+  border-color: #33406a;
+  color: #f1f5ff;
+}
+
+.generate-filter-radios {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.45rem 0;
+}
+
+.generate-filter-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #a6b3d5;
+  font-size: 0.82rem;
+}
+
+.generate-filter-radio input[type="radio"] {
+  accent-color: #5d7bff;
+}
+
+.generate-state-block {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: #3a4668 !important;
+}
+
+.generate-regenerate-box {
+  background: rgba(33, 42, 66, 0.72);
+  border-color: #44527a !important;
+}
+
+.generate-regenerate-box span {
+  color: #9fb0da !important;
+}
+
+.generate-regenerate-box p {
+  color: #c0cdea !important;
+}
+
+.generate-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.generate-cancel-btn {
+  width: 100%;
+  height: 2.75rem;
+  border: 1px solid #334069;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: #8a99c4;
+  font-weight: 500;
+}
+
+:host ::ng-deep .generate-sheet-dialog .p-button.p-button-warning {
+  background: linear-gradient(180deg, #f6b23a 0%, #ea9a19 100%);
+  border-color: #f0a62d;
+  color: #1f2937;
+}

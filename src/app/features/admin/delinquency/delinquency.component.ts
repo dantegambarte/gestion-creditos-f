@@ -1,19 +1,17 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
-import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { MessageModule } from 'primeng/message';
-import { Subject } from 'rxjs';
-import { catchError, of, takeUntil } from 'rxjs';
+import { Subject, catchError, of, takeUntil } from 'rxjs';
+import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { Installment } from '../../../features/seller/models/installment.model';
 import { InstallmentsService } from '../../../features/seller/operations/installments.service';
 import { CashRegisterService } from '../cash-register/cash-register.service';
@@ -21,6 +19,7 @@ import {
   DelinquencyRow,
   DelinquencyStats,
 } from '../models/interface/delinquency';
+import { DelinquencyApplyDialogComponent } from './delinquency-apply-dialog.component';
 
 @Component({
   selector: 'app-delinquency',
@@ -36,8 +35,8 @@ import {
     InputTextModule,
     DropdownModule,
     CardModule,
-    DialogModule,
     MessageModule,
+    DelinquencyApplyDialogComponent,
   ],
   providers: [MessageService],
   templateUrl: './delinquency.component.html',
@@ -63,7 +62,6 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
 
   showApplyDialog = false;
   applyingRow: DelinquencyRow | null = null;
-  applyAmount: number | null = null;
 
   estadoOptions = [
     { label: 'Todos', value: null },
@@ -111,8 +109,8 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Setea el filtro de estado para la lista de clientes en mora. Si el valor seleccionado es el mismo que el filtro activo, se desactiva el filtro. Luego se aplican los filtros para actualizar la lista mostrada.
-   * @param value
+   * Alterna el filtro de estado chip. Si el valor ya está activo, lo desactiva.
+   * @param value Valor del chip seleccionado.
    */
   setStatusFilter(value: string): void {
     this.activeStatusFilter = this.activeStatusFilter === value ? null : value;
@@ -120,7 +118,7 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Aplica los filtros de búsqueda, estado y días de mora a la lista de clientes en mora. Filtra la lista de clientes según el término de búsqueda (nombre o DNI), el estado seleccionado y el rango de días de mora, actualizando la lista de clientes mostrada en consecuencia.
+   * Aplica los filtros de búsqueda, estado y días de mora sobre la lista de clientes.
    */
   applyFilters(): void {
     let result = [...this.clients];
@@ -153,9 +151,8 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Notifica al cliente sobre su situación de mora.
-   * @param row
-   * @returns
+   * Simula el envío de aviso al cliente en mora.
+   * @param row Fila del cliente a notificar.
    */
   onNotify(row: DelinquencyRow): void {
     if (this.processingId) return;
@@ -173,86 +170,25 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
 
   /**
    * Abre el diálogo para aplicar mora a un cliente.
-   * @param row
-   * @returns
+   * @param row Fila del cliente sobre la que se aplica mora.
    */
   onApply(row: DelinquencyRow): void {
     if (this.processingId) return;
     this.applyingRow = row;
-    this.applyAmount = null;
     this.showApplyDialog = true;
   }
 
   /**
-   * Confirma la aplicación de mora a un cliente.
-   * @returns
+   * Actualiza la lista tras una mora aplicada exitosamente desde el diálogo hijo.
+   * @param param0 ID de la cuota y monto de mora aplicado.
    */
-  confirmApply(): void {
-    if (!this.applyingRow || !this.applyAmount || this.applyAmount <= 0) return;
-
-    this.processingId = `${this.applyingRow.id}_apply`;
-
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
-
-        if (this.isCashClosed) {
-          this.processingId = null;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes aplicar mora. La caja del día está CERRADA.',
-            life: 5000,
-          });
-          return;
-        }
-
-        this.processApplyPenalty();
-      });
-  }
-
-  private processApplyPenalty(): void {
-    if (!this.applyingRow || !this.applyAmount) return;
-
-    const row = this.applyingRow;
-    this.installmentsService
-      .applyPenalty(row.id, { penaltyAmount: this.applyAmount })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (updated) => {
-          this.processingId = null;
-          this.showApplyDialog = false;
-          this.updateClientPenalty(
-            row.id,
-            updated.penaltyAmount ?? this.applyAmount!,
-          );
-          this.msg.add({
-            severity: 'warning',
-            summary: 'Mora aplicada',
-            detail: row.clientName,
-            life: 3000,
-          });
-        },
-        error: (err: { status?: number; message?: string }) => {
-          this.processingId = null;
-          this.msg.add({
-            severity: err.status === 409 ? 'warn' : 'error',
-            summary: err.status === 409 ? 'Advertencia' : 'Error',
-            detail: err.message ?? 'No se pudo aplicar mora.',
-          });
-        },
-      });
+  onPenaltyApplied({ id, amount }: { id: string; amount: number }): void {
+    this.updateClientPenalty(id, amount);
   }
 
   /**
-   * Condonar mora para un cliente.
-   * @param row
-   * @returns
+   * Condona la mora de un cliente tras verificar que la caja esté abierta.
+   * @param row Fila del cliente a condonar.
    */
   onCondone(row: DelinquencyRow): void {
     if (this.processingId) return;
@@ -283,6 +219,10 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Llama al servicio para condonar la mora de la cuota.
+   * @param row Fila del cliente a condonar.
+   */
   private processWaivePenalty(row: DelinquencyRow): void {
     this.installmentsService
       .waivePenalty(row.id)
@@ -310,9 +250,8 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Devuelve la etiqueta del estado de una operación reciente.
-   * @param status
-   * @returns
+   * Devuelve la etiqueta legible para el estado de mora.
+   * @param status Estado técnico de la fila.
    */
   statusLabel(status: string): string {
     const map: Record<string, string> = {
@@ -323,9 +262,8 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Devuelve la severidad del estado de una operación reciente.
-   * @param status
-   * @returns
+   * Devuelve la severidad visual para el estado de mora.
+   * @param status Estado técnico de la fila.
    */
   statusSeverity(
     status: string,
@@ -348,7 +286,7 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   *
+   * Carga las cuotas vencidas desde el backend y las mapea a filas de mora.
    */
   private loadClients(): void {
     this.loadingClients = true;
@@ -370,9 +308,8 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Convierte un recibo en una fila de mora.
-   * @param inst
-   * @returns
+   * Convierte una cuota vencida en una fila de mora con días calculados.
+   * @param inst Cuota de la API.
    */
   private toRow(inst: Installment): DelinquencyRow {
     const daysOverdue = Math.max(
@@ -393,9 +330,8 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Calcula las estadísticas de mora para un conjunto de filas.
-   * @param rows
-   * @returns
+   * Calcula las estadísticas de mora para el conjunto de filas dado.
+   * @param rows Filas de mora a resumir.
    */
   private calcStats(rows: DelinquencyRow[]): DelinquencyStats {
     return {
@@ -410,9 +346,9 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Actualiza el monto de penalidad de un cliente.
-   * @param id
-   * @param penaltyAmount
+   * Actualiza el estado de penalidad de un cliente en la lista local y recalcula stats y filtros.
+   * @param id ID de la cuota.
+   * @param penaltyAmount Nuevo monto de mora (0 para condonado).
    */
   private updateClientPenalty(id: string, penaltyAmount: number): void {
     const idx = this.clients.findIndex((c) => c.id === id);

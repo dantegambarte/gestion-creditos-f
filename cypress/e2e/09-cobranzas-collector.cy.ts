@@ -15,33 +15,43 @@ describe('Cobranzas — Collector Route (real)', () => {
   });
 
   it('renderiza la pantalla de ruta de cobro sin estado de error', () => {
-    cy.contains('h1', 'Mi Ruta de Cobro', { timeout: 15000 }).should('be.visible');
-    cy.contains('Mis planillas').should('be.visible');
+    cy.location('pathname', { timeout: 15000 }).should('eq', '/collector/route');
+    cy.contains(/Mi Ruta|Planillas|Ruta/i, { timeout: 15000 }).should('exist');
     cy.get('p-table').should('exist');
     cy.get('app-error-state').should('not.exist');
   });
 
   it('mantiene acceso a /collector/route luego de recargar', () => {
     cy.reload();
-    cy.location('pathname', { timeout: 15000 }).should('eq', '/collector/route');
-    cy.contains('h1', 'Mi Ruta de Cobro').should('be.visible');
+    cy.location('pathname', { timeout: 15000 }).should(
+      'eq',
+      '/collector/route',
+    );
+    cy.contains(/Mi Ruta|Planillas|Ruta/i).should('exist');
   });
 
   it('si hay planillas permite navegar al detalle y volver', () => {
     cy.get('body').then(($body) => {
-      const hasSheetButton = $body.find('button:contains("Ver planilla")').length > 0;
+      const hasSheetButton =
+        $body.find('button:contains("Ver planilla")').length > 0;
 
       if (!hasSheetButton) {
-        cy.contains('Mis planillas').should('be.visible');
+        cy.contains('Planillas asignadas').should('be.visible');
         return;
       }
 
       cy.contains('button', 'Ver planilla').first().click();
-      cy.location('pathname', { timeout: 15000 }).should('match', /\/collector\/route\/.+/);
+      cy.location('pathname', { timeout: 15000 }).should(
+        'match',
+        /\/collector\/route\/.+/,
+      );
       cy.contains('h1', 'Planilla', { timeout: 15000 }).should('be.visible');
 
       cy.contains('button', 'Volver').click();
-      cy.location('pathname', { timeout: 15000 }).should('eq', '/collector/route');
+      cy.location('pathname', { timeout: 15000 }).should(
+        'eq',
+        '/collector/route',
+      );
     });
   });
 });

@@ -14,7 +14,7 @@
         icon="pi pi-plus"
         severity="primary"
         styleClass="h-11 px-5 rounded-xl shadow-sm"
-        (onClick)="openDirectDialog()"
+        (onClick)="showDirectDialog = true"
       />
       <p-button
         label="Actualizar"
@@ -86,19 +86,15 @@
             <tr class="cursor-pointer" (click)="openDetail(p)">
               <td class="font-medium">
                 {{ p.customerName }}
-                <span class="text-xs text-gray-400 ml-1">{{
-                  p.customerDni
-                }}</span>
+                <span class="text-xs text-gray-400 ml-1">{{ p.customerDni }}</span>
               </td>
               <td>Cuota {{ p.installmentNumber }}</td>
-              <td class="text-sm text-gray-600">
-                {{ p.collectorName ?? "—" }}
-              </td>
+              <td class="text-sm text-gray-600">{{ p.collectorName ?? '—' }}</td>
               <td class="text-right font-semibold text-blue-600">
                 {{ p.amountReceived | currencyArs: 2 }}
               </td>
               <td>
-                {{ p.paymentMethod === "CASH" ? "Efectivo" : "Transferencia" }}
+                {{ p.paymentMethod === 'CASH' ? 'Efectivo' : 'Transferencia' }}
               </td>
               <td class="text-center">
                 @if (p.reversalPaymentId) {
@@ -109,21 +105,15 @@
                   <p-tag value="Pago directo" severity="info" />
                 } @else {
                   <div class="flex flex-wrap justify-center gap-1">
-                    <p-tag
-                      [value]="statusLabel(p.status)"
-                      [severity]="statusSeverity(p.status)"
-                    />
+                    <p-tag [value]="statusLabel(p.status)" [severity]="statusSeverity(p.status)" />
                     @if (paymentTypeLabel(p)) {
-                      <p-tag
-                        [value]="paymentTypeLabel(p)!"
-                        [severity]="paymentTypeSeverity(p)!"
-                      />
+                      <p-tag [value]="paymentTypeLabel(p)!" [severity]="paymentTypeSeverity(p)!" />
                     }
                   </div>
                 }
               </td>
               <td class="text-sm text-gray-500">
-                {{ p.createdAt | date: "dd/MM/yyyy HH:mm" }}
+                {{ p.createdAt | date: 'dd/MM/yyyy HH:mm' }}
               </td>
             </tr>
           </ng-template>
@@ -133,395 +123,14 @@
   }
 </div>
 
-<!-- ── Detail Dialog ───────────────────────────────────────────── -->
-<p-dialog
+<app-payment-detail-dialog
   [(visible)]="showDetailDialog"
-  header="Detalle del cobro"
-  [modal]="true"
-  [style]="{ width: '520px' }"
-  [draggable]="false"
-  [resizable]="false"
->
-  @if (loadingDetail) {
-    <div class="py-8 text-center text-gray-400">Cargando...</div>
-  } @else if (selectedPayment) {
-    <div class="flex flex-col gap-3 py-2">
-      @if (
-        selectedPayment.status === "REJECTED" && selectedPayment.rejectionReason
-      ) {
-        <div class="rounded-lg bg-red-50 border border-red-200 p-3">
-          <p class="text-sm font-semibold text-red-700">
-            <i class="pi pi-times-circle mr-1"></i>Motivo de rechazo:
-            {{ selectedPayment.rejectionReason }}
-          </p>
-        </div>
-      }
+  [paymentId]="selectedPaymentId"
+  (statusChanged)="onStatusChanged($event)"
+  (reloaded)="onReloaded()"
+/>
 
-      <div class="grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <p class="text-gray-500">Cliente</p>
-          <p class="font-semibold">{{ selectedPayment.customerName }}</p>
-          <p class="text-gray-400 text-xs">{{ selectedPayment.customerDni }}</p>
-        </div>
-        <div>
-          <p class="text-gray-500">Cobrador</p>
-          <p class="font-semibold">
-            {{ selectedPayment.collectorName ?? "—" }}
-          </p>
-        </div>
-        <div>
-          <p class="text-gray-500">Cuota</p>
-          <p class="font-semibold">
-            N° {{ selectedPayment.installmentNumber }}
-          </p>
-        </div>
-        <div>
-          <p class="text-gray-500">Vencimiento</p>
-          <p class="font-semibold">
-            {{ selectedPayment.dueDate | date: "dd/MM/yyyy" }}
-          </p>
-        </div>
-        <div>
-          <p class="text-gray-500">Monto de la cuota</p>
-          <p class="font-semibold">
-            {{ selectedPayment.amountDue | currencyArs: 2 }}
-          </p>
-        </div>
-        <div>
-          <p class="text-gray-500">Monto cobrado</p>
-          <p class="font-bold text-blue-600">
-            {{ selectedPayment.amountReceived | currencyArs: 2 }}
-          </p>
-        </div>
-        <div>
-          <p class="text-gray-500">Método</p>
-          <p class="font-semibold">
-            {{
-              selectedPayment.paymentMethod === "CASH"
-                ? "Efectivo"
-                : "Transferencia"
-            }}
-          </p>
-        </div>
-        @if (selectedPayment.transferReference) {
-          <div>
-            <p class="text-gray-500">Referencia</p>
-            <p class="font-semibold font-mono">
-              {{ selectedPayment.transferReference }}
-            </p>
-          </div>
-        }
-        <div>
-          <p class="text-gray-500">Estado</p>
-          <p-tag
-            [value]="statusLabel(selectedPayment.status)"
-            [severity]="statusSeverity(selectedPayment.status)"
-          />
-        </div>
-        <div>
-          <p class="text-gray-500">Registrado</p>
-          <p class="font-semibold">
-            {{ selectedPayment.createdAt | date: "dd/MM/yyyy HH:mm" }}
-          </p>
-        </div>
-        @if (selectedPayment.notes) {
-          <div class="col-span-2">
-            <p class="text-gray-500">Notas</p>
-            <p>{{ selectedPayment.notes }}</p>
-          </div>
-        }
-      </div>
-
-      @if (selectedPayment.status === "PENDING") {
-        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
-          <p-button
-            label="Rechazar"
-            icon="pi pi-times"
-            severity="danger"
-            [outlined]="true"
-            styleClass="w-full h-11 px-5 rounded-xl justify-center"
-            (onClick)="openRejectDialog()"
-          />
-          <p-button
-            label="Aprobar"
-            icon="pi pi-check"
-            severity="success"
-            styleClass="w-full h-11 px-5 rounded-xl justify-center"
-            (onClick)="confirmApprove()"
-            [loading]="processingApprove"
-          />
-        </div>
-      }
-
-      @if (selectedPayment.status === "APPROVED" && selectedPayment.reversalPaymentId) {
-        <div class="rounded-lg bg-orange-50 border border-orange-200 p-3">
-          <p class="text-xs text-orange-700">
-            <i class="pi pi-info-circle mr-1"></i>
-            Este cobro ya fue revertido.
-          </p>
-        </div>
-      }
-
-      @if (selectedPayment.status === "APPROVED" && !selectedPayment.reversalPaymentId && !selectedPayment.isReversal) {
-        <div class="pt-3 border-t border-gray-100">
-          <p-button
-            label="Revertir cobro"
-            icon="pi pi-undo"
-            severity="danger"
-            [outlined]="true"
-            styleClass="w-full"
-            (onClick)="openReverseDialog()"
-          />
-        </div>
-      }
-    </div>
-  }
-</p-dialog>
-
-<!-- ── Reject Dialog ───────────────────────────────────────────── -->
-<p-dialog
-  [(visible)]="showRejectDialog"
-  header="Rechazar cobro"
-  [modal]="true"
-  [style]="{ width: '440px' }"
-  [draggable]="false"
-  [resizable]="false"
->
-  <div class="flex flex-col gap-4 py-2">
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">
-        Motivo de rechazo (mín. 5, máx. 500 caracteres)
-      </label>
-      <textarea
-        pInputTextarea
-        [(ngModel)]="rejectReason"
-        rows="4"
-        maxlength="500"
-        class="w-full resize-none px-3 py-2"
-        placeholder="Describe el motivo..."
-      ></textarea>
-      <div class="flex justify-between text-xs text-gray-400 mt-1">
-        <span
-          [class.text-red-500]="rejectCharCount() > 0 && rejectCharCount() < 5"
-        >
-          Mínimo 5 caracteres
-        </span>
-        <span>{{ rejectCharCount() }}/500</span>
-      </div>
-    </div>
-  </div>
-  <ng-template pTemplate="footer">
-    <div class="grid grid-cols-2 gap-3 w-full">
-      <p-button
-        type="button"
-        label="Cancelar"
-        severity="secondary"
-        [outlined]="true"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
-        (onClick)="showRejectDialog = false"
-      />
-      <p-button
-        label="Rechazar"
-        severity="danger"
-        [outlined]="true"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
-        (onClick)="confirmReject()"
-        [loading]="processingReject"
-        [disabled]="rejectCharCount() < 5"
-      />
-    </div>
-  </ng-template>
-</p-dialog>
-
-<!-- ── Cobro Directo Dialog ────────────────────────────────────── -->
-<p-dialog
+<app-direct-payment-dialog
   [(visible)]="showDirectDialog"
-  header="Registrar cobro directo"
-  [modal]="true"
-  [style]="{ width: '480px' }"
-  [draggable]="false"
-  [resizable]="false"
->
-  <div class="flex flex-col gap-4 py-2">
-    <div class="rounded-lg bg-blue-50 border border-blue-200 p-3">
-      <p class="text-xs text-blue-700">
-        <i class="pi pi-info-circle mr-1"></i>
-        El cobro se registra y aprueba en el mismo paso. La caja del día debe estar abierta.
-      </p>
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">ID de cuota</label>
-      <input
-        pInputText
-        [(ngModel)]="directInstallmentId"
-        placeholder="UUID de la cuota"
-        class="w-full h-11 px-3"
-        [class.ng-invalid]="directInstallmentIdInvalid"
-        [class.ng-dirty]="directInstallmentIdInvalid"
-      />
-      @if (directInstallmentIdInvalid) {
-        <small class="text-red-500 text-xs">
-          <i class="pi pi-exclamation-circle mr-1"></i>
-          Debe ser un UUID válido (ej: 550e8400-e29b-41d4-a716-446655440000)
-        </small>
-      }
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Monto cobrado</label>
-      <p-inputNumber
-        appCurrencyAmountInput
-        [(ngModel)]="directAmount"
-        mode="currency"
-        currency="ARS"
-        locale="es-AR"
-        [minFractionDigits]="0"
-        [min]="0.01"
-        styleClass="w-full"
-        inputStyleClass="w-full h-11 px-3"
-      />
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Método de pago</label>
-      <p-dropdown
-        [options]="PAYMENT_METHOD_OPTIONS"
-        [(ngModel)]="directMethod"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="w-full h-11"
-        appendTo="body"
-      />
-    </div>
-
-    @if (directMethod === "TRANSFER") {
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700">Referencia de transferencia</label>
-        <input
-          pInputText
-          [(ngModel)]="directTransferRef"
-          placeholder="N° de operación o referencia"
-          class="w-full h-11 px-3"
-          maxlength="100"
-        />
-      </div>
-    }
-
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">
-        Próxima visita
-        <span class="text-xs text-gray-400 font-normal ml-1">(requerida si el cobro es parcial)</span>
-      </label>
-      <p-calendar
-        [(ngModel)]="directNextVisitDate"
-        dataType="string"
-        dateFormat="yy-mm-dd"
-        [showIcon]="true"
-        iconDisplay="input"
-        appendTo="body"
-        [minDate]="todayDate"
-        styleClass="w-full"
-        inputStyleClass="w-full h-11 px-3"
-        placeholder="Seleccioná una fecha..."
-      />
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Notas (opcional)</label>
-      <textarea
-        pInputTextarea
-        [(ngModel)]="directNotes"
-        rows="2"
-        maxlength="500"
-        class="w-full resize-none px-3 py-2"
-        placeholder="Observaciones adicionales..."
-      ></textarea>
-    </div>
-  </div>
-
-  <ng-template pTemplate="footer">
-    <div class="grid grid-cols-2 gap-3 w-full">
-      <p-button
-        type="button"
-        label="Cancelar"
-        severity="secondary"
-        [outlined]="true"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
-        (onClick)="showDirectDialog = false"
-      />
-      <p-button
-        label="Registrar cobro"
-        icon="pi pi-check"
-        severity="primary"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
-        (onClick)="confirmDirect()"
-        [loading]="processingDirect"
-        [disabled]="!directFormValid"
-      />
-    </div>
-  </ng-template>
-</p-dialog>
-
-<!-- ── Reverse Dialog ─────────────────────────────────────────── -->
-<p-dialog
-  [(visible)]="showReverseDialog"
-  (onHide)="onReverseDialogHide()"
-  header="Revertir cobro"
-  [modal]="true"
-  [style]="{ width: '440px' }"
-  [draggable]="false"
-  [resizable]="false"
->
-  <div class="flex flex-col gap-4 py-2">
-    <div class="rounded-lg bg-red-50 border border-red-200 p-3">
-      <p class="text-xs text-red-700">
-        <i class="pi pi-exclamation-triangle mr-1"></i>
-        Se revertirán el cobro principal y todos los sub-pagos derivados (cuotas adelantadas).
-        Esta acción no se puede deshacer.
-      </p>
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">
-        Motivo de la reversión (mín. 5, máx. 500 caracteres)
-      </label>
-      <textarea
-        pInputTextarea
-        [(ngModel)]="reverseReason"
-        rows="4"
-        maxlength="500"
-        class="w-full resize-none px-3 py-2"
-        placeholder="Describe el motivo..."
-      ></textarea>
-      <div class="flex justify-between text-xs text-gray-400 mt-1">
-        <span
-          [class.text-red-500]="reverseCharCount() > 0 && reverseCharCount() < 5"
-        >
-          Mínimo 5 caracteres
-        </span>
-        <span>{{ reverseCharCount() }}/500</span>
-      </div>
-    </div>
-  </div>
-  <ng-template pTemplate="footer">
-    <div class="grid grid-cols-2 gap-3 w-full">
-      <p-button
-        type="button"
-        label="Cancelar"
-        severity="secondary"
-        [outlined]="true"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
-        (onClick)="showReverseDialog = false"
-      />
-      <p-button
-        label="Revertir cobro"
-        severity="danger"
-        [outlined]="true"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
-        (onClick)="confirmReverse()"
-        [loading]="processingReverse"
-        [disabled]="reverseCharCount() < 5"
-      />
-    </div>
-  </ng-template>
-</p-dialog>
+  (created)="onReloaded()"
+/>

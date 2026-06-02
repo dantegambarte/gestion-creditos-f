@@ -165,126 +165,16 @@
     <!-- ── RIGHT: inline panels (admin only) ── -->
     @if (isAdmin) {
       <div class="lg:col-span-5 flex flex-col gap-4">
-        <!-- Alta individual -->
-        <div class="ff-panel p-5 space-y-4">
-          <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
-            {{ editingUnit ? "Editar unidad" : "Alta individual" }}
-          </h3>
-          <form [formGroup]="singleForm" (ngSubmit)="saveSingle()">
-            <div class="space-y-4">
-              <div class="flex flex-col gap-1">
-                <label
-                  class="text-xs font-bold uppercase tracking-wider"
-                  style="color: var(--ff-text-muted)"
-                >
-                  Código de unidad
-                </label>
-                <input
-                  pInputText
-                  formControlName="unitCode"
-                  placeholder="IMEI-353456789012345"
-                  class="w-full h-11 ff-mono"
-                  [class.ng-invalid]="isInvalid('unitCode')"
-                />
-                @if (isInvalid("unitCode")) {
-                  <small style="color: var(--ff-danger)"
-                    >Código requerido (2-100 chars, A-Z0-9-_).</small
-                  >
-                }
-              </div>
-              <div class="flex flex-col gap-1">
-                <label
-                  class="text-xs font-bold uppercase tracking-wider"
-                  style="color: var(--ff-text-muted)"
-                >
-                  Notas (opcional)
-                </label>
-                <textarea
-                  pInputTextarea
-                  formControlName="notes"
-                  rows="2"
-                  placeholder="Ej: Caja abierta, vidrio rayado..."
-                  class="w-full"
-                ></textarea>
-              </div>
-
-              @if (dialogError) {
-                <p
-                  class="text-sm px-3 py-2 rounded-lg"
-                  style="
-                    color: var(--ff-danger);
-                    background: rgba(239, 68, 68, 0.1);
-                  "
-                >
-                  {{ dialogError }}
-                </p>
-              }
-
-              <div class="pt-2 flex flex-col gap-2">
-                <p-button
-                  type="submit"
-                  [label]="editingUnit ? 'Guardar cambios' : 'Registrar unidad'"
-                  severity="primary"
-                  styleClass="w-full justify-center h-11 rounded-xl"
-                  [loading]="dialogSubmitting"
-                />
-                @if (editingUnit) {
-                  <p-button
-                    type="button"
-                    label="Cancelar edición"
-                    severity="secondary"
-                    [text]="true"
-                    styleClass="w-full justify-center h-9"
-                    (onClick)="openCreate()"
-                  />
-                }
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <!-- Alta masiva -->
-        <div class="ff-panel p-5 space-y-4">
-          <div class="flex items-center gap-2">
-            <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
-              Alta masiva
-            </h3>
-            <span
-              class="ff-badge"
-              style="
-                background: rgba(79, 110, 247, 0.18);
-                color: var(--ff-accent);
-              "
-            >
-              MÚLTIPLES UNIDADES
-            </span>
-          </div>
-          <form [formGroup]="bulkForm" (ngSubmit)="saveBulk()">
-            <div class="space-y-3">
-              <textarea
-                pInputTextarea
-                formControlName="rawCodes"
-                rows="5"
-                class="w-full ff-mono text-sm"
-                style="color: var(--ff-text-primary)"
-                placeholder="Ingresá un código por línea.&#10;IMEI-353456789012350&#10;IMEI-353456789012351&#10;IMEI-353456789012352"
-                (input)="onBulkCodesChange()"
-              ></textarea>
-              <p-button
-                type="submit"
-                [label]="
-                  bulkPreview.length > 0
-                    ? 'Registrar ' + bulkPreview.length + ' unidades...'
-                    : 'Registrar N unidades...'
-                "
-                severity="primary"
-                styleClass="w-full justify-center h-11 rounded-xl"
-                [loading]="dialogSubmitting"
-                [disabled]="bulkPreview.length === 0"
-              />
-            </div>
-          </form>
-        </div>
+        <app-unit-single-form
+          [variantId]="variantId"
+          [unit]="editingUnit"
+          (unitSaved)="onUnitSaved()"
+          (editCancelled)="clearEdit()"
+        />
+        <app-unit-bulk-form
+          [variantId]="variantId"
+          (unitsSaved)="loadUnits()"
+        />
       </div>
     }
   </div>

@@ -1,0 +1,75 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Rechazar Crédito"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    <div
+      class="auth-warning-banner"
+      style="
+        border-color: rgba(248, 113, 113, 0.3);
+        background: rgba(248, 113, 113, 0.08);
+        color: var(--ff-danger);
+      "
+    >
+      <i class="pi pi-exclamation-triangle shrink-0"></i>
+      <p class="text-sm font-semibold">Esta acción es irreversible.</p>
+    </div>
+    <div class="flex flex-col gap-1">
+      <label class="auth-label"
+        >Motivo de rechazo (mín. 5, máx. 500 caracteres)</label
+      >
+      <textarea
+        pTextarea
+        [(ngModel)]="reason"
+        rows="4"
+        maxlength="500"
+        class="w-full resize-none px-3 py-2"
+        style="
+          border: 1px solid var(--ff-border);
+          background: var(--ff-secondary);
+          color: var(--ff-text-primary);
+        "
+        placeholder="Describe el motivo..."
+      ></textarea>
+      <div
+        class="flex justify-between text-xs mt-1"
+        style="color: var(--ff-text-muted)"
+      >
+        <span
+          [style.color]="
+            charCount() > 0 && charCount() < 5 ? 'var(--ff-danger)' : ''
+          "
+        >
+          Mínimo 5 caracteres
+        </span>
+        <span>{{ charCount() }}/500</span>
+      </div>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+      />
+      <p-button
+        label="Rechazar"
+        severity="danger"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirm()"
+        [loading]="processing"
+        [disabled]="charCount() < 5"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

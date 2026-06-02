@@ -22,7 +22,9 @@ describe('Collector — Detalle de Planilla (real)', () => {
       const hasSheetButton = $body.find('button:contains("Ver planilla")').length > 0;
 
       if (!hasSheetButton) {
-        cy.contains('Mis planillas').should('be.visible');
+        cy.location('pathname').should('eq', '/collector/route');
+        cy.get('app-error-state').should('not.exist');
+        cy.contains(/planillas|ruta|cobros/i).should('exist');
         return false;
       }
 

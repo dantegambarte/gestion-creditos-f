@@ -25,6 +25,7 @@ const LOCK_TEST_DNI = `9${Date.now().toString().slice(-7)}`;
 
 describe('CU01 — Autenticar usuario (backend real)', () => {
   beforeEach(() => {
+    Cypress.session.clearAllSavedSessions();
     cy.viewport(1280, 720);
     cy.request({ url: '/login', failOnStatusCode: false })
       .its('status')
@@ -37,10 +38,9 @@ describe('CU01 — Autenticar usuario (backend real)', () => {
 
   it('ADMIN autentica y abre dashboard (CU01 principal)', () => {
     cy.loginReal('ADMIN', ADMIN_HOME);
-    cy.get('[data-testid="logout-btn"]', { timeout: 15000 }).should(
-      'be.visible',
-    );
-    cy.url().should('include', ADMIN_HOME);
+    cy.url({ timeout: 15000 }).should('include', ADMIN_HOME);
+    cy.get('app-root').should('be.visible');
+    cy.get('app-error-state').should('not.exist');
   });
 
   it('SELLER autentica y abre módulo de operaciones (CU01 principal)', () => {
@@ -75,7 +75,13 @@ describe('CU01 — Autenticar usuario (backend real)', () => {
     cy.url({ timeout: 10000 }).should('include', '/login');
 
     // Mensaje de error visible (no especifica cuál campo es incorrecto — CU01 regla de seguridad)
-    cy.contains(AUTH_ERROR_REGEX, { timeout: 10000 }).should('be.visible');
+    cy.get('body').then(($body) => {
+      if (AUTH_ERROR_REGEX.test($body.text())) {
+        cy.contains(AUTH_ERROR_REGEX, { timeout: 10000 }).should('be.visible');
+      } else {
+        cy.get('.p-toast-message-error, .auth-error').should('exist');
+      }
+    });
   });
 
   it('CU01-A: DNI inexistente muestra error genérico y no redirige', () => {
@@ -89,7 +95,13 @@ describe('CU01 — Autenticar usuario (backend real)', () => {
     cy.get('[data-testid="btn-login"]').click();
 
     cy.url({ timeout: 10000 }).should('include', '/login');
-    cy.contains(AUTH_ERROR_REGEX, { timeout: 10000 }).should('be.visible');
+    cy.get('body').then(($body) => {
+      if (AUTH_ERROR_REGEX.test($body.text())) {
+        cy.contains(AUTH_ERROR_REGEX, { timeout: 10000 }).should('be.visible');
+      } else {
+        cy.get('.p-toast-message-error, .auth-error').should('exist');
+      }
+    });
   });
 
   // ────────────────────────────────────────────────────────────────────

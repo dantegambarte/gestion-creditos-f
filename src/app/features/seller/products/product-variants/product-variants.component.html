@@ -49,7 +49,7 @@
         style="color: var(--ff-text-secondary); border-color: var(--ff-stroke)"
         (click)="toggleAllVariantsExpanded()"
       >
-        {{ areAllVariantsExpanded() ? 'Colapsar todas' : 'Expandir todas' }}
+        {{ areAllVariantsExpanded() ? "Colapsar todas" : "Expandir todas" }}
       </button>
     }
   </div>
@@ -61,7 +61,15 @@
   } @else {
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <!-- ── LEFT: table ── -->
-      <div [class]="showPanel ? (entryMode === 'bulk' ? 'lg:col-span-5 xl:col-span-6' : 'lg:col-span-7 xl:col-span-8') : 'lg:col-span-12'">
+      <div
+        [class]="
+          showPanel
+            ? isBulkMode
+              ? 'lg:col-span-5 xl:col-span-6'
+              : 'lg:col-span-7 xl:col-span-8'
+            : 'lg:col-span-12'
+        "
+      >
         <div class="ff-panel overflow-hidden">
           <p-table [value]="variants" styleClass="p-datatable-sm">
             <ng-template pTemplate="header">
@@ -87,46 +95,94 @@
                       [class.pi-chevron-down]="isVariantExpanded(v)"
                       style="color: var(--ff-text-muted)"
                     ></i>
-                    <span class="font-medium" style="color: var(--ff-text-primary)">{{ variantSummary(v) }}</span>
+                    <span
+                      class="font-medium"
+                      style="color: var(--ff-text-primary)"
+                      >{{ variantSummary(v) }}</span
+                    >
                   </div>
                 </td>
-                <td class="text-right ff-mono font-bold" style="color: var(--ff-accent)">
+                <td
+                  class="text-right ff-mono font-bold"
+                  style="color: var(--ff-accent)"
+                >
                   {{ v.currentPrice | currencyArs: 2 }}
                 </td>
                 <td class="text-center">
-                  @if ((v.availableCount ?? 0) <= 3 && (v.availableCount ?? 0) > 0) {
-                    <span class="font-bold ff-mono" style="color: var(--ff-warning)">
-                      {{ v.availableCount }}<i class="pi pi-arrow-down text-xs ml-0.5"></i>
+                  @if (
+                    (v.availableCount ?? 0) <= 3 && (v.availableCount ?? 0) > 0
+                  ) {
+                    <span
+                      class="font-bold ff-mono"
+                      style="color: var(--ff-warning)"
+                    >
+                      {{ v.availableCount
+                      }}<i class="pi pi-arrow-down text-xs ml-0.5"></i>
                     </span>
                   } @else {
-                    <span class="font-bold ff-mono" style="color: var(--ff-success)">{{ v.availableCount ?? "—" }}</span>
+                    <span
+                      class="font-bold ff-mono"
+                      style="color: var(--ff-success)"
+                      >{{ v.availableCount ?? "—" }}</span
+                    >
                   }
                 </td>
-                <td class="text-center ff-mono" style="color: var(--ff-text-secondary)">{{ v.reservedCount ?? "—" }}</td>
-                <td class="text-center ff-mono" style="color: var(--ff-text-muted)">{{ v.soldCount ?? "—" }}</td>
+                <td
+                  class="text-center ff-mono"
+                  style="color: var(--ff-text-secondary)"
+                >
+                  {{ v.reservedCount ?? "—" }}
+                </td>
+                <td
+                  class="text-center ff-mono"
+                  style="color: var(--ff-text-muted)"
+                >
+                  {{ v.soldCount ?? "—" }}
+                </td>
                 <td class="text-center">
                   <span
                     class="ff-badge"
                     [class.ff-badge--activo]="v.status === 'ACTIVE'"
                     [class.ff-badge--inactivo]="v.status !== 'ACTIVE'"
-                  >{{ v.status === "ACTIVE" ? "ACTIVO" : "INACTIVO" }}</span>
+                    >{{ v.status === "ACTIVE" ? "ACTIVO" : "INACTIVO" }}</span
+                  >
                 </td>
                 @if (!isBulkModeActive()) {
                   <td>
                     <div class="flex items-center gap-3 whitespace-nowrap">
-                      <a class="prod-action-link text-xs" style="cursor: pointer" (click)="$event.stopPropagation(); navigateToUnits(v)">
+                      <a
+                        class="prod-action-link text-xs"
+                        style="cursor: pointer"
+                        (click)="$event.stopPropagation(); navigateToUnits(v)"
+                      >
                         Ver unidades
                       </a>
                       @if (isAdmin) {
-                        <a class="prod-action-link text-xs" style="color: var(--ff-text-muted); cursor: pointer" (click)="$event.stopPropagation(); openEdit(v)">
+                        <a
+                          class="prod-action-link text-xs"
+                          style="color: var(--ff-text-muted); cursor: pointer"
+                          (click)="$event.stopPropagation(); openEdit(v)"
+                        >
                           Editar
                         </a>
                         @if (v.status === "ACTIVE") {
-                          <a class="prod-action-link text-xs" style="color: var(--ff-danger); cursor: pointer" (click)="$event.stopPropagation(); confirmDeactivate(v)">
+                          <a
+                            class="prod-action-link text-xs"
+                            style="color: var(--ff-danger); cursor: pointer"
+                            (click)="
+                              $event.stopPropagation(); confirmDeactivate(v)
+                            "
+                          >
                             Desactivar
                           </a>
                         } @else {
-                          <a class="prod-action-link text-xs" style="cursor: pointer" (click)="$event.stopPropagation(); confirmActivate(v)">
+                          <a
+                            class="prod-action-link text-xs"
+                            style="cursor: pointer"
+                            (click)="
+                              $event.stopPropagation(); confirmActivate(v)
+                            "
+                          >
                             Activar
                           </a>
                         }
@@ -137,23 +193,67 @@
               </tr>
               @if (isVariantExpanded(v)) {
                 <tr>
-                  <td [attr.colspan]="isBulkModeActive() ? 6 : 7" class="pt-0 pb-3">
-                    <div class="rounded-xl border px-3 py-2 text-xs grid grid-cols-2 md:grid-cols-4 gap-2" style="border-color: var(--ff-stroke); background: rgba(37, 99, 235, 0.05)">
+                  <td
+                    [attr.colspan]="isBulkModeActive() ? 6 : 7"
+                    class="pt-0 pb-3"
+                  >
+                    <div
+                      class="rounded-xl border px-3 py-2 text-xs grid grid-cols-2 md:grid-cols-4 gap-2"
+                      style="
+                        border-color: var(--ff-stroke);
+                        background: rgba(37, 99, 235, 0.05);
+                      "
+                    >
                       <div>
-                        <p class="uppercase font-semibold" style="color: var(--ff-text-muted)">Color</p>
-                        <p style="color: var(--ff-text-primary)">{{ v.color || '—' }}</p>
+                        <p
+                          class="uppercase font-semibold"
+                          style="color: var(--ff-text-muted)"
+                        >
+                          Color
+                        </p>
+                        <p style="color: var(--ff-text-primary)">
+                          {{ v.color || "—" }}
+                        </p>
                       </div>
                       <div>
-                        <p class="uppercase font-semibold" style="color: var(--ff-text-muted)">Talle</p>
-                        <p style="color: var(--ff-text-primary)">{{ v.size || '—' }}</p>
+                        <p
+                          class="uppercase font-semibold"
+                          style="color: var(--ff-text-muted)"
+                        >
+                          Talle
+                        </p>
+                        <p style="color: var(--ff-text-primary)">
+                          {{ v.size || "—" }}
+                        </p>
                       </div>
                       <div>
-                        <p class="uppercase font-semibold" style="color: var(--ff-text-muted)">Capacidad</p>
-                        <p style="color: var(--ff-text-primary)">{{ v.capacity || '—' }}</p>
+                        <p
+                          class="uppercase font-semibold"
+                          style="color: var(--ff-text-muted)"
+                        >
+                          Capacidad
+                        </p>
+                        <p style="color: var(--ff-text-primary)">
+                          {{ v.capacity || "—" }}
+                        </p>
                       </div>
                       <div>
-                        <p class="uppercase font-semibold" style="color: var(--ff-text-muted)">Total unidades</p>
-                        <p class="ff-mono" style="color: var(--ff-text-primary)">{{ (v.availableCount ?? 0) + (v.reservedCount ?? 0) + (v.soldCount ?? 0) }}</p>
+                        <p
+                          class="uppercase font-semibold"
+                          style="color: var(--ff-text-muted)"
+                        >
+                          Total unidades
+                        </p>
+                        <p
+                          class="ff-mono"
+                          style="color: var(--ff-text-primary)"
+                        >
+                          {{
+                            (v.availableCount ?? 0) +
+                              (v.reservedCount ?? 0) +
+                              (v.soldCount ?? 0)
+                          }}
+                        </p>
                       </div>
                     </div>
                   </td>
@@ -162,7 +262,11 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
               <tr>
-                <td [attr.colspan]="isBulkModeActive() ? 6 : 7" class="text-center py-8" style="color: var(--ff-text-muted)">
+                <td
+                  [attr.colspan]="isBulkModeActive() ? 6 : 7"
+                  class="text-center py-8"
+                  style="color: var(--ff-text-muted)"
+                >
                   Sin variantes registradas.
                 </td>
               </tr>
@@ -173,232 +277,20 @@
 
       <!-- ── RIGHT: panel a demanda (admin only) ── -->
       @if (isAdmin && showPanel) {
-        <div [class]="entryMode === 'bulk' ? 'lg:col-span-7 xl:col-span-6' : 'lg:col-span-5 xl:col-span-4'">
-          <div class="ff-panel p-6 space-y-4">
-            <div class="flex items-center justify-between">
-              <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
-                {{ editingVariant ? "Editar variante" : "Nueva variante" }}
-              </h3>
-              <button
-                type="button"
-                class="p-1 rounded-lg"
-                style="color: var(--ff-text-muted)"
-                (click)="closePanel()"
-                title="Cerrar"
-              >
-                <i class="pi pi-times text-sm"></i>
-              </button>
-            </div>
-
-            <div class="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                class="h-8 px-3 rounded-lg text-xs border"
-                [style.background]="entryMode === 'individual' ? 'var(--ff-accent)' : 'transparent'"
-                [style.color]="entryMode === 'individual' ? '#fff' : 'var(--ff-text-secondary)'"
-                [style.border-color]="entryMode === 'individual' ? 'var(--ff-accent)' : 'var(--ff-stroke)'"
-                (click)="setEntryMode('individual')"
-              >
-                Ingreso individual
-              </button>
-              <button
-                type="button"
-                class="h-8 px-3 rounded-lg text-xs border"
-                [style.background]="entryMode === 'bulk' ? 'var(--ff-accent)' : 'transparent'"
-                [style.color]="entryMode === 'bulk' ? '#fff' : 'var(--ff-text-secondary)'"
-                [style.border-color]="entryMode === 'bulk' ? 'var(--ff-accent)' : 'var(--ff-stroke)'"
-                (click)="setEntryMode('bulk')"
-              >
-                Ingresar múltiples
-              </button>
-            </div>
-
-            @if (entryMode === 'individual') {
-              <form [formGroup]="form" (ngSubmit)="saveDialog()">
-                <div class="space-y-4">
-                <div class="flex flex-col gap-1">
-                  <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--ff-text-muted)">Color</label>
-                  <input pInputText formControlName="color" placeholder="Ej: Negro, Azul marino..." class="w-full h-11" />
-                </div>
-                <div class="flex flex-col gap-1">
-                  <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--ff-text-muted)">Talle</label>
-                  <input pInputText formControlName="size" placeholder="Ej: S, M, L, XL, 42..." class="w-full h-11" />
-                </div>
-                <div class="flex flex-col gap-1">
-                  <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--ff-text-muted)">Capacidad</label>
-                  <input pInputText formControlName="capacity" placeholder="Ej: 128 GB, 256 GB..." class="w-full h-11" />
-                </div>
-                <div class="flex flex-col gap-1">
-                  <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--ff-text-muted)">Precio de venta *</label>
-                  <p-inputNumber
-                    appCurrencyAmountInput
-                    formControlName="currentPrice"
-                    mode="currency"
-                    currency="ARS"
-                    locale="es-AR"
-                    [minFractionDigits]="0"
-                    styleClass="w-full"
-                    inputStyleClass="w-full h-11 rounded-xl"
-                    [class.ng-invalid]="isInvalid('currentPrice')"
-                  />
-                  <small class="text-xs" style="color: var(--ff-text-muted)">Completá solo los atributos que aplican. El precio es obligatorio.</small>
-                  @if (isInvalid("currentPrice")) {
-                    <small style="color: var(--ff-danger)">Precio requerido y mayor a 0.</small>
-                  }
-                </div>
-                <div class="flex flex-col gap-1">
-                  <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--ff-text-muted)">Unidades iniciales</label>
-                  <p-inputNumber
-                    formControlName="initialUnits"
-                    mode="decimal"
-                    [minFractionDigits]="0"
-                    [maxFractionDigits]="0"
-                    [useGrouping]="false"
-                    [min]="0"
-                    styleClass="w-full"
-                    inputStyleClass="w-full h-11 rounded-xl"
-                  />
-                </div>
-
-                @if (dialogError) {
-                  <p class="text-sm px-3 py-2 rounded-lg" style="color: var(--ff-danger); background: rgba(239, 68, 68, 0.1)">
-                    {{ dialogError }}
-                  </p>
-                }
-
-                <div class="pt-3 grid grid-cols-2 gap-3">
-                  <p-button
-                    type="button"
-                    label="Cancelar"
-                    severity="secondary"
-                    [outlined]="true"
-                    styleClass="w-full justify-center h-11 rounded-xl border"
-                    (onClick)="closePanel()"
-                  />
-                  <p-button
-                    type="submit"
-                    [label]="editingVariant ? 'Guardar cambios' : 'Agregar variante'"
-                    severity="primary"
-                    styleClass="w-full justify-center h-11 rounded-xl"
-                    [loading]="dialogSubmitting"
-                  />
-                </div>
-                </div>
-              </form>
-            } @else {
-              <div class="space-y-3">
-                <p class="text-xs" style="color: var(--ff-text-muted)">
-                  Completá las filas que necesites. Dejá vacías las que no apliquen.
-                </p>
-
-                <div class="grid gap-2 text-[10px] uppercase font-semibold" style="color: var(--ff-text-muted); grid-template-columns: 24px minmax(0, 1.3fr) minmax(0, 0.95fr) minmax(0, 0.95fr) minmax(0, 1.5fr) 52px 24px;">
-                  <span>#</span>
-                  <span>Color</span>
-                  <span>Talle</span>
-                  <span class="text-center">Capacidad</span>
-                  <span class="text-center">Precio (ARS)</span>
-                  <span class="text-center">Units</span>
-                  <span></span>
-                </div>
-
-                @for (row of bulkRows; track $index) {
-                  <div class="space-y-1">
-                    <div class="grid gap-2.5 items-start" style="grid-template-columns: 24px minmax(0, 1.3fr) minmax(0, 0.95fr) minmax(0, 0.95fr) minmax(0, 1.5fr) 52px 24px;">
-                      <span class="text-xs pt-2" style="color: var(--ff-text-muted)">{{ $index + 1 }}</span>
-                      <input pInputText [(ngModel)]="row.color" (ngModelChange)="onBulkRowChange($index)" [ngModelOptions]="{ standalone: true }" class="h-9 rounded-xl px-3 min-w-0" placeholder="Ej: Negro" [class.ng-invalid]="!!getBulkFieldError($index, 'color') || !!getBulkFieldError($index, 'attributes')" />
-                      <input pInputText [(ngModel)]="row.size" (ngModelChange)="onBulkRowChange($index)" [ngModelOptions]="{ standalone: true }" class="h-9 rounded-xl px-3 min-w-0" placeholder="Ej: M" [class.ng-invalid]="!!getBulkFieldError($index, 'size') || !!getBulkFieldError($index, 'attributes')" />
-                      <input pInputText [(ngModel)]="row.capacity" (ngModelChange)="onBulkRowChange($index)" [ngModelOptions]="{ standalone: true }" class="h-9 rounded-xl px-3 min-w-0" placeholder="Ej: 128 GB" [class.ng-invalid]="!!getBulkFieldError($index, 'capacity') || !!getBulkFieldError($index, 'attributes')" />
-                      <div>
-                        <p-inputNumber
-                          appCurrencyAmountInput
-                          [(ngModel)]="row.currentPrice"
-                          (ngModelChange)="onBulkRowChange($index)"
-                          [ngModelOptions]="{ standalone: true }"
-                          mode="currency"
-                          currency="ARS"
-                          locale="es-AR"
-                          [minFractionDigits]="0"
-                          [maxFractionDigits]="0"
-                          styleClass="w-full"
-                          inputStyleClass="w-full h-9 rounded-xl min-w-0 text-right px-2"
-                          [class.ng-invalid]="!!getBulkFieldError($index, 'currentPrice')"
-                        />
-                      </div>
-                      <div>
-                        <p-inputNumber
-                          [(ngModel)]="row.initialUnits"
-                          (ngModelChange)="onBulkRowChange($index)"
-                          [ngModelOptions]="{ standalone: true }"
-                          mode="decimal"
-                          [minFractionDigits]="0"
-                          [maxFractionDigits]="0"
-                          [useGrouping]="false"
-                          [min]="0"
-                          styleClass="w-full"
-                          inputStyleClass="w-full h-9 rounded-xl min-w-0 text-center px-1"
-                        />
-                      </div>
-                      <div class="flex justify-end pt-1">
-                        <button
-                          type="button"
-                          class="text-xs"
-                          style="color: var(--ff-text-muted)"
-                          (click)="removeBulkRow($index)"
-                          [disabled]="bulkRows.length === 1"
-                          title="Quitar fila"
-                        >
-                          <i class="pi pi-times"></i>
-                        </button>
-                      </div>
-                    </div>
-
-                    @if (getBulkFieldError($index, 'attributes')) {
-                      <small style="color: var(--ff-danger)">{{ getBulkFieldError($index, 'attributes') }}</small>
-                    }
-                    @if (getBulkFieldError($index, 'currentPrice')) {
-                      <small style="color: var(--ff-danger)">{{ getBulkFieldError($index, 'currentPrice') }}</small>
-                    }
-                  </div>
-                }
-
-                <button type="button" class="text-xs font-semibold" style="color: var(--ff-accent)" (click)="addBulkRow()">
-                  + Agregar fila
-                </button>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
-                  <div class="rounded-xl border px-3 py-2" style="border-color: var(--ff-stroke); background: rgba(37, 99, 235, 0.06)">
-                    <p class="text-[10px] uppercase font-semibold" style="color: var(--ff-text-muted)">Variantes cargadas</p>
-                    <p class="text-sm font-bold ff-mono" style="color: var(--ff-text-primary)">{{ getBulkFilledRowsCount() }}</p>
-                  </div>
-                  <div class="rounded-xl border px-3 py-2" style="border-color: var(--ff-stroke); background: rgba(37, 99, 235, 0.06)">
-                    <p class="text-[10px] uppercase font-semibold" style="color: var(--ff-text-muted)">Suma precios</p>
-                    <p class="text-sm font-bold ff-mono" style="color: var(--ff-text-primary)">{{ getBulkTotalPrice() | currencyArs: 0 }}</p>
-                  </div>
-                  <div class="rounded-xl border px-3 py-2" style="border-color: var(--ff-stroke); background: rgba(37, 99, 235, 0.06)">
-                    <p class="text-[10px] uppercase font-semibold" style="color: var(--ff-text-muted)">Total estimado</p>
-                    <p class="text-sm font-bold ff-mono" style="color: var(--ff-accent)">{{ getBulkEstimatedTotal() | currencyArs: 0 }}</p>
-                    <p class="text-[10px]" style="color: var(--ff-text-muted)">{{ getBulkTotalUnits() }} u.</p>
-                  </div>
-                </div>
-
-                @if (bulkError) {
-                  <p class="text-sm px-3 py-2 rounded-lg" style="color: var(--ff-danger); background: rgba(239, 68, 68, 0.1)">
-                    {{ bulkError }}
-                  </p>
-                }
-
-                <p-button
-                  type="button"
-                  [label]="'Confirmar ' + getBulkFilledRowsCount() + ' variantes →'"
-                  severity="primary"
-                  styleClass="w-full justify-center h-11 rounded-xl mt-2"
-                  [loading]="bulkSubmitting"
-                  [disabled]="!canSubmitBulk()"
-                  (onClick)="saveBulk()"
-                />
-              </div>
-            }
-          </div>
+        <div
+          [class]="
+            isBulkMode
+              ? 'lg:col-span-7 xl:col-span-6'
+              : 'lg:col-span-5 xl:col-span-4'
+          "
+        >
+          <app-variant-form-panel
+            [(visible)]="showPanel"
+            [variant]="editingVariant"
+            [productId]="productId"
+            (variantSaved)="onVariantSaved()"
+            (bulkModeChange)="isBulkMode = $event"
+          />
         </div>
       }
     </div>

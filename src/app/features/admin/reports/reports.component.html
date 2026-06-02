@@ -1,5 +1,19 @@
-<div class="p-6 space-y-6">
-  <div class="mb-6 flex gap-1 border-b border-gray-200 overflow-x-auto">
+<div class="p-6">
+  @if (returnTo) {
+    <div class="mb-6">
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 text-sm font-medium transition-colors"
+        style="color: #67e8f9"
+        (click)="goBackToOrigin()"
+      >
+        <i class="pi pi-arrow-left text-xs"></i>
+        Volver a Caja
+      </button>
+    </div>
+  }
+
+  <div class="mb-8 flex gap-1 border-b border-gray-200 overflow-x-auto">
     @for (tab of TABS; track tab.id) {
       <button
         (click)="setTab(tab.id)"
@@ -36,5 +50,8 @@
   }
   @if (activeTab === "upcoming") {
     <app-upcoming-report />
+  }
+  @if (activeTab === "cashConversions") {
+    <app-cash-conversions-report />
   }
 </div>

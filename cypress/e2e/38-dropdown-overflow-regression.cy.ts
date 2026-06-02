@@ -107,20 +107,6 @@ describe('Regresión — Dropdowns con appendTo="body" (US-01, US-02, CL-09, CR-
   describe('CL-09 — Filtro riesgo en /admin/clients', () => {
     beforeEach(() => {
       cy.viewport(1280, 720);
-      cy.intercept('GET', '**/auth/me', {
-        statusCode: 200,
-        body: {
-          ok: true,
-          data: {
-            id: 'usr-001',
-            full_name: 'Carlos López',
-            dni: '12345678',
-            role: 'ADMIN',
-            is_temp_password: false,
-            force_relogin_at: null,
-          },
-        },
-      }).as('authMeClients');
       cy.intercept('GET', '**/api/customers*', {
         statusCode: 200,
         body: { ok: true, data: CLIENTS_LIST },

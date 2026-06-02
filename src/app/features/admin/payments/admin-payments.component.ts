@@ -3,35 +3,25 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
-import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputTextareaModule } from 'primeng/inputtextarea';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { catchError, of } from 'rxjs';
 import { AppError } from '../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { HeaderService } from '../../../core/services/header.service';
-import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
-import {
-  Payment,
-  PaymentDetail,
-  PaymentStatus,
-} from '../../collector/models/payment.model';
+import { Payment, PaymentStatus } from '../../collector/models/payment.model';
 import { PaymentsService } from '../../collector/payments.service';
-import { CashRegisterService } from '../cash-register/cash-register.service';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
+import { DirectPaymentDialogComponent } from './direct-payment-dialog.component';
+import { PaymentDetailDialogComponent } from './payment-detail-dialog.component';
 
 @Component({
   selector: 'app-admin-payments',
@@ -44,19 +34,15 @@ import { UsersService } from '../users/users.service';
     CardModule,
     TableModule,
     TagModule,
-    DialogModule,
     DropdownModule,
-    InputNumberModule,
-    InputTextModule,
-    InputTextareaModule,
     SkeletonModule,
     ToastModule,
     TooltipModule,
-    CalendarModule,
-    CurrencyAmountInputDirective,
     LoadingStateComponent,
     ErrorStateComponent,
     MessageModule,
+    PaymentDetailDialogComponent,
+    DirectPaymentDialogComponent,
   ],
   providers: [MessageService],
   templateUrl: './admin-payments.component.html',
@@ -64,7 +50,6 @@ import { UsersService } from '../users/users.service';
 export class AdminPaymentsComponent implements OnInit {
   private readonly paymentsService = inject(PaymentsService);
   private readonly usersService = inject(UsersService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
 
@@ -72,46 +57,19 @@ export class AdminPaymentsComponent implements OnInit {
   collectors: User[] = [];
   loading = true;
   error: AppError | null = null;
-  isCashClosed = false;
 
   filterStatus: PaymentStatus | null = null;
   filterCollectorId: string | null = null;
 
   showDetailDialog = false;
-  selectedPayment: PaymentDetail | null = null;
-  loadingDetail = false;
+  selectedPaymentId: string | null = null;
 
-  showRejectDialog = false;
-  rejectReason = '';
-  processingReject = false;
-  processingApprove = false;
-
-  // ── Cobro directo ──────────────────────────────────────────────
   showDirectDialog = false;
-  directInstallmentId = '';
-  directAmount: number | null = null;
-  directMethod: 'CASH' | 'TRANSFER' = 'CASH';
-  directTransferRef = '';
-  directNotes = '';
-  directNextVisitDate: string = '';
-  processingDirect = false;
-  readonly todayDate = new Date();
-
-  // ── Reversión ─────────────────────────────────────────────────
-  showReverseDialog = false;
-  reopenDetailOnReverseClose = false;
-  reverseReason = '';
-  processingReverse = false;
 
   readonly STATUS_OPTIONS = [
     { label: 'Pendiente', value: 'PENDING' as PaymentStatus },
     { label: 'Aprobado', value: 'APPROVED' as PaymentStatus },
     { label: 'Rechazado', value: 'REJECTED' as PaymentStatus },
-  ];
-
-  readonly PAYMENT_METHOD_OPTIONS = [
-    { label: 'Efectivo', value: 'CASH' as const },
-    { label: 'Transferencia', value: 'TRANSFER' as const },
   ];
 
   /**
@@ -136,46 +94,21 @@ export class AdminPaymentsComponent implements OnInit {
     });
   }
 
-  rejectCharCount(): number {
-    return this.rejectReason.length;
-  }
-
-  reverseCharCount(): number {
-    return this.reverseReason.length;
-  }
-
-  ngOnInit(): void {
-    this.header.set([{ label: 'Cobros' }]);
-    this.checkCashRegisterStatus();
-    this.usersService.listCollectors().subscribe((c) => (this.collectors = c));
-    this.load();
-  }
-
-  /**
-   * Verifica el estado de cierre de caja del día actual.
-   */
-  private checkCashRegisterStatus(): void {
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
-      });
-  }
-
   /**
    * Devuelve la severidad del tag según el estado del cobro.
+   * @param status estado del cobro
    */
   statusSeverity(
     status: PaymentStatus,
   ): 'success' | 'warning' | 'danger' | 'secondary' {
     return { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' }[
       status
-    ] as any;
+    ] as 'success' | 'warning' | 'danger';
   }
 
   /**
-   * Devuelve la etiqueta legible del estado.
+   * Devuelve la etiqueta legible del estado del cobro.
+   * @param status estado del cobro
    */
   statusLabel(status: PaymentStatus): string {
     return {
@@ -185,173 +118,9 @@ export class AdminPaymentsComponent implements OnInit {
     }[status];
   }
 
-  refresh(): void {
-    this.load();
-  }
-
-  openDetail(payment: Payment): void {
-    this.showDetailDialog = true;
-    this.selectedPayment = null;
-    this.loadingDetail = true;
-    this.paymentsService.getById(payment.id).subscribe({
-      next: (detail) => {
-        this.selectedPayment = detail;
-        this.loadingDetail = false;
-      },
-      error: () => {
-        this.loadingDetail = false;
-        this.showDetailDialog = false;
-      },
-    });
-  }
-
-  openRejectDialog(): void {
-    this.rejectReason = '';
-    this.showRejectDialog = true;
-  }
-
-  confirmApprove(): void {
-    if (!this.selectedPayment) return;
-
-    this.processingApprove = true;
-
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
-
-        if (this.isCashClosed) {
-          this.processingApprove = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes aprobar cobros. La caja del día está CERRADA.',
-            life: 5000,
-          });
-          return;
-        }
-
-        this.processPaymentApproval();
-      });
-  }
-
-  private processPaymentApproval(): void {
-    this.paymentsService.approve(this.selectedPayment!.id).subscribe({
-      next: (detail) => {
-        this.processingApprove = false;
-        this.showDetailDialog = false;
-        const isPaid = detail.amountPaid >= detail.amountDue;
-        this.msg.add({
-          severity: 'success',
-          summary: 'Cobro aprobado',
-          detail: isPaid
-            ? 'Cobro aprobado. La cuota quedó pagada.'
-            : 'Cobro aprobado correctamente.',
-          life: 5000,
-        });
-        this.updatePaymentInList(detail.id, 'APPROVED');
-      },
-      error: (err: AppError) => {
-        this.processingApprove = false;
-        this.msg.add({
-          severity: err.status === 409 ? 'warn' : 'error',
-          summary: err.status === 409 ? 'Advertencia' : 'Error',
-          detail: err.message ?? 'No se pudo aprobar.',
-        });
-      },
-    });
-  }
-
-  confirmReject(): void {
-    if (!this.selectedPayment || this.rejectReason.length < 5) return;
-
-    this.processingReject = true;
-
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
-
-        if (this.isCashClosed) {
-          this.processingReject = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes rechazar cobros. La caja del día está CERRADA.',
-            life: 5000,
-          });
-          return;
-        }
-
-        this.processPaymentReject();
-      });
-  }
-
-  private processPaymentReject(): void {
-    this.paymentsService
-      .reject(this.selectedPayment!.id, this.rejectReason)
-      .subscribe({
-        next: () => {
-          this.processingReject = false;
-          this.showRejectDialog = false;
-          this.showDetailDialog = false;
-          this.msg.add({
-            severity: 'info',
-            summary: 'Cobro rechazado',
-            detail: 'El cobro fue rechazado.',
-            life: 4000,
-          });
-          this.updatePaymentInList(this.selectedPayment!.id, 'REJECTED');
-        },
-        error: (err: AppError) => {
-          this.processingReject = false;
-          this.msg.add({
-            severity: err.status === 409 ? 'warn' : 'error',
-            summary: err.status === 409 ? 'Advertencia' : 'Error',
-            detail: err.message ?? 'No se pudo rechazar.',
-          });
-        },
-      });
-  }
-
-  // ── Cobro directo ──────────────────────────────────────────────
-
-  openDirectDialog(): void {
-    this.directInstallmentId = '';
-    this.directAmount = null;
-    this.directMethod = 'CASH';
-    this.directTransferRef = '';
-    this.directNotes = '';
-    this.directNextVisitDate = '';
-    this.showDirectDialog = true;
-  }
-
-  /**
-   * Indica si el formulario de cobro directo es válido para enviar.
-   */
-  private readonly UUID_RE =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-  get directFormValid(): boolean {
-    return (
-      this.UUID_RE.test(this.directInstallmentId.trim()) &&
-      (this.directAmount ?? 0) > 0 &&
-      (this.directMethod !== 'TRANSFER' ||
-        this.directTransferRef.trim().length > 0)
-    );
-  }
-
-  get directInstallmentIdInvalid(): boolean {
-    return (
-      this.directInstallmentId.trim().length > 0 &&
-      !this.UUID_RE.test(this.directInstallmentId.trim())
-    );
-  }
-
   /**
    * Devuelve la etiqueta de tipo de cobro para mostrar en la lista.
+   * @param p cobro
    */
   paymentTypeLabel(p: Payment): string | null {
     if (p.reversalPaymentId) return 'Revertido';
@@ -361,6 +130,10 @@ export class AdminPaymentsComponent implements OnInit {
     return null;
   }
 
+  /**
+   * Devuelve la severidad del tag de tipo de cobro.
+   * @param p cobro
+   */
   paymentTypeSeverity(
     p: Payment,
   ): 'danger' | 'info' | 'secondary' | 'warning' | null {
@@ -371,126 +144,41 @@ export class AdminPaymentsComponent implements OnInit {
     return null;
   }
 
-  confirmDirect(): void {
-    if (!this.directFormValid) return;
-
-    this.processingDirect = true;
-
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
-
-        if (this.isCashClosed) {
-          this.processingDirect = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes crear cobros. La caja del día está CERRADA.',
-            life: 5000,
-          });
-          return;
-        }
-
-        this.processDirectPayment();
-      });
+  ngOnInit(): void {
+    this.header.set([{ label: 'Cobros' }]);
+    this.usersService.listCollectors().subscribe((c) => (this.collectors = c));
+    this.load();
   }
 
-  private processDirectPayment(): void {
-    this.paymentsService
-      .adminDirect({
-        installmentId: this.directInstallmentId.trim(),
-        amountReceived: this.directAmount!,
-        paymentMethod: this.directMethod,
-        transferReference: this.directTransferRef || undefined,
-        notes: this.directNotes || undefined,
-        nextVisitDate: this.directNextVisitDate || undefined,
-      })
-      .subscribe({
-        next: () => {
-          this.processingDirect = false;
-          this.showDirectDialog = false;
-          this.msg.add({
-            severity: 'success',
-            summary: 'Cobro registrado',
-            detail: 'El cobro fue registrado y aprobado correctamente.',
-            life: 5000,
-          });
-          this.load();
-        },
-        error: (err: AppError) => {
-          this.processingDirect = false;
-          this.msg.add({
-            severity:
-              err.status === 409 || err.status === 422 ? 'warn' : 'error',
-            summary:
-              err.status === 409 || err.status === 422
-                ? 'Advertencia'
-                : 'Error',
-            detail: err.message ?? 'No se pudo registrar el cobro.',
-          });
-        },
-      });
-  }
-
-  // ── Reversión ─────────────────────────────────────────────────
-
-  /**
-   * Abre el modal de reversión cerrando antes el detalle para evitar modales anidados.
-   */
-  openReverseDialog(): void {
-    if (!this.selectedPayment) return;
-    this.reverseReason = '';
-    this.reopenDetailOnReverseClose = true;
-    this.showDetailDialog = false;
-    this.showReverseDialog = true;
+  refresh(): void {
+    this.load();
   }
 
   /**
-   * Gestiona el cierre del modal de reversión y reabre detalle solo si corresponde.
+   * Abre el dialog de detalle para el cobro seleccionado.
+   * @param payment cobro de la lista
    */
-  onReverseDialogHide(): void {
-    if (this.reopenDetailOnReverseClose && this.selectedPayment) {
-      this.showDetailDialog = true;
-    }
-    this.reopenDetailOnReverseClose = false;
+  openDetail(payment: Payment): void {
+    this.selectedPaymentId = payment.id;
+    this.showDetailDialog = true;
   }
 
-  confirmReverse(): void {
-    if (!this.selectedPayment || this.reverseReason.length < 5) return;
-    this.processingReverse = true;
-    this.paymentsService
-      .reverse(this.selectedPayment.id, { reason: this.reverseReason })
-      .subscribe({
-        next: () => {
-          this.processingReverse = false;
-          this.reopenDetailOnReverseClose = false;
-          this.showReverseDialog = false;
-          this.showDetailDialog = false;
-          this.msg.add({
-            severity: 'info',
-            summary: 'Cobro revertido',
-            detail: 'El cobro y sus sub-pagos fueron revertidos correctamente.',
-            life: 5000,
-          });
-          this.load();
-        },
-        error: (err: AppError) => {
-          this.processingReverse = false;
-          this.msg.add({
-            severity: err.status === 409 ? 'warn' : 'error',
-            summary: err.status === 409 ? 'Advertencia' : 'Error',
-            detail: err.message ?? 'No se pudo revertir el cobro.',
-          });
-        },
-      });
-  }
-
-  private updatePaymentInList(id: string, status: PaymentStatus): void {
+  /**
+   * Actualiza el estado de un cobro en la lista local sin recargar del servidor.
+   * @param id id del cobro
+   * @param status nuevo estado
+   */
+  onStatusChanged({ id, status }: { id: string; status: PaymentStatus }): void {
     this.payments = this.payments.map((p) =>
       p.id === id ? { ...p, status } : p,
     );
+  }
+
+  /**
+   * Recarga la lista completa tras una reversión o cobro directo.
+   */
+  onReloaded(): void {
+    this.load();
   }
 
   private load(): void {

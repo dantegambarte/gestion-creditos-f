@@ -106,7 +106,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
    * Retorna el monto del enganche del crédito aprobado.
    */
   get approvingRowDownPayment(): number {
-    return (this.approvingRow as any)?.downPayment ?? 0;
+    return this.approvingRow?.downPayment ?? 0;
   }
 
   private destroy$ = new Subject<void>();

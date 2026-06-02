@@ -4,6 +4,8 @@ import { map } from 'rxjs/operators';
 import { ApiHttpService } from '../../../core/http/api-http.service';
 import {
   CashRegister,
+  CashConversion,
+  CashConversionPayload,
   CashRegisterClosePayload,
   CashRegisterDashboard,
   CashRegisterDashboardRaw,
@@ -14,6 +16,18 @@ import {
   CashRegisterPreCloseRaw,
   CashRegisterRaw,
 } from '../models/cash-register.model';
+
+interface CashConversionRaw {
+  id: string;
+  register_date: string;
+  criteria: 'DAILY' | 'COMPANY';
+  source_method: 'CASH' | 'TRANSFER';
+  target_method: 'CASH' | 'TRANSFER';
+  amount: number;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+}
 
 /**
  * Convierte un objeto de tipo CashRegisterDashboardRaw a CashRegisterDashboard.
@@ -139,6 +153,25 @@ function toPreClose(r: CashRegisterPreCloseRaw): CashRegisterPreClose {
   };
 }
 
+/**
+ * Convierte un objeto de tipo CashConversionRaw a CashConversion.
+ * @param r
+ * @returns
+ */
+function toCashConversion(r: CashConversionRaw): CashConversion {
+  return {
+    id: r.id,
+    registerDate: r.register_date,
+    criteria: r.criteria,
+    sourceMethod: r.source_method,
+    targetMethod: r.target_method,
+    amount: r.amount,
+    notes: r.notes,
+    createdBy: r.created_by,
+    createdAt: r.created_at,
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class CashRegisterService {
   private readonly api = inject(ApiHttpService);
@@ -211,5 +244,23 @@ export class CashRegisterService {
     return this.api
       .post<CashRegisterRaw>('cash-register/close', body)
       .pipe(map(toCashRegister));
+  }
+
+  /**
+   * Registra una conversión interna entre efectivo y transferencia.
+   * @param payload
+   * @returns
+   */
+  createConversion(payload: CashConversionPayload): Observable<CashConversion> {
+    const body: Record<string, unknown> = {
+      criteria: payload.criteria,
+      source_method: payload.sourceMethod,
+      amount: payload.amount,
+    };
+    if (payload.notes) body['notes'] = payload.notes;
+    if (payload.registerDate) body['register_date'] = payload.registerDate;
+    return this.api
+      .post<CashConversionRaw>('cash-register/conversions', body)
+      .pipe(map(toCashConversion));
   }
 }

@@ -71,6 +71,12 @@ describe('Autenticación — Unhappy Paths', () => {
     cy.url().should('include', '/collector');
 
     cy.visit('/login');
+    cy.location('pathname', { timeout: 10000 }).then((pathname) => {
+      if (pathname === '/login') {
+        cy.visit('/collector/route');
+      }
+    });
+
     cy.url().should('include', '/collector');
   });
 

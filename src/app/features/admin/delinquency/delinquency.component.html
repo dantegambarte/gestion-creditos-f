@@ -321,55 +321,8 @@
   </div>
 </div>
 
-<p-dialog
+<app-delinquency-apply-dialog
   [(visible)]="showApplyDialog"
-  header="Aplicar mora"
-  [modal]="true"
-  [style]="{ width: '380px' }"
-  [draggable]="false"
-  [resizable]="false"
->
-  <div class="flex flex-col gap-4 py-2">
-    <p class="text-sm" style="color: var(--ff-text-primary)">
-      Cliente: <strong>{{ applyingRow?.clientName }}</strong> · Cuota #{{
-        applyingRow?.installmentNumber
-      }}
-    </p>
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Monto de mora</label>
-      <input
-        type="number"
-        [(ngModel)]="applyAmount"
-        min="0.01"
-        step="0.01"
-        class="w-full rounded-xl p-3 text-sm outline-none"
-        style="
-          border: 1px solid var(--ff-border);
-          background: var(--ff-secondary);
-          color: var(--ff-text-primary);
-        "
-        placeholder="0.00"
-      />
-    </div>
-  </div>
-  <ng-template pTemplate="footer">
-    <div class="grid grid-cols-2 gap-3 w-full">
-      <p-button
-        type="button"
-        label="Cancelar"
-        severity="secondary"
-        [outlined]="true"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
-        (onClick)="showApplyDialog = false"
-      />
-      <p-button
-        label="Aplicar"
-        severity="warning"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
-        (onClick)="confirmApply()"
-        [loading]="processingId !== null"
-        [disabled]="!applyAmount || applyAmount <= 0"
-      />
-    </div>
-  </ng-template>
-</p-dialog>
+  [row]="applyingRow"
+  (penaltyApplied)="onPenaltyApplied($event)"
+/>
