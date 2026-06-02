@@ -304,6 +304,36 @@ http://localhost:3000/api/credits - POST
 
 ---
 
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-21]
+**Título / Descripción:** [Operación Crédito]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [se hizo click en "Nueva Operación".]
+* **Resultado Esperado:** [Debería poder marcar todas las casilla.]
+* **Resultado Obtenido (Corregido):** [Se agregó un botón para marcar todos.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-22]
+**Título / Descripción:** [Nueva Operación]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nueva Operación" - Venta.]
+* **Resultado Esperado:** [Debería poder elegir la unidad del producto.]
+* **Resultado Obtenido (Error):** [Al alegir una unidad de un producto, automáticamente se selecciona la primera unidad disponible.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-23]
+**Título / Descripción:** [Aprobar Crédito]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Aprobar Crédito".]
+* **Resultado Esperado:** [Debería poder ver la cantidad de cuotas que se eligió en el plan.]
+* **Resultado Obtenido (Error):** [No muestra la cantidad de cuotas que se eligió en la preventa.]
+
+---
+
 
 Módulo Clientes
 
@@ -470,6 +500,19 @@ Módulo Clientes
 * **Resultado Obtenido (Error):** [No mantiene el mismo formato que en Admin.]
 
 ---
+
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-18]
+**Título / Descripción:** [Nuevo Cliente]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Cliente".]
+* **Resultado Esperado:** [Debería no crear el cliente si no tiene un cobrador asignado.]
+* **Resultado Obtenido (Error):** [Me permite crear un cliente por más que no tenga cobrador asignado.]
+
+---
+
+
 
 Módulo Producto
 

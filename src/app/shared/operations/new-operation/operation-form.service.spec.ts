@@ -1,3 +1,6 @@
+/// <reference types="jasmine" />
+declare const expect: any;
+declare const spyOn: any;
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
