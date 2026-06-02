@@ -155,7 +155,7 @@ export class RefinanceDialogComponent implements OnChanges {
    * Confirma y ejecuta la refinanciación. El nuevo crédito queda en PENDING_APPROVAL.
    */
   confirm(): void {
-    if (!this.credit || !this.refinanceStep1Valid) return;
+    if (this.processingRefinance || !this.credit || !this.refinanceStep1Valid) return;
     this.processingRefinance = true;
     this.creditsService
       .refinance(this.credit.id, {

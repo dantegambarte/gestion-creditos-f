@@ -97,7 +97,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
    * Valida caja y registra el cobro directo.
    */
   confirmDirect(): void {
-    if (!this.directFormValid) return;
+    if (this.processingDirect || !this.directFormValid) return;
     this.processingDirect = true;
 
     this.cashRegisterSvc

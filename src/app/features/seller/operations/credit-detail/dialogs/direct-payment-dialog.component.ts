@@ -89,7 +89,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
    * Verifica caja en tiempo real antes de crear el cobro.
    */
   confirm(): void {
-    if (!this.formValid) return;
+    if (this.processing || !this.formValid) return;
     this.processing = true;
     this.cashRegisterSvc
       .getDashboard()
