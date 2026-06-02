@@ -8,6 +8,9 @@
  */
 
 const ADMIN_NEW_OP_URL = '/admin/operations/new';
+
+let latestSaleCreditId: string | null = null;
+
 /**
  * Inicia sesión ADMIN por UI y navega al wizard.
  */
@@ -158,7 +161,9 @@ const addOneSaleUnitAndGoToConditions = (): void => {
  * Marca declaraciones requeridas y envía la operación a aprobación.
  */
 const submitOperationForApproval = (): void => {
-  cy.contains('Declaraciones y Autorizaciones').should('be.visible');
+  cy.contains('Declaraciones y Autorizaciones')
+    .scrollIntoView()
+    .should('be.visible');
 
   // Usar el nuevo botón 'Marcar todas' y verificar estado.
   cy.get('[data-cy="btn-mark-all"]').click({ force: true });
@@ -228,10 +233,11 @@ describe('Nueva Operación real — Admin', () => {
     pickFirstActiveClient();
     addOneSaleUnitAndGoToConditions();
 
-    cy.contains('label', 'Enganche').click({ force: true });
+  cy.contains('label', 'Enganche').click({ force: true });
     cy.get('p-inputNumber[formControlName="downPayment"] input', {
       timeout: 15000,
     })
+      .scrollIntoView()
       .should('be.visible')
       .clear()
       .type('5000')
@@ -243,19 +249,120 @@ describe('Nueva Operación real — Admin', () => {
     cy.viewport(1280, 720);
     loginFreshAdminToNewOperation();
     ensureNewOperationReady();
+    cy.intercept('GET', '**/api/product-units*').as('availableUnits');
+    cy.intercept('POST', '/api/credits').as('createCreditWithAdvanced');
 
     goToClientStepFromSaleType();
     pickFirstActiveClient();
+    cy.wait('@availableUnits');
     addOneSaleUnitAndGoToConditions();
 
+    cy.get('[data-cy="ddl-installments"] .p-dropdown', { timeout: 15000 })
+      .scrollIntoView()
+      .click();
+    cy.contains('.p-dropdown-item', '4 cuotas (Mensual)', { timeout: 10000 })
+      .click({ force: true });
+
     cy.contains('label', 'Cuotas adelantadas').click({ force: true });
-    cy.contains('Cantidad de cuotas adelantadas', { timeout: 15000 }).should(
-      'be.visible',
-    );
+    cy.contains('Cantidad de cuotas adelantadas', { timeout: 15000 })
+      .scrollIntoView()
+      .should('be.visible');
     cy.get('p-inputNumber[formControlName="advancedInstallmentsCount"] input')
+      .scrollIntoView()
       .should('be.visible')
       .clear()
       .type('2')
       .blur();
+
+    cy.contains('label', 'Efectivo').click({ force: true });
+    cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
+    cy.contains('Paso 5 de 5').should('be.visible');
+    cy.contains('Cuotas adelantadas').should('exist');
+
+    submitOperationForApproval();
+
+    cy.wait('@createCreditWithAdvanced').then((interception) => {
+      const requestBody = interception.request.body as Record<string, unknown>;
+      const responseBody = interception.response?.body as Record<string, unknown>;
+
+      const unitIds = requestBody['unit_ids'] as string[];
+      const prepaidInstallments = Number(
+        requestBody['prepaid_installments'] ?? 0,
+      );
+      const installmentsCount = Number(requestBody['installments_count'] ?? 0);
+
+      console.log('advanced request', requestBody);
+      console.log('advanced response', responseBody);
+
+      expect(requestBody['customer_id']).to.be.a('string');
+      expect(requestBody['type']).to.eq('SALE');
+      expect(installmentsCount).to.be.greaterThan(1);
+      expect(requestBody['payment_frequency']).to.be.oneOf([
+        'WEEKLY',
+        'BIWEEKLY',
+        'MONTHLY',
+      ]);
+      expect(unitIds).to.be.an('array').and.not.be.empty;
+      expect(unitIds[0], 'unidad tomada del runtime').to.be.a('string').and.not.be
+        .empty;
+      expect(prepaidInstallments).to.eq(2);
+      expect(requestBody['prepaid_installments_method']).to.eq('CASH');
+
+      if (interception.response?.statusCode !== 201) {
+        throw new Error(
+          `Alta SALE con cuotas adelantadas falló. status=${interception.response?.statusCode} body=${JSON.stringify(
+            responseBody,
+          )} request=${JSON.stringify(requestBody)}`,
+        );
+      }
+
+      latestSaleCreditId = String(responseBody['data']?.['id'] ?? '');
+      expect(latestSaleCreditId, 'id venta creada').to.not.equal('');
+    });
+
+    cy.url({ timeout: 20000 }).should('match', /\/admin\/(operations|approvals)$/);
+  });
+
+  it('venta: detalle y aprobación respetan cuotas ya definidas', () => {
+    cy.viewport(1280, 720);
+    expect(latestSaleCreditId, 'crédito SALE previo').to.be.a('string').and.not.be
+      .empty;
+
+    loginFreshAdminToNewOperation();
+    cy.visit(`/admin/operations/${latestSaleCreditId}`);
+
+    cy.contains('Detalles financieros', { timeout: 20000 }).should('be.visible');
+    cy.contains('Cuotas adelantadas').should('be.visible');
+    cy.contains('2 cuota(s)').should('be.visible');
+    cy.contains('Monto adelantado').should('be.visible');
+    cy.contains('Método adelanto').should('be.visible');
+
+    cy.contains('button', 'Aprobar').click();
+    cy.contains('Aprobar Crédito').should('be.visible');
+    cy.contains(
+      'Se aprobará la operación con las cuotas ya definidas en la pre-operación.',
+    ).should('be.visible');
+    cy.contains('Cantidad de cuotas definida').should('be.visible');
+    cy.contains('4 cuota(s)').should('be.visible');
+    cy.get('input[type="number"]').should('not.exist');
+  });
+
+  it('préstamo: aprobación mantiene input editable de cuotas', () => {
+    cy.viewport(1280, 720);
+    loginFreshAdminToNewOperation();
+    cy.visit('/admin/approvals');
+
+    cy.contains('Aprobación de Operaciones', { timeout: 20000 }).should(
+      'be.visible',
+    );
+    cy.contains('tr', 'Préstamo', { timeout: 20000 })
+      .first()
+      .within(() => {
+        cy.get('button').filter(':has(.pi-check)').click({ force: true });
+      });
+
+    cy.contains('Aprobar Operación').should('be.visible');
+    cy.contains('Cantidad de cuotas (puede ajustarse)').should('be.visible');
+    cy.get('input[type="number"]').should('be.visible');
   });
 });
