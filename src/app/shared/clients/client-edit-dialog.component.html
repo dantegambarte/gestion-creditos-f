@@ -11,16 +11,16 @@
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-1">
         <label class="auth-label">Nombre</label>
-        <input pInputText formControlName="nombre" class="client-input" />
+        <input pInputText formControlName="nombre" class="w-full h-11 px-4" />
       </div>
       <div class="flex flex-col gap-1">
         <label class="auth-label">Apellido</label>
-        <input pInputText formControlName="apellido" class="client-input" />
+        <input pInputText formControlName="apellido" class="w-full h-11 px-4" />
       </div>
     </div>
     <div class="flex flex-col gap-1">
       <label class="auth-label">Teléfono</label>
-      <input pInputText formControlName="phone" class="client-input" />
+      <input pInputText formControlName="phone" class="w-full h-11 px-4" />
     </div>
     <div class="flex flex-col gap-1">
       <label class="auth-label">Email</label>
@@ -28,15 +28,22 @@
         pInputText
         formControlName="email"
         placeholder="ejemplo@correo.com"
-        [class]="'client-input' + (isEditInvalid('email') ? ' client-input--error' : '')"
+        class="w-full h-11 px-4"
+        [class.ng-invalid]="isEditInvalid('email')"
+        [class.ng-dirty]="isEditInvalid('email')"
       />
-      @if (isEditInvalid('email')) {
-        <span class="auth-error">{{ getEditError('email') }}</span>
+      @if (isEditInvalid("email")) {
+        <span class="auth-error">{{ getEditError("email") }}</span>
       }
     </div>
     <div class="flex flex-col gap-1">
       <label class="auth-label">Dirección</label>
-      <input pInputText formControlName="direccion" placeholder="Ej: Av. Corrientes 1234" class="client-input" />
+      <input
+        pInputText
+        formControlName="direccion"
+        placeholder="Ej: Av. Corrientes 1234"
+        class="w-full h-11 px-4"
+      />
     </div>
     <div class="flex flex-col gap-1">
       <label class="auth-label">Cobrador asignado</label>
@@ -45,10 +52,12 @@
         [options]="collectorOptions"
         optionLabel="label"
         optionValue="value"
-        [placeholder]="collectorsLoading ? 'Cargando cobradores…' : 'Seleccionar cobrador'"
+        [placeholder]="
+          collectorsLoading ? 'Cargando cobradores…' : 'Seleccionar cobrador'
+        "
         [disabled]="collectorsLoading"
         [showClear]="true"
-        styleClass="w-full"
+        styleClass="w-full h-11"
         appendTo="body"
       />
     </div>

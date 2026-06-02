@@ -156,6 +156,31 @@ export class ClientCreateDialogComponent implements OnChanges {
       });
   }
 
+  /**
+   * Solo permite dígitos y '+' al inicio para código de país.
+   * @param {Event} event - Evento input del campo teléfono.
+   * @param {string} field - Nombre del control en el formulario.
+   */
+  onPhoneInput(event: Event, field: string): void {
+    const input = event.target as HTMLInputElement;
+    const raw = input.value;
+    const hasPlus = raw.startsWith('+');
+    const digits = raw.replace(/\D/g, '');
+    const clean = hasPlus ? '+' + digits : digits;
+    this.form.get(field)?.setValue(clean, { emitEvent: false });
+    input.value = clean;
+  }
+
+  /**
+   * Elimina cualquier carácter no numérico del campo DNI al escribir o pegar.
+   */
+  onDniInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const clean = input.value.replace(/\D/g, '');
+    this.form.get('dni')?.setValue(clean, { emitEvent: false });
+    input.value = clean;
+  }
+
   private buildForm(): FormGroup {
     return this.fb.group({
       nombres: [
@@ -182,7 +207,7 @@ export class ClientCreateDialogComponent implements OnChanges {
       telefonoAlterno: ['', [Validators.pattern(/^[\d\s\+\-]*$/)]],
       email: ['', [Validators.email]],
       direccion: ['', [Validators.required]],
-      assignedCollectorId: [''],
+      assignedCollectorId: ['', [Validators.required]],
     });
   }
 }

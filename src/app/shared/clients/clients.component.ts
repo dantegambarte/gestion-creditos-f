@@ -13,6 +13,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { AuthServiceBase } from '../../core/auth/auth-service.base';
 import { UserRoleEnum } from '../../core/models/types/user-role';
@@ -72,6 +73,7 @@ function toClient(c: Customer): Client {
     TagModule,
     DialogModule,
     ToastModule,
+    TooltipModule,
     ClientCreateDialogComponent,
     ClientEditDialogComponent,
   ],
@@ -224,5 +226,17 @@ export class ClientsComponent implements OnInit, OnDestroy {
   openCredits(client: Client): void {
     const base = this.router.url.split(`/${AppRoutes.CLIENTS}`)[0];
     this.router.navigate([base, AppRoutes.CLIENTS, client.id]);
+  }
+
+  /**
+   * Abre WhatsApp con el número del cliente, limpiando caracteres no numéricos salvo el '+' inicial.
+   * @param {string} phone - Teléfono del cliente.
+   */
+  openWhatsApp(phone: string, name: string): void {
+    const clean = phone.startsWith('+')
+      ? '+' + phone.slice(1).replace(/\D/g, '')
+      : phone.replace(/\D/g, '');
+    const msg = encodeURIComponent(`Hola ${name}! `);
+    window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
   }
 }

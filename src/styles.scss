@@ -84,7 +84,7 @@ body {
 .p-button.p-button-primary,
 .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-link):not(.p-button-secondary):not(
     .p-button-success
-  ):not(.p-button-info):not(.p-button-warning):not(.p-button-help):not(.p-button-danger) {
+  ):not(.p-button-info):not(.p-button-warning):not(.p-button-help):not(.p-button-danger):not(.p-button-whatsapp) {
   background: var(--ff-accent) !important;
   border-color: var(--ff-accent) !important;
   color: #ffffff !important;
@@ -103,10 +103,60 @@ body {
 .p-button.p-button-primary,
 .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-link):not(.p-button-secondary):not(
     .p-button-success
-  ):not(.p-button-info):not(.p-button-warning):not(.p-button-help):not(.p-button-danger):not(.p-dialog-header-icon) {
+  ):not(.p-button-info):not(.p-button-warning):not(.p-button-help):not(.p-button-danger):not(.p-button-whatsapp):not(
+    .p-dialog-header-icon
+  ) {
   background: var(--ff-accent) !important;
   border-color: var(--ff-accent) !important;
   color: #ffffff !important;
+}
+
+// ─── p-button help (violeta) ─────────────────────────────────────────────────
+.p-button.p-button-help {
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+  color: #ffffff !important;
+
+  &:hover:not(:disabled) {
+    background: #6d28d9 !important;
+    border-color: #6d28d9 !important;
+  }
+}
+
+// ─── p-button whatsapp (verde) ───────────────────────────────────────────────
+.p-button.p-button-whatsapp {
+  background: #25d366 !important;
+  border-color: #25d366 !important;
+  color: #ffffff !important;
+
+  &:hover:not(:disabled) {
+    background: #1da851 !important;
+    border-color: #1da851 !important;
+  }
+}
+
+// ─── p-button info ───────────────────────────────────────────────────────────
+.p-button.p-button-info {
+  background: #4f6ef7 !important;
+  border-color: #4f6ef7 !important;
+  color: #ffffff !important;
+
+  &:hover:not(:disabled) {
+    background: #3a5ae8 !important;
+    border-color: #3a5ae8 !important;
+  }
+}
+
+// ─── p-button warning ────────────────────────────────────────────────────────
+.p-button.p-button-warning {
+  background: #fbb040 !important;
+  border-color: #fbb040 !important;
+  color: #ffffff !important;
+
+  &:hover:not(:disabled) {
+    background: #e09a2a !important;
+    border-color: #e09a2a !important;
+  }
 }
 
 // ─── p-button success ────────────────────────────────────────────────────────

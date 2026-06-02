@@ -15,10 +15,12 @@
           pInputText
           formControlName="nombres"
           placeholder="María"
-          [class]="'client-input' + (isInvalid('nombres') ? ' client-input--error' : '')"
+          class="w-full h-11 px-4"
+          [class.ng-invalid]="isInvalid('nombres')"
+          [class.ng-dirty]="isInvalid('nombres')"
         />
-        @if (isInvalid('nombres')) {
-          <span class="auth-error">{{ getError('nombres') }}</span>
+        @if (isInvalid("nombres")) {
+          <span class="auth-error">{{ getError("nombres") }}</span>
         }
       </div>
       <div class="flex flex-col gap-1">
@@ -27,10 +29,12 @@
           pInputText
           formControlName="apellidos"
           placeholder="Garcia López"
-          [class]="'client-input' + (isInvalid('apellidos') ? ' client-input--error' : '')"
+          class="w-full h-11 px-4"
+          [class.ng-invalid]="isInvalid('apellidos')"
+          [class.ng-dirty]="isInvalid('apellidos')"
         />
-        @if (isInvalid('apellidos')) {
-          <span class="auth-error">{{ getError('apellidos') }}</span>
+        @if (isInvalid("apellidos")) {
+          <span class="auth-error">{{ getError("apellidos") }}</span>
         }
       </div>
     </div>
@@ -42,10 +46,13 @@
         formControlName="dni"
         inputmode="numeric"
         placeholder="12345678"
-        [class]="'client-input' + (isDniInvalid() ? ' client-input--error' : '')"
+        class="w-full h-11 px-4"
+        [class.ng-invalid]="isDniInvalid()"
+        [class.ng-dirty]="isDniInvalid()"
+        (input)="onDniInput($event)"
       />
       @if (isDniInvalid()) {
-        <span class="auth-error">{{ getError('dni') }}</span>
+        <span class="auth-error">{{ getError("dni") }}</span>
       }
     </div>
 
@@ -55,11 +62,15 @@
         <input
           pInputText
           formControlName="telefonoPrincipal"
+          inputmode="tel"
           placeholder="3811234567"
-          [class]="'client-input' + (isInvalid('telefonoPrincipal') ? ' client-input--error' : '')"
+          class="w-full h-11 px-4"
+          [class.ng-invalid]="isInvalid('telefonoPrincipal')"
+          [class.ng-dirty]="isInvalid('telefonoPrincipal')"
+          (input)="onPhoneInput($event, 'telefonoPrincipal')"
         />
-        @if (isInvalid('telefonoPrincipal')) {
-          <span class="auth-error">{{ getError('telefonoPrincipal') }}</span>
+        @if (isInvalid("telefonoPrincipal")) {
+          <span class="auth-error">{{ getError("telefonoPrincipal") }}</span>
         }
       </div>
       <div class="flex flex-col gap-1">
@@ -67,11 +78,15 @@
         <input
           pInputText
           formControlName="telefonoAlterno"
+          inputmode="tel"
           placeholder="3817654321"
-          [class]="'client-input' + (isInvalid('telefonoAlterno') ? ' client-input--error' : '')"
+          class="w-full h-11 px-4"
+          [class.ng-invalid]="isInvalid('telefonoAlterno')"
+          [class.ng-dirty]="isInvalid('telefonoAlterno')"
+          (input)="onPhoneInput($event, 'telefonoAlterno')"
         />
-        @if (isInvalid('telefonoAlterno')) {
-          <span class="auth-error">{{ getError('telefonoAlterno') }}</span>
+        @if (isInvalid("telefonoAlterno")) {
+          <span class="auth-error">{{ getError("telefonoAlterno") }}</span>
         }
       </div>
     </div>
@@ -82,10 +97,12 @@
         pInputText
         formControlName="email"
         placeholder="m.garcia@email.com"
-        [class]="'client-input' + (isInvalid('email') ? ' client-input--error' : '')"
+        class="w-full h-11 px-4"
+        [class.ng-invalid]="isInvalid('email')"
+        [class.ng-dirty]="isInvalid('email')"
       />
-      @if (isInvalid('email')) {
-        <span class="auth-error">{{ getError('email') }}</span>
+      @if (isInvalid("email")) {
+        <span class="auth-error">{{ getError("email") }}</span>
       }
     </div>
 
@@ -95,10 +112,12 @@
         pInputText
         formControlName="direccion"
         placeholder="Calle 5 #23-10, Sector Norte"
-        [class]="'client-input' + (isInvalid('direccion') ? ' client-input--error' : '')"
+        class="w-full h-11 px-4"
+        [class.ng-invalid]="isInvalid('direccion')"
+        [class.ng-dirty]="isInvalid('direccion')"
       />
-      @if (isInvalid('direccion')) {
-        <span class="auth-error">{{ getError('direccion') }}</span>
+      @if (isInvalid("direccion")) {
+        <span class="auth-error">{{ getError("direccion") }}</span>
       }
     </div>
 
@@ -109,10 +128,16 @@
         [options]="collectorOptions"
         optionLabel="label"
         optionValue="value"
-        [placeholder]="collectorsLoading ? 'Cargando cobradores…' : collectorOptions.length === 0 ? 'No hay cobradores activos' : 'Seleccionar cobrador'"
+        [placeholder]="
+          collectorsLoading
+            ? 'Cargando cobradores…'
+            : collectorOptions.length === 0
+              ? 'No hay cobradores activos'
+              : 'Seleccionar cobrador'
+        "
         [disabled]="collectorsLoading"
         [showClear]="true"
-        styleClass="w-full"
+        styleClass="w-full h-11"
         appendTo="body"
       />
     </div>
