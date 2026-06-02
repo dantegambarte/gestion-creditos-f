@@ -82,6 +82,226 @@
           </div>
         }
 
+        @if (form.controls["operationType"].value === "SALE") {
+          <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-6">
+            <div class="space-y-5">
+              <div>
+                <h3 class="text-base font-semibold text-white">
+                  Configuración por producto
+                </h3>
+                <p class="mt-1 text-sm text-slate-400">
+                  Cada producto mantiene su propio plan de cuotas según la
+                  frecuencia elegida.
+                </p>
+              </div>
+
+              <div
+                class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4 space-y-3"
+              >
+                <label
+                  class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                  >Pago inicial</label
+                >
+                <div class="flex flex-wrap gap-4">
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <p-radioButton
+                      formControlName="initialPaymentType"
+                      value="NONE"
+                      inputId="pay-none"
+                    />
+                    <span class="text-sm text-slate-300">Sin pago inicial</span>
+                  </label>
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <p-radioButton
+                      formControlName="initialPaymentType"
+                      value="DOWN_PAYMENT"
+                      inputId="pay-down"
+                    />
+                    <span class="text-sm text-slate-300">Enganche</span>
+                  </label>
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <p-radioButton
+                      formControlName="initialPaymentType"
+                      value="ADVANCED_INSTALLMENTS"
+                      inputId="pay-advance"
+                    />
+                    <span class="text-sm text-slate-300">Cuotas adelantadas</span>
+                  </label>
+                </div>
+
+                @if (
+                  form.controls["initialPaymentType"].value === "DOWN_PAYMENT"
+                ) {
+                  <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label
+                        class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                        >Tipo de pago</label
+                      >
+                      <div class="flex gap-4">
+                        <label class="flex cursor-pointer items-center gap-2">
+                          <p-radioButton
+                            formControlName="downPaymentMethod"
+                            value="CASH"
+                            inputId="dp-cash"
+                          />
+                          <span class="text-sm text-slate-300">Efectivo</span>
+                        </label>
+                        <label class="flex cursor-pointer items-center gap-2">
+                          <p-radioButton
+                            formControlName="downPaymentMethod"
+                            value="TRANSFER"
+                            inputId="dp-transfer"
+                          />
+                          <span class="text-sm text-slate-300"
+                            >Transferencia</span
+                          >
+                        </label>
+                      </div>
+                    </div>
+
+                    @if (
+                      form.controls["downPaymentMethod"].value === "TRANSFER"
+                    ) {
+                      <div>
+                        <label
+                          class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                          >Referencia de transferencia</label
+                        >
+                        <input
+                          pInputText
+                          formControlName="downPaymentTransferReference"
+                          class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                          placeholder="Nro. de operación..."
+                          maxlength="100"
+                        />
+                      </div>
+                    }
+                  </div>
+                }
+
+                @if (
+                  form.controls["initialPaymentType"].value ===
+                  "ADVANCED_INSTALLMENTS"
+                ) {
+                  <div class="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label
+                        class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                        >Cantidad de cuotas adelantadas</label
+                      >
+                      <p-inputNumber
+                        formControlName="advancedInstallmentsCount"
+                        [min]="1"
+                        [useGrouping]="false"
+                        placeholder="Ej: 2"
+                        styleClass="w-full"
+                        inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                        >Tipo de pago</label
+                      >
+                      <div class="flex gap-4">
+                        <label class="flex cursor-pointer items-center gap-2">
+                          <p-radioButton
+                            formControlName="advancedInstallmentsMethod"
+                            value="CASH"
+                            inputId="adv-cash"
+                          />
+                          <span class="text-sm text-slate-300">Efectivo</span>
+                        </label>
+                        <label class="flex cursor-pointer items-center gap-2">
+                          <p-radioButton
+                            formControlName="advancedInstallmentsMethod"
+                            value="TRANSFER"
+                            inputId="adv-transfer"
+                          />
+                          <span class="text-sm text-slate-300"
+                            >Transferencia</span
+                          >
+                        </label>
+                      </div>
+                    </div>
+
+                    @if (
+                      form.controls["advancedInstallmentsMethod"].value ===
+                      "TRANSFER"
+                    ) {
+                      <div class="md:col-span-2">
+                        <label
+                          class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                          >Referencia de transferencia</label
+                        >
+                        <input
+                          pInputText
+                          formControlName="advancedInstallmentsTransferReference"
+                          class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                          placeholder="Nro. de operación..."
+                          maxlength="100"
+                        />
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="space-y-4">
+                @for (line of cartLines; track line.productoId) {
+                  <div
+                    class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4"
+                  >
+                    <div
+                      class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div>
+                        <p class="text-sm font-medium text-white">
+                          {{ line.nombre }}
+                        </p>
+                        <p class="mt-1 text-xs text-slate-400">
+                          {{ getLinePlanSubtitle(line) }}
+                        </p>
+                      </div>
+
+                      <div class="w-full md:w-[280px]" data-cy="ddl-installments">
+                        <p-dropdown
+                          [options]="getInstallmentsOptionsForLine(line)"
+                          optionLabel="label"
+                          optionValue="value"
+                          [ngModel]="line.selectedInstallments"
+                          (ngModelChange)="
+                            saleInstallmentsChanged.emit({
+                              productoId: line.productoId,
+                              installments: $event,
+                            })
+                          "
+                          [ngModelOptions]="{ standalone: true }"
+                          appendTo="body"
+                          [scrollHeight]="'180px'"
+                          placeholder="Seleccionar cuotas para este producto"
+                          styleClass="w-full bg-[#121520] border border-[#1A1D27] text-white rounded-xl focus:border-[#3B82F6] outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    @if (getInstallmentsOptionsForLine(line).length === 0) {
+                      <div class="mt-3">
+                        <p-message
+                          severity="warn"
+                          text="Este producto no tiene cuotas para la frecuencia elegida."
+                        />
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
         <div class="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
           <div
             class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4 md:col-span-2"
@@ -211,225 +431,6 @@
         </div>
       </div>
 
-      @if (form.controls["operationType"].value === "SALE") {
-        <div class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-6">
-          <div class="space-y-5">
-            <div>
-              <h3 class="text-base font-semibold text-white">
-                Configuración por producto
-              </h3>
-              <p class="mt-1 text-sm text-slate-400">
-                Cada producto mantiene su propio plan de cuotas según la
-                frecuencia elegida.
-              </p>
-            </div>
-
-            <div
-              class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4 space-y-3"
-            >
-              <label
-                class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
-                >Pago inicial</label
-              >
-              <div class="flex flex-wrap gap-4">
-                <label class="flex cursor-pointer items-center gap-2">
-                  <p-radioButton
-                    formControlName="initialPaymentType"
-                    value="NONE"
-                    inputId="pay-none"
-                  />
-                  <span class="text-sm text-slate-300">Sin pago inicial</span>
-                </label>
-                <label class="flex cursor-pointer items-center gap-2">
-                  <p-radioButton
-                    formControlName="initialPaymentType"
-                    value="DOWN_PAYMENT"
-                    inputId="pay-down"
-                  />
-                  <span class="text-sm text-slate-300">Enganche</span>
-                </label>
-                <label class="flex cursor-pointer items-center gap-2">
-                  <p-radioButton
-                    formControlName="initialPaymentType"
-                    value="ADVANCED_INSTALLMENTS"
-                    inputId="pay-advance"
-                  />
-                  <span class="text-sm text-slate-300">Cuotas adelantadas</span>
-                </label>
-              </div>
-
-              @if (
-                form.controls["initialPaymentType"].value === "DOWN_PAYMENT"
-              ) {
-                <div class="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label
-                      class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
-                      >Tipo de pago</label
-                    >
-                    <div class="flex gap-4">
-                      <label class="flex cursor-pointer items-center gap-2">
-                        <p-radioButton
-                          formControlName="downPaymentMethod"
-                          value="CASH"
-                          inputId="dp-cash"
-                        />
-                        <span class="text-sm text-slate-300">Efectivo</span>
-                      </label>
-                      <label class="flex cursor-pointer items-center gap-2">
-                        <p-radioButton
-                          formControlName="downPaymentMethod"
-                          value="TRANSFER"
-                          inputId="dp-transfer"
-                        />
-                        <span class="text-sm text-slate-300"
-                          >Transferencia</span
-                        >
-                      </label>
-                    </div>
-                  </div>
-
-                  @if (
-                    form.controls["downPaymentMethod"].value === "TRANSFER"
-                  ) {
-                    <div>
-                      <label
-                        class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
-                        >Referencia de transferencia</label
-                      >
-                      <input
-                        pInputText
-                        formControlName="downPaymentTransferReference"
-                        class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
-                        placeholder="Nro. de operación..."
-                        maxlength="100"
-                      />
-                    </div>
-                  }
-                </div>
-              }
-
-              @if (
-                form.controls["initialPaymentType"].value ===
-                "ADVANCED_INSTALLMENTS"
-              ) {
-                <div class="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label
-                      class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
-                      >Cantidad de cuotas adelantadas</label
-                    >
-                    <p-inputNumber
-                      formControlName="advancedInstallmentsCount"
-                      [min]="1"
-                      [useGrouping]="false"
-                      placeholder="Ej: 2"
-                      styleClass="w-full"
-                      inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
-                      >Tipo de pago</label
-                    >
-                    <div class="flex gap-4">
-                      <label class="flex cursor-pointer items-center gap-2">
-                        <p-radioButton
-                          formControlName="advancedInstallmentsMethod"
-                          value="CASH"
-                          inputId="adv-cash"
-                        />
-                        <span class="text-sm text-slate-300">Efectivo</span>
-                      </label>
-                      <label class="flex cursor-pointer items-center gap-2">
-                        <p-radioButton
-                          formControlName="advancedInstallmentsMethod"
-                          value="TRANSFER"
-                          inputId="adv-transfer"
-                        />
-                        <span class="text-sm text-slate-300"
-                          >Transferencia</span
-                        >
-                      </label>
-                    </div>
-                  </div>
-
-                  @if (
-                    form.controls["advancedInstallmentsMethod"].value ===
-                    "TRANSFER"
-                  ) {
-                    <div class="md:col-span-2">
-                      <label
-                        class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
-                        >Referencia de transferencia</label
-                      >
-                      <input
-                        pInputText
-                        formControlName="advancedInstallmentsTransferReference"
-                        class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
-                        placeholder="Nro. de operación..."
-                        maxlength="100"
-                      />
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-
-            <div class="space-y-4">
-              @for (line of cartLines; track line.productoId) {
-                <div
-                  class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4"
-                >
-                  <div
-                    class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-                  >
-                    <div>
-                      <p class="text-sm font-medium text-white">
-                        {{ line.nombre }}
-                      </p>
-                      <p class="mt-1 text-xs text-slate-400">
-                        {{ getLinePlanSubtitle(line) }}
-                      </p>
-                    </div>
-
-                    <div class="w-full md:w-[280px]" data-cy="ddl-installments">
-                      <p-dropdown
-                        [options]="getInstallmentsOptionsForLine(line)"
-                        optionLabel="label"
-                        optionValue="value"
-                        [ngModel]="line.selectedInstallments"
-                        (ngModelChange)="
-                          saleInstallmentsChanged.emit({
-                            productoId: line.productoId,
-                            installments: $event,
-                          })
-                        "
-                        [ngModelOptions]="{ standalone: true }"
-                        appendTo="body"
-                        [scrollHeight]="'180px'"
-                        placeholder="Seleccionar cuotas para este producto"
-                        styleClass="w-full bg-[#121520] border border-[#1A1D27] text-white rounded-xl focus:border-[#3B82F6] outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  @if (getInstallmentsOptionsForLine(line).length === 0) {
-                    <div class="mt-3">
-                      <p-message
-                        severity="warn"
-                        text="Este producto no tiene cuotas para la frecuencia elegida."
-                      />
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-      }
     </div>
 
     <div class="w-full">
