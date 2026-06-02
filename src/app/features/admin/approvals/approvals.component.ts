@@ -1,5 +1,6 @@
 import { DatePipe, NgClass } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -59,6 +60,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   private readonly credits = inject(CreditsService);
   private readonly msg = inject(MessageService);
   private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly router = inject(Router);
   readonly dateService = inject(DateService);
 
   approvals: Credit[] = [];
@@ -338,5 +340,13 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
    */
   rejectCharCount(): number {
     return this.rejectReason.length;
+  }
+
+  /**
+   * Navega al detalle de la operación seleccionada.
+   * @param {string} id - ID de la operación.
+   */
+  viewDetail(id: string): void {
+    this.router.navigate(['/admin/operations', id]);
   }
 }
