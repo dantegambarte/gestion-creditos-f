@@ -28,6 +28,14 @@ export class ApproveDialogComponent {
   private readonly creditsSvc = inject(CreditsService);
   private readonly msg = inject(MessageService);
 
+  /**
+   * Indica si la operación en aprobación es una venta y debe usar las cuotas ya definidas.
+   * @returns {boolean} True cuando no corresponde ajustar cuotas manualmente.
+   */
+  get usesFixedInstallments(): boolean {
+    return this.credit?.type === 'SALE';
+  }
+
   close(): void {
     this.visibleChange.emit(false);
   }
@@ -50,9 +58,10 @@ export class ApproveDialogComponent {
     }
 
     this.processing = true;
-    const payload =
-      this.installmentsCount !== null &&
-      this.installmentsCount !== this.credit.installmentsCount
+    const payload = this.usesFixedInstallments
+      ? {}
+      : this.installmentsCount !== null &&
+          this.installmentsCount !== this.credit.installmentsCount
         ? { installmentsCount: this.installmentsCount }
         : {};
 
