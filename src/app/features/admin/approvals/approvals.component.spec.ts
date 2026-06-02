@@ -1,7 +1,10 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ApprovalsComponent } from './approvals.component';
+import { CashRegisterService } from '../cash-register/cash-register.service';
 import { CreditsService } from '../../seller/operations/credits.service';
 import { DateService } from '../../../core/services/date.service';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -54,16 +57,21 @@ describe('ApprovalsComponent', () => {
       'approve',
       'reject',
     ]);
+    const cashRegisterSpy = jasmine.createSpyObj('CashRegisterService', ['getDashboard']);
     creditsSvc.list.and.returnValue(of([...MOCK_CREDITS]));
     creditsSvc.approve.and.returnValue(of({} as any));
     creditsSvc.reject.and.returnValue(of(undefined as any));
+    cashRegisterSpy.getDashboard.and.returnValue(of({ isClosed: false } as any));
 
     await TestBed.configureTestingModule({
       imports: [ApprovalsComponent, RouterTestingModule, NoopAnimationsModule],
       providers: [
         { provide: CreditsService, useValue: creditsSvc },
+        { provide: CashRegisterService, useValue: cashRegisterSpy },
         MessageService,
         DateService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ],
     })
       .overrideComponent(ApprovalsComponent, { set: { providers: [] } })

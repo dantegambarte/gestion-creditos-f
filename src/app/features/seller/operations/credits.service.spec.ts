@@ -391,7 +391,7 @@ describe('CreditsService', () => {
         .subscribe();
 
       const req = httpMock.expectOne(`${BASE}/credits`);
-      expect(req.request.body['down_payment']).toBeUndefined();
+      expect(req.request.body['down_payment']).toBe(0);
       expect(req.request.body['prepaid_installments']).toBe(1);
       expect(req.request.body['prepaid_installments_method']).toBe('TRANSFER');
       expect(req.request.body['prepaid_installments_transfer_reference']).toBe('TRX-123');

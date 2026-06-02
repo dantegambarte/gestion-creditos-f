@@ -12,7 +12,9 @@ const mockDetail = {
   id: 'sheet1',
   sheetDate: '2026-04-25',
   filterUsed: 'OVERDUE' as const,
+  status: 'ACTIVE' as const,
   createdAt: '2026-04-25T10:00:00Z',
+  sentAt: null,
   collectorName: 'Luis Cobrador',
   totalItems: 2,
   collectorId: 'c1',
@@ -21,6 +23,16 @@ const mockDetail = {
     {
       orderNumber: 1,
       plannedAmount: 1000,
+      inclusionCriteria: 'DUE_DATE' as const,
+      inclusionReason: 'OVERDUE' as const,
+      opPriority: null,
+      remainingAmount: null,
+      antecedentId: null,
+      antecedentType: null,
+      antecedentDate: null,
+      antecedentNotes: null,
+      nextVisitDate: null,
+      hasPendingPayment: false,
       installmentId: 'i1',
       installmentNumber: 3,
       dueDate: '2026-04-20',
@@ -30,11 +42,20 @@ const mockDetail = {
       installmentStatus: 'OVERDUE' as const,
       creditId: 'cr1',
       creditType: 'SALE' as const,
+      collectionReference: 'Cuota 3 de 12 · venta',
       customerName: 'Juan Cliente',
       customerPhone: null,
       customerAddress: null,
+      customerDni: '12345678',
+      managementStatus: 'PENDING' as const,
+      live: null,
     },
   ],
+};
+
+const mockGenerateOutcome = {
+  sheet: mockDetail,
+  alerts: { overdueNextVisits: [], unassignedCustomers: [] },
 };
 
 describe('SheetComponent (planillas)', () => {
@@ -79,7 +100,7 @@ describe('SheetComponent (planillas)', () => {
   });
 
   it('generatePlanilla calls generate with mapped filter', () => {
-    collectionsSpy.generate.and.returnValue(of(mockDetail));
+    collectionsSpy.generate.and.returnValue(of(mockGenerateOutcome as any));
     component.selectedCollectorId = 'c1';
     component.selectedFilter = 'OVERDUE';
     component.generatePlanilla();

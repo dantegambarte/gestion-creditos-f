@@ -67,7 +67,22 @@ describe('CommissionsComponent', () => {
     commissionsSpy.getWeeklySummary.and.returnValue(of(mockSummary));
     commissionsSpy.getLiquidations.and.returnValue(of([]));
     usersSpy.listCollectors.and.returnValue(of([]));
-    cashRegisterSpy.getDashboard.and.returnValue(of({ isClosed: false }));
+    cashRegisterSpy.getDashboard.and.returnValue(
+      of({
+        date: '2026-06-02',
+        isClosed: false,
+        cashAmount: 0,
+        transferAmount: 0,
+        totalCollected: 0,
+        totalOutflows: 0,
+        approvedCount: 0,
+        pendingCount: 0,
+        netBalance: 0,
+        pendingAmount: 0,
+        downPaymentsTotal: 0,
+        downPaymentsCount: 0,
+      }),
+    );
     formatSpy.currency.and.callFake((value: number) => `$${value}`);
 
     await TestBed.configureTestingModule({
@@ -84,8 +99,8 @@ describe('CommissionsComponent', () => {
 
     fixture = TestBed.createComponent(CommissionsComponent);
     component = fixture.componentInstance;
-    messageService = TestBed.inject(MessageService);
     fixture.detectChanges();
+    messageService = fixture.debugElement.injector.get(MessageService);
   });
 
   it('should create', () => {

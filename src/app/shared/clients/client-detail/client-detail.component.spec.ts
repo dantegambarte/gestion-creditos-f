@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 
 import { ClientDetailComponent } from './client-detail.component';
 import { HeaderService } from '../../../core/services/header.service';
+import { CreditsService } from '../../../features/seller/operations/credits.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
 import { provideAuthTesting } from '../../../core/auth/testing/auth-testing';
 
@@ -47,6 +48,8 @@ describe('ClientDetailComponent (shared/clients)', () => {
     const routerSpy = jasmine.createSpyObj('Router', ['navigate'], { url: '/admin/clients/uuid-001' });
     customersServiceSpy = jasmine.createSpyObj('CustomersService', ['getById']);
     customersServiceSpy.getById.and.returnValue(customerResponse);
+    const creditsServiceSpy = jasmine.createSpyObj('CreditsService', ['list']);
+    creditsServiceSpy.list.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [ClientDetailComponent],
@@ -55,6 +58,7 @@ describe('ClientDetailComponent (shared/clients)', () => {
         { provide: Router, useValue: routerSpy },
         { provide: HeaderService, useValue: headerServiceSpy },
         { provide: CustomersService, useValue: customersServiceSpy },
+        { provide: CreditsService, useValue: creditsServiceSpy },
         ...provideAuthTesting(),
       ],
     }).compileComponents();

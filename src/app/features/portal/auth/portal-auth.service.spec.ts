@@ -8,10 +8,10 @@ import { PortalAuthService } from './portal-auth.service';
 import { environment } from '../../../../environments/environment';
 import { provideAuthTesting } from '../../../core/auth/testing/auth-testing';
 
-// Minimal base64url-encoded JWT with exp in far future
+// Minimal base64url-encoded JWT with exp in far future and required portal audience
 function makeJwt(payload: Record<string, unknown>): string {
   const header = btoa(JSON.stringify({ alg: 'HS256' }));
-  const body = btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600, ...payload }));
+  const body = btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600, aud: 'portal-cliente', ...payload }));
   return `${header}.${body}.sig`;
 }
 
@@ -140,7 +140,7 @@ describe('PortalAuthService', () => {
     // detecta TOKEN_EXPIRED en la primera llamada y hace el refresh.
     // Si se limpiaría aquí, el refresh nunca ocurriría.
     const expiredJwt = btoa(JSON.stringify({ alg: 'HS256' })) + '.' +
-      btoa(JSON.stringify({ sub: 'c-001', exp: Math.floor(Date.now() / 1000) - 60 })) + '.sig';
+      btoa(JSON.stringify({ sub: 'c-001', aud: 'portal-cliente', exp: Math.floor(Date.now() / 1000) - 60 })) + '.sig';
     localStorage.setItem(TOKEN_KEY, expiredJwt);
     localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ id: 'c-001', fullName: 'Ana', dni: '12345678', portalIsTempPassword: false }));
 
