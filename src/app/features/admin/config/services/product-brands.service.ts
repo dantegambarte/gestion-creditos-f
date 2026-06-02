@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay, tap } from 'rxjs/operators';
 import { ApiHttpService } from '../../../../core/http/api-http.service';
 import { ProductBrand, ProductBrandRaw } from '../models/interfaces/product';
 
@@ -20,13 +20,30 @@ function toBrand(r: ProductBrandRaw): ProductBrand {
 @Injectable({ providedIn: 'root' })
 export class ProductBrandsService {
   private readonly api = inject(ApiHttpService);
+  private readonly cache = new Map<string, Observable<ProductBrand[]>>();
 
-  /** Obtiene todas las marcas de producto, incluyendo inactivas cuando se usa en administración. */
+  /** Invalida todo el caché en memoria para forzar una nueva consulta al backend. */
+  invalidateCache(): void {
+    this.cache.clear();
+  }
+
+  /**
+   * Obtiene todas las marcas de producto.
+   * El resultado se cachea por variante de filtro y se comparte entre suscriptores.
+   */
   getAll(includeInactive = false): Observable<ProductBrand[]> {
-    const params = includeInactive ? { include_inactive: 'true' } : undefined;
-    return this.api
-      .get<ProductBrandRaw[]>('product-brands', params)
-      .pipe(map((items) => items.map(toBrand)));
+    const key = String(includeInactive);
+    if (!this.cache.has(key)) {
+      const params = includeInactive ? { include_inactive: 'true' } : undefined;
+      this.cache.set(
+        key,
+        this.api.get<ProductBrandRaw[]>('product-brands', params).pipe(
+          map((items) => items.map(toBrand)),
+          shareReplay(1),
+        ),
+      );
+    }
+    return this.cache.get(key)!;
   }
 
   /** Obtiene una marca por su ID. */
@@ -36,35 +53,39 @@ export class ProductBrandsService {
       .pipe(map(toBrand));
   }
 
-  /** Crea una nueva marca con el nombre indicado. */
+  /** Crea una nueva marca e invalida el caché. */
   create(name: string): Observable<ProductBrand> {
-    return this.api
-      .post<ProductBrandRaw>('product-brands', { name })
-      .pipe(map(toBrand));
+    return this.api.post<ProductBrandRaw>('product-brands', { name }).pipe(
+      map(toBrand),
+      tap(() => this.invalidateCache()),
+    );
   }
 
   /**
-   * Actualiza el nombre de una marca existente.
+   * Actualiza el nombre de una marca existente e invalida el caché.
    * @param id - ID de la marca a actualizar.
    * @param name - Nuevo nombre.
    */
   update(id: string, name: string): Observable<ProductBrand> {
-    return this.api
-      .put<ProductBrandRaw>(`product-brands/${id}`, { name })
-      .pipe(map(toBrand));
+    return this.api.put<ProductBrandRaw>(`product-brands/${id}`, { name }).pipe(
+      map(toBrand),
+      tap(() => this.invalidateCache()),
+    );
   }
 
-  /** Activa una marca de producto. */
+  /** Activa una marca de producto e invalida el caché. */
   activate(id: string): Observable<void> {
-    return this.api
-      .patch<void>(`product-brands/${id}/activate`)
-      .pipe(map(() => undefined));
+    return this.api.patch<void>(`product-brands/${id}/activate`).pipe(
+      map(() => undefined),
+      tap(() => this.invalidateCache()),
+    );
   }
 
-  /** Desactiva una marca de producto. */
+  /** Desactiva una marca de producto e invalida el caché. */
   deactivate(id: string): Observable<void> {
-    return this.api
-      .patch<void>(`product-brands/${id}/deactivate`)
-      .pipe(map(() => undefined));
+    return this.api.patch<void>(`product-brands/${id}/deactivate`).pipe(
+      map(() => undefined),
+      tap(() => this.invalidateCache()),
+    );
   }
 }
