@@ -47,9 +47,14 @@ export type CartLine = {
   precio: number;
   subtotal: number;
   stockDisponible: number;
+  /** Todas las unidades disponibles de la variante (catálogo). */
   unitIds: string[];
+  /** Códigos de las unidades disponibles, mismo orden e índice que `unitIds`. */
   unitCodes: string[];
   productIds: string[];
+  /** Unidades realmente elegidas por el usuario para esta línea. La cantidad y
+   * el subtotal se derivan de esta lista. El payload al backend usa esto. */
+  selectedUnitIds: string[];
   rates: ProductRate[];
   selectedInstallments: number | null;
 };
@@ -736,15 +741,23 @@ export class OperationFormService {
   }
 
   /**
-   * Inserta o incrementa una línea del carrito preservando tasas.
+   * Inserta o incrementa una línea del carrito preservando tasas. La unidad
+   * que se agrega se controla con `unitId`:
+   *   · Si se pasa un `unitId`, se agrega esa unidad puntual (idempotente: si
+   *     ya estaba seleccionada, no hace nada).
+   *   · Si no se pasa, se toma la primera unidad disponible no seleccionada
+   *     (compat: lo usan `addProductVariant`/`addProduct` y el incrementador
+   *     genérico del carrito).
    * @param {CatalogProduct} product - Producto agrupado del catálogo.
    * @param {CatalogVariant} variant - Variante puntual seleccionada.
    * @param {ProductRate[]} rates - Tasas activas asociadas al producto.
+   * @param {string} [unitId] - Unidad puntual a agregar.
    */
   upsertCartLine(
     product: CatalogProduct,
     variant: CatalogVariant,
     rates: ProductRate[],
+    unitId?: string,
   ): void {
     this.resetSimulationResult();
     const existing = this.cartLines.find(
@@ -752,6 +765,19 @@ export class OperationFormService {
         this.getCartLineKey(line.productoId, line.variantId) ===
         this.getCartLineKey(product.productoId, variant.variantId),
     );
+
+    // Resuelve qué unitId concreto agregar. Si vino explícito y está disponible,
+    // ese; sino la primera del catálogo que no esté ya seleccionada en la línea.
+    const alreadySelected = new Set(existing?.selectedUnitIds ?? []);
+    const resolvedUnitId =
+      unitId && variant.unitIds.includes(unitId) && !alreadySelected.has(unitId)
+        ? unitId
+        : variant.unitIds.find((id) => !alreadySelected.has(id));
+
+    if (!resolvedUnitId) {
+      // No hay unidades libres para agregar; idempotente si ya estaba.
+      return;
+    }
 
     if (!existing) {
       const draftLine: CartLine = {
@@ -766,6 +792,7 @@ export class OperationFormService {
         unitIds: variant.unitIds,
         unitCodes: variant.unitCodes,
         productIds: variant.productIds,
+        selectedUnitIds: [resolvedUnitId],
         rates,
         selectedInstallments: null,
       };
@@ -781,6 +808,7 @@ export class OperationFormService {
               rates,
               cantidad: line.cantidad + 1,
               subtotal: (line.cantidad + 1) * line.precio,
+              selectedUnitIds: [...line.selectedUnitIds, resolvedUnitId],
               selectedInstallments:
                 line.selectedInstallments ??
                 this.getInstallmentsOptionsForLine({ ...line, rates })[0]
@@ -799,7 +827,77 @@ export class OperationFormService {
   }
 
   /**
-   * Incrementa una línea del carrito respetando el stock disponible.
+   * Agrega una unidad PUNTUAL de una variante al carrito. Es la vía limpia para
+   * la selección granular (botón "+ Agregar" por unidad en el paso 2). Si la
+   * unidad ya estaba seleccionada para esa línea, no hace nada.
+   * @param {CatalogProduct} product
+   * @param {string} variantId
+   * @param {string} unitId
+   */
+  addProductUnit(product: CatalogProduct, variantId: string, unitId: string): void {
+    const variant = product.variants.find((v) => v.variantId === variantId);
+    if (!variant) return;
+    const existing = this.cartLines.find(
+      (line) => this.getCartLineKey(line.productoId, line.variantId) ===
+        this.getCartLineKey(product.productoId, variant.variantId),
+    );
+    if (existing && existing.cantidad >= existing.stockDisponible) {
+      this.notifyProductOutOfStock(`${product.nombre} — ${variant.label}`);
+      return;
+    }
+    if ((existing?.rates.length ?? 0) > 0) {
+      this.upsertCartLine(product, variant, existing!.rates, unitId);
+      return;
+    }
+    // Sin tasas cargadas todavía: igual que addProductVariant, las pide on-demand.
+    this.catalogSvc.loadingProductRatesByCatalogId[product.productoId] = true;
+    const firstProductId = variant.productIds[0] ?? product.productIds[0];
+    if (!firstProductId) {
+      this.catalogSvc.loadingProductRatesByCatalogId[product.productoId] = false;
+      return;
+    }
+    this.catalogSvc.loadProductRatesByProductId(firstProductId)
+      .pipe(finalize(() => {
+        this.catalogSvc.loadingProductRatesByCatalogId[product.productoId] = false;
+      }))
+      .subscribe((rates) => this.upsertCartLine(product, variant, rates, unitId));
+  }
+
+  /**
+   * Quita una unidad PUNTUAL de la línea del carrito. Si era la última unidad
+   * de la línea, elimina la línea entera. Es la vía limpia para "× Quitar" por
+   * unidad en el paso 2.
+   * @param {string} productoId
+   * @param {string} variantId
+   * @param {string} unitId
+   */
+  removeProductUnit(productoId: string, variantId: string, unitId: string): void {
+    this.resetSimulationResult();
+    this.cartLines = this.cartLines
+      .map((line) => {
+        if (this.getCartLineKey(line.productoId, line.variantId) !==
+            this.getCartLineKey(productoId, variantId)) return line;
+        const nextSelected = line.selectedUnitIds.filter((id) => id !== unitId);
+        const nextQty = nextSelected.length;
+        return {
+          ...line,
+          selectedUnitIds: nextSelected,
+          cantidad: nextQty,
+          subtotal: nextQty * line.precio,
+        };
+      })
+      .filter((line) => line.cantidad > 0);
+    this.syncSelectedProductsFromCart();
+    this.ensureValidSaleLineInstallments();
+    this.ensureValidFrequencySelection();
+    this.ensureValidInstallmentsSelection();
+    this.calculateDynamicRate();
+  }
+
+  /**
+   * Incrementa una línea del carrito respetando el stock disponible. Agrega la
+   * siguiente unidad del catálogo que aún no esté seleccionada en esa línea
+   * (mantiene la consistencia con selectedUnitIds).
    * @param {string} productoId - ID del producto agrupado.
    */
   increaseQuantity(target: string | CartLineRef): void {
@@ -807,8 +905,16 @@ export class OperationFormService {
     this.cartLines = this.cartLines.map((line) => {
       if (!this.matchesCartLine(line, target) || line.cantidad >= line.stockDisponible)
         return line;
+      const already = new Set(line.selectedUnitIds);
+      const nextUnitId = line.unitIds.find((id) => !already.has(id));
+      if (!nextUnitId) return line;
       const nextQty = line.cantidad + 1;
-      return { ...line, cantidad: nextQty, subtotal: nextQty * line.precio };
+      return {
+        ...line,
+        cantidad: nextQty,
+        subtotal: nextQty * line.precio,
+        selectedUnitIds: [...line.selectedUnitIds, nextUnitId],
+      };
     });
     this.syncSelectedProductsFromCart();
     this.ensureValidSaleLineInstallments();
@@ -818,7 +924,8 @@ export class OperationFormService {
   }
 
   /**
-   * Disminuye una línea del carrito; si llega a cero la elimina.
+   * Disminuye una línea del carrito; si llega a cero la elimina. Saca la ÚLTIMA
+   * unidad seleccionada (LIFO sobre selectedUnitIds).
    * @param {string} productoId - ID del producto agrupado.
    */
   decreaseQuantity(target: string | CartLineRef): void {
@@ -826,8 +933,14 @@ export class OperationFormService {
     this.cartLines = this.cartLines
       .map((line) => {
         if (!this.matchesCartLine(line, target)) return line;
-        const nextQty = line.cantidad - 1;
-        return { ...line, cantidad: nextQty, subtotal: nextQty * line.precio };
+        const nextSelected = line.selectedUnitIds.slice(0, -1);
+        const nextQty = nextSelected.length;
+        return {
+          ...line,
+          cantidad: nextQty,
+          subtotal: nextQty * line.precio,
+          selectedUnitIds: nextSelected,
+        };
       })
       .filter((line) => line.cantidad > 0);
     this.syncSelectedProductsFromCart();
@@ -1350,8 +1463,7 @@ export class OperationFormService {
     );
     const selectedUnits: ProductOperation[] = [];
     for (const line of this.cartLines) {
-      const selectedIds = line.unitIds.slice(0, line.cantidad);
-      for (const unitId of selectedIds) {
+      for (const unitId of line.selectedUnitIds) {
         const unit = unitById.get(unitId);
         if (unit) selectedUnits.push(unit);
       }
