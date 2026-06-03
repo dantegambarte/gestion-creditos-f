@@ -25,7 +25,12 @@ import {
   CashSessionOpenPayload,
   CashSessionSnapshot,
 } from '../models/cash-session.model';
-import { ActiveBusinessDay } from '../models/business-day.model';
+import {
+  ActiveBusinessDay,
+  BusinessDayDetail,
+  BusinessDayFilters,
+  BusinessDayListItem,
+} from '../models/business-day.model';
 
 interface CashConversionRaw {
   id: string;
@@ -285,6 +290,29 @@ export class CashRegisterService {
   /** V4: jornada activa (OPEN o READY_TO_CLOSE) de la sucursal default. */
   getActiveBusinessDay(): Observable<ActiveBusinessDay | null> {
     return this.api.get<ActiveBusinessDay | null>('business-days/active');
+  }
+
+  /**
+   * V4 (F3.5): listado de jornadas con filtros. Pensado para el tab
+   * "Histórico Jornadas" que permite consultar jornadas CLOSED/AUDITED.
+   */
+  listBusinessDays(filters: BusinessDayFilters = {}): Observable<BusinessDayListItem[]> {
+    const params: Record<string, string> = {};
+    if (filters.status)   params['status']     = filters.status;
+    if (filters.branchId) params['branch_id']  = filters.branchId;
+    if (filters.dateFrom) params['date_from']  = filters.dateFrom;
+    if (filters.dateTo)   params['date_to']    = filters.dateTo;
+    return this.api.get<BusinessDayListItem[]>('business-days', params);
+  }
+
+  /**
+   * V4 (F3.5): detalle de una jornada con session_counts y cajas embebidas.
+   * El cliente normalmente abrirá el dialog de detalle y, para las métricas
+   * por caja (summary), usará listSessionsByBusinessDay(id) que ya enriquece
+   * con los totales del cierre.
+   */
+  getBusinessDayDetail(id: string): Observable<BusinessDayDetail> {
+    return this.api.get<BusinessDayDetail>(`business-days/${id}`);
   }
 
   /** V4: caja operativa activa de la jornada actual (única por jornada). */

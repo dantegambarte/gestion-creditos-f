@@ -39,6 +39,8 @@ import { CashSessionSnapshotDialogComponent } from './cash-session-snapshot-dial
 import { CashSessionDropDialogComponent } from './cash-session-drop-dialog/cash-session-drop-dialog.component';
 import { CashSessionHistoryListComponent } from './cash-session-history-list/cash-session-history-list.component';
 import { BusinessDayCloseDialogComponent } from './business-day-close-dialog/business-day-close-dialog.component';
+import { BusinessDayHistoryListComponent } from './business-day-history-list/business-day-history-list.component';
+import { BusinessDayDetailDialogComponent } from './business-day-detail-dialog/business-day-detail-dialog.component';
 import { CashRegisterService } from './cash-register.service';
 import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 
@@ -70,6 +72,8 @@ import { CurrencyAmountInputDirective } from '../../../shared/directives/currenc
     CashSessionDropDialogComponent,
     CashSessionHistoryListComponent,
     BusinessDayCloseDialogComponent,
+    BusinessDayHistoryListComponent,
+    BusinessDayDetailDialogComponent,
     CurrencyAmountInputDirective,
   ],
   providers: [MessageService],
@@ -139,6 +143,10 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   /** F3: visibilidad del dialog "Cerrar jornada". */
   showCloseBusinessDayDialog = false;
+
+  /** F3.5: dialog detalle de jornada histórica. */
+  showBusinessDayDetailDialog = false;
+  selectedBusinessDayId: string | null = null;
 
   /**
    * Indica si la jornada activa pertenece a un día calendario anterior al actual.
@@ -604,6 +612,13 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   onBusinessDayClosed(): void {
     this.loadJornadaState();
     this.historyRefreshSignal++;
+  }
+
+  // ── F3.5: Histórico de Jornadas ─────────────────────────────────────────
+
+  onBusinessDayViewDetail(id: string): void {
+    this.selectedBusinessDayId = id;
+    this.showBusinessDayDetailDialog = true;
   }
 
   // ── Helpers de UI para Jornada Actual ───────────────────────────────────

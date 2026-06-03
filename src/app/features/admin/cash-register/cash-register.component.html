@@ -205,7 +205,16 @@
   </p-tabPanel>
 
   <!-- ──────────────────────────────────────────────────────────────────── -->
-  <!-- TAB 2 — Histórico Legacy (modelo viejo, se elimina en cleanup)       -->
+  <!-- TAB 2 — Histórico Jornadas (F3.5)                                    -->
+  <!-- ──────────────────────────────────────────────────────────────────── -->
+  <p-tabPanel header="Histórico Jornadas" leftIcon="pi pi-calendar-times">
+    <app-business-day-history-list
+      (viewDetail)="onBusinessDayViewDetail($event)"
+    ></app-business-day-history-list>
+  </p-tabPanel>
+
+  <!-- ──────────────────────────────────────────────────────────────────── -->
+  <!-- TAB 3 — Histórico Legacy (modelo viejo, se elimina en cleanup)       -->
   <!-- ──────────────────────────────────────────────────────────────────── -->
   <p-tabPanel header="Histórico Legacy" leftIcon="pi pi-history">
 
@@ -759,3 +768,8 @@
   [businessDate]="activeBusinessDay?.business_date ?? null"
   (closedSuccessfully)="onBusinessDayClosed()"
 ></app-business-day-close-dialog>
+
+<app-business-day-detail-dialog
+  [(visible)]="showBusinessDayDetailDialog"
+  [businessDayId]="selectedBusinessDayId"
+></app-business-day-detail-dialog>
