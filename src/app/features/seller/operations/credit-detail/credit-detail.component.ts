@@ -32,6 +32,7 @@ import { RejectDialogComponent } from './dialogs/reject-dialog.component';
 import { RefinanceDialogComponent } from './dialogs/refinance-dialog.component';
 import { SettlementDialogComponent } from './dialogs/settlement-dialog.component';
 import { CreditSchedulePanelComponent } from './credit-schedule-panel.component';
+import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
 
 @Component({
   selector: 'app-credit-detail',
@@ -54,6 +55,7 @@ import { CreditSchedulePanelComponent } from './credit-schedule-panel.component'
     RefinanceDialogComponent,
     SettlementDialogComponent,
     CreditSchedulePanelComponent,
+    BackButtonComponent,
   ],
   providers: [MessageService],
   templateUrl: './credit-detail.component.html',

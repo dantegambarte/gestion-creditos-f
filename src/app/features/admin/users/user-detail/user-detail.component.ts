@@ -16,6 +16,7 @@ import { LoadingStateComponent } from '../../../../shared/states/loading-state/l
 import { UserDetail } from '../user.model';
 import { UsersService } from '../users.service';
 import { UserEditFormComponent } from './user-edit-form.component';
+import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'Administrador',
@@ -46,6 +47,7 @@ const ROLE_SEVERITY: Record<string, string> = {
     ErrorStateComponent,
     TempPasswordDialogComponent,
     UserEditFormComponent,
+    BackButtonComponent,
   ],
   templateUrl: './user-detail.component.html',
 })

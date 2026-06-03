@@ -7,14 +7,7 @@
     <app-error-state />
   } @else if (sheet) {
     <div class="sheet-topbar mb-2">
-      <p-button
-        label="Volver"
-        icon="pi pi-arrow-left"
-        severity="contrast"
-        [outlined]="true"
-        styleClass="sheet-back-btn"
-        (onClick)="goBack()"
-      />
+      <app-back-button (back)="goBack()" />
       <div class="sheet-topbar__crumb">Mi Ruta <span>→</span> Planilla {{ sheet.sheetDate | date: "dd/MM/yyyy" }}</div>
     </div>
 

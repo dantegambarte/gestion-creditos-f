@@ -32,6 +32,7 @@ import {
   ManagementLogEntry,
 } from '../models/management-log.model';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
+import { BackButtonComponent } from '../../../shared/components/back-button/back-button.component';
 import { AttemptDialogComponent } from './dialogs/attempt-dialog.component';
 import { PaymentDialogComponent } from './dialogs/payment-dialog.component';
 import { CollectionDialogSuccess } from './dialogs/sheet-dialog.model';
@@ -55,6 +56,7 @@ import { VoidDialogComponent } from './dialogs/void-dialog.component';
     PaymentDialogComponent,
     AttemptDialogComponent,
     VoidDialogComponent,
+    BackButtonComponent,
   ],
   providers: [MessageService],
   templateUrl: './collection-sheet-detail.component.html',

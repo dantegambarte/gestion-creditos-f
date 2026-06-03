@@ -59,20 +59,12 @@
 
   <!-- Header bar -->
   <div
-    class="px-6 py-4 border-b space-y-4"
+    class="px-6 pt-6 pb-4 border-b space-y-4"
     style="border-color: var(--ff-border)"
   >
-    <div class="flex flex-wrap items-center gap-4 xl:gap-6">
-      <p-button
-        label="Volver"
-        icon="pi pi-arrow-left"
-        severity="secondary"
-        [outlined]="true"
-        size="small"
-        styleClass="h-9 px-3 rounded-lg"
-        (onClick)="goBack()"
-      />
+    <app-back-button (back)="goBack()" />
 
+    <div class="flex flex-wrap items-center gap-4 xl:gap-6">
       <div class="flex items-center gap-2">
         <p-tag
           [value]="credit.type === 'SALE' ? 'Venta' : 'Préstamo'"

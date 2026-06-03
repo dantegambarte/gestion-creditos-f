@@ -4,24 +4,16 @@
   } @else if (error) {
     <app-error-state />
   } @else if (sheet) {
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="text-xl font-bold text-gray-800">
-          Planilla {{ sheet.sheetDate | date: "dd/MM/yyyy" }}
-        </h1>
-        <p class="text-sm text-gray-500">
-          {{ sheet.collectorName }} · Generada por {{ sheet.generatedByName }} ·
-          <span class="font-medium">{{ filterLabel(sheet.filterUsed) }}</span> ·
-          {{ sheet.totalItems }} cuota{{ sheet.totalItems !== 1 ? "s" : "" }}
-        </p>
-      </div>
-      <p-button
-        label="Volver"
-        icon="pi pi-arrow-left"
-        severity="secondary"
-        [outlined]="true"
-        (onClick)="goBack()"
-      />
+    <app-back-button (back)="goBack()" />
+    <div class="mb-6">
+      <h1 class="text-xl font-bold text-gray-800">
+        Planilla {{ sheet.sheetDate | date: "dd/MM/yyyy" }}
+      </h1>
+      <p class="text-sm text-gray-500">
+        {{ sheet.collectorName }} · Generada por {{ sheet.generatedByName }} ·
+        <span class="font-medium">{{ filterLabel(sheet.filterUsed) }}</span> ·
+        {{ sheet.totalItems }} cuota{{ sheet.totalItems !== 1 ? "s" : "" }}
+      </p>
     </div>
 
     <div class="flex flex-col gap-3">
