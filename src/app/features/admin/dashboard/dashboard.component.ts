@@ -15,8 +15,8 @@ import { InstallmentsService } from '../../seller/operations/installments.servic
 import { CashRegisterService } from '../cash-register/cash-register.service';
 import { KpiCard } from '../models/interface/kpi-card';
 import { ReportsService } from '../reports/reports.service';
-import { DashboardChartsComponent } from './components/dashboard-charts/dashboard-charts.component';
-import { DashboardPendingComponent } from './components/dashboard-pending/dashboard-pending.component';
+import { DashboardChartsComponent } from './dashboard-charts/dashboard-charts.component';
+import { DashboardPendingComponent } from './dashboard-pending/dashboard-pending.component';
 
 @Component({
   selector: 'app-dashboard',

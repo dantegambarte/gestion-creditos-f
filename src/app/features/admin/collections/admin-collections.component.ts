@@ -30,12 +30,12 @@ import {
 } from '../../collector/models/collection.model';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
-import { CollectionAlertsDialogComponent } from './components/collection-alerts-dialog/collection-alerts-dialog.component';
+import { CollectionAlertsDialogComponent } from './collection-alerts-dialog/collection-alerts-dialog.component';
 import {
   CollectionSheetDetailPanelComponent,
   DetailTab,
-} from './components/collection-sheet-detail-panel/collection-sheet-detail-panel.component';
-import { GenerateCollectionDialogComponent } from './components/generate-collection-dialog/generate-collection-dialog.component';
+} from './collection-sheet-detail-panel/collection-sheet-detail-panel.component';
+import { GenerateCollectionDialogComponent } from './generate-collection-dialog/generate-collection-dialog.component';
 
 @Component({
   selector: 'app-admin-collections',

@@ -27,9 +27,9 @@ import {
   CashRegisterFilters,
   DifferenceStatus,
 } from '../models/cash-register.model';
-import { CashRegisterCloseDialogComponent } from './components/cash-register-close-dialog/cash-register-close-dialog.component';
-import { CashRegisterClosePanelComponent } from './components/cash-register-close-panel/cash-register-close-panel.component';
-import { CashRegisterDetailDialogComponent } from './components/cash-register-detail-dialog/cash-register-detail-dialog.component';
+import { CashRegisterCloseDialogComponent } from './cash-register-close-dialog/cash-register-close-dialog.component';
+import { CashRegisterClosePanelComponent } from './cash-register-close-panel/cash-register-close-panel.component';
+import { CashRegisterDetailDialogComponent } from './cash-register-detail-dialog/cash-register-detail-dialog.component';
 import { CashRegisterService } from './cash-register.service';
 import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 

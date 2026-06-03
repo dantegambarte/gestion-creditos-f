@@ -25,8 +25,8 @@ import {
   PlanillaEntry,
 } from '../models/interface/sheet';
 import { UsersService } from '../users/users.service';
-import { SheetHistoryComponent } from './sheet-history.component';
-import { SheetReviewDialogComponent } from './sheet-review-dialog.component';
+import { SheetHistoryComponent } from './sheet-history/sheet-history.component';
+import { SheetReviewDialogComponent } from './sheet-review-dialog/sheet-review-dialog.component';
 
 @Component({
   selector: 'app-sheet',
