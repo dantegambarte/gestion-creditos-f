@@ -11,6 +11,11 @@ const ADMIN_NEW_OP_URL = '/admin/operations/new';
 
 let latestSaleCreditId: string | null = null;
 
+type CreditDetailApi = {
+  customer_dni?: string;
+  customerDni?: string;
+};
+
 /**
  * Inicia sesión ADMIN por UI y navega al wizard.
  */
@@ -233,7 +238,7 @@ describe('Nueva Operación real — Admin', () => {
     pickFirstActiveClient();
     addOneSaleUnitAndGoToConditions();
 
-  cy.contains('label', 'Enganche').click({ force: true });
+    cy.contains('label', 'Enganche').click({ force: true });
     cy.get('p-inputNumber[formControlName="downPayment"] input', {
       timeout: 15000,
     })
@@ -342,6 +347,47 @@ describe('Nueva Operación real — Admin', () => {
     cy.contains(
       'Se aprobará la operación con las cuotas ya definidas en la pre-operación.',
     ).should('be.visible');
+    cy.contains('Cantidad de cuotas definida').should('be.visible');
+    cy.contains('4 cuota(s)').should('be.visible');
+    cy.get('input[type="number"]').should('not.exist');
+  });
+
+  it('venta: approvals muestra cuotas adelantadas enriquecidas en modal', () => {
+    cy.viewport(1280, 720);
+    expect(latestSaleCreditId, 'crédito SALE previo').to.be.a('string').and.not.be
+      .empty;
+
+    cy.intercept('GET', `**/api/credits/${latestSaleCreditId}`).as(
+      'getSaleApprovalDetail',
+    );
+    loginFreshAdminToNewOperation();
+
+    cy.getAuthToken('ADMIN').then((token) => {
+      cy.apiRequest('GET', `/credits/${latestSaleCreditId}`, null, token).then(
+        (response) => {
+          const detail = response.body.data as CreditDetailApi;
+          const dni = detail.customer_dni ?? detail.customerDni;
+
+          expect(response.status, 'detalle venta creada').to.eq(200);
+          expect(dni, 'DNI de venta creada').to.be.a('string').and.not.be.empty;
+
+          cy.visit('/admin/approvals');
+          cy.contains('Aprobación de Operaciones', { timeout: 20000 }).should(
+            'be.visible',
+          );
+          cy.contains('tr', String(dni), { timeout: 20000 })
+            .should('be.visible')
+            .within(() => {
+              cy.get('button').filter(':has(.pi-check)').click({ force: true });
+            });
+        },
+      );
+    });
+
+    cy.wait('@getSaleApprovalDetail');
+    cy.contains('Aprobar Operación').should('be.visible');
+    cy.contains('Cuotas adelantadas: 2 cuota(s)').should('be.visible');
+    cy.contains('Método: Efectivo').should('be.visible');
     cy.contains('Cantidad de cuotas definida').should('be.visible');
     cy.contains('4 cuota(s)').should('be.visible');
     cy.get('input[type="number"]').should('not.exist');

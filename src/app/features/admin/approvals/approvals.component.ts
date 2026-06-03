@@ -239,7 +239,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
       this.msg.add({
         severity: 'error',
         summary: 'Caja Cerrada',
-        detail: 'No puedes aprobar créditos. La caja del día está CERRADA. El crédito + enganche se aprobarán juntos cuando se abra una nueva caja.',
+        detail: 'No puedes aprobar créditos. La caja del día está CERRADA. El crédito y sus pagos iniciales se aprobarán juntos cuando se abra una nueva caja.',
         life: 5000,
       });
       return;
