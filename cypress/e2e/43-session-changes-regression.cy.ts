@@ -45,7 +45,6 @@ function visitAsAdmin(path: string, pendingApprovals = 0) {
     },
   }).as('authMe');
   cy.visit(path, { onBeforeLoad: seedAdmin });
-  cy.wait('@authMe');
 }
 
 /** Silencia llamadas al backend real que devolverían 401 con mock token */
@@ -87,7 +86,6 @@ describe('A — Sidebar: badge de aprobaciones pendientes', () => {
       },
     }).as('authMe');
     cy.visit('/admin/dashboard', { onBeforeLoad: seedAdmin });
-    cy.wait('@authMe');
     cy.get('[data-testid="nav-aprobaciones"] .nav-item__badge').should('not.exist');
   });
 });

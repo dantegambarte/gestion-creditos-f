@@ -93,31 +93,44 @@
           <td>
             <div class="flex items-center gap-2">
               <p-button
-                label="Ver"
-                severity="secondary"
-                size="small"
-                [outlined]="true"
+                icon="pi pi-eye"
+                severity="info"
+                [rounded]="true"
+                pTooltip="Ver"
+                tooltipPosition="top"
                 [attr.data-cy]="'btn-ver-' + client.dni"
                 (onClick)="openView(client)"
               />
               @if (canEditClients) {
                 <p-button
-                  label="Editar"
-                  severity="secondary"
-                  size="small"
-                  [outlined]="true"
+                  icon="pi pi-pencil"
+                  severity="warning"
+                  [rounded]="true"
+                  pTooltip="Editar"
+                  tooltipPosition="top"
                   [attr.data-cy]="'btn-editar-' + client.dni"
                   (onClick)="openEdit(client)"
                 />
               }
               @if (client.credits > 0) {
                 <p-button
-                  label="Créditos"
-                  severity="secondary"
-                  size="small"
-                  [outlined]="true"
+                  icon="pi pi-credit-card"
+                  severity="help"
+                  [rounded]="true"
+                  pTooltip="Créditos"
+                  tooltipPosition="top"
                   [attr.data-cy]="'btn-creditos-' + client.dni"
                   (onClick)="openCredits(client)"
+                />
+              }
+              @if (client.phone) {
+                <p-button
+                  icon="pi pi-whatsapp"
+                  styleClass="p-button-whatsapp"
+                  [rounded]="true"
+                  pTooltip="WhatsApp"
+                  tooltipPosition="top"
+                  (onClick)="openWhatsApp(client.phone, client.name)"
                 />
               }
             </div>

@@ -20,7 +20,7 @@ const CLIENTS_WITH_CREDITS = [
     phone: '3811234567',
     email: 'ana@test.com',
     status: 'ACTIVE',
-    active_credits_count: 3,
+    active_credits: 3,
   },
   {
     id: 'cl-002',
@@ -29,7 +29,7 @@ const CLIENTS_WITH_CREDITS = [
     phone: '3817654321',
     email: 'carlos@test.com',
     status: 'ACTIVE',
-    active_credits_count: 0,
+    active_credits: 0,
   },
 ];
 
@@ -47,7 +47,11 @@ const BRANDS_STUB = [
 describe('CL-10 — Créditos del cliente: muestra activeCredits del backend', () => {
   beforeEach(() => {
     cy.viewport(1280, 800);
-    cy.intercept('GET', '**/api/customers*', {
+    cy.intercept('GET', '**/users*', {
+      statusCode: 200,
+      body: { ok: true, data: [] },
+    }).as('collectors');
+    cy.intercept('GET', '**/customers*', {
       statusCode: 200,
       body: { ok: true, data: CLIENTS_WITH_CREDITS },
     }).as('customers');
@@ -85,13 +89,13 @@ describe('PR-07 — Desactivar Categoría: confirm dialog antes de ejecutar', ()
   });
 
   it('al hacer click en Desactivar aparece un confirm dialog', () => {
-    cy.contains('a', 'Desactivar').first().click();
+    cy.contains('a', 'Desactivar').first().should('be.visible').click({ force: true });
     cy.get('.p-confirm-dialog').should('be.visible');
     cy.get('.p-confirm-dialog').contains('Desactivar categoría').should('exist');
   });
 
   it('cancelar NO llama a la API', () => {
-    cy.contains('a', 'Desactivar').first().click();
+    cy.contains('a', 'Desactivar').first().should('be.visible').click({ force: true });
     cy.get('.p-confirm-dialog').should('be.visible');
     cy.get('.p-confirm-dialog').contains('button', 'Cancelar').click();
     cy.get('.p-confirm-dialog').should('not.exist');
@@ -149,10 +153,10 @@ describe('PR-08 — Desactivar Marca: confirm dialog antes de ejecutar', () => {
 describe('CR-09 — Unidad no disponible: mensaje claro y recarga automática', () => {
   beforeEach(() => {
     cy.viewport(1280, 800);
-    cy.intercept('GET', '**/api/customers*', {
+    cy.intercept('GET', '**/customers*', {
       ok: true,
       data: [{ id: 'cust-001', full_name: 'Ana García', dni: '11223344',
-        phone: '', email: '', status: 'ACTIVE', active_credits_count: 0 }],
+        phone: '', email: '', status: 'ACTIVE', active_credits: 0 }],
     });
     cy.intercept('GET', '**/api/interest-rates*', { ok: true, data: [] });
     cy.intercept('GET', '**/api/product-units*', { ok: true, data: [] });

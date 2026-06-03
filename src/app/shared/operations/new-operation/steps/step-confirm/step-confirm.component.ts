@@ -128,7 +128,7 @@ export class StepConfirmComponent {
   get initialPaymentSummary(): string {
     if (this.operationType !== 'SALE') return 'Sin pago inicial';
 
-    const type = this.form?.controls['initialPaymentType']?.value;
+    const type = this.initialPaymentType;
     if (type === 'DOWN_PAYMENT' && this.validatedDownPayment > 0) {
       return `${this.formatCurrency(this.validatedDownPayment)} · ${this.paymentMethodLabel(this.form?.controls['downPaymentMethod']?.value)}`;
     }
@@ -141,6 +141,48 @@ export class StepConfirmComponent {
     }
 
     return 'Sin pago inicial';
+  }
+
+  /**
+   * Tipo de pago inicial seleccionado para adaptar etiquetas y montos del resumen.
+   * @returns {'NONE' | 'DOWN_PAYMENT' | 'ADVANCED_INSTALLMENTS'} Tipo activo en el formulario.
+   */
+  get initialPaymentType(): 'NONE' | 'DOWN_PAYMENT' | 'ADVANCED_INSTALLMENTS' {
+    const type = this.form?.controls['initialPaymentType']?.value;
+    if (type === 'DOWN_PAYMENT' || type === 'ADVANCED_INSTALLMENTS') {
+      return type;
+    }
+    return 'NONE';
+  }
+
+  /**
+   * Etiqueta de negocio del pago inicial para el panel lateral.
+   * @returns {string} Nombre del concepto a mostrar.
+   */
+  get initialPaymentLabel(): string {
+    if (this.operationType !== 'SALE') return 'Detalle';
+    if (this.initialPaymentType === 'DOWN_PAYMENT') return 'Enganche';
+    if (this.initialPaymentType === 'ADVANCED_INSTALLMENTS')
+      return 'Cuotas adelantadas';
+    return 'Sin pago inicial';
+  }
+
+  /**
+   * Monto total del pago inicial según el tipo elegido.
+   * @returns {number} Importe que se descuenta del capital al inicio.
+   */
+  get initialPaymentAmount(): number {
+    if (this.operationType !== 'SALE') return 0;
+    if (this.initialPaymentType === 'DOWN_PAYMENT') {
+      return Math.max(0, this.validatedDownPayment);
+    }
+    if (this.initialPaymentType === 'ADVANCED_INSTALLMENTS') {
+      const count = Number(
+        this.form?.controls['advancedInstallmentsCount']?.value ?? 0,
+      );
+      return Math.max(0, count) * Math.max(0, this.valorCuota);
+    }
+    return 0;
   }
 
   /**

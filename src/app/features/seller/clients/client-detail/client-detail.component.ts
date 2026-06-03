@@ -16,9 +16,10 @@ import { Credit } from '../../models/credit.model';
 import { CustomerDetail } from '../../models/customer.model';
 import { CreditsService } from '../../operations/credits.service';
 import { CustomersService } from '../customers.service';
-import { ClientCreditsHistoryPanelComponent } from './client-credits-history-panel.component';
-import { ClientEditFormComponent } from './client-edit-form.component';
-import { ClientPortalPanelComponent } from './client-portal-panel.component';
+import { ClientCreditsHistoryPanelComponent } from './client-credits-history-panel/client-credits-history-panel.component';
+import { ClientEditFormComponent } from './client-edit-form/client-edit-form.component';
+import { ClientPortalPanelComponent } from './client-portal-panel/client-portal-panel.component';
+import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
 
 @Component({
   selector: 'app-client-detail',
@@ -35,6 +36,7 @@ import { ClientPortalPanelComponent } from './client-portal-panel.component';
     ClientEditFormComponent,
     ClientCreditsHistoryPanelComponent,
     ClientPortalPanelComponent,
+    BackButtonComponent,
   ],
   templateUrl: './client-detail.component.html',
 })

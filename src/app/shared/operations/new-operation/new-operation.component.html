@@ -198,4 +198,22 @@
       </div>
     </div>
   </div>
+
 </div>
+
+@if (state.submitting) {
+  <div
+    class="fixed inset-0 z-[1200] flex items-center justify-center bg-[#0B0D14]/85 backdrop-blur-sm"
+    data-cy="submit-loader-overlay"
+  >
+    <div class="flex min-w-[320px] flex-col items-center gap-4 rounded-2xl border border-[#252A3A] bg-[#121520] px-6 py-6 text-center text-slate-100 shadow-2xl">
+      <i class="pi pi-spinner pi-spin text-3xl text-[#37F0A4]"></i>
+      <div>
+        <p class="text-base font-semibold text-white">Enviando para aprobación</p>
+        <p class="mt-1 text-sm text-slate-400">
+          Estamos registrando la pre-operación. Esperá un instante...
+        </p>
+      </div>
+    </div>
+  </div>
+}

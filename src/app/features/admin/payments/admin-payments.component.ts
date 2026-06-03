@@ -20,8 +20,8 @@ import { Payment, PaymentStatus } from '../../collector/models/payment.model';
 import { PaymentsService } from '../../collector/payments.service';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
-import { DirectPaymentDialogComponent } from './direct-payment-dialog.component';
-import { PaymentDetailDialogComponent } from './payment-detail-dialog.component';
+import { DirectPaymentDialogComponent } from './direct-payment-dialog/direct-payment-dialog.component';
+import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-detail-dialog.component';
 
 @Component({
   selector: 'app-admin-payments',

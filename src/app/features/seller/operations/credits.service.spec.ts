@@ -64,9 +64,13 @@ const mockDetailRaw: CreditDetailRaw = {
   down_payment: 0,
   down_payment_method: null,
   down_payment_transfer_reference: null,
+  prepaid_installments: 0,
+  prepaid_installments_method: null,
+  prepaid_installments_transfer_reference: null,
   settled_at: null,
   settlement_amount: null,
   settlement_type: null,
+  refinanced_from_credit_id: null,
 };
 
 const mockSimulateRaw = {
@@ -369,6 +373,28 @@ describe('CreditsService', () => {
       expect(req.request.body['down_payment']).toBe(500);
       expect(req.request.body['down_payment_method']).toBe('CASH');
       expect(req.request.body['prepaid_installments']).toBeUndefined();
+      req.flush({ ok: true, data: { id: 'new-id', status: 'PENDING_APPROVAL' }, message: '' });
+    });
+
+    it('SALE with prepaid installments includes dedicated prepaid fields', () => {
+      service
+        .create({
+          customerId: 'cust-1',
+          type: 'SALE',
+          installmentsCount: 4,
+          paymentFrequency: 'MONTHLY',
+          units: [{ unitId: 'unit-1' }],
+          advancedInstallmentsCount: 1,
+          advancedInstallmentsMethod: 'TRANSFER',
+          advancedInstallmentsTransferReference: 'TRX-123',
+        } as any)
+        .subscribe();
+
+      const req = httpMock.expectOne(`${BASE}/credits`);
+      expect(req.request.body['down_payment']).toBe(0);
+      expect(req.request.body['prepaid_installments']).toBe(1);
+      expect(req.request.body['prepaid_installments_method']).toBe('TRANSFER');
+      expect(req.request.body['prepaid_installments_transfer_reference']).toBe('TRX-123');
       req.flush({ ok: true, data: { id: 'new-id', status: 'PENDING_APPROVAL' }, message: '' });
     });
 

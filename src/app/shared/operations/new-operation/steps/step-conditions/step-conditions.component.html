@@ -124,10 +124,21 @@
                       formControlName="initialPaymentType"
                       value="ADVANCED_INSTALLMENTS"
                       inputId="pay-advance"
+                      [disabled]="!canAdvanceInstallments()"
                     />
-                    <span class="text-sm text-slate-300">Cuotas adelantadas</span>
+                    <span
+                      class="text-sm"
+                      [class.text-slate-300]="canAdvanceInstallments()"
+                      [class.text-slate-500]="!canAdvanceInstallments()"
+                    >Cuotas adelantadas</span>
                   </label>
                 </div>
+
+                @if (!canAdvanceInstallments()) {
+                  <p class="text-xs text-amber-300">
+                    Necesitás un plan de al menos 2 cuotas para registrar cuotas adelantadas.
+                  </p>
+                }
 
                 @if (
                   form.controls["initialPaymentType"].value === "DOWN_PAYMENT"
@@ -193,11 +204,15 @@
                       <p-inputNumber
                         formControlName="advancedInstallmentsCount"
                         [min]="1"
+                        [max]="getMaxAdvancedInstallments()"
                         [useGrouping]="false"
                         placeholder="Ej: 2"
                         styleClass="w-full"
                         inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
                       />
+                      <p class="mt-2 text-xs text-slate-400">
+                        Máximo permitido: {{ getMaxAdvancedInstallments() }} cuota(s).
+                      </p>
                     </div>
 
                     <div>

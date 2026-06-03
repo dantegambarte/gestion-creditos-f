@@ -16,6 +16,7 @@ import { CollectionsService } from '../../collector/collections.service';
 import {
   COLLECTION_FILTER_LABELS,
   CollectionFilter,
+  CollectionGenerateResult,
   CollectionSheet,
   CollectionSheetDetail,
 } from '../../collector/models/collection.model';
@@ -24,8 +25,8 @@ import {
   PlanillaEntry,
 } from '../models/interface/sheet';
 import { UsersService } from '../users/users.service';
-import { SheetHistoryComponent } from './sheet-history.component';
-import { SheetReviewDialogComponent } from './sheet-review-dialog.component';
+import { SheetHistoryComponent } from './sheet-history/sheet-history.component';
+import { SheetReviewDialogComponent } from './sheet-review-dialog/sheet-review-dialog.component';
 
 @Component({
   selector: 'app-sheet',
@@ -137,7 +138,7 @@ export class SheetComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (result) => {
           this.results = [
-            this.mapDetailToResult(result.sheet),
+            this.mapDetailToResult((result as CollectionGenerateResult).sheet),
             ...this.results,
           ];
           this.loadHistorial();
@@ -188,7 +189,7 @@ export class SheetComponent implements OnInit, OnDestroy {
               .pipe(
                 map((generated) => ({
                   success: true as const,
-                  result: this.mapDetailToResult(generated.sheet),
+                  result: this.mapDetailToResult((generated as CollectionGenerateResult).sheet),
                   collectorName: c.fullName,
                 })),
                 catchError((err: AppError) =>
@@ -404,6 +405,7 @@ export class SheetComponent implements OnInit, OnDestroy {
       paidAmount: item.amountPaid,
       dueDate: item.dueDate,
       paymentStatus: this.mapInstallmentStatus(item.installmentStatus),
+      collectionReference: item.collectionReference,
     }));
     return {
       collectorId: detail.collectorId,

@@ -80,7 +80,7 @@
     </div>
 
     <div class="flex flex-col gap-1">
-      <label for="assignedCollectorId" class="auth-label">Cobrador asignado *</label>
+      <label for="assignedCollectorId" class="auth-label">Cobrador asignado</label>
       <p-dropdown
         inputId="assignedCollectorId"
         formControlName="assignedCollectorId"
@@ -90,20 +90,24 @@
         [placeholder]="
           collectorsLoading
             ? 'Cargando cobradores…'
+            : collectorsLoadFailed
+              ? 'No se pudieron cargar cobradores'
             : collectorOptions.length === 0
               ? 'No hay cobradores activos'
               : 'Seleccionar cobrador'
         "
-        [disabled]="collectorsLoading || collectorOptions.length === 0"
         [showClear]="true"
         appendTo="body"
         styleClass="w-full h-11"
         [class.ng-invalid]="isInvalid('assignedCollectorId')"
         [class.ng-dirty]="isInvalid('assignedCollectorId')"
       />
-        @if (isInvalid("assignedCollectorId")) {
-          <small class="text-red-500">{{ getError("assignedCollectorId") }}</small>
-        }
+      @if (collectorsLoadFailed) {
+        <small class="text-amber-400">Podés registrar el cliente sin asignar cobrador por ahora.</small>
+      }
+      @if (isInvalid("assignedCollectorId")) {
+        <small class="text-red-500">{{ getError("assignedCollectorId") }}</small>
+      }
     </div>
 
     <div class="flex gap-3 pt-2">

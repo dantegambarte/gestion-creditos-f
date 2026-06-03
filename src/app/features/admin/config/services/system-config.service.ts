@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay, tap } from 'rxjs/operators';
 import { ApiHttpService } from '../../../../core/http/api-http.service';
 import {
   SystemConfigParam,
@@ -26,15 +26,26 @@ function toParam(r: SystemConfigParamRaw): SystemConfigParam {
 @Injectable({ providedIn: 'root' })
 export class SystemConfigService {
   private readonly api = inject(ApiHttpService);
+  private cache$: Observable<SystemConfigParam[]> | null = null;
+
+  /** Invalida el caché en memoria para forzar una nueva consulta al backend. */
+  invalidateCache(): void {
+    this.cache$ = null;
+  }
 
   /**
    * Obtiene todos los parámetros de configuración del sistema.
+   * El resultado se cachea en memoria durante la sesión y se comparte entre suscriptores.
    * @returns
    */
   getAll(): Observable<SystemConfigParam[]> {
-    return this.api
-      .get<SystemConfigParamRaw[]>('system-config')
-      .pipe(map((items) => items.map(toParam)));
+    if (!this.cache$) {
+      this.cache$ = this.api.get<SystemConfigParamRaw[]>('system-config').pipe(
+        map((items) => items.map(toParam)),
+        shareReplay(1),
+      );
+    }
+    return this.cache$;
   }
 
   /**
@@ -49,7 +60,7 @@ export class SystemConfigService {
   }
 
   /**
-   * Actualiza un parámetro de configuración del sistema.
+   * Actualiza un parámetro de configuración del sistema e invalida el caché.
    * @param key
    * @param payload
    * @returns
@@ -62,17 +73,23 @@ export class SystemConfigService {
       .put<SystemConfigParamRaw>(`system-config/${key}`, {
         value: payload.value,
       })
-      .pipe(map(toParam));
+      .pipe(
+        map(toParam),
+        tap(() => this.invalidateCache()),
+      );
   }
 
   /**
-   * Restablece un parámetro de configuración del sistema a su valor por defecto.
+   * Restablece un parámetro de configuración del sistema a su valor por defecto e invalida el caché.
    * @param key
    * @returns
    */
   resetToDefault(key: string): Observable<SystemConfigParam> {
     return this.api
       .post<SystemConfigParamRaw>(`system-config/${key}/reset`)
-      .pipe(map(toParam));
+      .pipe(
+        map(toParam),
+        tap(() => this.invalidateCache()),
+      );
   }
 }

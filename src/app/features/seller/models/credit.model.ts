@@ -25,6 +25,9 @@ export interface Credit {
   createdById: string | null;
   createdByName: string | null;
   downPayment?: number;
+  prepaidInstallments?: number;
+  downPaymentMethod?: string | null;
+  prepaidInstallmentsMethod?: string | null;
 }
 
 export interface CreditInstallment {
@@ -89,6 +92,9 @@ export interface CreditDetail extends Credit {
   financedAmount: number;
   downPaymentMethod: string | null;
   downPaymentTransferReference: string | null;
+  prepaidInstallments: number;
+  prepaidInstallmentsMethod: string | null;
+  prepaidInstallmentsTransferReference: string | null;
   settledAt: string | null;
   settlementAmount: number | null;
   settlementType: string | null;
@@ -170,6 +176,9 @@ export interface SaleCreditPayload {
   downPayment?: number;
   downPaymentMethod?: 'CASH' | 'TRANSFER';
   downPaymentTransferReference?: string;
+  advancedInstallmentsCount?: number;
+  advancedInstallmentsMethod?: 'CASH' | 'TRANSFER';
+  advancedInstallmentsTransferReference?: string;
 }
 
 export interface LoanCreditPayload {
@@ -246,6 +255,9 @@ export interface CreditDetailRaw extends CreditRaw {
   financed_amount?: number;
   down_payment_method: string | null;
   down_payment_transfer_reference: string | null;
+  prepaid_installments: number;
+  prepaid_installments_method: string | null;
+  prepaid_installments_transfer_reference: string | null;
   settled_at: string | null;
   settlement_amount: number | null;
   settlement_type: string | null;

@@ -17,7 +17,7 @@ import { LoadingStateComponent } from '../../../../shared/states/loading-state/l
 import { ProductVariant } from '../../models/product-variant.model';
 import { ProductVariantsService } from '../product-variants.service';
 import { ProductsService } from '../products.service';
-import { VariantFormPanelComponent } from './variant-form-panel.component';
+import { VariantFormPanelComponent } from './variant-form-panel/variant-form-panel.component';
 
 @Component({
   selector: 'app-product-variants',

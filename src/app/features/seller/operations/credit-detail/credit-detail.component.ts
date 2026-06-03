@@ -27,11 +27,12 @@ import { Installment } from '../../models/installment.model';
 import { CreditsService } from '../credits.service';
 import { CreditPayment } from '../../../collector/models/payment.model';
 import { PaymentsService } from '../../../collector/payments.service';
-import { ApproveDialogComponent } from './dialogs/approve-dialog.component';
-import { RejectDialogComponent } from './dialogs/reject-dialog.component';
-import { RefinanceDialogComponent } from './dialogs/refinance-dialog.component';
-import { SettlementDialogComponent } from './dialogs/settlement-dialog.component';
-import { CreditSchedulePanelComponent } from './credit-schedule-panel.component';
+import { ApproveDialogComponent } from './approve-dialog/approve-dialog.component';
+import { RejectDialogComponent } from './reject-dialog/reject-dialog.component';
+import { RefinanceDialogComponent } from './refinance-dialog/refinance-dialog.component';
+import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog.component';
+import { CreditSchedulePanelComponent } from './credit-schedule-panel/credit-schedule-panel.component';
+import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
 
 @Component({
   selector: 'app-credit-detail',
@@ -54,6 +55,7 @@ import { CreditSchedulePanelComponent } from './credit-schedule-panel.component'
     RefinanceDialogComponent,
     SettlementDialogComponent,
     CreditSchedulePanelComponent,
+    BackButtonComponent,
   ],
   providers: [MessageService],
   templateUrl: './credit-detail.component.html',
@@ -87,6 +89,59 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
 
   get installmentAmount(): number | null {
     return this.credit?.installments[0]?.amountDue ?? null;
+  }
+
+  /**
+   * Resume cómo debe mostrarse el pago inicial cuando el backend no distingue su origen.
+   * @returns {string} Etiqueta visible para el bloque financiero.
+   */
+  get initialPaymentLabel(): string {
+    if (this.credit?.prepaidInstallments && this.credit.prepaidInstallments > 0) {
+      return 'Cuotas adelantadas';
+    }
+    return 'Enganche';
+  }
+
+  /**
+   * Describe la limitación actual del detalle para pagos iniciales de ventas pendientes.
+   * @returns {string | null} Texto auxiliar si falta metadata para distinguir el origen.
+   */
+  get initialPaymentNote(): string | null {
+    if (!this.credit || this.credit.type !== 'SALE') {
+      return null;
+    }
+
+    if (this.credit.prepaidInstallments > 0) {
+      return `${this.credit.prepaidInstallments} cuota(s) · ${this.paymentMethodLabel(this.credit.prepaidInstallmentsMethod)}`;
+    }
+
+    if (this.credit.downPayment > 0) {
+      return this.paymentMethodLabel(this.credit.downPaymentMethod);
+    }
+
+    return null;
+  }
+
+  /**
+   * Calcula el monto estimado asociado al adelanto de cuotas.
+   * @returns {number} Importe equivalente al adelanto cuando existe.
+   */
+  get prepaidInstallmentsAmount(): number {
+    if (!this.credit || this.credit.prepaidInstallments <= 0) return 0;
+    const installmentsCount = this.credit.installmentsCount || 0;
+    if (installmentsCount <= 0) return 0;
+    return Math.round((this.credit.financedAmount / installmentsCount) * this.credit.prepaidInstallments);
+  }
+
+  /**
+   * Traduce un método de pago interno a su etiqueta visible.
+   * @param {string | null | undefined} method - Código interno del método.
+   * @returns {string} Etiqueta legible para la UI.
+   */
+  paymentMethodLabel(method: string | null | undefined): string {
+    if (method === 'TRANSFER') return 'Transferencia';
+    if (method === 'CASH') return 'Efectivo';
+    return 'Sin especificar';
   }
 
   get settlementTotalAmount(): number {

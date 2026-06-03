@@ -1,5 +1,6 @@
 import { DatePipe, NgClass } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -59,6 +60,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   private readonly credits = inject(CreditsService);
   private readonly msg = inject(MessageService);
   private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly router = inject(Router);
   readonly dateService = inject(DateService);
 
   approvals: Credit[] = [];
@@ -68,6 +70,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 
   showApproveDialog = false;
   approvingRow: Credit | null = null;
+  approvingDetail: Credit | null = null;
   approveCheckDoc = false;
   approveCheckClient = false;
   approveNote = '';
@@ -106,7 +109,45 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
    * Retorna el monto del enganche del crédito aprobado.
    */
   get approvingRowDownPayment(): number {
-    return this.approvingRow?.downPayment ?? 0;
+    return this.approvingDetail?.downPayment ?? this.approvingRow?.downPayment ?? 0;
+  }
+
+  /**
+   * Cantidad de cuotas adelantadas de la operación en aprobación.
+   * @returns {number} Adelanto persistido o cero si no existe.
+   */
+  get approvingRowPrepaidInstallments(): number {
+    return this.approvingDetail?.prepaidInstallments ?? 0;
+  }
+
+  /**
+   * Método asociado al pago inicial o al adelanto según corresponda.
+   * @returns {string | null} Método persistido para mostrar en el modal.
+   */
+  get approvingRowPaymentMethod(): string | null {
+    if (this.approvingRowPrepaidInstallments > 0) {
+      return this.approvingDetail?.prepaidInstallmentsMethod ?? null;
+    }
+    return this.approvingDetail?.downPaymentMethod ?? null;
+  }
+
+  /**
+   * Traduce el método de pago persistido a una etiqueta legible.
+   * @param {string | null} method - Código interno del método.
+   * @returns {string} Texto visible en la UI.
+   */
+  paymentMethodLabel(method: string | null): string {
+    if (method === 'TRANSFER') return 'Transferencia';
+    if (method === 'CASH') return 'Efectivo';
+    return 'Sin especificar';
+  }
+
+  /**
+   * Indica si la fila en aprobación debe respetar las cuotas ya definidas en origen.
+   * @returns {boolean} True para ventas.
+   */
+  get approvingRowUsesFixedInstallments(): boolean {
+    return this.approvingRow?.type === 'SALE';
   }
 
   private destroy$ = new Subject<void>();
@@ -171,11 +212,20 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   onApprove(row: Credit): void {
     if (this.processingId) return;
     this.approvingRow = row;
+    this.approvingDetail = null;
     this.approveCheckDoc = false;
     this.approveCheckClient = false;
     this.approveNote = '';
     this.approveInstallmentsCount = row.installmentsCount;
     this.showApproveDialog = true;
+    this.credits.getById(row.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (detail) => {
+        this.approvingDetail = detail;
+      },
+      error: () => {
+        this.approvingDetail = row;
+      },
+    });
   }
 
   /**
@@ -189,7 +239,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
       this.msg.add({
         severity: 'error',
         summary: 'Caja Cerrada',
-        detail: 'No puedes aprobar créditos. La caja del día está CERRADA. El crédito + enganche se aprobarán juntos cuando se abra una nueva caja.',
+        detail: 'No puedes aprobar créditos. La caja del día está CERRADA. El crédito y sus pagos iniciales se aprobarán juntos cuando se abra una nueva caja.',
         life: 5000,
       });
       return;
@@ -199,6 +249,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
     const row = this.approvingRow;
 
     const payload =
+      !this.approvingRowUsesFixedInstallments &&
       this.approveInstallmentsCount !== null &&
       this.approveInstallmentsCount !== row.installmentsCount
         ? { installmentsCount: this.approveInstallmentsCount }
@@ -213,6 +264,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
           this.processingApprove = false;
           this.showApproveDialog = false;
           this.approvingRow = null;
+          this.approvingDetail = null;
           this.msg.add({
             severity: 'success',
             summary: 'Aprobado',
@@ -288,5 +340,13 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
    */
   rejectCharCount(): number {
     return this.rejectReason.length;
+  }
+
+  /**
+   * Navega al detalle de la operación seleccionada.
+   * @param {string} id - ID de la operación.
+   */
+  viewDetail(id: string): void {
+    this.router.navigate(['/admin/operations', id]);
   }
 }

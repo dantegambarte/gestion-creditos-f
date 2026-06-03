@@ -18,7 +18,7 @@ import { LoadingStateComponent } from '../../../shared/states/loading-state/load
 import { ExpenseCategory } from '../models/interface/expenses';
 import { CategoryColorService } from './category-color.service';
 import { ExpenseCategoriesService } from './expense-categories.service';
-import { ExpenseSidePanelComponent } from './expense-side-panel.component';
+import { ExpenseSidePanelComponent } from './expense-side-panel/expense-side-panel.component';
 import { Expense } from './expense.model';
 import { ExpensesService } from './expenses.service';
 

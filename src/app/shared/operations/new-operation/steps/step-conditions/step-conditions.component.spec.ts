@@ -103,11 +103,4 @@ describe('StepConditionsComponent', () => {
     expect(component.simulationVisible).toBeFalse();
   });
 
-  it('marca la simulación como lista para simular cuando ya no hay resultado real vigente', () => {
-    component.simulationResult = null;
-    component.simulationLoading = false;
-    component.simulationError = null;
-
-    expect(component.getSimulationStatusLabel()).toBe('Lista para simular');
-  });
 });

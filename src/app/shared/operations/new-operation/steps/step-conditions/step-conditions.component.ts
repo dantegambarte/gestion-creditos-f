@@ -22,7 +22,7 @@ import {
   FirstPaymentDateMode,
   SaleInstallmentOption,
 } from '../../operation-form.service';
-import { StepConditionsSimulationPanelComponent } from './step-conditions-simulation-panel.component';
+import { StepConditionsSimulationPanelComponent } from './step-conditions-simulation-panel/step-conditions-simulation-panel.component';
 
 @Component({
   selector: 'app-step-conditions',
@@ -176,6 +176,22 @@ export class StepConditionsComponent implements OnChanges {
       );
     }
     return this.form.controls['installmentsCount']?.value ?? 0;
+  }
+
+  /**
+   * Máximo de cuotas que se pueden adelantar sin superar el plan seleccionado.
+   * @returns {number} Límite superior válido para el input de adelanto.
+   */
+  getMaxAdvancedInstallments(): number {
+    return Math.max(this.getSelectedInstallmentsCount() - 1, 0);
+  }
+
+  /**
+   * Indica si el plan actual permite adelantar al menos una cuota.
+   * @returns {boolean} True si existe margen para adelanto.
+   */
+  canAdvanceInstallments(): boolean {
+    return this.getMaxAdvancedInstallments() > 0;
   }
 
   /**

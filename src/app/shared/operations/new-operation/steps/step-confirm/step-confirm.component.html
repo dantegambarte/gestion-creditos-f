@@ -387,9 +387,7 @@
               Pago inicial
             </p>
             <div class="flex items-center justify-between gap-3">
-              <span class="text-[#7C879B]">{{
-                operationType === "SALE" ? "Enganche" : "Detalle"
-              }}</span>
+              <span class="text-[#7C879B]">{{ initialPaymentLabel }}</span>
               <span class="font-semibold text-[#37F0A4]">{{
                 initialPaymentSummary
               }}</span>
@@ -410,12 +408,14 @@
                     subtotalProductos | currencyArs
                   }}</span>
                 </div>
-                <div class="flex items-center justify-between gap-3">
-                  <span class="text-[#7C879B]">Enganche</span>
-                  <span class="font-semibold text-[#FFB347]"
-                    >- {{ validatedDownPayment | currencyArs }}</span
-                  >
-                </div>
+                @if (initialPaymentAmount > 0) {
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-[#7C879B]">{{ initialPaymentLabel }}</span>
+                    <span class="font-semibold text-[#FFB347]"
+                      >- {{ initialPaymentAmount | currencyArs }}</span
+                    >
+                  </div>
+                }
               }
               <div class="flex items-center justify-between gap-3">
                 <span class="text-[#7C879B]">Financiado</span>

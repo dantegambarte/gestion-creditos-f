@@ -59,99 +59,107 @@
 
   <!-- Header bar -->
   <div
-    class="flex flex-wrap items-center gap-4 px-6 py-4 border-b"
+    class="px-6 pt-6 pb-4 border-b space-y-4"
     style="border-color: var(--ff-border)"
   >
-    <p-button
-      label="Volver"
-      icon="pi pi-arrow-left"
-      severity="secondary"
-      [outlined]="true"
-      size="small"
-      styleClass="h-9 px-3 rounded-lg"
-      (onClick)="goBack()"
-    />
+    <app-back-button (back)="goBack()" />
 
-    <div class="flex items-center gap-2">
-      <p-tag
-        [value]="credit.type === 'SALE' ? 'Venta' : 'Préstamo'"
-        [severity]="credit.type === 'SALE' ? 'info' : 'secondary'"
-      />
-      <p-tag [value]="statusLabel(credit.status)" [severity]="statusSeverity(credit.status)" />
-    </div>
-
-    <div class="flex items-center gap-6 text-sm">
-      <div>
-        <div class="ud-label text-xs">Monto total</div>
-        <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
-          {{ credit.totalAmount | currencyArs: 0 }}
-        </div>
+    <div class="flex flex-wrap items-center gap-4 xl:gap-6">
+      <div class="flex items-center gap-2">
+        <p-tag
+          [value]="credit.type === 'SALE' ? 'Venta' : 'Préstamo'"
+          [severity]="credit.type === 'SALE' ? 'info' : 'secondary'"
+        />
+        <p-tag [value]="statusLabel(credit.status)" [severity]="statusSeverity(credit.status)" />
       </div>
-      @if (installmentAmount) {
+
+      <div class="flex flex-wrap items-center gap-5 xl:gap-6 text-sm">
         <div>
-          <div class="ud-label text-xs">Cuota</div>
+          <div class="ud-label text-xs">Monto total</div>
           <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
-            {{ installmentAmount | currencyArs: 0 }} / mes
+            {{ credit.totalAmount | currencyArs: 0 }}
           </div>
         </div>
-      }
-      <div>
-        <div class="ud-label text-xs">Cuotas</div>
-        <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
-          {{ credit.installmentsCount }}
-        </div>
-      </div>
-      @if (credit.approvedAt) {
         <div>
-          <div class="ud-label text-xs">Aprobado</div>
+          <div class="ud-label text-xs">Cuotas</div>
           <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
-            {{ credit.approvedAt | date: 'dd/MM/yyyy' }}
+            {{ credit.installmentsCount }}
           </div>
         </div>
-      }
+        @if (installmentAmount) {
+          <div>
+            <div class="ud-label text-xs">Cuota</div>
+            <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
+              {{ installmentAmount | currencyArs: 0 }} / mes
+            </div>
+          </div>
+        }
+        @if (credit.approvedAt) {
+          <div>
+            <div class="ud-label text-xs">Aprobado</div>
+            <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
+              {{ credit.approvedAt | date: 'dd/MM/yyyy' }}
+            </div>
+          </div>
+        }
+      </div>
     </div>
 
-    <div class="flex items-center gap-3 ml-auto flex-wrap">
-      @if (credit.customerName) {
-        <span class="text-sm font-semibold" style="color: var(--ff-accent)">
-          {{ credit.customerName }} →
-        </span>
-      }
-      @if (credit.createdByName) {
-        <span class="text-xs" style="color: var(--ff-text-muted)">
-          Vendedor: {{ credit.createdByName }}
-        </span>
-      }
-      @if (isAdmin && credit.status === 'PENDING_APPROVAL') {
-        <p-button
-          label="Aprobar"
-          icon="pi pi-check"
-          severity="success"
-          size="small"
-          (onClick)="openApproveDialog()"
-          [disabled]="isCashClosed"
-          [pTooltip]="isCashClosed ? 'La caja está cerrada' : ''"
-          tooltipPosition="top"
-        />
-        <p-button label="Rechazar" icon="pi pi-times" severity="danger" [outlined]="true" size="small" (onClick)="openRejectDialog()" />
-      }
-      @if (isAdmin && credit.status === 'ACTIVE') {
-        <p-button
-          label="Cancelación total anticipada"
-          severity="secondary"
-          [outlined]="true"
-          size="small"
-          pTooltip="Liquidar todas las cuotas pendientes en un solo pago"
-          (onClick)="openSettlementDialog()"
-        />
-        <p-button
-          label="Refinanciar"
-          icon="pi pi-refresh"
-          severity="warning"
-          size="small"
-          (onClick)="openRefinanceDialog()"
-        />
-      }
+    <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+      <div class="flex flex-wrap items-center gap-3 min-w-0">
+        @if (credit.customerName) {
+          <span class="text-sm font-semibold truncate" style="color: var(--ff-accent)">
+            {{ credit.customerName }} →
+          </span>
+        }
+        @if (credit.createdByName) {
+          <span class="text-xs" style="color: var(--ff-text-muted)">
+            Vendedor: {{ credit.createdByName }}
+          </span>
+        }
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 xl:justify-end">
+        @if (isAdmin && credit.status === 'PENDING_APPROVAL') {
+          <p-button
+            label="Aprobar"
+            icon="pi pi-check"
+            severity="success"
+            size="small"
+            (onClick)="openApproveDialog()"
+            [disabled]="isCashClosed"
+            [pTooltip]="isCashClosed ? 'La caja está cerrada' : ''"
+            tooltipPosition="top"
+            styleClass="h-11 px-5 rounded-xl shadow-sm"
+          />
+          <p-button
+            label="Rechazar"
+            icon="pi pi-times"
+            severity="danger"
+            [outlined]="true"
+            size="small"
+            (onClick)="openRejectDialog()"
+            styleClass="h-11 px-5 rounded-xl"
+          />
+        }
+        @if (isAdmin && credit.status === 'ACTIVE') {
+          <p-button
+            label="Cancelación total anticipada"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            pTooltip="Liquidar todas las cuotas pendientes en un solo pago"
+            (onClick)="openSettlementDialog()"
+          />
+          <p-button
+            label="Refinanciar"
+            icon="pi pi-refresh"
+            severity="warning"
+            size="small"
+            (onClick)="openRefinanceDialog()"
+          />
+        }
+      </div>
     </div>
   </div>
 
@@ -182,27 +190,50 @@
               @if (credit.interestRate != null) {
                 {{ (credit.interestRate * 100).toFixed(2) }}%
               } @else if (credit.type === 'SALE') {
-                N/A (Venta)
+                @if (credit.status === 'PENDING_APPROVAL') {
+                  Se definirá al aprobar
+                } @else {
+                  N/A (Venta)
+                }
               } @else {
                 <span style="color: var(--ff-text-muted)">—</span>
               }
             </div>
           </div>
-          @if (credit.type === 'SALE' && credit.downPayment > 0) {
-            <div>
-              <div class="ud-label">Enganche</div>
-              <div class="ud-value ff-mono">{{ credit.downPayment | currencyArs: 0 }}</div>
-            </div>
-            <div>
-              <div class="ud-label">Cuotas adelantadas</div>
-              <div class="ud-value">0</div>
-            </div>
-            <div>
-              <div class="ud-label">Método enganche</div>
-              <div class="ud-value">
-                {{ credit.downPaymentMethod === 'CASH' ? 'Efectivo' : 'Transferencia' }}
+          @if (
+            credit.type === 'SALE' &&
+            (credit.downPayment > 0 || credit.prepaidInstallments > 0)
+          ) {
+            @if (credit.prepaidInstallments > 0) {
+              <div>
+                <div class="ud-label">Cuotas adelantadas</div>
+                <div class="ud-value">{{ credit.prepaidInstallments }} cuota(s)</div>
               </div>
-            </div>
+              <div>
+                <div class="ud-label">Monto adelantado</div>
+                <div class="ud-value ff-mono">{{ prepaidInstallmentsAmount | currencyArs: 0 }}</div>
+              </div>
+              <div>
+                <div class="ud-label">Método adelanto</div>
+                <div class="ud-value">{{ paymentMethodLabel(credit.prepaidInstallmentsMethod) }}</div>
+              </div>
+            } @else {
+              <div>
+                <div class="ud-label">Enganche</div>
+                <div class="ud-value ff-mono">{{ credit.downPayment | currencyArs: 0 }}</div>
+              </div>
+              <div>
+                <div class="ud-label">Método enganche</div>
+                <div class="ud-value">{{ paymentMethodLabel(credit.downPaymentMethod) }}</div>
+              </div>
+            }
+            @if (initialPaymentNote && credit.prepaidInstallments <= 0) {
+              <div class="col-span-2">
+                <div class="ud-value text-sm" style="color: var(--ff-text-muted)">
+                  {{ initialPaymentNote }}
+                </div>
+              </div>
+            }
           }
           @if (credit.notes) {
             <div class="col-span-2">

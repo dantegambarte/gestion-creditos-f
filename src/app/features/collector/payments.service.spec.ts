@@ -34,6 +34,7 @@ const mockPaymentRaw: PaymentRaw = {
   is_reversal: false,
   admin_direct: false,
   parent_payment_id: null,
+  reversal_payment_id: null,
 };
 
 describe('PaymentsService', () => {

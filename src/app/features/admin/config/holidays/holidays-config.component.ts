@@ -14,8 +14,8 @@ import {
   HolidayType,
 } from '../models/interfaces/holiday.model';
 import { HolidaysService } from '../services/holidays.service';
-import { HolidayDuplicatePreviewDialogComponent } from './holiday-duplicate-preview-dialog.component';
-import { HolidayFormDialogComponent } from './holiday-form-dialog.component';
+import { HolidayDuplicatePreviewDialogComponent } from './holiday-duplicate-preview-dialog/holiday-duplicate-preview-dialog.component';
+import { HolidayFormDialogComponent } from './holiday-form-dialog/holiday-form-dialog.component';
 
 @Component({
   selector: 'app-holidays-config',

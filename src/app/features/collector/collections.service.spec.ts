@@ -15,7 +15,10 @@ const mockSheetRaw: CollectionSheetRaw = {
   id: 'sheet-1',
   sheet_date: '2026-04-24',
   filter_used: 'TODAY',
+  status: 'ACTIVE',
   created_at: '2026-04-24T08:00:00Z',
+  sent_at: null,
+  collector_id: 'coll-1',
   collector_name: 'María G.',
   total_items: 3,
 };
@@ -28,6 +31,16 @@ const mockDetailRaw: CollectionSheetDetailRaw = {
     {
       order_number: 1,
       planned_amount: 1000,
+      inclusion_criteria: 'DUE_DATE',
+      inclusion_reason: 'OVERDUE',
+      op_priority: null,
+      remaining_amount: null,
+      antecedent_id: null,
+      antecedent_type: null,
+      antecedent_date: null,
+      antecedent_notes: null,
+      next_visit_date: null,
+      has_pending_payment: false,
       installment_id: 'inst-1',
       installment_number: 3,
       due_date: '2026-04-24',
@@ -37,9 +50,13 @@ const mockDetailRaw: CollectionSheetDetailRaw = {
       installment_status: 'OVERDUE',
       credit_id: 'credit-1',
       credit_type: 'LOAN',
+      collection_reference: 'Cuota 3 de 12 · préstamo de $10.000',
       customer_name: 'Juan Pérez',
       customer_phone: '1122334455',
       customer_address: 'Av. Corrientes 1234',
+      customer_dni: '12345678',
+      management_status: 'PENDING',
+      live: null,
     },
   ],
 };
@@ -114,19 +131,27 @@ describe('CollectionsService', () => {
         date: '2026-04-24',
         filter: 'TODAY',
       });
-      req.flush({ ok: true, data: mockDetailRaw, message: '' });
+      req.flush({
+        ok: true,
+        data: { sheet: mockDetailRaw, alerts: { overdue_next_visits: [], unassigned_customers: [] } },
+        message: '',
+      });
     });
 
-    it('maps response to CollectionSheetDetail', () => {
+    it('maps response to CollectionGenerateResult with nested sheet', () => {
       let result: any;
       service
         .generate({ collectorId: 'coll-1', date: '2026-04-24', filter: 'OVERDUE' })
         .subscribe((d) => (result = d));
       const req = httpMock.expectOne(`${BASE}/collections`);
-      req.flush({ ok: true, data: mockDetailRaw, message: '' });
-      expect(result.collectorId).toBe('coll-1');
-      expect(result.totalItems).toBe(3);
-      expect(result.items[0].plannedAmount).toBe(1000);
+      req.flush({
+        ok: true,
+        data: { sheet: mockDetailRaw, alerts: { overdue_next_visits: [], unassigned_customers: [] } },
+        message: '',
+      });
+      expect(result.sheet.collectorId).toBe('coll-1');
+      expect(result.sheet.totalItems).toBe(3);
+      expect(result.sheet.items[0].plannedAmount).toBe(1000);
     });
 
     it('propagates 409 error', () => {

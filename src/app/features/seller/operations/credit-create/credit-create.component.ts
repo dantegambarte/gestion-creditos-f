@@ -28,8 +28,9 @@ import {
 } from '../../models/credit.model';
 import { Customer } from '../../models/customer.model';
 import { CreditsService } from '../credits.service';
-import { CreditCartComponent } from './credit-cart.component';
-import { CreditSimulationComponent } from './credit-simulation.component';
+import { CreditCartComponent } from './credit-cart/credit-cart.component';
+import { CreditSimulationComponent } from './credit-simulation/credit-simulation.component';
+import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
 
 @Component({
   selector: 'app-credit-create',
@@ -48,6 +49,7 @@ import { CreditSimulationComponent } from './credit-simulation.component';
     ToastModule,
     CreditCartComponent,
     CreditSimulationComponent,
+    BackButtonComponent,
   ],
   templateUrl: './credit-create.component.html',
 })

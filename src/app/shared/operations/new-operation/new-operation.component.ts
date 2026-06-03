@@ -149,7 +149,6 @@ export class NewOperationComponent implements OnInit {
   submitOperation(): void {
     this.state.submit().subscribe({
       next: () => {
-        this.state.submitting = false;
         this.messageService.add({
           severity: 'success',
           summary: 'Operación enviada',
@@ -158,7 +157,11 @@ export class NewOperationComponent implements OnInit {
         });
         this.onComplete.emit();
         const base = this.router.url.split('/operations')[0];
-        setTimeout(() => this.router.navigate([base, 'operations']), 1500);
+        const destination = base === '/admin' ? 'approvals' : 'operations';
+        setTimeout(() => {
+          this.router.navigate([base, destination]);
+          this.state.submitting = false;
+        }, 1500);
       },
       error: (err: unknown) => {
         this.state.submitting = false;

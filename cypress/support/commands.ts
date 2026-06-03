@@ -344,6 +344,81 @@ function requestLoginWithRetry(
 }
 
 /**
+ * Convierte el usuario real del backend al contrato AuthUser que la app guarda en storage.
+ * @param user Usuario crudo devuelto por auth/login o auth/me.
+ * @param token Token JWT emitido por el backend real.
+ * @returns Usuario normalizado para `sgcf_user`.
+ */
+function normalizeRealInternalUser(
+  user: Record<string, unknown>,
+  token: string,
+): Record<string, unknown> {
+  const fullName = String(user['full_name'] ?? user['name'] ?? '').trim();
+  const role = String(user['role'] ?? '').trim();
+
+  return {
+    ...user,
+    full_name: fullName,
+    name: fullName,
+    roles: Array.isArray(user['roles']) ? user['roles'] : [role],
+    avatar: fullName
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join(''),
+    is_temp_password: Boolean(user['is_temp_password']),
+    force_relogin_at: user['force_relogin_at'] ?? null,
+    token,
+  };
+}
+
+/**
+ * Persiste una sesión interna real antes de iniciar Angular.
+ * @param win Ventana del AUT donde se inyecta storage.
+ * @param token Token JWT emitido por el backend real.
+ * @param user Usuario devuelto por el backend, si está disponible.
+ */
+function seedRealInternalSession(
+  win: Cypress.AUTWindow,
+  token: string,
+  user: Record<string, unknown> | null,
+): void {
+  win.localStorage.setItem(INTERNAL_TOKEN_KEY, token);
+  if (user) {
+    win.localStorage.setItem(
+      INTERNAL_USER_KEY,
+      JSON.stringify(normalizeRealInternalUser(user, token)),
+    );
+  }
+}
+
+/**
+ * Obtiene una sesión real fresca para recuperar navegación si la sesión cacheada cae en /login.
+ * @param role Rol interno a autenticar.
+ * @param creds Credenciales reales del rol.
+ * @returns Token y usuario devueltos por el backend.
+ */
+function fetchFreshInternalSession(
+  role: InternalRole,
+  creds: RealCredentials,
+): Cypress.Chainable<{ token: string; user: Record<string, unknown> | null }> {
+  return requestLoginWithRetry(creds).then((res) => {
+    expect(res.status, `[cypress][loginReal] relogin ${role}`).to.eq(200);
+
+    const token = res.body?.data?.token;
+    const user =
+      (res.body?.data?.user as Record<string, unknown> | undefined) ?? null;
+
+    expect(token, '[cypress][loginReal] token backend fresco').to.be.a('string')
+      .and.not.be.empty;
+
+    AUTH_TOKEN_CACHE[role] = token as string;
+
+    return { token: token as string, user };
+  });
+}
+
+/**
  * Obtiene credenciales reales de portal desde Cypress.env.
  * @returns Credenciales DNI/password del cliente portal.
  */
@@ -434,6 +509,11 @@ function assertRealAuthEnabled(): void {
  * cy.intercept persiste durante todo el test (testIsolation limpia entre tests).
  */
 Cypress.Commands.add('loginAs', (role: InternalRole, destination?: string) => {
+  if (Cypress.env('realAuthEnabled') === true) {
+    cy.loginReal(role, destination);
+    return;
+  }
+
   // GET /auth/me devuelve el usuario correcto para que APP_INITIALIZER
   // (AuthService.restoreSession) persista el usuario en _user$.
   cy.intercept('GET', '**/auth/me', {
@@ -467,24 +547,17 @@ Cypress.Commands.add(
       ? normalizePath(destination)
       : undefined;
 
+    cy.intercept('GET', '**/auth/me').as('authMeReal');
+
     cy.session(
-      `internal-real-${role}-${dni}`,
+      `internal-real-v2-${role}-${dni}`,
       () => {
         cy.clearAllLocalStorage();
 
-        const visitWithToken = (
-          token: string,
-          user: Record<string, unknown> | null,
-        ) => {
-          cy.visit(roleHome, {
+        const visitWithToken = (token: string, user: Record<string, unknown> | null) => {
+          cy.visit('/login', {
             onBeforeLoad(win) {
-              win.localStorage.setItem(INTERNAL_TOKEN_KEY, token);
-              if (user) {
-                win.localStorage.setItem(
-                  INTERNAL_USER_KEY,
-                  JSON.stringify(user),
-                );
-              }
+              seedRealInternalSession(win, token, user);
             },
           });
         };
@@ -524,12 +597,47 @@ Cypress.Commands.add(
       },
     );
 
-    cy.visit(normalizedDestination ?? roleHome);
+    const targetPath = normalizedDestination ?? roleHome;
+
+    fetchFreshInternalSession(role, { dni, password }).then(({ token, user }) => {
+      cy.request({
+        method: 'GET',
+        url: `${String(Cypress.env('apiBaseUrl'))}/auth/me`,
+        headers: { Authorization: `Bearer ${token}` },
+        failOnStatusCode: false,
+      }).then((res) => {
+        expect(res.status, '[cypress][loginReal] auth/me backend').to.eq(200);
+        cy.intercept('GET', '**/auth/me', {
+          statusCode: 200,
+          body: res.body,
+        }).as('authMeReal');
+      });
+
+      cy.visit(targetPath, {
+        onBeforeLoad(win) {
+          seedRealInternalSession(win, token, user);
+        },
+      });
+    });
 
     cy.url({ timeout: 15000 }).should(
       'include',
-      normalizedDestination ?? roleHome,
+      targetPath,
     );
+
+    cy.location('pathname', { timeout: 15000 }).then((pathname) => {
+      if (normalizePath(pathname) !== '/login') {
+        return;
+      }
+
+      fetchFreshInternalSession(role, { dni, password }).then(({ token, user }) => {
+        cy.visit(targetPath, {
+          onBeforeLoad(win) {
+            seedRealInternalSession(win, token, user);
+          },
+        });
+      });
+    });
 
     if (!normalizedDestination) {
       return;

@@ -44,6 +44,7 @@ export class ClientCreateComponent implements OnInit {
   submitting = false;
   collectorOptions: { label: string; value: string }[] = [];
   collectorsLoading = false;
+  collectorsLoadFailed = false;
 
   ngOnInit(): void {
     this.header.set([
@@ -65,7 +66,12 @@ export class ClientCreateComponent implements OnInit {
       address: ['', [Validators.maxLength(255)]],
       phone: [''],
       email: ['', [Validators.email]],
-      assignedCollectorId: ['', [Validators.required]],
+      assignedCollectorId: [
+        {
+          value: '',
+          disabled: this.collectorsLoading || this.collectorOptions.length === 0,
+        },
+      ],
     });
 
     this.loadCollectors();
@@ -76,18 +82,43 @@ export class ClientCreateComponent implements OnInit {
    */
   private loadCollectors(): void {
     this.collectorsLoading = true;
+    this.collectorsLoadFailed = false;
+    this.syncCollectorControlState();
     this.usersService.listCollectors().subscribe({
       next: (collectors) => {
         this.collectorOptions = collectors.map((c) => ({
           label: c.fullName,
           value: c.id,
         }));
+        this.collectorsLoadFailed = false;
         this.collectorsLoading = false;
+        this.syncCollectorControlState();
       },
       error: () => {
+        this.collectorOptions = [];
+        this.collectorsLoadFailed = true;
         this.collectorsLoading = false;
+        this.syncCollectorControlState();
       },
     });
+  }
+
+  /**
+   * Sincroniza el estado habilitado del selector de cobrador según la carga y disponibilidad.
+   */
+  private syncCollectorControlState(): void {
+    const control = this.form.get('assignedCollectorId');
+
+    if (!control) {
+      return;
+    }
+
+    if (this.collectorsLoading || this.collectorOptions.length === 0) {
+      control.disable({ emitEvent: false });
+      return;
+    }
+
+    control.enable({ emitEvent: false });
   }
 
   /**

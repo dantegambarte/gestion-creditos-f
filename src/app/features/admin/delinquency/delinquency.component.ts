@@ -19,7 +19,7 @@ import {
   DelinquencyRow,
   DelinquencyStats,
 } from '../models/interface/delinquency';
-import { DelinquencyApplyDialogComponent } from './delinquency-apply-dialog.component';
+import { DelinquencyApplyDialogComponent } from './delinquency-apply-dialog/delinquency-apply-dialog.component';
 
 @Component({
   selector: 'app-delinquency',
