@@ -60,6 +60,10 @@ export class ClientEditDialogComponent implements OnChanges {
       this.editError = '';
       this.editForm = this.buildEditForm(this.client);
     }
+
+    if (changes['collectorsLoading']) {
+      this.syncCollectorControlState();
+    }
   }
 
   isEditInvalid(field: string): boolean {
@@ -113,11 +117,29 @@ export class ClientEditDialogComponent implements OnChanges {
     });
   }
 
+  /**
+   * Sincroniza el estado habilitado del selector de cobrador con la carga de opciones.
+   */
+  private syncCollectorControlState(): void {
+    const control = this.editForm.get('assignedCollectorId');
+
+    if (!control) {
+      return;
+    }
+
+    if (this.collectorsLoading) {
+      control.disable({ emitEvent: false });
+      return;
+    }
+
+    control.enable({ emitEvent: false });
+  }
+
   private buildEditForm(client: Client | null): FormGroup {
     const parts = client?.name.split(' ') ?? ['', ''];
     const nombre = parts[0] ?? '';
     const apellido = parts.slice(1).join(' ') || '';
-    return this.fb.group({
+    const form = this.fb.group({
       nombre: [
         nombre,
         [
@@ -137,7 +159,9 @@ export class ClientEditDialogComponent implements OnChanges {
       phone: [client?.phone ?? '', [Validators.pattern(/^[\d\s\+\-]*$/)]],
       email: [client?.email ?? '', [Validators.email]],
       direccion: [client?.address ?? '', [Validators.maxLength(255)]],
-      assignedCollectorId: [client?.collectorId ?? ''],
+      assignedCollectorId: [{ value: client?.collectorId ?? '', disabled: this.collectorsLoading }],
     });
+
+    return form;
   }
 }

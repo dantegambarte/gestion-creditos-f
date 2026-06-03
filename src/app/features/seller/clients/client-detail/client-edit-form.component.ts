@@ -148,12 +148,15 @@ export class ClientEditFormComponent implements OnInit {
       address: [this.customer.address ?? '', [Validators.maxLength(255)]],
       phone: [this.customer.phone ?? ''],
       email: [this.customer.email ?? '', [Validators.email]],
-      assignedCollectorId: [this.customer.collectorId ?? ''],
+      assignedCollectorId: [
+        { value: this.customer.collectorId ?? '', disabled: this.collectorsLoading },
+      ],
     });
   }
 
   private loadCollectors(): void {
     this.collectorsLoading = true;
+    this.syncCollectorControlState();
     this.usersService.listCollectors().subscribe({
       next: (collectors) => {
         this.collectorOptions = collectors.map((c) => ({
@@ -161,10 +164,30 @@ export class ClientEditFormComponent implements OnInit {
           value: c.id,
         }));
         this.collectorsLoading = false;
+        this.syncCollectorControlState();
       },
       error: () => {
         this.collectorsLoading = false;
+        this.syncCollectorControlState();
       },
     });
+  }
+
+  /**
+   * Sincroniza el estado habilitado del selector de cobrador con la carga de opciones.
+   */
+  private syncCollectorControlState(): void {
+    const control = this.editForm.get('assignedCollectorId');
+
+    if (!control) {
+      return;
+    }
+
+    if (this.collectorsLoading) {
+      control.disable({ emitEvent: false });
+      return;
+    }
+
+    control.enable({ emitEvent: false });
   }
 }

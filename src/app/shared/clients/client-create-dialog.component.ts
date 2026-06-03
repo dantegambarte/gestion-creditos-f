@@ -59,6 +59,10 @@ export class ClientCreateDialogComponent implements OnChanges {
       this.creatingClient = false;
       this.form = this.buildForm();
     }
+
+    if (changes['collectorsLoading']) {
+      this.syncCollectorControlState();
+    }
   }
 
   isInvalid(field: string): boolean {
@@ -181,8 +185,26 @@ export class ClientCreateDialogComponent implements OnChanges {
     input.value = clean;
   }
 
+  /**
+   * Sincroniza el estado habilitado del selector de cobrador con la carga de opciones.
+   */
+  private syncCollectorControlState(): void {
+    const control = this.form.get('assignedCollectorId');
+
+    if (!control) {
+      return;
+    }
+
+    if (this.collectorsLoading) {
+      control.disable({ emitEvent: false });
+      return;
+    }
+
+    control.enable({ emitEvent: false });
+  }
+
   private buildForm(): FormGroup {
-    return this.fb.group({
+    const form = this.fb.group({
       nombres: [
         '',
         [
@@ -207,7 +229,12 @@ export class ClientCreateDialogComponent implements OnChanges {
       telefonoAlterno: ['', [Validators.pattern(/^[\d\s\+\-]*$/)]],
       email: ['', [Validators.email]],
       direccion: ['', [Validators.required]],
-      assignedCollectorId: ['', [Validators.required]],
+      assignedCollectorId: [
+        { value: '', disabled: this.collectorsLoading },
+        [Validators.required],
+      ],
     });
+
+    return form;
   }
 }
