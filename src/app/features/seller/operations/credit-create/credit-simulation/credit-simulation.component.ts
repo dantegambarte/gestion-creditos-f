@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
-import { SimulateResult } from '../../models/credit.model';
+import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
+import { SimulateResult } from '../../../models/credit.model';
 
 @Component({
   selector: 'app-credit-simulation',

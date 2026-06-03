@@ -17,9 +17,9 @@ import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
-import { AppError } from '../../../../core/models/app-error';
-import { ProductUnit } from '../../models/product-unit.model';
-import { ProductUnitsService } from '../product-units.service';
+import { AppError } from '../../../../../core/models/app-error';
+import { ProductUnit } from '../../../models/product-unit.model';
+import { ProductUnitsService } from '../../product-units.service';
 
 @Component({
   selector: 'app-unit-single-form',

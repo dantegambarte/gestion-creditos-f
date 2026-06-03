@@ -20,8 +20,8 @@ import {
 import { ProductUnitsService } from '../product-units.service';
 import { ProductVariantsService } from '../product-variants.service';
 import { ProductsService } from '../products.service';
-import { UnitBulkFormComponent } from './unit-bulk-form.component';
-import { UnitSingleFormComponent } from './unit-single-form.component';
+import { UnitBulkFormComponent } from './unit-bulk-form/unit-bulk-form.component';
+import { UnitSingleFormComponent } from './unit-single-form/unit-single-form.component';
 
 @Component({
   selector: 'app-product-units',

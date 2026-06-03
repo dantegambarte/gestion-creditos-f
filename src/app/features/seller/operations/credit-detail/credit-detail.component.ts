@@ -27,11 +27,11 @@ import { Installment } from '../../models/installment.model';
 import { CreditsService } from '../credits.service';
 import { CreditPayment } from '../../../collector/models/payment.model';
 import { PaymentsService } from '../../../collector/payments.service';
-import { ApproveDialogComponent } from './dialogs/approve-dialog.component';
-import { RejectDialogComponent } from './dialogs/reject-dialog.component';
-import { RefinanceDialogComponent } from './dialogs/refinance-dialog.component';
-import { SettlementDialogComponent } from './dialogs/settlement-dialog.component';
-import { CreditSchedulePanelComponent } from './credit-schedule-panel.component';
+import { ApproveDialogComponent } from './approve-dialog/approve-dialog.component';
+import { RejectDialogComponent } from './reject-dialog/reject-dialog.component';
+import { RefinanceDialogComponent } from './refinance-dialog/refinance-dialog.component';
+import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog.component';
+import { CreditSchedulePanelComponent } from './credit-schedule-panel/credit-schedule-panel.component';
 import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
 
 @Component({

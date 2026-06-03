@@ -14,14 +14,14 @@ import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
-import { CreditDetail, InstallmentStatus } from '../../models/credit.model';
-import { Installment } from '../../models/installment.model';
-import { CreditPayment } from '../../../collector/models/payment.model';
-import { PaymentsService } from '../../../collector/payments.service';
-import { DirectPaymentDialogComponent } from './dialogs/direct-payment-dialog.component';
-import { PenaltyDialogComponent } from './dialogs/penalty-dialog.component';
-import { WaiveDialogComponent } from './dialogs/waive-dialog.component';
+import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
+import { CreditDetail, InstallmentStatus } from '../../../models/credit.model';
+import { Installment } from '../../../models/installment.model';
+import { CreditPayment } from '../../../../collector/models/payment.model';
+import { PaymentsService } from '../../../../collector/payments.service';
+import { DirectPaymentDialogComponent } from '../direct-payment-dialog/direct-payment-dialog.component';
+import { PenaltyDialogComponent } from '../penalty-dialog/penalty-dialog.component';
+import { WaiveDialogComponent } from '../waive-dialog/waive-dialog.component';
 
 @Component({
   selector: 'app-credit-schedule-panel',

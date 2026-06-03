@@ -17,11 +17,11 @@ import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
-import { AppError } from '../../../../core/models/app-error';
-import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
-import { ProductVariant } from '../../models/product-variant.model';
-import { ProductVariantsService } from '../product-variants.service';
-import { BulkVariantEntryComponent } from './bulk-variant-entry.component';
+import { AppError } from '../../../../../core/models/app-error';
+import { CurrencyAmountInputDirective } from '../../../../../shared/directives/currency-amount-input.directive';
+import { ProductVariant } from '../../../models/product-variant.model';
+import { ProductVariantsService } from '../../product-variants.service';
+import { BulkVariantEntryComponent } from '../bulk-variant-entry/bulk-variant-entry.component';
 
 @Component({
   selector: 'app-variant-form-panel',

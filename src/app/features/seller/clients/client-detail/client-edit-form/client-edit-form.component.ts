@@ -17,13 +17,13 @@ import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
-import { AppError } from '../../../../core/models/app-error';
-import { UsersService } from '../../../admin/users/users.service';
+import { AppError } from '../../../../../core/models/app-error';
+import { UsersService } from '../../../../admin/users/users.service';
 import {
   CustomerDetail,
   CustomerUpdatePayload,
-} from '../../models/customer.model';
-import { CustomersService } from '../customers.service';
+} from '../../../models/customer.model';
+import { CustomersService } from '../../customers.service';
 
 @Component({
   selector: 'app-client-edit-form',

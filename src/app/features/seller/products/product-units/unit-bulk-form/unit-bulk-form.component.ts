@@ -8,8 +8,8 @@ import {
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextareaModule } from 'primeng/inputtextarea';
-import { AppError } from '../../../../core/models/app-error';
-import { ProductUnitsService } from '../product-units.service';
+import { AppError } from '../../../../../core/models/app-error';
+import { ProductUnitsService } from '../../product-units.service';
 
 @Component({
   selector: 'app-unit-bulk-form',

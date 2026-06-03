@@ -12,10 +12,10 @@ import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { firstValueFrom } from 'rxjs';
-import { AppError } from '../../../../core/models/app-error';
-import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
-import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
-import { ProductVariantsService } from '../product-variants.service';
+import { AppError } from '../../../../../core/models/app-error';
+import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
+import { CurrencyAmountInputDirective } from '../../../../../shared/directives/currency-amount-input.directive';
+import { ProductVariantsService } from '../../product-variants.service';
 
 type BulkRow = {
   color: string;

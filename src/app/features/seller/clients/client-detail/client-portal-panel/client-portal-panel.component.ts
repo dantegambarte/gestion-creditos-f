@@ -3,10 +3,10 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
-import { AppError } from '../../../../core/models/app-error';
-import { TempPasswordDialogComponent } from '../../../../shared/components/temp-password-dialog/temp-password-dialog.component';
-import { CustomerDetail } from '../../models/customer.model';
-import { CustomersService } from '../customers.service';
+import { AppError } from '../../../../../core/models/app-error';
+import { TempPasswordDialogComponent } from '../../../../../shared/components/temp-password-dialog/temp-password-dialog.component';
+import { CustomerDetail } from '../../../models/customer.model';
+import { CustomersService } from '../../customers.service';
 
 @Component({
   selector: 'app-client-portal-panel',
