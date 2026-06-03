@@ -1,3 +1,6 @@
+/// <reference types="jasmine" />
+declare const expect: any;
+declare const spyOn: any;
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
@@ -94,6 +97,7 @@ describe('OperationFormService', () => {
         unitIds: ['unit-1'],
         unitCodes: ['SN-001'],
         productIds: ['prod-1'],
+        selectedUnitIds: ['unit-1'],
         rates: [],
         selectedInstallments: 1,
       },
@@ -137,6 +141,7 @@ describe('OperationFormService', () => {
         unitIds: ['unit-1'],
         unitCodes: ['SN-001'],
         productIds: ['prod-1'],
+        selectedUnitIds: ['unit-1'],
         rates: [],
         selectedInstallments: 1,
       },
@@ -166,6 +171,7 @@ describe('OperationFormService', () => {
         unitIds: ['unit-1'],
         unitCodes: ['SN-001'],
         productIds: ['prod-1'],
+        selectedUnitIds: ['unit-1'],
         rates: [],
         selectedInstallments: 1,
       },

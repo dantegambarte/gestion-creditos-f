@@ -53,7 +53,7 @@ describe('StepConditionsComponent', () => {
       const result = component.getInstallmentsOptionsForLine({
         productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
         cantidad: 1, precio: 1000, subtotal: 1000, stockDisponible: 5,
-        unitIds: [], unitCodes: [], productIds: [], rates: [], selectedInstallments: null,
+        unitIds: [], unitCodes: [], productIds: [], selectedUnitIds: [], rates: [], selectedInstallments: null,
       });
       expect(result).toEqual([]);
     });
@@ -63,7 +63,7 @@ describe('StepConditionsComponent', () => {
       const result = component.getInstallmentsOptionsForLine({
         productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
         cantidad: 1, precio: 1000, subtotal: 1000, stockDisponible: 5,
-        unitIds: [], unitCodes: [], productIds: [],
+        unitIds: [], unitCodes: [], productIds: [], selectedUnitIds: [],
         rates: [
           { installmentsCount: 3, paymentFrequency: 'MONTHLY', rate: 0.1, active: true } as any,
           { installmentsCount: 2, paymentFrequency: 'WEEKLY', rate: 0.08, active: true } as any,
@@ -80,7 +80,7 @@ describe('StepConditionsComponent', () => {
       const result = component.getLineInstallmentValue({
         productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
         cantidad: 1, precio: 10000, subtotal: 10000, stockDisponible: 5,
-        unitIds: [], unitCodes: [], productIds: [], rates: [], selectedInstallments: null,
+        unitIds: [], unitCodes: [], productIds: [], selectedUnitIds: [], rates: [], selectedInstallments: null,
       });
       expect(result).toBe(0);
     });

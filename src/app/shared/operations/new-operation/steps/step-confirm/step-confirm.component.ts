@@ -77,19 +77,18 @@ export class StepConfirmComponent {
   }
 
   /**
-   * Expande las unidades serializadas del carrito para renderizarlas una por una en el resumen lateral.
+   * Expande las unidades serializadas del carrito para renderizarlas una por una
+   * en el resumen lateral. Usa las unidades REALMENTE seleccionadas (en su orden
+   * de selección), no las primeras del catálogo — sino el resumen mostraba un
+   * IMEI distinto al que el usuario eligió.
    * @returns {{ title: string; unitCode: string }[]} Lista plana de unidades visibles.
    */
   get selectedUnitsSummary(): { title: string; unitCode: string }[] {
     return this.cartLines.flatMap((line) => {
       const baseTitle = `${line.nombre} ${this.getVariantLabel(line)}`.trim();
-      const unitCodes = line.unitCodes?.length
-        ? line.unitCodes.slice(0, Math.max(1, Number(line.cantidad ?? 0)))
-        : ['-'];
-      return unitCodes.map((unitCode) => ({
-        title: baseTitle,
-        unitCode,
-      }));
+      const unitCodes = this.selectedUnitCodes(line);
+      const codes = unitCodes.length ? unitCodes : ['-'];
+      return codes.map((unitCode) => ({ title: baseTitle, unitCode }));
     });
   }
 
@@ -275,7 +274,18 @@ export class StepConfirmComponent {
    * @returns {string} Texto compacto con seriales o guion si no hay datos.
    */
   getUnitCodesLabel(line: CartLine): string {
-    return line.unitCodes?.length ? line.unitCodes.join(', ') : '-';
+    const codes = this.selectedUnitCodes(line);
+    return codes.length ? codes.join(', ') : '-';
+  }
+
+  /**
+   * Mapea selectedUnitIds de una línea a sus códigos (IMEI/serial) en el orden
+   * de selección. Devuelve la lista real de unidades que se van a vender.
+   */
+  selectedUnitCodes(line: CartLine): string[] {
+    return line.selectedUnitIds
+      .map((id) => line.unitCodes[line.unitIds.indexOf(id)])
+      .filter((code): code is string => !!code);
   }
 
   /**

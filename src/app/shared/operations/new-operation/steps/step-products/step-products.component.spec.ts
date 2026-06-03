@@ -63,7 +63,8 @@ describe('StepProductsComponent', () => {
       component.cartLines = [{
         productoId: 'p1', nombre: 'Heladera', variantId: 'v1', variantLabel: 'Std',
         cantidad: 3, precio: 1000, subtotal: 3000, stockDisponible: 3,
-        unitIds: [], unitCodes: [], productIds: [], rates: [], selectedInstallments: null,
+        unitIds: [], unitCodes: [], productIds: [], selectedUnitIds: [],
+        rates: [], selectedInstallments: null,
       }];
       expect(component.isCatalogProductOutOfStock(mockCatalog[0])).toBeTrue();
     });
