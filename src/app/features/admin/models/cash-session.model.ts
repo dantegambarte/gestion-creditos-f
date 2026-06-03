@@ -44,6 +44,37 @@ export interface CashSession {
   observations?: string | null;
 }
 
+/**
+ * F2-0: estructura derivada del closure_snapshot expuesta en GET
+ * /api/cash-sessions. Los consumers NO leen closure_snapshot directamente;
+ * usan este objeto para que la API quede estable frente a la evolución
+ * del snapshot (v2, métodos nuevos, etc.).
+ */
+export interface CashSessionSummary {
+  collections: number;
+  expenses: number;
+  drops: number;
+  difference: number;
+}
+
+/**
+ * Item del listado GET /api/cash-sessions?business_day_id=X. Extiende
+ * CashSession con campos enriquecidos del JOIN y el summary derivado.
+ */
+export interface CashSessionListItem extends CashSession {
+  closure_total_difference?: number | null;
+  closure_difference_status?: 'EXACT' | 'SURPLUS' | 'SHORTAGE' | null;
+  pending_reconciliation_at?: string | null;
+  pending_reconciliation_reason?: string | null;
+  reconciled_at?: string | null;
+  reconciled_by?: string | null;
+  business_date?: string;
+  branch_id?: string;
+  owner_name?: string;
+  /** null en sesiones OPEN o PENDING (sin snapshot aún). */
+  summary: CashSessionSummary | null;
+}
+
 // ── Snapshot (X report en vivo) ────────────────────────────────────────────
 
 export interface CashByMethod {

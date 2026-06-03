@@ -37,6 +37,8 @@ import { CashSessionOpenDialogComponent } from './cash-session-open-dialog/cash-
 import { CashSessionCloseDialogComponent } from './cash-session-close-dialog/cash-session-close-dialog.component';
 import { CashSessionSnapshotDialogComponent } from './cash-session-snapshot-dialog/cash-session-snapshot-dialog.component';
 import { CashSessionDropDialogComponent } from './cash-session-drop-dialog/cash-session-drop-dialog.component';
+import { CashSessionHistoryListComponent } from './cash-session-history-list/cash-session-history-list.component';
+import { BusinessDayCloseDialogComponent } from './business-day-close-dialog/business-day-close-dialog.component';
 import { CashRegisterService } from './cash-register.service';
 import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 
@@ -66,6 +68,8 @@ import { CurrencyAmountInputDirective } from '../../../shared/directives/currenc
     CashSessionCloseDialogComponent,
     CashSessionSnapshotDialogComponent,
     CashSessionDropDialogComponent,
+    CashSessionHistoryListComponent,
+    BusinessDayCloseDialogComponent,
     CurrencyAmountInputDirective,
   ],
   providers: [MessageService],
@@ -130,6 +134,11 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   showSnapshotDialog = false;
   showDropDialog = false;
   selectedSessionId: string | null = null;
+  /** F2: cuenta de cambios; el historial reacciona vía @Input refreshSignal. */
+  historyRefreshSignal = 0;
+
+  /** F3: visibilidad del dialog "Cerrar jornada". */
+  showCloseBusinessDayDialog = false;
 
   /**
    * Indica si la jornada activa pertenece a un día calendario anterior al actual.
@@ -538,9 +547,63 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     this.showDropDialog = true;
   }
 
-  /** Callback tras abrir, cerrar o dropear: refresca estado de jornada. */
+  /** Callback tras abrir, cerrar o dropear: refresca estado de jornada + historial. */
   onJornadaStateChanged(): void {
     this.loadJornadaState();
+    this.historyRefreshSignal++;
+  }
+
+  /** F2: handler de "Ver Snapshot" desde el historial de cajas. */
+  onHistoryViewSnapshot(sessionId: string): void {
+    this.selectedSessionId = sessionId;
+    this.showSnapshotDialog = true;
+  }
+
+  // ── F3: Cerrar Jornada (validación estricta) ────────────────────────────
+
+  /**
+   * F3: el botón "Cerrar Jornada" SOLO se habilita cuando:
+   *   · La jornada está en READY_TO_CLOSE (ya transicionada por el backend
+   *     cuando todas las cajas se cerraron).
+   *   · No hay cajas OPEN ni PENDING_RECONCILIATION (defensa extra; debería
+   *     ser implicado por el status anterior).
+   *   · Hay al menos una caja registrada (total_count > 0).
+   *
+   * El force-close (jornadas trabadas) NO se ofrece desde este flujo.
+   */
+  get canCloseBusinessDay(): boolean {
+    if (!this.activeBusinessDay) return false;
+    if (this.activeBusinessDay.status !== 'READY_TO_CLOSE') return false;
+    const counts = this.activeBusinessDay.session_counts;
+    return counts.open_count === 0 && counts.pending_count === 0 && counts.total_count > 0;
+  }
+
+  /** Texto del tooltip cuando el botón está disabled, explicando por qué. */
+  get closeBusinessDayTooltip(): string {
+    if (!this.activeBusinessDay) return 'No hay jornada activa.';
+    const counts = this.activeBusinessDay.session_counts;
+    if (counts.open_count > 0)
+      return 'Cerrá la caja operativa antes de cerrar la jornada.';
+    if (counts.pending_count > 0)
+      return 'Reconciliá las cajas pendientes antes de cerrar la jornada.';
+    if (counts.total_count === 0)
+      return 'La jornada todavía no tiene cajas registradas.';
+    if (this.activeBusinessDay.status === 'CLOSED' ||
+        this.activeBusinessDay.status === 'AUDITED')
+      return `Jornada ya ${this.activeBusinessDay.status === 'CLOSED' ? 'cerrada' : 'auditada'}.`;
+    if (this.activeBusinessDay.status === 'OPEN')
+      return 'La jornada sigue OPEN; debe pasar a READY_TO_CLOSE.';
+    return 'Cerrar jornada formalmente.';
+  }
+
+  openCloseBusinessDayDialog(): void {
+    if (!this.canCloseBusinessDay) return;
+    this.showCloseBusinessDayDialog = true;
+  }
+
+  onBusinessDayClosed(): void {
+    this.loadJornadaState();
+    this.historyRefreshSignal++;
   }
 
   // ── Helpers de UI para Jornada Actual ───────────────────────────────────

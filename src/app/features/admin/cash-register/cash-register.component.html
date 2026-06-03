@@ -82,16 +82,18 @@
               </div>
             </div>
 
-            <!-- Botón Cerrar Jornada — placeholder F3 -->
+            <!-- Cerrar Jornada (F3) — habilitación estricta -->
             <button
               pButton
               type="button"
               icon="pi pi-lock"
               label="Cerrar Jornada"
-              class="p-button-text p-button-sm"
-              [disabled]="true"
-              pTooltip="Próximamente (F3)"
+              [class.p-button-text]="!canCloseBusinessDay"
+              class="p-button-sm"
+              [disabled]="!canCloseBusinessDay"
+              [pTooltip]="closeBusinessDayTooltip"
               tooltipPosition="left"
+              (click)="openCloseBusinessDayDialog()"
             ></button>
           </div>
         } @else {
@@ -180,21 +182,24 @@
         </p-card>
       </div>
 
-      <!-- Placeholder: Historial de cajas de la jornada (F2) -->
-      <div class="mt-4">
-        <p-card>
-          <ng-template pTemplate="header">
-            <div class="px-4 pt-4 text-base font-semibold flex items-center gap-2 text-gray-500">
-              <i class="pi pi-list"></i>
-              Historial de cajas de la jornada
-              <span class="ml-2 text-xs font-normal">(Próximamente — F2)</span>
-            </div>
-          </ng-template>
-          <div class="text-sm text-gray-400">
-            Listado de turnos (abiertos, cerrados, pendientes) de la jornada actual.
-          </div>
-        </p-card>
-      </div>
+      <!-- Historial de cajas de la jornada (F2) -->
+      @if (activeBusinessDay) {
+        <div class="mt-4">
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="px-4 pt-4 text-base font-semibold flex items-center gap-2">
+                <i class="pi pi-list" style="color: var(--ff-primary)"></i>
+                Historial de cajas de la jornada
+              </div>
+            </ng-template>
+            <app-cash-session-history-list
+              [businessDayId]="activeBusinessDay.id"
+              [refreshSignal]="historyRefreshSignal"
+              (viewSnapshot)="onHistoryViewSnapshot($event)"
+            ></app-cash-session-history-list>
+          </p-card>
+        </div>
+      }
     }
 
   </p-tabPanel>
@@ -747,3 +752,10 @@
   [sessionId]="selectedSessionId"
   (dropCreated)="onJornadaStateChanged()"
 ></app-cash-session-drop-dialog>
+
+<app-business-day-close-dialog
+  [(visible)]="showCloseBusinessDayDialog"
+  [businessDayId]="activeBusinessDay?.id ?? null"
+  [businessDate]="activeBusinessDay?.business_date ?? null"
+  (closedSuccessfully)="onBusinessDayClosed()"
+></app-business-day-close-dialog>

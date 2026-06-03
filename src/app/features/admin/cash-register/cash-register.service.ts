@@ -21,6 +21,7 @@ import {
   CashSessionClosePayload,
   CashSessionDropPayload,
   CashSessionDropResponse,
+  CashSessionListItem,
   CashSessionOpenPayload,
   CashSessionSnapshot,
 } from '../models/cash-session.model';
@@ -289,6 +290,30 @@ export class CashRegisterService {
   /** V4: caja operativa activa de la jornada actual (única por jornada). */
   getActiveSession(): Observable<CashSession | null> {
     return this.api.get<CashSession | null>('cash-sessions/active');
+  }
+
+  /**
+   * V4 (F3): cierra formalmente la jornada (READY_TO_CLOSE → CLOSED).
+   * Solo se debe llamar cuando no hay cajas OPEN ni PENDING — el frontend
+   * valida estrictamente antes de exponer el botón. El force-close (jornadas
+   * trabadas con cajas pendientes) NO se expone en este flujo; queda como
+   * herramienta administrativa de excepción accesible vía backend.
+   */
+  closeBusinessDay(id: string, observations?: string): Observable<unknown> {
+    const body: Record<string, unknown> = {};
+    if (observations) body['observations'] = observations;
+    return this.api.post(`business-days/${id}/close`, body);
+  }
+
+  /**
+   * V4 (F2): lista las cajas de una jornada con summary enriquecido
+   * (collections, expenses, drops, difference) — derivado del closure_snapshot
+   * por el backend, sin exponer el snapshot crudo.
+   */
+  listSessionsByBusinessDay(businessDayId: string): Observable<CashSessionListItem[]> {
+    return this.api.get<CashSessionListItem[]>('cash-sessions', {
+      business_day_id: businessDayId,
+    });
   }
 
   /**
