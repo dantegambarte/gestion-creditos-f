@@ -1,0 +1,96 @@
+<p-dialog
+  header="Drop a Caja General"
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!submitting"
+  (visibleChange)="visibleChange.emit($event)"
+  [style]="{ width: '460px' }"
+>
+  <div class="flex flex-col gap-3">
+    <p class="text-sm text-gray-600">
+      Envía efectivo o transferencia desde la caja operativa hacia Caja General
+      (tesorería). Genera automáticamente un movimiento <strong>DROP_IN</strong>
+      en la cuenta destino.
+    </p>
+
+    <div>
+      <label class="block text-sm font-medium mb-1" for="drop-method">Método</label>
+      <p-dropdown
+        inputId="drop-method"
+        [options]="methodOptions"
+        [(ngModel)]="paymentMethod"
+        optionLabel="label"
+        optionValue="value"
+        class="w-full"
+        [style]="{ width: '100%' }"
+      ></p-dropdown>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium mb-1" for="drop-amount">Monto</label>
+      <p-inputNumber
+        inputId="drop-amount"
+        [(ngModel)]="amount"
+        mode="currency"
+        currency="ARS"
+        appCurrencyAmountInput
+        [min]="0.01"
+        [showButtons]="false"
+        class="w-full"
+      ></p-inputNumber>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium mb-1" for="drop-reason">
+        Motivo <span class="text-gray-400">(opcional)</span>
+      </label>
+      <textarea
+        pInputTextarea
+        id="drop-reason"
+        [(ngModel)]="reason"
+        rows="2"
+        maxlength="500"
+        class="w-full"
+      ></textarea>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium mb-1" for="drop-receipt">
+        Comprobante / referencia <span class="text-gray-400">(opcional)</span>
+      </label>
+      <input
+        pInputText
+        id="drop-receipt"
+        [(ngModel)]="receiptReference"
+        maxlength="120"
+        class="w-full"
+      />
+    </div>
+
+    @if (errorMessage) {
+      <div class="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+        {{ errorMessage }}
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      label="Cancelar"
+      class="p-button-text"
+      [disabled]="submitting"
+      (click)="close()"
+    ></button>
+    <button
+      pButton
+      label="Registrar drop"
+      icon="pi pi-send"
+      [loading]="submitting"
+      [disabled]="!canSubmit()"
+      (click)="submit()"
+    ></button>
+  </ng-template>
+</p-dialog>

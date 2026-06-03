@@ -1,6 +1,209 @@
 <p-toast />
 
 <div class="p-6 space-y-6" data-cy="admin-cash-register-page">
+
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- V4: TabView con "Jornada Actual" (default) y "Histórico Legacy"       -->
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<p-tabView>
+
+  <!-- ──────────────────────────────────────────────────────────────────── -->
+  <!-- TAB 1 — Jornada Actual (modelo V4)                                  -->
+  <!-- ──────────────────────────────────────────────────────────────────── -->
+  <p-tabPanel header="Jornada Actual" leftIcon="pi pi-calendar">
+
+    @if (loadingJornada && !activeBusinessDay && !activeSession) {
+      <app-loading-state message="Cargando jornada..."></app-loading-state>
+    } @else if (errorJornada) {
+      <div class="flex items-center justify-between gap-3 p-4 border border-red-200 bg-red-50 rounded">
+        <div class="text-sm text-red-700">
+          {{ errorJornada.message || 'No se pudo cargar la jornada.' }}
+        </div>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-refresh"
+          label="Reintentar"
+          class="p-button-sm p-button-outlined"
+          (click)="loadJornadaState()"
+        ></button>
+      </div>
+    } @else {
+      <!-- Card Jornada -->
+      <p-card>
+        <ng-template pTemplate="header">
+          <div class="flex items-center justify-between px-4 pt-4">
+            <div class="flex items-center gap-3">
+              <i class="pi pi-calendar text-xl" style="color: var(--ff-primary)"></i>
+              <div>
+                <div class="text-lg font-semibold">
+                  @if (activeBusinessDay) {
+                    Jornada del {{ formatDate(activeBusinessDay.business_date) }}
+                  } @else {
+                    Sin jornada activa
+                  }
+                </div>
+                @if (activeBusinessDay) {
+                  <div class="text-xs text-gray-500 mt-0.5">
+                    Sucursal {{ activeBusinessDay.branch_id.slice(0, 8) }} ·
+                    abierta {{ formatDateTime(activeBusinessDay.opened_at) }}
+                  </div>
+                }
+              </div>
+            </div>
+            @if (activeBusinessDay) {
+              <p-tag
+                [value]="businessDayStatusLabel(activeBusinessDay.status)"
+                [severity]="businessDayStatusSeverity(activeBusinessDay.status)"
+              ></p-tag>
+            }
+          </div>
+        </ng-template>
+
+        <!-- Body: counts de cajas + acciones de jornada -->
+        @if (activeBusinessDay) {
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex gap-4 text-sm">
+              <div>
+                <span class="text-gray-500">Cajas:</span>
+                <strong class="ml-1">{{ activeBusinessDay.session_counts.total_count }}</strong>
+              </div>
+              <div>
+                <span class="text-gray-500">Abiertas:</span>
+                <strong class="ml-1 text-green-600">{{ activeBusinessDay.session_counts.open_count }}</strong>
+              </div>
+              <div>
+                <span class="text-gray-500">Pendientes:</span>
+                <strong class="ml-1 text-yellow-600">{{ activeBusinessDay.session_counts.pending_count }}</strong>
+              </div>
+              <div>
+                <span class="text-gray-500">Cerradas:</span>
+                <strong class="ml-1 text-gray-700">{{ activeBusinessDay.session_counts.closed_count }}</strong>
+              </div>
+            </div>
+
+            <!-- Botón Cerrar Jornada — placeholder F3 -->
+            <button
+              pButton
+              type="button"
+              icon="pi pi-lock"
+              label="Cerrar Jornada"
+              class="p-button-text p-button-sm"
+              [disabled]="true"
+              pTooltip="Próximamente (F3)"
+              tooltipPosition="left"
+            ></button>
+          </div>
+        } @else {
+          <div class="text-sm text-gray-500">
+            No hay jornada abierta. Se creará automáticamente al abrir la primera caja.
+          </div>
+        }
+      </p-card>
+
+      <!-- Subcard: Caja Activa -->
+      <div class="mt-4">
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="px-4 pt-4 text-base font-semibold flex items-center gap-2">
+              <i class="pi pi-wallet" style="color: var(--ff-primary)"></i>
+              Caja Operativa Activa
+            </div>
+          </ng-template>
+
+          @if (activeSession) {
+            <div class="flex flex-col gap-3">
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <div class="text-gray-500">ID</div>
+                  <div class="font-mono text-xs">#{{ activeSession.id.slice(0, 8) }}</div>
+                </div>
+                <div>
+                  <div class="text-gray-500">Apertura</div>
+                  <div>{{ formatDateTime(activeSession.opened_at) }}</div>
+                </div>
+                <div>
+                  <div class="text-gray-500">Monto inicial</div>
+                  <div>{{ formatCurrency(activeSession.opening_amount) }}</div>
+                </div>
+                <div>
+                  <div class="text-gray-500">Turno</div>
+                  <div>{{ activeSession.shift_label || '—' }}</div>
+                </div>
+              </div>
+
+              <div class="flex gap-2 flex-wrap pt-2">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  label="Snapshot"
+                  class="p-button-outlined"
+                  (click)="openSnapshotDialog()"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-send"
+                  label="Drop a Caja General"
+                  class="p-button-outlined"
+                  (click)="openDropDialog()"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-lock"
+                  label="Cerrar Caja"
+                  (click)="openCloseSessionDialog()"
+                ></button>
+              </div>
+            </div>
+          } @else {
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div class="text-sm text-gray-600">
+                No existe caja operativa abierta.
+                @if (activeBusinessDay?.status === 'READY_TO_CLOSE') {
+                  <span class="block text-xs text-yellow-600 mt-1">
+                    La jornada está en READY_TO_CLOSE. Si abrís una caja, vuelve a OPEN.
+                  </span>
+                }
+              </div>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-plus"
+                label="Abrir Caja"
+                (click)="openOpenSessionDialog()"
+              ></button>
+            </div>
+          }
+        </p-card>
+      </div>
+
+      <!-- Placeholder: Historial de cajas de la jornada (F2) -->
+      <div class="mt-4">
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="px-4 pt-4 text-base font-semibold flex items-center gap-2 text-gray-500">
+              <i class="pi pi-list"></i>
+              Historial de cajas de la jornada
+              <span class="ml-2 text-xs font-normal">(Próximamente — F2)</span>
+            </div>
+          </ng-template>
+          <div class="text-sm text-gray-400">
+            Listado de turnos (abiertos, cerrados, pendientes) de la jornada actual.
+          </div>
+        </p-card>
+      </div>
+    }
+
+  </p-tabPanel>
+
+  <!-- ──────────────────────────────────────────────────────────────────── -->
+  <!-- TAB 2 — Histórico Legacy (modelo viejo, se elimina en cleanup)       -->
+  <!-- ──────────────────────────────────────────────────────────────────── -->
+  <p-tabPanel header="Histórico Legacy" leftIcon="pi pi-history">
+
   <!-- Page header -->
   <div class="flex items-center justify-between">
     <div>
@@ -360,6 +563,10 @@
       </div>
     }
   </div>
+
+  </p-tabPanel>
+
+</p-tabView>
 </div>
 
 <app-cash-register-close-dialog
@@ -515,3 +722,28 @@
     </div>
   </ng-template>
 </p-dialog>
+
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- Dialogs V4 (Jornada Actual)                                            -->
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<app-cash-session-open-dialog
+  [(visible)]="showOpenSessionDialog"
+  (openedSuccessfully)="onJornadaStateChanged()"
+></app-cash-session-open-dialog>
+
+<app-cash-session-close-dialog
+  [(visible)]="showCloseSessionDialog"
+  [sessionId]="selectedSessionId"
+  (closedSuccessfully)="onJornadaStateChanged()"
+></app-cash-session-close-dialog>
+
+<app-cash-session-snapshot-dialog
+  [(visible)]="showSnapshotDialog"
+  [sessionId]="selectedSessionId"
+></app-cash-session-snapshot-dialog>
+
+<app-cash-session-drop-dialog
+  [(visible)]="showDropDialog"
+  [sessionId]="selectedSessionId"
+  (dropCreated)="onJornadaStateChanged()"
+></app-cash-session-drop-dialog>

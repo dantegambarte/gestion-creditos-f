@@ -10,6 +10,7 @@ import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { TableModule } from 'primeng/table';
+import { TabViewModule } from 'primeng/tabview';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
@@ -27,9 +28,15 @@ import {
   CashRegisterFilters,
   DifferenceStatus,
 } from '../models/cash-register.model';
+import { ActiveBusinessDay } from '../models/business-day.model';
+import { CashSession } from '../models/cash-session.model';
 import { CashRegisterCloseDialogComponent } from './cash-register-close-dialog/cash-register-close-dialog.component';
 import { CashRegisterClosePanelComponent } from './cash-register-close-panel/cash-register-close-panel.component';
 import { CashRegisterDetailDialogComponent } from './cash-register-detail-dialog/cash-register-detail-dialog.component';
+import { CashSessionOpenDialogComponent } from './cash-session-open-dialog/cash-session-open-dialog.component';
+import { CashSessionCloseDialogComponent } from './cash-session-close-dialog/cash-session-close-dialog.component';
+import { CashSessionSnapshotDialogComponent } from './cash-session-snapshot-dialog/cash-session-snapshot-dialog.component';
+import { CashSessionDropDialogComponent } from './cash-session-drop-dialog/cash-session-drop-dialog.component';
 import { CashRegisterService } from './cash-register.service';
 import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 
@@ -46,6 +53,7 @@ import { CurrencyAmountInputDirective } from '../../../shared/directives/currenc
     InputNumberModule,
     InputTextareaModule,
     TableModule,
+    TabViewModule,
     TagModule,
     ToastModule,
     TooltipModule,
@@ -54,6 +62,10 @@ import { CurrencyAmountInputDirective } from '../../../shared/directives/currenc
     CashRegisterClosePanelComponent,
     CashRegisterCloseDialogComponent,
     CashRegisterDetailDialogComponent,
+    CashSessionOpenDialogComponent,
+    CashSessionCloseDialogComponent,
+    CashSessionSnapshotDialogComponent,
+    CashSessionDropDialogComponent,
     CurrencyAmountInputDirective,
   ],
   providers: [MessageService],
@@ -107,6 +119,18 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     { label: 'Caja de la empresa', value: 'COMPANY' as const },
   ];
 
+  // ── V4: Jornada + Caja Operativa ─────────────────────────────────────────
+  activeBusinessDay: ActiveBusinessDay | null = null;
+  activeSession: CashSession | null = null;
+  loadingJornada = false;
+  errorJornada: AppError | null = null;
+
+  showOpenSessionDialog = false;
+  showCloseSessionDialog = false;
+  showSnapshotDialog = false;
+  showDropDialog = false;
+  selectedSessionId: string | null = null;
+
   /**
    * Indica si la jornada activa pertenece a un día calendario anterior al actual.
    * Ocurre cuando se trabaja pasada la medianoche sin haber cerrado la caja del día anterior.
@@ -123,6 +147,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     this.header.set([{ label: 'Caja' }]);
     this.loadDashboard();
     this.loadHistory();
+    this.loadJornadaState();
     this.startPolling();
   }
 
@@ -458,5 +483,89 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    */
   paymentMethodLabel(method: string): string {
     return method === 'CASH' ? 'Efectivo' : 'Transferencia';
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // V4 — Jornada Actual + Caja Operativa
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /**
+   * V4: carga jornada activa + caja activa en paralelo. Se llama en ngOnInit
+   * y después de cada acción (abrir/cerrar caja, drop) para que la UI no
+   * quede desincronizada.
+   */
+  loadJornadaState(): void {
+    this.loadingJornada = true;
+    this.errorJornada = null;
+    this.service
+      .refreshJornadaState()
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.loadingJornada = false)),
+      )
+      .subscribe({
+        next: ({ businessDay, activeSession }) => {
+          this.activeBusinessDay = businessDay;
+          this.activeSession = activeSession;
+        },
+        error: (err: AppError) => {
+          this.errorJornada = err;
+        },
+      });
+  }
+
+  // ── Acciones sobre la caja operativa V4 ─────────────────────────────────
+
+  openOpenSessionDialog(): void {
+    this.showOpenSessionDialog = true;
+  }
+
+  openCloseSessionDialog(): void {
+    if (!this.activeSession) return;
+    this.selectedSessionId = this.activeSession.id;
+    this.showCloseSessionDialog = true;
+  }
+
+  openSnapshotDialog(): void {
+    if (!this.activeSession) return;
+    this.selectedSessionId = this.activeSession.id;
+    this.showSnapshotDialog = true;
+  }
+
+  openDropDialog(): void {
+    if (!this.activeSession) return;
+    this.selectedSessionId = this.activeSession.id;
+    this.showDropDialog = true;
+  }
+
+  /** Callback tras abrir, cerrar o dropear: refresca estado de jornada. */
+  onJornadaStateChanged(): void {
+    this.loadJornadaState();
+  }
+
+  // ── Helpers de UI para Jornada Actual ───────────────────────────────────
+
+  /** Etiqueta legible del status de jornada. */
+  businessDayStatusLabel(status: string): string {
+    switch (status) {
+      case 'OPEN':           return 'Abierta';
+      case 'READY_TO_CLOSE': return 'Lista para cerrar';
+      case 'CLOSED':         return 'Cerrada';
+      case 'AUDITED':        return 'Auditada';
+      default:               return status;
+    }
+  }
+
+  /** Severity de PrimeNG-Tag para el status de jornada. */
+  businessDayStatusSeverity(
+    status: string,
+  ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
+    switch (status) {
+      case 'OPEN':           return 'success';
+      case 'READY_TO_CLOSE': return 'warning';
+      case 'CLOSED':         return 'info';
+      case 'AUDITED':        return 'secondary';
+      default:               return 'info';
+    }
   }
 }
