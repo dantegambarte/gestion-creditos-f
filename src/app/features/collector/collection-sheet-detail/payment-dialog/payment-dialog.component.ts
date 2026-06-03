@@ -22,7 +22,7 @@ import { CurrencyAmountInputDirective } from '../../../../shared/directives/curr
 import { CollectionSheetItem } from '../../models/collection.model';
 import { PaymentCreatePayload } from '../../models/payment.model';
 import { PaymentsService } from '../../payments.service';
-import { CollectionDialogSuccess } from './sheet-dialog.model';
+import { CollectionDialogSuccess } from '../sheet-dialog.model';
 
 @Component({
   selector: 'app-collection-payment-dialog',

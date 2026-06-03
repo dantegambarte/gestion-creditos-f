@@ -22,7 +22,7 @@ import {
   FirstPaymentDateMode,
   SaleInstallmentOption,
 } from '../../operation-form.service';
-import { StepConditionsSimulationPanelComponent } from './step-conditions-simulation-panel.component';
+import { StepConditionsSimulationPanelComponent } from './step-conditions-simulation-panel/step-conditions-simulation-panel.component';
 
 @Component({
   selector: 'app-step-conditions',

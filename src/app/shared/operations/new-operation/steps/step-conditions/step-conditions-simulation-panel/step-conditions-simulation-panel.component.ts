@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
-import { SimulateResult } from '../../../../../features/seller/models/credit.model';
+import { CurrencyArsPipe } from '../../../../../../core/pipes/currency-ars.pipe';
+import { SimulateResult } from '../../../../../../features/seller/models/credit.model';
 
 @Component({
   selector: 'app-step-conditions-simulation-panel',

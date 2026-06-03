@@ -9,7 +9,7 @@ import {
   AntecedentType,
   CollectionSheetItem,
 } from '../../models/collection.model';
-import { CollectionDialogSuccess } from './sheet-dialog.model';
+import { CollectionDialogSuccess } from '../sheet-dialog.model';
 
 @Component({
   selector: 'app-collection-void-dialog',

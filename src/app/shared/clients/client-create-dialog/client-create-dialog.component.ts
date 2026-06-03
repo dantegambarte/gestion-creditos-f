@@ -18,7 +18,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
-import { CustomersService } from '../../features/seller/clients/customers.service';
+import { CustomersService } from '../../../features/seller/clients/customers.service';
 
 @Component({
   selector: 'app-client-create-dialog',

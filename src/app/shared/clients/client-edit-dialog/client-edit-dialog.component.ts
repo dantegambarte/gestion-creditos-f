@@ -18,8 +18,8 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
-import { CustomersService } from '../../features/seller/clients/customers.service';
-import { Client } from '../models/interface/client';
+import { CustomersService } from '../../../features/seller/clients/customers.service';
+import { Client } from '../../models/interface/client';
 
 @Component({
   selector: 'app-client-edit-dialog',

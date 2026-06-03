@@ -23,8 +23,8 @@ import { CustomersService } from '../../features/seller/clients/customers.servic
 import { Customer } from '../../features/seller/models/customer.model';
 import { AppRoutes } from '../models/enums/routes.enum';
 import { Client } from '../models/interface/client';
-import { ClientCreateDialogComponent } from './client-create-dialog.component';
-import { ClientEditDialogComponent } from './client-edit-dialog.component';
+import { ClientCreateDialogComponent } from './client-create-dialog/client-create-dialog.component';
+import { ClientEditDialogComponent } from './client-edit-dialog/client-edit-dialog.component';
 
 const AVATAR_COLORS = [
   '#3B82F6',
