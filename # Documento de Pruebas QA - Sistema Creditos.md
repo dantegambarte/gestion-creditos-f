@@ -30,6 +30,7 @@
 | **CR-21** | Operación Crédito - Declaraciones y Autorizaciones | Faltaba un control para marcar todas las declaraciones en la pantalla de confirmación | Debe existir un botón para marcar todas las declaraciones y que las casillas queden efectivamente marcadas | Corregido / Validado — agregado botón "Marcar todas" (`data-cy="btn-mark-all"`) en `step-confirm.component.html`; método `setAllDeclarations` añadido en `step-confirm.component.ts`; test E2E `cypress/e2e/03-nueva-operacion-real.cy.ts` actualizado para usar el nuevo botón |
 | **CR-22** | Nueva Operación. | Se hizo click en "Nueva Operación" - Venta. | Debería poder elegir la unidad del producto. | Al alegir una unidad de un producto, automáticamente se selecciona la primera unidad disponible. | Error |
 | **CR-23** | Aprobar Crédito. | Se hizo click en "Aprobar Crédito". | Debería poder ver la cantidad de cuotas que se eligió en el plan. | No muestra la cantidad de cuotas que se eligió en la preventa. | Error |
+| **CR-24** | Adelanto de cuotas. | Se hizo click en "Venta de producto" con adelanto de cuotas. | Si se adelanta 2 cuotas la siguiente aparece con fecha para cobrar con error. | Error |
 
 
 ## 🟢 2. Módulo: Cliente
@@ -86,6 +87,7 @@
 | **PL-02** | Botones | Los botones no están correctamente ubicados. | Deberían seguir los patrones visuales. | Corregido / Validado |
 | **PL-03** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar "Generar Planilla para todos". | Corregido |
 | **PL-04** | Mi Ruta - Collector | Se hizo click en "Ver Planilla". | Al seleccionar el ícono del calendario, el mismo ocupa toda la pantalla. | Corregido |
+| **PL-05** | Generar Planilla | Se hizo click en "Generar Planilla" del día. | Debería mostrar las cuotas de ese día. | Error |
 
 
 ## 🟢 Módulo: Gastos

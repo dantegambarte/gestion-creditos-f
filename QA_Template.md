@@ -334,6 +334,16 @@ http://localhost:3000/api/credits - POST
 
 ---
 
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-24]
+**Título / Descripción:** [Adelanto de cuotas]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Venta de producto" con adelanto de cuotas.]
+* **Resultado Esperado:** [Debería la cuota siguiente adelantarse.]
+* **Resultado Obtenido (Error):** [Si se adelanta 2 cuotas la siguiente aparece con fecha para cobrar con error.]
+
+---
+
 
 Módulo Clientes
 
@@ -765,6 +775,16 @@ Módulo Planilla
 * **Acción Realizada:** [Se hizo click en "Ver Planillas" - "Cobrar" (importe menor que la cuota) o "No Pagó".]
 * **Resultado Esperado:** [Al seleccionar el ícono del calendario, el mismo ocupa toda la pantalla.]
 * **Resultado Obtenido (Error):**[Debería desplegarse un calendario mas pequeño.]
+
+---
+
+**Módulo:** [Planilla]
+**ID de Prueba:** [PL-05]
+**Título / Descripción:** [Generar Planilla]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Generar Planilla" del día.]
+* **Resultado Esperado:** [Debería mostrar las cuotas de ese día.]
+* **Resultado Obtenido (Error):**[Aparecen todas las cuotas, vencidas y no vencidas.]
 
 ---
 
