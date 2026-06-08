@@ -320,7 +320,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Nueva Operación" - Venta.]
 * **Resultado Esperado:** [Debería poder elegir la unidad del producto.]
-* **Resultado Obtenido (Error):** [Al alegir una unidad de un producto, automáticamente se selecciona la primera unidad disponible.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El flujo respeta la unidad puntual elegida: al seleccionar `U-002`, el POST de creación envía `unit_ids: ['unit-2']` y no reemplaza por la primera unidad disponible. Validado con Cypress en `cypress/e2e/31-qa-regression-issues.cy.ts` (caso CR-22).]
 
 ---
 
@@ -330,7 +330,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Aprobar Crédito".]
 * **Resultado Esperado:** [Debería poder ver la cantidad de cuotas que se eligió en el plan.]
-* **Resultado Obtenido (Error):** [No muestra la cantidad de cuotas que se eligió en la preventa.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. En venta, el detalle y el modal de aprobación muestran "Cantidad de cuotas definida" y las cuotas elegidas en la preventa; no aparece input editable para cambiar cuotas en SALE. Validado con Cypress real en `cypress/e2e/03-nueva-operacion-real.cy.ts` (`venta: detalle y aprobación respetan cuotas ya definidas` y `venta: approvals muestra cuotas adelantadas enriquecidas en modal`).]
 
 ---
 
@@ -508,7 +508,7 @@ Módulo Clientes
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Nuevo Cliente".]
 * **Resultado Esperado:** [Debería no crear el cliente si no tiene un cobrador asignado.]
-* **Resultado Obtenido (Error):** [Me permite crear un cliente por más que no tenga cobrador asignado.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. `assignedCollectorId` es obligatorio en el formulario; si se completan todos los campos pero no se elige cobrador, el botón "Crear Cliente" queda deshabilitado y no se llama a la API. Validado con `client-create-dialog.component.spec.ts` y Cypress real en `cypress/e2e/06-negative-clientes.cy.ts` (caso CL-18).]
 
 ---
 
