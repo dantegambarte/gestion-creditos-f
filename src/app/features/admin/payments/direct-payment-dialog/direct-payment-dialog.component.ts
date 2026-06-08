@@ -18,6 +18,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { catchError, of } from 'rxjs';
 import { AppError } from '../../../../core/models/app-error';
+import { DateService } from '../../../../core/services/date.service';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
 import { PaymentsService } from '../../../collector/payments.service';
 import { CashRegisterService } from '../../cash-register/cash-register.service';
@@ -44,6 +45,11 @@ export class DirectPaymentDialogComponent implements OnChanges {
   /** Emite tras registrar el cobro con éxito. El padre recarga la lista. */
   @Output() created = new EventEmitter<void>();
 
+  private readonly paymentsService = inject(PaymentsService);
+  private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly dateSvc = inject(DateService);
+  private readonly msg = inject(MessageService);
+
   directInstallmentId = '';
   directAmount: number | null = null;
   directMethod: 'CASH' | 'TRANSFER' = 'CASH';
@@ -51,7 +57,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
   directNotes = '';
   directNextVisitDate = '';
   processingDirect = false;
-  readonly todayDate = new Date();
+  readonly todayDate: Date = this.dateSvc.startOfToday();
 
   readonly PAYMENT_METHOD_OPTIONS = [
     { label: 'Efectivo', value: 'CASH' as const },
@@ -60,10 +66,6 @@ export class DirectPaymentDialogComponent implements OnChanges {
 
   private readonly UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-  private readonly paymentsService = inject(PaymentsService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
-  private readonly msg = inject(MessageService);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true) {

@@ -8,6 +8,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { AppError } from '../../../core/models/app-error';
+import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
@@ -42,6 +43,7 @@ export class RouteComponent implements OnInit {
   private readonly paymentsService = inject(PaymentsService);
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
+  private readonly dateSvc = inject(DateService);
 
   sheets: CollectionSheet[] = [];
   recentPayments: Payment[] = [];
@@ -51,7 +53,7 @@ export class RouteComponent implements OnInit {
 
   today = new Date();
 
-  private readonly todayIso = new Date().toISOString().slice(0, 10);
+  private get todayIso(): string { return this.dateSvc.toLocalIso(new Date()); }
 
   ngOnInit(): void {
     this.header.set([{ label: 'Mi Ruta' }]);

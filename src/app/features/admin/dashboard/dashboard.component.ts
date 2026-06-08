@@ -97,8 +97,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    const dateFromMonth = firstDay.toISOString().split('T')[0];
-    const dateToMonth = today.toISOString().split('T')[0];
+    const dateFromMonth = this.dateService.toLocalIso(firstDay);
+    const dateToMonth = this.dateService.toLocalIso(today);
 
     combineLatest([
       this.reportsSvc.getSummaryReport().pipe(catchError(() => of(null))),

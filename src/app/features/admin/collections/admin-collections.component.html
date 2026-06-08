@@ -48,27 +48,61 @@
         appendTo="body"
         (onChange)="applyFilters()"
       />
-      <p-calendar
-        [(ngModel)]="filterDate"
-        dataType="string"
-        dateFormat="yy-mm-dd"
-        [showIcon]="true"
-        iconDisplay="input"
+      <div class="relative">
+        <p-calendar
+          [(ngModel)]="filterDate"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          styleClass="w-44"
+          inputStyleClass="native-date-input h-10 pr-6"
+          (onSelect)="applyFilters()"
+        />
+        @if (filterDate) {
+          <button
+            type="button"
+            class="absolute right-8 top-1/2 -translate-y-1/2 flex items-center justify-center w-4 h-4 rounded-full hover:opacity-70 transition-opacity"
+            style="color: var(--ff-text-muted)"
+            (click)="filterDate = ''; applyFilters()"
+          >
+            <i class="pi pi-times text-xs"></i>
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="absolute right-8 top-1/2 -translate-y-1/2 text-xs font-semibold px-1.5 py-0.5 rounded hover:opacity-70 transition-opacity"
+            style="color: var(--ff-text-muted); background: var(--ff-border)"
+            (click)="filterDate = dateSvc.toLocalIso(today); applyFilters()"
+          >
+            hoy
+          </button>
+        }
+      </div>
+      <p-dropdown
+        [options]="filterUsedOptions"
+        [(ngModel)]="filterUsed"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Filtro de cuotas"
+        [showClear]="!!filterUsed"
+        styleClass="w-52 text-sm"
         appendTo="body"
-        styleClass="w-44"
-        inputStyleClass="native-date-input h-10"
-        (onSelect)="applyFilters()"
+        (onChange)="applyFilters()"
       />
-      <label class="inline-flex items-center gap-2 cursor-pointer text-xs select-none" style="color: var(--ff-text-secondary)">
+      <div class="inline-flex items-center gap-2 cursor-pointer text-xs select-none" style="color: var(--ff-text-secondary)"
+        (click)="filterIncludeRegenerated = !filterIncludeRegenerated; applyFilters()">
         <p-inputSwitch
-          [(ngModel)]="filterIncludeRegenerated"
-          (onChange)="applyFilters()"
+          [ngModel]="filterIncludeRegenerated"
+          (click)="$event.stopPropagation()"
+          (onChange)="filterIncludeRegenerated = $event.checked; applyFilters()"
         />
         <span pTooltip="Incluye planillas regeneradas (solo auditoría)" tooltipPosition="bottom">
           Incluir regeneradas
         </span>
-      </label>
-      @if (filterCollectorId || filterDate || filterIncludeRegenerated) {
+      </div>
+      @if (filterCollectorId || filterDate || filterIncludeRegenerated || filterUsed) {
         <p-button
           label="Limpiar"
           severity="secondary"
@@ -99,7 +133,7 @@
         </div>
       } @else {
         <p-table
-          [value]="sheets"
+          [value]="visibleSheets"
           [paginator]="true"
           [rows]="20"
           styleClass="p-datatable-sm p-datatable-hoverable-rows"

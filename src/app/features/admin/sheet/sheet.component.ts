@@ -10,6 +10,7 @@ import { ToastModule } from 'primeng/toast';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
+import { DateService } from '../../../core/services/date.service';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { CollectionsService } from '../../collector/collections.service';
@@ -51,12 +52,13 @@ export class SheetComponent implements OnInit, OnDestroy {
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
   readonly format = inject(FormatService);
+  private readonly dateSvc = inject(DateService);
   private destroy$ = new Subject<void>();
 
   collectorOptions: { label: string; value: string }[] = [];
   selectedCollectorId: string | null = null;
 
-  selectedDate: string = new Date().toISOString().split('T')[0];
+  selectedDate: string = '';
   selectedFilter: CollectionFilter = 'OVERDUE';
   filterOptions: { label: string; value: CollectionFilter }[] = [
     { label: 'Solo vencidas', value: 'OVERDUE' },
@@ -76,6 +78,7 @@ export class SheetComponent implements OnInit, OnDestroy {
   selectedSheetId: string | null = null;
 
   ngOnInit(): void {
+    this.selectedDate = this.dateSvc.toLocalIso(new Date());
     this.header.set([{ label: 'Planilla' }]);
     this.usersService
       .listCollectors()

@@ -19,6 +19,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { Subject, catchError, finalize, of, takeUntil } from 'rxjs';
 import { AppError } from '../../../../core/models/app-error';
+import { DateService } from '../../../../core/services/date.service';
 import { FormatService } from '../../../../core/services/format.service';
 import { CashRegisterService } from '../../cash-register/cash-register.service';
 import { ExpenseCategory } from '../../models/interface/expenses';
@@ -76,8 +77,6 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
   createError = '';
   editingExpenseId: string | null = null;
   saving = false;
-  readonly todayDate = new Date();
-
   // ── Confirmación de eliminación ──────────────────────────────────
   showConfirmDelete = false;
   deletingId: string | null = null;
@@ -88,6 +87,9 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
   private readonly cashRegisterSvc = inject(CashRegisterService);
   private readonly msg = inject(MessageService);
   readonly fmt = inject(FormatService);
+  private readonly dateSvc = inject(DateService);
+
+  readonly todayDate: Date = this.dateSvc.startOfToday();
 
   readonly paymentMethodOptions = [
     { label: 'Efectivo', value: 'CASH' },
@@ -302,6 +304,6 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
   }
 
   private todayIso(): string {
-    return new Date().toISOString().split('T')[0];
+    return this.dateSvc.toLocalIso(new Date());
   }
 }
