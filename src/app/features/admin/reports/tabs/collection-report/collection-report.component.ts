@@ -5,6 +5,7 @@ import { CalendarModule } from 'primeng/calendar';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
+import { DateService } from '../../../../../core/services/date.service';
 import { FormatService } from '../../../../../core/services/format.service';
 import { ErrorStateComponent } from '../../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
@@ -26,6 +27,7 @@ import { ReportsService } from '../../reports.service';
 export class CollectionReportComponent implements OnInit, OnDestroy {
   private readonly service = inject(ReportsService);
   readonly format = inject(FormatService);
+  private readonly dateSvc = inject(DateService);
   private destroy$ = new Subject<void>();
 
   collectionDateFrom: string;
@@ -126,7 +128,7 @@ export class CollectionReportComponent implements OnInit, OnDestroy {
    * @returns cadena en formato ISO
    */
   private toIso(d: Date): string {
-    return d.toISOString().split('T')[0];
+    return this.dateSvc.toLocalIso(d);
   }
 
   /** Formatea un valor numérico como moneda local. */

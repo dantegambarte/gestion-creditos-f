@@ -16,6 +16,7 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { AppError } from '../../../../core/models/app-error';
+import { DateService } from '../../../../core/services/date.service';
 import { CollectionAttemptsService } from '../../collection-attempts.service';
 import {
   CollectionAttemptCreatePayload,
@@ -51,11 +52,12 @@ export class AttemptDialogComponent implements OnChanges {
   attemptNotes = '';
   processingAttempt = false;
 
-  readonly todayDate = new Date();
-  readonly todayIso = new Date().toISOString().split('T')[0];
-
   private readonly attemptsService = inject(CollectionAttemptsService);
   private readonly msg = inject(MessageService);
+  private readonly dateSvc = inject(DateService);
+
+  readonly todayDate: Date = this.dateSvc.startOfToday();
+  get todayIso(): string { return this.dateSvc.toLocalIso(new Date()); }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true) {

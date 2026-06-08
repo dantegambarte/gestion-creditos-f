@@ -4,6 +4,7 @@ import {
   COLLECTION_FILTER_LABELS,
   CollectionSheetDetail,
 } from '../../collector/models/collection.model';
+import { DateService } from '../../../core/services/date.service';
 import { FormatService } from '../../../core/services/format.service';
 import {
   GeneratedPlanillaResult,
@@ -16,6 +17,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class CollectionPdfService {
   private readonly fmt = inject(FormatService);
+  private readonly dateSvc = inject(DateService);
 
   /**
    * Genera el PDF de la planilla y lo descarga en el navegador.
@@ -385,7 +387,7 @@ export class CollectionPdfService {
     });
 
     const safeName = (result.collectorName ?? 'cobrador').replace(/\s+/g, '-');
-    const safeDate = result.fecha ?? new Date().toISOString().split('T')[0];
+    const safeDate = result.fecha ?? this.dateSvc.toLocalIso(new Date());
     doc.save(`planilla-${safeName}-${safeDate}.pdf`);
   }
 

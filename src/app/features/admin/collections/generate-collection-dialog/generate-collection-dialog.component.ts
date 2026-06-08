@@ -20,6 +20,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../core/models/app-error';
+import { DateService } from '../../../../core/services/date.service';
 import { CollectionsService } from '../../../collector/collections.service';
 import {
   CollectionFilter,
@@ -56,11 +57,14 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   @Output() batchCompleted = new EventEmitter<void>();
 
   readonly ALL_COLLECTORS = 'ALL';
-  readonly todayDate = new Date();
-  readonly todayIsoDate = new Date().toISOString().split('T')[0];
 
+  private readonly collectionsService = inject(CollectionsService);
+  private readonly msg = inject(MessageService);
+  private readonly dateSvc = inject(DateService);
+
+  readonly todayDate: Date = this.dateSvc.startOfToday();
   selectedCollectorId: string = this.ALL_COLLECTORS;
-  selectedDate: string = new Date().toISOString().split('T')[0];
+  selectedDate: string = this.dateSvc.toLocalIso(new Date());
   selectedFilter: CollectionFilter = 'OVERDUE';
   filterOptions: { label: string; value: CollectionFilter }[] = [
     { label: 'Solo vencidas', value: 'OVERDUE' },
@@ -75,11 +79,10 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   regenerateExisting = false;
 
   private destroy$ = new Subject<void>();
-  private readonly collectionsService = inject(CollectionsService);
-  private readonly msg = inject(MessageService);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true) {
+      this.selectedDate = this.dateSvc.toLocalIso(new Date());
       this.selectedCollectorId = this.ALL_COLLECTORS;
       this.regenerateExisting = false;
       this.loadDialogSheets();
@@ -453,7 +456,7 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
    * @returns {boolean} True si la fecha es pasada y la acción debe abortarse.
    */
   private isDateInPast(): boolean {
-    if (this.selectedDate >= this.todayIsoDate) return false;
+    if (this.selectedDate >= this.dateSvc.toLocalIso(new Date())) return false;
     this.msg.add({
       severity: 'warn',
       summary: 'Fecha inválida',

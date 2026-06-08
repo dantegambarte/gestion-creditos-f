@@ -17,6 +17,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { AppError } from '../../../../core/models/app-error';
+import { DateService } from '../../../../core/services/date.service';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
 import { CollectionSheetItem } from '../../models/collection.model';
@@ -59,11 +60,12 @@ export class PaymentDialogComponent implements OnChanges {
     { label: 'Efectivo', value: 'CASH' },
     { label: 'Transferencia', value: 'TRANSFER' },
   ];
-  readonly todayDate = new Date();
-  readonly todayIso = new Date().toISOString().split('T')[0];
-
   private readonly paymentsService = inject(PaymentsService);
   private readonly msg = inject(MessageService);
+  private readonly dateSvc = inject(DateService);
+
+  readonly todayDate: Date = this.dateSvc.startOfToday();
+  get todayIso(): string { return this.dateSvc.toLocalIso(new Date()); }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true && this.item) {
