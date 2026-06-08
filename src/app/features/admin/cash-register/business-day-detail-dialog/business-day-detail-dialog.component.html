@@ -1,0 +1,107 @@
+<p-dialog
+  header="Detalle de jornada"
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  (visibleChange)="visibleChange.emit($event)"
+  [style]="{ width: '900px' }"
+>
+  @if (loading) {
+    <app-loading-state message="Cargando jornada..."></app-loading-state>
+  } @else if (error) {
+    <div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-3">
+      {{ error.message || 'No se pudo cargar la jornada.' }}
+    </div>
+  } @else if (detail) {
+    <div class="flex flex-col gap-4">
+      <!-- Header de jornada -->
+      <div class="border rounded p-3 bg-gray-50">
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <div>
+            <div class="text-lg font-semibold">
+              Jornada del {{ formatDate(detail.business_date) }}
+            </div>
+            <div class="text-xs text-gray-500 mt-0.5">
+              Sucursal {{ detail.branch_code || detail.branch_name || detail.branch_id.slice(0, 8) }}
+            </div>
+          </div>
+          <p-tag
+            [value]="statusLabel(detail.status)"
+            [severity]="statusSeverity(detail.status)"
+          ></p-tag>
+        </div>
+
+        <!-- Timestamps -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div>
+            <div class="text-xs text-gray-500">Apertura</div>
+            <div>{{ formatDateTime(detail.opened_at) }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Lista para cerrar</div>
+            <div>{{ formatDateTime(detail.ready_to_close_at) }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Cierre</div>
+            <div>{{ formatDateTime(detail.closed_at) }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Auditoría</div>
+            <div>{{ formatDateTime(detail.audited_at) }}</div>
+          </div>
+        </div>
+
+        <!-- Counts -->
+        <div class="flex gap-4 text-sm mt-3 pt-3 border-t">
+          <div>
+            <span class="text-gray-500">Total cajas:</span>
+            <strong class="ml-1">{{ detail.session_counts.total_count }}</strong>
+          </div>
+          <div>
+            <span class="text-gray-500">Abiertas:</span>
+            <strong class="ml-1 text-green-600">{{ detail.session_counts.open_count }}</strong>
+          </div>
+          <div>
+            <span class="text-gray-500">Pendientes:</span>
+            <strong class="ml-1 text-yellow-600">{{ detail.session_counts.pending_count }}</strong>
+          </div>
+          <div>
+            <span class="text-gray-500">Cerradas:</span>
+            <strong class="ml-1 text-gray-700">{{ detail.session_counts.closed_count }}</strong>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        @if (detail.observations) {
+          <div class="mt-3 pt-3 border-t text-sm">
+            <div class="text-xs text-gray-500 mb-1">Observaciones</div>
+            <div class="whitespace-pre-wrap text-gray-700">{{ detail.observations }}</div>
+          </div>
+        }
+      </div>
+
+      <!-- Cajas de la jornada (reusa cash-session-history-list) -->
+      <div>
+        <div class="text-base font-semibold mb-2 flex items-center gap-2">
+          <i class="pi pi-list" style="color: var(--ff-primary)"></i>
+          Cajas de la jornada
+        </div>
+        <app-cash-session-history-list
+          [businessDayId]="detail.id"
+          (viewSnapshot)="onSnapshot($event)"
+        ></app-cash-session-history-list>
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Cerrar" class="p-button-text" (click)="close()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Snapshot dialog embebido (sobre el detalle) -->
+<app-cash-session-snapshot-dialog
+  [(visible)]="showSnapshotDialog"
+  [sessionId]="selectedSessionId"
+></app-cash-session-snapshot-dialog>

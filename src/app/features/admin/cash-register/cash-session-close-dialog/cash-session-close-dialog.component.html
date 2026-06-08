@@ -1,0 +1,109 @@
+<p-dialog
+  header="Cerrar caja operativa"
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!submitting"
+  (visibleChange)="visibleChange.emit($event)"
+  [style]="{ width: '640px' }"
+>
+  @if (loadingSnapshot) {
+    <app-loading-state message="Cargando snapshot..."></app-loading-state>
+  } @else if (snapshot) {
+    <div class="flex flex-col gap-3">
+      <p class="text-sm text-gray-600">
+        Declará el monto físico por método de pago. La diferencia se calcula
+        contra el <strong>esperado</strong> del snapshot V4 (X report).
+      </p>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="bg-gray-50 border-b">
+              <th class="text-left p-2">Método</th>
+              <th class="text-right p-2">Esperado</th>
+              <th class="text-right p-2">Declarado</th>
+              <th class="text-right p-2">Diferencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows; track row.method) {
+              <tr class="border-b">
+                <td class="p-2 font-medium">{{ row.label }}</td>
+                <td class="p-2 text-right">{{ format.currency(row.expected) }}</td>
+                <td class="p-2 text-right">
+                  <p-inputNumber
+                    [(ngModel)]="row.declared"
+                    (ngModelChange)="onDeclaredChange(row)"
+                    mode="currency"
+                    currency="ARS"
+                    appCurrencyAmountInput
+                    [min]="0"
+                    [showButtons]="false"
+                    [inputStyleClass]="'w-32 text-right'"
+                  ></p-inputNumber>
+                </td>
+                <td
+                  class="p-2 text-right font-medium"
+                  [class.text-green-600]="row.declared != null && row.difference === 0"
+                  [class.text-red-600]="row.declared != null && row.difference < 0"
+                  [class.text-yellow-600]="row.declared != null && row.difference > 0"
+                >
+                  @if (row.declared != null) {
+                    {{ format.currency(row.difference) }}
+                  } @else {
+                    <span class="text-gray-400">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="bg-gray-100 font-semibold">
+              <td class="p-2">Total</td>
+              <td class="p-2 text-right">{{ format.currency(totalExpected) }}</td>
+              <td class="p-2 text-right">{{ format.currency(totalDeclared) }}</td>
+              <td
+                class="p-2 text-right"
+                [class.text-green-600]="totalDifference === 0"
+                [class.text-red-600]="totalDifference < 0"
+                [class.text-yellow-600]="totalDifference > 0"
+              >
+                {{ format.currency(totalDifference) }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      @if (errorMessage) {
+        <div class="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+          {{ errorMessage }}
+        </div>
+      }
+    </div>
+  } @else if (errorMessage) {
+    <div class="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+      {{ errorMessage }}
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      label="Cancelar"
+      class="p-button-text"
+      [disabled]="submitting"
+      (click)="close()"
+    ></button>
+    <button
+      pButton
+      label="Cerrar caja"
+      icon="pi pi-check"
+      [loading]="submitting"
+      [disabled]="!canSubmit()"
+      (click)="submit()"
+    ></button>
+  </ng-template>
+</p-dialog>

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiHttpService } from '../../../core/http/api-http.service';
 import {
@@ -16,6 +16,21 @@ import {
   CashRegisterPreCloseRaw,
   CashRegisterRaw,
 } from '../models/cash-register.model';
+import {
+  CashSession,
+  CashSessionClosePayload,
+  CashSessionDropPayload,
+  CashSessionDropResponse,
+  CashSessionListItem,
+  CashSessionOpenPayload,
+  CashSessionSnapshot,
+} from '../models/cash-session.model';
+import {
+  ActiveBusinessDay,
+  BusinessDayDetail,
+  BusinessDayFilters,
+  BusinessDayListItem,
+} from '../models/business-day.model';
 
 interface CashConversionRaw {
   id: string;
@@ -262,5 +277,126 @@ export class CashRegisterService {
     return this.api
       .post<CashConversionRaw>('cash-register/conversions', body)
       .pipe(map(toCashConversion));
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // MODELO V4 — Jornada + Caja Operativa
+  //
+  // Coexisten con los métodos legacy de arriba durante la transición. Cuando
+  // se complete la migración (feat/cash-system-cleanup), los métodos legacy
+  // desaparecen y este service queda exclusivamente con la API V4.
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /** V4: jornada activa (OPEN o READY_TO_CLOSE) de la sucursal default. */
+  getActiveBusinessDay(): Observable<ActiveBusinessDay | null> {
+    return this.api.get<ActiveBusinessDay | null>('business-days/active');
+  }
+
+  /**
+   * V4 (F3.5): listado de jornadas con filtros. Pensado para el tab
+   * "Histórico Jornadas" que permite consultar jornadas CLOSED/AUDITED.
+   */
+  listBusinessDays(filters: BusinessDayFilters = {}): Observable<BusinessDayListItem[]> {
+    const params: Record<string, string> = {};
+    if (filters.status)   params['status']     = filters.status;
+    if (filters.branchId) params['branch_id']  = filters.branchId;
+    if (filters.dateFrom) params['date_from']  = filters.dateFrom;
+    if (filters.dateTo)   params['date_to']    = filters.dateTo;
+    return this.api.get<BusinessDayListItem[]>('business-days', params);
+  }
+
+  /**
+   * V4 (F3.5): detalle de una jornada con session_counts y cajas embebidas.
+   * El cliente normalmente abrirá el dialog de detalle y, para las métricas
+   * por caja (summary), usará listSessionsByBusinessDay(id) que ya enriquece
+   * con los totales del cierre.
+   */
+  getBusinessDayDetail(id: string): Observable<BusinessDayDetail> {
+    return this.api.get<BusinessDayDetail>(`business-days/${id}`);
+  }
+
+  /** V4: caja operativa activa de la jornada actual (única por jornada). */
+  getActiveSession(): Observable<CashSession | null> {
+    return this.api.get<CashSession | null>('cash-sessions/active');
+  }
+
+  /**
+   * V4 (F3): cierra formalmente la jornada (READY_TO_CLOSE → CLOSED).
+   * Solo se debe llamar cuando no hay cajas OPEN ni PENDING — el frontend
+   * valida estrictamente antes de exponer el botón. El force-close (jornadas
+   * trabadas con cajas pendientes) NO se expone en este flujo; queda como
+   * herramienta administrativa de excepción accesible vía backend.
+   */
+  closeBusinessDay(id: string, observations?: string): Observable<unknown> {
+    const body: Record<string, unknown> = {};
+    if (observations) body['observations'] = observations;
+    return this.api.post(`business-days/${id}/close`, body);
+  }
+
+  /**
+   * V4 (F2): lista las cajas de una jornada con summary enriquecido
+   * (collections, expenses, drops, difference) — derivado del closure_snapshot
+   * por el backend, sin exponer el snapshot crudo.
+   */
+  listSessionsByBusinessDay(businessDayId: string): Observable<CashSessionListItem[]> {
+    return this.api.get<CashSessionListItem[]>('cash-sessions', {
+      business_day_id: businessDayId,
+    });
+  }
+
+  /**
+   * V4: abre una caja operativa para la jornada actual. Solo puede haber UNA
+   * OPEN por jornada simultáneamente; si ya existe → 409
+   * ACTIVE_SESSION_IN_BUSINESS_DAY. Si la jornada está en READY_TO_CLOSE,
+   * vuelve a OPEN automáticamente.
+   */
+  openSession(payload: CashSessionOpenPayload): Observable<CashSession> {
+    const body: Record<string, unknown> = { opening_amount: payload.opening_amount };
+    if (payload.shift_label)  body['shift_label']  = payload.shift_label;
+    if (payload.observations) body['observations'] = payload.observations;
+    return this.api.post<CashSession>('cash-sessions', body);
+  }
+
+  /**
+   * V4: cierra una caja operativa. declared es dinámico — el frontend arma el
+   * array con los métodos de pago activos (DECLARED_PAYMENT_METHODS).
+   */
+  closeSession(id: string, payload: CashSessionClosePayload): Observable<CashSession> {
+    return this.api.post<CashSession>(`cash-sessions/${id}/close`, payload);
+  }
+
+  /** V4: snapshot vivo (X report) de una caja. Read-only. */
+  getSessionSnapshot(id: string): Observable<CashSessionSnapshot> {
+    return this.api.get<CashSessionSnapshot>(`cash-sessions/${id}/snapshot`);
+  }
+
+  /**
+   * V4: drop de efectivo/transferencia hacia Caja General. Genera DROP_IN
+   * automático en la cuenta destino dentro de la misma tx.
+   */
+  createDrop(id: string, payload: CashSessionDropPayload): Observable<CashSessionDropResponse> {
+    const body: Record<string, unknown> = {
+      amount:         payload.amount,
+      payment_method: payload.payment_method,
+    };
+    if (payload.destination_account_id) body['destination_account_id'] = payload.destination_account_id;
+    if (payload.reason)                  body['reason']                  = payload.reason;
+    if (payload.receipt_reference)       body['receipt_reference']       = payload.receipt_reference;
+    return this.api.post<CashSessionDropResponse>(`cash-sessions/${id}/drops`, body);
+  }
+
+  /**
+   * V4: refresh paralelo de jornada + caja activa. Necesario después de cada
+   * acción (abrir/cerrar caja, drop) para evitar estados desincronizados en
+   * la UI (caja cerrada que sigue mostrándose OPEN hasta recargar).
+   */
+  refreshJornadaState(): Observable<{
+    businessDay: ActiveBusinessDay | null;
+    activeSession: CashSession | null;
+  }> {
+    return forkJoin({
+      businessDay:   this.getActiveBusinessDay(),
+      activeSession: this.getActiveSession(),
+    });
   }
 }
