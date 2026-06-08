@@ -29,8 +29,11 @@ export function app(): express.Express {
   );
 
   // Rutas protegidas (admin/seller/collector): dependen de APIs del navegador
-  // (localStorage, window, document) para auth y UI. Servimos index.html
-  // estático y dejamos que Angular renderice todo client-side, sin SSR.
+  // (localStorage, window, document) para auth y UI. Servimos el shell CSR
+  // puro (index.csr.html) y dejamos que Angular renderice todo client-side.
+  // OJO: NO usar index.html — con `prerender: true` ese archivo trae HTML
+  // pre-renderizado (ej. la pantalla de login), lo que provoca el "pestañeo"
+  // de login antes de que el router resuelva la ruta real en el cliente.
   server.get(
     [
       '/admin',
@@ -41,7 +44,7 @@ export function app(): express.Express {
       '/collector/*',
     ],
     (req, res) => {
-      res.sendFile(join(browserDistFolder, 'index.html'));
+      res.sendFile(join(browserDistFolder, 'index.csr.html'));
     },
   );
 
