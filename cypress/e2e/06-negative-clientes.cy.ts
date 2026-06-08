@@ -21,6 +21,18 @@ describe('Gestión de Clientes real — Unhappy Paths', () => {
    */
   const getVisibleDialog = () => cy.get('.p-dialog:visible', { timeout: 10000 }).first();
 
+  /**
+   * Selecciona el primer cobrador disponible en el modal de creación.
+   */
+  const selectFirstCollector = () => {
+    getVisibleDialog()
+      .find('p-dropdown[formControlName="assignedCollectorId"] .p-dropdown')
+      .click({ force: true });
+    cy.get('.p-dropdown-panel .p-dropdown-item', { timeout: 10000 })
+      .first()
+      .click({ force: true });
+  };
+
   beforeEach(() => {
     cy.viewport(1280, 720);
     cy.loginReal('ADMIN', '/admin/clients');
@@ -83,6 +95,25 @@ describe('Gestión de Clientes real — Unhappy Paths', () => {
     cy.get('tbody tr').should('have.length', 0);
   });
 
+  // ── Crear: cobrador requerido ────────────────────────────────────────────────
+  it('CL-18 — formulario completo sin cobrador mantiene Crear Cliente deshabilitado', () => {
+    const stamp = Date.now().toString().slice(-6);
+
+    cy.get('[data-cy="btn-nuevo-cliente"] button', { timeout: 15000 }).click({ force: true });
+    getVisibleDialog().contains('.p-dialog-title', 'Crear Cliente').should('be.visible');
+
+    getVisibleDialog().find('input[formControlName="nombres"]').clear().type('Sin');
+    getVisibleDialog().find('input[formControlName="apellidos"]').clear().type('Cobrador');
+    getVisibleDialog().find('input[formControlName="dni"]').clear().type(`6${stamp}2`);
+    getVisibleDialog().find('input[formControlName="telefonoPrincipal"]').clear().type(`381${stamp}`);
+    getVisibleDialog().find('input[formControlName="direccion"]').clear().type(`Calle Sin Cobrador ${stamp}`);
+
+    getVisibleDialog()
+      .contains('button.p-button', 'Crear Cliente')
+      .should('be.visible')
+      .and('be.disabled');
+  });
+
   // ── Crear: DNI duplicado real ────────────────────────────────────────────────
   it('crear cliente con DNI duplicado muestra error backend y mantiene modal abierto', () => {
     const stamp = Date.now().toString().slice(-6);
@@ -105,6 +136,7 @@ describe('Gestión de Clientes real — Unhappy Paths', () => {
     getVisibleDialog().find('input[formControlName="telefonoPrincipal"]').type(`381${stamp}`).blur();
     getVisibleDialog().find('input[formControlName="direccion"]').clear();
     getVisibleDialog().find('input[formControlName="direccion"]').type(`Calle Negativa ${stamp}`);
+    selectFirstCollector();
 
     getVisibleDialog()
       .contains('button.p-button', 'Crear Cliente')

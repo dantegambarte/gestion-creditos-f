@@ -95,7 +95,7 @@ function stubSaleFlowCatalogs() {
           category_name: null,
           brand_id: null,
           brand_name: null,
-          available_count: 1,
+          available_count: 2,
           reserved_count: 0,
           sold_count: 0,
           variants: [
@@ -159,6 +159,21 @@ function stubSaleFlowCatalogs() {
           product_id: 'prod-1',
           product_name: 'Moto X',
         },
+        {
+          id: 'unit-2',
+          unit_code: 'U-002',
+          status: 'AVAILABLE',
+          notes: null,
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-01-01T00:00:00Z',
+          variant_id: 'var-1',
+          color: 'Rojo',
+          size: null,
+          capacity: null,
+          current_price: 1000,
+          product_id: 'prod-1',
+          product_name: 'Moto X',
+        },
       ],
     },
   }).as('units');
@@ -176,7 +191,7 @@ function selectDropdownOption(selector: string, optionText: string) {
   });
 }
 
-function prepareSaleForm() {
+function prepareSaleForm(unitCode = 'U-001') {
   cy.get('body').then(($body) => {
     if ($body.find('[data-cy="credit-customer"]').length === 0) {
       cy.url().should('include', '/seller/operations/new');
@@ -194,7 +209,7 @@ function prepareSaleForm() {
     cy.wait('@variants');
     selectDropdownOption('[data-cy="sale-variant-selector"]', 'Rojo');
     cy.wait('@units');
-    selectDropdownOption('[data-cy="sale-unit-selector"]', 'U-001');
+    selectDropdownOption('[data-cy="sale-unit-selector"]', unitCode);
     cy.get('[data-cy="sale-add-unit"]').click();
 
     cy.get('[data-cy="sale-toggle-down-payment"]').click();
@@ -307,6 +322,36 @@ describe('QA Regression — SALE frontend integration', () => {
       cy.contains('El enganche no puede ser mayor al total de la venta.').should(
         'be.visible',
       );
+    });
+  });
+
+  it('CR-22 — respeta la unidad puntual elegida y no reemplaza por la primera disponible', () => {
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-cy="credit-customer"]').length === 0) {
+        cy.url().should('include', '/seller/operations/new');
+      }
+    });
+
+    cy.intercept('POST', '**/api/credits', (req) => {
+      expect(req.body).to.include({
+        customer_id: 'cust-001',
+        type: 'SALE',
+        installments_count: 3,
+        payment_frequency: 'MONTHLY',
+      });
+      expect(req.body.unit_ids).to.deep.equal(['unit-2']);
+      req.reply(saleCreateResponse);
+    }).as('createSaleWithSecondUnit');
+
+    prepareSaleForm('U-002');
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-cy="credit-submit"]').length === 0) {
+        cy.url().should('include', '/seller/operations/new');
+        return;
+      }
+
+      cy.get('[data-cy="credit-submit"]').click();
+      cy.wait('@createSaleWithSecondUnit');
     });
   });
 });

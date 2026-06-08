@@ -28,8 +28,8 @@
 | **CR-19** | Cancelación Anticipada - Admin. | Se hizo click en "Cancelación Anticipada" en una operación aprobada. | Debería poder adelantar cuotas. | Corregido / Validado — botón renombrado a "Cancelación total anticipada"; diálogo explica que es pago total de todas las cuotas y menciona la opción de pago anticipado por cuota individual |
 | **CR-20** | Nueva Operación. | Se hizo click en "Nueva Operación". | Debería estar debajo la cantidad de cuotas al elegir el plan de pago. | Corregido / Validado — panel "Cantidad de cuotas" movido arriba de "Fecha de inicio de pago" para LOAN; `mt-6` para separación visual |
 | **CR-21** | Operación Crédito - Declaraciones y Autorizaciones | Faltaba un control para marcar todas las declaraciones en la pantalla de confirmación | Debe existir un botón para marcar todas las declaraciones y que las casillas queden efectivamente marcadas | Corregido / Validado — agregado botón "Marcar todas" (`data-cy="btn-mark-all"`) en `step-confirm.component.html`; método `setAllDeclarations` añadido en `step-confirm.component.ts`; test E2E `cypress/e2e/03-nueva-operacion-real.cy.ts` actualizado para usar el nuevo botón |
-| **CR-22** | Nueva Operación. | Se hizo click en "Nueva Operación" - Venta. | Debería poder elegir la unidad del producto. | Al alegir una unidad de un producto, automáticamente se selecciona la primera unidad disponible. | Error |
-| **CR-23** | Aprobar Crédito. | Se hizo click en "Aprobar Crédito". | Debería poder ver la cantidad de cuotas que se eligió en el plan. | No muestra la cantidad de cuotas que se eligió en la preventa. | Error |
+| **CR-22** | Nueva Operación. | Se hizo click en "Nueva Operación" - Venta. | Debería poder elegir la unidad del producto. | Corregido / Validado — test Cypress agregado: al elegir `U-002`, el POST envía `unit_ids: ['unit-2']` y no reemplaza por la primera unidad disponible |
+| **CR-23** | Aprobar Crédito. | Se hizo click en "Aprobar Crédito". | Debería poder ver la cantidad de cuotas que se eligió en el plan. | Corregido / Validado — Cypress real confirma que la aprobación de venta muestra "Cantidad de cuotas definida" y las cuotas elegidas en la preventa |
 
 
 ## 🟢 2. Módulo: Cliente
@@ -54,7 +54,7 @@
 | **CL-15** | Ver Clientes | Click en "Ver Clientes". | Debería poder mostrar los datos. | Corregido / Validado — `CreditsService` inyectado en `client-detail`; créditos cargados desde API por `customerId` después de cargar el cliente |
 | **CL-16** | Editar Clientes | Click en "Editar" en un cliente. | Debería permitir editar todos los campos. | Corregido / Validado — modal editar expandido con Email, Dirección y Cobrador Asignado; pre-carga datos existentes del cliente; error visible si email inválido |
 | **CL-17** | Nuevo Cliente | Click en "Nuevo Cliente" en Seller y Seller-Collector. | Corregido / Validado — inputs con `h-11 px-3`; labels con `auth-label`; orden de botones: Cancelar izquierda / Registrar derecha; dropdown Cobrador con `appendTo="body"` y deshabilitado cuando no hay cobradores activos |
-| **CL-18** | Nuevo Cliente | Click en "Nuevo Cliente". | Debería no dejar crear el cliente si no tiene un cobrador asignado. | Permite crear el cliente por más que no tenga cobrador asignado. | Error
+| **CL-18** | Nuevo Cliente | Click en "Nuevo Cliente". | Debería no dejar crear el cliente si no tiene un cobrador asignado. | Corregido / Validado — `assignedCollectorId` es requerido; tests de componente y Cypress real verifican que sin cobrador no se llama API y el botón queda deshabilitado |
 
 
 ## 🟢 3. Módulo: Producto
