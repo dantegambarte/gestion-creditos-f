@@ -20,10 +20,30 @@ export function app(): express.Express {
   // Example Express Rest API endpoints
   // server.get('/api/**', (req, res) => { });
   // Serve static files from /browser
-  server.get('**', express.static(browserDistFolder, {
-    maxAge: '1y',
-    index: 'index.html',
-  }));
+  server.get(
+    '**',
+    express.static(browserDistFolder, {
+      maxAge: '1y',
+      index: 'index.html',
+    }),
+  );
+
+  // Rutas protegidas (admin/seller/collector): dependen de APIs del navegador
+  // (localStorage, window, document) para auth y UI. Servimos index.html
+  // estático y dejamos que Angular renderice todo client-side, sin SSR.
+  server.get(
+    [
+      '/admin',
+      '/admin/*',
+      '/seller',
+      '/seller/*',
+      '/collector',
+      '/collector/*',
+    ],
+    (req, res) => {
+      res.sendFile(join(browserDistFolder, 'index.html'));
+    },
+  );
 
   // All regular routes use the Angular engine
   server.get('**', (req, res, next) => {
