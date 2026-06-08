@@ -14,8 +14,9 @@ import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, switchMap, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
+import { DateService } from '../../../core/services/date.service';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
@@ -70,6 +71,8 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
   readonly format = inject(FormatService);
+  readonly dateSvc = inject(DateService);
+  readonly today = new Date();
   private destroy$ = new Subject<void>();
 
   sheets: CollectionSheet[] = [];
@@ -77,8 +80,21 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   loading = true;
   error: AppError | null = null;
   filterCollectorId: string | null = null;
-  filterDate = '';
+  filterDate = this.dateSvc.toLocalIso(new Date());
   filterIncludeRegenerated = false;
+  filterUsed: CollectionFilter | null = null;
+
+  readonly filterUsedOptions: { label: string; value: CollectionFilter }[] = [
+    { label: 'Solo vencidas', value: 'OVERDUE' },
+    { label: 'Del día', value: 'TODAY' },
+    { label: 'Vencidas + hoy', value: 'TODAY_AND_OVERDUE' },
+    { label: 'Todas pendientes', value: 'ALL_PENDING' },
+  ];
+
+  get visibleSheets(): CollectionSheet[] {
+    if (!this.filterUsed) return this.sheets;
+    return this.sheets.filter((s) => s.filterUsed === this.filterUsed);
+  }
 
   showAlertsDialog = false;
   lastAlerts: CollectionAlerts | null = null;
@@ -93,6 +109,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
 
   private pendingOpenSheetId: string | null = null;
   private pendingOpenTab: DetailTab | null = null;
+  private readonly load$ = new Subject<void>();
 
   /**
    * Opciones de cobrador para el dropdown del filtro.
@@ -116,6 +133,42 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
       .listCollectors()
       .pipe(takeUntil(this.destroy$))
       .subscribe((c) => (this.collectors = c));
+
+    this.load$
+      .pipe(
+        debounceTime(150),
+        switchMap(() => {
+          this.loading = true;
+          this.error = null;
+          const filters: { collectorId?: string; date?: string; includeRegenerated?: boolean } = {};
+          if (this.filterCollectorId) filters.collectorId = this.filterCollectorId;
+          if (this.filterDate) filters.date = this.filterDate;
+          if (this.filterIncludeRegenerated) filters.includeRegenerated = true;
+          return this.collectionsService.list(filters);
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe({
+        next: (data) => {
+          this.sheets = data;
+          this.loading = false;
+          if (this.pendingOpenSheetId) {
+            const sheetToOpen = data.find((s) => s.id === this.pendingOpenSheetId);
+            this.pendingOpenSheetId = null;
+            this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+            if (sheetToOpen) {
+              this.openTabForPanel = this.pendingOpenTab;
+              this.selectedSheetMeta = sheetToOpen;
+            }
+            this.pendingOpenTab = null;
+          }
+        },
+        error: (err: AppError) => {
+          this.error = err;
+          this.loading = false;
+        },
+      });
+
     this.load();
     this.maybeAutoOpenGenerate();
   }
@@ -160,8 +213,9 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
    */
   clearFilters(): void {
     this.filterCollectorId = null;
-    this.filterDate = '';
+    this.filterDate = this.dateSvc.toLocalIso(new Date());
     this.filterIncludeRegenerated = false;
+    this.filterUsed = null;
     this.load();
   }
 
@@ -258,46 +312,11 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga la lista de planillas aplicando los filtros activos.
+   * Dispara una recarga de planillas. Debounceado — llamadas rápidas colapsan en una sola.
    */
   private load(): void {
-    this.loading = true;
-    this.error = null;
-    const filters: {
-      collectorId?: string;
-      date?: string;
-      includeRegenerated?: boolean;
-    } = {};
-    if (this.filterCollectorId) filters.collectorId = this.filterCollectorId;
-    if (this.filterDate) filters.date = this.filterDate;
-    if (this.filterIncludeRegenerated) filters.includeRegenerated = true;
-    this.collectionsService.list(filters).subscribe({
-      next: (data) => {
-        this.sheets = data;
-        if (this.pendingOpenSheetId) {
-          const sheetToOpen = data.find(
-            (s) => s.id === this.pendingOpenSheetId,
-          );
-          this.pendingOpenSheetId = null;
-          this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: {},
-            replaceUrl: true,
-          });
-          if (sheetToOpen) {
-            this.openTabForPanel = this.pendingOpenTab;
-            this.pendingOpenTab = null;
-            this.selectedSheetMeta = sheetToOpen;
-          }
-        } else if (this.pendingOpenTab) {
-          this.pendingOpenTab = null;
-        }
-        this.loading = false;
-      },
-      error: (err: AppError) => {
-        this.error = err;
-        this.loading = false;
-      },
-    });
+    this.load$.next();
   }
+
 }
+

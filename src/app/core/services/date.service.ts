@@ -53,6 +53,16 @@ export class DateService {
     return this.daysOverdue(dueDate) > 0;
   }
 
+  /**
+   * Convierte una fecha a YYYY-MM-DD usando hora local, sin conversión UTC.
+   */
+  toLocalIso(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   addDays = addDays;
   isAfter = isAfter;
   isBefore = isBefore;

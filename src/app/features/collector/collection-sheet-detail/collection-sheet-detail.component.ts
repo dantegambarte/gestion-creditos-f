@@ -11,6 +11,7 @@ import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../core/models/app-error';
+import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
@@ -69,6 +70,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
+  private readonly dateSvc = inject(DateService);
 
   sheet: CollectionSheetDetail | null = null;
   items: CollectionSheetItem[] = [];
@@ -99,7 +101,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   showVoidDialog = false;
   voidDialogItem: CollectionSheetItem | null = null;
 
-  readonly todayIso = new Date().toISOString().split('T')[0];
+  get todayIso(): string { return this.dateSvc.toLocalIso(new Date()); }
 
   private get sheetId(): string {
     return this.route.snapshot.paramMap.get('sheetId')!;
