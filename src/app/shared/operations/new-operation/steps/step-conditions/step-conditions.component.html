@@ -95,6 +95,56 @@
                 </p>
               </div>
 
+              <div class="space-y-4">
+                @for (line of cartLines; track line.productoId) {
+                  <div
+                    class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4"
+                  >
+                    <div
+                      class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div>
+                        <p class="text-sm font-medium text-white">
+                          {{ line.nombre }}
+                        </p>
+                        <p class="mt-1 text-xs text-slate-400">
+                          {{ getLinePlanSubtitle(line) }}
+                        </p>
+                      </div>
+
+                      <div class="w-full md:w-[280px]" data-cy="ddl-installments">
+                        <p-dropdown
+                          [options]="getInstallmentsOptionsForLine(line)"
+                          optionLabel="label"
+                          optionValue="value"
+                          [ngModel]="line.selectedInstallments"
+                          (ngModelChange)="
+                            saleInstallmentsChanged.emit({
+                              productoId: line.productoId,
+                              installments: $event,
+                            })
+                          "
+                          [ngModelOptions]="{ standalone: true }"
+                          appendTo="body"
+                          [scrollHeight]="'180px'"
+                          placeholder="Seleccionar cuotas para este producto"
+                          styleClass="w-full bg-[#121520] border border-[#1A1D27] text-white rounded-xl focus:border-[#3B82F6] outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    @if (getInstallmentsOptionsForLine(line).length === 0) {
+                      <div class="mt-3">
+                        <p-message
+                          severity="warn"
+                          text="Este producto no tiene cuotas para la frecuencia elegida."
+                        />
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
               <div
                 class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4 space-y-3"
               >
@@ -257,56 +307,6 @@
                           class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
                           placeholder="Nro. de operación..."
                           maxlength="100"
-                        />
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-
-              <div class="space-y-4">
-                @for (line of cartLines; track line.productoId) {
-                  <div
-                    class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-4"
-                  >
-                    <div
-                      class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-                    >
-                      <div>
-                        <p class="text-sm font-medium text-white">
-                          {{ line.nombre }}
-                        </p>
-                        <p class="mt-1 text-xs text-slate-400">
-                          {{ getLinePlanSubtitle(line) }}
-                        </p>
-                      </div>
-
-                      <div class="w-full md:w-[280px]" data-cy="ddl-installments">
-                        <p-dropdown
-                          [options]="getInstallmentsOptionsForLine(line)"
-                          optionLabel="label"
-                          optionValue="value"
-                          [ngModel]="line.selectedInstallments"
-                          (ngModelChange)="
-                            saleInstallmentsChanged.emit({
-                              productoId: line.productoId,
-                              installments: $event,
-                            })
-                          "
-                          [ngModelOptions]="{ standalone: true }"
-                          appendTo="body"
-                          [scrollHeight]="'180px'"
-                          placeholder="Seleccionar cuotas para este producto"
-                          styleClass="w-full bg-[#121520] border border-[#1A1D27] text-white rounded-xl focus:border-[#3B82F6] outline-none transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    @if (getInstallmentsOptionsForLine(line).length === 0) {
-                      <div class="mt-3">
-                        <p-message
-                          severity="warn"
-                          text="Este producto no tiene cuotas para la frecuencia elegida."
                         />
                       </div>
                     }
