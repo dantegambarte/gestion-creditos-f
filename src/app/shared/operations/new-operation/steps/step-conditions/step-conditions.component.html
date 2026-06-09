@@ -197,6 +197,27 @@
                     <div>
                       <label
                         class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                        >Monto del enganche</label
+                      >
+                      <p-inputNumber
+                        appCurrencyAmountInput
+                        formControlName="downPayment"
+                        mode="currency"
+                        currency="ARS"
+                        locale="es-AR"
+                        [minFractionDigits]="0"
+                        [allowEmpty]="true"
+                        placeholder="$ 0"
+                        [min]="1"
+                        [max]="capitalBase - 1"
+                        styleClass="w-full"
+                        inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
                         >Tipo de pago</label
                       >
                       <div class="flex gap-4">
@@ -224,7 +245,7 @@
                     @if (
                       form.controls["downPaymentMethod"].value === "TRANSFER"
                     ) {
-                      <div>
+                      <div class="md:col-span-2">
                         <label
                           class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
                           >Referencia de transferencia</label
@@ -399,50 +420,24 @@
             </div>
           </div>
 
-          @if (form.controls["operationType"].value === "SALE") {
-            <div>
-              <label
-                class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
-                >Anticipo / Entrega</label
-              >
+          <div>
+            <label
+              class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+              >Anticipo / Entrega</label
+            >
+            <div
+              class="flex w-full items-center rounded-xl border border-[#1A1D27] bg-[#121520] px-4 py-3 text-white"
+            >
               @if (
+                form.controls["operationType"].value === "SALE" &&
                 form.controls["initialPaymentType"].value === "DOWN_PAYMENT"
               ) {
-                <p-inputNumber
-                  appCurrencyAmountInput
-                  formControlName="downPayment"
-                  mode="currency"
-                  currency="ARS"
-                  locale="es-AR"
-                  [minFractionDigits]="0"
-                  [allowEmpty]="true"
-                  placeholder="$ 0"
-                  [min]="1"
-                  [max]="capitalBase - 1"
-                  styleClass="w-full"
-                  inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
-                />
+                {{ validatedDownPayment | currencyArs }}
               } @else {
-                <div
-                  class="flex w-full items-center rounded-xl border border-[#1A1D27] bg-[#121520] px-4 py-3 text-white"
-                >
-                  {{ validatedDownPayment | currencyArs }}
-                </div>
+                {{ 0 | currencyArs }}
               }
             </div>
-          } @else {
-            <div>
-              <label
-                class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
-                >Anticipo / Entrega</label
-              >
-              <div
-                class="flex w-full items-center rounded-xl border border-[#1A1D27] bg-[#121520] px-4 py-3 text-white"
-              >
-                {{ 0 | currencyArs }}
-              </div>
-            </div>
-          }
+          </div>
         </div>
       </div>
 
