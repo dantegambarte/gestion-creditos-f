@@ -646,10 +646,20 @@ export class OperationFormService {
       this.ensureValidInstallmentsSelection();
     });
 
-    this.operationForm.controls.installmentsCount.valueChanges.subscribe(() => {
-      this.resetSimulationResult();
-      this.calculateDynamicRate();
-    });
+    this.operationForm.controls.installmentsCount.valueChanges.subscribe(
+      (count) => {
+        this.resetSimulationResult();
+        this.calculateDynamicRate();
+        // Si el plan baja a < 2 cuotas, "Cuotas adelantadas" deja de tener
+        // sentido. Resetear a NONE evita que quede un valor invalido en el
+        // form y nos permite ocultar la opcion en el template (eliminando
+        // el warning de Angular sobre [disabled] en reactive forms).
+        const n = Number(count ?? 0);
+        if (n < 2 && this.operationForm.controls.initialPaymentType.value === 'ADVANCED_INSTALLMENTS') {
+          this.operationForm.controls.initialPaymentType.setValue('NONE');
+        }
+      },
+    );
 
     this.operationForm.controls.firstPaymentDate.valueChanges.subscribe(() => {
       this.resetSimulationResult();
