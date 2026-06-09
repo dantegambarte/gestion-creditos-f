@@ -12,6 +12,7 @@ import {
 import { Router } from '@angular/router';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { SkeletonModule } from 'primeng/skeleton';
+import { MessageService } from 'primeng/api';
 import { Subject, combineLatest } from 'rxjs';
 import { catchError, of, takeUntil } from 'rxjs';
 import { Credit } from '../../../seller/models/credit.model';
@@ -51,6 +52,7 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
   private readonly router = inject(Router);
   private readonly creditsSvc = inject(CreditsService);
   private readonly paymentsSvc = inject(PaymentsService);
+  private readonly messageService = inject(MessageService);
   private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
@@ -191,6 +193,12 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
         next: () => {
           this.closeApprovePaymentDialog();
           this.approvingPaymentId = null;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Cobro aprobado',
+            detail: 'Cobro aprobado correctamente.',
+            life: 5000,
+          });
           this.loadPending();
           this.paymentApproved.emit();
         },
