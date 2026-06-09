@@ -344,6 +344,36 @@ http://localhost:3000/api/credits - POST
 
 ---
 
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-25]
+**Título / Descripción:** [Aprobación de Crédito]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Venta de producto" o "Préstamo".]
+* **Resultado Esperado:** [Deberían aparecer las cuotas si son mensuales 30 días corridos.]
+* **Resultado Obtenido (Error):** [Las siguientes cuotas no aparecen 30 días corridos.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-26]
+**Título / Descripción:** [Simulación de Crédito]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Ver Simulación".]
+* **Resultado Esperado:** [Deberían aparecer correctamente las cuotas.]
+* **Resultado Obtenido (Error):** [Las siguientes cuotas no aparecen 30 días corridos.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-27]
+**Título / Descripción:** [Nuevo Crédito]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nueva Operación".]
+* **Resultado Esperado:** [Deberían aparecer correctamente los créditos que posee el cliente.]
+* **Resultado Obtenido (Error):** [La información es confusa.]
+
+---
+
 
 Módulo Clientes
 
@@ -1022,6 +1052,16 @@ Módulo Cobro
 * **Acción Realizada:** [Se hizo click en "Cobrar" en la cuota de la planilla generada.]
 * **Resultado Esperado:** [Debería solo poner números en el campo.]
 * **Resultado Obtenido (Actual):** [Corregido. `@HostListener('keydown')` agregado a `CurrencyAmountInputDirective` bloquea `e`, `E` y `+` antes de que `p-inputNumber` los procese. Aplica a todos los inputs monetarios del sistema. Validado con semilla 08 + sesión manual como COLLECTOR.]
+
+---
+
+**Módulo:** [Cobro]
+**ID de Prueba:** [CO-05]
+**Título / Descripción:** [Cobros por aprobar]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Aprobar" en el dashboard.]
+* **Resultado Esperado:** [Debería salir un cartel que se aprobó un cobro.]
+* **Resultado Obtenido (Error):** [No aparece ningún cartel luego de aprobar un precobro.]
 
 ---
 

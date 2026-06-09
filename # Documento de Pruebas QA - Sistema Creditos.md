@@ -28,9 +28,12 @@
 | **CR-19** | Cancelación Anticipada - Admin. | Se hizo click en "Cancelación Anticipada" en una operación aprobada. | Debería poder adelantar cuotas. | Corregido / Validado — botón renombrado a "Cancelación total anticipada"; diálogo explica que es pago total de todas las cuotas y menciona la opción de pago anticipado por cuota individual |
 | **CR-20** | Nueva Operación. | Se hizo click en "Nueva Operación". | Debería estar debajo la cantidad de cuotas al elegir el plan de pago. | Corregido / Validado — panel "Cantidad de cuotas" movido arriba de "Fecha de inicio de pago" para LOAN; `mt-6` para separación visual |
 | **CR-21** | Operación Crédito - Declaraciones y Autorizaciones | Faltaba un control para marcar todas las declaraciones en la pantalla de confirmación | Debe existir un botón para marcar todas las declaraciones y que las casillas queden efectivamente marcadas | Corregido / Validado — agregado botón "Marcar todas" (`data-cy="btn-mark-all"`) en `step-confirm.component.html`; método `setAllDeclarations` añadido en `step-confirm.component.ts`; test E2E `cypress/e2e/03-nueva-operacion-real.cy.ts` actualizado para usar el nuevo botón |
-| **CR-22** | Nueva Operación. | Se hizo click en "Nueva Operación" - Venta. | Debería poder elegir la unidad del producto. | Al alegir una unidad de un producto, automáticamente se selecciona la primera unidad disponible. | Error |
-| **CR-23** | Aprobar Crédito. | Se hizo click en "Aprobar Crédito". | Debería poder ver la cantidad de cuotas que se eligió en el plan. | No muestra la cantidad de cuotas que se eligió en la preventa. | Error |
+| **CR-22** | Nueva Operación. | Se hizo click en "Nueva Operación" - Venta. | Debería poder elegir la unidad del producto. | Corregido / Validado — test Cypress agregado: al elegir `U-002`, el POST envía `unit_ids: ['unit-2']` y no reemplaza por la primera unidad disponible |
+| **CR-23** | Aprobar Crédito. | Se hizo click en "Aprobar Crédito". | Debería poder ver la cantidad de cuotas que se eligió en el plan. | Corregido / Validado — Cypress real confirma que la aprobación de venta muestra "Cantidad de cuotas definida" y las cuotas elegidas en la preventa |
 | **CR-24** | Adelanto de cuotas. | Se hizo click en "Venta de producto" con adelanto de cuotas. | Si se adelanta 2 cuotas la siguiente aparece con fecha para cobrar con error. | Error |
+| **CR-25** | Aprobación de Crédito. | Se hizo click en "Venta de producto" o "Préstamo". | Deberían aparecer las cuotas si son mensuales 30 días corridos. | Las siguientes cuotas no aparecen 30 días corridos. | Error
+| **CR-26** | Simulación de Crédito. | Se hizo click en "Ver Simulación". | Deberían aparecer las cuotas correctamente. | Las siguientes cuotas no aparecen 30 días corridos. | Error
+| **CR-27** | Nuevo Crédito | Se hizo click en "Nueva Operación". | Deberían aparecer correctamente los créditos que posee el cliente. | La información es confusa. | Error
 
 
 ## 🟢 2. Módulo: Cliente
@@ -128,6 +131,7 @@
 | **CO-02** | Cobro directo - Admin | Se hizo click en "Cobro directo" y se completaron los campos. | Debería registrar y aprobar el cobro en el mismo paso (`admin_direct: true`, `status: APPROVED`). | Corregido / Validado — `processDirectPayment()` llamaba a `create` (PENDING) en vez de `adminDirect` (APPROVED); corregido en `admin-payments.component.ts` |
 | **CO-03** | Cobro directo parcial - Admin | Se intentó registrar un cobro con monto menor al de la cuota. | El form debería pedir "Fecha de próxima visita" para cobros parciales. | Corregido / Validado — campo `p-calendar` agregado al dialog con `[minDate]="todayDate"`; `nextVisitDate` agregado a `AdminDirectPayload`, mapeado en service y enviado al backend |
 | **CO-04** | Registrar Cobro - Collector | Se hizo click en "Cobrar" en la cuota de la planilla generada. | El form debería permitir solo ingresar números. | Corregido / Validado — `@HostListener('keydown')` en `CurrencyAmountInputDirective` bloquea `e`, `E` y `+`; aplica a todos los `p-inputNumber[appCurrencyAmountInput]` del sistema |
+| **CO-05** | Cobros por aprobar | Se hizo click en "Aprobar" en el dashboard. | Debería salir un cartel que se aprobó un cobro. | No aparece ningún cartel | Error
 
 
 ## 🟢 Módulo: Liquidación
