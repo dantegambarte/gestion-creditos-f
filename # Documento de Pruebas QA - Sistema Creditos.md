@@ -34,6 +34,11 @@
 | **CR-25** | Aprobación de Crédito. | Se hizo click en "Venta de producto" o "Préstamo". | Deberían aparecer las cuotas si son mensuales 30 días corridos. | Las siguientes cuotas no aparecen 30 días corridos. | Error
 | **CR-26** | Simulación de Crédito. | Se hizo click en "Ver Simulación". | Deberían aparecer las cuotas correctamente. | Las siguientes cuotas no aparecen 30 días corridos. | Error
 | **CR-27** | Nuevo Crédito | Se hizo click en "Nueva Operación". | Deberían aparecer correctamente los créditos que posee el cliente. | La información es confusa. | Error
+| **CR-28** | Aprobaciones - Dashboard | En la sección "Aprobaciones" debería aparecer la cantidad de operaciones para aprobar. | La información no se refresca automáticamente, debemos actualizar la pantalla. | Error
+| **CR-29** | Adelanto de cuotas | Debería permitir ingresar un número menor a la cantidad de cuotas. | El primer dígito permite ingresar un número menor a la cantidad de cuotas, pero me deja seguir ingresando números. | Error
+| **CR-30** | Resumen de plan | Se hizo click en "Semanal", "Quincenal" en un crédito. | Debería cambiar la frecuencia en los datos. | La frecuencia siempre aparece "Mensual". | Error
+| **CR-31** | Préstamo de efectivo | Se hizo click en Préstamo de efectivo". | El input de "Anticipo / Entrega" no debería aparecer. | El input de "Anticipo / Entrega" aparece. | Error
+
 
 
 ## 🟢 2. Módulo: Cliente
@@ -80,6 +85,7 @@
 | **PR-13** | Múltiples Variantes Producto | Se hizo click en "Ingresar Múltiples Variantes". | Se ingresaron datos erróneos. | Corregido / Validado — feature implementada: ingreso individual con validación inline + toast en duplicado; ingreso múltiple con tabla de filas, skip de filas vacías, remapeo de errores por índice original, y summary de variantes/precio total; filas vacías entre filas cargadas se ignoran correctamente |
 | **PR-14** | Categoría y Marca | Categoría y Marca solo permite creación y no edición. | Corregido / Validado — botón "Editar" por fila en tablas de Categorías y Marcas; diálogo de edición con nombre pre-cargado |
 | **PR-15** | Nuevo Producto - Admin | Se hizo click en "Nuevo Producto". | El menú desplegable sale cortado en "Categoria" y "Marca". | Corregido / Validado — `appendTo="body"` en dropdowns Categoría y Estado del modal de creación (`products.component.html`) |
+| **PR-16** | Crear Variante | Se hizo click en "Nueva Variante". | Debería permitirme crear la variante para luego ingresar productos de esa variante. | Al "Crear Variante" se crea un producto como "product initial". | Error
 
 
 ## 🟢 Módulo: Planilla

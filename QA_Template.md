@@ -374,6 +374,47 @@ http://localhost:3000/api/credits - POST
 
 ---
 
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-28]
+**Título / Descripción:** [Aprobaciones]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Dashboard.]
+* **Resultado Esperado:** [En la sección "Aprobaciones" debería aparecer la cantidad de operaciones para aprobar.]
+* **Resultado Obtenido (Error):** [La información no se refresca automáticamente, debemos actualizar la pantalla.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-29]
+**Título / Descripción:** [Adelanto de cuotas]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Adelanto de cuotas".]
+* **Resultado Esperado:** [Debería permitir ingresar un número menor a la cantidad de cuotas.]
+* **Resultado Obtenido (Error):** [El primer dígito permite ingresar un número menor a la cantidad de cuotas, pero me deja seguir ingresando números.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-30]
+**Título / Descripción:** [Resumen de plan]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Semanal", "Quincenal" en un crédito.]
+* **Resultado Esperado:** [Debería cambiar la frecuencia en los datos.]
+* **Resultado Obtenido (Error):** [La frecuencia siempre aparece "Mensual".]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-31]
+**Título / Descripción:** [Préstamo de efectivo]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Préstamo de efectivo".]
+* **Resultado Esperado:** [El input de "Anticipo / Entrega" no debería aparecer.]
+* **Resultado Obtenido (Error):** [El input de "Anticipo / Entrega" aparece.]
+
+---
+
+
 
 Módulo Clientes
 
@@ -760,6 +801,16 @@ http://localhost:3000/api/products - POST
 * **Acción Realizada:** [Se hizo click en "Nuevo Producto".]
 * **Resultado Esperado:** [El menú desplegable de "Marca" y "Categoría" deberia mostrarse todas las opciones.]
 * **Resultado Obtenido (Pendiente):** [El menú desplegable de "Marca" y "Producto" sale cortado, las últimas opciones no salen.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-16]
+**Título / Descripción:** [Nuevo Variante - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nueva Variante".]
+* **Resultado Esperado:** [Debería permitirme crear la variante para luego ingresar productos de esa variante.]
+* **Resultado Obtenido (Error):** [Al "Crear Variante" se crea un producto como "product initial".]
 
 ---
 
