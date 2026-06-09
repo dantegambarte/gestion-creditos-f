@@ -412,16 +412,32 @@ export class StepConfirmComponent {
     return date;
   }
 
+  /** Nombres de los checks de declaraciones (orden de aparicion en la UI). */
+  private static readonly DECLARATION_FIELDS = [
+    'chkIdentity', 'chkConditions', 'chkDisbursement', 'chkCapacity',
+  ];
+
   /**
-   * Marca (o desmarca) todas las declaraciones disponibles en el formulario.
-   * @param {boolean} value - Valor a aplicar a todas las casillas.
+   * True si las 4 declaraciones estan tildadas. Habilita el modo "desmarcar"
+   * del boton toggle (cambia label + color).
    */
-  setAllDeclarations(value: boolean): void {
+  get allDeclarationsChecked(): boolean {
+    if (!this.form) return false;
+    return StepConfirmComponent.DECLARATION_FIELDS.every(
+      (n) => !!this.form.controls[n]?.value,
+    );
+  }
+
+  /**
+   * Toggle: si todas estan tildadas las destilda, si no las tilda. Reemplaza
+   * al setAllDeclarations(value) previo — un solo boton para ambos sentidos.
+   */
+  toggleAllDeclarations(): void {
     if (!this.form) return;
-    const names = ['chkIdentity', 'chkConditions', 'chkDisbursement', 'chkCapacity'];
-    names.forEach((n) => {
+    const next = !this.allDeclarationsChecked;
+    StepConfirmComponent.DECLARATION_FIELDS.forEach((n) => {
       if (this.form.controls[n]) {
-        this.form.controls[n].setValue(value);
+        this.form.controls[n].setValue(next);
         this.form.controls[n].markAsDirty();
       }
     });
