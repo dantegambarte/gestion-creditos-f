@@ -3,6 +3,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
+import { SimulateResult } from '../../../../../features/seller/models/credit.model';
 import { ClientOperation } from '../../../../models/interface/client';
 import { CartLine } from '../../operation-form.service';
 
@@ -26,6 +27,17 @@ export class StepConfirmComponent {
   @Input() totalADevolver = 0;
   @Input() validatedDownPayment = 0;
   @Input() installmentsCount: number | null = null;
+  /**
+   * Resultado de la ultima simulacion del backend (paso 4). Si esta
+   * presente, el cronograma del resumen lo usa tal cual — incluye la
+   * regla de dia habil aplicada en backend (fines de semana + feriados).
+   * Si no esta (raro, deberia estarlo siempre en paso 5), cae al
+   * calculo local sin day-shift como fallback.
+   */
+  @Input() simulationResult: SimulateResult | null = null;
+
+  /** Cuantas filas como maximo mostramos del cronograma en el resumen. */
+  private static readonly SCHEDULE_PREVIEW_LIMIT = 4;
 
   /**
    * Expone el tipo de operación actual de forma segura para la vista.
@@ -211,17 +223,32 @@ export class StepConfirmComponent {
   }
 
   /**
-   * Construye un preview corto del cronograma usando la fecha inicial y la frecuencia actual.
+   * Construye un preview corto del cronograma. Si el backend ya devolvio
+   * la simulacion del paso 4, la usamos: las fechas ya tienen aplicada
+   * la regla de dia habil (fines de semana + feriados) y son las mismas
+   * que se persistiran al aprobar. Si no hay simulacion (caso raro),
+   * fallback al calculo local — sin day-shift, pero al menos no rompe.
    * @returns {{ label: string; dueDate: string; amount: number }[]} Primeras filas visibles del plan.
    */
   get schedulePreview(): { label: string; dueDate: string; amount: number }[] {
+    const limit = StepConfirmComponent.SCHEDULE_PREVIEW_LIMIT;
+
+    const backendSchedule = this.simulationResult?.schedule ?? [];
+    if (backendSchedule.length > 0) {
+      return backendSchedule.slice(0, limit).map((row) => ({
+        label: `Cuota ${row.installmentNumber}`,
+        dueDate: this.formatDate(this.parseLocalDate(row.dueDate)),
+        amount: row.amount,
+      }));
+    }
+
     const firstPaymentDate = this.form?.controls['firstPaymentDate']
       ?.value as Date | null;
     const installments = this.summaryInstallmentsCount;
     if (!firstPaymentDate || installments <= 0 || this.valorCuota <= 0)
       return [];
 
-    const rows = Math.min(installments, 4);
+    const rows = Math.min(installments, limit);
     return Array.from({ length: rows }).map((_, index) => ({
       label: `Cuota ${index + 1}`,
       dueDate: this.formatDate(
@@ -229,6 +256,18 @@ export class StepConfirmComponent {
       ),
       amount: this.valorCuota,
     }));
+  }
+
+  /**
+   * Titulo dinamico del bloque de cronograma. Antes era hardcoded en
+   * "primeras 4 cuotas" aunque el plan tuviera menos (o mas).
+   */
+  get schedulePreviewTitle(): string {
+    const shown = this.schedulePreview.length;
+    if (shown === 0) return 'Cronograma';
+    const total = this.summaryInstallmentsCount;
+    if (total > 0 && total <= shown) return `Cronograma (${total} cuota${total === 1 ? '' : 's'})`;
+    return `Cronograma (primeras ${shown} cuotas)`;
   }
 
   /**
@@ -321,6 +360,19 @@ export class StepConfirmComponent {
    */
   private paymentMethodLabel(value: string | null | undefined): string {
     return value === 'TRANSFER' ? 'Transferencia' : 'Efectivo';
+  }
+
+  /**
+   * Parsea un string 'YYYY-MM-DD' como fecha local sin sesgo UTC.
+   * new Date('YYYY-MM-DD') lo interpreta como medianoche UTC y en zonas
+   * horarias negativas (AR GMT-3) muestra el dia anterior. Reconstruir
+   * con componentes locales evita el drift.
+   */
+  private parseLocalDate(value: string): Date {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    if (!match) return new Date(value);
+    const [, year, month, day] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
   }
 
   /**

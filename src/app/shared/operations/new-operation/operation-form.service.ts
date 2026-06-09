@@ -1575,6 +1575,13 @@ export class OperationFormService {
         ? this.operationForm.controls.downPaymentTransferReference.value
         : null;
 
+    // El backend persiste first_payment_date en columna DATE. Mandamos
+    // string 'YYYY-MM-DD' (sin TZ) para evitar que JSON.stringify(Date)
+    // serialice como ISO UTC y la conversion en backend pierda el dia.
+    const firstPaymentDateApi = firstPaymentDate
+      ? this.toApiDate(firstPaymentDate)
+      : undefined;
+
     const payload =
       type === 'SALE'
         ? {
@@ -1617,7 +1624,7 @@ export class OperationFormService {
             interestRate: this.interestRate,
             totalInstallmentValue: this.valorCuota,
             totalToPay: this.totalADevolver,
-            firstPaymentDate,
+            firstPaymentDate: firstPaymentDateApi,
             paymentFrequency: freq,
           }
         : {
@@ -1627,7 +1634,7 @@ export class OperationFormService {
             downPayment: 0,
             installmentsCount,
             interestRate: this.interestRate,
-            firstPaymentDate,
+            firstPaymentDate: firstPaymentDateApi,
             paymentFrequency: freq,
           };
 

@@ -68,7 +68,7 @@ export class StepConditionsSimulationPanelComponent {
     if (this.simulationResult?.schedule?.length) {
       return this.simulationResult.schedule.map((row) => ({
         installment: row.installmentNumber,
-        dueDate: new Date(row.dueDate),
+        dueDate: this.parseLocalDate(row.dueDate),
         amount: row.amount,
         capital: row.capital,
         interest: row.interest,
@@ -134,6 +134,22 @@ export class StepConditionsSimulationPanelComponent {
       month: '2-digit',
       year: 'numeric',
     }).format(date);
+  }
+
+  /**
+   * Parsea un string 'YYYY-MM-DD' como fecha local sin sesgo UTC.
+   *
+   * `new Date('2026-05-01')` interpreta el string como medianoche UTC, lo
+   * que en zonas horarias negativas (ej. AR GMT-3) produce el día anterior
+   * al formatearse. El backend ya devuelve YYYY-MM-DD sin TZ; al parsearlo
+   * componente a componente garantizamos que el dia visible coincida con
+   * el dia que calculó el server.
+   */
+  private parseLocalDate(value: string): Date {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    if (!match) return new Date(value);
+    const [, year, month, day] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
   }
 
   /**

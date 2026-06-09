@@ -171,6 +171,8 @@ export interface SaleCreditPayload {
   type: 'SALE';
   installmentsCount: number;
   paymentFrequency: PaymentFrequency;
+  /** Fecha de la primera cuota en formato 'YYYY-MM-DD' (sin TZ). */
+  firstPaymentDate?: string;
   units: Array<{ unitId: string }>;
   notes?: string;
   downPayment?: number;
@@ -187,6 +189,8 @@ export interface LoanCreditPayload {
   totalAmount: number;
   installmentsCount: number;
   paymentFrequency: PaymentFrequency;
+  /** Fecha de la primera cuota en formato 'YYYY-MM-DD' (sin TZ). */
+  firstPaymentDate?: string;
   notes?: string;
 }
 
