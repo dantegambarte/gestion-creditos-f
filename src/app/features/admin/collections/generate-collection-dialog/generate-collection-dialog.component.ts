@@ -65,13 +65,40 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   readonly todayDate: Date = this.dateSvc.startOfToday();
   selectedCollectorId: string = this.ALL_COLLECTORS;
   selectedDate: string = this.dateSvc.toLocalIso(new Date());
-  selectedFilter: CollectionFilter = 'OVERDUE';
-  filterOptions: { label: string; value: CollectionFilter }[] = [
-    { label: 'Solo vencidas', value: 'OVERDUE' },
-    { label: 'Del día', value: 'TODAY' },
-    { label: 'Vencidas + hoy', value: 'TODAY_AND_OVERDUE' },
-    { label: 'Todas pendientes', value: 'ALL_PENDING' },
+  selectedFilter: CollectionFilter = 'TODAY';
+  /**
+   * Etiquetas y leyendas alineadas con la semantica real de cada filtro
+   * (auditoria de planillas). Se omite TODAY_AND_OVERDUE: devuelve
+   * practicamente el mismo conjunto que TODAY y el operador no nota
+   * diferencia. Se mantiene el tipo CollectionFilter para compat con
+   * planillas pre-existentes que se hayan generado con ese valor.
+   */
+  filterOptions: { label: string; value: CollectionFilter; description: string }[] = [
+    {
+      label:       'Para cobrar hoy',
+      value:       'TODAY',
+      description: 'Cuotas que vencen hoy + visitas agendadas para hoy + vencidas sin nueva visita.',
+    },
+    {
+      label:       'Vencidas sin agenda',
+      value:       'OVERDUE',
+      description: 'Cuotas en mora cuya proxima visita ya paso o nunca se agendo. No incluye vencidas con visita hoy.',
+    },
+    {
+      label:       'Todas las pendientes',
+      value:       'ALL_PENDING',
+      description: 'Todas las cuotas del cobrador con saldo > 0, sin filtrar por fecha ni agenda.',
+    },
   ];
+
+  /**
+   * Descripcion del filtro actualmente seleccionado para mostrar debajo del
+   * dropdown. Si el valor no aparece en filterOptions (p. ej. una planilla
+   * vieja con TODAY_AND_OVERDUE) devuelve cadena vacia y el bloque se oculta.
+   */
+  get selectedFilterDescription(): string {
+    return this.filterOptions.find((o) => o.value === this.selectedFilter)?.description ?? '';
+  }
   generating = false;
   generatingAll = false;
   dialogSheets: CollectionSheet[] = [];
