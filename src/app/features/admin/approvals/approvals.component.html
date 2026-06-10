@@ -134,7 +134,7 @@
         </ng-template>
         <ng-template pTemplate="body" let-app>
           <tr>
-            <td>{{ app.createdAt | date: "short" }}</td>
+            <td>{{ app.createdAt | date: 'dd/MM/yy' }}</td>
             <td class="font-medium">
               {{ app.customerName }}
               <span

@@ -273,68 +273,31 @@
               </div>
             </div>
 
-            <div class="border-b border-[#252A3A] pb-5">
-              <p class="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Historial crediticio</p>
-              <div class="space-y-2">
-                @if ((selectedClient.creditsSummary ?? []).length === 0) {
-                  <div class="rounded-lg border border-dashed border-[#2A2E3B] bg-[#121520] px-4 py-4 text-sm text-[#848D9E]">
-                    Este cliente todavía no registra créditos previos.
+            @if (selectedClientHasMora) {
+              <div class="rounded-xl border border-[#FF7A00]/40 bg-[#FF7A00]/10 px-4 py-3">
+                <div class="flex items-start gap-3">
+                  <i class="pi pi-exclamation-triangle mt-0.5 text-base text-[#FF7A00]"></i>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-[#FFB36B]">
+                      Atención — el cliente tiene
+                      {{ selectedClient.overdueInstallments ?? 0 }}
+                      {{ (selectedClient.overdueInstallments ?? 0) === 1 ? 'cuota' : 'cuotas' }}
+                      en mora
+                    </p>
+                    <p class="mt-1 text-xs text-[#FFB36B]/80">
+                      Esta operación puede requerir validación adicional.
+                      <a
+                        class="ml-1 inline-flex items-center gap-1 font-semibold text-[#FFB36B] underline-offset-2 hover:underline"
+                        [routerLink]="clientDetailLink"
+                      >
+                        Ver detalle del cliente
+                        <i class="pi pi-arrow-right text-[10px]"></i>
+                      </a>
+                    </p>
                   </div>
-                } @else {
-                  @for (credit of selectedClient.creditsSummary ?? []; track credit.id) {
-                    <div class="grid grid-cols-[auto_auto_auto_1fr_auto] items-center gap-3 rounded-lg bg-[#232943] px-3 py-2">
-                      <span class="rounded-md px-2 py-1 text-[10px] font-semibold" [class]="credit.type === 'SALE' ? 'bg-[#4F6BFF]/15 text-[#85A0FF]' : 'bg-[#00D084]/15 text-[#3BE6A5]'">
-                        {{ getCreditTypeLabel(credit.type) }}
-                      </span>
-                      <span class="text-[11px] text-[#94A3B8]">{{ credit.installmentsCount }} cuotas</span>
-                      <span class="text-sm font-semibold text-white">$ {{ credit.totalAmount | number:'1.0-0' }}</span>
-                      <div class="h-2 rounded-full bg-[#2A2E3B]">
-                        <div
-                          [class]="credit.status === 'ACTIVE'
-                            ? 'h-2 rounded-full bg-[#00D084]/35'
-                            : 'h-2 rounded-full bg-[#64748B]/35'"
-                          [style.width]="credit.status === 'ACTIVE' ? '100%' : '65%'"
-                        ></div>
-                      </div>
-                      <div class="flex items-center gap-3">
-                        <span
-                          [class]="credit.status === 'ACTIVE'
-                            ? 'rounded-full bg-[#00D084]/10 px-2 py-0.5 text-[10px] font-semibold text-[#00D084]'
-                            : 'rounded-full bg-[#64748B]/15 px-2 py-0.5 text-[10px] font-semibold text-[#94A3B8]'"
-                        >
-                          {{ getCreditStatusLabel(credit.status) }}
-                        </span>
-                        <span class="text-[11px] text-[#7C879A]">{{ formatShortDate(credit.referenceDate) }}</span>
-                      </div>
-                    </div>
-                  }
-                }
-              </div>
-            </div>
-
-            <div>
-              <p class="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Estado financiero</p>
-              <div class="grid gap-3 sm:grid-cols-3">
-                <div class="rounded-xl bg-[#232943] px-4 py-3">
-                  <p class="text-[10px] uppercase tracking-[0.12em] text-[#7C879A]">Cuotas pagadas</p>
-                  <p class="mt-2 text-2xl font-semibold text-[#00D084]">{{ selectedClient.paidInstallments ?? 0 }}</p>
-                </div>
-                <div class="rounded-xl bg-[#232943] px-4 py-3">
-                  <p class="text-[10px] uppercase tracking-[0.12em] text-[#7C879A]">Cuotas pendientes</p>
-                  <p class="mt-2 text-2xl font-semibold text-[#CBD5E1]">{{ selectedClient.pendingInstallments ?? 0 }}</p>
-                </div>
-                <div class="rounded-xl bg-[#232943] px-4 py-3">
-                  <p class="text-[10px] uppercase tracking-[0.12em] text-[#7C879A]">En mora</p>
-                  <p
-                    [class]="selectedClientHasMora
-                      ? 'mt-2 text-2xl font-semibold text-[#FF7A00]'
-                      : 'mt-2 text-2xl font-semibold text-[#00D084]'"
-                  >
-                    {{ selectedClient.overdueInstallments ?? 0 }}
-                  </p>
                 </div>
               </div>
-            </div>
+            }
 
             <button
               type="button"
@@ -356,9 +319,6 @@
               >
                 {{ selectedClientHasMora ? 'Con Mora' : 'Apto' }}
               </span>
-              <span class="rounded-full bg-[#3B82F6]/10 px-3 py-1 text-xs font-semibold text-[#7EA6FF]">
-                Límite disponible: $ {{ selectedClient.paymentCapacity | number:'1.0-0' }}
-              </span>
               <span class="rounded-full bg-[#8B5CF6]/10 px-3 py-1 text-xs font-semibold text-[#C4B5FD]">
                 Créditos activos: {{ selectedClient.previousCredits }}
               </span>
@@ -368,12 +328,6 @@
                 </span>
               }
             </div>
-
-            @if (selectedClientHasMora) {
-              <div class="rounded-xl border border-[#FF7A00]/30 bg-[#FF7A00]/10 px-4 py-3 text-sm text-[#FFB36B]">
-                El cliente registra mora. La operación puede requerir validación adicional.
-              </div>
-            }
           </div>
         </div>
       }

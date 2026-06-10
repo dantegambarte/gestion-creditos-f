@@ -123,6 +123,13 @@ export class AuthService extends AuthServiceBase {
     this.clear();
   }
 
+  patchCurrentUser(update: Partial<AuthUser>): void {
+    const currentUser = this._user$.value;
+    if (!currentUser) return;
+    const patchedUser = { ...currentUser, ...update };
+    this.persist(patchedUser);
+  }
+
   /**
    * Cambia la contraseña del usuario actual.
    * @param currentPassword

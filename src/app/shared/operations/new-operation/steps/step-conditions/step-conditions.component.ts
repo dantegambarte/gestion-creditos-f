@@ -179,6 +179,26 @@ export class StepConditionsComponent implements OnChanges {
   }
 
   /**
+   * Etiqueta de la cuota mostrada en el resumen del plan.
+   * - Ventas muestran una cuota consolidada.
+   * - Préstamos muestran la frecuencia seleccionada.
+   */
+  getInstallmentLabel(): string {
+    if (this.form.controls['operationType'].value === 'SALE') {
+      return 'Cuota consolidada';
+    }
+
+    const frequency = this.form.controls['paymentFrequency']?.value as
+      | 'WEEKLY'
+      | 'BIWEEKLY'
+      | 'MONTHLY'
+      | null;
+    if (frequency === 'WEEKLY') return 'Cuota semanal';
+    if (frequency === 'BIWEEKLY') return 'Cuota quincenal';
+    return 'Cuota mensual';
+  }
+
+  /**
    * Máximo de cuotas que se pueden adelantar sin superar el plan seleccionado.
    * @returns {number} Límite superior válido para el input de adelanto.
    */

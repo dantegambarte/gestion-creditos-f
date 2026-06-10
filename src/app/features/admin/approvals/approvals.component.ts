@@ -1,4 +1,4 @@
-import { DatePipe, NgClass } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { catchError, of, takeUntil } from 'rxjs';
 
 import { MessageService } from 'primeng/api';
+import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
@@ -59,6 +60,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   private readonly credits = inject(CreditsService);
   private readonly msg = inject(MessageService);
   private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly auth = inject(AuthServiceBase);
   private readonly router = inject(Router);
   readonly dateService = inject(DateService);
 
@@ -195,12 +197,17 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.approvals = data;
+          this.syncPendingApprovalsBadge(data.length);
           this.loading = false;
         },
         error: () => {
           this.loading = false;
         },
       });
+  }
+
+  private syncPendingApprovalsBadge(count: number): void {
+    this.auth.patchCurrentUser({ pending_approvals_count: count });
   }
 
   /**
@@ -264,6 +271,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
           this.showApproveDialog = false;
           this.approvingRow = null;
           this.approvingDetail = null;
+          this.decrementPendingApprovalsCount();
           this.msg.add({
             severity: 'success',
             summary: 'Aprobado',
@@ -313,6 +321,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
           );
           this.processingReject = false;
           this.showRejectDialog = false;
+          this.decrementPendingApprovalsCount();
           this.msg.add({
             severity: 'info',
             summary: 'Rechazado',
@@ -331,6 +340,14 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
           });
         },
       });
+  }
+
+  private decrementPendingApprovalsCount(): void {
+    const currentCount = this.auth.snapshot?.pending_approvals_count;
+    if (currentCount === undefined || currentCount === null) return;
+    this.auth.patchCurrentUser({
+      pending_approvals_count: Math.max(currentCount - 1, 0),
+    });
   }
 
   /**

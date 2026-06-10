@@ -91,6 +91,15 @@
             </label>
           }
         </div>
+        @if (selectedFilterDescription) {
+          <p
+            class="text-[11px] italic mt-1"
+            style="color: var(--ff-text-muted)"
+          >
+            <i class="pi pi-info-circle text-[10px] mr-1"></i>
+            {{ selectedFilterDescription }}
+          </p>
+        }
       </div>
     </div>
 

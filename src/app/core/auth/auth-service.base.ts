@@ -18,6 +18,7 @@ export abstract class AuthServiceBase {
   abstract isAuthenticated(): boolean;
   abstract get snapshot(): AuthUser | null;
   abstract get token(): string | null;
+  abstract patchCurrentUser(update: Partial<AuthUser>): void;
 
   /**
    * Restaura la sesión al iniciar la app.

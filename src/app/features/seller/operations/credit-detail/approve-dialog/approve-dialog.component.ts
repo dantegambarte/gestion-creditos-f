@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../../../core/models/app-error';
+import { AuthServiceBase } from '../../../../../core/auth/auth-service.base';
 import { CreditDetail } from '../../../models/credit.model';
 import { CreditsService } from '../../credits.service';
 
@@ -26,6 +27,7 @@ export class ApproveDialogComponent {
   processing = false;
 
   private readonly creditsSvc = inject(CreditsService);
+  private readonly auth = inject(AuthServiceBase);
   private readonly msg = inject(MessageService);
 
   /**
@@ -69,6 +71,12 @@ export class ApproveDialogComponent {
       next: (updated) => {
         this.processing = false;
         this.close();
+        this.auth.patchCurrentUser({
+          pending_approvals_count: Math.max(
+            (this.auth.snapshot?.pending_approvals_count ?? 1) - 1,
+            0,
+          ),
+        });
         this.msg.add({
           severity: 'success',
           summary: 'Aprobado',
