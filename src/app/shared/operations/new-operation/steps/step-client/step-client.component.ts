@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
 import { CustomerCreatePayload } from '../../../../../features/seller/models/customer.model';
 import { ClientOperation } from '../../../../models/interface/client';
@@ -8,7 +9,7 @@ import { ClientOperation } from '../../../../models/interface/client';
 @Component({
   selector: 'app-step-client',
   standalone: true,
-  imports: [FormsModule, InputTextModule, DecimalPipe],
+  imports: [FormsModule, InputTextModule, DecimalPipe, RouterLink],
   templateUrl: './step-client.component.html',
 })
 export class StepClientComponent implements OnChanges {
@@ -23,6 +24,22 @@ export class StepClientComponent implements OnChanges {
   @Output() registerClientRequested = new EventEmitter<void>();
   @Output() quickRegisterSubmitted = new EventEmitter<CustomerCreatePayload>();
   @Output() quickRegisterCancelled = new EventEmitter<void>();
+
+  private readonly router = inject(Router);
+
+  /**
+   * Link al detalle del cliente seleccionado para profundizar desde el banner
+   * de mora. Devuelve null si no hay cliente; el banner solo se renderiza
+   * cuando hay seleccion, asi que el null es defensivo.
+   *
+   * Determina seller/admin segun la URL actual para no romper si el wizard
+   * se invoca desde cualquiera de los dos.
+   */
+  get clientDetailLink(): unknown[] | null {
+    if (!this.selectedClient) return null;
+    const prefix = this.router.url.startsWith('/admin') ? '/admin' : '/seller';
+    return [prefix, 'clients', this.selectedClient.id];
+  }
 
   searchText = '';
   quickRegisterTouched = false;

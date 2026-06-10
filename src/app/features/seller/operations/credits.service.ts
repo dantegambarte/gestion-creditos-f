@@ -285,6 +285,7 @@ function toCreateBody(p: CreditCreatePayload): Record<string, unknown> {
     installments_count: p.installmentsCount,
     payment_frequency: p.paymentFrequency,
   };
+  if (p.firstPaymentDate) body['first_payment_date'] = p.firstPaymentDate;
   if (p.notes) body['notes'] = p.notes;
   if (p.type === 'SALE') {
     body['unit_ids'] = p.units.map((u) => u.unitId);
