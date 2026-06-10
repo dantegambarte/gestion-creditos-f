@@ -150,6 +150,13 @@ export class MockAuthService extends AuthServiceBase {
     this._user$.next(null);
   }
 
+  patchCurrentUser(update: Partial<AuthUser>): void {
+    const currentUser = this._user$.value;
+    if (!currentUser) return;
+    const patchedUser = { ...currentUser, ...update };
+    this.persist(patchedUser);
+  }
+
   changePassword(
     _currentPassword: string,
     _newPassword: string,
