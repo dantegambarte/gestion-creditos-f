@@ -1,6 +1,13 @@
 <p-toast />
 
 <div class="p-6 space-y-6">
+  <div class="ff-page-header mb-0">
+    <div>
+      <h1 class="ff-page-title">Mora y Cancelaciones</h1>
+      <p class="ff-page-subtitle">Seguimiento de cuotas en mora y acciones de cobranza.</p>
+    </div>
+  </div>
+
   <!-- KPI Cards -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     @if (loadingStats) {
@@ -103,7 +110,7 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Estado"
-          styleClass="w-40"
+          styleClass="w-40 h-11"
           (onChange)="applyFilters()"
         />
         <p-dropdown
@@ -112,7 +119,7 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Días en Mora"
-          styleClass="w-44"
+          styleClass="w-44 h-11"
           (onChange)="applyFilters()"
         />
         <input

@@ -14,13 +14,13 @@
 <div class="p-6">
   <div
     class="ff-list-header mb-6"
-    style="border-radius: 6px 6px 0 0; border-bottom: none"
+    style="border-radius: 12px; border-bottom: none"
   >
     <div>
-      <h1 class="text-xl font-bold" style="color: var(--ff-text-primary)">
+      <h1 class="ff-page-title">
         Aprobación de Operaciones
       </h1>
-      <p class="text-sm" style="color: var(--ff-text-muted)">
+      <p class="ff-page-subtitle">
         Revisa y valida las solicitudes entrantes.
       </p>
     </div>
@@ -163,6 +163,7 @@
                   severity="secondary"
                   [rounded]="true"
                   [outlined]="true"
+                  styleClass="approval-action-button"
                   (onClick)="viewDetail(app.id)"
                   pTooltip="Ver detalle"
                   tooltipPosition="top"
@@ -171,6 +172,7 @@
                   icon="pi pi-check"
                   severity="success"
                   [rounded]="true"
+                  styleClass="approval-action-button"
                   (onClick)="onApprove(app)"
                   pTooltip="Aprobar"
                   tooltipPosition="top"
@@ -179,6 +181,7 @@
                   icon="pi pi-times"
                   severity="danger"
                   [rounded]="true"
+                  styleClass="approval-action-button"
                   (onClick)="onReject(app)"
                   pTooltip="Rechazar"
                   tooltipPosition="top"

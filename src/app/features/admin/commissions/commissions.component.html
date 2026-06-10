@@ -1,38 +1,33 @@
 <p-toast />
 
 <div class="p-6 space-y-6">
+  <div class="ff-page-header mb-0">
+    <div>
+      <h1 class="ff-page-title">Liquidaciones</h1>
+      <p class="ff-page-subtitle">Comisiones, historial y sueldo fijo del equipo.</p>
+    </div>
+  </div>
+
   <!-- Tabs -->
-  <div class="flex gap-2 border-b border-gray-200">
+  <div class="ff-tab-nav">
     <button
       (click)="vm.setTab('resumen')"
-      [class]="
-        'px-4 py-2 text-sm font-medium border-b-2 transition-colors ' +
-        (vm.activeTab() === 'resumen'
-          ? 'border-blue-600 text-blue-600'
-          : 'border-transparent text-gray-500 hover:text-gray-700')
-      "
+      class="ff-tab"
+      [class.ff-tab--active]="vm.activeTab() === 'resumen'"
     >
       <i class="pi pi-wallet mr-1.5"></i> Resumen semanal
     </button>
     <button
       (click)="vm.setTab('historial')"
-      [class]="
-        'px-4 py-2 text-sm font-medium border-b-2 transition-colors ' +
-        (vm.activeTab() === 'historial'
-          ? 'border-blue-600 text-blue-600'
-          : 'border-transparent text-gray-500 hover:text-gray-700')
-      "
+      class="ff-tab"
+      [class.ff-tab--active]="vm.activeTab() === 'historial'"
     >
       <i class="pi pi-history mr-1.5"></i> Historial
     </button>
     <button
       (click)="vm.setTab('sueldos')"
-      [class]="
-        'px-4 py-2 text-sm font-medium border-b-2 transition-colors ' +
-        (vm.activeTab() === 'sueldos'
-          ? 'border-blue-600 text-blue-600'
-          : 'border-transparent text-gray-500 hover:text-gray-700')
-      "
+      class="ff-tab"
+      [class.ff-tab--active]="vm.activeTab() === 'sueldos'"
     >
       <i class="pi pi-money-bill mr-1.5"></i> Sueldo fijo
     </button>

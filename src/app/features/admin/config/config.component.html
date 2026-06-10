@@ -1,14 +1,21 @@
 <div class="flex flex-col h-full">
+  <div class="px-6 pt-6">
+    <div class="ff-page-header mb-4">
+      <div>
+        <h1 class="ff-page-title">Configuración</h1>
+        <p class="ff-page-subtitle">Parámetros generales, tasas, feriados y usuarios.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Tab nav -->
-  <nav
-    class="flex items-end gap-1 border-b border-slate-800 px-6 pt-4 overflow-x-auto"
-  >
+  <nav class="ff-tab-nav px-6 pt-4">
     @for (item of navItems; track item.path) {
       <a
         [routerLink]="item.path"
-        routerLinkActive="border-b-2 border-blue-500 text-slate-100 bg-slate-800/40"
+        routerLinkActive="ff-tab--active"
         [routerLinkActiveOptions]="{ exact: false }"
-        class="flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/30 transition-colors whitespace-nowrap border-b-2 border-transparent"
+        class="ff-tab rounded-t-lg"
       >
         <i [class]="item.icon + ' text-sm'"></i>
         {{ item.label }}

@@ -1,1 +1,10 @@
-// cancel-btn y field-dark-border son globales (styles.scss)
+:host ::ng-deep .approval-action-button {
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  min-width: 2.25rem !important;
+  padding: 0 !important;
+}
+
+:host ::ng-deep .approval-action-button .p-button-icon {
+  font-size: 0.85rem;
+}

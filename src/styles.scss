@@ -798,7 +798,7 @@ aside.sidebar {
 .db-kpi {
   background: var(--ff-panel);
   border: 1px solid var(--ff-border);
-  border-radius: 6px;
+  border-radius: 12px;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
@@ -848,7 +848,7 @@ aside.sidebar {
 .db-panel {
   background: var(--ff-panel);
   border: 1px solid var(--ff-border);
-  border-radius: 6px;
+  border-radius: 12px;
   overflow: hidden;
   min-width: 0;
 }
@@ -1334,8 +1334,79 @@ table.ff-table {
 .ff-panel {
   background: var(--ff-panel);
   border: 1px solid var(--ff-border);
-  border-radius: 6px;
+  border-radius: 12px;
   overflow: hidden;
+}
+
+// ─── Header de página estándar ───────────────────────────────────────────────
+.ff-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ff-page-title {
+  margin: 0;
+  color: var(--ff-text-primary) !important;
+  font-size: 24px !important;
+  line-height: 1.2;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+}
+
+.ff-page-subtitle {
+  margin: 4px 0 0;
+  color: var(--ff-text-secondary) !important;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+// ─── Navegación por tabs estándar ────────────────────────────────────────────
+.ff-tab-nav {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--ff-border);
+  overflow-x: auto;
+}
+
+.ff-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ff-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+.ff-tab:hover {
+  color: var(--ff-text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ff-tab--active {
+  color: var(--ff-accent) !important;
+  border-bottom-color: var(--ff-accent) !important;
+}
+
+@media (max-width: 768px) {
+  .ff-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 // ─── Header de listado estándar ──────────────────────────────────────────────
@@ -1358,6 +1429,16 @@ table.ff-table {
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+
+  &--filters {
+    justify-content: flex-start;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  &--filters &__actions {
+    flex-wrap: wrap;
   }
 }
 

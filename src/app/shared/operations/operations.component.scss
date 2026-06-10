@@ -19,15 +19,17 @@
 
 .operations-title {
   margin: 0;
-  font-size: 28px;
+  font-size: 24px;
+  line-height: 1.2;
   font-weight: 700;
   color: #ffffff;
+  letter-spacing: -0.02em;
 }
 
 .operations-subtitle {
   margin: 4px 0 0;
-  font-size: 13px;
-  color: #66728d;
+  font-size: 14px;
+  color: var(--ff-text-secondary);
 }
 
 :host ::ng-deep .operations-cta {

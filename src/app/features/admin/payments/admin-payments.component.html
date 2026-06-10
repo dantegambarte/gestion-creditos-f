@@ -1,10 +1,10 @@
 <p-toast />
 
 <div class="p-6">
-  <div class="flex items-center justify-between mb-6">
+  <div class="ff-page-header">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">Cobros</h1>
-      <p class="text-sm text-gray-500">
+      <h1 class="ff-page-title">Cobros</h1>
+      <p class="ff-page-subtitle">
         Pre-cargas de cobro registradas por cobradores.
       </p>
     </div>
@@ -35,8 +35,8 @@
   } @else if (error) {
     <app-error-state />
   } @else {
-    <p-card styleClass="shadow-sm">
-      <div class="flex flex-wrap gap-3 mb-4 items-center">
+    <div class="ff-panel">
+      <div class="ff-list-header ff-list-header--filters">
         <p-dropdown
           [options]="STATUS_OPTIONS"
           [(ngModel)]="filterStatus"
@@ -44,7 +44,7 @@
           optionValue="value"
           placeholder="Todos los estados"
           [showClear]="!!filterStatus"
-          styleClass="w-48"
+          styleClass="w-48 h-11"
           appendTo="body"
         />
         <p-dropdown
@@ -54,7 +54,7 @@
           optionValue="value"
           placeholder="Todos los cobradores"
           [showClear]="!!filterCollectorId"
-          styleClass="w-52"
+          styleClass="w-52 h-11"
           appendTo="body"
         />
       </div>
@@ -89,8 +89,8 @@
                 <span class="text-xs text-gray-400 ml-1">{{ p.customerDni }}</span>
               </td>
               <td>Cuota {{ p.installmentNumber }}</td>
-              <td class="text-sm text-gray-600">{{ p.collectorName ?? '—' }}</td>
-              <td class="text-right font-semibold text-blue-600">
+              <td style="color: var(--ff-text-secondary)">{{ p.collectorName ?? '—' }}</td>
+              <td class="text-right font-semibold" style="color: var(--ff-text-primary)">
                 {{ p.amountReceived | currencyArs: 2 }}
               </td>
               <td>
@@ -112,14 +112,14 @@
                   </div>
                 }
               </td>
-              <td class="text-sm text-gray-500">
+              <td style="color: var(--ff-text-secondary)">
                 {{ p.createdAt | date: 'dd/MM/yyyy HH:mm' }}
               </td>
             </tr>
           </ng-template>
         </p-table>
       }
-    </p-card>
+    </div>
   }
 </div>
 

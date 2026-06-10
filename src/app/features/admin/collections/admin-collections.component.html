@@ -1,9 +1,13 @@
 <p-toast />
 
-<div class="flex h-full min-h-0 overflow-hidden">
+<div
+  class="flex h-full min-h-0 overflow-hidden"
+  [class.p-6]="!selectedSheetMeta"
+>
   <!-- LEFT PANEL: lista -->
   <div
     class="flex flex-col transition-all duration-300 overflow-hidden shrink-0 min-h-0"
+    [class.ff-panel]="!selectedSheetMeta"
     [class.border-r]="!!selectedSheetMeta && !leftPanelCollapsed"
     [style.width]="
       !selectedSheetMeta ? '100%' : leftPanelCollapsed ? '0px' : '420px'
@@ -12,14 +16,14 @@
   >
     <!-- Header -->
     <div
-      class="flex items-center justify-between px-4 py-3 shrink-0"
+      class="flex items-center justify-between px-4 py-4 shrink-0"
       style="border-bottom: 1px solid var(--ff-border)"
     >
       <div>
-        <h1 class="text-base font-bold" style="color: var(--ff-text-primary)">
+        <h1 class="ff-page-title">
           Planillas de cobro
         </h1>
-        <p class="text-xs" style="color: var(--ff-text-muted)">
+        <p class="ff-page-subtitle">
           Planillas generadas para cobradores.
         </p>
       </div>
@@ -27,7 +31,7 @@
         label="Generar nueva planilla"
         icon="pi pi-plus"
         severity="primary"
-        styleClass="h-9 px-4 rounded-xl shadow-sm text-sm"
+        styleClass="h-11 px-5 rounded-xl shadow-sm"
         (onClick)="openGenerateDialog()"
       />
     </div>
@@ -44,7 +48,7 @@
         optionValue="value"
         placeholder="Todos los cobradores"
         [showClear]="!!filterCollectorId"
-        styleClass="w-44 text-sm"
+        styleClass="w-44 h-11 text-sm"
         appendTo="body"
         (onChange)="applyFilters()"
       />
@@ -57,7 +61,7 @@
           iconDisplay="input"
           appendTo="body"
           styleClass="w-44"
-          inputStyleClass="native-date-input h-10 pr-6"
+          inputStyleClass="native-date-input h-11 pr-6"
           (onSelect)="applyFilters()"
         />
         @if (filterDate) {
@@ -87,7 +91,7 @@
         optionValue="value"
         placeholder="Filtro de cuotas"
         [showClear]="!!filterUsed"
-        styleClass="w-52 text-sm"
+        styleClass="w-52 h-11 text-sm"
         appendTo="body"
         (onChange)="applyFilters()"
       />
