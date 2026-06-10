@@ -34,7 +34,6 @@ import { CashRegisterService } from '../cash-register/cash-register.service';
   imports: [
     CurrencyArsPipe,
     DatePipe,
-    NgClass,
     FormsModule,
     TableModule,
     TagModule,
