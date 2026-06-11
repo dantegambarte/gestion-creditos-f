@@ -84,7 +84,7 @@ describe('OperationFormService', () => {
     service.operationForm.controls.operationType.setValue('SALE');
     service.operationForm.controls.paymentFrequency.setValue('MONTHLY');
     service.operationForm.controls.firstPaymentDate.setValue(new Date(2026, 4, 10));
-    service.cartLines = [
+    service.cartLines.set([
       {
         productoId: 'prod-1',
         nombre: 'Heladera',
@@ -101,7 +101,7 @@ describe('OperationFormService', () => {
         rates: [],
         selectedInstallments: 1,
       },
-    ];
+    ]);
     service.catalogSvc.availableProducts = [
       {
         id: 'unit-1',
@@ -128,7 +128,7 @@ describe('OperationFormService', () => {
   it('permite avanzar en condiciones con fecha derivada cuando usa fecha de aprobación', () => {
     service.operationForm.controls.operationType.setValue('SALE');
     service.operationForm.controls.paymentFrequency.setValue('BIWEEKLY');
-    service.cartLines = [
+    service.cartLines.set([
       {
         productoId: 'prod-1',
         nombre: 'Heladera',
@@ -145,7 +145,7 @@ describe('OperationFormService', () => {
         rates: [],
         selectedInstallments: 1,
       },
-    ];
+    ]);
 
     service.syncFirstPaymentDateWithMode();
 
@@ -158,7 +158,7 @@ describe('OperationFormService', () => {
     service.operationForm.controls.paymentFrequency.setValue('BIWEEKLY');
     service.operationForm.controls.firstPaymentDateMode.setValue('CUSTOM_DATE');
     service.operationForm.controls.firstPaymentDate.setValue(null);
-    service.cartLines = [
+    service.cartLines.set([
       {
         productoId: 'prod-1',
         nombre: 'Heladera',
@@ -175,7 +175,7 @@ describe('OperationFormService', () => {
         rates: [],
         selectedInstallments: 1,
       },
-    ];
+    ]);
 
     expect(service.canNext(2)).toBeFalse();
   });

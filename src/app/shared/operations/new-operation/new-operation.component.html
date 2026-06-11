@@ -1,9 +1,16 @@
 <p-toast position="top-right" />
-<div class="flex h-full min-h-0 bg-[#0B0D14] font-sans text-[#E2E8F0] overflow-hidden">
+<div
+  class="flex h-full min-h-0 bg-[#0B0D14] font-sans text-[#E2E8F0] overflow-hidden"
+>
   <div class="flex-1 min-h-0 flex flex-col">
-    <header class="h-[72px] border-b border-[#1A1D27] bg-[#0B0D14] flex items-center px-8 justify-between shrink-0">
+    <header
+      class="h-[72px] border-b border-[#1A1D27] bg-[#0B0D14] flex items-center px-8 justify-between shrink-0"
+    >
       <div class="flex items-center gap-3">
-        <button class="p-2 -ml-2 rounded-lg hover:bg-[#1A1D27] transition-colors text-slate-400 hover:text-white" routerLink="../">
+        <button
+          class="p-2 -ml-2 rounded-lg hover:bg-[#1A1D27] transition-colors text-slate-400 hover:text-white"
+          routerLink="../"
+        >
           <i class="pi pi-arrow-left"></i>
         </button>
         <h1 class="text-[15px] font-semibold text-white">Nueva Operación</h1>
@@ -14,7 +21,10 @@
           @if (i > 0) {
             <div class="w-8 h-[1px] bg-[#1A1D27]"></div>
           }
-          <div class="flex items-center gap-2" [class.opacity-50]="activeIndex !== i">
+          <div
+            class="flex items-center gap-2"
+            [class.opacity-50]="activeIndex !== i"
+          >
             <div
               class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
               [class.bg-[#3B82F6]]="activeIndex === i"
@@ -30,14 +40,27 @@
               [class.text-white]="activeIndex === i"
               [class.text-[#848D9E]]="activeIndex !== i"
             >
-              {{ i === 0 ? 'Tipo' : i === 1 ? 'Cliente' : i === 2 ? 'Producto' : i === 3 ? 'Condiciones' : 'Confirmación' }}
+              {{
+                i === 0
+                  ? "Tipo"
+                  : i === 1
+                    ? "Cliente"
+                    : i === 2
+                      ? "Producto"
+                      : i === 3
+                        ? "Condiciones"
+                        : "Confirmación"
+              }}
             </span>
           </div>
         }
       </div>
 
       <div class="flex items-center gap-2">
-        <button class="p-2 rounded-lg hover:bg-[#1A1D27] transition-colors text-slate-400 hover:text-white" routerLink="../">
+        <button
+          class="p-2 rounded-lg hover:bg-[#1A1D27] transition-colors text-slate-400 hover:text-white"
+          routerLink="../"
+        >
           <i class="pi pi-times"></i>
         </button>
       </div>
@@ -48,7 +71,11 @@
       [class.overflow-hidden]="activeIndex === 2"
       [class.overflow-y-auto]="activeIndex !== 2"
     >
-      <div [class.pb-24]="activeIndex !== 2" [class.h-full]="activeIndex === 2" [class.min-h-0]="activeIndex === 2">
+      <div
+        [class.pb-24]="activeIndex !== 2"
+        [class.h-full]="activeIndex === 2"
+        [class.min-h-0]="activeIndex === 2"
+      >
         @switch (activeIndex) {
           @case (0) {
             <app-step-type
@@ -58,12 +85,12 @@
           }
           @case (1) {
             <app-step-client
-              [clients]="state.clients"
+              [clients]="state.clients()"
               [selectedClientId]="state.operationForm.controls.customerId.value"
               [selectedClientSummary]="state.selectedClient()"
-              [loadingSummary]="state.loadingSelectedClientSummary"
-              [showQuickRegister]="state.showQuickClientForm"
-              [creatingQuickRegister]="state.creatingQuickClient"
+              [loadingSummary]="state.loadingSelectedClientSummary()"
+              [showQuickRegister]="state.showQuickClientForm()"
+              [creatingQuickRegister]="state.creatingQuickClient()"
               (clientSelected)="state.selectClient($event)"
               (continueRequested)="nextStep()"
               (registerClientRequested)="openNewClient()"
@@ -77,18 +104,32 @@
                 [form]="state.operationForm"
                 [operationTypeOptions]="state.operationTypeOptions"
                 [catalogProducts]="state.catalogProducts"
-                [cartLines]="state.cartLines"
-                [totalCarrito]="state.totalCarrito"
+                [cartLines]="state.cartLines()"
+                [totalCarrito]="state.totalCarrito()"
                 [prestamoTotal]="state.prestamoTotal"
-                [loadingLoanData]="state.loadingLoanData"
+                [loadingLoanData]="state.loadingLoanData()"
                 [loadingSaleData]="state.loadingSaleData"
                 [loadingProductRatesByCatalogId]="
                   state.loadingProductRatesByCatalogId
                 "
                 (productAdded)="state.addProduct($event)"
-                (productVariantAdded)="state.addProductVariant($event.product, $event.variantId)"
-                (unitAdded)="state.addProductUnit($event.product, $event.variantId, $event.unitId)"
-                (unitRemoved)="state.removeProductUnit($event.productoId, $event.variantId, $event.unitId)"
+                (productVariantAdded)="
+                  state.addProductVariant($event.product, $event.variantId)
+                "
+                (unitAdded)="
+                  state.addProductUnit(
+                    $event.product,
+                    $event.variantId,
+                    $event.unitId
+                  )
+                "
+                (unitRemoved)="
+                  state.removeProductUnit(
+                    $event.productoId,
+                    $event.variantId,
+                    $event.unitId
+                  )
+                "
                 (productRemoved)="state.removeFromCart($event)"
                 (quantityIncreased)="state.increaseQuantity($event)"
                 (quantityDecreased)="state.decreaseQuantity($event)"
@@ -99,21 +140,21 @@
           @case (3) {
             <app-step-conditions
               [form]="state.operationForm"
-              [cartLines]="state.cartLines"
+              [cartLines]="state.cartLines()"
               [paymentFrequencyOptions]="state.paymentFrequencyOptions"
               [installmentsOptions]="state.installmentsOptions"
-              [isInstallmentsRefreshing]="state.isInstallmentsRefreshing"
+              [isInstallmentsRefreshing]="state.isInstallmentsRefreshing()"
               [capitalBase]="state.capitalBase"
               [capitalAFinanciar]="state.capitalAFinanciar"
               [interestRate]="state.interestRate"
               [valorCuota]="state.valorCuota"
               [totalADevolver]="state.totalADevolver"
               [todayDate]="state.todayDate"
-              [installmentsDropdownClass]="state.installmentsDropdownClass"
+              [installmentsDropdownClass]="state.installmentsDropdownClass()"
               [validatedDownPayment]="state.getValidatedDownPayment()"
-              [simulationResult]="state.simulationResult"
-              [simulationLoading]="state.simulationLoading"
-              [simulationError]="state.simulationError"
+              [simulationResult]="state.simulationResult()"
+              [simulationLoading]="state.simulationLoading()"
+              [simulationError]="state.simulationError()"
               [canContinueWithPlan]="canGoNext()"
               (saleInstallmentsChanged)="
                 state.onSaleInstallmentsChange(
@@ -129,7 +170,7 @@
             <app-step-confirm
               [form]="state.operationForm"
               [selectedClient]="state.selectedClient()"
-              [cartLines]="state.cartLines"
+              [cartLines]="state.cartLines()"
               [capitalAFinanciar]="state.capitalAFinanciar"
               [valorCuota]="state.valorCuota"
               [totalADevolver]="state.totalADevolver"
@@ -137,7 +178,7 @@
               [installmentsCount]="
                 state.operationForm.controls.installmentsCount.value
               "
-              [simulationResult]="state.simulationResult"
+              [simulationResult]="state.simulationResult()"
             />
           }
         }
@@ -147,7 +188,8 @@
     <div class="shrink-0 border-t border-[#1A1D27] bg-[#0B0D14] px-8 py-4">
       <div class="flex items-center justify-between">
         <span class="text-sm text-[#848D9E]">
-          Paso {{ activeIndex + 1 }} de {{ steps.length }} · {{ steps[activeIndex].label }}
+          Paso {{ activeIndex + 1 }} de {{ steps.length }} ·
+          {{ steps[activeIndex].label }}
         </span>
 
         <div class="flex items-center gap-3">
@@ -190,7 +232,7 @@
               severity="success"
               data-cy="btn-enviar-aprobacion"
               [disabled]="!state.canSubmitOperation"
-              [loading]="state.submitting"
+              [loading]="state.submitting()"
               (onClick)="submitOperation()"
               styleClass="h-11 px-6 rounded-xl"
             />
@@ -199,18 +241,21 @@
       </div>
     </div>
   </div>
-
 </div>
 
-@if (state.submitting) {
+@if (state.submitting()) {
   <div
     class="fixed inset-0 z-[1200] flex items-center justify-center bg-[#0B0D14]/85 backdrop-blur-sm"
     data-cy="submit-loader-overlay"
   >
-    <div class="flex min-w-[320px] flex-col items-center gap-4 rounded-2xl border border-[#252A3A] bg-[#121520] px-6 py-6 text-center text-slate-100 shadow-2xl">
+    <div
+      class="flex min-w-[320px] flex-col items-center gap-4 rounded-2xl border border-[#252A3A] bg-[#121520] px-6 py-6 text-center text-slate-100 shadow-2xl"
+    >
       <i class="pi pi-spinner pi-spin text-3xl text-[#37F0A4]"></i>
       <div>
-        <p class="text-base font-semibold text-white">Enviando para aprobación</p>
+        <p class="text-base font-semibold text-white">
+          Enviando para aprobación
+        </p>
         <p class="mt-1 text-sm text-slate-400">
           Estamos registrando la pre-operación. Esperá un instante...
         </p>

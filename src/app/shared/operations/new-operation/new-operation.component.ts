@@ -160,11 +160,11 @@ export class NewOperationComponent implements OnInit {
         const destination = base === '/admin' ? 'approvals' : 'operations';
         setTimeout(() => {
           this.router.navigate([base, destination]);
-          this.state.submitting = false;
+          this.state.submitting.set(false);
         }, 1500);
       },
       error: (err: unknown) => {
-        this.state.submitting = false;
+        this.state.submitting.set(false);
         const apiMessage =
           typeof err === 'object' &&
           err !== null &&
