@@ -4,7 +4,7 @@
 
   <!-- ── Header full-width ───────────────────────────────────── -->
   <div class="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0 border-b border-gray-800">
-    <h1 class="text-2xl font-bold">Gastos</h1>
+    <h1 class="ff-page-title">Gastos</h1>
     <div class="flex items-center gap-3">
       @if (rows.length && !showCatsPanel) {
         <span class="font-bold text-red-400 font-mono">
@@ -40,7 +40,7 @@
             appendTo="body"
             placeholder="dd/mm/aaaa"
             styleClass="w-[170px]"
-            inputStyleClass="w-full h-10 border border-gray-600 bg-gray-800 text-gray-200 rounded-lg px-3 py-2 text-sm"
+            inputStyleClass="w-full h-11 border border-gray-600 bg-gray-800 text-gray-200 rounded-lg px-3 py-2 text-sm"
           />
           <p-calendar
             [(ngModel)]="filterDateTo"
@@ -51,7 +51,7 @@
             appendTo="body"
             placeholder="dd/mm/aaaa"
             styleClass="w-[170px]"
-            inputStyleClass="w-full h-10 border border-gray-600 bg-gray-800 text-gray-200 rounded-lg px-3 py-2 text-sm"
+            inputStyleClass="w-full h-11 border border-gray-600 bg-gray-800 text-gray-200 rounded-lg px-3 py-2 text-sm"
           />
           <p-dropdown
             [options]="filterCategoryOptions"
@@ -60,7 +60,7 @@
             optionValue="value"
             placeholder="Todas las categorías"
             appendTo="body"
-            styleClass="text-sm w-[130px]"
+            styleClass="h-11 text-sm w-[130px]"
           />
           <p-button
             label="Filtrar"
@@ -89,7 +89,7 @@
       } @else if (rows.length === 0) {
         <p class="text-2xl text-slate-400/90 text-center py-16">Sin gastos para el período seleccionado.</p>
       } @else {
-        <div class="border border-gray-800 overflow-hidden">
+        <div class="ff-panel">
           <p-table
             [value]="rows"
             styleClass="p-datatable-sm p-datatable-hoverable-rows"

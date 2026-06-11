@@ -3,14 +3,22 @@
     <!-- Header -->
     <div
       class="ff-list-header"
-      style="align-items: flex-start; flex-wrap: wrap; gap: 12px"
+      style="flex-wrap: wrap; gap: 12px"
     >
-      <div>
-        <h1 class="text-base font-bold" style="color: var(--ff-text-primary)">
-          Productos
-        </h1>
-      </div>
-      <div class="ff-list-header__actions" style="flex: 1; flex-wrap: wrap">
+      <h1 class="ff-page-title">Productos</h1>
+      @if (canCreate) {
+        <p-button
+          label="Nuevo producto"
+          icon="pi pi-plus"
+          severity="primary"
+          styleClass="h-11 px-5 rounded-xl shadow-sm"
+          (onClick)="navigateToCreate()"
+        />
+      }
+    </div>
+
+    <div class="ff-list-header ff-list-header--filters">
+      <div class="ff-list-header__actions" style="flex-wrap: wrap">
         <span class="p-input-icon-left">
           <i class="pi pi-search" style="color: var(--ff-text-muted)"></i>
           <input
@@ -48,15 +56,6 @@
           styleClass="h-11"
         />
       </div>
-      @if (canCreate) {
-        <p-button
-          label="Nuevo producto"
-          icon="pi pi-plus"
-          severity="primary"
-          styleClass="h-11 px-5 rounded-xl shadow-sm"
-          (onClick)="navigateToCreate()"
-        />
-      }
     </div>
 
     @if (loading) {

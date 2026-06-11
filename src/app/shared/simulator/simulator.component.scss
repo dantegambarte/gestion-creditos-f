@@ -15,7 +15,7 @@
 .sim-card {
   position: relative;
   border: 1px solid var(--ff-border);
-  border-radius: 6px;
+  border-radius: 12px;
   background: radial-gradient(circle at top right, rgba(79, 110, 247, 0.16), transparent 36%), var(--ff-panel);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
 }
@@ -43,7 +43,8 @@
 .sim-card__header h2 {
   margin: 0;
   color: var(--ff-text-primary);
-  font-size: 20px;
+  font-size: 24px;
+  line-height: 1.2;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -84,14 +85,14 @@
   gap: 8px;
   padding: 6px;
   border: 1px solid var(--ff-border);
-  border-radius: 6px;
+  border-radius: 12px;
   background: rgba(34, 38, 58, 0.72);
 }
 
 .sim-toggle__button {
   height: 42px;
   border: 1px solid transparent;
-  border-radius: 5px;
+  border-radius: 10px;
   color: var(--ff-text-secondary);
   font-size: 13px;
   font-weight: 700;
@@ -151,7 +152,7 @@
 .sim-option,
 .sim-detail-card {
   border: 1px solid var(--ff-border);
-  border-radius: 6px;
+  border-radius: 12px;
   background: var(--ff-secondary);
 }
 
@@ -217,7 +218,7 @@
 
 .sim-secondary-action {
   padding: 7px 12px;
-  border-radius: 5px;
+  border-radius: 10px;
   white-space: nowrap;
 }
 

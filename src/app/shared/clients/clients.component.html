@@ -2,16 +2,19 @@
 <div class="p-6">
   <div class="ff-panel">
     <div class="ff-list-header">
-      <span class="ff-list-header__title">Gestión de Clientes</span>
+      <h1 class="ff-page-title">Gestión de Clientes</h1>
+      <p-button
+        label="Nuevo Cliente"
+        icon="pi pi-plus"
+        severity="primary"
+        styleClass="h-11 px-5 rounded-xl shadow-sm"
+        data-cy="btn-nuevo-cliente"
+        (onClick)="showCreateModal = true"
+      />
+    </div>
+
+    <div class="ff-list-header ff-list-header--filters">
       <div class="ff-list-header__actions">
-        <p-button
-          label="Nuevo Cliente"
-          icon="pi pi-plus"
-          severity="primary"
-          styleClass="h-11 px-5 rounded-xl shadow-sm"
-          data-cy="btn-nuevo-cliente"
-          (onClick)="showCreateModal = true"
-        />
         <p-dropdown
           [options]="filterOptions"
           [(ngModel)]="selectedFilter"
@@ -91,11 +94,12 @@
             >
           </td>
           <td>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <p-button
                 icon="pi pi-eye"
                 severity="info"
                 [rounded]="true"
+                styleClass="client-action-button"
                 pTooltip="Ver"
                 tooltipPosition="top"
                 [attr.data-cy]="'btn-ver-' + client.dni"
@@ -106,6 +110,7 @@
                   icon="pi pi-pencil"
                   severity="warning"
                   [rounded]="true"
+                  styleClass="client-action-button"
                   pTooltip="Editar"
                   tooltipPosition="top"
                   [attr.data-cy]="'btn-editar-' + client.dni"
@@ -117,6 +122,7 @@
                   icon="pi pi-credit-card"
                   severity="help"
                   [rounded]="true"
+                  styleClass="client-action-button"
                   pTooltip="Créditos"
                   tooltipPosition="top"
                   [attr.data-cy]="'btn-creditos-' + client.dni"
@@ -126,7 +132,7 @@
               @if (client.phone) {
                 <p-button
                   icon="pi pi-whatsapp"
-                  styleClass="p-button-whatsapp"
+                  styleClass="p-button-whatsapp client-action-button"
                   [rounded]="true"
                   pTooltip="WhatsApp"
                   tooltipPosition="top"

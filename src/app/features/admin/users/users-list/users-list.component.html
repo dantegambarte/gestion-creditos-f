@@ -18,7 +18,22 @@
 
 <div class="ff-panel" style="margin: 24px" data-cy="admin-users-page">
   <div class="ff-list-header">
-    <div class="ff-list-header__actions" style="flex: 1">
+    <div>
+      <h1 class="ff-page-title">Gestión de Usuarios</h1>
+      <p class="ff-page-subtitle">Administrá usuarios, roles y estados.</p>
+    </div>
+    <p-button
+      data-cy="admin-users-create-cta"
+      label="Nuevo usuario"
+      icon="pi pi-plus"
+      severity="primary"
+      styleClass="h-11 px-5 rounded-xl shadow-sm"
+      (onClick)="openNew()"
+    />
+  </div>
+
+  <div class="ff-list-header ff-list-header--filters">
+    <div class="ff-list-header__actions">
       <p-iconField iconPosition="left">
         <p-inputIcon
           styleClass="pi pi-search z-10"
@@ -43,6 +58,7 @@
         [showClear]="true"
         optionLabel="label"
         optionValue="value"
+        styleClass="h-11"
         appendTo="body"
       />
       <p-dropdown
@@ -54,17 +70,10 @@
         [showClear]="true"
         optionLabel="label"
         optionValue="value"
+        styleClass="h-11"
         appendTo="body"
       />
     </div>
-    <p-button
-      data-cy="admin-users-create-cta"
-      label="Nuevo usuario"
-      icon="pi pi-plus"
-      severity="primary"
-      styleClass="h-11 px-5 rounded-xl shadow-sm"
-      (onClick)="openNew()"
-    />
   </div>
 
   @if (loading) {

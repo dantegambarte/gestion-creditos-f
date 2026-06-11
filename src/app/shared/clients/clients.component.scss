@@ -41,3 +41,14 @@
     }
   }
 }
+
+:host ::ng-deep .client-action-button {
+  width: 2rem !important;
+  height: 2rem !important;
+  min-width: 2rem !important;
+  padding: 0 !important;
+}
+
+:host ::ng-deep .client-action-button .p-button-icon {
+  font-size: 0.8rem;
+}
