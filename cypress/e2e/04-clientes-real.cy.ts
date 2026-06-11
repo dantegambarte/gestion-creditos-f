@@ -70,7 +70,7 @@ describe('Gestión de Clientes real — Admin', () => {
         );
       }
     });
-    cy.contains('.ff-list-header__title', 'Gestión de Clientes', {
+    cy.contains('.ff-page-title', 'Gestión de Clientes', {
       timeout: 20000,
     }).should('be.visible');
     cy.get('p-table', { timeout: 20000 }).should('be.visible');
@@ -92,6 +92,19 @@ describe('Gestión de Clientes real — Admin', () => {
       .should('be.visible')
       .and('not.be.disabled')
       .click();
+  };
+
+  /**
+   * Selecciona el primer cobrador disponible en el modal de creación.
+   * El campo "Cobrador asignado" es requerido por el form de alta de cliente.
+   */
+  const selectFirstCollector = () => {
+    getVisibleDialog()
+      .find('p-dropdown[formControlName="assignedCollectorId"] .p-dropdown')
+      .click({ force: true });
+    cy.get('.p-dropdown-panel .p-dropdown-item', { timeout: 10000 })
+      .first()
+      .click({ force: true });
   };
 
   it('CU03 principal: crea y edita cliente real con persistencia cruzada', () => {
@@ -132,6 +145,7 @@ describe('Gestión de Clientes real — Admin', () => {
       .find('input[formControlName="direccion"]')
       .clear()
       .type(data.direccion);
+    selectFirstCollector();
     clickVisibleDialogButton('Crear Cliente');
 
     cy.contains('.p-toast-message', 'Cliente guardado correctamente.', {
@@ -236,6 +250,7 @@ describe('Gestión de Clientes real — Admin', () => {
       .find('input[formControlName="direccion"]')
       .clear()
       .type('Calle Dup 100');
+    selectFirstCollector();
     clickVisibleDialogButton('Crear Cliente');
 
     cy.contains('.p-toast-message', 'Ya existe un cliente con ese DNI.', {
