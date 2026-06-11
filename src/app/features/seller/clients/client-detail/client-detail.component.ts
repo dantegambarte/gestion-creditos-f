@@ -126,8 +126,18 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
    * Devuelve la vista al inicio del detalle sin cambiar de ruta.
    */
   scrollToTop(): void {
-    const scrollContainer = this.document.querySelector('main.overflow-y-auto');
+    const scrollContainer = this.getScrollContainer();
     scrollContainer?.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /**
+   * Obtiene el contenedor real de scroll del shell autenticado.
+   * Mantiene fallback al selector anterior para convivir con layouts viejos.
+   */
+  private getScrollContainer(): HTMLElement | null {
+    return this.document.querySelector<HTMLElement>(
+      'main.ff-shell__main, main.overflow-y-auto',
+    );
   }
 
   /**
@@ -136,7 +146,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
   private observeTopSummary(element: HTMLElement): void {
     this.topSummaryObserver?.disconnect();
 
-    const scrollContainer = this.document.querySelector('main.overflow-y-auto');
+    const scrollContainer = this.getScrollContainer();
     this.topSummaryObserver = new IntersectionObserver(
       ([entry]) => {
         this.showScrollTop = !entry.isIntersecting;
