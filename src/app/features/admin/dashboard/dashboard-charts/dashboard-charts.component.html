@@ -5,11 +5,16 @@
       <span>Recaudación semana</span>
     </div>
     @if (loadingCharts) {
-      <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
+      <div class="db-chart-body">
         <p-skeleton width="100%" height="250px" />
       </div>
     } @else {
-      <p-chart type="bar" [data]="chartWeeklyData" [options]="chartWeeklyOptions" style="height: 250px;" />
+      <p-chart
+        class="db-chart"
+        type="bar"
+        [data]="chartWeeklyData"
+        [options]="chartWeeklyOptions"
+      />
     }
   </div>
 
@@ -19,11 +24,16 @@
       <span>Top 5 cobradores</span>
     </div>
     @if (loadingCharts) {
-      <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
+      <div class="db-chart-body">
         <p-skeleton width="100%" height="250px" />
       </div>
     } @else {
-      <p-chart type="bar" [data]="chartCollectorsData" [options]="chartCollectorsOptions" style="height: 250px;" />
+      <p-chart
+        class="db-chart"
+        type="bar"
+        [data]="chartCollectorsData"
+        [options]="chartCollectorsOptions"
+      />
     }
   </div>
 
@@ -33,11 +43,16 @@
       <span>Top 5 vendedores</span>
     </div>
     @if (loadingCharts) {
-      <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
+      <div class="db-chart-body">
         <p-skeleton width="100%" height="250px" />
       </div>
     } @else {
-      <p-chart type="bar" [data]="chartSellersData" [options]="chartSellersOptions" style="height: 250px;" />
+      <p-chart
+        class="db-chart"
+        type="bar"
+        [data]="chartSellersData"
+        [options]="chartSellersOptions"
+      />
     }
   </div>
 </div>
