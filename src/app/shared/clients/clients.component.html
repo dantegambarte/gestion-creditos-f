@@ -1,5 +1,5 @@
 <p-toast />
-<div class="p-6">
+<div class="ff-complex-page">
   <div class="ff-panel">
     <div class="ff-list-header">
       <h1 class="ff-page-title">Gestión de Clientes</h1>
@@ -26,10 +26,7 @@
           data-cy="dropdown-filtro-clientes"
         />
         <p-iconField iconPosition="left">
-          <p-inputIcon
-            styleClass="pi pi-search z-10"
-            style="color: var(--ff-text-muted)"
-          />
+          <p-inputIcon styleClass="pi pi-search z-10 ff-muted-icon" />
           <input
             pInputText
             type="text"
@@ -44,7 +41,7 @@
 
     <p-table
       [value]="filteredClients"
-      styleClass="p-datatable-sm"
+      styleClass="p-datatable-sm ff-data-table"
       [tableStyle]="{ 'min-width': '50rem' }"
       [paginator]="true"
       [rows]="10"
@@ -76,7 +73,7 @@
             </div>
           </td>
           <td class="font-medium">{{ client.name }}</td>
-          <td style="color: var(--ff-text-secondary)">{{ client.phone }}</td>
+          <td class="ff-text-secondary">{{ client.phone }}</td>
           <td>{{ client.credits }}</td>
           <td>
             <span
@@ -165,10 +162,10 @@
           >{{ selectedClient.initials }}</span
         >
         <div>
-          <p class="font-semibold" style="color: var(--ff-text-primary)">
+          <p class="font-semibold ff-text-primary">
             {{ selectedClient.name }}
           </p>
-          <p class="text-sm ff-mono" style="color: var(--ff-text-muted)">
+          <p class="text-sm ff-mono ff-text-muted">
             DNI: {{ selectedClient.dni }}
           </p>
         </div>
