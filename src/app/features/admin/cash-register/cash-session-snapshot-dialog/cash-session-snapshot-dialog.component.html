@@ -1,93 +1,202 @@
 <p-dialog
-  header="Snapshot (X report) — caja operativa"
   [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
   [modal]="true"
+  [showHeader]="false"
+  [closable]="false"
   [draggable]="false"
   [resizable]="false"
-  (visibleChange)="visibleChange.emit($event)"
-  [style]="{ width: '560px' }"
+  styleClass="bg-[#121520] border border-[#1A1D27]"
+  contentStyleClass="bg-[#121520] p-0 border-none"
+  [contentStyle]="{
+    padding: '0',
+    background: '#121520',
+    color: '#cbd5e1',
+    border: '1px solid #1A1D27',
+    borderRadius: '1rem',
+    overflow: 'hidden',
+  }"
+  [style]="{ width: '560px', maxWidth: '95vw' }"
 >
-  @if (loading) {
-    <app-loading-state message="Cargando snapshot..."></app-loading-state>
-  } @else if (snapshot) {
-    <div class="flex flex-col gap-4 text-sm">
-      <div class="grid grid-cols-3 gap-2 font-medium text-gray-600 border-b pb-2">
-        <div></div>
-        <div class="text-right">Efectivo</div>
-        <div class="text-right">Transferencia</div>
-      </div>
+  <section class="bg-[#121520] text-slate-300">
+    <header
+      class="flex items-center justify-between gap-4 border-b border-[#252A3A] px-6 py-5"
+    >
+      <h2 class="text-xl font-bold text-white">
+        Snapshot (X report) — caja operativa
+      </h2>
+      <button
+        type="button"
+        class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
+        (click)="close()"
+      >
+        <i class="pi pi-times text-base"></i>
+      </button>
+    </header>
 
-      <div class="grid grid-cols-3 gap-2">
-        <div class="font-medium">Apertura</div>
-        <div class="text-right">{{ format.currency(snapshot.opening.cash) }}</div>
-        <div class="text-right">{{ format.currency(snapshot.opening.transfer) }}</div>
-      </div>
-
-      <div>
-        <div class="font-medium text-gray-700 mb-1">Cobros</div>
-        <div class="grid grid-cols-3 gap-2 pl-3">
-          <div class="text-gray-600">Pagos aprobados</div>
-          <div class="text-right">{{ format.currency(snapshot.collections.payments.cash) }}</div>
-          <div class="text-right">{{ format.currency(snapshot.collections.payments.transfer) }}</div>
+    <div class="px-6 py-5">
+      @if (loading) {
+        <app-loading-state message="Cargando snapshot..."></app-loading-state>
+      } @else if (snapshot) {
+        <div
+          class="overflow-hidden rounded-xl border border-[#252A3A] bg-[#0F121B]"
+        >
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr
+                class="border-b border-[#334155] bg-[#1D2231] text-xs uppercase tracking-[0.14em] text-slate-400"
+              >
+                <th class="px-4 py-3 text-left font-semibold">Concepto</th>
+                <th class="px-4 py-3 text-right font-semibold">Efectivo</th>
+                <th class="px-4 py-3 text-right font-semibold">
+                  Transferencia
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#252A3A]">
+              <tr class="bg-[#121520]">
+                <td class="px-4 py-3 font-semibold text-white">Apertura</td>
+                <td
+                  class="px-4 py-3 text-right font-mono font-semibold text-slate-200"
+                >
+                  {{ format.currency(snapshot.opening.cash) }}
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono font-semibold text-slate-200"
+                >
+                  {{ format.currency(snapshot.opening.transfer) }}
+                </td>
+              </tr>
+              <tr class="bg-[#0F121B]">
+                <td class="px-4 py-3 font-semibold text-blue-300">
+                  Cobros · pagos aprobados
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono font-semibold text-emerald-300"
+                >
+                  {{ format.currency(snapshot.collections.payments.cash) }}
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono font-semibold text-emerald-300"
+                >
+                  {{ format.currency(snapshot.collections.payments.transfer) }}
+                </td>
+              </tr>
+              <tr class="bg-[#121520]">
+                <td class="px-4 py-3 pl-8 text-slate-400">
+                  Cobros · enganches
+                </td>
+                <td class="px-4 py-3 text-right font-mono text-slate-200">
+                  {{ format.currency(snapshot.collections.down_payments.cash) }}
+                </td>
+                <td class="px-4 py-3 text-right font-mono text-slate-200">
+                  {{
+                    format.currency(snapshot.collections.down_payments.transfer)
+                  }}
+                </td>
+              </tr>
+              <tr class="bg-[#0F121B]">
+                <td class="px-4 py-3 pl-8 text-slate-400">
+                  Cobros · ingresos manuales
+                </td>
+                <td class="px-4 py-3 text-right font-mono text-slate-200">
+                  {{ format.currency(snapshot.collections.manual_incomes.cash) }}
+                </td>
+                <td class="px-4 py-3 text-right font-mono text-slate-200">
+                  {{
+                    format.currency(snapshot.collections.manual_incomes.transfer)
+                  }}
+                </td>
+              </tr>
+              <tr class="bg-[#121520]">
+                <td class="px-4 py-3 font-semibold text-red-300">
+                  Egresos operativos · gastos
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono font-semibold text-red-300"
+                >
+                  {{ format.currency(snapshot.outflows.expenses.cash) }}
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono font-semibold text-red-300"
+                >
+                  {{ format.currency(snapshot.outflows.expenses.transfer) }}
+                </td>
+              </tr>
+              <tr class="bg-[#0F121B]">
+                <td class="px-4 py-3 font-semibold text-white">
+                  Conversiones (delta)
+                </td>
+                <td class="px-4 py-3 text-right font-mono text-slate-200">
+                  {{ format.currency(snapshot.conversions.cash_delta) }}
+                </td>
+                <td class="px-4 py-3 text-right font-mono text-slate-200">
+                  {{ format.currency(snapshot.conversions.transfer_delta) }}
+                </td>
+              </tr>
+              <tr class="bg-[#121520]">
+                <td class="px-4 py-3 font-semibold text-white">
+                  Drops a Caja General
+                </td>
+                <td class="px-4 py-3 text-right font-mono text-slate-200">
+                  {{ format.currency(snapshot.drops.cash) }}
+                </td>
+                <td class="px-4 py-3 text-right font-mono text-slate-200">
+                  {{ format.currency(snapshot.drops.transfer) }}
+                </td>
+              </tr>
+              @if (snapshot.drops.items.length > 0) {
+                @for (item of snapshot.drops.items; track item.id) {
+                  <tr class="bg-[#121520] text-xs text-slate-400">
+                    <td class="px-4 py-2 pl-8 font-mono">
+                      #{{ item.id.slice(0, 8) }} · {{ item.payment_method }}
+                    </td>
+                    <td class="px-4 py-2 text-right font-mono">
+                      {{ format.currency(item.amount) }}
+                    </td>
+                    <td class="px-4 py-2 text-right font-mono">—</td>
+                  </tr>
+                }
+              }
+            </tbody>
+            <tfoot>
+              <tr
+                class="border-t-2 border-slate-300 bg-[#1D2231] text-base font-bold text-white"
+              >
+                <td class="px-4 py-4">Esperado en caja</td>
+                <td class="px-4 py-4 text-right font-mono">
+                  {{ format.currency(snapshot.expected.cash) }}
+                </td>
+                <td class="px-4 py-4 text-right font-mono">
+                  {{ format.currency(snapshot.expected.transfer) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
-        <div class="grid grid-cols-3 gap-2 pl-3">
-          <div class="text-gray-600">Enganches</div>
-          <div class="text-right">{{ format.currency(snapshot.collections.down_payments.cash) }}</div>
-          <div class="text-right">{{ format.currency(snapshot.collections.down_payments.transfer) }}</div>
+
+        <p class="mt-4 text-xs leading-relaxed text-slate-400">
+          Este es el snapshot vivo. La
+          <strong class="text-slate-200">diferencia</strong> contra el dinero
+          físico se calcula al cerrar la caja.
+        </p>
+      } @else if (errorMessage) {
+        <div
+          class="rounded-xl border border-red-400/25 bg-red-500/10 p-3 text-sm text-red-200"
+        >
+          {{ errorMessage }}
         </div>
-      </div>
-
-      <div>
-        <div class="font-medium text-gray-700 mb-1">Egresos operativos</div>
-        <div class="grid grid-cols-3 gap-2 pl-3">
-          <div class="text-gray-600">Gastos</div>
-          <div class="text-right">{{ format.currency(snapshot.outflows.expenses.cash) }}</div>
-          <div class="text-right">{{ format.currency(snapshot.outflows.expenses.transfer) }}</div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-3 gap-2">
-        <div class="font-medium">Conversiones (delta)</div>
-        <div class="text-right">{{ format.currency(snapshot.conversions.cash_delta) }}</div>
-        <div class="text-right">{{ format.currency(snapshot.conversions.transfer_delta) }}</div>
-      </div>
-
-      <div>
-        <div class="grid grid-cols-3 gap-2">
-          <div class="font-medium">Drops a Caja General</div>
-          <div class="text-right">{{ format.currency(snapshot.drops.cash) }}</div>
-          <div class="text-right">{{ format.currency(snapshot.drops.transfer) }}</div>
-        </div>
-        @if (snapshot.drops.items.length > 0) {
-          <ul class="text-xs text-gray-500 pl-3 mt-1">
-            @for (item of snapshot.drops.items; track item.id) {
-              <li>
-                #{{ item.id.slice(0, 8) }} · {{ item.payment_method }} ·
-                {{ format.currency(item.amount) }}
-              </li>
-            }
-          </ul>
-        }
-      </div>
-
-      <div class="grid grid-cols-3 gap-2 border-t pt-3 font-semibold text-base">
-        <div>Esperado en caja</div>
-        <div class="text-right">{{ format.currency(snapshot.expected.cash) }}</div>
-        <div class="text-right">{{ format.currency(snapshot.expected.transfer) }}</div>
-      </div>
-
-      <div class="text-xs text-gray-400">
-        Este es el snapshot vivo. La <strong>diferencia</strong> contra el dinero
-        físico se calcula al cerrar la caja (declarar por método).
-      </div>
+      }
     </div>
-  } @else if (errorMessage) {
-    <div class="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
-      {{ errorMessage }}
-    </div>
-  }
 
-  <ng-template pTemplate="footer">
-    <button pButton label="Cerrar" class="p-button-text" (click)="close()"></button>
-  </ng-template>
+    <footer class="flex justify-end border-t border-[#252A3A] px-6 py-4">
+      <button
+        type="button"
+        class="h-10 rounded-xl border border-blue-400/40 px-4 text-sm font-semibold text-white transition hover:bg-blue-500/15"
+        (click)="close()"
+      >
+        Cerrar
+      </button>
+    </footer>
+  </section>
 </p-dialog>

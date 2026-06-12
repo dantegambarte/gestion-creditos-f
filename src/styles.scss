@@ -2147,26 +2147,6 @@ table.ff-table {
   }
 }
 
-// ─── movement-detail-dialog scrollbar (override específico — no tocar) ───────
-.movement-detail-dialog .p-dialog-content {
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--ff-border);
-    border-radius: 999px;
-
-    &:hover {
-      background: var(--ff-text-muted);
-    }
-  }
-}
-
 // ─── Phase 3: complex views cohesion ─────────────────────────────────────────
 .ff-complex-page {
   padding: 1.5rem;

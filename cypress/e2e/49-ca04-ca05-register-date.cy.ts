@@ -76,6 +76,62 @@ const MOCK_PRE_CLOSE_WITH_ENGANCHES_AND_GASTOS = {
 
 const MOCK_CASH_HISTORY = { ok: true, data: [] };
 
+const MOCK_ACTIVE_BUSINESS_DAY = {
+  ok: true,
+  data: {
+    id: 'business-day-001',
+    business_date: YESTERDAY,
+    branch_id: 'branch-hq',
+    status: 'OPEN',
+    opened_at: `${YESTERDAY}T12:00:00.000Z`,
+    session_counts: {
+      open_count: 1,
+      pending_count: 0,
+      closed_count: 0,
+      total_count: 1,
+    },
+  },
+};
+
+const MOCK_ACTIVE_SESSION = {
+  ok: true,
+  data: {
+    id: 'cash-session-001',
+    business_day_id: 'business-day-001',
+    owner_user_id: 'admin-001',
+    opened_at: `${YESTERDAY}T12:00:00.000Z`,
+    opened_by: 'admin-001',
+    opening_amount: 0,
+    status: 'OPEN',
+    cash_counted: null,
+    closure_total_difference: null,
+  },
+};
+
+const MOCK_SESSION_MOVEMENTS = { ok: true, data: [] };
+
+const MOCK_SESSION_SNAPSHOT = {
+  ok: true,
+  data: {
+    session_id: 'cash-session-001',
+    status: 'OPEN',
+    owner_user_id: 'admin-001',
+    opened_at: `${YESTERDAY}T12:00:00.000Z`,
+    opening: { cash: 0, transfer: 0 },
+    collections: {
+      payments: { cash: 45000, transfer: 20000 },
+      down_payments: { cash: 8000, transfer: 2000 },
+    },
+    outflows: {
+      expenses: { cash: 3000, transfer: 1500 },
+      commissions: { cash: 0, transfer: 0 },
+    },
+    conversions: { cash_delta: 0, transfer_delta: 0 },
+    drops: { cash: 0, transfer: 0, items: [] },
+    expected: { cash: 50000, transfer: 20500 },
+  },
+};
+
 // ── CA-05 real backend ─────────────────────────────────────────────────────────
 
 describe('CA-05 real — gasto creado hoy queda en la jornada activa (register_date)', () => {
@@ -236,8 +292,30 @@ describe('CA-04 mock — dashboard muestra enganches de jornada anterior a hoy',
       body: MOCK_CASH_HISTORY,
     }).as('getCashHistory');
 
+    cy.intercept('GET', '**/api/business-days/active', {
+      statusCode: 200,
+      body: MOCK_ACTIVE_BUSINESS_DAY,
+    }).as('getActiveBusinessDay');
+
+    cy.intercept('GET', '**/api/cash-sessions/active', {
+      statusCode: 200,
+      body: MOCK_ACTIVE_SESSION,
+    }).as('getActiveSession');
+
+    cy.intercept('GET', '**/api/cash-register/sessions/*/movements', {
+      statusCode: 200,
+      body: MOCK_SESSION_MOVEMENTS,
+    }).as('getSessionMovements');
+
+    cy.intercept('GET', '**/api/cash-sessions/*/snapshot', {
+      statusCode: 200,
+      body: MOCK_SESSION_SNAPSHOT,
+    }).as('getSessionSnapshot');
+
     cy.viewport(1280, 720);
     cy.loginAs('ADMIN', '/admin/cash-register');
+    cy.wait('@getActiveBusinessDay');
+    cy.wait('@getActiveSession');
     cy.wait('@getDashboard');
   });
 
@@ -248,7 +326,8 @@ describe('CA-04 mock — dashboard muestra enganches de jornada anterior a hoy',
 
   it('CA-04 — el badge de jornada anterior está visible junto con los enganches en el dashboard', () => {
     // La jornada activa es AYER → debe mostrarse el badge
-    cy.get('[data-cy="jornada-post-midnight-badge"]').should('be.visible');
+    const [y, m, d] = YESTERDAY.split('-');
+    cy.contains(`${d}/${m}/${y}`).should('be.visible');
     // Los KPIs del dashboard se renderizan (no 0 ni error)
     cy.get('[data-cy="admin-cash-register-kpis"]').should('be.visible');
   });
@@ -273,52 +352,56 @@ describe('CA-04 + CA-05 mock — pre-cierre de jornada anterior muestra enganche
       body: MOCK_CASH_HISTORY,
     }).as('getCashHistory');
 
+    cy.intercept('GET', '**/api/business-days/active', {
+      statusCode: 200,
+      body: MOCK_ACTIVE_BUSINESS_DAY,
+    }).as('getActiveBusinessDay');
+
+    cy.intercept('GET', '**/api/cash-sessions/active', {
+      statusCode: 200,
+      body: MOCK_ACTIVE_SESSION,
+    }).as('getActiveSession');
+
+    cy.intercept('GET', '**/api/cash-register/sessions/*/movements', {
+      statusCode: 200,
+      body: MOCK_SESSION_MOVEMENTS,
+    }).as('getSessionMovements');
+
+    cy.intercept('GET', '**/api/cash-sessions/*/snapshot', {
+      statusCode: 200,
+      body: MOCK_SESSION_SNAPSHOT,
+    }).as('getSessionSnapshot');
+
     cy.viewport(1280, 720);
     cy.loginAs('ADMIN', '/admin/cash-register');
+    cy.wait('@getActiveBusinessDay');
+    cy.wait('@getActiveSession');
     cy.wait('@getDashboard');
 
-    // Abrir panel de pre-cierre
+    // Abrir el cierre V4 de caja operativa, reemplazo del pre-cierre legacy.
     cy.get('[data-cy="admin-cash-register-close-day-cta"]').click();
-    cy.wait('@getPreClose');
-    cy.get('[data-cy="admin-cash-register-close-section"]', {
-      timeout: 10000,
-    }).should('be.visible');
+    cy.wait('@getSessionSnapshot');
+    cy.contains('Cerrar caja operativa', { timeout: 10000 }).should('be.visible');
   });
 
-  it('CA-04 — el pre-cierre muestra la fila "Enganches en efectivo" con monto > 0', () => {
-    // enganches_efectivo: 8000 — aparece en la sección de ingresos
-    cy.get('[data-cy="admin-cash-register-close-ingresos-inline"]').within(
-      () => {
-        cy.contains('Enganches en efectivo').should('be.visible');
-        cy.contains(/8[\.,]000|8000/).should('exist');
-      },
-    );
+  it('CA-04 — el cierre V4 muestra esperado de efectivo con enganches de jornada anterior', () => {
+    cy.contains('Efectivo').should('be.visible');
+    cy.contains(/50[\.,]000|50000/).should('exist');
   });
 
-  it('CA-04 — el pre-cierre muestra la fila "Enganches en transferencia" con monto > 0', () => {
-    // enganches_transferencia: 2000
-    cy.get('[data-cy="admin-cash-register-close-ingresos-inline"]').within(
-      () => {
-        cy.contains('Enganches en transferencia').should('be.visible');
-        cy.contains(/2[\.,]000|2000/).should('exist');
-      },
-    );
+  it('CA-04 — el cierre V4 muestra esperado de transferencia con enganches de jornada anterior', () => {
+    cy.contains('Transferencia').should('be.visible');
+    cy.contains(/20[\.,]500|20500/).should('exist');
   });
 
-  it('CA-05 — la sección de egresos aparece cuando hay gastos (egresos.total > 0)', () => {
-    // @if (preClose.egresos.total > 0) → sección visible solo cuando hay egresos
-    cy.get('[data-cy="admin-cash-register-close-egresos-inline"]').should(
-      'be.visible',
-    );
+  it('CA-04 + CA-05 — el total esperado descuenta los gastos registrados', () => {
+    cy.contains('Total').should('be.visible');
+    cy.contains(/70[\.,]500|70500/).should('exist');
   });
 
-  it('CA-04 + CA-05 — el total de egresos muestra el valor correcto (gastos registrados)', () => {
-    // total egresos: 4500 — mostrado como "- $4.500" en la sección de egresos
-    cy.get('[data-cy="admin-cash-register-close-egresos-inline"]').within(
-      () => {
-        cy.contains(/4[\.,]500|4500/).should('exist');
-      },
-    );
+  it('CA-05 — el cierre V4 permite declarar montos físicos contra el snapshot', () => {
+    cy.contains('Declarado').should('be.visible');
+    cy.contains('Diferencia').should('be.visible');
   });
 
   it('CA-04 + CA-05 — la jornada del pre-cierre corresponde al día anterior (no hoy)', () => {

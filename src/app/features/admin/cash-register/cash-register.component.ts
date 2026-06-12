@@ -1,48 +1,46 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { CalendarModule } from 'primeng/calendar';
-import { CardModule } from 'primeng/card';
-import { DropdownModule } from 'primeng/dropdown';
 import { DialogModule } from 'primeng/dialog';
+import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
-import { TableModule } from 'primeng/table';
-import { TabViewModule } from 'primeng/tabview';
-import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { TooltipModule } from 'primeng/tooltip';
-import { Subject, interval } from 'rxjs';
+import { Subject, interval, of } from 'rxjs';
 import { finalize, switchMap, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
+import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
+import { ExpenseCategoriesService } from '../expenses/expense-categories.service';
+import { ExpenseSidePanelComponent } from '../expenses/expense-side-panel/expense-side-panel.component';
+import { ActiveBusinessDay } from '../models/business-day.model';
 import {
-  CashRegister,
   CashConversionPayload,
   CashRegisterDashboard,
-  CashRegisterFilters,
-  DifferenceStatus,
+  CashRegisterMovement,
+  CashRegisterMovementType,
 } from '../models/cash-register.model';
-import { ActiveBusinessDay } from '../models/business-day.model';
 import { CashSession } from '../models/cash-session.model';
-import { CashRegisterCloseDialogComponent } from './cash-register-close-dialog/cash-register-close-dialog.component';
-import { CashRegisterClosePanelComponent } from './cash-register-close-panel/cash-register-close-panel.component';
-import { CashRegisterDetailDialogComponent } from './cash-register-detail-dialog/cash-register-detail-dialog.component';
-import { CashSessionOpenDialogComponent } from './cash-session-open-dialog/cash-session-open-dialog.component';
-import { CashSessionCloseDialogComponent } from './cash-session-close-dialog/cash-session-close-dialog.component';
-import { CashSessionSnapshotDialogComponent } from './cash-session-snapshot-dialog/cash-session-snapshot-dialog.component';
-import { CashSessionDropDialogComponent } from './cash-session-drop-dialog/cash-session-drop-dialog.component';
-import { CashSessionHistoryListComponent } from './cash-session-history-list/cash-session-history-list.component';
-import { BusinessDayCloseDialogComponent } from './business-day-close-dialog/business-day-close-dialog.component';
-import { BusinessDayHistoryListComponent } from './business-day-history-list/business-day-history-list.component';
-import { BusinessDayDetailDialogComponent } from './business-day-detail-dialog/business-day-detail-dialog.component';
+import { ExpenseCategory } from '../models/interface/expenses';
 import { CashRegisterService } from './cash-register.service';
-import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
+import { CashSessionCloseDialogComponent } from './cash-session-close-dialog/cash-session-close-dialog.component';
+import { CashSessionOpenDialogComponent } from './cash-session-open-dialog/cash-session-open-dialog.component';
+import { CashSessionSnapshotDialogComponent } from './cash-session-snapshot-dialog/cash-session-snapshot-dialog.component';
+
+type MovementTypeFilter = 'TODOS' | CashRegisterMovementType;
+type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
 
 @Component({
   selector: 'app-cash-register',
@@ -50,31 +48,19 @@ import { CurrencyAmountInputDirective } from '../../../shared/directives/currenc
   imports: [
     FormsModule,
     ButtonModule,
-    CalendarModule,
-    CardModule,
-    DropdownModule,
     DialogModule,
+    DropdownModule,
     InputNumberModule,
+    InputTextModule,
     InputTextareaModule,
-    TableModule,
-    TabViewModule,
-    TagModule,
     ToastModule,
-    TooltipModule,
+    CurrencyAmountInputDirective,
     LoadingStateComponent,
     ErrorStateComponent,
-    CashRegisterClosePanelComponent,
-    CashRegisterCloseDialogComponent,
-    CashRegisterDetailDialogComponent,
     CashSessionOpenDialogComponent,
     CashSessionCloseDialogComponent,
     CashSessionSnapshotDialogComponent,
-    CashSessionDropDialogComponent,
-    CashSessionHistoryListComponent,
-    BusinessDayCloseDialogComponent,
-    BusinessDayHistoryListComponent,
-    BusinessDayDetailDialogComponent,
-    CurrencyAmountInputDirective,
+    ExpenseSidePanelComponent,
   ],
   providers: [MessageService],
   templateUrl: './cash-register.component.html',
@@ -82,88 +68,206 @@ import { CurrencyAmountInputDirective } from '../../../shared/directives/currenc
 })
 export class CashRegisterComponent implements OnInit, OnDestroy {
   private readonly service = inject(CashRegisterService);
+  private readonly expenseCategoryService = inject(ExpenseCategoriesService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
   readonly format = inject(FormatService);
-  private readonly router = inject(Router);
   private destroy$ = new Subject<void>();
 
-  dashboard: CashRegisterDashboard | null = null;
-  loadingDashboard = true;
-  errorDashboard: AppError | null = null;
-  closedToday = false;
+  readonly dashboard = signal<CashRegisterDashboard | null>(null);
+  readonly loadingDashboard = signal(true);
+  readonly errorDashboard = signal<AppError | null>(null);
 
-  history: CashRegister[] = [];
-  loadingHistory = true;
-  errorHistory: AppError | null = null;
+  readonly movements = signal<CashRegisterMovement[]>([]);
+  readonly loadingMovements = signal(false);
+  readonly errorMovements = signal<AppError | null>(null);
+  readonly showMovementsDialog = signal(false);
+  readonly movementTypeFilter = signal<MovementTypeFilter>('TODOS');
+  readonly movementMethodFilter = signal<MovementMethodFilter>('TODOS');
+  readonly movementPage = signal(1);
+  readonly movementRows = 10;
 
-  filterDateFrom: string | null = null;
-  filterDateTo: string | null = null;
-  filterDifferenceStatus: DifferenceStatus | null = null;
+  readonly activeBusinessDay = signal<ActiveBusinessDay | null>(null);
+  readonly activeSession = signal<CashSession | null>(null);
+  readonly loadingJornada = signal(false);
+  readonly errorJornada = signal<AppError | null>(null);
+  readonly closingJornada = signal(false);
 
-  readonly differenceStatusOptions = [
-    { label: 'Todos los estados', value: null },
-    { label: 'Exacta', value: 'EXACT' as DifferenceStatus },
-    { label: 'Sobrante', value: 'SURPLUS' as DifferenceStatus },
-    { label: 'Faltante', value: 'SHORTAGE' as DifferenceStatus },
+  readonly showOpenSessionDialog = signal(false);
+  readonly showCloseSessionDialog = signal(false);
+  readonly showSnapshotDialog = signal(false);
+  readonly selectedSessionId = signal<string | null>(null);
+
+  readonly showConversionDialog = signal(false);
+  readonly conversionSourceMethod = signal<'CASH' | 'TRANSFER'>('CASH');
+  readonly conversionAmount = signal<number | null>(null);
+  readonly conversionNotes = signal('');
+  readonly conversionValidationError = signal('');
+  readonly conversionSubmitting = signal(false);
+
+  readonly showManualIncomeDialog = signal(false);
+  readonly manualIncomeAmount = signal<number | null>(null);
+  readonly manualIncomePaymentMethod = signal<'CASH' | 'TRANSFER'>('CASH');
+  readonly manualIncomeDescription = signal('');
+  readonly manualIncomeReference = signal('');
+  readonly manualIncomeValidationError = signal('');
+  readonly manualIncomeSubmitting = signal(false);
+
+  readonly showExpenseDialog = signal(false);
+  readonly expenseCategories = signal<ExpenseCategory[]>([]);
+
+  readonly conversionSourceOptions = [
+    { label: 'Efectivo', value: 'CASH' as const },
+    { label: 'Transferencia', value: 'TRANSFER' as const },
   ];
 
-  showCloseDialog = false;
-  showInlineClosePanel = false;
-
-  showDetailDialog = false;
-  selectedRegisterId: string | null = null;
-
-  showConversionDialog = false;
-  conversionSourceMethod: 'CASH' | 'TRANSFER' = 'CASH';
-  conversionCriteria: 'DAILY' | 'COMPANY' | null = null;
-  conversionAmount: number | null = null;
-  conversionNotes = '';
-  conversionValidationError = '';
-  conversionSubmitting = false;
-
-  readonly conversionCriteriaOptions = [
-    { label: 'Caja diaria', value: 'DAILY' as const },
-    { label: 'Caja de la empresa', value: 'COMPANY' as const },
+  readonly manualIncomeMethodOptions = [
+    { label: 'Efectivo', value: 'CASH' as const },
+    { label: 'Transferencia', value: 'TRANSFER' as const },
   ];
 
-  // ── V4: Jornada + Caja Operativa ─────────────────────────────────────────
-  activeBusinessDay: ActiveBusinessDay | null = null;
-  activeSession: CashSession | null = null;
-  loadingJornada = false;
-  errorJornada: AppError | null = null;
+  readonly movementTypeOptions = [
+    { label: 'Todos', value: 'TODOS' as const },
+    { label: 'INGRESO', value: 'INGRESO' as const },
+    { label: 'EGRESO', value: 'EGRESO' as const },
+    { label: 'CONVERSION', value: 'CONVERSION' as const },
+  ];
 
-  showOpenSessionDialog = false;
-  showCloseSessionDialog = false;
-  showSnapshotDialog = false;
-  showDropDialog = false;
-  selectedSessionId: string | null = null;
-  /** F2: cuenta de cambios; el historial reacciona vía @Input refreshSignal. */
-  historyRefreshSignal = 0;
+  readonly movementMethodOptions = [
+    { label: 'Todos', value: 'TODOS' as const },
+    { label: 'EFECTIVO', value: 'EFECTIVO' as const },
+    { label: 'TRANSFERENCIA', value: 'TRANSFERENCIA' as const },
+  ];
 
-  /** F3: visibilidad del dialog "Cerrar jornada". */
-  showCloseBusinessDayDialog = false;
+  readonly operationsDisabled = computed(() => !this.activeBusinessDay());
 
-  /** F3.5: dialog detalle de jornada histórica. */
-  showBusinessDayDetailDialog = false;
-  selectedBusinessDayId: string | null = null;
+  readonly estimatedBalance = computed(() => {
+    const dashboard = this.dashboard();
+    if (!dashboard) return 0;
+    return dashboard.cashAmount + dashboard.transferAmount;
+  });
 
   /**
-   * Indica si la jornada activa pertenece a un día calendario anterior al actual.
-   * Ocurre cuando se trabaja pasada la medianoche sin haber cerrado la caja del día anterior.
+   * Dinero contado en el último arqueo de cierre de la caja activa.
+   * Null si la caja sigue OPEN sin arquear todavía.
    */
-  get isPostMidnightJornada(): boolean {
-    if (!this.dashboard) return false;
-    const today = new Date().toLocaleDateString('en-CA', {
-      timeZone: 'America/Argentina/Buenos_Aires',
+  readonly cashCounted = computed<number | null>(
+    () => this.activeSession()?.cash_counted ?? null,
+  );
+
+  /**
+   * Diferencia entre lo contado y el saldo estimado. Null si no hay arqueo
+   * registrado todavía (la caja sigue OPEN sin contar).
+   */
+  readonly currentDifference = computed<number | null>(() => {
+    const counted = this.cashCounted();
+    if (counted === null) return null;
+    return counted - this.estimatedBalance();
+  });
+
+  /** Tono visual de la diferencia: cuadrada (success), falta (danger), sobra (warning) o sin arqueo (neutral). */
+  readonly differenceTone = computed<
+    'neutral' | 'success' | 'danger' | 'warning'
+  >(() => {
+    const diff = this.currentDifference();
+    if (diff === null) return 'neutral';
+    if (diff === 0) return 'success';
+    return diff < 0 ? 'danger' : 'warning';
+  });
+
+  readonly summaryCards = computed(() => {
+    const dashboard = this.dashboard();
+    const session = this.activeSession();
+    const initialBalance = session?.opening_amount ?? 0;
+    const incomes = dashboard?.totalCollected ?? 0;
+    const outflows = dashboard?.totalOutflows ?? 0;
+    const strongboxBalance = initialBalance + incomes - outflows;
+
+    return [
+      {
+        label: 'Saldo Fuerte',
+        value: strongboxBalance,
+        tone: strongboxBalance >= 0 ? 'success' : 'danger',
+        hint: 'Total disponible de la jornada',
+      },
+      {
+        label: 'Ingresos',
+        value: incomes,
+        tone: 'success',
+        hint: 'Cobros y entradas confirmadas',
+      },
+      {
+        label: 'Gastos',
+        value: outflows,
+        tone: 'danger',
+        hint: 'Egresos y salidas registradas',
+      },
+    ];
+  });
+
+  readonly conversionTargetMethod = computed<'CASH' | 'TRANSFER'>(() =>
+    this.conversionSourceMethod() === 'CASH' ? 'TRANSFER' : 'CASH',
+  );
+
+  readonly conversionSourceAvailable = computed(() => {
+    const dashboard = this.dashboard();
+    if (!dashboard) return 0;
+    return this.conversionSourceMethod() === 'CASH'
+      ? dashboard.cashAmount
+      : dashboard.transferAmount;
+  });
+
+  readonly canSubmitConversion = computed(() => {
+    const amount = this.conversionAmount();
+    return !!(
+      amount &&
+      amount > 0 &&
+      amount <= this.conversionSourceAvailable() &&
+      !this.conversionSubmitting()
+    );
+  });
+
+  readonly previewMovements = computed(() => this.movements().slice(0, 5));
+
+  readonly filteredMovements = computed(() => {
+    const type = this.movementTypeFilter();
+    const method = this.movementMethodFilter();
+    return this.movements().filter((movement) => {
+      const matchesType = type === 'TODOS' || movement.tipo === type;
+      const matchesMethod =
+        method === 'TODOS' || movement.metodoPago.includes(method);
+      return matchesType && matchesMethod;
     });
-    return this.dashboard.date < today;
+  });
+
+  readonly movementTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredMovements().length / this.movementRows)),
+  );
+
+  readonly pagedMovements = computed(() => {
+    const page = Math.min(this.movementPage(), this.movementTotalPages());
+    const start = (page - 1) * this.movementRows;
+    return this.filteredMovements().slice(start, start + this.movementRows);
+  });
+
+  /** True si la jornada quedó lista para el cierre formal (sin cajas OPEN/PENDING). */
+  private isBusinessDayReadyToClose(
+    businessDay: ActiveBusinessDay | null,
+  ): boolean {
+    if (!businessDay) return false;
+    if (businessDay.status !== 'READY_TO_CLOSE') return false;
+    const counts = businessDay.session_counts;
+    return (
+      counts.open_count === 0 &&
+      counts.pending_count === 0 &&
+      counts.total_count > 0
+    );
   }
 
   ngOnInit(): void {
     this.header.set([{ label: 'Caja' }]);
+    this.loadExpenseCategories();
     this.loadDashboard();
-    this.loadHistory();
     this.loadJornadaState();
     this.startPolling();
   }
@@ -185,8 +289,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (d) => {
-          this.dashboard = d;
-          this.closedToday = d.isClosed;
+          this.dashboard.set(d);
         },
       });
   }
@@ -195,273 +298,315 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * Carga los datos del dashboard desde el servidor.
    */
   loadDashboard(): void {
-    this.loadingDashboard = true;
-    this.errorDashboard = null;
+    this.loadingDashboard.set(true);
+    this.errorDashboard.set(null);
     this.service
       .getDashboard()
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
-          this.loadingDashboard = false;
+          this.loadingDashboard.set(false);
         }),
       )
       .subscribe({
         next: (d) => {
-          this.dashboard = d;
-          this.closedToday = d.isClosed;
+          this.dashboard.set(d);
         },
         error: (err: AppError) => {
-          this.errorDashboard = err;
+          this.errorDashboard.set(err);
         },
       });
   }
 
   /**
-   * Carga el historial de registros de caja desde el servidor.
+   * Carga la fuente temporal de movimientos de caja hasta tener el endpoint
+   * unificado de movimientos de jornada.
    */
-  loadHistory(): void {
-    this.loadingHistory = true;
-    this.errorHistory = null;
-    const filters: CashRegisterFilters = {};
-    if (this.filterDateFrom) filters.dateFrom = this.filterDateFrom;
-    if (this.filterDateTo) filters.dateTo = this.filterDateTo;
-    if (this.filterDifferenceStatus)
-      filters.differenceStatus = this.filterDifferenceStatus;
+  loadMovements(sessionId = this.activeSession()?.id ?? null): void {
+    if (!sessionId) {
+      this.movements.set([]);
+      this.loadingMovements.set(false);
+      this.errorMovements.set(null);
+      return;
+    }
+    this.loadingMovements.set(true);
+    this.errorMovements.set(null);
     this.service
-      .getAll(filters)
+      .getSessionMovements(sessionId)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
-          this.loadingHistory = false;
+          this.loadingMovements.set(false);
         }),
       )
       .subscribe({
-        next: (history) => {
-          this.history = history;
+        next: (movements) => {
+          this.movements.set(movements);
+          this.movementPage.set(1);
         },
         error: (err: AppError) => {
-          this.errorHistory = err;
+          this.errorMovements.set(err);
         },
       });
   }
 
   /**
-   * Muestra/oculta el panel lateral de cierre.
+   * Abre la vista dedicada de auditoría de movimientos desde el preview.
    */
-  toggleInlineClosePanel(): void {
-    this.showInlineClosePanel = !this.showInlineClosePanel;
+  openMovementsDialog(): void {
+    this.movementPage.set(1);
+    this.showMovementsDialog.set(true);
   }
 
   /**
-   * Abre el diálogo modal de cierre de caja.
+   * Filtra la vista expandida por tipo y vuelve a la primera página.
+   * @param value - Tipo de movimiento o TODOS.
    */
-  openCloseDialog(): void {
-    this.showCloseDialog = true;
+  setMovementTypeFilter(value: MovementTypeFilter): void {
+    this.movementTypeFilter.set(value);
+    this.movementPage.set(1);
   }
 
   /**
-   * Callback tras cierre exitoso desde el panel o el dialog.
-   * @param reg registro generado por el cierre
+   * Filtra la vista expandida por método de pago y vuelve a la primera página.
+   * @param value - Método de pago o TODOS.
    */
-  onClosedSuccessfully(reg: CashRegister): void {
-    this.closedToday = true;
-    this.showInlineClosePanel = false;
-    this.history = [reg, ...this.history];
-    this.loadDashboard();
-    this.openDetail(reg);
+  setMovementMethodFilter(value: MovementMethodFilter): void {
+    this.movementMethodFilter.set(value);
+    this.movementPage.set(1);
   }
 
   /**
-   * Abre el diálogo de detalle para el registro indicado.
-   * @param reg registro de caja a ver
+   * Avanza una página en la vista expandida sin exceder el total disponible.
    */
-  openDetail(reg: CashRegister): void {
-    this.selectedRegisterId = reg.id;
-    this.showDetailDialog = true;
+  nextMovementPage(): void {
+    this.movementPage.set(
+      Math.min(this.movementPage() + 1, this.movementTotalPages()),
+    );
   }
 
   /**
-   * Abre el modal para registrar una conversión de caja.
+   * Retrocede una página en la vista expandida sin bajar de la primera.
+   */
+  previousMovementPage(): void {
+    this.movementPage.set(Math.max(1, this.movementPage() - 1));
+  }
+
+  /**
+   * Carga categorías activas para el alta rápida de gastos desde Caja.
+   */
+  loadExpenseCategories(): void {
+    this.expenseCategoryService
+      .getAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (categories) => this.expenseCategories.set(categories),
+        error: (err: AppError) => {
+          this.msg.add({
+            severity: 'error',
+            summary: 'No se pudieron cargar categorías',
+            detail:
+              err.message || 'Intentá nuevamente antes de registrar un gasto.',
+          });
+        },
+      });
+  }
+
+  /**
+   * Abre el alta rápida de ingreso manual sin crear una operación comercial.
+   */
+  openManualIncomeDialog(): void {
+    this.manualIncomeAmount.set(null);
+    this.manualIncomePaymentMethod.set('CASH');
+    this.manualIncomeDescription.set('');
+    this.manualIncomeReference.set('');
+    this.manualIncomeValidationError.set('');
+    this.showManualIncomeDialog.set(true);
+  }
+
+  /**
+   * Registra una entrada manual en la caja operativa activa.
+   */
+  submitManualIncome(): void {
+    this.manualIncomeValidationError.set('');
+    const session = this.activeSession();
+    const amount = this.manualIncomeAmount();
+    const description = this.manualIncomeDescription().trim();
+    if (!session) {
+      this.manualIncomeValidationError.set(
+        'No hay una caja abierta para imputar el ingreso.',
+      );
+      return;
+    }
+    if (!amount || amount <= 0) {
+      this.manualIncomeValidationError.set('Ingresá un monto mayor a 0.');
+      return;
+    }
+    if (description.length < 3) {
+      this.manualIncomeValidationError.set(
+        'Ingresá un concepto de al menos 3 caracteres.',
+      );
+      return;
+    }
+
+    this.manualIncomeSubmitting.set(true);
+    this.service
+      .createManualIncome(session.id, {
+        amount,
+        paymentMethod: this.manualIncomePaymentMethod(),
+        description,
+        receiptReference: this.manualIncomeReference().trim() || undefined,
+      })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.manualIncomeSubmitting.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.msg.add({
+            severity: 'success',
+            summary: 'Ingreso registrado',
+            detail: 'La entrada manual se imputó a la caja activa.',
+          });
+          this.showManualIncomeDialog.set(false);
+          this.onJornadaStateChanged();
+        },
+        error: (err: AppError) => {
+          this.msg.add({
+            severity: 'error',
+            summary: 'No se pudo registrar',
+            detail:
+              err.message || 'Ocurrió un error al registrar el ingreso manual.',
+          });
+        },
+      });
+  }
+
+  /**
+   * Abre el alta rápida de gastos sin sacar al usuario del flujo de Caja.
+   */
+  openExpenseDialog(): void {
+    this.showExpenseDialog.set(true);
+  }
+
+  /**
+   * Cierra el alta rápida de gastos embebida en Caja.
+   */
+  closeExpenseDialog(): void {
+    this.showExpenseDialog.set(false);
+  }
+
+  /**
+   * Refresca Caja luego de registrar un gasto desde el modal contextual.
+   */
+  onExpenseSaved(): void {
+    this.showExpenseDialog.set(false);
+    this.onJornadaStateChanged();
+  }
+
+  /**
+   * Abre el diálogo de conversión entre efectivo y transferencia.
    */
   openConversionDialog(): void {
-    this.showConversionDialog = true;
-    this.conversionSourceMethod = 'CASH';
-    this.conversionCriteria = null;
-    this.conversionAmount = null;
-    this.conversionNotes = '';
-    this.conversionValidationError = '';
+    this.conversionSourceMethod.set('CASH');
+    this.conversionAmount.set(null);
+    this.conversionNotes.set('');
+    this.conversionValidationError.set('');
+    this.showConversionDialog.set(true);
   }
 
   /**
-   * Selecciona el criterio de conversión.
-   * @param criteria criterio de caja a registrar
+   * Devuelve la etiqueta visible para un método interno de pago.
+   * @param method - Método CASH o TRANSFER.
    */
-  selectConversionCriteria(criteria: 'DAILY' | 'COMPANY'): void {
-    this.conversionCriteria = criteria;
-    this.conversionSourceMethod = 'CASH';
-    this.conversionAmount = null;
-    this.conversionValidationError = '';
+  paymentMethodLabel(method: 'CASH' | 'TRANSFER'): string {
+    return method === 'CASH' ? 'Efectivo' : 'Transferencia';
   }
 
   /**
-   * Devuelve el disponible del método origen para validar la conversión.
-   */
-  get conversionSourceAvailable(): number {
-    if (!this.dashboard || !this.conversionCriteria) return 0;
-    return this.conversionSourceMethod === 'CASH'
-      ? this.dashboard.cashAmount
-      : this.dashboard.transferAmount;
-  }
-
-  /**
-   * Indica si ya se eligió el criterio y se pueden habilitar los demás campos.
-   */
-  get canEditConversionFields(): boolean {
-    return !!this.conversionCriteria;
-  }
-
-  /**
-   * Valida si el monto ingresado respeta el disponible del método origen.
-   */
-  get conversionAmountValid(): boolean {
-    if (!this.canEditConversionFields) return false;
-    if (!this.conversionAmount || this.conversionAmount <= 0) return false;
-    return this.conversionAmount <= this.conversionSourceAvailable;
-  }
-
-  /**
-   * Indica si el monto supera el disponible del método origen.
-   */
-  get conversionAmountExceedsAvailable(): boolean {
-    return !!(
-      this.canEditConversionFields &&
-      this.conversionAmount &&
-      this.conversionAmount > this.conversionSourceAvailable
-    );
-  }
-
-  /**
-   * Devuelve el método de pago destino según el método origen.
-   */
-  get conversionTargetMethod(): 'CASH' | 'TRANSFER' {
-    return this.conversionSourceMethod === 'CASH' ? 'TRANSFER' : 'CASH';
-  }
-
-  /**
-   * Indica si la conversión está lista para ser enviada.
-   */
-  get canSubmitConversion(): boolean {
-    return !!(
-      this.conversionCriteria &&
-      this.conversionAmountValid &&
-      !this.conversionSubmitting
-    );
-  }
-
-  /**
-   * Registra una conversión entre efectivo y transferencia y actualiza la caja.
+   * Registra una conversión de dinero y refresca los saldos de la jornada.
    */
   submitConversion(): void {
-    this.conversionValidationError = '';
-    if (!this.conversionCriteria) {
-      this.conversionValidationError =
-        'Seleccioná primero el criterio de caja para continuar.';
+    this.conversionValidationError.set('');
+    const amount = this.conversionAmount();
+    if (!amount || amount <= 0) {
+      this.conversionValidationError.set('Ingresá un monto mayor a 0.');
       return;
     }
-    if (!this.conversionAmount || this.conversionAmount <= 0) {
-      this.conversionValidationError = 'Ingresá un monto mayor a 0.';
+    if (amount > this.conversionSourceAvailable()) {
+      this.conversionValidationError.set(
+        'El monto supera el disponible del método seleccionado.',
+      );
       return;
     }
-    if (this.conversionAmount > this.conversionSourceAvailable) {
-      this.conversionValidationError = 'El monto supera el disponible del método seleccionado.';
-      return;
-    }
-    if (!this.canSubmitConversion) return;
+    if (!this.canSubmitConversion()) return;
 
     const payload: CashConversionPayload = {
-      criteria: this.conversionCriteria!,
-      sourceMethod: this.conversionSourceMethod,
-      amount: this.conversionAmount!,
-      notes: this.conversionNotes?.trim() || undefined,
-      registerDate: this.dashboard?.date,
+      criteria: 'DAILY',
+      sourceMethod: this.conversionSourceMethod(),
+      amount,
+      notes: this.conversionNotes().trim() || undefined,
+      registerDate: this.dashboard()?.date,
     };
 
-    this.conversionSubmitting = true;
+    this.conversionSubmitting.set(true);
     this.service
       .createConversion(payload)
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => {
-          this.conversionSubmitting = false;
-        }),
+        finalize(() => this.conversionSubmitting.set(false)),
       )
       .subscribe({
         next: () => {
           this.msg.add({
             severity: 'success',
             summary: 'Conversión registrada',
-            detail: 'La conversión se aplicó correctamente en la caja del día.',
+            detail: 'El dinero se convirtió correctamente.',
           });
-          this.showConversionDialog = false;
-          this.loadDashboard();
+          this.showConversionDialog.set(false);
+          this.onJornadaStateChanged();
         },
         error: (err: AppError) => {
           this.msg.add({
             severity: 'error',
-            summary: 'No se pudo registrar',
-            detail: err.message || 'Ocurrió un error al registrar la conversión.',
+            summary: 'No se pudo convertir',
+            detail:
+              err.message || 'Ocurrió un error al registrar la conversión.',
           });
         },
       });
   }
 
   /**
-   * Navega a la pestaña de movimientos de conversiones en Reportes.
+   * Devuelve clases Dark Premium para el badge del tipo de movimiento.
+   * @param tipo - Tipo unificado devuelto por el backend.
    */
-  goToConversionMovements(): void {
-    this.showConversionDialog = false;
-    this.router.navigate(['/admin/reports'], {
-      queryParams: { tab: 'cashConversions', returnTo: '/admin/cash-register' },
-    });
+  movementTypeClass(tipo: CashRegisterMovementType): string {
+    if (tipo === 'INGRESO')
+      return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300';
+    if (tipo === 'EGRESO')
+      return 'border-red-400/30 bg-red-500/10 text-red-300';
+    return 'border-blue-400/30 bg-blue-500/10 text-blue-300';
   }
 
   /**
-   * Aplica los filtros seleccionados y recarga el historial.
+   * Devuelve clases de monto según el tipo de movimiento.
+   * @param tipo - Tipo unificado devuelto por el backend.
    */
-  applyFilters(): void {
-    this.loadHistory();
+  movementAmountClass(tipo: CashRegisterMovementType): string {
+    if (tipo === 'INGRESO') return 'text-emerald-300';
+    if (tipo === 'EGRESO') return 'text-red-300';
+    return 'text-blue-300';
   }
 
   /**
-   * Limpia los filtros y recarga el historial sin ningún filtro aplicado.
+   * Devuelve el signo visual para la columna de monto.
+   * @param tipo - Tipo unificado devuelto por el backend.
    */
-  clearFilters(): void {
-    this.filterDateFrom = null;
-    this.filterDateTo = null;
-    this.filterDifferenceStatus = null;
-    this.loadHistory();
-  }
-
-  /**
-   * Devuelve la etiqueta correspondiente al estado de diferencia.
-   * @param status estado de diferencia
-   */
-  differenceLabel(status: DifferenceStatus): string {
-    return { EXACT: 'Exacta', SURPLUS: 'Sobrante', SHORTAGE: 'Faltante' }[
-      status
-    ];
-  }
-
-  /**
-   * Devuelve el severity de PrimeNG para el estado de diferencia.
-   * @param status estado de diferencia
-   */
-  differenceSeverity(
-    status: DifferenceStatus,
-  ): 'success' | 'warning' | 'danger' {
-    return { EXACT: 'success', SURPLUS: 'warning', SHORTAGE: 'danger' }[
-      status
-    ] as 'success' | 'warning' | 'danger';
+  movementAmountPrefix(tipo: CashRegisterMovementType): string {
+    if (tipo === 'INGRESO') return '+';
+    if (tipo === 'EGRESO') return '-';
+    return '';
   }
 
   /**
@@ -495,130 +640,107 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Devuelve la etiqueta de método de pago.
-   * @param method CASH o TRANSFER
-   */
-  paymentMethodLabel(method: string): string {
-    return method === 'CASH' ? 'Efectivo' : 'Transferencia';
-  }
-
-  // ═════════════════════════════════════════════════════════════════════════
-  // V4 — Jornada Actual + Caja Operativa
-  // ═════════════════════════════════════════════════════════════════════════
-
-  /**
    * V4: carga jornada activa + caja activa en paralelo. Se llama en ngOnInit
    * y después de cada acción (abrir/cerrar caja, drop) para que la UI no
    * quede desincronizada.
    */
   loadJornadaState(): void {
-    this.loadingJornada = true;
-    this.errorJornada = null;
+    this.loadingJornada.set(true);
+    this.errorJornada.set(null);
     this.service
       .refreshJornadaState()
       .pipe(
         takeUntil(this.destroy$),
-        finalize(() => (this.loadingJornada = false)),
+        finalize(() => this.loadingJornada.set(false)),
       )
       .subscribe({
         next: ({ businessDay, activeSession }) => {
-          this.activeBusinessDay = businessDay;
-          this.activeSession = activeSession;
+          this.activeBusinessDay.set(businessDay);
+          this.activeSession.set(activeSession);
+          this.loadMovements(activeSession?.id ?? null);
         },
         error: (err: AppError) => {
-          this.errorJornada = err;
+          this.errorJornada.set(err);
         },
       });
   }
 
   // ── Acciones sobre la caja operativa V4 ─────────────────────────────────
 
+  /**
+   * Abre el diálogo de apertura de caja para la jornada activa.
+   */
   openOpenSessionDialog(): void {
-    this.showOpenSessionDialog = true;
+    this.showOpenSessionDialog.set(true);
   }
-
-  openCloseSessionDialog(): void {
-    if (!this.activeSession) return;
-    this.selectedSessionId = this.activeSession.id;
-    this.showCloseSessionDialog = true;
-  }
-
-  openSnapshotDialog(): void {
-    if (!this.activeSession) return;
-    this.selectedSessionId = this.activeSession.id;
-    this.showSnapshotDialog = true;
-  }
-
-  openDropDialog(): void {
-    if (!this.activeSession) return;
-    this.selectedSessionId = this.activeSession.id;
-    this.showDropDialog = true;
-  }
-
-  /** Callback tras abrir, cerrar o dropear: refresca estado de jornada + historial. */
-  onJornadaStateChanged(): void {
-    this.loadJornadaState();
-    this.historyRefreshSignal++;
-  }
-
-  /** F2: handler de "Ver Snapshot" desde el historial de cajas. */
-  onHistoryViewSnapshot(sessionId: string): void {
-    this.selectedSessionId = sessionId;
-    this.showSnapshotDialog = true;
-  }
-
-  // ── F3: Cerrar Jornada (validación estricta) ────────────────────────────
 
   /**
-   * F3: el botón "Cerrar Jornada" SOLO se habilita cuando:
-   *   · La jornada está en READY_TO_CLOSE (ya transicionada por el backend
-   *     cuando todas las cajas se cerraron).
-   *   · No hay cajas OPEN ni PENDING_RECONCILIATION (defensa extra; debería
-   *     ser implicado por el status anterior).
-   *   · Hay al menos una caja registrada (total_count > 0).
-   *
-   * El force-close (jornadas trabadas) NO se ofrece desde este flujo.
+   * Abre el diálogo de cierre para la caja activa, si existe.
    */
-  get canCloseBusinessDay(): boolean {
-    if (!this.activeBusinessDay) return false;
-    if (this.activeBusinessDay.status !== 'READY_TO_CLOSE') return false;
-    const counts = this.activeBusinessDay.session_counts;
-    return counts.open_count === 0 && counts.pending_count === 0 && counts.total_count > 0;
+  openCloseSessionDialog(): void {
+    const session = this.activeSession();
+    if (!session) return;
+    this.selectedSessionId.set(session.id);
+    this.showCloseSessionDialog.set(true);
   }
 
-  /** Texto del tooltip cuando el botón está disabled, explicando por qué. */
-  get closeBusinessDayTooltip(): string {
-    if (!this.activeBusinessDay) return 'No hay jornada activa.';
-    const counts = this.activeBusinessDay.session_counts;
-    if (counts.open_count > 0)
-      return 'Cerrá la caja operativa antes de cerrar la jornada.';
-    if (counts.pending_count > 0)
-      return 'Reconciliá las cajas pendientes antes de cerrar la jornada.';
-    if (counts.total_count === 0)
-      return 'La jornada todavía no tiene cajas registradas.';
-    if (this.activeBusinessDay.status === 'CLOSED' ||
-        this.activeBusinessDay.status === 'AUDITED')
-      return `Jornada ya ${this.activeBusinessDay.status === 'CLOSED' ? 'cerrada' : 'auditada'}.`;
-    if (this.activeBusinessDay.status === 'OPEN')
-      return 'La jornada sigue OPEN; debe pasar a READY_TO_CLOSE.';
-    return 'Cerrar jornada formalmente.';
+  /**
+   * Abre el snapshot de la caja activa para consultar el estado en vivo.
+   */
+  openSnapshotDialog(): void {
+    const session = this.activeSession();
+    if (!session) return;
+    this.selectedSessionId.set(session.id);
+    this.showSnapshotDialog.set(true);
   }
 
-  openCloseBusinessDayDialog(): void {
-    if (!this.canCloseBusinessDay) return;
-    this.showCloseBusinessDayDialog = true;
-  }
-
-  onBusinessDayClosed(): void {
+  /**
+   * Refresca jornada, dashboard y movimientos después de operar la caja.
+   */
+  onJornadaStateChanged(): void {
     this.loadJornadaState();
-    this.historyRefreshSignal++;
+    this.loadDashboard();
   }
 
-  // ── F3.5: Histórico de Jornadas ─────────────────────────────────────────
+  // ── Cierre unificado: caja + jornada en una sola acción ─────────────────
 
-  onBusinessDayViewDetail(id: string): void {
-    this.selectedBusinessDayId = id;
-    this.showBusinessDayDetailDialog = true;
+  /**
+   * Tras cerrar la caja operativa, encadena automáticamente el cierre formal
+   * de la jornada (este negocio opera con una sola caja por jornada, así que
+   * el cierre de caja siempre deja la jornada en READY_TO_CLOSE).
+   */
+  onSessionClosed(): void {
+    this.closingJornada.set(true);
+    this.service
+      .refreshJornadaState()
+      .pipe(
+        switchMap(({ businessDay, activeSession }) => {
+          this.activeBusinessDay.set(businessDay);
+          this.activeSession.set(activeSession);
+          this.loadMovements(activeSession?.id ?? null);
+          return this.isBusinessDayReadyToClose(businessDay)
+            ? this.service.closeBusinessDay(businessDay!.id)
+            : of(null);
+        }),
+        finalize(() => this.closingJornada.set(false)),
+      )
+      .subscribe({
+        next: (result) => {
+          if (result !== null) {
+            this.msg.add({
+              severity: 'success',
+              summary: 'Jornada cerrada',
+              detail: 'La jornada quedó cerrada formalmente.',
+            });
+            this.loadJornadaState();
+          }
+          this.loadDashboard();
+        },
+        error: (err: AppError) => {
+          this.errorJornada.set(err);
+          this.loadDashboard();
+        },
+      });
   }
 
   // ── Helpers de UI para Jornada Actual ───────────────────────────────────
@@ -626,24 +748,16 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   /** Etiqueta legible del status de jornada. */
   businessDayStatusLabel(status: string): string {
     switch (status) {
-      case 'OPEN':           return 'Abierta';
-      case 'READY_TO_CLOSE': return 'Lista para cerrar';
-      case 'CLOSED':         return 'Cerrada';
-      case 'AUDITED':        return 'Auditada';
-      default:               return status;
-    }
-  }
-
-  /** Severity de PrimeNG-Tag para el status de jornada. */
-  businessDayStatusSeverity(
-    status: string,
-  ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
-    switch (status) {
-      case 'OPEN':           return 'success';
-      case 'READY_TO_CLOSE': return 'warning';
-      case 'CLOSED':         return 'info';
-      case 'AUDITED':        return 'secondary';
-      default:               return 'info';
+      case 'OPEN':
+        return 'Abierta';
+      case 'READY_TO_CLOSE':
+        return 'Lista para cerrar';
+      case 'CLOSED':
+        return 'Cerrada';
+      case 'AUDITED':
+        return 'Auditada';
+      default:
+        return status;
     }
   }
 }

@@ -20,12 +20,12 @@ export const DECLARED_PAYMENT_METHODS: Array<{
   value: DeclaredPaymentMethod;
   label: string;
 }> = [
-  { value: 'CASH',     label: 'Efectivo' },
+  { value: 'CASH', label: 'Efectivo' },
   { value: 'TRANSFER', label: 'Transferencia' },
-  { value: 'MP',       label: 'Mercado Pago' },
-  { value: 'QR',       label: 'QR' },
-  { value: 'CHECK',    label: 'Cheque' },
-  { value: 'OTHER',    label: 'Otro' },
+  { value: 'MP', label: 'Mercado Pago' },
+  { value: 'QR', label: 'QR' },
+  { value: 'CHECK', label: 'Cheque' },
+  { value: 'OTHER', label: 'Otro' },
 ];
 
 // ── Caja activa ────────────────────────────────────────────────────────────
@@ -42,6 +42,10 @@ export interface CashSession {
   closed_by?: string | null;
   shift_label?: string | null;
   observations?: string | null;
+  /** Diferencia total del cierre (cash + transfer). Null si la caja sigue OPEN sin arquear. */
+  closure_total_difference?: number | null;
+  /** Suma de declared_amount (cash + transfer) del arqueo de cierre. Null si todavía no se arqueó. */
+  cash_counted?: number | null;
 }
 
 /**
@@ -99,6 +103,7 @@ export interface CashSessionSnapshot {
   collections: {
     payments: CashByMethod;
     down_payments: CashByMethod;
+    manual_incomes: CashByMethod;
   };
   outflows: {
     expenses: CashByMethod;
