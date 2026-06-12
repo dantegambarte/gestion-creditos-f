@@ -1272,7 +1272,7 @@ export class OperationFormService {
   }
 
   /**
-   * Calcula la primera cuota aplicando la regla de aprobación confirmada por negocio.
+   * Calcula la primera cuota aplicando días corridos desde la aprobación.
    * @param {Date} approvalDate - Fecha base de aprobación de la operación.
    * @param {'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'} frequency - Frecuencia elegida del plan.
    * @returns {Date} Primera fecha de vencimiento resultante.
@@ -1294,7 +1294,7 @@ export class OperationFormService {
       return dueDate;
     }
 
-    dueDate.setMonth(dueDate.getMonth() + 1);
+    dueDate.setDate(dueDate.getDate() + 30);
     return dueDate;
   }
 

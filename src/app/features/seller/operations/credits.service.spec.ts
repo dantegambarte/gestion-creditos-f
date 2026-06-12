@@ -251,6 +251,7 @@ describe('CreditsService', () => {
           r.params.get('status') === 'ACTIVE' &&
           r.params.get('type') === 'LOAN',
       );
+      expect(req.request.method).toBe('GET');
       req.flush({ ok: true, data: [mockCreditRaw], message: '' });
     });
 

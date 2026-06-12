@@ -3,6 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
+import { MessageService } from 'primeng/api';
 import { MockAuthService } from '../../../core/auth/mock-auth.service';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { CashRegisterService } from '../cash-register/cash-register.service';
@@ -76,7 +77,15 @@ describe('DashboardComponent', () => {
         { provide: CashRegisterService, useValue: cashRegisterSpy },
         { provide: FormatService, useValue: formatSpy },
         { provide: Router, useValue: routerSpy },
-        { provide: DateService, useValue: { display: () => 'sábado 26 de abril, 2025' } },
+        {
+          provide: DateService,
+          useValue: {
+            display: () => 'sábado 26 de abril, 2025',
+            toLocalIso: (date: Date) =>
+              `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+          },
+        },
+        MessageService,
         provideHttpClient(),
         provideHttpClientTesting(),
       ],
@@ -105,5 +114,15 @@ describe('DashboardComponent', () => {
     const recaudado = component.kpis.find((k) => k.label === 'Recaudado hoy');
     expect(recaudado).toBeTruthy();
     expect(recaudado?.value).toContain('53.920');
+  });
+
+  it('recarga KPIs cuando se aprueba un cobro desde pendientes — CR-28', () => {
+    reportsSpy.getSummaryReport.calls.reset();
+    reportsSpy.getCollectionReport.calls.reset();
+
+    component.onPaymentApproved();
+
+    expect(reportsSpy.getSummaryReport).toHaveBeenCalledTimes(1);
+    expect(reportsSpy.getCollectionReport).toHaveBeenCalledTimes(1);
   });
 });

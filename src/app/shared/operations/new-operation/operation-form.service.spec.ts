@@ -179,4 +179,61 @@ describe('OperationFormService', () => {
 
     expect(service.canNext(2)).toBeFalse();
   });
+
+  it('acota las cuotas adelantadas al máximo permitido del plan — CR-29', () => {
+    service.initialize().subscribe();
+    service.operationForm.controls.operationType.setValue('SALE');
+    service.operationForm.controls.paymentFrequency.setValue('MONTHLY');
+    service.cartLines.set([
+      {
+        productoId: 'prod-1',
+        nombre: 'Heladera',
+        variantId: 'var-1',
+        variantLabel: 'Variante estándar',
+        cantidad: 1,
+        precio: 1000,
+        subtotal: 1000,
+        stockDisponible: 1,
+        unitIds: ['unit-1'],
+        unitCodes: ['SN-001'],
+        productIds: ['prod-1'],
+        selectedUnitIds: ['unit-1'],
+        rates: [],
+        selectedInstallments: 4,
+      },
+    ]);
+
+    service.operationForm.controls.advancedInstallmentsCount.setValue(99);
+
+    expect(service.operationForm.controls.advancedInstallmentsCount.value).toBe(3);
+  });
+
+  it('limpia anticipo y cuotas adelantadas cuando se cambia a préstamo de efectivo — CR-31', () => {
+    service.initialize().subscribe();
+    service.operationForm.controls.operationType.setValue('SALE');
+    service.operationForm.controls.initialPaymentType.setValue('DOWN_PAYMENT');
+    service.operationForm.controls.downPayment.setValue(1000);
+    service.operationForm.controls.downPaymentMethod.setValue('CASH');
+    service.operationForm.controls.advancedInstallmentsCount.setValue(2);
+    service.operationForm.controls.advancedInstallmentsMethod.setValue('CASH');
+
+    service.operationForm.controls.operationType.setValue('LOAN');
+
+    expect(service.operationForm.controls.initialPaymentType.value).toBe('NONE');
+    expect(service.operationForm.controls.downPayment.value).toBeNull();
+    expect(service.operationForm.controls.downPaymentMethod.value).toBeNull();
+    expect(service.operationForm.controls.advancedInstallmentsCount.value).toBeNull();
+    expect(service.operationForm.controls.advancedInstallmentsMethod.value).toBeNull();
+  });
+
+  it('calcula la primera cuota mensual a 30 días corridos desde aprobación — CR-25', () => {
+    const approvalDate = new Date(2026, 0, 1);
+
+    const result = service.getFirstPaymentDateFromApprovalRule(
+      approvalDate,
+      'MONTHLY',
+    );
+
+    expect(service.toApiDate(result)).toBe('2026-01-31');
+  });
 });

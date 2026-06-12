@@ -77,7 +77,7 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
     {
       label:       'Para cobrar hoy',
       value:       'TODAY',
-      description: 'Cuotas que vencen hoy + visitas agendadas para hoy + vencidas sin nueva visita.',
+      description: 'Cuotas que vencen hoy + visitas agendadas para hoy. No incluye mora vieja.',
     },
     {
       label:       'Vencidas sin agenda',
