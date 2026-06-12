@@ -86,6 +86,34 @@ describe('StepConditionsComponent', () => {
     });
   });
 
+  it('muestra la frecuencia real seleccionada en el resumen del plan — CR-30', () => {
+    component.form.controls['operationType'].setValue('LOAN');
+
+    component.form.controls['paymentFrequency'].setValue('WEEKLY');
+    expect(component.getInstallmentLabel()).toBe('Cuota semanal');
+
+    component.form.controls['paymentFrequency'].setValue('BIWEEKLY');
+    expect(component.getInstallmentLabel()).toBe('Cuota quincenal');
+
+    component.form.controls['paymentFrequency'].setValue('MONTHLY');
+    expect(component.getInstallmentLabel()).toBe('Cuota mensual');
+  });
+
+  it('limita el adelanto de cuotas a una menos que el plan seleccionado — CR-29', () => {
+    component.form.controls['operationType'].setValue('SALE');
+    component.cartLines = [
+      {
+        productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
+        cantidad: 1, precio: 1000, subtotal: 1000, stockDisponible: 5,
+        unitIds: [], unitCodes: [], productIds: [], selectedUnitIds: [], rates: [], selectedInstallments: 4,
+      },
+    ];
+
+    expect(component.getSelectedInstallmentsCount()).toBe(4);
+    expect(component.getMaxAdvancedInstallments()).toBe(3);
+    expect(component.canAdvanceInstallments()).toBeTrue();
+  });
+
   it('cierra la simulación visible cuando el resultado previo queda invalidado por cambios del plan', () => {
     component.simulationVisible = true;
     component.simulationResult = { installmentsCount: 4, installmentAmount: 1000 } as any;

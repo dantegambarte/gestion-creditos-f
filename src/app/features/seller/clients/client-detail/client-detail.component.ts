@@ -1,5 +1,12 @@
-import { CommonModule, Location } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule, DOCUMENT, Location } from '@angular/common';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -10,6 +17,7 @@ import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { AppError } from '../../../../core/models/app-error';
 import { UserRoleEnum } from '../../../../core/models/types/user-role';
 import { HeaderService } from '../../../../core/services/header.service';
+import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { Credit } from '../../models/credit.model';
@@ -19,7 +27,6 @@ import { CustomersService } from '../customers.service';
 import { ClientCreditsHistoryPanelComponent } from './client-credits-history-panel/client-credits-history-panel.component';
 import { ClientEditFormComponent } from './client-edit-form/client-edit-form.component';
 import { ClientPortalPanelComponent } from './client-portal-panel/client-portal-panel.component';
-import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
 
 @Component({
   selector: 'app-client-detail',
@@ -40,13 +47,14 @@ import { BackButtonComponent } from '../../../../shared/components/back-button/b
   ],
   templateUrl: './client-detail.component.html',
 })
-export class ClientDetailComponent implements OnInit {
+export class ClientDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly customersService = inject(CustomersService);
   private readonly creditsService = inject(CreditsService);
   private readonly auth = inject(AuthServiceBase);
   private readonly location = inject(Location);
+  private readonly document = inject(DOCUMENT);
   private readonly header = inject(HeaderService);
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
@@ -58,6 +66,17 @@ export class ClientDetailComponent implements OnInit {
   error: AppError | null = null;
 
   showEditForm = false;
+  showScrollTop = false;
+  private topSummaryObserver: IntersectionObserver | null = null;
+
+  /**
+   * Registra el bloque superior cuando Angular lo renderiza después de cargar el cliente.
+   */
+  @ViewChild('topSummary')
+  set topSummary(element: ElementRef<HTMLElement> | undefined) {
+    if (!element) return;
+    this.observeTopSummary(element.nativeElement);
+  }
 
   /**
    * Indica si el usuario actual tiene rol de ADMIN, lo que habilita ciertas acciones en la interfaz.
@@ -90,10 +109,51 @@ export class ClientDetailComponent implements OnInit {
   }
 
   /**
+   * Libera el observer de visibilidad al salir del detalle.
+   */
+  ngOnDestroy(): void {
+    this.topSummaryObserver?.disconnect();
+  }
+
+  /**
    * Navega de vuelta a la lista de clientes.
    */
   goBack(): void {
     this.location.back();
+  }
+
+  /**
+   * Devuelve la vista al inicio del detalle sin cambiar de ruta.
+   */
+  scrollToTop(): void {
+    const scrollContainer = this.getScrollContainer();
+    scrollContainer?.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /**
+   * Obtiene el contenedor real de scroll del shell autenticado.
+   * Mantiene fallback al selector anterior para convivir con layouts viejos.
+   */
+  private getScrollContainer(): HTMLElement | null {
+    return this.document.querySelector<HTMLElement>(
+      'main.ff-shell__main, main.overflow-y-auto',
+    );
+  }
+
+  /**
+   * Observa el bloque superior para mostrar el acceso rápido solo cuando deja de verse.
+   */
+  private observeTopSummary(element: HTMLElement): void {
+    this.topSummaryObserver?.disconnect();
+
+    const scrollContainer = this.getScrollContainer();
+    this.topSummaryObserver = new IntersectionObserver(
+      ([entry]) => {
+        this.showScrollTop = !entry.isIntersecting;
+      },
+      { root: scrollContainer, threshold: 0.01 },
+    );
+    this.topSummaryObserver.observe(element);
   }
 
   /**
@@ -204,11 +264,16 @@ export class ClientDetailComponent implements OnInit {
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
-      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.deactivate(this.customerId).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Cliente desactivado', detail: '' });
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Cliente desactivado',
+              detail: '',
+            });
             this.refresh();
           },
           error: (err: AppError) => this.handleActionError(err),
@@ -227,11 +292,16 @@ export class ClientDetailComponent implements OnInit {
       acceptLabel: 'Activar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.activate(this.customerId).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Cliente activado', detail: '' });
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Cliente activado',
+              detail: '',
+            });
             this.refresh();
           },
           error: (err: AppError) => this.handleActionError(err),

@@ -10,6 +10,7 @@ import { DateService } from '../../../core/services/date.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Credit } from '../../seller/models/credit.model';
+import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 
 const MOCK_CREDITS: Credit[] = [
   {
@@ -50,15 +51,23 @@ describe('ApprovalsComponent', () => {
   let component: ApprovalsComponent;
   let fixture: ComponentFixture<ApprovalsComponent>;
   let creditsSvc: jasmine.SpyObj<CreditsService>;
+  let authSpy: jasmine.SpyObj<AuthServiceBase>;
 
   beforeEach(async () => {
     creditsSvc = jasmine.createSpyObj('CreditsService', [
       'list',
+      'getById',
       'approve',
       'reject',
     ]);
+    authSpy = jasmine.createSpyObj('AuthServiceBase', ['patchCurrentUser'], {
+      snapshot: { pending_approvals_count: 2 },
+    });
     const cashRegisterSpy = jasmine.createSpyObj('CashRegisterService', ['getDashboard']);
     creditsSvc.list.and.returnValue(of([...MOCK_CREDITS]));
+    creditsSvc.getById.and.callFake((id: string) =>
+      of((MOCK_CREDITS.find((credit) => credit.id === id) ?? MOCK_CREDITS[0]) as any),
+    );
     creditsSvc.approve.and.returnValue(of({} as any));
     creditsSvc.reject.and.returnValue(of(undefined as any));
     cashRegisterSpy.getDashboard.and.returnValue(of({ isClosed: false } as any));
@@ -68,6 +77,7 @@ describe('ApprovalsComponent', () => {
       providers: [
         { provide: CreditsService, useValue: creditsSvc },
         { provide: CashRegisterService, useValue: cashRegisterSpy },
+        { provide: AuthServiceBase, useValue: authSpy },
         MessageService,
         DateService,
         provideHttpClient(),
@@ -123,6 +133,21 @@ describe('ApprovalsComponent', () => {
     component.confirmApprove();
     expect(creditsSvc.approve).toHaveBeenCalledWith('CR001', {});
     expect(component.approvals.find((a) => a.id === 'CR001')).toBeUndefined();
+  });
+
+  it('confirmApprove muestra toast de éxito al aprobar', () => {
+    const addSpy = spyOn(TestBed.inject(MessageService), 'add');
+    component.approvingRow = MOCK_CREDITS[0];
+    component.approveInstallmentsCount = 12;
+
+    component.confirmApprove();
+
+    expect(addSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        severity: 'success',
+        summary: 'Aprobado',
+      }),
+    );
   });
 
   it('confirmReject no envía si rejectReason menor a 5 chars', () => {

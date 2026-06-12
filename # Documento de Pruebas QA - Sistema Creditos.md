@@ -30,14 +30,14 @@
 | **CR-21** | Operación Crédito - Declaraciones y Autorizaciones | Faltaba un control para marcar todas las declaraciones en la pantalla de confirmación | Debe existir un botón para marcar todas las declaraciones y que las casillas queden efectivamente marcadas | Corregido / Validado — agregado botón "Marcar todas" (`data-cy="btn-mark-all"`) en `step-confirm.component.html`; método `setAllDeclarations` añadido en `step-confirm.component.ts`; test E2E `cypress/e2e/03-nueva-operacion-real.cy.ts` actualizado para usar el nuevo botón |
 | **CR-22** | Nueva Operación. | Se hizo click en "Nueva Operación" - Venta. | Debería poder elegir la unidad del producto. | Corregido / Validado — test Cypress agregado: al elegir `U-002`, el POST envía `unit_ids: ['unit-2']` y no reemplaza por la primera unidad disponible |
 | **CR-23** | Aprobar Crédito. | Se hizo click en "Aprobar Crédito". | Debería poder ver la cantidad de cuotas que se eligió en el plan. | Corregido / Validado — Cypress real confirma que la aprobación de venta muestra "Cantidad de cuotas definida" y las cuotas elegidas en la preventa |
-| **CR-24** | Adelanto de cuotas. | Se hizo click en "Venta de producto" con adelanto de cuotas. | Si se adelanta 2 cuotas la siguiente aparece con fecha para cobrar con error. | Error |
-| **CR-25** | Aprobación de Crédito. | Se hizo click en "Venta de producto" o "Préstamo". | Deberían aparecer las cuotas si son mensuales 30 días corridos. | Las siguientes cuotas no aparecen 30 días corridos. | Error
-| **CR-26** | Simulación de Crédito. | Se hizo click en "Ver Simulación". | Deberían aparecer las cuotas correctamente. | Las siguientes cuotas no aparecen 30 días corridos. | Error
-| **CR-27** | Nuevo Crédito | Se hizo click en "Nueva Operación". | Deberían aparecer correctamente los créditos que posee el cliente. | La información es confusa. | Error
-| **CR-28** | Aprobaciones - Dashboard | En la sección "Aprobaciones" debería aparecer la cantidad de operaciones para aprobar. | La información no se refresca automáticamente, debemos actualizar la pantalla. | Error
-| **CR-29** | Adelanto de cuotas | Debería permitir ingresar un número menor a la cantidad de cuotas. | El primer dígito permite ingresar un número menor a la cantidad de cuotas, pero me deja seguir ingresando números. | Error
-| **CR-30** | Resumen de plan | Se hizo click en "Semanal", "Quincenal" en un crédito. | Debería cambiar la frecuencia en los datos. | La frecuencia siempre aparece "Mensual". | Error
-| **CR-31** | Préstamo de efectivo | Se hizo click en Préstamo de efectivo". | El input de "Anticipo / Entrega" no debería aparecer. | El input de "Anticipo / Entrega" aparece. | Error
+| **CR-24** | Adelanto de cuotas. | Se hizo click en "Venta de producto" con adelanto de cuotas. | Si se adelantan cuotas, las restantes deben reprogramarse correctamente. | Corregido / Validado — backend reprograma cuotas mensuales con intervalos de 30 días; validado con `payments.queries.test.js` |
+| **CR-25** | Aprobación de Crédito. | Se hizo click en "Venta de producto" o "Préstamo". | Deberían aparecer las cuotas si son mensuales 30 días corridos. | Corregido / Validado — frontend y backend usan 30 días corridos para frecuencia mensual; validado con `operation-form.service.spec.ts` y `creditCalculator.test.js` |
+| **CR-26** | Simulación de Crédito. | Se hizo click en "Ver Simulación". | Deberían aparecer correctamente las cuotas. | Corregido / Validado — simulación/cronograma mensual validado con 30 días corridos en frontend y backend |
+| **CR-27** | Nuevo Crédito | Se hizo click en "Nueva Operación". | Deberían aparecer correctamente los créditos que posee el cliente. | Corregido / Validado — resumen enriquecido de créditos del cliente cubierto en `step-client.component.spec.ts` |
+| **CR-28** | Aprobaciones - Dashboard | En la sección "Aprobaciones" debería aparecer la cantidad de operaciones para aprobar. | Debe refrescar KPIs/listados tras aprobar cobros. | Corregido / Validado — dashboard recarga KPIs al aprobar cobros; validado con `dashboard.component.spec.ts` |
+| **CR-29** | Adelanto de cuotas | Debería permitir ingresar un número menor a la cantidad de cuotas. | No debe permitir exceder el máximo permitido. | Corregido / Validado — adelanto acotado al máximo permitido; validado con `operation-form.service.spec.ts` y `step-conditions.component.spec.ts` |
+| **CR-30** | Resumen de plan | Se hizo click en "Semanal", "Quincenal" en un crédito. | Debería cambiar la frecuencia en los datos. | Corregido / Validado — resumen muestra la frecuencia real seleccionada; validado con `step-conditions.component.spec.ts` |
+| **CR-31** | Préstamo de efectivo | Se hizo click en "Préstamo de efectivo". | El input de "Anticipo / Entrega" no debería aparecer. | Corregido / Validado — préstamo efectivo limpia anticipo/cuotas adelantadas; validado con `operation-form.service.spec.ts` |
 
 
 
@@ -85,7 +85,7 @@
 | **PR-13** | Múltiples Variantes Producto | Se hizo click en "Ingresar Múltiples Variantes". | Se ingresaron datos erróneos. | Corregido / Validado — feature implementada: ingreso individual con validación inline + toast en duplicado; ingreso múltiple con tabla de filas, skip de filas vacías, remapeo de errores por índice original, y summary de variantes/precio total; filas vacías entre filas cargadas se ignoran correctamente |
 | **PR-14** | Categoría y Marca | Categoría y Marca solo permite creación y no edición. | Corregido / Validado — botón "Editar" por fila en tablas de Categorías y Marcas; diálogo de edición con nombre pre-cargado |
 | **PR-15** | Nuevo Producto - Admin | Se hizo click en "Nuevo Producto". | El menú desplegable sale cortado en "Categoria" y "Marca". | Corregido / Validado — `appendTo="body"` en dropdowns Categoría y Estado del modal de creación (`products.component.html`) |
-| **PR-16** | Crear Variante | Se hizo click en "Nueva Variante". | Debería permitirme crear la variante para luego ingresar productos de esa variante. | Al "Crear Variante" se crea un producto como "product initial". | Error
+| **PR-16** | Crear Variante | Se hizo click en "Nueva Variante". | Debería permitirme crear la variante para luego ingresar productos de esa variante. | Corregido / Validado — crear variante usa `/product-variants` con `product_id` e `initial_units`, sin crear un producto nuevo; validado con `product-variants.service.spec.ts` |
 
 
 ## 🟢 Módulo: Planilla
@@ -96,7 +96,7 @@
 | **PL-02** | Botones | Los botones no están correctamente ubicados. | Deberían seguir los patrones visuales. | Corregido / Validado |
 | **PL-03** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar "Generar Planilla para todos". | Corregido |
 | **PL-04** | Mi Ruta - Collector | Se hizo click en "Ver Planilla". | Al seleccionar el ícono del calendario, el mismo ocupa toda la pantalla. | Corregido |
-| **PL-05** | Generar Planilla | Se hizo click en "Generar Planilla" del día. | Debería mostrar las cuotas de ese día. | Error |
+| **PL-05** | Generar Planilla | Se hizo click en "Generar Planilla" del día. | Debería mostrar solo cuotas que vencen hoy y visitas agendadas hoy. | Corregido / Validado — `TODAY` ya no arrastra mora vieja sin agenda; validado con integración `planilla-inclusion-rules.test.js` sobre Postgres local (`9/9`) |
 
 
 ## 🟢 Módulo: Gastos
@@ -125,8 +125,10 @@
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
 | **CA-01** | Cierre de caja | Se hizo click en "Cierre de caja". | Debería poder realizar el cierre de caja. | Corregido / Validado — bug backend: `totalEgresos` vs `totalOutflows` naming mismatch causaba error 500; controller ahora también maneja 422 correctamente |
-| **CA-02** | Cierre de caja | Se hizo click en "Cierre de caja" al pasar las 00:00. | Debería permitirme cerrar la caja del día anterior pasadas las 00:00. | Error |
+| **CA-02** | Cierre de caja | Se hizo click en "Cierre de caja" al pasar las 00:00. | Debería permitirme cerrar la caja del día anterior pasadas las 00:00. | Corregido / Validado — jornada anterior activa cubierta por `cashRegister.service.test.js` |
 | **CA-03** | Cierre de caja | Se hizo click en "Estado". | Debería poder ver todas las opciones. | Corregido / Validado — `appendTo="body"` en dropdown de Estado en historial de cierres (`cash-register.component.html`) |
+| **CA-04** | Enganche post-medianoche | Se aprueba una operación con enganche pasada la medianoche con jornada anterior activa. | El enganche debe figurar en la jornada activa. | Corregido / Validado — `credit_down_payments.register_date` usa jornada activa; validado con `credits.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts` |
+| **CA-05** | Gasto post-medianoche | Se registra un gasto pasada la medianoche con jornada anterior activa. | El gasto debe descontarse de la jornada activa. | Corregido / Validado — `expenses.register_date` usa jornada activa; validado con `expenses.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts` (`10/10`) |
 
 
 ## 🟢 Módulo: Cobro
@@ -137,7 +139,7 @@
 | **CO-02** | Cobro directo - Admin | Se hizo click en "Cobro directo" y se completaron los campos. | Debería registrar y aprobar el cobro en el mismo paso (`admin_direct: true`, `status: APPROVED`). | Corregido / Validado — `processDirectPayment()` llamaba a `create` (PENDING) en vez de `adminDirect` (APPROVED); corregido en `admin-payments.component.ts` |
 | **CO-03** | Cobro directo parcial - Admin | Se intentó registrar un cobro con monto menor al de la cuota. | El form debería pedir "Fecha de próxima visita" para cobros parciales. | Corregido / Validado — campo `p-calendar` agregado al dialog con `[minDate]="todayDate"`; `nextVisitDate` agregado a `AdminDirectPayload`, mapeado en service y enviado al backend |
 | **CO-04** | Registrar Cobro - Collector | Se hizo click en "Cobrar" en la cuota de la planilla generada. | El form debería permitir solo ingresar números. | Corregido / Validado — `@HostListener('keydown')` en `CurrencyAmountInputDirective` bloquea `e`, `E` y `+`; aplica a todos los `p-inputNumber[appCurrencyAmountInput]` del sistema |
-| **CO-05** | Cobros por aprobar | Se hizo click en "Aprobar" en el dashboard. | Debería salir un cartel que se aprobó un cobro. | No aparece ningún cartel | Error
+| **CO-05** | Cobros por aprobar | Se hizo click en "Aprobar" en el dashboard. | Debería salir un cartel que se aprobó un cobro. | Corregido / Validado — toast de aprobación cubierto en `dashboard-pending.component.spec.ts` |
 
 
 ## 🟢 Módulo: Liquidación
@@ -255,12 +257,11 @@
 
 ---
 
-## 🔴 Pendiente — diferido
+## ✅ Pendientes diferidos cerrados
 
-| ID | Bug | Fix requerido |
+| ID | Bug | Estado |
 | :--- | :--- | :--- |
-| **CA-02** | Cierre de caja pasadas 00:00 | A definir approach — diferido |
-| **CA-02** | Cierre de caja pasadas las 00:00 | Backend debe aceptar `date=yesterday` cuando no hay caja abierta para hoy |
+| **CA-02** | Cierre de caja pasadas 00:00 | Corregido / Validado — jornada comercial activa y cierre post-medianoche cubiertos por `cashRegister.service.test.js` |
 
 ---
 

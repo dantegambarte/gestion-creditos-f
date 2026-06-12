@@ -34,9 +34,8 @@
           }
           <span
             class="db-kpi__trend"
-            [style.color]="
-              kpi.trendUp ? 'var(--ff-success)' : 'var(--ff-danger)'
-            "
+            [class.db-kpi__trend--up]="kpi.trendUp"
+            [class.db-kpi__trend--down]="!kpi.trendUp"
           >
             <i
               [class]="
@@ -62,15 +61,9 @@
     <!-- Ranking cuotas vencidas -->
     <div class="db-panel">
       <div class="db-panel__header">
-        <div style="display: flex; flex-direction: column; gap: 4px">
+        <div class="db-panel__title-stack">
           <span>Ranking de cuotas vencidas</span>
-          <span
-            style="
-              font-size: 0.75rem;
-              color: var(--text-color-secondary);
-              font-weight: normal;
-            "
-          >
+          <span class="db-panel__subtitle">
             Cuota más antigua por cliente. Puede haber más vencidas.
           </span>
         </div>
@@ -80,7 +73,7 @@
           [value]="upcomingInstallments"
           [loading]="loadingUpcoming"
           [rows]="5"
-          styleClass="p-datatable-sm db-table"
+          styleClass="p-datatable-sm db-table ff-data-table"
           responsiveLayout="scroll"
         >
           <ng-template pTemplate="header">
@@ -98,9 +91,7 @@
             <tr>
               <td>{{ inst.dueDate | date: "dd/MM/yyyy" }}</td>
               <td>
-                <span style="color: var(--ff-danger)"
-                  >{{ inst.daysOverdue }} días</span
-                >
+                <span class="ff-text-danger">{{ inst.daysOverdue }} días</span>
               </td>
               <td class="db-td--client">{{ inst.customerName }}</td>
               <td>{{ inst.installmentNumber }}</td>
@@ -137,10 +128,7 @@
       <div class="db-panel__header">
         <span>Accesos rápidos</span>
       </div>
-      <div
-        class="db-panel__body"
-        style="display: flex; flex-direction: column; gap: 12px"
-      >
+      <div class="db-panel__body db-panel__body--quick-actions">
         <button class="db-quick-btn" (click)="navigateNewCredit()">
           <i class="pi pi-plus"></i>
           <span>Nuevo crédito</span>

@@ -340,7 +340,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Venta de producto" con adelanto de cuotas.]
 * **Resultado Esperado:** [Debería la cuota siguiente adelantarse.]
-* **Resultado Obtenido (Error):** [Si se adelanta 2 cuotas la siguiente aparece con fecha para cobrar con error.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. La reprogramación de cuotas restantes por adelanto usa la frecuencia real del crédito y, para mensual, intervalos de 30 días corridos. Validado con `src/modules/payments/payments.queries.test.js` (`CR-24/CR-26`).]
 
 ---
 
@@ -350,7 +350,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Venta de producto" o "Préstamo".]
 * **Resultado Esperado:** [Deberían aparecer las cuotas si son mensuales 30 días corridos.]
-* **Resultado Obtenido (Error):** [Las siguientes cuotas no aparecen 30 días corridos.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. Frontend y backend calculan cuotas mensuales con 30 días corridos, no con `setMonth` ni intervalo calendario. Validado con `operation-form.service.spec.ts` y `creditCalculator.test.js`.]
 
 ---
 
@@ -360,7 +360,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Ver Simulación".]
 * **Resultado Esperado:** [Deberían aparecer correctamente las cuotas.]
-* **Resultado Obtenido (Error):** [Las siguientes cuotas no aparecen 30 días corridos.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. La simulación y el cronograma generado desde primera cuota respetan 30 días corridos para frecuencia mensual. Validado con `operation-form.service.spec.ts` y `creditCalculator.test.js`.]
 
 ---
 
@@ -370,7 +370,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Nueva Operación".]
 * **Resultado Esperado:** [Deberían aparecer correctamente los créditos que posee el cliente.]
-* **Resultado Obtenido (Error):** [La información es confusa.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El paso de cliente muestra resumen enriquecido de créditos, cuotas pagadas/pendientes/vencidas y mora del cliente seleccionado. Validado con `step-client.component.spec.ts`.]
 
 ---
 
@@ -380,7 +380,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Dashboard.]
 * **Resultado Esperado:** [En la sección "Aprobaciones" debería aparecer la cantidad de operaciones para aprobar.]
-* **Resultado Obtenido (Error):** [La información no se refresca automáticamente, debemos actualizar la pantalla.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El dashboard recarga KPIs/listados cuando se aprueba un cobro desde pendientes. Validado con `dashboard.component.spec.ts`.]
 
 ---
 
@@ -390,7 +390,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Adelanto de cuotas".]
 * **Resultado Esperado:** [Debería permitir ingresar un número menor a la cantidad de cuotas.]
-* **Resultado Obtenido (Error):** [El primer dígito permite ingresar un número menor a la cantidad de cuotas, pero me deja seguir ingresando números.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El adelanto de cuotas queda acotado al máximo permitido y no permite exceder la cantidad válida. Validado con `operation-form.service.spec.ts` y `step-conditions.component.spec.ts`.]
 
 ---
 
@@ -400,7 +400,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Semanal", "Quincenal" en un crédito.]
 * **Resultado Esperado:** [Debería cambiar la frecuencia en los datos.]
-* **Resultado Obtenido (Error):** [La frecuencia siempre aparece "Mensual".]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El resumen de plan muestra la frecuencia real seleccionada (semanal, quincenal o mensual). Validado con `step-conditions.component.spec.ts`.]
 
 ---
 
@@ -410,7 +410,7 @@ http://localhost:3000/api/credits - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Préstamo de efectivo".]
 * **Resultado Esperado:** [El input de "Anticipo / Entrega" no debería aparecer.]
-* **Resultado Obtenido (Error):** [El input de "Anticipo / Entrega" aparece.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. En préstamo de efectivo se limpian y ocultan anticipo/cuotas adelantadas, evitando controles propios de venta. Validado con `operation-form.service.spec.ts`.]
 
 ---
 
@@ -810,7 +810,7 @@ http://localhost:3000/api/products - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Nueva Variante".]
 * **Resultado Esperado:** [Debería permitirme crear la variante para luego ingresar productos de esa variante.]
-* **Resultado Obtenido (Error):** [Al "Crear Variante" se crea un producto como "product initial".]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. Crear variante usa el endpoint `/product-variants` con `product_id` e `initial_units`, sin crear un producto nuevo. Validado con `product-variants.service.spec.ts`.]
 
 ---
 
@@ -865,7 +865,7 @@ Módulo Planilla
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Generar Planilla" del día.]
 * **Resultado Esperado:** [Debería mostrar las cuotas de ese día.]
-* **Resultado Obtenido (Error):**[Aparecen todas las cuotas, vencidas y no vencidas.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El filtro `TODAY` ahora incluye cuotas que vencen hoy y visitas agendadas hoy, pero no arrastra mora vieja sin agenda. Validado con `tests/integration/planilla-inclusion-rules.test.js` sobre Postgres local (`9/9`).]
 
 ---
 
@@ -999,7 +999,7 @@ Módulo Caja
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Cierre de caja".]
 * **Resultado Esperado:** [Al pasar las 00:00 debería permitirme cerrar la caja del día anterior.]
-* **Resultado Obtenido (Error):** [Al hacer click en "Cierre de caja" al pasar las 00:00 no me permite cerrar la caja del día anterior.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El cierre con jornada anterior activa valida la jornada comercial y bloquea pre-cargas pendientes salvo `force`; cubierto por `cashRegister.service.test.js`.]
 
 ---
 
@@ -1009,7 +1009,7 @@ Módulo Caja
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Estado".]
 * **Resultado Esperado:** [Debería mostrarme todos los estados de los cierres de cajas.]
-* **Resultado Obtenido (Error):** [Al hacer click en "Estado" sale cortado las opciones de abajo.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El dropdown de estado usa `appendTo="body"` y no queda cortado en el historial de cierres.]
 
 ---
 
@@ -1019,14 +1019,12 @@ Módulo Caja
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [El Admin aprueba una operación con enganche pasada la medianoche (ej: 01:30 AM del día siguiente), cuando la jornada comercial activa sigue siendo el día anterior.]
 * **Resultado Esperado:** [El enganche debería figurar en el dashboard y el cierre de la jornada activa (el día anterior).]
-* **Resultado Obtenido (Error):** [El enganche queda con `created_at::date` del nuevo día calendario. El dashboard de la jornada activa no lo incluye en sus totales. Al cerrar la caja de la jornada activa, el monto del enganche no es contabilizado.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El enganche se persiste con `register_date` de la jornada activa y las consultas de caja lo toman por esa fecha. Validado con `credits.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts`.]
 ### 2. Causa Raíz Identificada
-* `credit_down_payments` no tiene columna `register_date`. El INSERT usa `DEFAULT NOW()` (timestamp del servidor). Las queries del dashboard y cierre filtran por `created_at::date = jornada_date`, pero el enganche fue creado con `created_at::date = hoy` (nuevo día).
-* La tabla `cash_movements` sí tiene `register_date` separado del timestamp — por eso los cobros (payments) ya fueron corregidos en CA-02. Los enganches necesitan el mismo tratamiento.
-### 3. Fix Requerido (deuda técnica)
-* Agregar columna `register_date DATE` a `credit_down_payments`.
-* En `credits.service.js`, al crear el registro de enganche, setear `register_date = getActiveJornadaDate()`.
-* Actualizar todas las queries de `cashRegister.queries.js` que filtran `credit_down_payments` por `created_at::date` para usar `register_date` en su lugar.
+* Resuelta: `credit_down_payments` cuenta con `register_date`; el alta usa `getActiveJornadaDate()` y las consultas de caja filtran por `register_date`.
+### 3. Evidencia de Validación
+* Backend: `credits.service.test.js` valida que el enganche use la jornada activa aunque el día calendario sea otro.
+* E2E: `cypress/e2e/49-ca04-ca05-register-date.cy.ts` valida el dashboard/cierre V4 con jornada anterior.
 
 ---
 
@@ -1036,13 +1034,12 @@ Módulo Caja
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [El Admin registra un gasto pasada la medianoche (ej: 01:30 AM del día siguiente), cuando la jornada comercial activa sigue siendo el día anterior.]
 * **Resultado Esperado:** [El gasto debería descontarse del efectivo esperado en el cierre de la jornada activa (el día anterior).]
-* **Resultado Obtenido (Error):** [El gasto queda con `created_at::date` del nuevo día calendario y no aparece en los totales del cierre de la jornada activa.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El gasto se persiste con `register_date` de la jornada activa y el cierre V4 lo descuenta del snapshot esperado. Validado con `expenses.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts` (`10/10`).]
 ### 2. Causa Raíz Identificada
-* Mismo problema que CA-04: `expenses` no tiene columna `register_date`. El INSERT usa `DEFAULT NOW()`. Las queries del dashboard y cierre filtran por `created_at::date = jornada_date`.
-### 3. Fix Requerido (deuda técnica)
-* Agregar columna `register_date DATE` a `expenses`.
-* En `expenses.service.js`, al crear el gasto, setear `register_date = getActiveJornadaDate()`.
-* Actualizar las queries de `cashRegister.queries.js` que filtran `expenses` por `created_at::date` para usar `register_date`.
+* Resuelta: `expenses` cuenta con `register_date`; el alta usa `getActiveJornadaDate()` y las consultas de caja filtran por `register_date`.
+### 3. Evidencia de Validación
+* Backend: `expenses.service.test.js` valida que el gasto use la jornada activa aunque `expense_date` sea otro día.
+* E2E: `cypress/e2e/49-ca04-ca05-register-date.cy.ts` valida el cierre V4 con gastos en el snapshot.
 
 ---
 
@@ -1112,7 +1109,7 @@ Módulo Cobro
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Aprobar" en el dashboard.]
 * **Resultado Esperado:** [Debería salir un cartel que se aprobó un cobro.]
-* **Resultado Obtenido (Error):** [No aparece ningún cartel luego de aprobar un precobro.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. Al aprobar un precobro desde pendientes se muestra toast de éxito. Validado con `dashboard-pending.component.spec.ts`.]
 
 ---
 
@@ -1286,7 +1283,17 @@ Módulo Liquidaciones
   - Backend: `reverse` simplificado — valida y registra contra `movement.register_date` (la jornada del cobro original)
   - Frontend: getter `isPostMidnightJornada` y badge de advertencia `[data-cy="jornada-post-midnight-badge"]` en el panel de caja
 - Tests Cypress → `cypress/e2e/47-jornada-regression.cy.ts` — 8 tests automatizados (CA-02a: badge jornada, CA-02b: cierre post-medianoche, CA-02c: aprobación post-medianoche, CA-02d: reversión post-medianoche)
-- **CA-04** → Pendiente (deuda técnica) — enganches post-medianoche no se contabilizan en la jornada activa por falta de `register_date` en `credit_down_payments`
-- **CA-05** → Pendiente (deuda técnica) — gastos post-medianoche no se contabilizan en la jornada activa por falta de `register_date` en `expenses`
+- **CA-04** → Corregido / validado — enganches post-medianoche se imputan a `register_date` de la jornada activa; cubierto por `credits.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts`
+- **CA-05** → Corregido / validado — gastos post-medianoche se imputan a `register_date` de la jornada activa; cubierto por `expenses.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts`
+
+### Sesión 10 (QA bugs abiertos CR-24 a CR-31, PR-16, PL-05, CO-05)
+- **CR-24 / CR-25 / CR-26** → Corregido / validado — frecuencia mensual usa 30 días corridos en frontend, backend y reprogramación por adelanto
+- **CR-27** → Corregido / validado — resumen enriquecido de créditos del cliente en nueva operación
+- **CR-28** → Corregido / validado — dashboard refresca KPIs/listados tras aprobar cobros
+- **CR-29 / CR-30 / CR-31** → Corregido / validado — adelanto acotado, frecuencia real en resumen y préstamo sin anticipo
+- **PR-16** → Corregido / validado — alta de variante usa `/product-variants`, no crea producto dummy
+- **PL-05** → Corregido / validado — planilla `TODAY` muestra cuotas del día y visitas de hoy, no mora vieja sin agenda; integración Postgres local `planilla-inclusion-rules.test.js` pasó `9/9`
+- **CO-05** → Corregido / validado — toast de aprobación de precobro cubierto por `dashboard-pending.component.spec.ts`
+- Tests focalizados: frontend QA `85/85`, backend unit focalizados `13/13`, Cypress `49-ca04-ca05-register-date.cy.ts` `10/10`, integración `PL-05` `9/9`
 
 ---

@@ -44,6 +44,13 @@ import { ExpenseCategoryManagerComponent } from '../expense-category-manager/exp
   templateUrl: './expense-side-panel.component.html',
 })
 export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private readonly svc = inject(ExpensesService);
+  private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly msg = inject(MessageService);
+  readonly fmt = inject(FormatService);
+  private readonly dateSvc = inject(DateService);
+
   /** Si true, muestra el panel de gestión de categorías en lugar del formulario. */
   @Input() showCats = false;
   /** Gasto a editar. null = modo creación. */
@@ -81,13 +88,6 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
   showConfirmDelete = false;
   deletingId: string | null = null;
   deleting = false;
-
-  private destroy$ = new Subject<void>();
-  private readonly svc = inject(ExpensesService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
-  private readonly msg = inject(MessageService);
-  readonly fmt = inject(FormatService);
-  private readonly dateSvc = inject(DateService);
 
   readonly todayDate: Date = this.dateSvc.startOfToday();
 
@@ -161,7 +161,10 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
 
     this.cashRegisterSvc
       .getDashboard()
-      .pipe(catchError(() => of(null)), takeUntil(this.destroy$))
+      .pipe(
+        catchError(() => of(null)),
+        takeUntil(this.destroy$),
+      )
       .subscribe((dashboard) => {
         const isCashClosed = dashboard?.isClosed ?? false;
 
@@ -200,13 +203,20 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
     this.deleting = true;
     this.svc
       .remove(this.deletingId)
-      .pipe(takeUntil(this.destroy$), finalize(() => (this.deleting = false)))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.deleting = false)),
+      )
       .subscribe({
         next: () => {
           this.showConfirmDelete = false;
           this.deletingId = null;
           this.resetForm();
-          this.msg.add({ severity: 'success', summary: 'Eliminado', detail: 'Gasto eliminado.' });
+          this.msg.add({
+            severity: 'success',
+            summary: 'Eliminado',
+            detail: 'Gasto eliminado.',
+          });
           this.deleted.emit();
         },
         error: (err: AppError) => {
@@ -227,7 +237,10 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
       paymentMethod: this.createPaymentMethod,
       expenseDate: this.createExpenseDate || undefined,
     };
-    if (this.createPaymentMethod === 'TRANSFER' && this.createTransferRef.trim()) {
+    if (
+      this.createPaymentMethod === 'TRANSFER' &&
+      this.createTransferRef.trim()
+    ) {
       payload.transferReference = this.createTransferRef.trim();
     }
     if (this.createCategoryId) {
@@ -236,7 +249,10 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
 
     this.svc
       .create(payload)
-      .pipe(takeUntil(this.destroy$), finalize(() => (this.saving = false)))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.saving = false)),
+      )
       .subscribe({
         next: () => {
           this.resetForm();
@@ -266,7 +282,10 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
       paymentMethod: this.createPaymentMethod,
       expenseDate: this.createExpenseDate || undefined,
     };
-    if (this.createPaymentMethod === 'TRANSFER' && this.createTransferRef.trim()) {
+    if (
+      this.createPaymentMethod === 'TRANSFER' &&
+      this.createTransferRef.trim()
+    ) {
       payload.transferReference = this.createTransferRef.trim();
     }
     if (this.createCategoryId) {
@@ -275,7 +294,10 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
 
     this.svc
       .update(this.editingExpenseId, payload)
-      .pipe(takeUntil(this.destroy$), finalize(() => (this.saving = false)))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.saving = false)),
+      )
       .subscribe({
         next: () => {
           this.msg.add({
@@ -299,7 +321,8 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
     this.createPaymentMethod = expense.paymentMethod;
     this.createTransferRef = expense.transferReference ?? '';
     this.createCategoryId = expense.categoryId;
-    this.createExpenseDate = (expense.expenseDate || '').split('T')[0] || this.todayIso();
+    this.createExpenseDate =
+      (expense.expenseDate || '').split('T')[0] || this.todayIso();
     this.createError = '';
   }
 

@@ -1,109 +1,169 @@
 <p-dialog
-  header="Cerrar caja operativa"
   [(visible)]="visible"
+  (visibleChange)="visibleChange.emit($event)"
   [modal]="true"
+  [showHeader]="false"
+  [closable]="false"
   [draggable]="false"
   [resizable]="false"
-  [closable]="!submitting"
-  (visibleChange)="visibleChange.emit($event)"
-  [style]="{ width: '640px' }"
+  styleClass="bg-[#121520] border border-[#1A1D27]"
+  contentStyleClass="bg-[#121520] p-0 border-none"
+  [contentStyle]="{
+    padding: '0',
+    background: '#121520',
+    color: '#cbd5e1',
+    border: '1px solid #1A1D27',
+    borderRadius: '1rem',
+    overflow: 'hidden',
+  }"
+  [style]="{ width: '640px', maxWidth: '95vw' }"
 >
-  @if (loadingSnapshot) {
-    <app-loading-state message="Cargando snapshot..."></app-loading-state>
-  } @else if (snapshot) {
-    <div class="flex flex-col gap-3">
-      <p class="text-sm text-gray-600">
-        Declará el monto físico por método de pago. La diferencia se calcula
-        contra el <strong>esperado</strong> del snapshot V4 (X report).
-      </p>
+  <section class="bg-[#121520] text-slate-300">
+    <header
+      class="flex items-center justify-between gap-4 border-b border-[#252A3A] px-6 py-5"
+    >
+      <h2 class="text-xl font-bold text-white">Cerrar caja operativa</h2>
+      <button
+        type="button"
+        class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:opacity-50"
+        [disabled]="submitting"
+        (click)="close()"
+      >
+        <i class="pi pi-times text-base"></i>
+      </button>
+    </header>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm border-collapse">
-          <thead>
-            <tr class="bg-gray-50 border-b">
-              <th class="text-left p-2">Método</th>
-              <th class="text-right p-2">Esperado</th>
-              <th class="text-right p-2">Declarado</th>
-              <th class="text-right p-2">Diferencia</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of rows; track row.method) {
-              <tr class="border-b">
-                <td class="p-2 font-medium">{{ row.label }}</td>
-                <td class="p-2 text-right">{{ format.currency(row.expected) }}</td>
-                <td class="p-2 text-right">
-                  <p-inputNumber
-                    [(ngModel)]="row.declared"
-                    (ngModelChange)="onDeclaredChange(row)"
-                    mode="currency"
-                    currency="ARS"
-                    appCurrencyAmountInput
-                    [min]="0"
-                    [showButtons]="false"
-                    [inputStyleClass]="'w-32 text-right'"
-                  ></p-inputNumber>
-                </td>
-                <td
-                  class="p-2 text-right font-medium"
-                  [class.text-green-600]="row.declared != null && row.difference === 0"
-                  [class.text-red-600]="row.declared != null && row.difference < 0"
-                  [class.text-yellow-600]="row.declared != null && row.difference > 0"
+    <div class="px-6 py-5">
+      @if (loadingSnapshot) {
+        <app-loading-state message="Cargando snapshot..."></app-loading-state>
+      } @else if (snapshot) {
+        <div class="flex flex-col gap-4">
+          <p class="text-sm leading-relaxed text-slate-400">
+            Declará el monto físico por método de pago. La diferencia se calcula
+            contra el <strong class="text-slate-200">esperado</strong> del
+            snapshot V4 (X report).
+          </p>
+
+          <div
+            class="overflow-hidden rounded-xl border border-[#252A3A] bg-[#0F121B]"
+          >
+            <table class="w-full border-collapse text-sm">
+              <thead>
+                <tr
+                  class="border-b border-[#334155] bg-[#1D2231] text-xs uppercase tracking-[0.14em] text-slate-300"
                 >
-                  @if (row.declared != null) {
-                    {{ format.currency(row.difference) }}
-                  } @else {
-                    <span class="text-gray-400">—</span>
-                  }
-                </td>
-              </tr>
-            }
-          </tbody>
-          <tfoot>
-            <tr class="bg-gray-100 font-semibold">
-              <td class="p-2">Total</td>
-              <td class="p-2 text-right">{{ format.currency(totalExpected) }}</td>
-              <td class="p-2 text-right">{{ format.currency(totalDeclared) }}</td>
-              <td
-                class="p-2 text-right"
-                [class.text-green-600]="totalDifference === 0"
-                [class.text-red-600]="totalDifference < 0"
-                [class.text-yellow-600]="totalDifference > 0"
-              >
-                {{ format.currency(totalDifference) }}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+                  <th class="px-3 py-3 text-left font-semibold">Método</th>
+                  <th class="px-3 py-3 text-right font-semibold">Esperado</th>
+                  <th class="px-3 py-3 text-right font-semibold">Declarado</th>
+                  <th class="px-3 py-3 text-right font-semibold">Diferencia</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#334155]">
+                @for (row of rows; track row.method; let index = $index) {
+                  <tr
+                    [class]="index % 2 === 0 ? 'bg-[#121520]' : 'bg-[#0F121B]'"
+                  >
+                    <td class="px-3 py-3 font-semibold text-white">
+                      {{ row.label }}
+                    </td>
+                    <td
+                      class="px-3 py-3 text-right font-mono font-semibold text-slate-200"
+                    >
+                      {{ format.currency(row.expected) }}
+                    </td>
+                    <td class="px-3 py-3 text-right">
+                      <p-inputNumber
+                        [(ngModel)]="row.declared"
+                        (ngModelChange)="onDeclaredChange(row)"
+                        mode="currency"
+                        currency="ARS"
+                        appCurrencyAmountInput
+                        [min]="0"
+                        [showButtons]="false"
+                        styleClass="w-40"
+                        inputStyleClass="w-full h-10 rounded-xl border border-[#252A3A] bg-[#0B0D14] px-3 text-right text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      ></p-inputNumber>
+                    </td>
+                    <td
+                      class="px-3 py-3 text-right font-mono font-semibold"
+                      [class.text-emerald-300]="
+                        row.declared != null && row.difference === 0
+                      "
+                      [class.text-red-300]="
+                        row.declared != null && row.difference < 0
+                      "
+                      [class.text-amber-300]="
+                        row.declared != null && row.difference > 0
+                      "
+                    >
+                      @if (row.declared != null) {
+                        {{ format.currency(row.difference) }}
+                      } @else {
+                        <span class="text-slate-400">—</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr
+                  class="border-t-2 border-slate-300 bg-[#1D2231] font-bold text-white"
+                >
+                  <td class="px-3 py-4">Total</td>
+                  <td class="px-3 py-4 text-right font-mono">
+                    {{ format.currency(totalExpected) }}
+                  </td>
+                  <td class="px-3 py-4 text-right font-mono">
+                    {{ format.currency(totalDeclared) }}
+                  </td>
+                  <td
+                    class="px-3 py-4 text-right font-mono"
+                    [class.text-emerald-300]="totalDifference === 0"
+                    [class.text-red-300]="totalDifference < 0"
+                    [class.text-amber-300]="totalDifference > 0"
+                  >
+                    {{ format.currency(totalDifference) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
 
-      @if (errorMessage) {
-        <div class="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
+          @if (errorMessage) {
+            <div
+              class="rounded-xl border border-red-400/25 bg-red-500/10 p-3 text-sm text-red-200"
+            >
+              {{ errorMessage }}
+            </div>
+          }
+        </div>
+      } @else if (errorMessage) {
+        <div
+          class="rounded-xl border border-red-400/25 bg-red-500/10 p-3 text-sm text-red-200"
+        >
           {{ errorMessage }}
         </div>
       }
     </div>
-  } @else if (errorMessage) {
-    <div class="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-2">
-      {{ errorMessage }}
-    </div>
-  }
 
-  <ng-template pTemplate="footer">
-    <button
-      pButton
-      label="Cancelar"
-      class="p-button-text"
-      [disabled]="submitting"
-      (click)="close()"
-    ></button>
-    <button
-      pButton
-      label="Cerrar caja"
-      icon="pi pi-check"
-      [loading]="submitting"
-      [disabled]="!canSubmit()"
-      (click)="submit()"
-    ></button>
-  </ng-template>
+    <footer class="flex justify-end gap-3 border-t border-[#252A3A] px-6 py-4">
+      <button
+        type="button"
+        class="h-11 rounded-xl border border-[#334155] px-5 text-sm font-semibold text-slate-200 transition hover:bg-[#1D2231] hover:text-white disabled:opacity-50"
+        [disabled]="submitting"
+        (click)="close()"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-500 px-5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-500/40 disabled:text-slate-300"
+        [disabled]="submitting || !canSubmit()"
+        (click)="submit()"
+      >
+        <i class="pi pi-check text-xs"></i>
+        {{ submitting ? "Cerrando..." : "Cerrar caja" }}
+      </button>
+    </footer>
+  </section>
 </p-dialog>

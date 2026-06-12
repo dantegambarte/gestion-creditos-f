@@ -1,31 +1,22 @@
 <p-toast />
 
-<div
-  class="flex h-full min-h-0 overflow-hidden"
-  [class.p-6]="!selectedSheetMeta"
->
+<div class="collection-workspace" [class.p-6]="!selectedSheetMeta">
   <!-- LEFT PANEL: lista -->
   <div
-    class="flex flex-col transition-all duration-300 overflow-hidden shrink-0 min-h-0"
+    class="collection-master-panel flex flex-col transition-all duration-300 overflow-hidden shrink-0 min-h-0"
     [class.ff-panel]="!selectedSheetMeta"
     [class.border-r]="!!selectedSheetMeta && !leftPanelCollapsed"
     [style.width]="
       !selectedSheetMeta ? '100%' : leftPanelCollapsed ? '0px' : '420px'
     "
-    style="border-color: var(--ff-border)"
   >
     <!-- Header -->
     <div
-      class="flex items-center justify-between px-4 py-4 shrink-0"
-      style="border-bottom: 1px solid var(--ff-border)"
+      class="collection-toolbar flex items-center justify-between px-4 py-4 shrink-0"
     >
       <div>
-        <h1 class="ff-page-title">
-          Planillas de cobro
-        </h1>
-        <p class="ff-page-subtitle">
-          Planillas generadas para cobradores.
-        </p>
+        <h1 class="ff-page-title">Planillas de cobro</h1>
+        <p class="ff-page-subtitle">Planillas generadas para cobradores.</p>
       </div>
       <p-button
         label="Generar nueva planilla"
@@ -38,8 +29,7 @@
 
     <!-- Filtros -->
     <div
-      class="flex flex-wrap items-center gap-2 px-4 py-3 shrink-0"
-      style="border-bottom: 1px solid var(--ff-border)"
+      class="collection-filters flex flex-wrap items-center gap-2 px-4 py-3 shrink-0"
     >
       <p-dropdown
         [options]="collectorOptions"
@@ -67,8 +57,7 @@
         @if (filterDate) {
           <button
             type="button"
-            class="absolute right-8 top-1/2 -translate-y-1/2 flex items-center justify-center w-4 h-4 rounded-full hover:opacity-70 transition-opacity"
-            style="color: var(--ff-text-muted)"
+            class="collection-date-chip collection-date-chip--icon"
             (click)="filterDate = ''; applyFilters()"
           >
             <i class="pi pi-times text-xs"></i>
@@ -76,8 +65,7 @@
         } @else {
           <button
             type="button"
-            class="absolute right-8 top-1/2 -translate-y-1/2 text-xs font-semibold px-1.5 py-0.5 rounded hover:opacity-70 transition-opacity"
-            style="color: var(--ff-text-muted); background: var(--ff-border)"
+            class="collection-date-chip collection-date-chip--today"
             (click)="filterDate = dateSvc.toLocalIso(today); applyFilters()"
           >
             hoy
@@ -95,18 +83,30 @@
         appendTo="body"
         (onChange)="applyFilters()"
       />
-      <div class="inline-flex items-center gap-2 cursor-pointer text-xs select-none" style="color: var(--ff-text-secondary)"
-        (click)="filterIncludeRegenerated = !filterIncludeRegenerated; applyFilters()">
+      <div
+        class="collection-switch-row"
+        (click)="
+          filterIncludeRegenerated = !filterIncludeRegenerated; applyFilters()
+        "
+      >
         <p-inputSwitch
           [ngModel]="filterIncludeRegenerated"
           (click)="$event.stopPropagation()"
           (onChange)="filterIncludeRegenerated = $event.checked; applyFilters()"
         />
-        <span pTooltip="Incluye planillas regeneradas (solo auditoría)" tooltipPosition="bottom">
+        <span
+          pTooltip="Incluye planillas regeneradas (solo auditoría)"
+          tooltipPosition="bottom"
+        >
           Incluir regeneradas
         </span>
       </div>
-      @if (filterCollectorId || filterDate || filterIncludeRegenerated || filterUsed) {
+      @if (
+        filterCollectorId ||
+        filterDate ||
+        filterIncludeRegenerated ||
+        filterUsed
+      ) {
         <p-button
           label="Limpiar"
           severity="secondary"
@@ -129,8 +129,7 @@
         <app-error-state />
       } @else if (sheets.length === 0) {
         <div
-          class="flex flex-col items-center justify-center h-40 gap-2"
-          style="color: var(--ff-text-muted)"
+          class="collection-empty-state flex flex-col items-center justify-center h-40 gap-2"
         >
           <i class="pi pi-inbox text-2xl"></i>
           <span class="text-sm">No hay planillas generadas.</span>
@@ -140,7 +139,7 @@
           [value]="visibleSheets"
           [paginator]="true"
           [rows]="20"
-          styleClass="p-datatable-sm p-datatable-hoverable-rows"
+          styleClass="p-datatable-sm p-datatable-hoverable-rows ff-data-table collection-table"
         >
           <ng-template pTemplate="header">
             <tr>
@@ -154,10 +153,8 @@
           <ng-template pTemplate="body" let-sheet>
             <tr
               class="cursor-pointer"
-              [style.background]="
+              [class.collection-row--selected]="
                 selectedSheetMeta?.id === sheet.id
-                  ? 'var(--ff-accent-dim, rgba(59,130,246,0.15))'
-                  : ''
               "
               (click)="selectSheet(sheet)"
             >
@@ -168,8 +165,7 @@
                 {{ sheet.collectorName }}
                 @if (sheet.status === "REGENERATED") {
                   <span
-                    class="ml-1 inline-block text-[10px] font-bold px-1.5 py-0.5 rounded uppercase"
-                    style="background: #e5e7eb; color: #4b5563;"
+                    class="collection-regenerated-badge ml-1 inline-block text-[10px] font-bold px-1.5 py-0.5 rounded uppercase"
                     pTooltip="Planilla regenerada — solo lectura"
                   >
                     Regenerada
@@ -184,10 +180,7 @@
               </td>
               <td class="text-center font-semibold">{{ sheet.totalItems }}</td>
               <td class="text-center">
-                <i
-                  class="pi pi-chevron-right text-xs"
-                  style="color: var(--ff-text-muted)"
-                ></i>
+                <i class="pi pi-chevron-right text-xs"></i>
               </td>
             </tr>
           </ng-template>

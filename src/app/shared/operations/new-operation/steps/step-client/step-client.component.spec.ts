@@ -51,4 +51,34 @@ describe('StepClientComponent', () => {
 
     expect(component.filteredClients).toEqual([component.clients[1]]);
   });
+
+  it('muestra el resumen enriquecido de créditos del cliente seleccionado — CR-27', () => {
+    component.selectedClientId = '1';
+    component.selectedClientSummary = {
+      ...component.clients[0],
+      previousCredits: 2,
+      paidInstallments: 4,
+      pendingInstallments: 3,
+      overdueInstallments: 1,
+      creditsSummary: [
+        {
+          id: 'credit-1',
+          type: 'SALE',
+          status: 'ACTIVE',
+          totalAmount: 100000,
+          balance: 60000,
+          installmentsCount: 6,
+          paidInstallments: 2,
+          pendingInstallments: 3,
+          overdueInstallments: 1,
+        },
+      ],
+    } as any;
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Créditos activos: 2');
+    expect(component.selectedClient?.creditsSummary?.length).toBe(1);
+    expect(component.selectedClient?.overdueInstallments).toBe(1);
+  });
 });

@@ -13,8 +13,8 @@ export interface ChartConfig {
 export class DashboardChartsService {
   private readonly fmt = inject(FormatService);
 
-  private readonly TEXT_COLOR = '#8b97b8';
-  private readonly GRID_COLOR = 'rgba(46, 51, 71, 0.3)';
+  private readonly TEXT_COLOR = '#9aa6c7';
+  private readonly GRID_COLOR = 'rgba(148, 163, 184, 0.12)';
 
   /**
    * Gráfico de barras de recaudación de la semana actual.
@@ -43,8 +43,8 @@ export class DashboardChartsService {
           {
             label: 'Recaudado',
             data: labels.map((d) => daysMap.get(d) ?? 0),
-            backgroundColor: 'rgba(79, 110, 247, 0.5)',
-            borderColor: 'rgb(79, 110, 247)',
+            backgroundColor: 'rgba(95, 122, 246, 0.58)',
+            borderColor: 'rgb(95, 122, 246)',
             borderWidth: 1,
             borderRadius: 4,
             barThickness: 24,
@@ -72,7 +72,7 @@ export class DashboardChartsService {
           {
             label: 'Monto cobrado',
             data: top5.map((c) => c.totalCollected),
-            backgroundColor: 'rgba(52, 211, 153, 0.6)',
+            backgroundColor: 'rgba(52, 211, 153, 0.52)',
             borderColor: 'rgb(52, 211, 153)',
             borderWidth: 1,
             borderRadius: 4,
@@ -99,8 +99,8 @@ export class DashboardChartsService {
           {
             label: 'Monto creado',
             data: top5.map((s) => s.totalAmount),
-            backgroundColor: 'rgba(251, 191, 36, 0.6)',
-            borderColor: 'rgb(251, 191, 36)',
+            backgroundColor: 'rgba(251, 176, 64, 0.54)',
+            borderColor: 'rgb(251, 176, 64)',
             borderWidth: 1,
             borderRadius: 4,
             barThickness: 24,
@@ -115,6 +115,9 @@ export class DashboardChartsService {
     return {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: { bottom: 14, left: 4, right: 4 },
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -126,7 +129,7 @@ export class DashboardChartsService {
       },
       scales: {
         x: {
-          ticks: { color: this.TEXT_COLOR, font: { size: 11 } },
+          ticks: { color: this.TEXT_COLOR, font: { size: 11 }, padding: 8 },
           grid: { display: false },
         },
         y: {
