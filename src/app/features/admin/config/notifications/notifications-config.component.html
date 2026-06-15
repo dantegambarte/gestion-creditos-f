@@ -2,10 +2,10 @@
   <!-- Izquierda: notificaciones -->
   <div class="flex-1 space-y-4">
     <div class="space-y-1">
-      <h2 class="text-base font-semibold text-slate-100">
+      <h2 class="text-base font-semibold ff-text-primary">
         Configuración de notificaciones
       </h2>
-      <p class="text-sm text-slate-500">
+      <p class="text-sm ff-text-muted">
         Controlá qué alertas reciben los administradores del sistema.
       </p>
     </div>
@@ -16,22 +16,24 @@
           [class]="
             'flex items-center justify-between px-4 py-3.5 rounded-2xl border transition-colors ' +
             (setting.enabled
-              ? 'bg-slate-800/60 border-slate-700'
-              : 'bg-slate-900/40 border-slate-800')
+              ? 'bg-[var(--ff-secondary)] border-[var(--ff-border)]'
+              : 'bg-[var(--ff-panel)] border-[var(--ff-border-subtle)]')
           "
         >
           <div class="flex items-center gap-3">
             <div
               [class]="
                 'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ' +
-                (setting.enabled ? 'bg-blue-500/20' : 'bg-slate-700/50')
+                (setting.enabled
+                  ? 'bg-blue-500/20'
+                  : 'bg-[var(--ff-secondary)]')
               "
             >
               <i
                 [class]="
                   setting.icon +
                   ' text-sm ' +
-                  (setting.enabled ? 'text-blue-400' : 'text-slate-500')
+                  (setting.enabled ? 'text-blue-400' : 'ff-text-muted')
                 "
               ></i>
             </div>
@@ -39,7 +41,7 @@
               <p
                 [class]="
                   'text-sm font-medium ' +
-                  (setting.enabled ? 'text-slate-100' : 'text-slate-500')
+                  (setting.enabled ? 'ff-text-primary' : 'ff-text-muted')
                 "
               >
                 {{ setting.label }}
@@ -47,7 +49,7 @@
               <p
                 [class]="
                   'text-xs mt-0.5 ' +
-                  (setting.enabled ? 'text-slate-400' : 'text-slate-600')
+                  (setting.enabled ? 'ff-text-secondary' : 'ff-text-muted')
                 "
               >
                 {{ setting.description }}
@@ -61,7 +63,7 @@
 
     <p-button
       label="Guardar preferencias"
-      styleClass="h-10 px-5 rounded-xl mt-2"
+      styleClass="h-11 px-5 rounded-xl shadow-sm mt-2"
       (onClick)="save()"
     />
   </div>
@@ -69,15 +71,18 @@
   <!-- Derecha: paneles informativos -->
   <div class="w-[300px] flex-shrink-0 space-y-3">
     <!-- Canales -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+    <div
+      class="border rounded-2xl p-4 space-y-3"
+      style="border-color: var(--ff-border); background: var(--ff-panel-raised)"
+    >
+      <h3 class="text-xs font-bold ff-text-secondary uppercase tracking-widest">
         Canales de notificación
       </h3>
       <div class="space-y-2.5">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <i class="pi pi-envelope text-slate-400 text-xs"></i>
-            <span class="text-sm text-slate-300">Email</span>
+            <i class="pi pi-envelope ff-muted-icon text-xs"></i>
+            <span class="text-sm ff-text-secondary">Email</span>
           </div>
           <span
             class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full"
@@ -86,8 +91,8 @@
         </div>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <i class="pi pi-whatsapp text-slate-400 text-xs"></i>
-            <span class="text-sm text-slate-300">WhatsApp</span>
+            <i class="pi pi-whatsapp ff-muted-icon text-xs"></i>
+            <span class="text-sm ff-text-secondary">WhatsApp</span>
           </div>
           <div class="flex flex-col items-end gap-0.5">
             <span
@@ -103,8 +108,8 @@
         </div>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <i class="pi pi-bell text-slate-400 text-xs"></i>
-            <span class="text-sm text-slate-300">Push in-app</span>
+            <i class="pi pi-bell ff-muted-icon text-xs"></i>
+            <span class="text-sm ff-text-secondary">Push in-app</span>
           </div>
           <span
             class="text-xs font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full"
@@ -115,19 +120,24 @@
     </div>
 
     <!-- Frecuencia -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+    <div
+      class="border rounded-2xl p-4 space-y-3"
+      style="border-color: var(--ff-border); background: var(--ff-panel-raised)"
+    >
+      <h3 class="text-xs font-bold ff-text-secondary uppercase tracking-widest">
         Frecuencia de envío
       </h3>
       <div class="space-y-2">
         <div class="flex items-center justify-between gap-2">
-          <span class="text-sm text-slate-400 shrink-0">Alertas de mora</span>
-          <span class="text-xs text-slate-300 whitespace-nowrap"
+          <span class="text-sm ff-text-secondary shrink-0"
+            >Alertas de mora</span
+          >
+          <span class="text-xs ff-text-primary whitespace-nowrap"
             >Inmediata</span
           >
         </div>
         <div class="flex items-center justify-between gap-2">
-          <span class="text-sm text-slate-400 shrink-0"
+          <span class="text-sm ff-text-secondary shrink-0"
             >Vencimiento de cuotas</span
           >
           <span class="text-xs text-blue-400 whitespace-nowrap"
@@ -135,8 +145,10 @@
           >
         </div>
         <div class="flex items-center justify-between gap-2">
-          <span class="text-sm text-slate-400 shrink-0">Resumen semanal</span>
-          <span class="text-xs text-slate-300 whitespace-nowrap"
+          <span class="text-sm ff-text-secondary shrink-0"
+            >Resumen semanal</span
+          >
+          <span class="text-xs ff-text-primary whitespace-nowrap"
             >Lunes 08:00 hs</span
           >
         </div>
@@ -144,32 +156,35 @@
     </div>
 
     <!-- Historial -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
-      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">
+    <div
+      class="border rounded-2xl p-4 space-y-3"
+      style="border-color: var(--ff-border); background: var(--ff-panel-raised)"
+    >
+      <h3 class="text-xs font-bold ff-text-secondary uppercase tracking-widest">
         Historial de alertas
       </h3>
       <div class="space-y-2">
         <div class="flex items-center justify-between gap-2">
-          <span class="text-sm text-slate-300 truncate"
+          <span class="text-sm ff-text-secondary truncate"
             >Alerta mora — Carlos R.</span
           >
-          <span class="text-xs text-slate-500 whitespace-nowrap"
+          <span class="text-xs ff-text-muted whitespace-nowrap"
             >hace 2 horas</span
           >
         </div>
         <div class="flex items-center justify-between gap-2">
-          <span class="text-sm text-slate-300 truncate"
+          <span class="text-sm ff-text-secondary truncate"
             >Aprobación pendiente</span
           >
-          <span class="text-xs text-slate-500 whitespace-nowrap"
+          <span class="text-xs ff-text-muted whitespace-nowrap"
             >hace 4 horas</span
           >
         </div>
         <div class="flex items-center justify-between gap-2">
-          <span class="text-sm text-slate-300 truncate"
+          <span class="text-sm ff-text-secondary truncate"
             >Vencimiento mañana — 8 cuotas</span
           >
-          <span class="text-xs text-slate-500 whitespace-nowrap"
+          <span class="text-xs ff-text-muted whitespace-nowrap"
             >ayer 08:00</span
           >
         </div>

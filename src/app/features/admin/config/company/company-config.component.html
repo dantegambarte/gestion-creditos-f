@@ -1,79 +1,63 @@
 <div class="space-y-6">
   <!-- Card: Datos de la Empresa -->
-  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-    <div class="flex items-center gap-3 pb-4 border-b border-slate-800">
+  <div class="ff-panel border p-6 space-y-6">
+    <div
+      class="flex items-center gap-3 pb-4 border-b"
+      style="border-color: var(--ff-border)"
+    >
       <div
         class="w-9 h-9 rounded-xl bg-blue-600/20 flex items-center justify-center"
       >
         <i class="pi pi-building text-blue-400 text-base"></i>
       </div>
       <div>
-        <h2 class="text-base font-semibold text-slate-100">
+        <h2 class="text-base font-semibold ff-text-primary">
           Datos de la Empresa
         </h2>
-        <p class="text-xs text-slate-500">Información general del sistema</p>
+        <p class="text-xs ff-text-muted">Información general del sistema</p>
       </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Nombre del sistema</label
-        >
-        <input
-          pInputText
-          [(ngModel)]="systemName"
-          class="w-full h-11 px-3.5 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 transition-colors"
-        />
+        <label class="auth-label">Nombre del sistema</label>
+        <input pInputText [(ngModel)]="systemName" class="w-full h-11 px-3.5" />
       </div>
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Email de contacto</label
-        >
+        <label class="auth-label">Email de contacto</label>
         <input
           pInputText
           [(ngModel)]="contactEmail"
-          class="w-full h-11 px-3.5 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 transition-colors"
+          class="w-full h-11 px-3.5"
         />
       </div>
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Teléfono</label
-        >
-        <input
-          pInputText
-          [(ngModel)]="phone"
-          class="w-full h-11 px-3.5 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 transition-colors"
-        />
+        <label class="auth-label">Teléfono</label>
+        <input pInputText [(ngModel)]="phone" class="w-full h-11 px-3.5" />
       </div>
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Dirección</label
-        >
-        <input
-          pInputText
-          [(ngModel)]="address"
-          class="w-full h-11 px-3.5 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-100 placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 transition-colors"
-        />
+        <label class="auth-label">Dirección</label>
+        <input pInputText [(ngModel)]="address" class="w-full h-11 px-3.5" />
       </div>
     </div>
   </div>
 
   <!-- Card: Tasas de Interés -->
-  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-    <div class="flex items-center gap-3 pb-4 border-b border-slate-800">
+  <div class="ff-panel border p-6 space-y-6">
+    <div
+      class="flex items-center gap-3 pb-4 border-b"
+      style="border-color: var(--ff-border)"
+    >
       <div
         class="w-9 h-9 rounded-xl bg-emerald-600/20 flex items-center justify-center"
       >
         <i class="pi pi-percentage text-emerald-400 text-base"></i>
       </div>
       <div>
-        <h2 class="text-base font-semibold text-slate-100">Tasas de Interés</h2>
-        <p class="text-xs text-slate-500">
+        <h2 class="text-base font-semibold ff-text-primary">
+          Tasas de Interés
+        </h2>
+        <p class="text-xs ff-text-muted">
           Tasas y comisiones aplicadas a las operaciones
         </p>
       </div>
@@ -81,66 +65,57 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Tasa VENTA (mensual)</label
-        >
+        <label class="auth-label">Tasa VENTA (mensual)</label>
         <p-dropdown
           [options]="rateOptions"
           [(ngModel)]="saleRate"
-          styleClass="w-full h-11 rounded-xl bg-slate-800/60 border-slate-700"
+          styleClass="w-full h-11 rounded-xl"
           appendTo="body"
         />
       </div>
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Tasa PRÉSTAMO (mensual)</label
-        >
+        <label class="auth-label">Tasa PRÉSTAMO (mensual)</label>
         <p-dropdown
           [options]="rateOptions"
           [(ngModel)]="loanRate"
-          styleClass="w-full h-11 rounded-xl bg-slate-800/60 border-slate-700"
+          styleClass="w-full h-11 rounded-xl"
           appendTo="body"
         />
       </div>
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Tasa MORA (diaria)</label
-        >
+        <label class="auth-label">Tasa MORA (diaria)</label>
         <p-dropdown
           [options]="moraOptions"
           [(ngModel)]="moraRate"
-          styleClass="w-full h-11 rounded-xl bg-slate-800/60 border-slate-700"
+          styleClass="w-full h-11 rounded-xl"
           appendTo="body"
         />
       </div>
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Comisión Vendedor</label
-        >
+        <label class="auth-label">Comisión Vendedor</label>
         <p-dropdown
           [options]="commissionOptions"
           [(ngModel)]="sellerCommission"
-          styleClass="w-full h-11 rounded-xl bg-slate-800/60 border-slate-700"
+          styleClass="w-full h-11 rounded-xl"
           appendTo="body"
         />
       </div>
     </div>
 
-    <div class="flex items-center gap-3 pt-2 border-t border-slate-800">
-      <label class="text-sm text-slate-400 whitespace-nowrap"
+    <div
+      class="flex items-center gap-3 pt-2 border-t"
+      style="border-color: var(--ff-border)"
+    >
+      <label class="text-sm ff-text-secondary whitespace-nowrap"
         >Período de gracia:</label
       >
       <p-inputNumber
         [(ngModel)]="gracePeriod"
         [min]="0"
         [max]="90"
-        inputStyleClass="w-20 h-11 text-center rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100"
+        inputStyleClass="w-20 h-11 text-center"
       />
-      <span class="text-sm text-slate-500"
+      <span class="text-sm ff-text-muted"
         >días. Recordatorio a 30d, alerta a 45d.</span
       >
     </div>

@@ -23,7 +23,8 @@
     <p-button
       label="+ Nueva Tasa"
       (onClick)="openCreate()"
-      styleClass="h-10 px-5 rounded-xl"
+      severity="primary"
+      styleClass="h-11 px-5 rounded-xl shadow-sm"
     />
   </div>
 
@@ -141,19 +142,22 @@
     <!-- Panel lateral: Nueva tasa -->
     @if (showCreateDialog) {
       <div
-        class="w-80 flex-shrink-0 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4"
+        class="w-80 flex-shrink-0 border rounded-2xl p-5 space-y-4"
+        style="
+          border-color: var(--ff-border);
+          background: var(--ff-panel-raised);
+          color: var(--ff-text-primary);
+        "
       >
         <h3
-          class="text-sm font-semibold text-slate-100 uppercase tracking-wide"
+          class="text-sm font-semibold uppercase tracking-wide"
+          style="color: var(--ff-text-primary)"
         >
           Nueva tasa
         </h3>
 
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Frecuencia de pago</label
-          >
+          <label class="auth-label">Frecuencia de pago</label>
           <p-dropdown
             [options]="freqOptions.slice(1)"
             [(ngModel)]="createForm.paymentFrequency"
@@ -166,56 +170,44 @@
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Cantidad de cuotas</label
-          >
+          <label class="auth-label">Cantidad de cuotas</label>
           <p-inputNumber
             [(ngModel)]="createForm.installmentsCount"
             [min]="1"
             [max]="120"
             [useGrouping]="false"
             styleClass="w-full"
-            inputStyleClass="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500"
+            inputStyleClass="w-full h-11 px-3"
             placeholder="Ej: 12"
           />
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Monto mínimo ($)</label
-          >
+          <label class="auth-label">Monto mínimo ($)</label>
           <p-inputNumber
             [(ngModel)]="createForm.minAmount"
             [min]="0"
             mode="decimal"
             styleClass="w-full"
-            inputStyleClass="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500"
+            inputStyleClass="w-full h-11 px-3"
             placeholder="1.000"
           />
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Monto máximo ($)</label
-          >
+          <label class="auth-label">Monto máximo ($)</label>
           <p-inputNumber
             [(ngModel)]="createForm.maxAmount"
             [min]="0"
             mode="decimal"
             styleClass="w-full"
-            inputStyleClass="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500"
+            inputStyleClass="w-full h-11 px-3"
             placeholder="Sin límite (dejar vacío)"
           />
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Tasa (%)</label
-          >
+          <label class="auth-label">Tasa (%)</label>
           <p-inputNumber
             [(ngModel)]="createForm.ratePercent"
             [min]="0"
@@ -223,10 +215,10 @@
             [minFractionDigits]="2"
             [maxFractionDigits]="4"
             styleClass="w-full"
-            inputStyleClass="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500"
+            inputStyleClass="w-full h-11 px-3"
             placeholder="Ej: 8 → se interpreta como 8%"
           />
-          <span class="text-xs text-slate-500"
+          <span class="text-xs ff-text-muted"
             >El sistema valida que los rangos no se superpongan con tasas
             activas existentes.</span
           >

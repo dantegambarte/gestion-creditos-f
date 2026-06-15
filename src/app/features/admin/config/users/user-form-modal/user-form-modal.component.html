@@ -11,9 +11,9 @@
   <ng-template pTemplate="header">
     <div class="flex items-center justify-between w-full">
       @if (isEdit) {
-        <p class="font-semibold text-slate-100 text-base">
+        <p class="font-semibold ff-text-primary text-base">
           Editar usuario —
-          <span class="text-slate-300">{{ editRecord?.name }}</span>
+          <span class="ff-text-secondary">{{ editRecord?.name }}</span>
         </p>
       } @else {
         <div class="flex items-center gap-3">
@@ -23,10 +23,10 @@
             <i class="pi pi-user text-blue-400 text-base"></i>
           </div>
           <div>
-            <p class="font-semibold text-slate-100 text-base leading-tight">
+            <p class="font-semibold ff-text-primary text-base leading-tight">
               Nuevo Usuario
             </p>
-            <p class="text-xs text-slate-400 leading-tight">
+            <p class="text-xs ff-text-secondary leading-tight">
               Registra un nuevo usuario en el sistema
             </p>
           </div>
@@ -34,7 +34,8 @@
       }
       <button
         (click)="close()"
-        class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
+        class="w-7 h-7 flex items-center justify-center rounded-lg ff-text-secondary transition-colors"
+        style="background: var(--ff-secondary)"
       >
         <i class="pi pi-times text-sm"></i>
       </button>
@@ -49,27 +50,21 @@
       <!-- Nombre + Email -->
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Nombre completo</label
-          >
+          <label class="auth-label">Nombre completo</label>
           <input
             pInputText
             [(ngModel)]="form.name"
             placeholder="Ej. Carlos Andrade"
-            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+            class="w-full h-11 px-3 text-sm"
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Email</label
-          >
+          <label class="auth-label">Email</label>
           <input
             pInputText
             [(ngModel)]="form.email"
             placeholder="usuario@empresa.com"
-            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+            class="w-full h-11 px-3 text-sm"
           />
         </div>
       </div>
@@ -77,27 +72,21 @@
       <!-- DNI + Teléfono -->
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >DNI</label
-          >
+          <label class="auth-label">DNI</label>
           <input
             pInputText
             [(ngModel)]="form.dni"
             placeholder="Ej. 30.123.456"
-            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+            class="w-full h-11 px-3 text-sm"
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Teléfono</label
-          >
+          <label class="auth-label">Teléfono</label>
           <input
             pInputText
             [(ngModel)]="form.phone"
             placeholder="+54 381 0000000"
-            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+            class="w-full h-11 px-3 text-sm"
           />
         </div>
       </div>
@@ -105,10 +94,7 @@
       <!-- Rol + Sucursal -->
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Rol</label
-          >
+          <label class="auth-label">Rol</label>
           <p-dropdown
             [(ngModel)]="form.role"
             [options]="roleOptions"
@@ -120,10 +106,7 @@
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Sucursal</label
-          >
+          <label class="auth-label">Sucursal</label>
           <p-dropdown
             [(ngModel)]="form.branch"
             [options]="branchOptions"
@@ -139,20 +122,17 @@
       <!-- Estado -->
       <div class="flex items-center gap-3">
         <p-inputSwitch [(ngModel)]="form.active" />
-        <span class="text-sm text-slate-300">Estado activo</span>
+        <span class="text-sm ff-text-secondary">Estado activo</span>
       </div>
 
       <!-- Dirección -->
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Dirección</label
-        >
+        <label class="auth-label">Dirección</label>
         <input
           pInputText
           [(ngModel)]="form.address"
           placeholder="Av. Principal 456"
-          class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+          class="w-full h-11 px-3 text-sm"
         />
       </div>
     } @else {
@@ -161,52 +141,40 @@
       <!-- Nombre + DNI -->
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Nombre completo</label
-          >
+          <label class="auth-label">Nombre completo</label>
           <input
             pInputText
             [(ngModel)]="form.name"
             placeholder="Ej. Carlos Andrade"
-            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+            class="w-full h-11 px-3 text-sm"
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >DNI</label
-          >
+          <label class="auth-label">DNI</label>
           <input
             pInputText
             [(ngModel)]="form.dni"
             placeholder="Ej. 30123456"
-            class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+            class="w-full h-11 px-3 text-sm"
           />
         </div>
       </div>
 
       <!-- Email -->
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Correo electrónico</label
-        >
+        <label class="auth-label">Correo electrónico</label>
         <input
           pInputText
           [(ngModel)]="form.email"
           placeholder="usuario@empresa.com"
-          class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+          class="w-full h-11 px-3 text-sm"
         />
       </div>
 
       <!-- Rol + Sucursal -->
       <div class="grid grid-cols-2 gap-3">
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Rol</label
-          >
+          <label class="auth-label">Rol</label>
           <p-dropdown
             [(ngModel)]="form.role"
             [options]="roleOptions"
@@ -218,10 +186,7 @@
           />
         </div>
         <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-            >Sucursal</label
-          >
+          <label class="auth-label">Sucursal</label>
           <p-dropdown
             [(ngModel)]="form.branch"
             [options]="branchOptions"
@@ -236,26 +201,24 @@
 
       <!-- Contraseña -->
       <div class="flex flex-col gap-1.5">
-        <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
-          >Contraseña</label
-        >
+        <label class="auth-label">Contraseña</label>
         <input
           type="password"
           pInputText
           [(ngModel)]="form.password"
           placeholder="Mínimo 8 caracteres"
-          class="w-full h-11 px-3 rounded-xl border border-slate-700 bg-slate-800/60 text-slate-100 placeholder-slate-500 text-sm"
+          class="w-full h-11 px-3 text-sm"
         />
       </div>
 
       <!-- Estado -->
       <div
-        class="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800/40 px-4 py-3"
+        class="flex items-center justify-between rounded-xl border px-4 py-3"
+        style="border-color: var(--ff-border); background: var(--ff-secondary)"
       >
         <div>
-          <p class="text-sm font-medium text-slate-200">Estado del usuario</p>
-          <p class="text-xs text-slate-500">
+          <p class="text-sm font-medium ff-text-primary">Estado del usuario</p>
+          <p class="text-xs ff-text-muted">
             {{
               form.active
                 ? "El usuario puede iniciar sesión"
