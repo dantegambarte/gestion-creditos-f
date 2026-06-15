@@ -1,0 +1,162 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Cambio de plan"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <!-- Cargando simulación -->
+  @if (simulating) {
+    <div class="py-8 text-center" style="color: var(--ff-text-muted)">
+      <i class="pi pi-spin pi-spinner mr-2"></i> Calculando simulación...
+    </div>
+  }
+
+  <!-- No elegible / error -->
+  @if (!simulating && error) {
+    <div
+      class="rounded-lg p-3 my-2"
+      style="
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      "
+    >
+      <p class="text-xs" style="color: var(--ff-danger)">
+        <i class="pi pi-exclamation-triangle mr-1"></i>
+        {{ error }}
+      </p>
+    </div>
+  }
+
+  <!-- Simulación -->
+  @if (!simulating && simulation) {
+    <div class="flex flex-col gap-4 py-2">
+      <div
+        class="rounded-lg p-3"
+        style="
+          background: rgba(251, 176, 64, 0.08);
+          border: 1px solid rgba(251, 176, 64, 0.3);
+        "
+      >
+        <p class="text-xs" style="color: var(--ff-warning)">
+          <i class="pi pi-exclamation-triangle mr-1"></i>
+          El saldo se recalcula con la tasa del plan más corto. La reducción de
+          intereses es intencional. <strong>Esta acción es definitiva</strong> y
+          no se puede deshacer.
+        </p>
+      </div>
+
+      <!-- Plan actual vs nuevo -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="cr-detail-cell">
+          <div class="ud-label">Plan actual</div>
+          <div class="ud-value ff-mono">
+            {{ simulation.currentPlan.installments }} cuotas ·
+            {{ simulation.currentPlan.rate }}%
+          </div>
+        </div>
+        <div class="cr-detail-cell">
+          <div class="ud-label">Nuevo plan</div>
+          <div class="ud-value ff-mono" style="color: var(--ff-accent)">
+            {{ simulation.newPlan.installments }} cuotas ·
+            {{ simulation.newPlan.rate }}%
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs financieros -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="cr-detail-cell text-center">
+          <div class="ud-label">Pagado</div>
+          <div class="ud-value ff-mono">
+            {{ simulation.totalPaid | currencyArs: 0 }}
+          </div>
+        </div>
+        <div class="cr-detail-cell text-center">
+          <div class="ud-label">Nuevo total</div>
+          <div class="ud-value ff-mono">
+            {{ simulation.newCreditTotal | currencyArs: 0 }}
+          </div>
+        </div>
+        <div class="cr-detail-cell text-center">
+          <div class="ud-label">Nuevo saldo</div>
+          <div class="ud-value ff-mono" style="color: var(--ff-accent)">
+            {{ simulation.newBalance | currencyArs: 0 }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultado sobre las cuotas -->
+      @if (simulation.creditWillBeSettled) {
+        <div
+          class="rounded-lg p-3"
+          style="
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+          "
+        >
+          <p class="text-xs" style="color: var(--ff-success)">
+            <i class="pi pi-check-circle mr-1"></i>
+            El saldo recalculado es ≤ 0: el crédito quedará
+            <strong>cancelado automáticamente</strong>.
+          </p>
+        </div>
+      } @else {
+        <div
+          class="rounded-lg p-3"
+          style="
+            background: rgba(79, 110, 247, 0.08);
+            border: 1px solid rgba(79, 110, 247, 0.2);
+          "
+        >
+          <p class="text-xs" style="color: var(--ff-text-secondary)">
+            <i class="pi pi-info-circle mr-1"></i>
+            Quedará una única cuota viva por
+            <strong>{{ simulation.newBalance | currencyArs: 0 }}</strong>
+            (conserva su fecha de vencimiento original).
+            @if (simulation.cancelledInstallments.length > 0) {
+              Se anularán las cuotas
+              {{ simulation.cancelledInstallments.join(", ") }}.
+            }
+          </p>
+        </div>
+      }
+
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Motivo (opcional)</label>
+        <textarea
+          pInputTextarea
+          [(ngModel)]="reason"
+          rows="2"
+          maxlength="500"
+          class="w-full resize-none px-3 py-2"
+          placeholder="Motivo del cambio de plan..."
+        ></textarea>
+      </div>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+      />
+      <p-button
+        label="Confirmar cambio"
+        icon="pi pi-check"
+        severity="warning"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirm()"
+        [loading]="processing"
+        [disabled]="simulating || !simulation"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

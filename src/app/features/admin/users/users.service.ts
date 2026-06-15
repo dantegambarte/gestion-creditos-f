@@ -89,6 +89,7 @@ export class UsersService {
   list(filters?: UserListFilters): Observable<User[]> {
     const params: Record<string, string> = {};
     if (filters?.role) params['role'] = filters.role;
+    if (filters?.roles) params['roles'] = filters.roles;
     if (filters?.status) params['status'] = filters.status;
     if (filters?.search) params['search'] = filters.search;
     return this.api
@@ -97,11 +98,13 @@ export class UsersService {
   }
 
   /**
-   * Lista los recaudadores activos.
+   * Lista los usuarios que pueden cobrar: COLLECTOR + SELLER_COLLECTOR (doble
+   * función). Es el listado de "cobradores" usado en planillas, filtros y
+   * asignación de clientes.
    * @returns
    */
   listCollectors(): Observable<User[]> {
-    return this.list({ role: 'COLLECTOR', status: 'ACTIVE' });
+    return this.list({ roles: 'COLLECTOR,SELLER_COLLECTOR', status: 'ACTIVE' });
   }
 
   /**

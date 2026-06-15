@@ -8,7 +8,12 @@ export type CreditStatus =
 export type CreditType = 'SALE' | 'LOAN';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 export type IntakePaymentMethod = 'CASH' | 'TRANSFER' | 'MIXED';
-export type InstallmentStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'PARTIAL';
+export type InstallmentStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'OVERDUE'
+  | 'PARTIAL'
+  | 'PLAN_CHANGE_CANCELLED';
 
 export interface Credit {
   id: string;
@@ -308,6 +313,29 @@ export interface RefinancePayload {
   reason: string;
   extraCharges?: number;
   notes?: string;
+}
+
+// ── Cambio de plan ──────────────────────────────────────────────
+export interface PlanChangePlan {
+  installments: number;
+  rate: number; // porcentaje (ej: 20 = 20%)
+}
+
+export interface PlanChangeSimulation {
+  currentPlan: PlanChangePlan;
+  newPlan: PlanChangePlan;
+  totalPaid: number;
+  newCreditTotal: number;
+  newBalance: number;
+  survivingInstallmentId: string | null;
+  cancelledInstallments: number[];
+  creditWillBeSettled: boolean;
+}
+
+export interface PlanChangeResult extends PlanChangeSimulation {
+  planChangeId: string;
+  executedAt: string;
+  message: string;
 }
 
 export interface RefinanceResult {

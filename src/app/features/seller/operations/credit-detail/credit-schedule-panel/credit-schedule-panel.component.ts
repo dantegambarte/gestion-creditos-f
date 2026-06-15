@@ -179,6 +179,7 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       PAID: 'success',
       OVERDUE: 'danger',
       PARTIAL: 'warning',
+      PLAN_CHANGE_CANCELLED: 'secondary',
     };
     return map[status] ?? 'secondary';
   }
@@ -193,6 +194,7 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       PAID: 'Pagada',
       OVERDUE: 'Vencida',
       PARTIAL: 'Parcial',
+      PLAN_CHANGE_CANCELLED: 'Anulada (cambio de plan)',
     };
     return map[status] ?? status;
   }

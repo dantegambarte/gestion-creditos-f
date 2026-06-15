@@ -19,6 +19,8 @@ import {
   CreditUnitRaw,
   EarlySettlementPayload,
   EarlySettlementResult,
+  PlanChangeSimulation,
+  PlanChangeResult,
   RejectPayload,
   RefinancePayload,
   RefinanceResult,
@@ -464,6 +466,53 @@ export class CreditsService {
             extraCharges: raw.extra_charges,
             totalTransferred: raw.total_transferred,
             message: raw.message,
+          }),
+        ),
+      );
+  }
+
+  /**
+   * Simula un cambio de plan (solo lectura). El plan destino lo determina el
+   * backend (cuotas_pagadas + 1); no recibe parámetros además del id.
+   * @param id - ID del crédito ACTIVE.
+   * @returns Simulación con saldo recalculado y cuotas afectadas.
+   */
+  simulatePlanChange(id: string): Observable<PlanChangeSimulation> {
+    return this.api.get<PlanChangeSimulation>(
+      `credits/${id}/plan-change/simulate`,
+    );
+  }
+
+  /**
+   * Ejecuta el cambio de plan (admin-only, sin doble aprobación). Definitivo.
+   * @param id - ID del crédito ACTIVE.
+   * @param payload - Motivo opcional.
+   * @returns Resultado del cambio + id de auditoría.
+   */
+  changePlan(
+    id: string,
+    payload: { reason?: string } = {},
+  ): Observable<PlanChangeResult> {
+    const body: Record<string, unknown> = {};
+    if (payload.reason) body['reason'] = payload.reason;
+    return this.api
+      .post<Record<string, unknown>>(`credits/${id}/plan-change`, body)
+      .pipe(
+        map(
+          (raw): PlanChangeResult => ({
+            currentPlan: raw['currentPlan'] as PlanChangeResult['currentPlan'],
+            newPlan: raw['newPlan'] as PlanChangeResult['newPlan'],
+            totalPaid: raw['totalPaid'] as number,
+            newCreditTotal: raw['newCreditTotal'] as number,
+            newBalance: raw['newBalance'] as number,
+            survivingInstallmentId:
+              (raw['survivingInstallmentId'] as string | null) ?? null,
+            cancelledInstallments:
+              (raw['cancelledInstallments'] as number[]) ?? [],
+            creditWillBeSettled: raw['creditWillBeSettled'] as boolean,
+            planChangeId: raw['plan_change_id'] as string,
+            executedAt: raw['executed_at'] as string,
+            message: raw['message'] as string,
           }),
         ),
       );
