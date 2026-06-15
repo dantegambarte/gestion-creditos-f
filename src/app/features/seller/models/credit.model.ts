@@ -303,6 +303,29 @@ export interface RefinancePayload {
   notes?: string;
 }
 
+// ── Cambio de plan ──────────────────────────────────────────────
+export interface PlanChangePlan {
+  installments: number;
+  rate: number; // porcentaje (ej: 20 = 20%)
+}
+
+export interface PlanChangeSimulation {
+  currentPlan: PlanChangePlan;
+  newPlan: PlanChangePlan;
+  totalPaid: number;
+  newCreditTotal: number;
+  newBalance: number;
+  survivingInstallmentId: string | null;
+  cancelledInstallments: number[];
+  creditWillBeSettled: boolean;
+}
+
+export interface PlanChangeResult extends PlanChangeSimulation {
+  planChangeId: string;
+  executedAt: string;
+  message: string;
+}
+
 export interface RefinanceResult {
   originalCreditId: string;
   newCredit: {

@@ -158,6 +158,17 @@
             size="small"
             (onClick)="openRefinanceDialog()"
           />
+          @if (credit.type === 'LOAN') {
+            <p-button
+              label="Cambiar plan"
+              icon="pi pi-sliders-h"
+              severity="warning"
+              [outlined]="true"
+              size="small"
+              pTooltip="Recalcular el saldo con la tasa de un plan más corto"
+              (onClick)="openPlanChangeDialog()"
+            />
+          }
         }
       </div>
     </div>
@@ -341,4 +352,10 @@
   [(visible)]="showRefinanceDialog"
   [credit]="credit"
   (refinanced)="onRefinanced()"
+/>
+
+<app-plan-change-dialog
+  [(visible)]="showPlanChangeDialog"
+  [credit]="credit"
+  (planChanged)="onPlanChanged()"
 />
