@@ -1,12 +1,12 @@
 .operations-page {
-  color: #e5ecff;
+  color: var(--ff-text-primary);
 }
 
 .operations-shell {
   overflow: hidden;
-  border: 1px solid #2a2f3d;
+  border: 1px solid var(--ff-border);
   border-radius: 12px;
-  background: #171b26;
+  background: var(--ff-panel-raised);
 }
 
 .operations-topbar {
@@ -22,7 +22,7 @@
   font-size: 24px;
   line-height: 1.2;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--ff-text-primary);
   letter-spacing: -0.02em;
 }
 
@@ -30,14 +30,6 @@
   margin: 4px 0 0;
   font-size: 14px;
   color: var(--ff-text-secondary);
-}
-
-:host ::ng-deep .operations-cta {
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 6px;
-  box-shadow: none;
-  font-size: 13px;
 }
 
 .operations-filters {
@@ -60,21 +52,21 @@
   left: 14px;
   z-index: 1;
   font-size: 12px;
-  color: #66728d;
+  color: var(--ff-text-muted);
   pointer-events: none;
 }
 
 .operations-clear {
   border: 0;
   background: transparent;
-  color: #8ea0c7;
+  color: var(--ff-text-secondary);
   font-size: 13px;
   cursor: pointer;
   padding: 0 4px;
 }
 
 .operations-clear:hover {
-  color: #dce6ff;
+  color: var(--ff-text-primary);
 }
 
 :host ::ng-deep .operations-filter-dropdown {
@@ -84,29 +76,29 @@
 :host ::ng-deep .operations-filter-dropdown .p-dropdown {
   height: 36px;
   border-radius: 6px;
-  border: 1px solid #2d3345;
-  background: #2a3045;
+  border: 1px solid var(--ff-border);
+  background: var(--ff-secondary);
 }
 
 :host ::ng-deep .operations-filter-dropdown .p-dropdown-label {
   display: flex;
   align-items: center;
-  color: #dce6ff;
+  color: var(--ff-text-primary);
   font-size: 13px;
 }
 
 :host ::ng-deep .operations-filter-dropdown .p-dropdown-trigger {
-  color: #8ea0c7;
+  color: var(--ff-text-secondary);
 }
 
 .operations-empty {
   padding: 24px 16px;
-  color: #8ea0c7;
+  color: var(--ff-text-secondary);
   font-size: 14px;
 }
 
 :host ::ng-deep .operations-table {
-  border-top: 1px solid #2a2f3d;
+  border-top: 1px solid var(--ff-border);
 }
 
 :host ::ng-deep .operations-table .p-datatable-table {
@@ -116,8 +108,8 @@
 :host ::ng-deep .operations-table .p-datatable-thead > tr > th {
   padding: 10px 12px;
   border: 0;
-  background: #1c202b;
-  color: #56627d;
+  background: var(--ff-panel);
+  color: var(--ff-text-muted);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -125,19 +117,19 @@
 }
 
 :host ::ng-deep .operations-table .p-datatable-tbody > tr {
-  background: #212734;
+  background: var(--ff-secondary);
 }
 
 :host ::ng-deep .operations-table .p-datatable-tbody > tr > td {
   padding: 9px 12px;
   border: 0;
-  border-bottom: 1px solid rgba(45, 52, 70, 0.7);
-  color: #e8eeff;
+  border-bottom: 1px solid var(--ff-border-subtle);
+  color: var(--ff-text-primary);
   vertical-align: middle;
 }
 
 :host ::ng-deep .operations-table .p-datatable-tbody > tr.operations-row--highlight {
-  background: rgba(78, 69, 52, 0.32);
+  background: rgba(251, 176, 64, 0.08);
 }
 
 .operations-client {
@@ -148,19 +140,19 @@
 
 .operations-client__name {
   font-weight: 700;
-  color: #ffffff;
+  color: var(--ff-text-primary);
   font-size: 13px;
 }
 
 .operations-client__dni,
 .operations-muted {
-  color: #71809f;
+  color: var(--ff-text-muted);
   font-size: 12px;
 }
 
 .operations-money {
   font-weight: 700;
-  color: #ffffff;
+  color: var(--ff-text-primary);
   font-size: 13px;
 }
 
@@ -179,7 +171,7 @@
 
 .operations-type-badge--sale {
   background: rgba(74, 105, 255, 0.15);
-  color: #5f86ff;
+  color: var(--ff-accent);
 }
 
 .operations-type-badge--loan {
@@ -197,22 +189,22 @@
 
 :host ::ng-deep .ff-badge--activo {
   background: rgba(20, 135, 106, 0.22);
-  color: #32e0ad;
+  color: var(--ff-success);
 }
 
 :host ::ng-deep .ff-badge--pendiente {
   background: rgba(146, 104, 35, 0.32);
-  color: #ffb53d;
+  color: var(--ff-warning);
 }
 
 :host ::ng-deep .ff-badge--vencido {
   background: rgba(132, 53, 66, 0.28);
-  color: #ff7d8c;
+  color: var(--ff-danger);
 }
 
 :host ::ng-deep .ff-badge--pagado {
-  background: rgba(67, 76, 99, 0.28);
-  color: #aeb7cf;
+  background: var(--ff-accent-soft);
+  color: var(--ff-text-secondary);
 }
 
 .operations-action {
@@ -223,21 +215,21 @@
   height: 26px;
   border: 0;
   border-radius: 6px;
-  background: #2a3045;
-  color: #6c85ff;
+  background: var(--ff-secondary);
+  color: var(--ff-accent);
   cursor: pointer;
 }
 
 .operations-action:hover {
-  background: #2b344a;
-  color: #8ea8ff;
+  background: var(--ff-surface-hover);
+  color: var(--ff-accent);
 }
 
 :host ::ng-deep .operations-table .p-paginator {
   padding: 10px 14px;
   border: 0;
-  background: #1c202b;
-  color: #8ea0c7;
+  background: var(--ff-panel);
+  color: var(--ff-text-secondary);
 }
 
 :host ::ng-deep .operations-table .p-paginator .p-paginator-pages .p-paginator-page,
@@ -248,19 +240,19 @@
   min-width: 32px;
   height: 32px;
   border-radius: 6px;
-  color: #8ea0c7;
+  color: var(--ff-text-secondary);
 }
 
 :host ::ng-deep .operations-table .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
-  background: #5d76ff;
-  color: #ffffff;
+  background: var(--ff-accent);
+  color: var(--primary-color-text);
 }
 
 :host ::ng-deep .operations-table .p-paginator .p-dropdown {
   height: 32px;
   border-radius: 6px;
-  border: 1px solid #31384b;
-  background: #2a3045;
+  border: 1px solid var(--ff-border);
+  background: var(--ff-secondary);
 }
 
 @media (max-width: 768px) {
