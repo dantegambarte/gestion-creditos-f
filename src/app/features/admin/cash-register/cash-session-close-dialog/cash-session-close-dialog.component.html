@@ -6,23 +6,25 @@
   [closable]="false"
   [draggable]="false"
   [resizable]="false"
-  styleClass="bg-[#121520] border border-[#1A1D27]"
-  contentStyleClass="bg-[#121520] p-0 border-none"
+  styleClass="!bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
+  contentStyleClass="!bg-[var(--ff-panel)] p-0 border-none"
   [contentStyle]="{
     padding: '0',
-    background: '#121520',
-    color: '#cbd5e1',
-    border: '1px solid #1A1D27',
+    background: 'var(--ff-panel)',
+    color: 'var(--ff-text-secondary)',
+    border: '1px solid var(--ff-border-subtle)',
     borderRadius: '1rem',
     overflow: 'hidden',
   }"
   [style]="{ width: '640px', maxWidth: '95vw' }"
 >
-  <section class="bg-[#121520] text-slate-300">
+  <section class="bg-[var(--ff-panel)] text-[var(--ff-text-secondary)]">
     <header
-      class="flex items-center justify-between gap-4 border-b border-[#252A3A] px-6 py-5"
+      class="flex items-center justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
     >
-      <h2 class="text-xl font-bold text-white">Cerrar caja operativa</h2>
+      <h2 class="text-xl font-bold text-[var(--ff-text-primary)]">
+        Cerrar caja operativa
+      </h2>
       <button
         type="button"
         class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:opacity-50"
@@ -38,19 +40,20 @@
         <app-loading-state message="Cargando snapshot..."></app-loading-state>
       } @else if (snapshot) {
         <div class="flex flex-col gap-4">
-          <p class="text-sm leading-relaxed text-slate-400">
+          <p class="text-sm leading-relaxed text-[var(--ff-text-secondary)]">
             Declará el monto físico por método de pago. La diferencia se calcula
-            contra el <strong class="text-slate-200">esperado</strong> del
+            contra el
+            <strong class="text-[var(--ff-text-primary)]">esperado</strong> del
             snapshot V4 (X report).
           </p>
 
           <div
-            class="overflow-hidden rounded-xl border border-[#252A3A] bg-[#0F121B]"
+            class="overflow-hidden rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)]"
           >
             <table class="w-full border-collapse text-sm">
               <thead>
                 <tr
-                  class="border-b border-[#334155] bg-[#1D2231] text-xs uppercase tracking-[0.14em] text-slate-300"
+                  class="border-b border-[var(--ff-border)] bg-[var(--ff-panel-raised)] text-xs uppercase tracking-[0.14em] text-[var(--ff-text-secondary)]"
                 >
                   <th class="px-3 py-3 text-left font-semibold">Método</th>
                   <th class="px-3 py-3 text-right font-semibold">Esperado</th>
@@ -58,16 +61,22 @@
                   <th class="px-3 py-3 text-right font-semibold">Diferencia</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#334155]">
+              <tbody class="divide-y divide-[var(--ff-border)]">
                 @for (row of rows; track row.method; let index = $index) {
                   <tr
-                    [class]="index % 2 === 0 ? 'bg-[#121520]' : 'bg-[#0F121B]'"
+                    [class]="
+                      index % 2 === 0
+                        ? 'bg-[var(--ff-panel)]'
+                        : 'bg-[var(--ff-bg)]'
+                    "
                   >
-                    <td class="px-3 py-3 font-semibold text-white">
+                    <td
+                      class="px-3 py-3 font-semibold text-[var(--ff-text-primary)]"
+                    >
                       {{ row.label }}
                     </td>
                     <td
-                      class="px-3 py-3 text-right font-mono font-semibold text-slate-200"
+                      class="px-3 py-3 text-right font-mono font-semibold text-[var(--ff-text-primary)]"
                     >
                       {{ format.currency(row.expected) }}
                     </td>
@@ -81,7 +90,7 @@
                         [min]="0"
                         [showButtons]="false"
                         styleClass="w-40"
-                        inputStyleClass="w-full h-10 rounded-xl border border-[#252A3A] bg-[#0B0D14] px-3 text-right text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        inputStyleClass="w-full h-10 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-right text-[var(--ff-text-primary)] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       ></p-inputNumber>
                     </td>
                     <td
@@ -99,7 +108,7 @@
                       @if (row.declared != null) {
                         {{ format.currency(row.difference) }}
                       } @else {
-                        <span class="text-slate-400">—</span>
+                        <span class="text-[var(--ff-text-secondary)]">—</span>
                       }
                     </td>
                   </tr>
@@ -107,7 +116,7 @@
               </tbody>
               <tfoot>
                 <tr
-                  class="border-t-2 border-slate-300 bg-[#1D2231] font-bold text-white"
+                  class="border-t-2 border-[var(--ff-border)] bg-[var(--ff-panel-raised)] font-bold text-[var(--ff-text-primary)]"
                 >
                   <td class="px-3 py-4">Total</td>
                   <td class="px-3 py-4 text-right font-mono">
@@ -146,10 +155,12 @@
       }
     </div>
 
-    <footer class="flex justify-end gap-3 border-t border-[#252A3A] px-6 py-4">
+    <footer
+      class="flex justify-end gap-3 border-t border-[var(--ff-border)] px-6 py-4"
+    >
       <button
         type="button"
-        class="h-11 rounded-xl border border-[#334155] px-5 text-sm font-semibold text-slate-200 transition hover:bg-[#1D2231] hover:text-white disabled:opacity-50"
+        class="h-11 rounded-xl border border-[var(--ff-border)] px-5 text-sm font-semibold text-[var(--ff-text-primary)] transition hover:bg-[var(--ff-panel-raised)] hover:text-[var(--ff-text-primary)] disabled:opacity-50"
         [disabled]="submitting"
         (click)="close()"
       >
@@ -157,7 +168,7 @@
       </button>
       <button
         type="button"
-        class="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-500 px-5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-500/40 disabled:text-slate-300"
+        class="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-500 px-5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-500/40 disabled:text-[var(--ff-text-secondary)]"
         [disabled]="submitting || !canSubmit()"
         (click)="submit()"
       >

@@ -1,0 +1,209 @@
+<div class="space-y-6">
+  <div class="flex flex-wrap items-end gap-3">
+    <div>
+      <label class="block text-xs text-gray-400 mb-1">Desde</label>
+      <p-calendar
+        [(ngModel)]="dateFrom"
+        dataType="string"
+        dateFormat="yy-mm-dd"
+        [showIcon]="true"
+        iconDisplay="input"
+        appendTo="body"
+        styleClass="w-44"
+        inputStyleClass="w-full h-10 bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+      />
+    </div>
+    <div>
+      <label class="block text-xs text-gray-400 mb-1">Hasta</label>
+      <p-calendar
+        [(ngModel)]="dateTo"
+        dataType="string"
+        dateFormat="yy-mm-dd"
+        [showIcon]="true"
+        iconDisplay="input"
+        appendTo="body"
+        styleClass="w-44"
+        inputStyleClass="w-full h-10 bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+      />
+    </div>
+    <p-button
+      label="Buscar jornadas"
+      icon="pi pi-search"
+      [disabled]="!rangeValid"
+      [loading]="loadingDays"
+      styleClass="h-10 px-4 rounded-lg"
+      (onClick)="consult()"
+    />
+  </div>
+
+  @if (dateError) {
+    <p class="text-sm text-red-400 flex items-center gap-1.5">
+      <i class="pi pi-exclamation-circle"></i> {{ dateError }}
+    </p>
+  }
+
+  @if (loadingDays) {
+    <app-loading-state />
+  } @else if (daysError) {
+    <app-error-state [message]="daysError.message" />
+  } @else if (businessDays.length === 0) {
+    <p class="text-sm text-gray-500 text-center py-10">
+      No hay jornadas en el período seleccionado.
+    </p>
+  } @else {
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="w-72">
+        <label class="block text-xs text-gray-400 mb-1">Jornada</label>
+        <p-dropdown
+          [options]="businessDayOptions"
+          [ngModel]="selectedBusinessDayId"
+          (ngModelChange)="onSelectBusinessDay($event)"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccioná una jornada"
+          styleClass="w-full rounded-xl border border-[#252A3A] bg-[#121520] text-white"
+          panelStyleClass="bg-[#121520] border border-[#252A3A] text-white"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+    </div>
+
+    @if (selectedBusinessDayId && loadingSessions) {
+      <app-loading-state />
+    } @else if (sessionsError) {
+      <app-error-state [message]="sessionsError.message" />
+    } @else if (selectedBusinessDayId && sessions.length === 0) {
+      <p class="text-sm text-gray-500 text-center py-10">
+        Esta jornada no tiene una caja registrada.
+      </p>
+    }
+  }
+
+  @if (selectedSessionId) {
+    @if (loadingReport) {
+      <app-loading-state />
+    } @else if (reportError) {
+      <app-error-state [message]="reportError.message" />
+    } @else if (report) {
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div class="bg-gray-800 rounded-xl p-4 space-y-1">
+          <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+            Movimientos
+          </p>
+          <p class="text-xl font-extrabold text-white">
+            {{ report.summary.totalMovements }}
+          </p>
+        </div>
+        <div class="bg-gray-800 rounded-xl p-4 space-y-1">
+          <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+            Cobros
+          </p>
+          <p class="text-xl font-extrabold text-emerald-300 font-mono">
+            {{ formatCurrency(report.summary.totalCollections) }}
+          </p>
+        </div>
+        <div class="bg-gray-800 rounded-xl p-4 space-y-1">
+          <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+            Enganches
+          </p>
+          <p class="text-xl font-extrabold text-emerald-300 font-mono">
+            {{ formatCurrency(report.summary.totalDownPayments) }}
+          </p>
+        </div>
+        <div class="bg-gray-800 rounded-xl p-4 space-y-1">
+          <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+            Gastos
+          </p>
+          <p class="text-xl font-extrabold text-red-300 font-mono">
+            {{ formatCurrency(report.summary.totalExpenses) }}
+          </p>
+        </div>
+        <div class="bg-gray-800 rounded-xl p-4 space-y-1">
+          <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+            Drops
+          </p>
+          <p class="text-xl font-extrabold text-white font-mono">
+            {{ formatCurrency(report.summary.totalDrops) }}
+          </p>
+        </div>
+      </div>
+
+      @if (report.rows.length === 0) {
+        <p class="text-sm text-gray-500 text-center py-10">
+          Esta caja no tiene movimientos registrados.
+        </p>
+      } @else {
+        <div class="bg-gray-800 rounded-xl overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-700">
+                <th
+                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Fecha
+                </th>
+                <th
+                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Tipo
+                </th>
+                <th
+                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Método
+                </th>
+                <th
+                  class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Monto
+                </th>
+                <th
+                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Detalle
+                </th>
+                <th
+                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                >
+                  Usuario
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of report.rows; track row.id) {
+                <tr
+                  class="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors"
+                >
+                  <td class="px-5 py-3 text-gray-300 font-mono">
+                    {{ formatDateTime(row.occurredAt) }}
+                  </td>
+                  <td class="px-5 py-3">
+                    <span
+                      class="text-[10px] uppercase tracking-widest px-2 py-1 rounded-md font-semibold {{
+                        typeBadgeClasses(row.type)
+                      }}"
+                    >
+                      {{ typeLabel(row.type) }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-gray-300">
+                    {{ methodLabel(row.paymentMethod) }}
+                  </td>
+                  <td
+                    class="px-5 py-3 text-right font-mono font-semibold text-blue-400"
+                  >
+                    {{ formatCurrency(row.amount) }}
+                  </td>
+                  <td class="px-5 py-3 text-gray-400">{{ row.description }}</td>
+                  <td class="px-5 py-3 text-gray-300">
+                    {{ row.performedByName || "—" }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  }
+</div>

@@ -7,6 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -14,9 +15,10 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { RadioButtonModule } from 'primeng/radiobutton';
 import { ToastModule } from 'primeng/toast';
 import { Subject, interval, of } from 'rxjs';
-import { finalize, switchMap, takeUntil } from 'rxjs/operators';
+import { catchError, finalize, switchMap, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
@@ -53,6 +55,7 @@ type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
     InputNumberModule,
     InputTextModule,
     InputTextareaModule,
+    RadioButtonModule,
     ToastModule,
     CurrencyAmountInputDirective,
     LoadingStateComponent,
@@ -71,6 +74,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   private readonly expenseCategoryService = inject(ExpenseCategoriesService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
+  private readonly router = inject(Router);
   readonly format = inject(FormatService);
   private destroy$ = new Subject<void>();
 
@@ -99,15 +103,22 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   readonly selectedSessionId = signal<string | null>(null);
 
   readonly showConversionDialog = signal(false);
+  readonly conversionCriteria = signal<'DAILY' | 'COMPANY'>('DAILY');
   readonly conversionSourceMethod = signal<'CASH' | 'TRANSFER'>('CASH');
   readonly conversionAmount = signal<number | null>(null);
   readonly conversionNotes = signal('');
   readonly conversionValidationError = signal('');
   readonly conversionSubmitting = signal(false);
+  /** Saldo actual de Caja General (cuenta GENERAL_CASH), para la conversión COMPANY. */
+  readonly generalCashBalance = signal<number | null>(null);
 
   readonly showManualIncomeDialog = signal(false);
   readonly manualIncomeAmount = signal<number | null>(null);
-  readonly manualIncomePaymentMethod = signal<'CASH' | 'TRANSFER'>('CASH');
+  readonly manualIncomePaymentMethod = signal<'CASH' | 'TRANSFER' | 'MIXED'>(
+    'CASH',
+  );
+  readonly manualIncomeCashAmount = signal<number | null>(null);
+  readonly manualIncomeTransferAmount = signal<number | null>(null);
   readonly manualIncomeDescription = signal('');
   readonly manualIncomeReference = signal('');
   readonly manualIncomeValidationError = signal('');
@@ -121,9 +132,15 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     { label: 'Transferencia', value: 'TRANSFER' as const },
   ];
 
+  readonly conversionCriteriaOptions = [
+    { label: 'Caja del día', value: 'DAILY' as const },
+    { label: 'Caja General', value: 'COMPANY' as const },
+  ];
+
   readonly manualIncomeMethodOptions = [
     { label: 'Efectivo', value: 'CASH' as const },
     { label: 'Transferencia', value: 'TRANSFER' as const },
+    { label: 'Efectivo + transferencia', value: 'MIXED' as const },
   ];
 
   readonly movementTypeOptions = [
@@ -210,11 +227,20 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   );
 
   readonly conversionSourceAvailable = computed(() => {
+    if (this.conversionCriteria() === 'COMPANY') {
+      return this.generalCashBalance() ?? 0;
+    }
     const dashboard = this.dashboard();
     if (!dashboard) return 0;
     return this.conversionSourceMethod() === 'CASH'
       ? dashboard.cashAmount
       : dashboard.transferAmount;
+  });
+
+  /** True si el monto ingresado supera el disponible del origen seleccionado. */
+  readonly conversionExceedsAvailable = computed(() => {
+    const amount = this.conversionAmount();
+    return amount !== null && amount > this.conversionSourceAvailable();
   });
 
   readonly canSubmitConversion = computed(() => {
@@ -418,6 +444,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   openManualIncomeDialog(): void {
     this.manualIncomeAmount.set(null);
     this.manualIncomePaymentMethod.set('CASH');
+    this.manualIncomeCashAmount.set(null);
+    this.manualIncomeTransferAmount.set(null);
     this.manualIncomeDescription.set('');
     this.manualIncomeReference.set('');
     this.manualIncomeValidationError.set('');
@@ -431,6 +459,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     this.manualIncomeValidationError.set('');
     const session = this.activeSession();
     const amount = this.manualIncomeAmount();
+    const amountCash = this.manualIncomeCashAmount() ?? 0;
+    const amountTransfer = this.manualIncomeTransferAmount() ?? 0;
     const description = this.manualIncomeDescription().trim();
     if (!session) {
       this.manualIncomeValidationError.set(
@@ -440,6 +470,18 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     }
     if (!amount || amount <= 0) {
       this.manualIncomeValidationError.set('Ingresá un monto mayor a 0.');
+      return;
+    }
+    if (
+      this.manualIncomePaymentMethod() === 'MIXED' &&
+      (amountCash <= 0 ||
+        amountTransfer <= 0 ||
+        Math.round((amountCash + amountTransfer) * 100) !==
+          Math.round(amount * 100))
+    ) {
+      this.manualIncomeValidationError.set(
+        'El efectivo y la transferencia deben ser mayores a 0 y sumar el monto total.',
+      );
       return;
     }
     if (description.length < 3) {
@@ -453,7 +495,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     this.service
       .createManualIncome(session.id, {
         amount,
-        paymentMethod: this.manualIncomePaymentMethod(),
+        ...(this.manualIncomePaymentMethod() === 'MIXED'
+          ? { amountCash, amountTransfer }
+          : { paymentMethod: this.manualIncomePaymentMethod() }),
         description,
         receiptReference: this.manualIncomeReference().trim() || undefined,
       })
@@ -508,11 +552,23 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * Abre el diálogo de conversión entre efectivo y transferencia.
    */
   openConversionDialog(): void {
+    this.conversionCriteria.set('DAILY');
     this.conversionSourceMethod.set('CASH');
     this.conversionAmount.set(null);
     this.conversionNotes.set('');
     this.conversionValidationError.set('');
     this.showConversionDialog.set(true);
+
+    this.service
+      .getCashAccounts()
+      .pipe(
+        catchError(() => of([])),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((accounts) => {
+        const general = accounts.find((a) => a.type === 'GENERAL_CASH');
+        this.generalCashBalance.set(general?.current_balance ?? null);
+      });
   }
 
   /**
@@ -542,7 +598,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     if (!this.canSubmitConversion()) return;
 
     const payload: CashConversionPayload = {
-      criteria: 'DAILY',
+      criteria: this.conversionCriteria(),
       sourceMethod: this.conversionSourceMethod(),
       amount,
       notes: this.conversionNotes().trim() || undefined,
@@ -644,6 +700,16 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * y después de cada acción (abrir/cerrar caja, drop) para que la UI no
    * quede desincronizada.
    */
+  /**
+   * Navega al reporte histórico de cajas (tab "Cajas" en Reportes), con
+   * retorno contextual a la pantalla de Caja.
+   */
+  goToCashSessionsReport(): void {
+    this.router.navigate(['/admin/reports'], {
+      queryParams: { tab: 'cashSessions', returnTo: '/admin/cash-register' },
+    });
+  }
+
   loadJornadaState(): void {
     this.loadingJornada.set(true);
     this.errorJornada.set(null);

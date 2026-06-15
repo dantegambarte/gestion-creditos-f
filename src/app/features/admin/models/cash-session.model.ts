@@ -148,6 +148,17 @@ export interface CashSessionDropPayload {
   receipt_reference?: string;
 }
 
+// ── Caja General (tesorería) ───────────────────────────────────────────────
+
+export interface CashAccount {
+  id: string;
+  name: string;
+  type: 'GENERAL_CASH' | string;
+  is_active: boolean;
+  current_balance: number;
+  created_at: string;
+}
+
 export interface CashSessionDropResponse {
   id: string;
   cash_session_id: string;
@@ -159,4 +170,71 @@ export interface CashSessionDropResponse {
   status: 'ACTIVE' | 'REVERSED';
   performed_by: string;
   performed_at: string;
+}
+
+// ── Detalle de caja cerrada (reporte histórico) ────────────────────────────
+
+/** Item de `cash_session_closure_details`: arqueo declarado por método de pago. */
+export interface CashSessionClosureDetail {
+  id: string;
+  payment_method: DeclaredPaymentMethod;
+  expected_amount: number;
+  declared_amount: number;
+  difference: number;
+  difference_status: 'EXACT' | 'SURPLUS' | 'SHORTAGE';
+  notes: string | null;
+}
+
+/** Drop de una caja, tal como lo devuelve GET /cash-sessions/:id. */
+export interface CashSessionDropDetail {
+  id: string;
+  amount: number;
+  payment_method: DropPaymentMethod;
+  destination?: string | null;
+  destination_account_id: string;
+  reason?: string | null;
+  receipt_reference?: string | null;
+  status: 'ACTIVE' | 'REVERSED';
+  performed_by: string;
+  performed_at: string;
+  reversed_at?: string | null;
+  reversed_by?: string | null;
+  reversed_reason?: string | null;
+}
+
+/**
+ * Snapshot persistido en `closure_snapshot` al cerrar la caja. Mismo shape
+ * que `CashSessionSnapshot` pero sin los campos identificatorios de sesión
+ * (esos ya están en `CashSessionDetail`).
+ */
+export interface CashSessionClosureSnapshot {
+  opening: CashByMethod;
+  collections: {
+    payments: CashByMethod;
+    down_payments: CashByMethod;
+    manual_incomes: CashByMethod;
+  };
+  outflows: {
+    expenses: CashByMethod;
+    commissions: CashByMethod;
+  };
+  conversions: {
+    cash_delta: number;
+    transfer_delta: number;
+  };
+  drops: {
+    cash: number;
+    transfer: number;
+    items: CashSessionDropItem[];
+  };
+  expected: CashByMethod;
+}
+
+/** Respuesta de GET /cash-sessions/:id — detalle completo para auditoría. */
+export interface CashSessionDetail extends CashSession {
+  owner: { id: string; full_name: string; role: string } | null;
+  drops: CashSessionDropDetail[];
+  closure_details: CashSessionClosureDetail[];
+  closure_difference_status?: 'EXACT' | 'SURPLUS' | 'SHORTAGE' | null;
+  closure_snapshot?: CashSessionClosureSnapshot | null;
 }

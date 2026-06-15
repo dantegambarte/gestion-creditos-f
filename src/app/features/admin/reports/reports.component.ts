@@ -2,6 +2,9 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HeaderService } from '../../../core/services/header.service';
 import { ReportTab } from './report.models';
+import { CashConversionsReportComponent } from './tabs/cash-conversions-report/cash-conversions-report.component';
+import { CashMovementsReportComponent } from './tabs/cash-movements-report/cash-movements-report.component';
+import { CashSessionsReportComponent } from './tabs/cash-sessions-report/cash-sessions-report.component';
 import { CollectionReportComponent } from './tabs/collection-report/collection-report.component';
 import { CollectorsReportComponent } from './tabs/collectors-report/collectors-report.component';
 import { OverdueReportComponent } from './tabs/overdue-report/overdue-report.component';
@@ -9,7 +12,6 @@ import { PortfolioReportComponent } from './tabs/portfolio-report/portfolio-repo
 import { ProductsReportComponent } from './tabs/products-report/products-report.component';
 import { SummaryReportComponent } from './tabs/summary-report/summary-report.component';
 import { UpcomingReportComponent } from './tabs/upcoming-report/upcoming-report.component';
-import { CashConversionsReportComponent } from './tabs/cash-conversions-report/cash-conversions-report.component';
 
 @Component({
   selector: 'app-reports',
@@ -17,12 +19,14 @@ import { CashConversionsReportComponent } from './tabs/cash-conversions-report/c
   imports: [
     SummaryReportComponent,
     CollectionReportComponent,
+    CashSessionsReportComponent,
     PortfolioReportComponent,
     OverdueReportComponent,
     CollectorsReportComponent,
     ProductsReportComponent,
     UpcomingReportComponent,
     CashConversionsReportComponent,
+    CashMovementsReportComponent,
   ],
   templateUrl: './reports.component.html',
 })
@@ -37,12 +41,18 @@ export class ReportsComponent implements OnInit, OnDestroy {
   readonly TABS: { id: ReportTab; label: string; icon: string }[] = [
     { id: 'summary', label: 'Resumen del día', icon: 'pi pi-sun' },
     { id: 'collection', label: 'Recaudación', icon: 'pi pi-money-bill' },
+    { id: 'cashSessions', label: 'Cajas', icon: 'pi pi-wallet' },
+    { id: 'cashMovements', label: 'Movimientos de caja', icon: 'pi pi-list' },
     { id: 'portfolio', label: 'Cartera', icon: 'pi pi-briefcase' },
     { id: 'overdue', label: 'Mora', icon: 'pi pi-exclamation-triangle' },
     { id: 'collectors', label: 'Cobradores', icon: 'pi pi-users' },
     { id: 'products', label: 'Productos', icon: 'pi pi-box' },
     { id: 'upcoming', label: 'Próximos vencimientos', icon: 'pi pi-calendar' },
-    { id: 'cashConversions', label: 'Conversiones de caja', icon: 'pi pi-sync' },
+    {
+      id: 'cashConversions',
+      label: 'Conversiones de caja',
+      icon: 'pi pi-sync',
+    },
   ];
 
   ngOnInit(): void {
@@ -77,7 +87,9 @@ export class ReportsComponent implements OnInit, OnDestroy {
    */
   private syncTabFromQueryParams(): void {
     this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
-    const tab = this.route.snapshot.queryParamMap.get('tab') as ReportTab | null;
+    const tab = this.route.snapshot.queryParamMap.get(
+      'tab',
+    ) as ReportTab | null;
     if (!tab) return;
     if (this.TABS.some((t) => t.id === tab)) {
       this.activeTab = tab;

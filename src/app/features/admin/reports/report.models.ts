@@ -227,12 +227,75 @@ export interface CashConversionReportRaw {
 export type ReportTab =
   | 'summary'
   | 'collection'
+  | 'cashSessions'
   | 'portfolio'
   | 'overdue'
   | 'collectors'
   | 'products'
   | 'upcoming'
-  | 'cashConversions';
+  | 'cashConversions'
+  | 'cashMovements';
+
+export type CashMovementType =
+  | 'COBRO'
+  | 'ENGANCHE'
+  | 'GASTO'
+  | 'DROP'
+  | 'CONVERSION';
+
+export interface CashMovementReportSummary {
+  totalMovements: number;
+  totalCollections: number;
+  totalDownPayments: number;
+  totalExpenses: number;
+  totalDrops: number;
+}
+
+export interface CashMovementReportRow {
+  id: string;
+  type: CashMovementType;
+  occurredAt: string;
+  cashSessionId: string;
+  businessDate: string;
+  branchName: string;
+  shiftLabel: string | null;
+  amount: number;
+  paymentMethod: string;
+  description: string;
+  performedByName: string | null;
+}
+
+export interface CashMovementReport {
+  summary: CashMovementReportSummary;
+  rows: CashMovementReportRow[];
+}
+
+export interface CashMovementReportSummaryRaw {
+  total_movements: number;
+  total_collections: number;
+  total_down_payments: number;
+  total_expenses: number;
+  total_drops: number;
+}
+
+export interface CashMovementReportRowRaw {
+  id: string;
+  type: CashMovementType;
+  occurred_at: string;
+  cash_session_id: string;
+  business_date: string;
+  branch_name: string;
+  shift_label: string | null;
+  amount: number;
+  payment_method: string;
+  description: string;
+  performed_by_name: string | null;
+}
+
+export interface CashMovementReportRaw {
+  summary: CashMovementReportSummaryRaw;
+  rows: CashMovementReportRowRaw[];
+}
 
 export interface CollectionSummaryRaw {
   grand_total: number;

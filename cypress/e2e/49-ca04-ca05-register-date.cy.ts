@@ -151,6 +151,23 @@ describe('CA-05 real — gasto creado hoy queda en la jornada activa (register_d
 
   it('CA-05 — gasto POST retorna 201 y el pre-cierre refleja el egreso en la jornada activa', () => {
     cy.getAuthToken('ADMIN').then((token) => {
+      // Resetear jornada y abrir caja con opening_amount > GASTO_AMOUNT para que
+      // el gasto en efectivo nunca dispare el chequeo de efectivo disponible (409 INSUFFICIENT_CASH).
+      cy.apiRequest('DELETE', '/test/business-days/today', null, token).then(
+        (resetRes) => {
+          expect(resetRes.status, 'reset jornada').to.eq(200);
+
+          cy.apiRequest(
+            'POST',
+            '/cash-sessions',
+            { opening_amount: GASTO_AMOUNT * 10 },
+            token,
+          )
+            .its('status')
+            .should('eq', 201);
+        },
+      );
+
       // Obtener una categoría válida (category_id es requerido en el validador)
       cy.apiRequest('GET', '/expense-categories', null, token).then(
         (catRes) => {
@@ -381,7 +398,9 @@ describe('CA-04 + CA-05 mock — pre-cierre de jornada anterior muestra enganche
     // Abrir el cierre V4 de caja operativa, reemplazo del pre-cierre legacy.
     cy.get('[data-cy="admin-cash-register-close-day-cta"]').click();
     cy.wait('@getSessionSnapshot');
-    cy.contains('Cerrar caja operativa', { timeout: 10000 }).should('be.visible');
+    cy.contains('Cerrar caja operativa', { timeout: 10000 }).should(
+      'be.visible',
+    );
   });
 
   it('CA-04 — el cierre V4 muestra esperado de efectivo con enganches de jornada anterior', () => {

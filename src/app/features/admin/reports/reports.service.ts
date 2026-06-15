@@ -3,18 +3,24 @@ import { Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiHttpService } from '../../../core/http/api-http.service';
 import {
-  CollectionDailyRaw,
-  CollectionDailyRow,
-  CollectionReport,
-  CollectionReportRaw,
-  CollectionSummary,
-  CollectionSummaryRaw,
   CashConversionReport,
   CashConversionReportRaw,
   CashConversionReportRow,
   CashConversionReportRowRaw,
   CashConversionReportSummary,
   CashConversionReportSummaryRaw,
+  CashMovementReport,
+  CashMovementReportRaw,
+  CashMovementReportRow,
+  CashMovementReportRowRaw,
+  CashMovementReportSummary,
+  CashMovementReportSummaryRaw,
+  CollectionDailyRaw,
+  CollectionDailyRow,
+  CollectionReport,
+  CollectionReportRaw,
+  CollectionSummary,
+  CollectionSummaryRaw,
   CollectorReportRow,
   CollectorReportRowRaw,
   OverdueByCustomer,
@@ -126,10 +132,62 @@ function toCashConversionRow(
  * @param r
  * @returns
  */
-function toCashConversionReport(r: CashConversionReportRaw): CashConversionReport {
+function toCashConversionReport(
+  r: CashConversionReportRaw,
+): CashConversionReport {
   return {
     summary: toCashConversionSummary(r.summary),
     rows: r.rows.map(toCashConversionRow),
+  };
+}
+
+/**
+ * Convierte un objeto CashMovementReportSummaryRaw a CashMovementReportSummary.
+ * @param r
+ * @returns
+ */
+function toCashMovementSummary(
+  r: CashMovementReportSummaryRaw,
+): CashMovementReportSummary {
+  return {
+    totalMovements: r.total_movements,
+    totalCollections: r.total_collections,
+    totalDownPayments: r.total_down_payments,
+    totalExpenses: r.total_expenses,
+    totalDrops: r.total_drops,
+  };
+}
+
+/**
+ * Convierte un objeto CashMovementReportRowRaw a CashMovementReportRow.
+ * @param r
+ * @returns
+ */
+function toCashMovementRow(r: CashMovementReportRowRaw): CashMovementReportRow {
+  return {
+    id: r.id,
+    type: r.type,
+    occurredAt: r.occurred_at,
+    cashSessionId: r.cash_session_id,
+    businessDate: r.business_date,
+    branchName: r.branch_name,
+    shiftLabel: r.shift_label,
+    amount: r.amount,
+    paymentMethod: r.payment_method,
+    description: r.description,
+    performedByName: r.performed_by_name,
+  };
+}
+
+/**
+ * Convierte un objeto CashMovementReportRaw a CashMovementReport.
+ * @param r
+ * @returns
+ */
+function toCashMovementReport(r: CashMovementReportRaw): CashMovementReport {
+  return {
+    summary: toCashMovementSummary(r.summary),
+    rows: r.rows.map(toCashMovementRow),
   };
 }
 
@@ -311,7 +369,10 @@ export class ReportsService {
         message: 'Los parámetros date_from y date_to son obligatorios.',
       }));
     }
-    const params: Record<string, string> = { date_from: range.dateFrom, date_to: range.dateTo };
+    const params: Record<string, string> = {
+      date_from: range.dateFrom,
+      date_to: range.dateTo,
+    };
     if (nocache) {
       params['t'] = Date.now().toString();
     }
@@ -336,7 +397,10 @@ export class ReportsService {
         message: 'Los parámetros date_from y date_to son obligatorios.',
       }));
     }
-    const params: Record<string, string> = { date_from: range.dateFrom, date_to: range.dateTo };
+    const params: Record<string, string> = {
+      date_from: range.dateFrom,
+      date_to: range.dateTo,
+    };
     if (nocache) {
       params['t'] = Date.now().toString();
     }
@@ -396,6 +460,27 @@ export class ReportsService {
     return this.api
       .get<CashConversionReportRaw>('reports/cash-conversions', params)
       .pipe(map(toCashConversionReport));
+  }
+
+  /**
+   * Obtiene el reporte de movimientos de una caja operativa puntual.
+   * @param cashSessionId - ID de la caja (cash_sessions.id)
+   * @returns
+   */
+  getCashMovementsReport(
+    cashSessionId: string,
+  ): Observable<CashMovementReport> {
+    if (!cashSessionId) {
+      return throwError(() => ({
+        status: 400,
+        message: 'Debe seleccionar una caja para ver sus movimientos.',
+      }));
+    }
+    return this.api
+      .get<CashMovementReportRaw>('reports/cash-movements', {
+        cash_session_id: cashSessionId,
+      })
+      .pipe(map(toCashMovementReport));
   }
 }
 

@@ -148,7 +148,9 @@ export interface CashConversionPayload {
 
 export interface CashSessionManualIncomePayload {
   amount: number;
-  paymentMethod: 'CASH' | 'TRANSFER';
+  paymentMethod?: 'CASH' | 'TRANSFER' | 'MIXED';
+  amountCash?: number;
+  amountTransfer?: number;
   description: string;
   receiptReference?: string;
 }
