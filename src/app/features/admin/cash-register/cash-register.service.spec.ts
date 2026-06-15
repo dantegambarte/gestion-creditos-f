@@ -38,7 +38,10 @@ describe('CashRegisterService', () => {
   beforeEach(() => {
     apiSpy = jasmine.createSpyObj('ApiHttpService', ['get', 'post']);
     TestBed.configureTestingModule({
-      providers: [CashRegisterService, { provide: ApiHttpService, useValue: apiSpy }],
+      providers: [
+        CashRegisterService,
+        { provide: ApiHttpService, useValue: apiSpy },
+      ],
     });
     service = TestBed.inject(CashRegisterService);
   });
@@ -69,9 +72,13 @@ describe('CashRegisterService', () => {
 
   it('close includes observations when provided', () => {
     apiSpy.post.and.returnValue(of(mockRegisterRaw));
-    service.close({ declaredCash: 25000, observations: 'Sin novedad' }).subscribe(() => {});
+    service
+      .close({ declaredCash: 25000, observations: 'Sin novedad' })
+      .subscribe(() => {});
     const [, body] = apiSpy.post.calls.mostRecent().args;
-    expect((body as Record<string, unknown>)['observations']).toBe('Sin novedad');
+    expect((body as Record<string, unknown>)['observations']).toBe(
+      'Sin novedad',
+    );
   });
 
   it('close with force=true includes force in body', () => {
@@ -86,6 +93,41 @@ describe('CashRegisterService', () => {
     service.close({ declaredCash: 25000 }).subscribe(() => {});
     const [, body] = apiSpy.post.calls.mostRecent().args;
     expect((body as Record<string, unknown>)['force']).toBeUndefined();
+  });
+
+  it('createManualIncome sends mixed split amounts without legacy payment_method', () => {
+    apiSpy.post.and.returnValue(
+      of({
+        id: 'income-1',
+        cash_session_id: 'session-1',
+        amount: 5000,
+        payment_method: 'MIXED',
+        description: 'Ingreso mixto test',
+        receipt_reference: 'MIX-INC-001',
+        created_by: 'Admin',
+        created_at: '2026-04-24T10:00:00Z',
+      }),
+    );
+
+    service
+      .createManualIncome('session-1', {
+        amount: 5000,
+        amountCash: 2000,
+        amountTransfer: 3000,
+        description: 'Ingreso mixto test',
+        receiptReference: 'MIX-INC-001',
+      })
+      .subscribe(() => {});
+
+    const [path, body] = apiSpy.post.calls.mostRecent().args;
+    expect(path).toBe('cash-sessions/session-1/manual-incomes');
+    expect((body as Record<string, unknown>)['amount']).toBe(5000);
+    expect((body as Record<string, unknown>)['amount_cash']).toBe(2000);
+    expect((body as Record<string, unknown>)['amount_transfer']).toBe(3000);
+    expect((body as Record<string, unknown>)['payment_method']).toBeUndefined();
+    expect((body as Record<string, unknown>)['receipt_reference']).toBe(
+      'MIX-INC-001',
+    );
   });
 
   it('getAll maps list items to camelCase with EXACT status', (done) => {
@@ -104,13 +146,17 @@ describe('CashRegisterService', () => {
     apiSpy.get.and.returnValue(of([]));
     service.getAll({ differenceStatus: 'SHORTAGE' }).subscribe(() => {});
     const [, params] = apiSpy.get.calls.mostRecent().args;
-    expect((params as Record<string, string>)['difference_status']).toBe('SHORTAGE');
+    expect((params as Record<string, string>)['difference_status']).toBe(
+      'SHORTAGE',
+    );
   });
 
   it('getAll does not send difference_status when not provided', () => {
     apiSpy.get.and.returnValue(of([]));
     service.getAll().subscribe(() => {});
     const [, params] = apiSpy.get.calls.mostRecent().args;
-    expect((params as Record<string, string>)['difference_status']).toBeUndefined();
+    expect(
+      (params as Record<string, string>)['difference_status'],
+    ).toBeUndefined();
   });
 });

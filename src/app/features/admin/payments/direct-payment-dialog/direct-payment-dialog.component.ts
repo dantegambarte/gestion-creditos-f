@@ -18,8 +18,10 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { catchError, of } from 'rxjs';
 import { AppError } from '../../../../core/models/app-error';
+import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { DateService } from '../../../../core/services/date.service';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
+import { PaymentMethod } from '../../../collector/models/payment.model';
 import { PaymentsService } from '../../../collector/payments.service';
 import { CashRegisterService } from '../../cash-register/cash-register.service';
 
@@ -35,6 +37,7 @@ import { CashRegisterService } from '../../cash-register/cash-register.service';
     InputNumberModule,
     InputTextModule,
     InputTextareaModule,
+    CurrencyArsPipe,
     CurrencyAmountInputDirective,
   ],
   templateUrl: './direct-payment-dialog.component.html',
@@ -51,8 +54,9 @@ export class DirectPaymentDialogComponent implements OnChanges {
   private readonly msg = inject(MessageService);
 
   directInstallmentId = '';
-  directAmount: number | null = null;
-  directMethod: 'CASH' | 'TRANSFER' = 'CASH';
+  directCashAmount: number | null = null;
+  directTransferAmount: number | null = null;
+  directMethod: PaymentMethod = 'CASH';
   directTransferRef = '';
   directNotes = '';
   directNextVisitDate = '';
@@ -62,6 +66,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
   readonly PAYMENT_METHOD_OPTIONS = [
     { label: 'Efectivo', value: 'CASH' as const },
     { label: 'Transferencia', value: 'TRANSFER' as const },
+    { label: 'Efectivo + transferencia', value: 'MIXED' as const },
   ];
 
   private readonly UUID_RE =
@@ -70,7 +75,8 @@ export class DirectPaymentDialogComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true) {
       this.directInstallmentId = '';
-      this.directAmount = null;
+      this.directCashAmount = null;
+      this.directTransferAmount = null;
       this.directMethod = 'CASH';
       this.directTransferRef = '';
       this.directNotes = '';
@@ -82,10 +88,25 @@ export class DirectPaymentDialogComponent implements OnChanges {
   get directFormValid(): boolean {
     return (
       this.UUID_RE.test(this.directInstallmentId.trim()) &&
-      (this.directAmount ?? 0) > 0 &&
-      (this.directMethod !== 'TRANSFER' ||
-        this.directTransferRef.trim().length > 0)
+      this.directAmount > 0
     );
+  }
+
+  /** Devuelve el total del cobro directo sumando los importes por medio. */
+  get directAmount(): number {
+    return this.roundMoney(
+      (this.directCashAmount ?? 0) + (this.directTransferAmount ?? 0),
+    );
+  }
+
+  /** Indica si el método seleccionado usa efectivo. */
+  get usesCash(): boolean {
+    return this.directMethod === 'CASH' || this.directMethod === 'MIXED';
+  }
+
+  /** Indica si el método seleccionado usa transferencia. */
+  get usesTransfer(): boolean {
+    return this.directMethod === 'TRANSFER' || this.directMethod === 'MIXED';
   }
 
   get directInstallmentIdInvalid(): boolean {
@@ -93,6 +114,21 @@ export class DirectPaymentDialogComponent implements OnChanges {
       this.directInstallmentId.trim().length > 0 &&
       !this.UUID_RE.test(this.directInstallmentId.trim())
     );
+  }
+
+  /** Ajusta importes visibles cuando se cambia el método del cobro directo. */
+  onDirectMethodChange(): void {
+    if (this.directMethod === 'CASH') {
+      this.directCashAmount = null;
+      this.directTransferAmount = null;
+      this.directTransferRef = '';
+    } else if (this.directMethod === 'TRANSFER') {
+      this.directCashAmount = null;
+      this.directTransferAmount = null;
+    } else {
+      this.directCashAmount = null;
+      this.directTransferAmount = null;
+    }
   }
 
   /**
@@ -124,8 +160,10 @@ export class DirectPaymentDialogComponent implements OnChanges {
     this.paymentsService
       .adminDirect({
         installmentId: this.directInstallmentId.trim(),
-        amountReceived: this.directAmount!,
-        paymentMethod: this.directMethod,
+        amountCash: this.usesCash ? (this.directCashAmount ?? 0) : 0,
+        amountTransfer: this.usesTransfer
+          ? (this.directTransferAmount ?? 0)
+          : 0,
         transferReference: this.directTransferRef || undefined,
         notes: this.directNotes || undefined,
         nextVisitDate: this.directNextVisitDate || undefined,
@@ -155,5 +193,10 @@ export class DirectPaymentDialogComponent implements OnChanges {
           });
         },
       });
+  }
+
+  /** Redondea importes monetarios para evitar decimales residuales en la suma. */
+  private roundMoney(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 }

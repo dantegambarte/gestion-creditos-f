@@ -84,13 +84,20 @@ describe('InstallmentsService', () => {
       service
         .applyPenalty('inst-1', { penaltyAmount: 200, reason: 'Mora' })
         .subscribe();
-      const req = httpMock.expectOne(`${BASE}/installments/inst-1/apply-penalty`);
+      const req = httpMock.expectOne(
+        `${BASE}/installments/inst-1/apply-penalty`,
+      );
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body['penalty_amount']).toBe(200);
       expect(req.request.body['reason']).toBe('Mora');
       req.flush({
         ok: true,
-        data: { id: 'inst-1', amount_due: 1200, penalty_amount: 200, status: 'OVERDUE' },
+        data: {
+          id: 'inst-1',
+          amount_due: 1200,
+          penalty_amount: 200,
+          status: 'OVERDUE',
+        },
         message: '',
       });
     });
@@ -99,12 +106,19 @@ describe('InstallmentsService', () => {
   describe('waivePenalty', () => {
     it('sends PATCH with no body', () => {
       service.waivePenalty('inst-1').subscribe();
-      const req = httpMock.expectOne(`${BASE}/installments/inst-1/waive-penalty`);
+      const req = httpMock.expectOne(
+        `${BASE}/installments/inst-1/waive-penalty`,
+      );
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toBeNull();
       req.flush({
         ok: true,
-        data: { id: 'inst-1', amount_due: 1000, penalty_amount: 0, status: 'OVERDUE' },
+        data: {
+          id: 'inst-1',
+          amount_due: 1000,
+          penalty_amount: 0,
+          status: 'OVERDUE',
+        },
         message: '',
       });
     });
@@ -113,11 +127,44 @@ describe('InstallmentsService', () => {
   describe('earlyPay', () => {
     it('includes transfer_reference when method is TRANSFER', () => {
       service
-        .earlyPay('inst-1', { paymentMethod: 'TRANSFER', transferReference: 'TRF999' })
+        .earlyPay('inst-1', {
+          paymentMethod: 'TRANSFER',
+          transferReference: 'TRF999',
+        })
         .subscribe();
       const req = httpMock.expectOne(`${BASE}/installments/inst-1/early-pay`);
       expect(req.request.body['payment_method']).toBe('TRANSFER');
       expect(req.request.body['transfer_reference']).toBe('TRF999');
+      req.flush({
+        ok: true,
+        data: {
+          ...mockInstallmentRaw,
+          amount_paid: 1000,
+          status: 'PAID',
+          credit_total: 12000,
+          updated_at: '2026-04-24T00:00:00Z',
+          credit_settled: false,
+        },
+        message: '',
+      });
+    });
+
+    it('sends mixed split amounts without legacy payment_method', () => {
+      service
+        .earlyPay('inst-1', {
+          paymentMethod: 'MIXED',
+          amountCash: 400,
+          amountTransfer: 600,
+          transferReference: 'EARLY-MIX-001',
+        } as any)
+        .subscribe();
+
+      const req = httpMock.expectOne(`${BASE}/installments/inst-1/early-pay`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body['amount_cash']).toBe(400);
+      expect(req.request.body['amount_transfer']).toBe(600);
+      expect(req.request.body['payment_method']).toBeUndefined();
+      expect(req.request.body['transfer_reference']).toBe('EARLY-MIX-001');
       req.flush({
         ok: true,
         data: {

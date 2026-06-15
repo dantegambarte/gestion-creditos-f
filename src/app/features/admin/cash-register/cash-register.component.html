@@ -1,7 +1,7 @@
 <p-toast />
 
 <div
-  class="min-h-screen bg-[#0B0D14] p-4 text-slate-100 md:p-6"
+  class="min-h-screen bg-[var(--ff-bg)] p-4 text-[var(--ff-text-primary)] md:p-6"
   data-cy="admin-cash-register-page"
 >
   @if (loadingJornada() && !activeBusinessDay() && !activeSession()) {
@@ -28,10 +28,10 @@
     } @else {
       <section class="space-y-6">
         <article
-          class="overflow-hidden rounded-3xl border border-[#1A1D27] bg-[#121520] shadow-[0_22px_70px_rgba(0,0,0,0.34)]"
+          class="overflow-hidden rounded-3xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] shadow-[0_22px_70px_rgba(0,0,0,0.34)]"
         >
           <div
-            class="flex flex-col gap-5 border-b border-[#1A1D27] px-5 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-6"
+            class="flex flex-col gap-5 border-b border-[var(--ff-border-subtle)] px-5 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-6"
           >
             <div class="flex items-start gap-4">
               <div
@@ -60,7 +60,7 @@
                       >Caja Fuerte Abierta</span
                     >
                     <span
-                      class="rounded-full border border-[#252A3A] bg-[#1D2231] px-3 py-1 text-xs font-semibold text-slate-300"
+                      class="rounded-full border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] px-3 py-1 text-xs font-semibold text-[var(--ff-text-secondary)]"
                       >{{ businessDayStatusLabel(jornada.status) }} ·
                       {{ formatDate(jornada.business_date) }}</span
                     >
@@ -73,7 +73,7 @@
                 </div>
 
                 <h1
-                  class="mt-3 text-2xl font-bold tracking-tight text-white md:text-3xl"
+                  class="mt-3 text-2xl font-bold tracking-tight text-[var(--ff-text-primary)] md:text-3xl"
                   data-cy="admin-cash-register-title"
                 >
                   Caja Fuerte - Central
@@ -82,6 +82,14 @@
             </div>
 
             <div class="flex flex-wrap gap-3">
+              <p-button
+                label="Historial de cajas"
+                icon="pi pi-wallet"
+                severity="secondary"
+                [outlined]="true"
+                styleClass="h-11 px-5 rounded-xl"
+                (onClick)="goToCashSessionsReport()"
+              />
               <p-button
                 label="Actualizar"
                 icon="pi pi-refresh"
@@ -108,10 +116,10 @@
                   class="relative overflow-hidden rounded-2xl border px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition hover:-translate-y-0.5 hover:border-white/10"
                   [class]="
                     card.tone === 'success'
-                      ? 'border-emerald-400/20 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.16),transparent_34%),#10141D]'
+                      ? 'border-emerald-400/20 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.16),transparent_34%),var(--ff-panel)]'
                       : card.tone === 'danger'
-                        ? 'border-red-400/20 bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.14),transparent_34%),#10141D]'
-                        : 'border-[#252A3A] bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_34%),#1D2231]'
+                        ? 'border-red-400/20 bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.14),transparent_34%),var(--ff-panel)]'
+                        : 'border-[var(--ff-border)] bg-[radial-gradient(circle_at_top_right,rgba(95,122,246,0.12),transparent_34%),var(--ff-panel-raised)]'
                   "
                 >
                   <div
@@ -142,7 +150,7 @@
                         ? 'text-emerald-300'
                         : card.tone === 'danger'
                           ? 'text-red-300'
-                          : 'text-slate-400'
+                          : 'text-[var(--ff-text-secondary)]'
                     "
                   >
                     {{ card.label }}
@@ -154,18 +162,20 @@
                         ? 'text-emerald-300'
                         : card.tone === 'danger'
                           ? 'text-red-300'
-                          : 'text-white'
+                          : 'text-[var(--ff-text-primary)]'
                     "
                   >
                     {{ formatCurrency(card.value) }}
                   </p>
-                  <p class="mt-2 text-xs text-slate-500">{{ card.hint }}</p>
+                  <p class="mt-2 text-xs text-[var(--ff-text-muted)]">
+                    {{ card.hint }}
+                  </p>
                 </div>
               }
             </div>
 
             <aside
-              class="rounded-2xl border border-[#252A3A] bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.14),transparent_34%),#0F121B] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+              class="rounded-2xl border border-[var(--ff-border)] bg-[radial-gradient(circle_at_top_right,rgba(95,122,246,0.14),transparent_34%),var(--ff-bg)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
             >
               <div class="mb-4 flex items-center justify-between gap-3">
                 <div>
@@ -174,7 +184,9 @@
                   >
                     Snapshot / Arqueo
                   </p>
-                  <h2 class="mt-1 text-lg font-semibold text-white">
+                  <h2
+                    class="mt-1 text-lg font-semibold text-[var(--ff-text-primary)]"
+                  >
                     Control de caja
                   </h2>
                 </div>
@@ -189,40 +201,45 @@
               </div>
               <div class="space-y-3 text-sm">
                 <div
-                  class="flex items-center justify-between rounded-xl border border-[#1A1D27] bg-[#121520]/90 px-4 py-3"
+                  class="flex items-center justify-between rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-4 py-3"
                 >
-                  <span class="inline-flex items-center gap-2 text-slate-400"
+                  <span
+                    class="inline-flex items-center gap-2 text-[var(--ff-text-secondary)]"
                     ><i class="pi pi-chart-line text-xs text-blue-400/70"></i>
                     Saldo Estimado</span
                   >
                   <span
-                    class="font-mono text-lg font-bold tracking-tight text-white"
+                    class="font-mono text-lg font-bold tracking-tight text-[var(--ff-text-primary)]"
                     >{{ formatCurrency(estimatedBalance()) }}</span
                   >
                 </div>
                 <div
-                  class="flex items-center justify-between rounded-xl border border-[#1A1D27] bg-[#121520]/90 px-4 py-3"
+                  class="flex items-center justify-between rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-4 py-3"
                 >
-                  <span class="inline-flex items-center gap-2 text-slate-400"
-                    ><i class="pi pi-calculator text-xs text-slate-500"></i>
+                  <span
+                    class="inline-flex items-center gap-2 text-[var(--ff-text-secondary)]"
+                    ><i
+                      class="pi pi-calculator text-xs text-[var(--ff-text-muted)]"
+                    ></i>
                     Dinero Contado</span
                   >
                   @if (cashCounted() === null) {
                     <span
-                      class="rounded-full border border-slate-500/15 bg-slate-500/10 px-2.5 py-1 text-xs font-medium uppercase tracking-wider text-slate-400"
+                      class="rounded-full border border-[var(--ff-border-subtle)] bg-[var(--ff-secondary)] px-2.5 py-1 text-xs font-medium uppercase tracking-wider text-[var(--ff-text-secondary)]"
                       >Pendiente de Arqueo</span
                     >
                   } @else {
                     <span
-                      class="font-mono text-lg font-bold tracking-tight text-white"
+                      class="font-mono text-lg font-bold tracking-tight text-[var(--ff-text-primary)]"
                       >{{ formatCurrency(cashCounted()!) }}</span
                     >
                   }
                 </div>
                 <div
-                  class="flex items-center justify-between rounded-xl border border-[#1A1D27] bg-[#121520]/90 px-4 py-3"
+                  class="flex items-center justify-between rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-4 py-3"
                 >
-                  <span class="inline-flex items-center gap-2 text-slate-400"
+                  <span
+                    class="inline-flex items-center gap-2 text-[var(--ff-text-secondary)]"
                     ><i
                       class="pi pi-balance-scale text-xs text-amber-400/70"
                     ></i>
@@ -230,7 +247,7 @@
                   >
                   @if (currentDifference() === null) {
                     <span
-                      class="font-mono text-lg font-bold tracking-tight text-slate-500"
+                      class="font-mono text-lg font-bold tracking-tight text-[var(--ff-text-muted)]"
                       >—</span
                     >
                   } @else {
@@ -254,16 +271,18 @@
 
         <div class="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           <article
-            class="rounded-2xl border border-[#1A1D27] bg-[#121520] p-5 shadow-[0_12px_36px_rgba(0,0,0,0.24)]"
+            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5 shadow-[0_12px_36px_rgba(0,0,0,0.24)]"
           >
             <div class="mb-5 flex items-center justify-between gap-3">
               <div>
                 <p
-                  class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500"
+                  class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ff-text-muted)]"
                 >
                   Acciones
                 </p>
-                <h2 class="mt-1 text-lg font-semibold text-white">
+                <h2
+                  class="mt-1 text-lg font-semibold text-[var(--ff-text-primary)]"
+                >
                   Operación diaria
                 </h2>
               </div>
@@ -285,7 +304,7 @@
                 <button
                   type="button"
                   data-cy="admin-cash-register-close-day-cta"
-                  class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-500 px-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-500/40 disabled:text-slate-300"
+                  class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-500 px-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-500/40 disabled:text-[var(--ff-text-secondary)]"
                   [disabled]="
                     operationsDisabled() ||
                     session.status !== 'OPEN' ||
@@ -308,7 +327,7 @@
               } @else {
                 <button
                   type="button"
-                  class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-500/40 disabled:text-slate-300"
+                  class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-500/40 disabled:text-[var(--ff-text-secondary)]"
                   (click)="openOpenSessionDialog()"
                 >
                   <i class="pi pi-plus text-xs"></i>
@@ -317,7 +336,7 @@
               }
               <button
                 type="button"
-                class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/5 bg-[#1A1D27] px-3 text-sm font-semibold text-white transition hover:bg-[#2A2D39] disabled:cursor-not-allowed disabled:opacity-45"
+                class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-secondary)] px-3 text-sm font-semibold text-[var(--ff-text-primary)] transition hover:bg-[var(--ff-surface-hover)] disabled:cursor-not-allowed disabled:opacity-45"
                 [disabled]="operationsDisabled()"
                 (click)="openManualIncomeDialog()"
               >
@@ -326,7 +345,7 @@
               </button>
               <button
                 type="button"
-                class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/5 bg-[#1A1D27] px-3 text-sm font-semibold text-white transition hover:bg-[#2A2D39] disabled:cursor-not-allowed disabled:opacity-45"
+                class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-secondary)] px-3 text-sm font-semibold text-[var(--ff-text-primary)] transition hover:bg-[var(--ff-surface-hover)] disabled:cursor-not-allowed disabled:opacity-45"
                 [disabled]="operationsDisabled()"
                 (click)="openExpenseDialog()"
               >
@@ -348,20 +367,20 @@
           </article>
 
           <article
-            class="overflow-hidden rounded-2xl border border-[#1A1D27] bg-[#121520] shadow-[0_12px_36px_rgba(0,0,0,0.24)]"
+            class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] shadow-[0_12px_36px_rgba(0,0,0,0.24)]"
             data-cy="admin-cash-register-history-section"
           >
             <div
-              class="flex flex-col gap-3 border-b border-[#1A1D27] px-5 py-4 md:flex-row md:items-center md:justify-between"
+              class="flex flex-col gap-3 border-b border-[var(--ff-border-subtle)] px-5 py-4 md:flex-row md:items-center md:justify-between"
             >
               <div>
                 <p
-                  class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500"
+                  class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ff-text-muted)]"
                 >
                   Flujo de dinero
                 </p>
                 <h2
-                  class="mt-1 text-lg font-semibold text-white"
+                  class="mt-1 text-lg font-semibold text-[var(--ff-text-primary)]"
                   data-cy="admin-cash-register-history-title"
                 >
                   Últimos Movimientos de la Jornada
@@ -369,14 +388,14 @@
               </div>
               <div class="flex flex-wrap items-center gap-2">
                 <span
-                  class="inline-flex items-center gap-2 rounded-full border border-[#252A3A] bg-[#1D2231] px-3 py-1 text-xs font-semibold text-slate-300"
+                  class="inline-flex items-center gap-2 rounded-full border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] px-3 py-1 text-xs font-semibold text-[var(--ff-text-secondary)]"
                 >
                   <i class="pi pi-list text-[10px] text-blue-300"></i>
                   {{ previewMovements().length }} de {{ movements().length }}
                 </span>
                 <button
                   type="button"
-                  class="inline-flex items-center gap-2 rounded-xl border border-white/5 bg-[#1A1D27] px-3 py-2 text-xs font-semibold text-slate-300 transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40"
+                  class="inline-flex items-center gap-2 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-secondary)] px-3 py-2 text-xs font-semibold text-[var(--ff-text-secondary)] transition hover:border-blue-400/30 hover:bg-blue-500/10 hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40"
                   [disabled]="movements().length === 0"
                   (click)="openMovementsDialog()"
                 >
@@ -392,26 +411,28 @@
               <app-error-state />
             } @else if (previewMovements().length === 0) {
               <div
-                class="flex min-h-64 flex-col items-center justify-center gap-3 px-5 text-center text-slate-500"
+                class="flex min-h-64 flex-col items-center justify-center gap-3 px-5 text-center text-[var(--ff-text-muted)]"
                 data-cy="admin-cash-register-history-empty-state"
               >
                 <div
-                  class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#252A3A] bg-[#1D2231]"
+                  class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)]"
                 >
                   <i class="pi pi-inbox text-xl"></i>
                 </div>
-                <p class="text-sm font-semibold text-slate-300">
+                <p
+                  class="text-sm font-semibold text-[var(--ff-text-secondary)]"
+                >
                   Sin movimientos para mostrar.
                 </p>
               </div>
             } @else {
               <div class="overflow-x-auto">
                 <table
-                  class="min-w-full divide-y divide-[#1A1D27] text-sm"
+                  class="min-w-full divide-y divide-[var(--ff-border-subtle)] text-sm"
                   data-cy="admin-cash-register-history-table"
                 >
                   <thead
-                    class="bg-[#0F121B] text-[10px] uppercase tracking-[0.16em] text-slate-500"
+                    class="bg-[var(--ff-bg)] text-[10px] uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
                   >
                     <tr>
                       <th class="px-5 py-3 text-left font-semibold">
@@ -427,28 +448,34 @@
                       <th class="px-5 py-3 text-right font-semibold">Monto</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-[#1A1D27] text-slate-300">
+                  <tbody
+                    class="divide-y divide-[var(--ff-border-subtle)] text-[var(--ff-text-secondary)]"
+                  >
                     @for (
                       movement of previewMovements();
                       track movement.id;
                       let odd = $odd
                     ) {
                       <tr
-                        class="transition-colors hover:bg-[#1D2231]"
-                        [class]="odd ? 'bg-[#0F121B]/60' : 'bg-[#121520]'"
+                        class="transition-colors hover:bg-[var(--ff-panel-raised)]"
+                        [class]="
+                          odd ? 'bg-[var(--ff-bg)]' : 'bg-[var(--ff-panel)]'
+                        "
                       >
                         <td class="px-5 py-4">
-                          <p class="font-semibold text-white">
+                          <p
+                            class="font-semibold text-[var(--ff-text-primary)]"
+                          >
                             {{ movement.concepto }}
                           </p>
-                          <p class="mt-0.5 text-xs text-slate-500">
+                          <p class="mt-0.5 text-xs text-[var(--ff-text-muted)]">
                             {{ movement.metodoPago }}
                           </p>
                         </td>
-                        <td class="px-5 py-4 text-slate-300">
+                        <td class="px-5 py-4 text-[var(--ff-text-secondary)]">
                           {{ formatDateTime(movement.fechaHora) }}
                         </td>
-                        <td class="px-5 py-4 text-slate-300">
+                        <td class="px-5 py-4 text-[var(--ff-text-secondary)]">
                           {{ movement.responsable }}
                         </td>
                         <td class="px-5 py-4 text-center">
@@ -499,21 +526,23 @@
   [closable]="false"
   [draggable]="false"
   [resizable]="false"
-  styleClass="bg-[#0B0D14] border border-[#1A1D27]"
-  contentStyleClass="bg-[#0B0D14] p-0 border-none"
+  styleClass="!bg-[var(--ff-bg)] !border !border-[var(--ff-border-subtle)]"
+  contentStyleClass="!bg-[var(--ff-bg)] p-0 border-none"
   [contentStyle]="{
     padding: '0',
-    background: '#0B0D14',
-    color: '#cbd5e1',
-    border: '1px solid #1A1D27',
+    background: 'var(--ff-bg)',
+    color: 'var(--ff-text-secondary)',
+    border: '1px solid var(--ff-border-subtle)',
     borderRadius: '1rem',
     overflow: 'hidden',
   }"
   [style]="{ width: '1180px', maxWidth: '96vw' }"
 >
-  <section class="max-h-[88vh] overflow-hidden bg-[#0B0D14] text-slate-300">
+  <section
+    class="max-h-[88vh] overflow-hidden bg-[var(--ff-bg)] text-[var(--ff-text-secondary)]"
+  >
     <header
-      class="flex flex-col gap-4 border-b border-[#1A1D27] bg-[#121520] px-6 py-5 lg:flex-row lg:items-center lg:justify-between"
+      class="flex flex-col gap-4 border-b border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-6 py-5 lg:flex-row lg:items-center lg:justify-between"
     >
       <div>
         <p
@@ -521,7 +550,9 @@
         >
           Auditoría
         </p>
-        <h2 class="mt-1 text-2xl font-bold tracking-tight text-white">
+        <h2
+          class="mt-1 text-2xl font-bold tracking-tight text-[var(--ff-text-primary)]"
+        >
           Movimientos de la Jornada
         </h2>
       </div>
@@ -534,13 +565,15 @@
       </button>
     </header>
 
-    <div class="border-b border-[#1A1D27] bg-[#0F121B] px-6 py-4">
+    <div
+      class="border-b border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-6 py-4"
+    >
       <div
         class="grid grid-cols-1 gap-3 md:grid-cols-[220px_260px_1fr] md:items-end"
       >
         <div>
           <label
-            class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500"
+            class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-muted)]"
             for="movement-type-filter"
             >Tipo</label
           >
@@ -551,14 +584,14 @@
             (ngModelChange)="setMovementTypeFilter($event)"
             optionLabel="label"
             optionValue="value"
-            styleClass="w-full rounded-xl border border-[#252A3A] bg-[#121520] text-white"
-            panelStyleClass="bg-[#121520] border border-[#252A3A] text-white"
+            styleClass="w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] text-[var(--ff-text-primary)]"
+            panelStyleClass="bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)]"
             [style]="{ width: '100%' }"
           ></p-dropdown>
         </div>
         <div>
           <label
-            class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500"
+            class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-muted)]"
             for="movement-method-filter"
             >Método de Pago</label
           >
@@ -569,14 +602,14 @@
             (ngModelChange)="setMovementMethodFilter($event)"
             optionLabel="label"
             optionValue="value"
-            styleClass="w-full rounded-xl border border-[#252A3A] bg-[#121520] text-white"
-            panelStyleClass="bg-[#121520] border border-[#252A3A] text-white"
+            styleClass="w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] text-[var(--ff-text-primary)]"
+            panelStyleClass="bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)]"
             [style]="{ width: '100%' }"
           ></p-dropdown>
         </div>
         <div class="flex justify-start md:justify-end">
           <span
-            class="inline-flex items-center gap-2 rounded-full border border-[#252A3A] bg-[#121520] px-3 py-2 text-xs font-semibold text-slate-300"
+            class="inline-flex items-center gap-2 rounded-full border border-[var(--ff-border)] bg-[var(--ff-panel)] px-3 py-2 text-xs font-semibold text-[var(--ff-text-secondary)]"
           >
             <i class="pi pi-filter text-[10px] text-blue-300"></i>
             {{ filteredMovements().length }} de
@@ -586,24 +619,26 @@
       </div>
     </div>
 
-    <div class="max-h-[56vh] overflow-auto bg-[#121520]">
+    <div class="max-h-[56vh] overflow-auto bg-[var(--ff-panel)]">
       @if (filteredMovements().length === 0) {
         <div
-          class="flex min-h-64 flex-col items-center justify-center gap-3 px-5 text-center text-slate-500"
+          class="flex min-h-64 flex-col items-center justify-center gap-3 px-5 text-center text-[var(--ff-text-muted)]"
         >
           <div
-            class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#252A3A] bg-[#1D2231]"
+            class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)]"
           >
             <i class="pi pi-search text-xl"></i>
           </div>
-          <p class="text-sm font-semibold text-slate-300">
+          <p class="text-sm font-semibold text-[var(--ff-text-secondary)]">
             No hay movimientos con esos filtros.
           </p>
         </div>
       } @else {
-        <table class="min-w-full divide-y divide-[#1A1D27] text-sm">
+        <table
+          class="min-w-full divide-y divide-[var(--ff-border-subtle)] text-sm"
+        >
           <thead
-            class="sticky top-0 z-10 bg-[#0F121B] text-[10px] uppercase tracking-[0.16em] text-slate-500 shadow-[0_1px_0_#1A1D27]"
+            class="sticky top-0 z-10 bg-[var(--ff-bg)] text-[10px] uppercase tracking-[0.16em] text-[var(--ff-text-muted)] shadow-[0_1px_0_var(--ff-border-subtle)]"
           >
             <tr>
               <th class="px-5 py-3 text-left font-semibold">Concepto</th>
@@ -614,25 +649,27 @@
               <th class="px-5 py-3 text-right font-semibold">Monto</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-[#1A1D27] text-slate-300">
+          <tbody
+            class="divide-y divide-[var(--ff-border-subtle)] text-[var(--ff-text-secondary)]"
+          >
             @for (
               movement of pagedMovements();
               track movement.id;
               let odd = $odd
             ) {
               <tr
-                class="transition-colors hover:bg-[#1D2231]"
-                [class]="odd ? 'bg-[#0F121B]/60' : 'bg-[#121520]'"
+                class="transition-colors hover:bg-[var(--ff-panel-raised)]"
+                [class]="odd ? 'bg-[var(--ff-bg)]' : 'bg-[var(--ff-panel)]'"
               >
                 <td class="px-5 py-4">
-                  <p class="font-semibold text-white">
+                  <p class="font-semibold text-[var(--ff-text-primary)]">
                     {{ movement.concepto }}
                   </p>
                 </td>
-                <td class="px-5 py-4 text-slate-300">
+                <td class="px-5 py-4 text-[var(--ff-text-secondary)]">
                   {{ formatDateTime(movement.fechaHora) }}
                 </td>
-                <td class="px-5 py-4 text-slate-300">
+                <td class="px-5 py-4 text-[var(--ff-text-secondary)]">
                   {{ movement.responsable }}
                 </td>
                 <td class="px-5 py-4 text-center">
@@ -648,7 +685,7 @@
                     >{{ movement.tipo }}</span
                   >
                 </td>
-                <td class="px-5 py-4 text-slate-400">
+                <td class="px-5 py-4 text-[var(--ff-text-secondary)]">
                   {{ movement.metodoPago }}
                 </td>
                 <td
@@ -672,15 +709,15 @@
     </div>
 
     <footer
-      class="flex flex-col gap-3 border-t border-[#1A1D27] bg-[#0F121B] px-6 py-4 md:flex-row md:items-center md:justify-between"
+      class="flex flex-col gap-3 border-t border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-6 py-4 md:flex-row md:items-center md:justify-between"
     >
-      <p class="text-xs text-slate-500">
+      <p class="text-xs text-[var(--ff-text-muted)]">
         Página {{ movementPage() }} de {{ movementTotalPages() }}
       </p>
       <div class="flex gap-2">
         <button
           type="button"
-          class="h-10 rounded-xl border border-white/5 bg-[#1A1D27] px-4 text-sm font-semibold text-slate-300 transition hover:bg-[#2A2D39] disabled:cursor-not-allowed disabled:opacity-40"
+          class="h-10 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-secondary)] px-4 text-sm font-semibold text-[var(--ff-text-secondary)] transition hover:bg-[var(--ff-surface-hover)] disabled:cursor-not-allowed disabled:opacity-40"
           [disabled]="movementPage() === 1"
           (click)="previousMovementPage()"
         >
@@ -688,7 +725,7 @@
         </button>
         <button
           type="button"
-          class="h-10 rounded-xl border border-white/5 bg-[#1A1D27] px-4 text-sm font-semibold text-slate-300 transition hover:bg-[#2A2D39] disabled:cursor-not-allowed disabled:opacity-40"
+          class="h-10 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-secondary)] px-4 text-sm font-semibold text-[var(--ff-text-secondary)] transition hover:bg-[var(--ff-surface-hover)] disabled:cursor-not-allowed disabled:opacity-40"
           [disabled]="movementPage() === movementTotalPages()"
           (click)="nextMovementPage()"
         >
@@ -707,21 +744,21 @@
   [closable]="false"
   [draggable]="false"
   [resizable]="false"
-  styleClass="bg-[#121520] border border-[#1A1D27]"
-  contentStyleClass="bg-[#121520] p-0 border-none"
+  styleClass="!bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
+  contentStyleClass="!bg-[var(--ff-panel)] p-0 border-none"
   [contentStyle]="{
     padding: '0',
-    background: '#121520',
-    color: '#cbd5e1',
-    border: '1px solid #1A1D27',
+    background: 'var(--ff-panel)',
+    color: 'var(--ff-text-secondary)',
+    border: '1px solid var(--ff-border-subtle)',
     borderRadius: '1rem',
     overflow: 'hidden',
   }"
   [style]="{ width: '460px', maxWidth: '95vw' }"
 >
-  <section class="bg-[#121520] text-slate-300">
+  <section class="bg-[var(--ff-panel)] text-[var(--ff-text-secondary)]">
     <header
-      class="flex items-center justify-between gap-4 border-b border-[#252A3A] px-6 py-5"
+      class="flex items-center justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
     >
       <div>
         <p
@@ -729,7 +766,9 @@
         >
           Entrada operativa
         </p>
-        <h2 class="mt-1 text-xl font-bold text-white">Ingreso Manual</h2>
+        <h2 class="mt-1 text-xl font-bold text-[var(--ff-text-primary)]">
+          Ingreso Manual
+        </h2>
       </div>
       <button
         type="button"
@@ -744,7 +783,7 @@
     <div class="flex flex-col gap-4 px-6 py-5">
       <div>
         <label
-          class="mb-1.5 block text-sm font-semibold text-slate-200"
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
           for="manual-income-amount"
           >Monto</label
         >
@@ -761,13 +800,13 @@
           [min]="0.01"
           [showButtons]="false"
           styleClass="w-full"
-          inputStyleClass="w-full h-11 rounded-xl border border-[#252A3A] bg-[#0B0D14] px-3 text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+          inputStyleClass="w-full h-11 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-[var(--ff-text-primary)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
         ></p-inputNumber>
       </div>
 
       <div>
         <label
-          class="mb-1.5 block text-sm font-semibold text-slate-200"
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
           for="manual-income-method"
           >Método</label
         >
@@ -775,18 +814,77 @@
           inputId="manual-income-method"
           [options]="manualIncomeMethodOptions"
           [ngModel]="manualIncomePaymentMethod()"
-          (ngModelChange)="manualIncomePaymentMethod.set($event)"
+          (ngModelChange)="
+            manualIncomePaymentMethod.set($event);
+            manualIncomeCashAmount.set(null);
+            manualIncomeTransferAmount.set(null);
+            manualIncomeValidationError.set('')
+          "
           optionLabel="label"
           optionValue="value"
-          styleClass="w-full rounded-xl border border-[#252A3A] bg-[#0B0D14] text-white"
-          panelStyleClass="bg-[#121520] border border-[#252A3A] text-white"
+          styleClass="w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] text-[var(--ff-text-primary)]"
+          panelStyleClass="bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)]"
           [style]="{ width: '100%' }"
         ></p-dropdown>
       </div>
 
+      @if (manualIncomePaymentMethod() === "MIXED") {
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
+            >
+              Efectivo
+            </label>
+            <p-inputNumber
+              inputId="manual-income-cash-amount"
+              [ngModel]="manualIncomeCashAmount()"
+              (ngModelChange)="
+                manualIncomeCashAmount.set($event);
+                manualIncomeValidationError.set('')
+              "
+              mode="currency"
+              currency="ARS"
+              locale="es-AR"
+              appCurrencyAmountInput
+              [min]="0"
+              [showButtons]="false"
+              styleClass="w-full"
+              inputStyleClass="w-full h-11 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-[var(--ff-text-primary)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            />
+          </div>
+          <div>
+            <label
+              class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
+            >
+              Transferencia
+            </label>
+            <p-inputNumber
+              inputId="manual-income-transfer-amount"
+              [ngModel]="manualIncomeTransferAmount()"
+              (ngModelChange)="
+                manualIncomeTransferAmount.set($event);
+                manualIncomeValidationError.set('')
+              "
+              mode="currency"
+              currency="ARS"
+              locale="es-AR"
+              appCurrencyAmountInput
+              [min]="0"
+              [showButtons]="false"
+              styleClass="w-full"
+              inputStyleClass="w-full h-11 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-[var(--ff-text-primary)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            />
+          </div>
+        </div>
+        <p class="text-xs text-[var(--ff-text-secondary)]">
+          Los importes deben sumar el monto total del ingreso.
+        </p>
+      }
+
       <div>
         <label
-          class="mb-1.5 block text-sm font-semibold text-slate-200"
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
           for="manual-income-description"
           >Concepto</label
         >
@@ -799,16 +897,23 @@
             manualIncomeValidationError.set('')
           "
           maxlength="255"
-          class="h-11 w-full rounded-xl border border-[#252A3A] bg-[#0B0D14] px-3 text-white placeholder-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+          class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-[var(--ff-text-primary)] placeholder-[var(--ff-text-muted)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
           placeholder="Ej: Aporte de efectivo, ajuste de caja..."
         />
       </div>
 
       <div>
         <label
-          class="mb-1.5 block text-sm font-semibold text-slate-200"
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
           for="manual-income-reference"
-          >Referencia <span class="text-slate-400">(opcional)</span></label
+          >Referencia
+          <span class="text-[var(--ff-text-secondary)]">
+            {{
+              manualIncomePaymentMethod() === "CASH"
+                ? "(opcional)"
+                : "(obligatoria)"
+            }}
+          </span></label
         >
         <input
           pInputText
@@ -816,7 +921,7 @@
           [ngModel]="manualIncomeReference()"
           (ngModelChange)="manualIncomeReference.set($event)"
           maxlength="120"
-          class="h-11 w-full rounded-xl border border-[#252A3A] bg-[#0B0D14] px-3 text-white placeholder-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+          class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-[var(--ff-text-primary)] placeholder-[var(--ff-text-muted)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
           placeholder="Comprobante, nota interna..."
         />
       </div>
@@ -830,10 +935,12 @@
       }
     </div>
 
-    <footer class="flex justify-end gap-3 border-t border-[#252A3A] px-6 py-4">
+    <footer
+      class="flex justify-end gap-3 border-t border-[var(--ff-border)] px-6 py-4"
+    >
       <button
         type="button"
-        class="h-11 rounded-xl border border-[#334155] px-5 text-sm font-semibold text-slate-200 transition hover:bg-[#1D2231] hover:text-white disabled:opacity-50"
+        class="h-11 rounded-xl border border-[var(--ff-border)] px-5 text-sm font-semibold text-[var(--ff-text-primary)] transition hover:bg-[var(--ff-panel-raised)] hover:text-[var(--ff-text-primary)] disabled:opacity-50"
         [disabled]="manualIncomeSubmitting()"
         (click)="showManualIncomeDialog.set(false)"
       >
@@ -841,7 +948,7 @@
       </button>
       <button
         type="button"
-        class="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-500 px-5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-500/40 disabled:text-slate-300"
+        class="inline-flex h-11 items-center gap-2 rounded-xl bg-emerald-500 px-5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-500/40 disabled:text-[var(--ff-text-secondary)]"
         [disabled]="manualIncomeSubmitting()"
         (click)="submitManualIncome()"
       >
@@ -860,21 +967,21 @@
   [closable]="false"
   [draggable]="false"
   [resizable]="false"
-  styleClass="bg-[#121520] border border-[#1A1D27]"
-  contentStyleClass="bg-[#121520] p-0 border-none"
+  styleClass="!bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
+  contentStyleClass="!bg-[var(--ff-panel)] p-0 border-none"
   [contentStyle]="{
     padding: '0',
-    background: '#121520',
-    color: '#cbd5e1',
-    border: '1px solid #1A1D27',
+    background: 'var(--ff-panel)',
+    color: 'var(--ff-text-secondary)',
+    border: '1px solid var(--ff-border-subtle)',
     borderRadius: '1rem',
     overflow: 'hidden',
   }"
   [style]="{ width: '460px', maxWidth: '95vw' }"
 >
-  <section class="bg-[#121520] text-slate-300">
+  <section class="bg-[var(--ff-panel)] text-[var(--ff-text-secondary)]">
     <header
-      class="flex items-center justify-between gap-4 border-b border-[#252A3A] px-6 py-5"
+      class="flex items-center justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
     >
       <div>
         <p
@@ -882,7 +989,9 @@
         >
           Conversión interna
         </p>
-        <h2 class="mt-1 text-xl font-bold text-white">Convertir Dinero</h2>
+        <h2 class="mt-1 text-xl font-bold text-[var(--ff-text-primary)]">
+          Convertir Dinero
+        </h2>
       </div>
       <button
         type="button"
@@ -897,7 +1006,34 @@
     <div class="flex flex-col gap-4 px-6 py-5">
       <div>
         <label
-          class="mb-1.5 block text-sm font-semibold text-slate-200"
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
+          >Origen</label
+        >
+        <div class="flex gap-4">
+          @for (opt of conversionCriteriaOptions; track opt.value) {
+            <label
+              class="flex cursor-pointer items-center gap-2 text-sm text-[var(--ff-text-secondary)]"
+            >
+              <p-radioButton
+                name="conversionCriteria"
+                [value]="opt.value"
+                [ngModel]="conversionCriteria()"
+                (ngModelChange)="
+                  conversionCriteria.set($event);
+                  conversionAmount.set(null);
+                  conversionValidationError.set('')
+                "
+                [inputId]="'conv_src_' + opt.value"
+              />
+              <span>{{ opt.label }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <div>
+        <label
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
           for="conversion-source"
           >Desde</label
         >
@@ -912,27 +1048,44 @@
           "
           optionLabel="label"
           optionValue="value"
-          styleClass="w-full rounded-xl border border-[#252A3A] bg-[#0B0D14] text-white"
-          panelStyleClass="bg-[#121520] border border-[#252A3A] text-white"
+          styleClass="w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] text-[var(--ff-text-primary)]"
+          panelStyleClass="bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)]"
           [style]="{ width: '100%' }"
         ></p-dropdown>
-        <p class="mt-2 text-xs text-slate-500">
+        <p
+          class="mt-2 text-xs"
+          [class]="
+            conversionSourceAvailable() < 0
+              ? 'font-semibold text-red-400'
+              : 'text-[var(--ff-text-muted)]'
+          "
+        >
           Disponible: {{ formatCurrency(conversionSourceAvailable()) }}
         </p>
+        @if (conversionExceedsAvailable()) {
+          <p class="mt-1 text-xs text-red-400">
+            El monto supera el disponible de
+            {{
+              conversionCriteria() === "COMPANY"
+                ? "Caja General"
+                : "Caja del día"
+            }}.
+          </p>
+        }
       </div>
 
       <div
-        class="rounded-xl border border-[#252A3A] bg-[#0B0D14] px-4 py-3 text-sm"
+        class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-4 py-3 text-sm"
       >
-        <span class="text-slate-500">Hacia</span>
-        <span class="ml-2 font-semibold text-white">{{
+        <span class="text-[var(--ff-text-muted)]">Hacia</span>
+        <span class="ml-2 font-semibold text-[var(--ff-text-primary)]">{{
           paymentMethodLabel(conversionTargetMethod())
         }}</span>
       </div>
 
       <div>
         <label
-          class="mb-1.5 block text-sm font-semibold text-slate-200"
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
           for="conversion-amount"
           >Monto</label
         >
@@ -949,15 +1102,16 @@
           [min]="0.01"
           [showButtons]="false"
           styleClass="w-full"
-          inputStyleClass="w-full h-11 rounded-xl border border-[#252A3A] bg-[#0B0D14] px-3 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          inputStyleClass="w-full h-11 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-[var(--ff-text-primary)] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         ></p-inputNumber>
       </div>
 
       <div>
         <label
-          class="mb-1.5 block text-sm font-semibold text-slate-200"
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
           for="conversion-notes"
-          >Observación <span class="text-slate-400">(opcional)</span></label
+          >Observación
+          <span class="text-[var(--ff-text-secondary)]">(opcional)</span></label
         >
         <textarea
           pInputTextarea
@@ -966,7 +1120,7 @@
           (ngModelChange)="conversionNotes.set($event)"
           rows="2"
           maxlength="300"
-          class="w-full resize-none rounded-xl border border-[#252A3A] bg-[#0B0D14] p-3 text-white placeholder-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          class="w-full resize-none rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3 text-[var(--ff-text-primary)] placeholder-[var(--ff-text-muted)] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         ></textarea>
       </div>
 
@@ -979,10 +1133,12 @@
       }
     </div>
 
-    <footer class="flex justify-end gap-3 border-t border-[#252A3A] px-6 py-4">
+    <footer
+      class="flex justify-end gap-3 border-t border-[var(--ff-border)] px-6 py-4"
+    >
       <button
         type="button"
-        class="h-11 rounded-xl border border-[#334155] px-5 text-sm font-semibold text-slate-200 transition hover:bg-[#1D2231] hover:text-white disabled:opacity-50"
+        class="h-11 rounded-xl border border-[var(--ff-border)] px-5 text-sm font-semibold text-[var(--ff-text-primary)] transition hover:bg-[var(--ff-panel-raised)] hover:text-[var(--ff-text-primary)] disabled:opacity-50"
         [disabled]="conversionSubmitting()"
         (click)="showConversionDialog.set(false)"
       >
@@ -990,7 +1146,7 @@
       </button>
       <button
         type="button"
-        class="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-500 px-5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-500/40 disabled:text-slate-300"
+        class="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-500 px-5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-500/40 disabled:text-[var(--ff-text-secondary)]"
         [disabled]="!canSubmitConversion()"
         (click)="submitConversion()"
       >
@@ -1009,13 +1165,13 @@
   [closable]="false"
   [draggable]="false"
   [resizable]="false"
-  styleClass="bg-[#1b2233] border border-[#1A1D27]"
-  contentStyleClass="bg-[#1b2233] p-0 border-none"
+  styleClass="!bg-[var(--ff-panel-raised)] !border !border-[var(--ff-border-subtle)]"
+  contentStyleClass="!bg-[var(--ff-panel-raised)] p-0 border-none"
   [contentStyle]="{
     padding: '0',
-    background: '#1b2233',
-    color: '#cbd5e1',
-    border: '1px solid #1A1D27',
+    background: 'var(--ff-panel-raised)',
+    color: 'var(--ff-text-secondary)',
+    border: '1px solid var(--ff-border-subtle)',
     borderRadius: '1rem',
     overflow: 'hidden',
   }"

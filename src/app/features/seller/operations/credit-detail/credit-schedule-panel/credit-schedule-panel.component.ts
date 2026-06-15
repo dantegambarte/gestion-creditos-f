@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   Component,
   EventEmitter,
@@ -8,17 +9,16 @@ import {
   SimpleChanges,
   inject,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
-import { CreditDetail, InstallmentStatus } from '../../../models/credit.model';
-import { Installment } from '../../../models/installment.model';
 import { CreditPayment } from '../../../../collector/models/payment.model';
 import { PaymentsService } from '../../../../collector/payments.service';
+import { CreditDetail, InstallmentStatus } from '../../../models/credit.model';
+import { Installment } from '../../../models/installment.model';
 import { DirectPaymentDialogComponent } from '../direct-payment-dialog/direct-payment-dialog.component';
 import { PenaltyDialogComponent } from '../penalty-dialog/penalty-dialog.component';
 import { WaiveDialogComponent } from '../waive-dialog/waive-dialog.component';
@@ -179,6 +179,7 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       PAID: 'success',
       OVERDUE: 'danger',
       PARTIAL: 'warning',
+      PLAN_CHANGE_CANCELLED: 'secondary',
     };
     return map[status] ?? 'secondary';
   }
@@ -193,6 +194,7 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       PAID: 'Pagada',
       OVERDUE: 'Vencida',
       PARTIAL: 'Parcial',
+      PLAN_CHANGE_CANCELLED: 'Anulada (cambio de plan)',
     };
     return map[status] ?? status;
   }
@@ -201,7 +203,9 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
    * Etiqueta del método de pago.
    * @param method Método de pago
    */
-  paymentMethodLabel(method: 'CASH' | 'TRANSFER'): string {
-    return method === 'CASH' ? 'Efectivo' : 'Transferencia';
+  paymentMethodLabel(method: 'CASH' | 'TRANSFER' | 'MIXED'): string {
+    if (method === 'CASH') return 'Efectivo';
+    if (method === 'TRANSFER') return 'Transferencia';
+    return 'Mixto';
   }
 }

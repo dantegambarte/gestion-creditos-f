@@ -1,33 +1,44 @@
 <p-toast position="top-right" />
 
 <div class="ff-page py-6">
-  <p class="text-sm text-gray-400 mb-6">/ Mi Perfil</p>
+  <p class="text-sm ff-text-muted mb-6">/ Mi Perfil</p>
 
   <div class="flex flex-col lg:flex-row gap-6">
     <div class="w-full lg:w-64 shrink-0">
       <div
-        class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col items-center text-center gap-3"
+        class="ff-panel border p-6 flex flex-col items-center text-center gap-3"
       >
         @if (currentUser) {
           <p-avatar
             [label]="currentUser.avatar"
             shape="circle"
             size="xlarge"
-            styleClass="bg-blue-600 text-white font-bold text-2xl w-20 h-20"
+            styleClass="font-bold text-2xl w-20 h-20"
+            [style]="{
+              background: 'var(--ff-accent)',
+              color: 'var(--primary-color-text)',
+            }"
           />
           <div>
-            <p class="text-lg font-bold text-gray-900">
+            <p class="text-lg font-bold ff-text-primary">
               {{ currentUser.full_name }}
             </p>
             <p-tag [value]="roleLabel" styleClass="mt-1 text-xs" />
-            <p class="text-sm text-gray-500 mt-2">{{ currentUser.email }}</p>
+            <p class="text-sm ff-text-secondary mt-2">
+              {{ currentUser.email }}
+            </p>
           </div>
         }
 
         <button
           pRipple
           (click)="logout()"
-          class="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition-colors text-sm font-medium"
+          class="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition-colors text-sm font-medium"
+          style="
+            border-color: rgba(248, 113, 113, 0.35);
+            color: var(--ff-danger);
+            background: rgba(248, 113, 113, 0.08);
+          "
         >
           <i class="pi pi-sign-out"></i>
           Cerrar Sesión
@@ -36,8 +47,10 @@
     </div>
 
     <div class="flex-1 flex flex-col gap-6">
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-        <h2 class="text-base font-bold text-gray-900 mb-5">Datos Personales</h2>
+      <div class="ff-panel border p-6">
+        <h2 class="text-base font-bold ff-text-primary mb-5">
+          Datos Personales
+        </h2>
 
         <form
           [formGroup]="personalForm"
@@ -46,9 +59,11 @@
         >
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-gray-700">Nombre</label>
+              <label class="text-sm font-semibold ff-text-secondary"
+                >Nombre</label
+              >
               <p-iconField iconPosition="left">
-                <p-inputIcon styleClass="pi pi-user text-gray-400 z-10" />
+                <p-inputIcon styleClass="pi pi-user ff-muted-icon z-10" />
                 <input
                   pInputText
                   formControlName="nombre"
@@ -58,22 +73,26 @@
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-gray-700">Email</label>
+              <label class="text-sm font-semibold ff-text-secondary"
+                >Email</label
+              >
               <p-iconField iconPosition="left">
-                <p-inputIcon styleClass="pi pi-envelope text-gray-400 z-10" />
+                <p-inputIcon styleClass="pi pi-envelope ff-muted-icon z-10" />
                 <input
                   pInputText
                   formControlName="email"
-                  class="w-full h-11 pl-10 rounded-xl bg-gray-50"
+                  class="w-full h-11 pl-10 rounded-xl"
                 />
               </p-iconField>
             </div>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold text-gray-700">Teléfono</label>
+            <label class="text-sm font-semibold ff-text-secondary"
+              >Teléfono</label
+            >
             <p-iconField iconPosition="left">
-              <p-inputIcon styleClass="pi pi-phone text-gray-400 z-10" />
+              <p-inputIcon styleClass="pi pi-phone ff-muted-icon z-10" />
               <input
                 pInputText
                 formControlName="telefono"
@@ -93,8 +112,8 @@
         </form>
       </div>
 
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-        <h2 class="text-base font-bold text-gray-900 mb-5">
+      <div class="ff-panel border p-6">
+        <h2 class="text-base font-bold ff-text-primary mb-5">
           Cambiar Contraseña
         </h2>
 
@@ -105,11 +124,11 @@
         >
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-gray-700"
+              <label class="text-sm font-semibold ff-text-secondary"
                 >Contraseña actual</label
               >
               <p-iconField iconPosition="left">
-                <p-inputIcon styleClass="pi pi-lock text-gray-400 z-10" />
+                <p-inputIcon styleClass="pi pi-lock ff-muted-icon z-10" />
                 <p-password
                   formControlName="currentPassword"
                   [feedback]="false"
@@ -122,11 +141,11 @@
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-gray-700"
+              <label class="text-sm font-semibold ff-text-secondary"
                 >Nueva contraseña</label
               >
               <p-iconField iconPosition="left">
-                <p-inputIcon styleClass="pi pi-lock text-gray-400 z-10" />
+                <p-inputIcon styleClass="pi pi-lock ff-muted-icon z-10" />
                 <p-password
                   formControlName="newPassword"
                   [feedback]="false"
@@ -139,11 +158,11 @@
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-gray-700"
+              <label class="text-sm font-semibold ff-text-secondary"
                 >Confirmar contraseña</label
               >
               <p-iconField iconPosition="left">
-                <p-inputIcon styleClass="pi pi-lock text-gray-400 z-10" />
+                <p-inputIcon styleClass="pi pi-lock ff-muted-icon z-10" />
                 <p-password
                   formControlName="confirmPassword"
                   [feedback]="false"
@@ -167,22 +186,25 @@
         </form>
       </div>
 
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-        <h2 class="text-base font-bold text-gray-900 mb-5">Preferencias</h2>
+      <div class="ff-panel border p-6">
+        <h2 class="text-base font-bold ff-text-primary mb-5">Preferencias</h2>
 
-        <div class="flex flex-col divide-y divide-gray-100">
+        <div
+          class="flex flex-col divide-y"
+          style="border-color: var(--ff-border-subtle)"
+        >
           <div class="flex items-center justify-between py-4">
-            <span class="text-sm text-gray-700"
+            <span class="text-sm ff-text-secondary"
               >Recibir notificaciones por email</span
             >
             <p-inputSwitch [(ngModel)]="emailNotifications" />
           </div>
           <div class="flex items-center justify-between py-4">
-            <span class="text-sm text-gray-700">Modo oscuro</span>
+            <span class="text-sm ff-text-secondary">Modo oscuro</span>
             <p-inputSwitch [(ngModel)]="darkMode" />
           </div>
           <div class="flex items-center justify-between py-4">
-            <span class="text-sm text-gray-700">Idioma</span>
+            <span class="text-sm ff-text-secondary">Idioma</span>
             <p-dropdown
               [(ngModel)]="selectedLanguage"
               [options]="languages"

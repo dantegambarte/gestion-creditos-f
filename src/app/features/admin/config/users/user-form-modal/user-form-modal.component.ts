@@ -19,7 +19,6 @@ export interface UserForm {
   dni: string;
   phone: string;
   role: string | null;
-  branch: string | null;
   active: boolean;
   password: string;
   address: string;
@@ -33,7 +32,6 @@ export interface UserRecord {
   phone?: string;
   address?: string;
   role: Roles;
-  branch: string;
   active: boolean;
   lastLogin: string;
 }
@@ -64,14 +62,6 @@ export class UserFormModalComponent implements OnChanges {
     { label: 'Cajero', value: 'CASHIER' },
   ];
 
-  branchOptions = [
-    { label: 'Central', value: 'Central' },
-    { label: 'Norte', value: 'Norte' },
-    { label: 'Sur', value: 'Sur' },
-    { label: 'Este', value: 'Este' },
-    { label: 'Oeste', value: 'Oeste' },
-  ];
-
   form: UserForm = this.emptyForm();
 
   get isEdit(): boolean {
@@ -86,7 +76,6 @@ export class UserFormModalComponent implements OnChanges {
         dni: this.editRecord.dni ?? '',
         phone: this.editRecord.phone ?? '',
         role: this.editRecord.role,
-        branch: this.editRecord.branch,
         active: this.editRecord.active,
         password: '',
         address: this.editRecord.address ?? '',
@@ -112,7 +101,6 @@ export class UserFormModalComponent implements OnChanges {
       dni: '',
       phone: '',
       role: null,
-      branch: null,
       active: true,
       password: '',
       address: '',

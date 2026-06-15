@@ -158,9 +158,16 @@ export class InstallmentsService {
    * @returns
    */
   earlyPay(id: string, payload: EarlyPayPayload): Observable<EarlyPayResult> {
-    const body: Record<string, unknown> = {
-      payment_method: payload.paymentMethod,
-    };
+    const body: Record<string, unknown> = {};
+    if (
+      payload.amountCash !== undefined ||
+      payload.amountTransfer !== undefined
+    ) {
+      body['amount_cash'] = payload.amountCash ?? 0;
+      body['amount_transfer'] = payload.amountTransfer ?? 0;
+    } else if (payload.paymentMethod) {
+      body['payment_method'] = payload.paymentMethod;
+    }
     if (payload.transferReference) {
       body['transfer_reference'] = payload.transferReference;
     }
@@ -176,7 +183,9 @@ export class InstallmentsService {
    */
   getManagementLog(installmentId: string): Observable<ManagementLogEntry[]> {
     return this.api
-      .get<ManagementLogEntryRaw[]>(`installments/${installmentId}/management-log`)
+      .get<
+        ManagementLogEntryRaw[]
+      >(`installments/${installmentId}/management-log`)
       .pipe(
         map((items) =>
           items.map((raw) => ({

@@ -30,6 +30,7 @@ import { PaymentsService } from '../../../collector/payments.service';
 import { ApproveDialogComponent } from './approve-dialog/approve-dialog.component';
 import { RejectDialogComponent } from './reject-dialog/reject-dialog.component';
 import { RefinanceDialogComponent } from './refinance-dialog/refinance-dialog.component';
+import { PlanChangeDialogComponent } from './plan-change-dialog/plan-change-dialog.component';
 import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog.component';
 import { CreditSchedulePanelComponent } from './credit-schedule-panel/credit-schedule-panel.component';
 import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
@@ -53,6 +54,7 @@ import { BackButtonComponent } from '../../../../shared/components/back-button/b
     ApproveDialogComponent,
     RejectDialogComponent,
     RefinanceDialogComponent,
+    PlanChangeDialogComponent,
     SettlementDialogComponent,
     CreditSchedulePanelComponent,
     BackButtonComponent,
@@ -86,6 +88,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   showApproveDialog = false;
   showRejectDialog = false;
   showRefinanceDialog = false;
+  showPlanChangeDialog = false;
 
   get installmentAmount(): number | null {
     return this.credit?.installments[0]?.amountDue ?? null;
@@ -364,6 +367,27 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
    * Handler del evento refinanced: recarga el crédito tras confirmar la refinanciación.
    */
   onRefinanced(): void {
+    this.load();
+  }
+
+  /**
+   * Indica si el crédito ya tuvo un cambio de plan. Se infiere de la presencia
+   * de cuotas anuladas por cambio de plan (un cambio exitoso siempre anula al
+   * menos una). Solo se permite un cambio de plan por crédito.
+   */
+  get planAlreadyChanged(): boolean {
+    return !!this.credit?.installments.some(
+      (i) => i.status === 'PLAN_CHANGE_CANCELLED',
+    );
+  }
+
+  /** Abre el diálogo de cambio de plan (simula al abrir). */
+  openPlanChangeDialog(): void {
+    this.showPlanChangeDialog = true;
+  }
+
+  /** Recarga el crédito tras un cambio de plan exitoso. */
+  onPlanChanged(): void {
     this.load();
   }
 

@@ -170,6 +170,81 @@ describe('PaymentsService', () => {
         message: '',
       });
     });
+
+    it('sends mixed split amounts without legacy amount_received/payment_method', () => {
+      service
+        .create({
+          installmentId: 'inst-1',
+          amountReceived: 500,
+          paymentMethod: 'MIXED',
+          amountCash: 200,
+          amountTransfer: 300,
+          transferReference: 'MIX-001',
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne(`${BASE}/payments`);
+      expect(req.request.body['installment_id']).toBe('inst-1');
+      expect(req.request.body['amount_cash']).toBe(200);
+      expect(req.request.body['amount_transfer']).toBe(300);
+      expect(req.request.body['amount_received']).toBeUndefined();
+      expect(req.request.body['payment_method']).toBeUndefined();
+      expect(req.request.body['transfer_reference']).toBe('MIX-001');
+      req.flush({
+        ok: true,
+        data: {
+          id: 'pay-3',
+          installment_id: 'inst-1',
+          amount_received: 500,
+          amount_cash: 200,
+          amount_transfer: 300,
+          payment_method: 'MIXED',
+          status: 'PENDING',
+          created_at: '2026-04-24T10:00:00Z',
+        },
+        message: '',
+      });
+    });
+  });
+
+  describe('adminDirect', () => {
+    it('sends mixed split amounts to admin-direct endpoint', () => {
+      service
+        .adminDirect({
+          installmentId: 'inst-1',
+          amountReceived: 500,
+          paymentMethod: 'MIXED',
+          amountCash: 125,
+          amountTransfer: 375,
+          transferReference: 'ADM-MIX-001',
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne(`${BASE}/payments/admin-direct`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body['installment_id']).toBe('inst-1');
+      expect(req.request.body['amount_cash']).toBe(125);
+      expect(req.request.body['amount_transfer']).toBe(375);
+      expect(req.request.body['amount_received']).toBeUndefined();
+      expect(req.request.body['payment_method']).toBeUndefined();
+      expect(req.request.body['transfer_reference']).toBe('ADM-MIX-001');
+      req.flush({
+        ok: true,
+        data: {
+          ...mockPaymentRaw,
+          amount_received: 500,
+          amount_cash: 125,
+          amount_transfer: 375,
+          payment_method: 'MIXED',
+          status: 'APPROVED',
+          amount_paid: 500,
+          penalty_amount: 0,
+          customer_id: 'cust-1',
+          collector_id: 'coll-1',
+        },
+        message: '',
+      });
+    });
   });
 
   describe('approve', () => {

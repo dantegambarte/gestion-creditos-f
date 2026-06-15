@@ -4,6 +4,7 @@ import {
   Input,
   OnChanges,
   OnDestroy,
+  OnInit,
   Output,
   SimpleChanges,
   inject,
@@ -17,15 +18,15 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { Subject, catchError, finalize, of, takeUntil } from 'rxjs';
+import { Subject, catchError, finalize, of, switchMap, takeUntil } from 'rxjs';
 import { AppError } from '../../../../core/models/app-error';
 import { DateService } from '../../../../core/services/date.service';
 import { FormatService } from '../../../../core/services/format.service';
 import { CashRegisterService } from '../../cash-register/cash-register.service';
 import { ExpenseCategory } from '../../models/interface/expenses';
+import { ExpenseCategoryManagerComponent } from '../expense-category-manager/expense-category-manager.component';
 import { Expense, ExpenseCreatePayload } from '../expense.model';
 import { ExpensesService } from '../expenses.service';
-import { ExpenseCategoryManagerComponent } from '../expense-category-manager/expense-category-manager.component';
 
 @Component({
   selector: 'app-expense-side-panel',
@@ -43,7 +44,7 @@ import { ExpenseCategoryManagerComponent } from '../expense-category-manager/exp
   ],
   templateUrl: './expense-side-panel.component.html',
 })
-export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
+export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();
   private readonly svc = inject(ExpensesService);
   private readonly cashRegisterSvc = inject(CashRegisterService);
@@ -81,7 +82,12 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
   createTransferRef = '';
   createCategoryId: string | null = null;
   createExpenseDate: string = this.todayIso();
+  createSource: 'DAILY' | 'COMPANY' = 'DAILY';
   createError = '';
+  /** Efectivo disponible en la caja activa de la jornada (null = no cargó aún). */
+  dailyAvailable: number | null = null;
+  /** Saldo actual de Caja General (cuenta GENERAL_CASH). */
+  generalAvailable: number | null = null;
   editingExpenseId: string | null = null;
   saving = false;
   // ── Confirmación de eliminación ──────────────────────────────────
@@ -94,6 +100,11 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
   readonly paymentMethodOptions = [
     { label: 'Efectivo', value: 'CASH' },
     { label: 'Transferencia', value: 'TRANSFER' },
+  ];
+
+  readonly sourceOptions = [
+    { label: 'Caja del día', value: 'DAILY' },
+    { label: 'Caja General', value: 'COMPANY' },
   ];
 
   /** Indica si el formulario está en modo edición. */
@@ -109,6 +120,10 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
 
   get createCategoryOptions(): { label: string; value: string | null }[] {
     return [{ label: 'Sin categoría', value: null }, ...this.categoryOptions];
+  }
+
+  ngOnInit(): void {
+    this.loadAvailableAmounts();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -140,6 +155,7 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
     this.createTransferRef = '';
     this.createCategoryId = null;
     this.createExpenseDate = this.todayIso();
+    this.createSource = 'DAILY';
     this.createError = '';
   }
 
@@ -151,8 +167,7 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
     if (
       !this.createAmount ||
       this.createAmount <= 0 ||
-      !this.createDescription.trim() ||
-      !this.createCategoryId
+      !this.createDescription.trim()
     )
       return;
 
@@ -246,6 +261,7 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
     if (this.createCategoryId) {
       payload.categoryId = this.createCategoryId;
     }
+    payload.source = this.createSource;
 
     this.svc
       .create(payload)
@@ -256,6 +272,7 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
       .subscribe({
         next: () => {
           this.resetForm();
+          this.loadAvailableAmounts();
           this.msg.add({
             severity: 'success',
             summary: 'Gasto registrado',
@@ -323,7 +340,40 @@ export class ExpenseSidePanelComponent implements OnChanges, OnDestroy {
     this.createCategoryId = expense.categoryId;
     this.createExpenseDate =
       (expense.expenseDate || '').split('T')[0] || this.todayIso();
+    this.createSource = expense.source;
     this.createError = '';
+  }
+
+  /**
+   * Carga el efectivo disponible en la caja activa y el saldo de Caja General,
+   * para mostrarlos como referencia bajo el selector de "Origen del gasto".
+   */
+  private loadAvailableAmounts(): void {
+    this.cashRegisterSvc
+      .getActiveSession()
+      .pipe(
+        switchMap((session) =>
+          session
+            ? this.cashRegisterSvc.getSessionSnapshot(session.id)
+            : of(null),
+        ),
+        catchError(() => of(null)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((snapshot) => {
+        this.dailyAvailable = snapshot?.expected.cash ?? null;
+      });
+
+    this.cashRegisterSvc
+      .getCashAccounts()
+      .pipe(
+        catchError(() => of([])),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((accounts) => {
+        const general = accounts.find((a) => a.type === 'GENERAL_CASH');
+        this.generalAvailable = general?.current_balance ?? null;
+      });
   }
 
   private todayIso(): string {

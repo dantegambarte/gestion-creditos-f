@@ -1,9 +1,9 @@
 ::ng-deep .date-nav-picker {
   .p-inputtext {
-    background: #121520;
-    border: 1px solid #1a1d27;
+    background: var(--ff-panel);
+    border: 1px solid var(--ff-border-subtle);
     border-radius: 10px;
-    color: #e2e8f0;
+    color: var(--ff-text-primary);
     font-size: 0.875rem;
     font-weight: 500;
     padding: 6px 12px 6px 32px;
@@ -16,11 +16,11 @@
     &:focus {
       outline: none;
       box-shadow: none;
-      border-color: #252a3a;
+      border-color: var(--ff-border);
     }
 
     &:hover {
-      border-color: #334155;
+      border-color: var(--ff-border);
     }
   }
 }
@@ -41,9 +41,9 @@
 
   .p-inputtext,
   .p-dropdown {
-    background: #121520;
-    border-color: #1a1d27;
-    color: #e2e8f0;
+    background: var(--ff-panel);
+    border-color: var(--ff-border-subtle);
+    color: var(--ff-text-primary);
   }
 }
 

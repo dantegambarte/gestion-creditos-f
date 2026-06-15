@@ -26,28 +26,11 @@
     }
 
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Monto recibido</label>
-      <p-inputNumber
-        appCurrencyAmountInput
-        [(ngModel)]="paymentAmount"
-        (ngModelChange)="onPaymentAmountChange()"
-        mode="currency"
-        currency="ARS"
-        locale="es-AR"
-        [minFractionDigits]="0"
-        [min]="0.01"
-        [max]="item ? availableBalance(item) : null"
-        styleClass="w-full"
-        inputStyleClass="w-full h-11 rounded-xl bg-gray-50 px-3 text-sm text-gray-700"
-        placeholder="$ 0"
-      />
-    </div>
-
-    <div class="flex flex-col gap-1">
       <label class="text-sm font-medium text-gray-700">Método de pago</label>
       <p-dropdown
         [options]="PAYMENT_METHOD_OPTIONS"
         [(ngModel)]="paymentMethod"
+        (ngModelChange)="onPaymentMethodChange()"
         optionLabel="label"
         optionValue="value"
         styleClass="w-full h-11"
@@ -55,7 +38,49 @@
       />
     </div>
 
-    @if (paymentMethod === "TRANSFER") {
+    @if (usesCash) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-gray-700"
+          >Monto en efectivo</label
+        >
+        <p-inputNumber
+          appCurrencyAmountInput
+          [(ngModel)]="paymentCashAmount"
+          (ngModelChange)="onPaymentAmountChange()"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [minFractionDigits]="0"
+          [min]="0"
+          [max]="item ? availableBalance(item) : null"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 rounded-xl bg-gray-50 px-3 text-sm text-gray-700"
+          placeholder="$ 0"
+        />
+      </div>
+    }
+
+    @if (usesTransfer) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-gray-700"
+          >Monto en transferencia</label
+        >
+        <p-inputNumber
+          appCurrencyAmountInput
+          [(ngModel)]="paymentTransferAmount"
+          (ngModelChange)="onPaymentAmountChange()"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [minFractionDigits]="0"
+          [min]="0"
+          [max]="item ? availableBalance(item) : null"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 rounded-xl bg-gray-50 px-3 text-sm text-gray-700"
+          placeholder="$ 0"
+        />
+      </div>
+
       <div class="flex flex-col gap-1">
         <label class="text-sm font-medium text-gray-700"
           >Referencia de transferencia</label
@@ -70,6 +95,10 @@
         />
       </div>
     }
+
+    <p class="text-xs text-gray-500">
+      Total a registrar: <strong>{{ paymentAmount | currencyArs: 2 }}</strong>
+    </p>
 
     @if (isPartialPayment()) {
       <div
@@ -125,12 +154,7 @@
         styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmPayment()"
         [loading]="processingPayment"
-        [disabled]="
-          !!processingPayment ||
-          !paymentAmount ||
-          paymentAmount <= 0 ||
-          (isPartialPayment() && !paymentNextVisitDate)
-        "
+        [disabled]="!!processingPayment || paymentFormInvalid"
       />
     </div>
   </ng-template>

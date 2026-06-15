@@ -7,7 +7,13 @@ export type CreditStatus =
   | 'REFINANCED';
 export type CreditType = 'SALE' | 'LOAN';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
-export type InstallmentStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'PARTIAL';
+export type IntakePaymentMethod = 'CASH' | 'TRANSFER' | 'MIXED';
+export type InstallmentStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'OVERDUE'
+  | 'PARTIAL'
+  | 'PLAN_CHANGE_CANCELLED';
 
 export interface Credit {
   id: string;
@@ -176,10 +182,14 @@ export interface SaleCreditPayload {
   units: Array<{ unitId: string }>;
   notes?: string;
   downPayment?: number;
-  downPaymentMethod?: 'CASH' | 'TRANSFER';
+  downPaymentMethod?: IntakePaymentMethod;
+  downPaymentCash?: number;
+  downPaymentTransfer?: number;
   downPaymentTransferReference?: string;
   advancedInstallmentsCount?: number;
-  advancedInstallmentsMethod?: 'CASH' | 'TRANSFER';
+  advancedInstallmentsMethod?: IntakePaymentMethod;
+  advancedInstallmentsCash?: number;
+  advancedInstallmentsTransfer?: number;
   advancedInstallmentsTransferReference?: string;
 }
 
@@ -285,7 +295,9 @@ export interface RejectPayload {
 }
 
 export interface EarlySettlementPayload {
-  paymentMethod: 'CASH' | 'TRANSFER';
+  paymentMethod?: IntakePaymentMethod;
+  amountCash?: number;
+  amountTransfer?: number;
   transferReference?: string;
 }
 
@@ -301,6 +313,29 @@ export interface RefinancePayload {
   reason: string;
   extraCharges?: number;
   notes?: string;
+}
+
+// ── Cambio de plan ──────────────────────────────────────────────
+export interface PlanChangePlan {
+  installments: number;
+  rate: number; // porcentaje (ej: 20 = 20%)
+}
+
+export interface PlanChangeSimulation {
+  currentPlan: PlanChangePlan;
+  newPlan: PlanChangePlan;
+  totalPaid: number;
+  newCreditTotal: number;
+  newBalance: number;
+  survivingInstallmentId: string | null;
+  cancelledInstallments: number[];
+  creditWillBeSettled: boolean;
+}
+
+export interface PlanChangeResult extends PlanChangeSimulation {
+  planChangeId: string;
+  executedAt: string;
+  message: string;
 }
 
 export interface RefinanceResult {

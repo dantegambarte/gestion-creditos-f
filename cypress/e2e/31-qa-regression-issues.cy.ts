@@ -184,14 +184,19 @@ function selectDropdownOption(selector: string, optionText: string) {
     .find('.p-dropdown, .p-select')
     .first()
     .click({ force: true });
-  cy.get('.p-dropdown-item, .p-select-option')
-    .should('have.length.greaterThan', 0);
+  cy.get('.p-dropdown-item, .p-select-option').should(
+    'have.length.greaterThan',
+    0,
+  );
   cy.contains('.p-dropdown-item, .p-select-option', optionText).click({
     force: true,
   });
 }
 
-function prepareSaleForm(unitCode = 'U-001') {
+function prepareSaleForm(
+  unitCode = 'U-001',
+  initialPayment: 'DOWN_PAYMENT' | 'NONE' = 'DOWN_PAYMENT',
+) {
   cy.get('body').then(($body) => {
     if ($body.find('[data-cy="credit-customer"]').length === 0) {
       cy.url().should('include', '/seller/operations/new');
@@ -201,9 +206,7 @@ function prepareSaleForm(unitCode = 'U-001') {
     selectDropdownOption('[data-cy="credit-customer"]', 'Ana García');
     selectDropdownOption('[data-cy="credit-frequency"]', 'Mensual');
 
-    cy.get('[data-cy="credit-installments-count"] input')
-      .clear()
-      .type('3');
+    cy.get('[data-cy="credit-installments-count"] input').clear().type('3');
 
     selectDropdownOption('[data-cy="sale-product-selector"]', 'Moto X');
     cy.wait('@variants');
@@ -212,8 +215,10 @@ function prepareSaleForm(unitCode = 'U-001') {
     selectDropdownOption('[data-cy="sale-unit-selector"]', unitCode);
     cy.get('[data-cy="sale-add-unit"]').click();
 
-    cy.get('[data-cy="sale-toggle-down-payment"]').click();
-    cy.get('[data-cy="sale-down-payment"] input').clear().type('200');
+    if (initialPayment === 'DOWN_PAYMENT') {
+      cy.get('[data-cy="sale-toggle-down-payment"]').click();
+      cy.get('[data-cy="sale-down-payment"] input').clear().type('200');
+    }
   });
 }
 
@@ -302,6 +307,89 @@ describe('QA Regression — SALE frontend integration', () => {
     });
   });
 
+  it('crea SALE con enganche mixto y envía split del pago inicial', () => {
+    cy.intercept('POST', '**/api/credits', (req) => {
+      expect(req.body).to.include({
+        customer_id: 'cust-001',
+        type: 'SALE',
+        installments_count: 3,
+        payment_frequency: 'MONTHLY',
+        down_payment: 200,
+        down_payment_cash: 80,
+        down_payment_transfer: 120,
+        down_payment_transfer_reference: 'DP-UI-MIX',
+      });
+      expect(req.body.down_payment_method).to.equal(undefined);
+      expect(req.body.prepaid_installments).to.equal(undefined);
+      req.reply(saleCreateResponse);
+    }).as('createSaleMixedDownPayment');
+
+    prepareSaleForm();
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-cy="credit-submit"]').length === 0) {
+        cy.url().should('include', '/seller/operations/new');
+        return;
+      }
+
+      cy.get('[data-cy="sale-down-payment-method-mixed"]').click({
+        force: true,
+      });
+      cy.get('[data-cy="sale-down-payment-cash"] input').clear().type('80');
+      cy.get('[data-cy="sale-down-payment-transfer"] input')
+        .clear()
+        .type('120');
+      cy.get('[data-cy="sale-down-payment-transfer-reference"]').type(
+        'DP-UI-MIX',
+      );
+      cy.get('[data-cy="credit-submit"]').click();
+      cy.wait('@createSaleMixedDownPayment');
+    });
+  });
+
+  it('crea SALE con cuotas adelantadas mixtas y envía split del adelanto', () => {
+    cy.intercept('POST', '**/api/credits', (req) => {
+      expect(req.body).to.include({
+        customer_id: 'cust-001',
+        type: 'SALE',
+        installments_count: 3,
+        payment_frequency: 'MONTHLY',
+        prepaid_installments: 1,
+        prepaid_installments_cash: 175,
+        prepaid_installments_transfer: 175,
+        prepaid_installments_transfer_reference: 'ADV-UI-MIX',
+      });
+      expect(req.body.prepaid_installments_method).to.equal(undefined);
+      req.reply(saleCreateResponse);
+    }).as('createSaleMixedAdvanced');
+
+    prepareSaleForm('U-001', 'NONE');
+    cy.get('body').then(($body) => {
+      if ($body.find('[data-cy="credit-submit"]').length === 0) {
+        cy.url().should('include', '/seller/operations/new');
+        return;
+      }
+
+      cy.contains('label', 'Cuotas adelantadas').click({ force: true });
+      cy.get('[data-cy="sale-advanced-installments-count"] input')
+        .clear()
+        .type('1');
+      cy.get('[data-cy="sale-advanced-installments-method-mixed"]').click({
+        force: true,
+      });
+      cy.get('[data-cy="sale-advanced-installments-cash"] input')
+        .clear()
+        .type('175');
+      cy.get('[data-cy="sale-advanced-installments-transfer"] input')
+        .clear()
+        .type('175');
+      cy.get('[data-cy="sale-advanced-installments-transfer-reference"]').type(
+        'ADV-UI-MIX',
+      );
+      cy.get('[data-cy="credit-submit"]').click();
+      cy.wait('@createSaleMixedAdvanced');
+    });
+  });
+
   it('bloquea la venta cuando el enganche supera el total del carrito', () => {
     cy.get('body').then(($body) => {
       if ($body.find('[data-cy="credit-customer"]').length === 0) {
@@ -311,7 +399,11 @@ describe('QA Regression — SALE frontend integration', () => {
 
     prepareSaleForm();
     cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="sale-down-payment"] input, [data-cy="credit-submit"]').length === 0) {
+      if (
+        $body.find(
+          '[data-cy="sale-down-payment"] input, [data-cy="credit-submit"]',
+        ).length === 0
+      ) {
         cy.url().should('include', '/seller/operations/new');
         return;
       }
@@ -319,9 +411,9 @@ describe('QA Regression — SALE frontend integration', () => {
       cy.get('[data-cy="sale-down-payment"] input').clear().type('1500');
       cy.get('[data-cy="credit-submit"]').click();
 
-      cy.contains('El enganche no puede ser mayor al total de la venta.').should(
-        'be.visible',
-      );
+      cy.contains(
+        'El enganche no puede ser mayor al total de la venta.',
+      ).should('be.visible');
     });
   });
 

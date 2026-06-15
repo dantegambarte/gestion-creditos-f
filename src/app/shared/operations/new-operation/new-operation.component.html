@@ -1,44 +1,46 @@
 <p-toast position="top-right" />
 <div
-  class="flex h-full min-h-0 bg-[#0B0D14] font-sans text-[#E2E8F0] overflow-hidden"
+  class="flex h-full min-h-0 overflow-hidden bg-[var(--ff-bg)] font-sans text-[var(--ff-text-primary)]"
 >
   <div class="flex-1 min-h-0 flex flex-col">
     <header
-      class="h-[72px] border-b border-[#1A1D27] bg-[#0B0D14] flex items-center px-8 justify-between shrink-0"
+      class="flex h-[72px] shrink-0 items-center justify-between border-b border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-8"
     >
       <div class="flex items-center gap-3">
         <button
-          class="p-2 -ml-2 rounded-lg hover:bg-[#1A1D27] transition-colors text-slate-400 hover:text-white"
+          class="-ml-2 rounded-lg p-2 text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
           routerLink="../"
         >
           <i class="pi pi-arrow-left"></i>
         </button>
-        <h1 class="text-[15px] font-semibold text-white">Nueva Operación</h1>
+        <h1 class="text-[15px] font-semibold text-[var(--ff-text-primary)]">
+          Nueva Operación
+        </h1>
       </div>
 
       <div class="flex items-center gap-6">
         @for (step of steps; track step.label; let i = $index) {
           @if (i > 0) {
-            <div class="w-8 h-[1px] bg-[#1A1D27]"></div>
+            <div class="h-[1px] w-8 bg-[var(--ff-border-subtle)]"></div>
           }
           <div
             class="flex items-center gap-2"
             [class.opacity-50]="activeIndex !== i"
           >
             <div
-              class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
-              [class.bg-[#3B82F6]]="activeIndex === i"
+              class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
+              [class.bg-[var(--ff-accent)]]="activeIndex === i"
               [class.text-white]="activeIndex === i"
               [class.border]="activeIndex !== i"
-              [class.border-[#2A2E3B]]="activeIndex !== i"
-              [class.text-[#848D9E]]="activeIndex !== i"
+              [class.border-[var(--ff-border)]]="activeIndex !== i"
+              [class.text-[var(--ff-text-muted)]]="activeIndex !== i"
             >
               {{ i + 1 }}
             </div>
             <span
               class="text-sm font-medium"
               [class.text-white]="activeIndex === i"
-              [class.text-[#848D9E]]="activeIndex !== i"
+              [class.text-[var(--ff-text-muted)]]="activeIndex !== i"
             >
               {{
                 i === 0
@@ -58,7 +60,7 @@
 
       <div class="flex items-center gap-2">
         <button
-          class="p-2 rounded-lg hover:bg-[#1A1D27] transition-colors text-slate-400 hover:text-white"
+          class="rounded-lg p-2 text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
           routerLink="../"
         >
           <i class="pi pi-times"></i>
@@ -185,9 +187,11 @@
       </div>
     </main>
 
-    <div class="shrink-0 border-t border-[#1A1D27] bg-[#0B0D14] px-8 py-4">
+    <div
+      class="shrink-0 border-t border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-8 py-4"
+    >
       <div class="flex items-center justify-between">
-        <span class="text-sm text-[#848D9E]">
+        <span class="text-sm text-[var(--ff-text-muted)]">
           Paso {{ activeIndex + 1 }} de {{ steps.length }} ·
           {{ steps[activeIndex].label }}
         </span>
@@ -245,18 +249,18 @@
 
 @if (state.submitting()) {
   <div
-    class="fixed inset-0 z-[1200] flex items-center justify-center bg-[#0B0D14]/85 backdrop-blur-sm"
+    class="fixed inset-0 z-[1200] flex items-center justify-center bg-[rgba(11,13,20,0.85)] backdrop-blur-sm"
     data-cy="submit-loader-overlay"
   >
     <div
-      class="flex min-w-[320px] flex-col items-center gap-4 rounded-2xl border border-[#252A3A] bg-[#121520] px-6 py-6 text-center text-slate-100 shadow-2xl"
+      class="flex min-w-[320px] flex-col items-center gap-4 rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel)] px-6 py-6 text-center text-[var(--ff-text-primary)] shadow-2xl"
     >
-      <i class="pi pi-spinner pi-spin text-3xl text-[#37F0A4]"></i>
+      <i class="pi pi-spinner pi-spin text-3xl text-[var(--ff-success)]"></i>
       <div>
-        <p class="text-base font-semibold text-white">
+        <p class="text-base font-semibold text-[var(--ff-text-primary)]">
           Enviando para aprobación
         </p>
-        <p class="mt-1 text-sm text-slate-400">
+        <p class="mt-1 text-sm text-[var(--ff-text-secondary)]">
           Estamos registrando la pre-operación. Esperá un instante...
         </p>
       </div>

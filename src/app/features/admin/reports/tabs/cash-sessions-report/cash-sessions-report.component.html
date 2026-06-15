@@ -1,0 +1,632 @@
+<div class="space-y-6">
+  <!-- Filtro inline -->
+  <div class="flex flex-wrap items-center gap-3">
+    <span class="text-sm text-gray-400">Desde</span>
+    <p-calendar
+      [(ngModel)]="dateFrom"
+      dataType="string"
+      dateFormat="yy-mm-dd"
+      [showIcon]="true"
+      iconDisplay="input"
+      appendTo="body"
+      styleClass="w-44"
+      inputStyleClass="w-full h-10 bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+    />
+    <span class="text-sm text-gray-400">hasta</span>
+    <p-calendar
+      [(ngModel)]="dateTo"
+      dataType="string"
+      dateFormat="yy-mm-dd"
+      [showIcon]="true"
+      iconDisplay="input"
+      appendTo="body"
+      styleClass="w-44"
+      inputStyleClass="w-full h-10 bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+    />
+    <p-button
+      label="Consultar"
+      icon="pi pi-search"
+      severity="primary"
+      styleClass="h-11 px-5 rounded-xl shadow-sm justify-center"
+      [disabled]="!rangeValid"
+      [loading]="loading"
+      (onClick)="consult()"
+    />
+  </div>
+  @if (dateError) {
+    <p class="text-sm text-red-400 flex items-center gap-1.5">
+      <i class="pi pi-exclamation-circle"></i> {{ dateError }}
+    </p>
+  }
+
+  @if (loading) {
+    <app-loading-state />
+  } @else if (error) {
+    <app-error-state [message]="error.message" />
+  } @else if (businessDays.length === 0) {
+    <p class="text-sm text-gray-500 text-center py-10">
+      Sin jornadas para el período seleccionado.
+    </p>
+  } @else {
+    <div class="bg-gray-800 rounded-xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-700">
+            <th
+              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Fecha
+            </th>
+            <th
+              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+            >
+              Estado
+            </th>
+            <th class="px-5 py-3 w-32"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (day of businessDays; track day.id) {
+            <tr
+              class="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors"
+            >
+              <td class="px-5 py-3 text-gray-300 font-mono">
+                {{ formatDate(day.business_date) }}
+              </td>
+              <td class="px-5 py-3">
+                <span
+                  class="text-[10px] uppercase tracking-widest px-2 py-1 rounded-md font-semibold {{
+                    statusBadgeClasses(day.status)
+                  }}"
+                >
+                  {{ businessDayStatusLabel(day.status) }}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <button
+                  type="button"
+                  class="text-sm font-medium transition-colors"
+                  style="color: #67e8f9"
+                  (click)="openJornada(day)"
+                >
+                  Ver detalle
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Dialog: detalle de jornada (cajas del día) -->
+<p-dialog
+  [(visible)]="showJornadaDialog"
+  [modal]="true"
+  [showHeader]="false"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="bg-[#121520] border border-[#1A1D27]"
+  contentStyleClass="bg-[#121520] p-0 border-none"
+  [contentStyle]="{
+    padding: '0',
+    background: '#121520',
+    color: '#cbd5e1',
+    border: '1px solid #1A1D27',
+    borderRadius: '1rem',
+    overflow: 'hidden',
+  }"
+  [style]="{ width: '720px', maxWidth: '95vw' }"
+>
+  <section class="bg-[#121520] text-slate-300">
+    <header
+      class="flex items-center justify-between gap-4 border-b border-[#252A3A] px-6 py-5"
+    >
+      <div>
+        <h2 class="text-xl font-bold text-white">Cajas de la jornada</h2>
+        @if (jornadaDetail()) {
+          <p class="text-xs text-slate-400 mt-1">
+            {{ formatDate(jornadaDetail()!.business_date) }} ·
+            {{ businessDayStatusLabel(jornadaDetail()!.status) }}
+          </p>
+        }
+      </div>
+      <button
+        type="button"
+        class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
+        (click)="closeJornadaDialog()"
+      >
+        <i class="pi pi-times text-base"></i>
+      </button>
+    </header>
+
+    <div class="px-6 py-5 max-h-[60vh] overflow-y-auto">
+      @if (loadingJornada()) {
+        <app-loading-state message="Cargando cajas..."></app-loading-state>
+      } @else if (jornadaError()) {
+        <div
+          class="rounded-xl border border-red-400/25 bg-red-500/10 p-3 text-sm text-red-200"
+        >
+          {{ jornadaError()!.message }}
+        </div>
+      } @else if (jornadaSessions().length === 0) {
+        <p class="text-sm text-slate-500 text-center py-8">
+          No hay cajas registradas en esta jornada.
+        </p>
+      } @else {
+        <div class="space-y-3">
+          @for (session of jornadaSessions(); track session.id) {
+            <div
+              class="rounded-xl border border-[#252A3A] bg-[#0F121B] p-4 space-y-3"
+            >
+              <div class="flex items-center justify-between gap-4">
+                <div>
+                  <p class="text-sm font-semibold text-white">
+                    {{ session.owner_name || "Sin asignar" }}
+                    @if (session.shift_label) {
+                      <span class="text-slate-400 font-normal">
+                        · {{ session.shift_label }}</span
+                      >
+                    }
+                  </p>
+                  <p class="text-xs text-slate-400 mt-0.5">
+                    {{ formatDateTime(session.opened_at) }} →
+                    {{ formatDateTime(session.closed_at) }}
+                  </p>
+                </div>
+                <span
+                  class="text-[10px] uppercase tracking-widest px-2 py-1 rounded-md font-semibold {{
+                    statusBadgeClasses(session.status)
+                  }}"
+                >
+                  {{ sessionStatusLabel(session.status) }}
+                </span>
+              </div>
+
+              @if (session.summary) {
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div class="rounded-lg bg-[#121520] px-3 py-2">
+                    <p
+                      class="text-[10px] text-slate-500 uppercase tracking-widest"
+                    >
+                      Cobros
+                    </p>
+                    <p class="text-sm font-mono font-semibold text-emerald-300">
+                      {{ formatCurrency(session.summary.collections) }}
+                    </p>
+                  </div>
+                  <div class="rounded-lg bg-[#121520] px-3 py-2">
+                    <p
+                      class="text-[10px] text-slate-500 uppercase tracking-widest"
+                    >
+                      Gastos
+                    </p>
+                    <p class="text-sm font-mono font-semibold text-red-300">
+                      {{ formatCurrency(session.summary.expenses) }}
+                    </p>
+                  </div>
+                  <div class="rounded-lg bg-[#121520] px-3 py-2">
+                    <p
+                      class="text-[10px] text-slate-500 uppercase tracking-widest"
+                    >
+                      Drops
+                    </p>
+                    <p class="text-sm font-mono font-semibold text-slate-200">
+                      {{ formatCurrency(session.summary.drops) }}
+                    </p>
+                  </div>
+                  <div class="rounded-lg bg-[#121520] px-3 py-2">
+                    <p
+                      class="text-[10px] text-slate-500 uppercase tracking-widest"
+                    >
+                      Diferencia
+                    </p>
+                    <p
+                      class="text-sm font-mono font-semibold"
+                      [class.text-emerald-300]="
+                        differenceTone(session.closure_difference_status) ===
+                        'success'
+                      "
+                      [class.text-amber-300]="
+                        differenceTone(session.closure_difference_status) ===
+                        'warning'
+                      "
+                      [class.text-red-300]="
+                        differenceTone(session.closure_difference_status) ===
+                        'danger'
+                      "
+                      [class.text-slate-200]="
+                        differenceTone(session.closure_difference_status) ===
+                        'neutral'
+                      "
+                    >
+                      {{ formatCurrency(session.summary.difference) }}
+                    </p>
+                  </div>
+                </div>
+              }
+
+              <div class="flex justify-end">
+                <button
+                  type="button"
+                  class="text-sm font-medium transition-colors"
+                  style="color: #67e8f9"
+                  (click)="openSession(session.id)"
+                >
+                  Ver cierre
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <footer class="flex justify-end border-t border-[#252A3A] px-6 py-4">
+      <button
+        type="button"
+        class="h-10 rounded-xl border border-blue-400/40 px-4 text-sm font-semibold text-white transition hover:bg-blue-500/15"
+        (click)="closeJornadaDialog()"
+      >
+        Cerrar
+      </button>
+    </footer>
+  </section>
+</p-dialog>
+
+<!-- Dialog: detalle de cierre de una caja -->
+<p-dialog
+  [(visible)]="showSessionDialog"
+  [modal]="true"
+  [showHeader]="false"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="bg-[#121520] border border-[#1A1D27]"
+  contentStyleClass="bg-[#121520] p-0 border-none"
+  [contentStyle]="{
+    padding: '0',
+    background: '#121520',
+    color: '#cbd5e1',
+    border: '1px solid #1A1D27',
+    borderRadius: '1rem',
+    overflow: 'hidden',
+  }"
+  [style]="{ width: '640px', maxWidth: '95vw' }"
+>
+  <section class="bg-[#121520] text-slate-300">
+    <header
+      class="flex items-center justify-between gap-4 border-b border-[#252A3A] px-6 py-5"
+    >
+      <div>
+        <h2 class="text-xl font-bold text-white">Cierre de caja</h2>
+        @if (sessionDetail()) {
+          <p class="text-xs text-slate-400 mt-1">
+            {{ sessionDetail()!.owner?.full_name || "Sin asignar" }} ·
+            {{ formatDateTime(sessionDetail()!.opened_at) }} →
+            {{ formatDateTime(sessionDetail()!.closed_at) }}
+          </p>
+        }
+      </div>
+      <button
+        type="button"
+        class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
+        (click)="closeSessionDialog()"
+      >
+        <i class="pi pi-times text-base"></i>
+      </button>
+    </header>
+
+    <div class="px-6 py-5 max-h-[60vh] overflow-y-auto space-y-4">
+      @if (loadingSession()) {
+        <app-loading-state message="Cargando cierre..."></app-loading-state>
+      } @else if (sessionError()) {
+        <div
+          class="rounded-xl border border-red-400/25 bg-red-500/10 p-3 text-sm text-red-200"
+        >
+          {{ sessionError()!.message }}
+        </div>
+      } @else if (sessionDetail()) {
+        <!-- Datos generales -->
+        <div class="rounded-xl border border-[#252A3A] bg-[#0F121B] p-4">
+          <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-3">
+            Datos generales
+          </p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Apertura
+              </p>
+              <p class="text-sm text-slate-200 mt-0.5">
+                {{ formatDateTime(sessionDetail()!.opened_at) }}
+              </p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Cierre
+              </p>
+              <p class="text-sm text-slate-200 mt-0.5">
+                {{ formatDateTime(sessionDetail()!.closed_at) }}
+              </p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Estado
+              </p>
+              <p class="text-sm text-slate-200 mt-0.5">
+                {{ sessionStatusLabel(sessionDetail()!.status) }}
+              </p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Turno
+              </p>
+              <p class="text-sm text-slate-200 mt-0.5">
+                {{ sessionDetail()!.shift_label || "—" }}
+              </p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Monto inicial
+              </p>
+              <p class="text-sm font-mono text-slate-200 mt-0.5">
+                {{ formatCurrency(sessionDetail()!.opening_amount) }}
+              </p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Diferencia de cierre
+              </p>
+              <p
+                class="text-sm font-mono mt-0.5"
+                [class.text-emerald-300]="
+                  differenceTone(sessionDetail()!.closure_difference_status) ===
+                  'success'
+                "
+                [class.text-amber-300]="
+                  differenceTone(sessionDetail()!.closure_difference_status) ===
+                  'warning'
+                "
+                [class.text-red-300]="
+                  differenceTone(sessionDetail()!.closure_difference_status) ===
+                  'danger'
+                "
+                [class.text-slate-200]="
+                  differenceTone(sessionDetail()!.closure_difference_status) ===
+                  'neutral'
+                "
+              >
+                {{
+                  formatCurrencyOrDash(
+                    sessionDetail()!.closure_total_difference
+                  )
+                }}
+              </p>
+            </div>
+            <div>
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Cerrado por
+              </p>
+              <p class="text-sm font-mono text-slate-200 mt-0.5">
+                {{ shortId(sessionDetail()!.closed_by) }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Totales de cobros / gastos / drops / diferencia -->
+        @if (sessionDetail()!.closure_snapshot) {
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div
+              class="rounded-lg bg-[#0F121B] border border-[#252A3A] px-3 py-2"
+            >
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Cobros
+              </p>
+              <p class="text-sm font-mono font-semibold text-emerald-300">
+                {{
+                  formatCurrency(
+                    closureSummary(sessionDetail()!.closure_snapshot!)
+                      .collections
+                  )
+                }}
+              </p>
+            </div>
+            <div
+              class="rounded-lg bg-[#0F121B] border border-[#252A3A] px-3 py-2"
+            >
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Gastos
+              </p>
+              <p class="text-sm font-mono font-semibold text-red-300">
+                {{
+                  formatCurrency(
+                    closureSummary(sessionDetail()!.closure_snapshot!).expenses
+                  )
+                }}
+              </p>
+            </div>
+            <div
+              class="rounded-lg bg-[#0F121B] border border-[#252A3A] px-3 py-2"
+            >
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Drops
+              </p>
+              <p class="text-sm font-mono font-semibold text-slate-200">
+                {{
+                  formatCurrency(
+                    closureSummary(sessionDetail()!.closure_snapshot!).drops
+                  )
+                }}
+              </p>
+            </div>
+            <div
+              class="rounded-lg bg-[#0F121B] border border-[#252A3A] px-3 py-2"
+            >
+              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+                Diferencia
+              </p>
+              <p
+                class="text-sm font-mono font-semibold"
+                [class.text-emerald-300]="
+                  differenceTone(sessionDetail()!.closure_difference_status) ===
+                  'success'
+                "
+                [class.text-amber-300]="
+                  differenceTone(sessionDetail()!.closure_difference_status) ===
+                  'warning'
+                "
+                [class.text-red-300]="
+                  differenceTone(sessionDetail()!.closure_difference_status) ===
+                  'danger'
+                "
+                [class.text-slate-200]="
+                  differenceTone(sessionDetail()!.closure_difference_status) ===
+                  'neutral'
+                "
+              >
+                {{
+                  formatCurrency(
+                    closureSummary(sessionDetail()!.closure_snapshot!)
+                      .difference
+                  )
+                }}
+              </p>
+            </div>
+          </div>
+        }
+
+        <!-- Arqueo por método de pago -->
+        @if (sessionDetail()!.closure_details.length > 0) {
+          <div
+            class="overflow-hidden rounded-xl border border-[#252A3A] bg-[#0F121B]"
+          >
+            <table class="w-full border-collapse text-sm">
+              <thead>
+                <tr
+                  class="border-b border-[#334155] bg-[#1D2231] text-xs uppercase tracking-[0.14em] text-slate-400"
+                >
+                  <th class="px-4 py-3 text-left font-semibold">Método</th>
+                  <th class="px-4 py-3 text-right font-semibold">Esperado</th>
+                  <th class="px-4 py-3 text-right font-semibold">Declarado</th>
+                  <th class="px-4 py-3 text-right font-semibold">Diferencia</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#252A3A]">
+                @for (
+                  detail of sessionDetail()!.closure_details;
+                  track detail.id
+                ) {
+                  <tr class="bg-[#121520]">
+                    <td class="px-4 py-3 font-semibold text-white">
+                      {{
+                        paymentMethodLabels[detail.payment_method] ||
+                          detail.payment_method
+                      }}
+                    </td>
+                    <td class="px-4 py-3 text-right font-mono text-slate-200">
+                      {{ formatCurrency(detail.expected_amount) }}
+                    </td>
+                    <td class="px-4 py-3 text-right font-mono text-slate-200">
+                      {{ formatCurrency(detail.declared_amount) }}
+                    </td>
+                    <td
+                      class="px-4 py-3 text-right font-mono font-semibold"
+                      [class.text-emerald-300]="
+                        differenceTone(detail.difference_status) === 'success'
+                      "
+                      [class.text-amber-300]="
+                        differenceTone(detail.difference_status) === 'warning'
+                      "
+                      [class.text-red-300]="
+                        differenceTone(detail.difference_status) === 'danger'
+                      "
+                    >
+                      {{ formatCurrency(detail.difference) }}
+                    </td>
+                  </tr>
+                  @if (detail.notes) {
+                    <tr class="bg-[#0F121B] text-xs text-slate-400">
+                      <td class="px-4 py-2" colspan="4">{{ detail.notes }}</td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="text-sm text-slate-500 text-center py-4">
+            Esta caja no tiene arqueo por método de pago registrado.
+          </p>
+        }
+
+        <!-- Drops -->
+        @if (sessionDetail()!.drops.length > 0) {
+          <div>
+            <p
+              class="text-[10px] text-slate-500 uppercase tracking-widest mb-2"
+            >
+              Drops a Caja General
+            </p>
+            <div
+              class="overflow-hidden rounded-xl border border-[#252A3A] bg-[#0F121B] divide-y divide-[#252A3A]"
+            >
+              @for (drop of sessionDetail()!.drops; track drop.id) {
+                <div
+                  class="flex items-center justify-between px-4 py-2.5 text-sm"
+                >
+                  <div>
+                    <span class="font-mono text-slate-200">
+                      {{ formatCurrency(drop.amount) }}
+                    </span>
+                    <span class="text-slate-400 text-xs ml-2">
+                      {{
+                        paymentMethodLabels[drop.payment_method] ||
+                          drop.payment_method
+                      }}
+                      @if (drop.reason) {
+                        · {{ drop.reason }}
+                      }
+                    </span>
+                  </div>
+                  @if (drop.status === "REVERSED") {
+                    <span
+                      class="text-[10px] uppercase tracking-widest px-2 py-1 rounded-md font-semibold bg-red-500/15 text-red-300"
+                    >
+                      Revertido
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (sessionDetail()!.observations) {
+          <div>
+            <p
+              class="text-[10px] text-slate-500 uppercase tracking-widest mb-2"
+            >
+              Observaciones
+            </p>
+            <p class="text-sm text-slate-300">
+              {{ sessionDetail()!.observations }}
+            </p>
+          </div>
+        }
+      }
+    </div>
+
+    <footer class="flex justify-end border-t border-[#252A3A] px-6 py-4">
+      <button
+        type="button"
+        class="h-10 rounded-xl border border-blue-400/40 px-4 text-sm font-semibold text-white transition hover:bg-blue-500/15"
+        (click)="closeSessionDialog()"
+      >
+        Cerrar
+      </button>
+    </footer>
+  </section>
+</p-dialog>

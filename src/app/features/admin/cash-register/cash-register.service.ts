@@ -27,8 +27,10 @@ import {
   CashSessionManualIncomePayload,
 } from '../models/cash-register.model';
 import {
+  CashAccount,
   CashSession,
   CashSessionClosePayload,
+  CashSessionDetail,
   CashSessionDropPayload,
   CashSessionDropResponse,
   CashSessionListItem,
@@ -342,9 +344,17 @@ export class CashRegisterService {
   ): Observable<CashSessionManualIncome> {
     const body: Record<string, unknown> = {
       amount: payload.amount,
-      payment_method: payload.paymentMethod,
       description: payload.description,
     };
+    if (
+      payload.amountCash !== undefined ||
+      payload.amountTransfer !== undefined
+    ) {
+      body['amount_cash'] = payload.amountCash ?? 0;
+      body['amount_transfer'] = payload.amountTransfer ?? 0;
+    } else if (payload.paymentMethod) {
+      body['payment_method'] = payload.paymentMethod;
+    }
     if (payload.receiptReference)
       body['receipt_reference'] = payload.receiptReference;
     return this.api
@@ -467,6 +477,19 @@ export class CashRegisterService {
   /** V4: snapshot vivo (X report) de una caja. Read-only. */
   getSessionSnapshot(id: string): Observable<CashSessionSnapshot> {
     return this.api.get<CashSessionSnapshot>(`cash-sessions/${id}/snapshot`);
+  }
+
+  /**
+   * V4 (F3.5): detalle completo de una caja (owner, drops, arqueo por método
+   * de pago). Pensado para el reporte histórico de cajas cerradas.
+   */
+  getSessionDetail(id: string): Observable<CashSessionDetail> {
+    return this.api.get<CashSessionDetail>(`cash-sessions/${id}`);
+  }
+
+  /** V4: cuentas de tesorería (Caja General y otras), con su saldo actual. */
+  getCashAccounts(): Observable<CashAccount[]> {
+    return this.api.get<CashAccount[]>('cash-accounts');
   }
 
   /**

@@ -23,6 +23,8 @@ export interface UserDetail extends User {
 
 export interface UserListFilters {
   role?: UserRole;
+  /** Conjunto de roles (CSV, ej: 'COLLECTOR,SELLER_COLLECTOR'). Tiene prioridad sobre role. */
+  roles?: string;
   status?: UserStatus;
   search?: string;
 }

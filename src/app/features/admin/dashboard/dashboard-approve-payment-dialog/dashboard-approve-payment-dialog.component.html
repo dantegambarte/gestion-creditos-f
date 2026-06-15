@@ -9,21 +9,32 @@
 >
   <div class="flex flex-col gap-3 py-2">
     <p class="m-0 text-sm" style="color: var(--text-color)">
-      Estás por aprobar este cobro. Esta acción impacta en la caja y en los indicadores del dashboard.
+      Estás por aprobar este cobro. Esta acción impacta en la caja y en los
+      indicadores del dashboard.
     </p>
 
     @if (payment) {
       <div
         class="rounded-xl px-3 py-2 text-sm"
-        style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
+        style="
+          border: 1px solid var(--ff-border);
+          background: var(--ff-secondary);
+          color: var(--ff-text-primary);
+        "
       >
         <div class="flex justify-between gap-3">
           <span>Cliente</span>
-          <strong>{{ payment.customerName || 'Sin cliente' }}</strong>
+          <strong>{{ payment.customerName || "Sin cliente" }}</strong>
         </div>
         <div class="flex justify-between gap-3 mt-1">
           <span>Método</span>
-          <strong>{{ payment.paymentMethod === 'CASH' ? 'Efectivo' : 'Transferencia' }}</strong>
+          <strong>{{
+            payment.paymentMethod === "CASH"
+              ? "Efectivo"
+              : payment.paymentMethod === "TRANSFER"
+                ? "Transferencia"
+                : "Mixto"
+          }}</strong>
         </div>
         <div class="flex justify-between gap-3 mt-1">
           <span>Importe</span>
@@ -31,7 +42,7 @@
         </div>
         <div class="flex justify-between gap-3 mt-1">
           <span>Cuota</span>
-          <strong>{{ payment.installmentNumber ?? '-' }}</strong>
+          <strong>{{ payment.installmentNumber ?? "-" }}</strong>
         </div>
       </div>
     }

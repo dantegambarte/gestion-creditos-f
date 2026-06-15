@@ -20,22 +20,34 @@
           <div class="db-pending-group">
             <div class="db-pending-group-header">
               <span class="db-pending-seller">{{ group.sellerName }}</span>
-              <span class="db-pending-meta">{{ group.count }} · {{ group.totalAmount | currencyArs }}</span>
+              <span class="db-pending-meta"
+                >{{ group.count }} · {{ group.totalAmount | currencyArs }}</span
+              >
             </div>
             <span class="db-pending-time">{{ timeAgo(group.oldestDate) }}</span>
             <div class="db-pending-items">
               @for (credit of group.credits; track credit.id) {
                 <div class="db-pending-item">
-                  <span class="db-pending-type">{{ credit.type === 'SALE' ? 'VENTA' : 'PRÉSTAMO' }}</span>
-                  <span class="db-pending-customer">{{ credit.customerName }}</span>
-                  <span class="db-pending-amount">{{ credit.totalAmount | currencyArs }}</span>
-                  <span class="db-pending-installments">{{ credit.installmentsCount }} cuotas</span>
+                  <span class="db-pending-type">{{
+                    credit.type === "SALE" ? "VENTA" : "PRÉSTAMO"
+                  }}</span>
+                  <span class="db-pending-customer">{{
+                    credit.customerName
+                  }}</span>
+                  <span class="db-pending-amount">{{
+                    credit.totalAmount | currencyArs
+                  }}</span>
+                  <span class="db-pending-installments"
+                    >{{ credit.installmentsCount }} cuotas</span
+                  >
                   <button
                     class="db-pending-btn"
                     [disabled]="isCashClosed"
                     [class.db-pending-btn--disabled]="isCashClosed"
                     (click)="reviewCredit(credit.id)"
-                    [title]="isCashClosed ? 'La caja está cerrada' : 'Revisar crédito'"
+                    [title]="
+                      isCashClosed ? 'La caja está cerrada' : 'Revisar crédito'
+                    "
                   >
                     Revisar
                   </button>
@@ -69,22 +81,40 @@
           <div class="db-pending-group">
             <div class="db-pending-group-header">
               <span class="db-pending-seller">{{ group.collectorName }}</span>
-              <span class="db-pending-meta">{{ group.count }} · {{ group.totalAmount | currencyArs }}</span>
+              <span class="db-pending-meta"
+                >{{ group.count }} · {{ group.totalAmount | currencyArs }}</span
+              >
             </div>
             <span class="db-pending-time">{{ timeAgo(group.oldestDate) }}</span>
             <div class="db-pending-items">
               @for (payment of group.payments; track payment.id) {
                 <div class="db-pending-item">
-                  <span class="db-pending-type">{{ payment.paymentMethod === 'CASH' ? 'EFECTIVO' : 'TRANSF.' }}</span>
-                  <span class="db-pending-customer">{{ payment.customerName }}</span>
-                  <span class="db-pending-amount">{{ payment.amountReceived | currencyArs }}</span>
-                  <span class="db-pending-installments">Cuota {{ payment.installmentNumber }}</span>
+                  <span class="db-pending-type">{{
+                    payment.paymentMethod === "CASH"
+                      ? "EFECTIVO"
+                      : payment.paymentMethod === "TRANSFER"
+                        ? "TRANSF."
+                        : "MIXTO"
+                  }}</span>
+                  <span class="db-pending-customer">{{
+                    payment.customerName
+                  }}</span>
+                  <span class="db-pending-amount">{{
+                    payment.amountReceived | currencyArs
+                  }}</span>
+                  <span class="db-pending-installments"
+                    >Cuota {{ payment.installmentNumber }}</span
+                  >
                   <button
                     class="db-pending-btn"
-                    [disabled]="isCashClosed || approvingPaymentId === payment.id"
+                    [disabled]="
+                      isCashClosed || approvingPaymentId === payment.id
+                    "
                     [class.db-pending-btn--disabled]="isCashClosed"
                     (click)="openApprovePaymentDialog(payment)"
-                    [title]="isCashClosed ? 'La caja está cerrada' : 'Aprobar cobro'"
+                    [title]="
+                      isCashClosed ? 'La caja está cerrada' : 'Aprobar cobro'
+                    "
                   >
                     Aprobar
                   </button>

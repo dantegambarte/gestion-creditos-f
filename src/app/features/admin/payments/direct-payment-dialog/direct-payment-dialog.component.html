@@ -20,6 +20,7 @@
       <label class="text-sm font-medium text-gray-700">ID de cuota</label>
       <input
         pInputText
+        data-cy="admin-direct-installment-id"
         [(ngModel)]="directInstallmentId"
         placeholder="UUID de la cuota"
         class="w-full h-11 px-3"
@@ -35,25 +36,13 @@
     </div>
 
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Monto cobrado</label>
-      <p-inputNumber
-        appCurrencyAmountInput
-        [(ngModel)]="directAmount"
-        mode="currency"
-        currency="ARS"
-        locale="es-AR"
-        [minFractionDigits]="0"
-        [min]="0.01"
-        styleClass="w-full"
-        inputStyleClass="w-full h-11 px-3"
-      />
-    </div>
-
-    <div class="flex flex-col gap-1">
       <label class="text-sm font-medium text-gray-700">Método de pago</label>
       <p-dropdown
+        inputId="admin-direct-payment-method"
+        data-cy="admin-direct-payment-method"
         [options]="PAYMENT_METHOD_OPTIONS"
         [(ngModel)]="directMethod"
+        (ngModelChange)="onDirectMethodChange()"
         optionLabel="label"
         optionValue="value"
         styleClass="w-full h-11"
@@ -61,13 +50,54 @@
       />
     </div>
 
-    @if (directMethod === "TRANSFER") {
+    @if (usesCash) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-gray-700"
+          >Monto en efectivo</label
+        >
+        <p-inputNumber
+          inputId="admin-direct-cash-amount"
+          data-cy="admin-direct-cash-amount"
+          appCurrencyAmountInput
+          [(ngModel)]="directCashAmount"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [minFractionDigits]="0"
+          [min]="0"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 px-3"
+        />
+      </div>
+    }
+
+    @if (usesTransfer) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-gray-700"
+          >Monto en transferencia</label
+        >
+        <p-inputNumber
+          inputId="admin-direct-transfer-amount"
+          data-cy="admin-direct-transfer-amount"
+          appCurrencyAmountInput
+          [(ngModel)]="directTransferAmount"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [minFractionDigits]="0"
+          [min]="0"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 px-3"
+        />
+      </div>
+
       <div class="flex flex-col gap-1">
         <label class="text-sm font-medium text-gray-700"
           >Referencia de transferencia</label
         >
         <input
           pInputText
+          data-cy="admin-direct-transfer-reference"
           [(ngModel)]="directTransferRef"
           placeholder="N° de operación o referencia"
           class="w-full h-11 px-3"
@@ -75,6 +105,10 @@
         />
       </div>
     }
+
+    <p class="text-xs text-gray-500">
+      Total a registrar: <strong>{{ directAmount | currencyArs: 2 }}</strong>
+    </p>
 
     <div class="flex flex-col gap-1">
       <label class="text-sm font-medium text-gray-700">
@@ -122,6 +156,7 @@
       />
       <p-button
         label="Registrar cobro"
+        data-cy="admin-direct-submit"
         icon="pi pi-check"
         severity="primary"
         styleClass="w-full h-11 px-5 rounded-xl justify-center"

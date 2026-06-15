@@ -2,7 +2,9 @@
   <div class="ff-page-header">
     <div>
       <h1 class="ff-page-title">Reportes</h1>
-      <p class="ff-page-subtitle">Indicadores operativos y financieros del sistema.</p>
+      <p class="ff-page-subtitle">
+        Indicadores operativos y financieros del sistema.
+      </p>
     </div>
   </div>
 
@@ -39,6 +41,9 @@
   @if (activeTab === "collection") {
     <app-collection-report />
   }
+  @if (activeTab === "cashSessions") {
+    <app-cash-sessions-report />
+  }
   @if (activeTab === "portfolio") {
     <app-portfolio-report />
   }
@@ -56,5 +61,8 @@
   }
   @if (activeTab === "cashConversions") {
     <app-cash-conversions-report />
+  }
+  @if (activeTab === "cashMovements") {
+    <app-cash-movements-report />
   }
 </div>

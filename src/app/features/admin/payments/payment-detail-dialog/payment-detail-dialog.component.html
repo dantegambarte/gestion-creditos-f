@@ -65,10 +65,26 @@
             {{
               selectedPayment.paymentMethod === "CASH"
                 ? "Efectivo"
-                : "Transferencia"
+                : selectedPayment.paymentMethod === "TRANSFER"
+                  ? "Transferencia"
+                  : "Mixto"
             }}
           </p>
         </div>
+        @if (selectedPayment.paymentMethod === "MIXED") {
+          <div>
+            <p class="text-gray-500">Efectivo</p>
+            <p class="font-semibold">
+              {{ selectedPayment.amountCash | currencyArs: 2 }}
+            </p>
+          </div>
+          <div>
+            <p class="text-gray-500">Transferencia</p>
+            <p class="font-semibold">
+              {{ selectedPayment.amountTransfer | currencyArs: 2 }}
+            </p>
+          </div>
+        }
         @if (selectedPayment.transferReference) {
           <div>
             <p class="text-gray-500">Referencia</p>
