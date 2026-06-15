@@ -214,6 +214,25 @@ export class StepConditionsComponent implements OnChanges {
     return this.getMaxAdvancedInstallments() > 0;
   }
 
+  /** Calcula el total estimado a cobrar por cuotas adelantadas. */
+  getAdvancedInstallmentsTotal(): number {
+    const count = this.form.controls['advancedInstallmentsCount']?.value ?? 0;
+    return Math.round(this.valorCuota * count * 100) / 100;
+  }
+
+  /** Indica si dos montos separados cierran contra el total esperado. */
+  isSplitMatchingTotal(
+    cash: number | null | undefined,
+    transfer: number | null | undefined,
+    total: number,
+  ): boolean {
+    if ((cash ?? 0) <= 0 || (transfer ?? 0) <= 0) return false;
+    return (
+      Math.round(((cash ?? 0) + (transfer ?? 0)) * 100) ===
+      Math.round(total * 100)
+    );
+  }
+
   /**
    * Calcula el total estimado de intereses a partir del capital financiado y el total a devolver.
    */

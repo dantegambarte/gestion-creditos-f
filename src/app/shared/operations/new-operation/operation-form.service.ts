@@ -86,14 +86,26 @@ export class OperationFormService {
       'NONE' | 'DOWN_PAYMENT' | 'ADVANCED_INSTALLMENTS'
     >('NONE'),
     downPayment: this.fb.control<number | null>(null, [Validators.min(0)]),
-    downPaymentMethod: this.fb.control<'CASH' | 'TRANSFER' | null>(null),
+    downPaymentMethod: this.fb.control<'CASH' | 'TRANSFER' | 'MIXED' | null>(
+      null,
+    ),
+    downPaymentCash: this.fb.control<number | null>(null, [Validators.min(0)]),
+    downPaymentTransfer: this.fb.control<number | null>(null, [
+      Validators.min(0),
+    ]),
     downPaymentTransferReference: this.fb.control<string | null>(null),
     advancedInstallmentsCount: this.fb.control<number | null>(null, [
       Validators.min(1),
     ]),
-    advancedInstallmentsMethod: this.fb.control<'CASH' | 'TRANSFER' | null>(
-      null,
-    ),
+    advancedInstallmentsMethod: this.fb.control<
+      'CASH' | 'TRANSFER' | 'MIXED' | null
+    >(null),
+    advancedInstallmentsCash: this.fb.control<number | null>(null, [
+      Validators.min(0),
+    ]),
+    advancedInstallmentsTransfer: this.fb.control<number | null>(null, [
+      Validators.min(0),
+    ]),
     advancedInstallmentsTransferReference: this.fb.control<string | null>(null),
     paymentFrequency: this.fb.control<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null>(
       null,
@@ -438,12 +450,26 @@ export class OperationFormService {
           const dp = this.operationForm.controls.downPayment.value ?? 0;
           const method = this.operationForm.controls.downPaymentMethod.value;
           initialPaymentValid = dp > 0 && dp < this.capitalBase && !!method;
+          if (initialPaymentValid && method === 'MIXED') {
+            initialPaymentValid = this.isSplitMatchingTotal(
+              this.operationForm.controls.downPaymentCash.value,
+              this.operationForm.controls.downPaymentTransfer.value,
+              dp,
+            );
+          }
         } else if (payType === 'ADVANCED_INSTALLMENTS') {
           const count =
             this.operationForm.controls.advancedInstallmentsCount.value ?? 0;
           const method =
             this.operationForm.controls.advancedInstallmentsMethod.value;
           initialPaymentValid = count > 0 && !!method;
+          if (initialPaymentValid && method === 'MIXED') {
+            initialPaymentValid = this.isSplitMatchingTotal(
+              this.operationForm.controls.advancedInstallmentsCash.value,
+              this.operationForm.controls.advancedInstallmentsTransfer.value,
+              this.getAdvancedInstallmentsTotal(),
+            );
+          }
         }
       }
 
@@ -534,6 +560,29 @@ export class OperationFormService {
     return Math.min(Math.max(raw, 0), this.capitalBase);
   }
 
+  /** Devuelve el total estimado que se cobrará por cuotas adelantadas. */
+  getAdvancedInstallmentsTotal(): number {
+    if (
+      this.operationForm.controls.initialPaymentType.value !==
+      'ADVANCED_INSTALLMENTS'
+    )
+      return 0;
+    const count =
+      this.operationForm.controls.advancedInstallmentsCount.value ?? 0;
+    return Math.round(this.valorCuota * count * 100) / 100;
+  }
+
+  /** Valida que el desglose mixto coincida con el total esperado. */
+  isSplitMatchingTotal(
+    cash: number | null,
+    transfer: number | null,
+    total: number,
+  ): boolean {
+    if ((cash ?? 0) <= 0 || (transfer ?? 0) <= 0) return false;
+    const splitTotal = Math.round(((cash ?? 0) + (transfer ?? 0)) * 100);
+    return splitTotal === Math.round(total * 100);
+  }
+
   /**
    * Devuelve la mayor cantidad de cuotas configurada entre las líneas de venta.
    * @returns {number} Cantidad máxima del plan actual.
@@ -621,9 +670,13 @@ export class OperationFormService {
         this.operationForm.controls.initialPaymentType.setValue('NONE');
         this.operationForm.controls.downPayment.setValue(null);
         this.operationForm.controls.downPaymentMethod.setValue(null);
+        this.operationForm.controls.downPaymentCash.setValue(null);
+        this.operationForm.controls.downPaymentTransfer.setValue(null);
         this.operationForm.controls.downPaymentTransferReference.setValue(null);
         this.operationForm.controls.advancedInstallmentsCount.setValue(null);
         this.operationForm.controls.advancedInstallmentsMethod.setValue(null);
+        this.operationForm.controls.advancedInstallmentsCash.setValue(null);
+        this.operationForm.controls.advancedInstallmentsTransfer.setValue(null);
         this.operationForm.controls.advancedInstallmentsTransferReference.setValue(
           null,
         );
@@ -694,6 +747,36 @@ export class OperationFormService {
             'ADVANCED_INSTALLMENTS'
         ) {
           this.operationForm.controls.initialPaymentType.setValue('NONE');
+        }
+      },
+    );
+
+    this.operationForm.controls.downPaymentMethod.valueChanges.subscribe(
+      (method) => {
+        if (method !== 'MIXED') {
+          this.operationForm.controls.downPaymentCash.setValue(null);
+          this.operationForm.controls.downPaymentTransfer.setValue(null);
+        }
+        if (method !== 'TRANSFER' && method !== 'MIXED') {
+          this.operationForm.controls.downPaymentTransferReference.setValue(
+            null,
+          );
+        }
+      },
+    );
+
+    this.operationForm.controls.advancedInstallmentsMethod.valueChanges.subscribe(
+      (method) => {
+        if (method !== 'MIXED') {
+          this.operationForm.controls.advancedInstallmentsCash.setValue(null);
+          this.operationForm.controls.advancedInstallmentsTransfer.setValue(
+            null,
+          );
+        }
+        if (method !== 'TRANSFER' && method !== 'MIXED') {
+          this.operationForm.controls.advancedInstallmentsTransferReference.setValue(
+            null,
+          );
         }
       },
     );
@@ -1732,6 +1815,14 @@ export class OperationFormService {
             units: selectedUnits.map((p) => ({ unitId: p.id })),
             downPayment: downPaymentAmount,
             downPaymentMethod: paymentMethod,
+            downPaymentCash:
+              paymentMethod === 'MIXED'
+                ? (this.operationForm.controls.downPaymentCash.value ?? 0)
+                : undefined,
+            downPaymentTransfer:
+              paymentMethod === 'MIXED'
+                ? (this.operationForm.controls.downPaymentTransfer.value ?? 0)
+                : undefined,
             downPaymentTransferReference: transferReference,
             advancedInstallmentsCount:
               initialPaymentType === 'ADVANCED_INSTALLMENTS'
@@ -1740,6 +1831,20 @@ export class OperationFormService {
             advancedInstallmentsMethod:
               initialPaymentType === 'ADVANCED_INSTALLMENTS'
                 ? this.operationForm.controls.advancedInstallmentsMethod.value
+                : undefined,
+            advancedInstallmentsCash:
+              initialPaymentType === 'ADVANCED_INSTALLMENTS' &&
+              this.operationForm.controls.advancedInstallmentsMethod.value ===
+                'MIXED'
+                ? (this.operationForm.controls.advancedInstallmentsCash.value ??
+                  0)
+                : undefined,
+            advancedInstallmentsTransfer:
+              initialPaymentType === 'ADVANCED_INSTALLMENTS' &&
+              this.operationForm.controls.advancedInstallmentsMethod.value ===
+                'MIXED'
+                ? (this.operationForm.controls.advancedInstallmentsTransfer
+                    .value ?? 0)
                 : undefined,
             advancedInstallmentsTransferReference:
               initialPaymentType === 'ADVANCED_INSTALLMENTS'

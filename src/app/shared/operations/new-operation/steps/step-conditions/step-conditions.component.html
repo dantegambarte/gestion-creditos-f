@@ -112,7 +112,10 @@
                         </p>
                       </div>
 
-                      <div class="w-full md:w-[280px]" data-cy="ddl-installments">
+                      <div
+                        class="w-full md:w-[280px]"
+                        data-cy="ddl-installments"
+                      >
                         <p-dropdown
                           [options]="getInstallmentsOptionsForLine(line)"
                           optionLabel="label"
@@ -176,14 +179,17 @@
                         value="ADVANCED_INSTALLMENTS"
                         inputId="pay-advance"
                       />
-                      <span class="text-sm text-slate-300">Cuotas adelantadas</span>
+                      <span class="text-sm text-slate-300"
+                        >Cuotas adelantadas</span
+                      >
                     </label>
                   }
                 </div>
 
                 @if (!canAdvanceInstallments()) {
                   <p class="text-xs text-amber-300">
-                    Necesitás un plan de al menos 2 cuotas para registrar cuotas adelantadas.
+                    Necesitás un plan de al menos 2 cuotas para registrar cuotas
+                    adelantadas.
                   </p>
                 }
 
@@ -198,6 +204,8 @@
                       >
                       <p-inputNumber
                         appCurrencyAmountInput
+                        inputId="sale-down-payment-amount"
+                        data-cy="sale-down-payment"
                         formControlName="downPayment"
                         mode="currency"
                         currency="ARS"
@@ -236,11 +244,76 @@
                             >Transferencia</span
                           >
                         </label>
+                        <label class="flex cursor-pointer items-center gap-2">
+                          <p-radioButton
+                            formControlName="downPaymentMethod"
+                            value="MIXED"
+                            inputId="dp-mixed"
+                            data-cy="sale-down-payment-method-mixed"
+                          />
+                          <span class="text-sm text-slate-300">Mixto</span>
+                        </label>
                       </div>
                     </div>
 
+                    @if (form.controls["downPaymentMethod"].value === "MIXED") {
+                      <div>
+                        <label
+                          class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                          >Efectivo del enganche</label
+                        >
+                        <p-inputNumber
+                          appCurrencyAmountInput
+                          inputId="sale-down-payment-cash"
+                          data-cy="sale-down-payment-cash"
+                          formControlName="downPaymentCash"
+                          mode="currency"
+                          currency="ARS"
+                          locale="es-AR"
+                          [minFractionDigits]="0"
+                          [allowEmpty]="true"
+                          [min]="0"
+                          styleClass="w-full"
+                          inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                          >Transferencia del enganche</label
+                        >
+                        <p-inputNumber
+                          appCurrencyAmountInput
+                          inputId="sale-down-payment-transfer"
+                          data-cy="sale-down-payment-transfer"
+                          formControlName="downPaymentTransfer"
+                          mode="currency"
+                          currency="ARS"
+                          locale="es-AR"
+                          [minFractionDigits]="0"
+                          [allowEmpty]="true"
+                          [min]="0"
+                          styleClass="w-full"
+                          inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                        />
+                      </div>
+                      @if (
+                        !isSplitMatchingTotal(
+                          form.controls["downPaymentCash"].value,
+                          form.controls["downPaymentTransfer"].value,
+                          form.controls["downPayment"].value ?? 0
+                        )
+                      ) {
+                        <p class="md:col-span-2 text-xs text-amber-300">
+                          El efectivo y la transferencia deben sumar el
+                          enganche.
+                        </p>
+                      }
+                    }
+
                     @if (
-                      form.controls["downPaymentMethod"].value === "TRANSFER"
+                      form.controls["downPaymentMethod"].value === "TRANSFER" ||
+                      form.controls["downPaymentMethod"].value === "MIXED"
                     ) {
                       <div class="md:col-span-2">
                         <label
@@ -249,6 +322,7 @@
                         >
                         <input
                           pInputText
+                          data-cy="sale-down-payment-transfer-reference"
                           formControlName="downPaymentTransferReference"
                           class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
                           placeholder="Nro. de operación..."
@@ -270,6 +344,8 @@
                         >Cantidad de cuotas adelantadas</label
                       >
                       <p-inputNumber
+                        inputId="sale-advanced-installments-count"
+                        data-cy="sale-advanced-installments-count"
                         formControlName="advancedInstallmentsCount"
                         [min]="1"
                         [max]="getMaxAdvancedInstallments()"
@@ -279,7 +355,12 @@
                         inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
                       />
                       <p class="mt-2 text-xs text-slate-400">
-                        Máximo permitido: {{ getMaxAdvancedInstallments() }} cuota(s).
+                        Máximo permitido:
+                        {{ getMaxAdvancedInstallments() }} cuota(s).
+                      </p>
+                      <p class="mt-1 text-xs text-slate-400">
+                        Total estimado:
+                        {{ getAdvancedInstallmentsTotal() | currencyArs: 2 }}
                       </p>
                     </div>
 
@@ -307,12 +388,81 @@
                             >Transferencia</span
                           >
                         </label>
+                        <label class="flex cursor-pointer items-center gap-2">
+                          <p-radioButton
+                            formControlName="advancedInstallmentsMethod"
+                            value="MIXED"
+                            inputId="adv-mixed"
+                            data-cy="sale-advanced-installments-method-mixed"
+                          />
+                          <span class="text-sm text-slate-300">Mixto</span>
+                        </label>
                       </div>
                     </div>
 
                     @if (
                       form.controls["advancedInstallmentsMethod"].value ===
-                      "TRANSFER"
+                      "MIXED"
+                    ) {
+                      <div>
+                        <label
+                          class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                          >Efectivo adelantado</label
+                        >
+                        <p-inputNumber
+                          appCurrencyAmountInput
+                          inputId="sale-advanced-installments-cash"
+                          data-cy="sale-advanced-installments-cash"
+                          formControlName="advancedInstallmentsCash"
+                          mode="currency"
+                          currency="ARS"
+                          locale="es-AR"
+                          [minFractionDigits]="0"
+                          [allowEmpty]="true"
+                          [min]="0"
+                          styleClass="w-full"
+                          inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          class="mb-2 block text-xs font-medium uppercase tracking-wide text-slate-400"
+                          >Transferencia adelantada</label
+                        >
+                        <p-inputNumber
+                          appCurrencyAmountInput
+                          inputId="sale-advanced-installments-transfer"
+                          data-cy="sale-advanced-installments-transfer"
+                          formControlName="advancedInstallmentsTransfer"
+                          mode="currency"
+                          currency="ARS"
+                          locale="es-AR"
+                          [minFractionDigits]="0"
+                          [allowEmpty]="true"
+                          [min]="0"
+                          styleClass="w-full"
+                          inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+                        />
+                      </div>
+                      @if (
+                        !isSplitMatchingTotal(
+                          form.controls["advancedInstallmentsCash"].value,
+                          form.controls["advancedInstallmentsTransfer"].value,
+                          getAdvancedInstallmentsTotal()
+                        )
+                      ) {
+                        <p class="md:col-span-2 text-xs text-amber-300">
+                          El efectivo y la transferencia deben sumar el total
+                          estimado de cuotas adelantadas.
+                        </p>
+                      }
+                    }
+
+                    @if (
+                      form.controls["advancedInstallmentsMethod"].value ===
+                        "TRANSFER" ||
+                      form.controls["advancedInstallmentsMethod"].value ===
+                        "MIXED"
                     ) {
                       <div class="md:col-span-2">
                         <label
@@ -321,6 +471,7 @@
                         >
                         <input
                           pInputText
+                          data-cy="sale-advanced-installments-transfer-reference"
                           formControlName="advancedInstallmentsTransferReference"
                           class="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
                           placeholder="Nro. de operación..."
@@ -438,7 +589,6 @@
           }
         </div>
       </div>
-
     </div>
 
     <div class="w-full">
