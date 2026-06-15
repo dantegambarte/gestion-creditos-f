@@ -7,6 +7,7 @@ export interface Expense {
   categoryId: string | null;
   categoryName: string | null;
   expenseDate: string;
+  source: 'DAILY' | 'COMPANY';
   createdAt: string;
   createdByName: string;
 }
@@ -24,8 +25,9 @@ export interface ExpenseCreatePayload {
   description: string;
   paymentMethod: 'CASH' | 'TRANSFER';
   transferReference?: string;
-  categoryId?: string;
+  categoryId?: string | null;
   expenseDate?: string;
+  source?: 'DAILY' | 'COMPANY';
 }
 
 export interface ExpenseUpdatePayload {
@@ -33,7 +35,7 @@ export interface ExpenseUpdatePayload {
   description: string;
   paymentMethod: 'CASH' | 'TRANSFER';
   transferReference?: string;
-  categoryId?: string;
+  categoryId?: string | null;
   expenseDate?: string;
 }
 
@@ -51,6 +53,7 @@ export interface ExpenseRaw {
   category_id: string | null;
   category_name: string | null;
   expense_date: string;
+  source: string;
   created_at: string;
   created_by_name: string;
 }
