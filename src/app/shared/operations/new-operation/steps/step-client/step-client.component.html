@@ -1,43 +1,65 @@
 <section class="mx-auto w-full max-w-[1200px]">
-  <div class="grid gap-4 xl:grid-cols-[500px_minmax(0,1fr)] 2xl:grid-cols-[520px_minmax(0,1fr)]">
-    <div class="overflow-hidden rounded-2xl border border-[#252A3A] bg-[#171B27] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
-      <div class="border-b border-[#252A3A] px-5 py-4">
-        <p class="text-base font-semibold text-white">Buscar cliente</p>
+  <div
+    class="grid gap-4 xl:grid-cols-[500px_minmax(0,1fr)] 2xl:grid-cols-[520px_minmax(0,1fr)]"
+  >
+    <div
+      class="overflow-hidden rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] shadow-[0_10px_30px_rgba(0,0,0,0.22)]"
+    >
+      <div class="border-b border-[var(--ff-border)] px-5 py-4">
+        <p class="text-base font-semibold text-[var(--ff-text-primary)]">
+          Buscar cliente
+        </p>
         <div class="relative mt-3">
-          <i class="pi pi-search pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7C87A1]"></i>
+          <i
+            class="pi pi-search pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ff-text-secondary)]"
+          ></i>
           <input
             pInputText
             [(ngModel)]="searchText"
-            class="h-11 w-full rounded-xl border border-[#2A2E3B] bg-[#232943] pl-11 pr-4 text-sm text-white placeholder:text-[#7C87A1] focus:border-[#4F6BFF] focus:outline-none"
+            class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] pl-11 pr-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-secondary)] focus:border-[#4F6BFF] focus:outline-none"
             placeholder="Buscar por nombre o DNI"
             data-cy="input-search-client"
           />
         </div>
-        <p class="mt-2 text-[11px] text-[#5E6A82]">
+        <p class="mt-2 text-[11px] text-[var(--ff-text-muted)]">
           Buscá por nombre o DNI.
         </p>
       </div>
 
-      <div class="flex items-center justify-between border-b border-[#252A3A] px-5 py-3">
-        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#5E6A82]">
+      <div
+        class="flex items-center justify-between border-b border-[var(--ff-border)] px-5 py-3"
+      >
+        <p
+          class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ff-text-muted)]"
+        >
           {{ filteredClients.length }} resultados
         </p>
       </div>
 
       @if (filteredClients.length === 0) {
         <div class="px-5 py-14 text-center">
-          <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#35405C] bg-[#1A1F31]">
-            <i class="pi pi-search text-xl text-[#6272A4]"></i>
+          <div
+            class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--ff-border)] bg-[var(--ff-secondary)]"
+          >
+            <i class="pi pi-search text-xl text-[var(--ff-text-secondary)]"></i>
           </div>
           @if (hasSearchTerm) {
-            <p class="text-sm font-medium text-[#E2E8F0]">
+            <p class="text-sm font-medium text-[var(--ff-text-primary)]">
               No se encontró ningún cliente con
-              <span class="font-semibold text-[#FFB36B]">"{{ searchText.trim() }}"</span>
+              <span class="font-semibold text-[#FFB36B]"
+                >"{{ searchText.trim() }}"</span
+              >
             </p>
-            <p class="mt-1 text-sm text-[#66738F]">Revisá el DNI o nombre e intentá de nuevo.</p>
+            <p class="mt-1 text-sm text-[var(--ff-text-muted)]">
+              Revisá el DNI o nombre e intentá de nuevo.
+            </p>
           } @else {
-            <p class="text-sm font-medium text-[#E2E8F0]">Todavía no seleccionaste un cliente</p>
-            <p class="mt-1 text-sm text-[#848D9E]">Buscá por DNI o nombre para continuar.</p>
+            <p class="text-sm font-medium text-[var(--ff-text-primary)]">
+              Todavía no seleccionaste un cliente
+            </p>
+            <p class="mt-1 text-sm text-[var(--ff-text-secondary)]">
+              Buscá por DNI o nombre para continuar.
+            </p>
           }
         </div>
       } @else {
@@ -45,30 +67,50 @@
           @for (client of filteredClients; track client.id) {
             <button
               type="button"
-              [class]="selectedClientId === client.id
-                ? 'w-full rounded-xl border border-[#4F6BFF] bg-[#232943] p-4 text-left transition-colors shadow-[0_0_0_1px_rgba(79,107,255,0.12)]'
-                : 'w-full rounded-xl border border-transparent bg-[#232943] p-4 text-left transition-colors hover:border-[#31384B]'"
+              [class]="
+                selectedClientId === client.id
+                  ? 'w-full rounded-xl border border-[#4F6BFF] bg-[var(--ff-secondary)] p-4 text-left transition-colors shadow-[0_0_0_1px_rgba(79,107,255,0.12)]'
+                  : 'w-full rounded-xl border border-transparent bg-[var(--ff-secondary)] p-4 text-left transition-colors hover:border-[var(--ff-border)]'
+              "
               (click)="clientSelected.emit(client)"
               [attr.data-cy]="'client-card-' + client.id"
             >
               <div class="flex items-start gap-3">
-                <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#4F6BFF]/40 bg-[#4F6BFF]/15 text-[11px] font-semibold text-[#85A0FF]">
+                <div
+                  class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#4F6BFF]/40 bg-[#4F6BFF]/15 text-[11px] font-semibold text-[#85A0FF]"
+                >
                   {{ getClientInitials(client.name) }}
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="flex items-start justify-between gap-3">
                     <div>
-                      <p class="truncate text-[14px] font-semibold text-white">{{ client.name }}</p>
-                      <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#7C87A1]">
-                        <span [class]="client.status === 'ACTIVE' ? 'rounded-full bg-[#00D084]/10 px-2 py-0.5 font-semibold text-[#00D084]' : 'rounded-full bg-[#FF4D4F]/10 px-2 py-0.5 font-semibold text-[#FF4D4F]'">
-                          {{ client.status === 'ACTIVE' ? 'ACTIVO' : 'INACTIVO' }}
+                      <p
+                        class="truncate text-[14px] font-semibold text-[var(--ff-text-primary)]"
+                      >
+                        {{ client.name }}
+                      </p>
+                      <div
+                        class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[var(--ff-text-secondary)]"
+                      >
+                        <span
+                          [class]="
+                            client.status === 'ACTIVE'
+                              ? 'rounded-full bg-[#00D084]/10 px-2 py-0.5 font-semibold text-[#00D084]'
+                              : 'rounded-full bg-[#FF4D4F]/10 px-2 py-0.5 font-semibold text-[#FF4D4F]'
+                          "
+                        >
+                          {{
+                            client.status === "ACTIVE" ? "ACTIVO" : "INACTIVO"
+                          }}
                         </span>
                         @if (client.collectorName) {
                           <span>Cobrador: {{ client.collectorName }}</span>
                         }
                       </div>
                     </div>
-                    <span class="shrink-0 text-[11px] tracking-[0.08em] text-[#73809A]">
+                    <span
+                      class="shrink-0 text-[11px] tracking-[0.08em] text-[var(--ff-text-muted)]"
+                    >
                       {{ client.dni }}
                     </span>
                   </div>
@@ -79,8 +121,10 @@
         </div>
       }
 
-      <div class="border-t border-[#252A3A] px-5 py-4 text-center">
-        <p class="text-[11px] text-[#5E6A82]">¿No encontrás al cliente?</p>
+      <div class="border-t border-[var(--ff-border)] px-5 py-4 text-center">
+        <p class="text-[11px] text-[var(--ff-text-muted)]">
+          ¿No encontrás al cliente?
+        </p>
         <button
           type="button"
           class="mt-2 inline-flex items-center gap-2 rounded-xl border border-[#4F6BFF]/60 px-4 py-2 text-xs font-semibold text-[#85A0FF] transition-colors hover:bg-[#4F6BFF]/10"
@@ -89,19 +133,30 @@
           <i class="pi pi-user-plus text-[11px]"></i>
           Registrar nuevo cliente
         </button>
-        <p class="mt-2 text-[11px] italic text-[#5E6A82]">(no perderás los datos cargados)</p>
+        <p class="mt-2 text-[11px] italic text-[var(--ff-text-muted)]">
+          (no perderás los datos cargados)
+        </p>
       </div>
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-[#252A3A] bg-[#171B27] shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+    <div
+      class="overflow-hidden rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] shadow-[0_10px_30px_rgba(0,0,0,0.22)]"
+    >
       @if (showQuickRegister) {
-        <div class="border-l-2 border-l-[#F5A524] bg-[#232943] px-5 py-5">
+        <div
+          class="border-l-2 border-l-[#F5A524] bg-[var(--ff-secondary)] px-5 py-5"
+        >
           <div class="flex items-start gap-3">
-            <i class="pi pi-exclamation-triangle mt-0.5 text-sm text-[#F5A524]"></i>
+            <i
+              class="pi pi-exclamation-triangle mt-0.5 text-sm text-[#F5A524]"
+            ></i>
             <div>
-              <p class="text-sm font-semibold text-white">¿El cliente no está registrado?</p>
-              <p class="mt-1 text-xs text-[#91A0C6]">
-                Podés registrarlo ahora sin perder los datos de la operación que estás cargando.
+              <p class="text-sm font-semibold text-[var(--ff-text-primary)]">
+                ¿El cliente no está registrado?
+              </p>
+              <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
+                Podés registrarlo ahora sin perder los datos de la operación que
+                estás cargando.
               </p>
             </div>
           </div>
@@ -109,79 +164,104 @@
 
         <div class="px-5 py-5">
           <div>
-            <p class="text-base font-semibold text-white">Registro rápido de cliente</p>
-            <p class="mt-1 text-xs text-[#66738F]">Solo los campos esenciales — podrás completar el resto luego.</p>
+            <p class="text-base font-semibold text-[var(--ff-text-primary)]">
+              Registro rápido de cliente
+            </p>
+            <p class="mt-1 text-xs text-[var(--ff-text-muted)]">
+              Solo los campos esenciales — podrás completar el resto luego.
+            </p>
           </div>
 
           <div class="mt-5 space-y-4">
             <div>
-              <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7180A1]">
+              <label
+                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-secondary)]"
+              >
                 Nombre completo *
               </label>
               <input
                 pInputText
                 [(ngModel)]="quickRegisterDraft.fullName"
-                [class]="hasQuickRegisterError('fullName')
-                  ? 'mt-2 h-11 w-full rounded-xl border border-red-400 bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'
-                  : 'mt-2 h-11 w-full rounded-xl border border-[#2A2E3B] bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'"
+                [class]="
+                  hasQuickRegisterError('fullName')
+                    ? 'mt-2 h-11 w-full rounded-xl border border-red-400 bg-[var(--ff-secondary)] px-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)]'
+                    : 'mt-2 h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)]'
+                "
                 placeholder="Ej: Juan Martínez"
               />
-              @if (hasQuickRegisterError('fullName')) {
-                <p class="mt-1 text-[11px] text-[#FF8E8E]">{{ getQuickRegisterError('fullName') }}</p>
+              @if (hasQuickRegisterError("fullName")) {
+                <p class="mt-1 text-[11px] text-[#FF8E8E]">
+                  {{ getQuickRegisterError("fullName") }}
+                </p>
               }
             </div>
 
             <div>
-              <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7180A1]">
+              <label
+                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-secondary)]"
+              >
                 DNI *
               </label>
               <input
                 pInputText
                 [(ngModel)]="quickRegisterDraft.dni"
-                [class]="hasQuickRegisterError('dni')
-                  ? 'mt-2 h-11 w-full rounded-xl border border-red-400 bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'
-                  : 'mt-2 h-11 w-full rounded-xl border border-[#2A2E3B] bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'"
+                [class]="
+                  hasQuickRegisterError('dni')
+                    ? 'mt-2 h-11 w-full rounded-xl border border-red-400 bg-[var(--ff-secondary)] px-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)]'
+                    : 'mt-2 h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)]'
+                "
                 placeholder="Sin puntos ni espacios"
               />
-              @if (hasQuickRegisterError('dni')) {
-                <p class="mt-1 text-[11px] text-[#FF8E8E]">{{ getQuickRegisterError('dni') }}</p>
+              @if (hasQuickRegisterError("dni")) {
+                <p class="mt-1 text-[11px] text-[#FF8E8E]">
+                  {{ getQuickRegisterError("dni") }}
+                </p>
               }
             </div>
 
             <div class="grid gap-4 md:grid-cols-2">
               <div>
-                <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7180A1]">
+                <label
+                  class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-secondary)]"
+                >
                   Teléfono
                 </label>
                 <input
                   pInputText
                   [(ngModel)]="quickRegisterDraft.phone"
-                  class="mt-2 h-11 w-full rounded-xl border border-[#2A2E3B] bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]"
+                  class="mt-2 h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)]"
                   placeholder="11-XXXX-XXXX"
                 />
               </div>
 
               <div>
-                <label class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7180A1]">
+                <label
+                  class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-secondary)]"
+                >
                   Email
                 </label>
                 <input
                   pInputText
                   [(ngModel)]="quickRegisterDraft.email"
-                  [class]="hasQuickRegisterError('email')
-                    ? 'mt-2 h-11 w-full rounded-xl border border-red-400 bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'
-                    : 'mt-2 h-11 w-full rounded-xl border border-[#2A2E3B] bg-[#232943] px-4 text-sm text-white placeholder:text-[#73809A]'"
+                  [class]="
+                    hasQuickRegisterError('email')
+                      ? 'mt-2 h-11 w-full rounded-xl border border-red-400 bg-[var(--ff-secondary)] px-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)]'
+                      : 'mt-2 h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)]'
+                  "
                   placeholder="opcional"
                   type="email"
                 />
-                @if (hasQuickRegisterError('email')) {
-                  <p class="mt-1 text-[11px] text-[#FF8E8E]">{{ getQuickRegisterError('email') }}</p>
+                @if (hasQuickRegisterError("email")) {
+                  <p class="mt-1 text-[11px] text-[#FF8E8E]">
+                    {{ getQuickRegisterError("email") }}
+                  </p>
                 }
               </div>
             </div>
 
-            <p class="text-[11px] text-[#66738F]">
-              El cliente se registrará y quedará seleccionado automáticamente para esta operación.
+            <p class="text-[11px] text-[var(--ff-text-muted)]">
+              El cliente se registrará y quedará seleccionado automáticamente
+              para esta operación.
             </p>
 
             <div class="flex flex-col gap-3 pt-2 md:flex-row">
@@ -193,13 +273,17 @@
               >
                 <span class="inline-flex items-center gap-2">
                   <i class="pi pi-user-plus text-xs"></i>
-                  {{ creatingQuickRegister ? 'Creando cliente...' : 'Crear cliente y continuar' }}
+                  {{
+                    creatingQuickRegister
+                      ? "Creando cliente..."
+                      : "Crear cliente y continuar"
+                  }}
                 </span>
               </button>
 
               <button
                 type="button"
-                class="rounded-xl border border-[#2A2E3B] px-5 py-3 text-sm font-medium text-[#A5B4D4] transition-colors hover:bg-[#202637]"
+                class="rounded-xl border border-[var(--ff-border)] px-5 py-3 text-sm font-medium text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)]"
                 [disabled]="creatingQuickRegister"
                 (click)="cancelQuickRegister()"
               >
@@ -210,127 +294,217 @@
         </div>
       } @else {
         <div class="px-5 py-4">
-          <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Estado del cliente</p>
+          <p
+            class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-muted)]"
+          >
+            Estado del cliente
+          </p>
         </div>
 
-      @if (!selectedClient) {
-        <div class="px-5 pb-5">
-          <div class="rounded-xl border border-dashed border-[#2A2E3B] bg-[#121520] px-4 py-10 text-center">
-            <p class="text-sm text-[#848D9E]">Seleccioná un cliente para ver el resumen.</p>
-          </div>
-        </div>
-      } @else if (loadingSummary) {
-        <div class="px-5 pb-5">
-          <div class="space-y-4">
-            <div class="h-8 w-56 animate-pulse rounded bg-[#1A1D27]"></div>
-            <div class="h-20 animate-pulse rounded-xl bg-[#121520]"></div>
-            <div class="h-28 animate-pulse rounded-xl bg-[#121520]"></div>
-            <div class="h-24 animate-pulse rounded-xl bg-[#121520]"></div>
-          </div>
-        </div>
-      } @else {
-        <div class="px-5 pb-5">
-          <div class="space-y-4">
-            <div class="flex items-start gap-4 border-b border-[#252A3A] pb-5">
-              <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#4F6BFF]/40 bg-[#4F6BFF]/15 text-sm font-semibold text-[#85A0FF]">
-                {{ selectedClientInitials }}
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <p class="text-[29px] font-semibold leading-none text-white md:text-[31px]">{{ selectedClient.name }}</p>
-                  <span class="rounded-full bg-[#00D084]/10 px-2.5 py-1 text-[11px] font-semibold text-[#00D084]">
-                    {{ selectedClient.status === 'ACTIVE' ? 'ACTIVO' : 'INACTIVO' }}
-                  </span>
-                </div>
-                <p class="mt-2 text-sm text-[#7C87A1]">DNI {{ selectedClient.dni }}</p>
-              </div>
+        @if (!selectedClient) {
+          <div class="px-5 pb-5">
+            <div
+              class="rounded-xl border border-dashed border-[var(--ff-border)] bg-[var(--ff-panel)] px-4 py-10 text-center"
+            >
+              <p class="text-sm text-[var(--ff-text-secondary)]">
+                Seleccioná un cliente para ver el resumen.
+              </p>
             </div>
-
-            <div class="grid gap-4 border-b border-[#252A3A] pb-5 sm:grid-cols-2">
-              <div class="space-y-3">
-                <div>
-                  <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Teléfono</p>
-                  <p class="mt-1 text-sm font-semibold text-white">{{ selectedClient.phone || 'Sin teléfono' }}</p>
-                </div>
-                <div>
-                  <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Dirección</p>
-                  <p class="mt-1 text-sm font-semibold text-white">{{ selectedClient.address || 'Sin dirección' }}</p>
-                </div>
-                <div>
-                  <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Alta</p>
-                  <p class="mt-1 text-sm font-semibold text-white">{{ formatShortDate(selectedClient.createdAt) }}</p>
-                </div>
-              </div>
-              <div class="space-y-3">
-                <div>
-                  <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Email</p>
-                  <p class="mt-1 text-sm font-semibold text-white">{{ selectedClient.email || 'Sin email' }}</p>
-                </div>
-                <div>
-                  <p class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#5E6A82]">Cobrador</p>
-                  <p class="mt-1 text-sm font-semibold text-white">{{ selectedClient.collectorName || 'Sin asignar' }}</p>
-                </div>
-              </div>
+          </div>
+        } @else if (loadingSummary) {
+          <div class="px-5 pb-5">
+            <div class="space-y-4">
+              <div
+                class="h-8 w-56 animate-pulse rounded bg-[var(--ff-secondary)]"
+              ></div>
+              <div
+                class="h-20 animate-pulse rounded-xl bg-[var(--ff-panel)]"
+              ></div>
+              <div
+                class="h-28 animate-pulse rounded-xl bg-[var(--ff-panel)]"
+              ></div>
+              <div
+                class="h-24 animate-pulse rounded-xl bg-[var(--ff-panel)]"
+              ></div>
             </div>
-
-            @if (selectedClientHasMora) {
-              <div class="rounded-xl border border-[#FF7A00]/40 bg-[#FF7A00]/10 px-4 py-3">
-                <div class="flex items-start gap-3">
-                  <i class="pi pi-exclamation-triangle mt-0.5 text-base text-[#FF7A00]"></i>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-semibold text-[#FFB36B]">
-                      Atención — el cliente tiene
-                      {{ selectedClient.overdueInstallments ?? 0 }}
-                      {{ (selectedClient.overdueInstallments ?? 0) === 1 ? 'cuota' : 'cuotas' }}
-                      en mora
+          </div>
+        } @else {
+          <div class="px-5 pb-5">
+            <div class="space-y-4">
+              <div
+                class="flex items-start gap-4 border-b border-[var(--ff-border)] pb-5"
+              >
+                <div
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#4F6BFF]/40 bg-[#4F6BFF]/15 text-sm font-semibold text-[#85A0FF]"
+                >
+                  {{ selectedClientInitials }}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p
+                      class="text-[29px] font-semibold leading-none text-[var(--ff-text-primary)] md:text-[31px]"
+                    >
+                      {{ selectedClient.name }}
                     </p>
-                    <p class="mt-1 text-xs text-[#FFB36B]/80">
-                      Esta operación puede requerir validación adicional.
-                      <a
-                        class="ml-1 inline-flex items-center gap-1 font-semibold text-[#FFB36B] underline-offset-2 hover:underline"
-                        [routerLink]="clientDetailLink"
-                      >
-                        Ver detalle del cliente
-                        <i class="pi pi-arrow-right text-[10px]"></i>
-                      </a>
+                    <span
+                      class="rounded-full bg-[#00D084]/10 px-2.5 py-1 text-[11px] font-semibold text-[#00D084]"
+                    >
+                      {{
+                        selectedClient.status === "ACTIVE"
+                          ? "ACTIVO"
+                          : "INACTIVO"
+                      }}
+                    </span>
+                  </div>
+                  <p class="mt-2 text-sm text-[var(--ff-text-secondary)]">
+                    DNI {{ selectedClient.dni }}
+                  </p>
+                </div>
+              </div>
+
+              <div
+                class="grid gap-4 border-b border-[var(--ff-border)] pb-5 sm:grid-cols-2"
+              >
+                <div class="space-y-3">
+                  <div>
+                    <p
+                      class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-muted)]"
+                    >
+                      Teléfono
+                    </p>
+                    <p
+                      class="mt-1 text-sm font-semibold text-[var(--ff-text-primary)]"
+                    >
+                      {{ selectedClient.phone || "Sin teléfono" }}
+                    </p>
+                  </div>
+                  <div>
+                    <p
+                      class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-muted)]"
+                    >
+                      Dirección
+                    </p>
+                    <p
+                      class="mt-1 text-sm font-semibold text-[var(--ff-text-primary)]"
+                    >
+                      {{ selectedClient.address || "Sin dirección" }}
+                    </p>
+                  </div>
+                  <div>
+                    <p
+                      class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-muted)]"
+                    >
+                      Alta
+                    </p>
+                    <p
+                      class="mt-1 text-sm font-semibold text-[var(--ff-text-primary)]"
+                    >
+                      {{ formatShortDate(selectedClient.createdAt) }}
+                    </p>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <div>
+                    <p
+                      class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-muted)]"
+                    >
+                      Email
+                    </p>
+                    <p
+                      class="mt-1 text-sm font-semibold text-[var(--ff-text-primary)]"
+                    >
+                      {{ selectedClient.email || "Sin email" }}
+                    </p>
+                  </div>
+                  <div>
+                    <p
+                      class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-muted)]"
+                    >
+                      Cobrador
+                    </p>
+                    <p
+                      class="mt-1 text-sm font-semibold text-[var(--ff-text-primary)]"
+                    >
+                      {{ selectedClient.collectorName || "Sin asignar" }}
                     </p>
                   </div>
                 </div>
               </div>
-            }
 
-            <button
-              type="button"
-              class="w-full rounded-xl bg-gradient-to-r from-[#4F6BFF] to-[#5D76F2] px-4 py-4 text-center shadow-[0_10px_30px_rgba(79,107,255,0.22)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
-              [disabled]="loadingSummary || isSelectedClientInactive"
-              (click)="continueWithSelectedClient()"
-            >
-              <div class="inline-flex items-center gap-2 text-sm font-semibold text-white">
-                <i class="pi pi-arrow-right text-xs"></i>
-                Continuar con este cliente
-              </div>
-            </button>
-
-            <div class="flex flex-wrap gap-2">
-              <span
-                [class]="selectedClientHasMora
-                  ? 'rounded-full px-3 py-1 text-xs font-semibold bg-[#FF7A00]/10 text-[#FF7A00]'
-                  : 'rounded-full px-3 py-1 text-xs font-semibold bg-[#00D084]/10 text-[#00D084]'"
-              >
-                {{ selectedClientHasMora ? 'Con Mora' : 'Apto' }}
-              </span>
-              <span class="rounded-full bg-[#8B5CF6]/10 px-3 py-1 text-xs font-semibold text-[#C4B5FD]">
-                Créditos activos: {{ selectedClient.previousCredits }}
-              </span>
-              @if (isSelectedClientInactive) {
-                <span class="rounded-full bg-[#FF4D4F]/10 px-3 py-1 text-xs font-semibold text-[#FF4D4F]">
-                  Inactivo
-                </span>
+              @if (selectedClientHasMora) {
+                <div
+                  class="rounded-xl border border-[#FF7A00]/40 bg-[#FF7A00]/10 px-4 py-3"
+                >
+                  <div class="flex items-start gap-3">
+                    <i
+                      class="pi pi-exclamation-triangle mt-0.5 text-base text-[#FF7A00]"
+                    ></i>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-[#FFB36B]">
+                        Atención — el cliente tiene
+                        {{ selectedClient.overdueInstallments ?? 0 }}
+                        {{
+                          (selectedClient.overdueInstallments ?? 0) === 1
+                            ? "cuota"
+                            : "cuotas"
+                        }}
+                        en mora
+                      </p>
+                      <p class="mt-1 text-xs text-[#FFB36B]/80">
+                        Esta operación puede requerir validación adicional.
+                        <a
+                          class="ml-1 inline-flex items-center gap-1 font-semibold text-[#FFB36B] underline-offset-2 hover:underline"
+                          [routerLink]="clientDetailLink"
+                        >
+                          Ver detalle del cliente
+                          <i class="pi pi-arrow-right text-[10px]"></i>
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+                </div>
               }
+
+              <button
+                type="button"
+                class="w-full rounded-xl bg-gradient-to-r from-[#4F6BFF] to-[#5D76F2] px-4 py-4 text-center shadow-[0_10px_30px_rgba(79,107,255,0.22)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+                [disabled]="loadingSummary || isSelectedClientInactive"
+                (click)="continueWithSelectedClient()"
+              >
+                <div
+                  class="inline-flex items-center gap-2 text-sm font-semibold text-white"
+                >
+                  <i class="pi pi-arrow-right text-xs"></i>
+                  Continuar con este cliente
+                </div>
+              </button>
+
+              <div class="flex flex-wrap gap-2">
+                <span
+                  [class]="
+                    selectedClientHasMora
+                      ? 'rounded-full px-3 py-1 text-xs font-semibold bg-[#FF7A00]/10 text-[#FF7A00]'
+                      : 'rounded-full px-3 py-1 text-xs font-semibold bg-[#00D084]/10 text-[#00D084]'
+                  "
+                >
+                  {{ selectedClientHasMora ? "Con Mora" : "Apto" }}
+                </span>
+                <span
+                  class="rounded-full bg-[#8B5CF6]/10 px-3 py-1 text-xs font-semibold text-[#C4B5FD]"
+                >
+                  Créditos activos: {{ selectedClient.previousCredits }}
+                </span>
+                @if (isSelectedClientInactive) {
+                  <span
+                    class="rounded-full bg-[#FF4D4F]/10 px-3 py-1 text-xs font-semibold text-[#FF4D4F]"
+                  >
+                    Inactivo
+                  </span>
+                }
+              </div>
             </div>
           </div>
-        </div>
-      }
+        }
       }
     </div>
   </div>
