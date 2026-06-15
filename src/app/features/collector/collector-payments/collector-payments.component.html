@@ -64,12 +64,16 @@
               </td>
               <td>Cuota {{ p.installmentNumber }}</td>
               <td class="text-right font-semibold text-blue-600">
-                {{
-                  p.amountReceived | currencyArs: 2
-                }}
+                {{ p.amountReceived | currencyArs: 2 }}
               </td>
               <td>
-                {{ p.paymentMethod === "CASH" ? "Efectivo" : "Transferencia" }}
+                {{
+                  p.paymentMethod === "CASH"
+                    ? "Efectivo"
+                    : p.paymentMethod === "TRANSFER"
+                      ? "Transferencia"
+                      : "Mixto"
+                }}
               </td>
               <td class="text-center">
                 @if (p.status === "REJECTED" && p.rejectionReason) {

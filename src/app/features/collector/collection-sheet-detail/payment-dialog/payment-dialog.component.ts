@@ -21,7 +21,10 @@ import { DateService } from '../../../../core/services/date.service';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
 import { CollectionSheetItem } from '../../models/collection.model';
-import { PaymentCreatePayload } from '../../models/payment.model';
+import {
+  PaymentCreatePayload,
+  PaymentMethod,
+} from '../../models/payment.model';
 import { PaymentsService } from '../../payments.service';
 import { CollectionDialogSuccess } from '../sheet-dialog.model';
 
@@ -49,8 +52,9 @@ export class PaymentDialogComponent implements OnChanges {
   /** Emite cuando el cobro fue enviado; el padre ejecuta el refresh silencioso. */
   @Output() paid = new EventEmitter<CollectionDialogSuccess>();
 
-  paymentAmount: number | null = null;
-  paymentMethod: 'CASH' | 'TRANSFER' = 'CASH';
+  paymentCashAmount: number | null = null;
+  paymentTransferAmount: number | null = null;
+  paymentMethod: PaymentMethod = 'CASH';
   transferReference = '';
   paymentNotes = '';
   paymentNextVisitDate = '';
@@ -59,17 +63,21 @@ export class PaymentDialogComponent implements OnChanges {
   readonly PAYMENT_METHOD_OPTIONS = [
     { label: 'Efectivo', value: 'CASH' },
     { label: 'Transferencia', value: 'TRANSFER' },
+    { label: 'Efectivo + transferencia', value: 'MIXED' },
   ];
   private readonly paymentsService = inject(PaymentsService);
   private readonly msg = inject(MessageService);
   private readonly dateSvc = inject(DateService);
 
   readonly todayDate: Date = this.dateSvc.startOfToday();
-  get todayIso(): string { return this.dateSvc.toLocalIso(new Date()); }
+  get todayIso(): string {
+    return this.dateSvc.toLocalIso(new Date());
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true && this.item) {
-      this.paymentAmount = this.availableBalance(this.item);
+      this.paymentCashAmount = null;
+      this.paymentTransferAmount = null;
       this.paymentMethod = 'CASH';
       this.transferReference = '';
       this.paymentNotes = '';
@@ -89,10 +97,52 @@ export class PaymentDialogComponent implements OnChanges {
     return Math.max(0, item.amountDue - item.amountPaid);
   }
 
+  /** Devuelve el total ingresado sumando los importes habilitados por medio. */
+  get paymentAmount(): number {
+    return this.roundMoney(
+      (this.paymentCashAmount ?? 0) + (this.paymentTransferAmount ?? 0),
+    );
+  }
+
+  /** Indica si el método seleccionado usa efectivo. */
+  get usesCash(): boolean {
+    return this.paymentMethod === 'CASH' || this.paymentMethod === 'MIXED';
+  }
+
+  /** Indica si el método seleccionado usa transferencia. */
+  get usesTransfer(): boolean {
+    return this.paymentMethod === 'TRANSFER' || this.paymentMethod === 'MIXED';
+  }
+
+  /** True cuando el formulario no tiene montos válidos o falta referencia bancaria. */
+  get paymentFormInvalid(): boolean {
+    return (
+      this.paymentAmount <= 0 ||
+      (!!this.item && this.paymentAmount > this.availableBalance(this.item)) ||
+      (this.isPartialPayment() && !this.paymentNextVisitDate)
+    );
+  }
+
   /** True si el monto ingresado dejaría la cuota en estado parcial. */
   isPartialPayment(): boolean {
-    if (!this.item || !this.paymentAmount) return false;
+    if (!this.item || this.paymentAmount <= 0) return false;
     return this.paymentAmount < this.availableBalance(this.item);
+  }
+
+  /** Ajusta los importes visibles al cambiar entre pago simple y mixto. */
+  onPaymentMethodChange(): void {
+    if (this.paymentMethod === 'CASH') {
+      this.paymentCashAmount = null;
+      this.paymentTransferAmount = null;
+      this.transferReference = '';
+    } else if (this.paymentMethod === 'TRANSFER') {
+      this.paymentCashAmount = null;
+      this.paymentTransferAmount = null;
+    } else {
+      this.paymentCashAmount = null;
+      this.paymentTransferAmount = null;
+    }
+    this.onPaymentAmountChange();
   }
 
   /** Limpia next_visit_date si el monto cubre el saldo completo. */
@@ -107,7 +157,7 @@ export class PaymentDialogComponent implements OnChanges {
    */
   confirmPayment(): void {
     if (this.processingPayment) return;
-    if (!this.item || !this.paymentAmount || this.paymentAmount <= 0) return;
+    if (!this.item || this.paymentFormInvalid) return;
 
     const balance = this.availableBalance(this.item);
     if (this.paymentAmount > balance) {
@@ -141,10 +191,10 @@ export class PaymentDialogComponent implements OnChanges {
     this.processingPayment = true;
     const payload: PaymentCreatePayload = {
       installmentId: this.item.installmentId,
-      amountReceived: this.paymentAmount,
-      paymentMethod: this.paymentMethod,
+      amountCash: this.usesCash ? (this.paymentCashAmount ?? 0) : 0,
+      amountTransfer: this.usesTransfer ? (this.paymentTransferAmount ?? 0) : 0,
     };
-    if (this.paymentMethod === 'TRANSFER' && this.transferReference) {
+    if (this.usesTransfer && this.transferReference) {
       payload.transferReference = this.transferReference;
     }
     if (this.paymentNotes) payload.notes = this.paymentNotes;
@@ -196,5 +246,10 @@ export class PaymentDialogComponent implements OnChanges {
     if (!iso) return '';
     const [y, m, d] = iso.split('-');
     return `${d}/${m}/${y}`;
+  }
+
+  /** Redondea importes monetarios para evitar decimales residuales en la suma. */
+  private roundMoney(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 }

@@ -7,6 +7,7 @@ export type CreditStatus =
   | 'REFINANCED';
 export type CreditType = 'SALE' | 'LOAN';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+export type IntakePaymentMethod = 'CASH' | 'TRANSFER' | 'MIXED';
 export type InstallmentStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'PARTIAL';
 
 export interface Credit {
@@ -176,10 +177,14 @@ export interface SaleCreditPayload {
   units: Array<{ unitId: string }>;
   notes?: string;
   downPayment?: number;
-  downPaymentMethod?: 'CASH' | 'TRANSFER';
+  downPaymentMethod?: IntakePaymentMethod;
+  downPaymentCash?: number;
+  downPaymentTransfer?: number;
   downPaymentTransferReference?: string;
   advancedInstallmentsCount?: number;
-  advancedInstallmentsMethod?: 'CASH' | 'TRANSFER';
+  advancedInstallmentsMethod?: IntakePaymentMethod;
+  advancedInstallmentsCash?: number;
+  advancedInstallmentsTransfer?: number;
   advancedInstallmentsTransferReference?: string;
 }
 
@@ -285,7 +290,9 @@ export interface RejectPayload {
 }
 
 export interface EarlySettlementPayload {
-  paymentMethod: 'CASH' | 'TRANSFER';
+  paymentMethod?: IntakePaymentMethod;
+  amountCash?: number;
+  amountTransfer?: number;
   transferReference?: string;
 }
 

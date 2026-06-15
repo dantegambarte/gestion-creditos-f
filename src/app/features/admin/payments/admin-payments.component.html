@@ -86,15 +86,28 @@
             <tr class="cursor-pointer" (click)="openDetail(p)">
               <td class="font-medium">
                 {{ p.customerName }}
-                <span class="text-xs text-gray-400 ml-1">{{ p.customerDni }}</span>
+                <span class="text-xs text-gray-400 ml-1">{{
+                  p.customerDni
+                }}</span>
               </td>
               <td>Cuota {{ p.installmentNumber }}</td>
-              <td style="color: var(--ff-text-secondary)">{{ p.collectorName ?? '—' }}</td>
-              <td class="text-right font-semibold" style="color: var(--ff-text-primary)">
+              <td style="color: var(--ff-text-secondary)">
+                {{ p.collectorName ?? "—" }}
+              </td>
+              <td
+                class="text-right font-semibold"
+                style="color: var(--ff-text-primary)"
+              >
                 {{ p.amountReceived | currencyArs: 2 }}
               </td>
               <td>
-                {{ p.paymentMethod === 'CASH' ? 'Efectivo' : 'Transferencia' }}
+                {{
+                  p.paymentMethod === "CASH"
+                    ? "Efectivo"
+                    : p.paymentMethod === "TRANSFER"
+                      ? "Transferencia"
+                      : "Mixto"
+                }}
               </td>
               <td class="text-center">
                 @if (p.reversalPaymentId) {
@@ -105,15 +118,21 @@
                   <p-tag value="Pago directo" severity="info" />
                 } @else {
                   <div class="flex flex-wrap justify-center gap-1">
-                    <p-tag [value]="statusLabel(p.status)" [severity]="statusSeverity(p.status)" />
+                    <p-tag
+                      [value]="statusLabel(p.status)"
+                      [severity]="statusSeverity(p.status)"
+                    />
                     @if (paymentTypeLabel(p)) {
-                      <p-tag [value]="paymentTypeLabel(p)!" [severity]="paymentTypeSeverity(p)!" />
+                      <p-tag
+                        [value]="paymentTypeLabel(p)!"
+                        [severity]="paymentTypeSeverity(p)!"
+                      />
                     }
                   </div>
                 }
               </td>
               <td style="color: var(--ff-text-secondary)">
-                {{ p.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                {{ p.createdAt | date: "dd/MM/yyyy HH:mm" }}
               </td>
             </tr>
           </ng-template>

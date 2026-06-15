@@ -145,7 +145,8 @@ function toCreditDetail(raw: CreditDetailRaw): CreditDetail {
     units: raw.units?.map(toCreditUnit),
     installments: raw.installments.map(toInstallment),
     downPayment,
-    financedAmount: raw.financed_amount ?? Math.max(raw.total_amount - downPayment, 0),
+    financedAmount:
+      raw.financed_amount ?? Math.max(raw.total_amount - downPayment, 0),
     downPaymentMethod: raw.down_payment_method,
     downPaymentTransferReference: raw.down_payment_transfer_reference,
     prepaidInstallments: raw.prepaid_installments ?? 0,
@@ -238,17 +239,17 @@ function toSimulateResult(raw: Record<string, unknown>): SimulateResult {
   };
   if (Array.isArray(raw['items'])) {
     result.items = (raw['items'] as Record<string, unknown>[]).map(
-        (item): SimulateResultItem => ({
-          productId: item['product_id'] as string,
-          productName: item['product_name'] as string,
-          variantId: item['variant_id'] as string | undefined,
-          quantity: item['quantity'] as number,
-          unitPrice: item['unit_price'] as number,
-          lineTotal: item['line_total'] as number,
-          rate: item['rate'] as number,
-          installmentContribution: item['installment_contribution'] as number,
-          installmentsCount: item['installments_count'] as number | undefined,
-        }),
+      (item): SimulateResultItem => ({
+        productId: item['product_id'] as string,
+        productName: item['product_name'] as string,
+        variantId: item['variant_id'] as string | undefined,
+        quantity: item['quantity'] as number,
+        unitPrice: item['unit_price'] as number,
+        lineTotal: item['line_total'] as number,
+        rate: item['rate'] as number,
+        installmentContribution: item['installment_contribution'] as number,
+        installmentsCount: item['installments_count'] as number | undefined,
+      }),
     );
   }
   if (raw['down_payment'] !== undefined) {
@@ -257,7 +258,10 @@ function toSimulateResult(raw: Record<string, unknown>): SimulateResult {
   if (raw['financed_amount'] !== undefined) {
     result.financedAmount = raw['financed_amount'] as number;
   } else if (result.downPayment !== undefined) {
-    result.financedAmount = Math.max(result.totalAmount - result.downPayment, 0);
+    result.financedAmount = Math.max(
+      result.totalAmount - result.downPayment,
+      0,
+    );
   }
   if (raw['interest_amount'] !== undefined) {
     result.interestAmount = raw['interest_amount'] as number;
@@ -268,7 +272,9 @@ function toSimulateResult(raw: Record<string, unknown>): SimulateResult {
     );
   }
   if (raw['summary'] && typeof raw['summary'] === 'object') {
-    result.summary = toSimulateSummary(raw['summary'] as Record<string, unknown>);
+    result.summary = toSimulateSummary(
+      raw['summary'] as Record<string, unknown>,
+    );
   }
   return result;
 }
@@ -291,14 +297,18 @@ function toCreateBody(p: CreditCreatePayload): Record<string, unknown> {
     body['unit_ids'] = p.units.map((u) => u.unitId);
     const hasDownPayment = p.downPayment !== undefined && p.downPayment > 0;
     const hasAdvancedInstallments =
-      p.advancedInstallmentsCount !== undefined && p.advancedInstallmentsCount > 0;
+      p.advancedInstallmentsCount !== undefined &&
+      p.advancedInstallmentsCount > 0;
 
     if (hasDownPayment || hasAdvancedInstallments) {
       body['down_payment'] = p.downPayment ?? 0;
     }
 
     if (hasDownPayment) {
-      if (p.downPaymentMethod) {
+      if (p.downPaymentMethod === 'MIXED') {
+        body['down_payment_cash'] = p.downPaymentCash ?? 0;
+        body['down_payment_transfer'] = p.downPaymentTransfer ?? 0;
+      } else if (p.downPaymentMethod) {
         body['down_payment_method'] = p.downPaymentMethod;
       }
       if (p.downPaymentTransferReference) {
@@ -307,9 +317,16 @@ function toCreateBody(p: CreditCreatePayload): Record<string, unknown> {
       }
     }
 
-    if (p.advancedInstallmentsCount !== undefined && p.advancedInstallmentsCount > 0) {
+    if (
+      p.advancedInstallmentsCount !== undefined &&
+      p.advancedInstallmentsCount > 0
+    ) {
       body['prepaid_installments'] = p.advancedInstallmentsCount;
-      if (p.advancedInstallmentsMethod) {
+      if (p.advancedInstallmentsMethod === 'MIXED') {
+        body['prepaid_installments_cash'] = p.advancedInstallmentsCash ?? 0;
+        body['prepaid_installments_transfer'] =
+          p.advancedInstallmentsTransfer ?? 0;
+      } else if (p.advancedInstallmentsMethod) {
         body['prepaid_installments_method'] = p.advancedInstallmentsMethod;
       }
       if (p.advancedInstallmentsTransferReference) {
@@ -415,7 +432,10 @@ export class CreditsService {
    * @param payload - Parámetros de la refinanciación.
    * @returns Resultado con el nuevo crédito y el snapshot financiero.
    */
-  refinance(id: string, payload: RefinancePayload): Observable<RefinanceResult> {
+  refinance(
+    id: string,
+    payload: RefinancePayload,
+  ): Observable<RefinanceResult> {
     const body: Record<string, unknown> = {
       installments_count: payload.installmentsCount,
       payment_frequency: payload.paymentFrequency,
@@ -427,23 +447,25 @@ export class CreditsService {
     return this.api
       .post<RefinanceResultRaw>(`credits/${id}/refinance`, body)
       .pipe(
-        map((raw): RefinanceResult => ({
-          originalCreditId: raw.original_credit_id,
-          newCredit: {
-            id: raw.new_credit.id,
-            type: raw.new_credit.type,
-            totalAmount: raw.new_credit.total_amount,
-            installmentsCount: raw.new_credit.installments_count,
-            paymentFrequency: raw.new_credit.payment_frequency,
-            status: raw.new_credit.status,
-            refinancedFromCreditId: raw.new_credit.refinanced_from_credit_id,
-            createdAt: raw.new_credit.created_at,
-          },
-          pendingBalance: raw.pending_balance,
-          extraCharges: raw.extra_charges,
-          totalTransferred: raw.total_transferred,
-          message: raw.message,
-        })),
+        map(
+          (raw): RefinanceResult => ({
+            originalCreditId: raw.original_credit_id,
+            newCredit: {
+              id: raw.new_credit.id,
+              type: raw.new_credit.type,
+              totalAmount: raw.new_credit.total_amount,
+              installmentsCount: raw.new_credit.installments_count,
+              paymentFrequency: raw.new_credit.payment_frequency,
+              status: raw.new_credit.status,
+              refinancedFromCreditId: raw.new_credit.refinanced_from_credit_id,
+              createdAt: raw.new_credit.created_at,
+            },
+            pendingBalance: raw.pending_balance,
+            extraCharges: raw.extra_charges,
+            totalTransferred: raw.total_transferred,
+            message: raw.message,
+          }),
+        ),
       );
   }
 
@@ -457,9 +479,16 @@ export class CreditsService {
     id: string,
     payload: EarlySettlementPayload,
   ): Observable<EarlySettlementResult> {
-    const body: Record<string, unknown> = {
-      payment_method: payload.paymentMethod,
-    };
+    const body: Record<string, unknown> = {};
+    if (
+      payload.amountCash !== undefined ||
+      payload.amountTransfer !== undefined
+    ) {
+      body['amount_cash'] = payload.amountCash ?? 0;
+      body['amount_transfer'] = payload.amountTransfer ?? 0;
+    } else if (payload.paymentMethod) {
+      body['payment_method'] = payload.paymentMethod;
+    }
     if (payload.transferReference) {
       body['transfer_reference'] = payload.transferReference;
     }

@@ -66,6 +66,8 @@
     <div class="flex flex-col gap-1">
       <label class="auth-label">Método de pago</label>
       <p-dropdown
+        inputId="settlement-payment-method"
+        data-cy="settlement-payment-method"
         [options]="PAYMENT_METHOD_OPTIONS"
         [(ngModel)]="paymentMethod"
         optionLabel="label"
@@ -87,6 +89,62 @@
         />
       </div>
     }
+    @if (paymentMethod === "MIXED") {
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Efectivo</label>
+          <p-inputNumber
+            inputId="settlement-cash-amount"
+            data-cy="settlement-cash-amount"
+            appCurrencyAmountInput
+            [(ngModel)]="amountCash"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [minFractionDigits]="0"
+            [allowEmpty]="true"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Transferencia</label>
+          <p-inputNumber
+            inputId="settlement-transfer-amount"
+            data-cy="settlement-transfer-amount"
+            appCurrencyAmountInput
+            [(ngModel)]="amountTransfer"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [minFractionDigits]="0"
+            [allowEmpty]="true"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+          />
+        </div>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Referencia de transferencia</label>
+        <input
+          type="text"
+          pInputText
+          data-cy="settlement-transfer-reference"
+          [(ngModel)]="transferRef"
+          maxlength="100"
+          class="w-full h-11 px-3"
+          placeholder="Número de operación..."
+        />
+      </div>
+      @if (!formValid) {
+        <p class="text-xs text-amber-600">
+          El efectivo y la transferencia deben sumar el total a cobrar, y la
+          referencia es obligatoria.
+        </p>
+      }
+    }
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
@@ -99,11 +157,12 @@
       />
       <p-button
         label="Confirmar"
+        data-cy="settlement-submit"
         severity="primary"
         styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirm()"
         [loading]="processing"
-        [disabled]="hasPendingPayments"
+        [disabled]="hasPendingPayments || !formValid"
         [pTooltip]="
           hasPendingPayments
             ? 'Resuelve los pagos pendientes antes de cancelar'

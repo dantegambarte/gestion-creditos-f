@@ -22,6 +22,8 @@
         >Monto cobrado</label
       >
       <p-inputNumber
+        inputId="seller-direct-payment-amount"
+        data-cy="seller-direct-payment-amount"
         appCurrencyAmountInput
         [(ngModel)]="amount"
         mode="currency"
@@ -40,6 +42,8 @@
         >Método de pago</label
       >
       <p-dropdown
+        inputId="seller-direct-payment-method"
+        data-cy="seller-direct-payment-method"
         [options]="PAYMENT_METHOD_OPTIONS"
         [(ngModel)]="method"
         optionLabel="label"
@@ -62,6 +66,72 @@
           maxlength="100"
         />
       </div>
+    }
+
+    @if (method === "MIXED") {
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-sm font-medium"
+            style="color: var(--ff-text-primary)"
+            >Efectivo</label
+          >
+          <p-inputNumber
+            inputId="seller-direct-cash-amount"
+            data-cy="seller-direct-cash-amount"
+            appCurrencyAmountInput
+            [(ngModel)]="amountCash"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [minFractionDigits]="0"
+            [allowEmpty]="true"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-sm font-medium"
+            style="color: var(--ff-text-primary)"
+            >Transferencia</label
+          >
+          <p-inputNumber
+            inputId="seller-direct-transfer-amount"
+            data-cy="seller-direct-transfer-amount"
+            appCurrencyAmountInput
+            [(ngModel)]="amountTransfer"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [minFractionDigits]="0"
+            [allowEmpty]="true"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+          />
+        </div>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+          >Referencia de transferencia</label
+        >
+        <input
+          pInputText
+          data-cy="seller-direct-transfer-reference"
+          [(ngModel)]="transferRef"
+          placeholder="N° de operación o referencia"
+          class="w-full h-11 px-3"
+          maxlength="100"
+        />
+      </div>
+      @if (!formValid) {
+        <p class="text-xs text-amber-600">
+          El efectivo y la transferencia deben sumar el monto cobrado, y la
+          referencia es obligatoria.
+        </p>
+      }
     }
 
     <div class="flex flex-col gap-1">
@@ -91,6 +161,7 @@
       />
       <p-button
         label="Registrar cobro"
+        data-cy="seller-direct-submit"
         icon="pi pi-check"
         severity="primary"
         styleClass="w-full h-11 px-5 rounded-xl justify-center"

@@ -17,7 +17,7 @@ export interface ManagementLogEntry {
   notes: string | null;
   amount: number | null;
   paymentStatus: PaymentStatus | null;
-  paymentMethod: 'CASH' | 'TRANSFER' | null;
+  paymentMethod: 'CASH' | 'TRANSFER' | 'MIXED' | null;
   isReversal: boolean;
   adminDirect: boolean;
   rejectionReason: string | null;
@@ -35,7 +35,7 @@ export interface ManagementLogEntryRaw {
   notes: string | null;
   amount: number | null;
   payment_status: PaymentStatus | null;
-  payment_method: 'CASH' | 'TRANSFER' | null;
+  payment_method: 'CASH' | 'TRANSFER' | 'MIXED' | null;
   is_reversal: boolean;
   admin_direct: boolean;
   rejection_reason: string | null;

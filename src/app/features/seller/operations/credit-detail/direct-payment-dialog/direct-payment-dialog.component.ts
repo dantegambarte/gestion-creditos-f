@@ -47,7 +47,9 @@ export class DirectPaymentDialogComponent implements OnChanges {
 
   maxAmount = 0;
   amount: number | null = null;
-  method: 'CASH' | 'TRANSFER' = 'CASH';
+  method: 'CASH' | 'TRANSFER' | 'MIXED' = 'CASH';
+  amountCash: number | null = null;
+  amountTransfer: number | null = null;
   transferRef = '';
   notes = '';
   processing = false;
@@ -55,6 +57,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
   readonly PAYMENT_METHOD_OPTIONS = [
     { label: 'Efectivo', value: 'CASH' },
     { label: 'Transferencia', value: 'TRANSFER' },
+    { label: 'Efectivo + transferencia', value: 'MIXED' },
   ];
 
   private readonly paymentsSvc = inject(PaymentsService);
@@ -67,6 +70,8 @@ export class DirectPaymentDialogComponent implements OnChanges {
       this.maxAmount = this.installment.amountDue - this.installment.amountPaid;
       this.amount = this.maxAmount;
       this.method = 'CASH';
+      this.amountCash = null;
+      this.amountTransfer = null;
       this.transferRef = '';
       this.notes = '';
     }
@@ -77,7 +82,12 @@ export class DirectPaymentDialogComponent implements OnChanges {
       !!this.installment &&
       (this.amount ?? 0) > 0 &&
       (this.amount ?? 0) <= this.maxAmount &&
-      (this.method !== 'TRANSFER' || this.transferRef.trim().length > 0)
+      (this.method !== 'MIXED' ||
+        (Math.round(
+          ((this.amountCash ?? 0) + (this.amountTransfer ?? 0)) * 100,
+        ) === Math.round((this.amount ?? 0) * 100) &&
+          (this.amountCash ?? 0) > 0 &&
+          (this.amountTransfer ?? 0) > 0))
     );
   }
 
@@ -114,7 +124,12 @@ export class DirectPaymentDialogComponent implements OnChanges {
       .create({
         installmentId: this.installment!.id,
         amountReceived: this.amount!,
-        paymentMethod: this.method,
+        ...(this.method === 'MIXED'
+          ? {
+              amountCash: this.amountCash ?? 0,
+              amountTransfer: this.amountTransfer ?? 0,
+            }
+          : { paymentMethod: this.method }),
         transferReference: this.transferRef || undefined,
         notes: this.notes || undefined,
       })

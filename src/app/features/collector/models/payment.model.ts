@@ -1,10 +1,13 @@
 export type PaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type PaymentMethod = 'CASH' | 'TRANSFER' | 'MIXED';
 
 export interface Payment {
   id: string;
   installmentId: string;
   amountReceived: number;
-  paymentMethod: 'CASH' | 'TRANSFER';
+  paymentMethod: PaymentMethod;
+  amountCash: number;
+  amountTransfer: number;
   transferReference: string | null;
   status: PaymentStatus;
   rejectionReason: string | null;
@@ -47,8 +50,10 @@ export interface PaymentListFilters {
 
 export interface PaymentCreatePayload {
   installmentId: string;
-  amountReceived: number;
-  paymentMethod: 'CASH' | 'TRANSFER';
+  amountReceived?: number;
+  paymentMethod?: PaymentMethod;
+  amountCash?: number;
+  amountTransfer?: number;
   transferReference?: string;
   notes?: string;
   /** Obligatorio cuando el cobro queda parcial (amount < saldo restante). */
@@ -60,6 +65,8 @@ export interface PaymentCreateResult {
   installmentId: string;
   amountReceived: number;
   paymentMethod: string;
+  amountCash: number;
+  amountTransfer: number;
   status: PaymentStatus;
   createdAt: string;
   nextVisitDate: string | null;
@@ -71,8 +78,10 @@ export interface CreditPayment {
   id: string;
   installmentId: string;
   collectorId: string | null;
-  amountReceived: number;
-  paymentMethod: 'CASH' | 'TRANSFER';
+  amountReceived?: number;
+  paymentMethod: PaymentMethod;
+  amountCash: number;
+  amountTransfer: number;
   transferReference: string | null;
   status: PaymentStatus;
   isReversal: boolean;
@@ -93,8 +102,10 @@ export interface CreditPayment {
 
 export interface AdminDirectPayload {
   installmentId: string;
-  amountReceived: number;
-  paymentMethod: 'CASH' | 'TRANSFER';
+  amountReceived?: number;
+  paymentMethod?: PaymentMethod;
+  amountCash?: number;
+  amountTransfer?: number;
   transferReference?: string;
   notes?: string;
   /** Obligatorio cuando el cobro queda parcial (amount < saldo restante). */
@@ -110,7 +121,9 @@ export interface PaymentRaw {
   id: string;
   installment_id: string;
   amount_received: number;
-  payment_method: 'CASH' | 'TRANSFER';
+  payment_method: PaymentMethod;
+  amount_cash?: number;
+  amount_transfer?: number;
   transfer_reference: string | null;
   status: PaymentStatus;
   rejection_reason: string | null;
@@ -148,6 +161,8 @@ export interface PaymentCreateResultRaw {
   installment_id: string;
   amount_received: number;
   payment_method: string;
+  amount_cash?: number;
+  amount_transfer?: number;
   status: PaymentStatus;
   created_at: string;
   next_visit_date: string | null;
@@ -159,7 +174,9 @@ export interface CreditPaymentRaw {
   installment_id: string;
   collector_id: string | null;
   amount_received: number;
-  payment_method: 'CASH' | 'TRANSFER';
+  payment_method: PaymentMethod;
+  amount_cash?: number;
+  amount_transfer?: number;
   transfer_reference: string | null;
   status: PaymentStatus;
   is_reversal: boolean;

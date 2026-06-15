@@ -53,7 +53,9 @@ export class RouteComponent implements OnInit {
 
   today = new Date();
 
-  private get todayIso(): string { return this.dateSvc.toLocalIso(new Date()); }
+  private get todayIso(): string {
+    return this.dateSvc.toLocalIso(new Date());
+  }
 
   ngOnInit(): void {
     this.header.set([{ label: 'Mi Ruta' }]);
@@ -85,7 +87,9 @@ export class RouteComponent implements OnInit {
    * @returns Texto corto para mostrar en UI.
    */
   paymentMethodLabel(method: Payment['paymentMethod']): string {
-    return method === 'CASH' ? 'Efectivo' : 'Transferencia';
+    if (method === 'CASH') return 'Efectivo';
+    if (method === 'TRANSFER') return 'Transferencia';
+    return 'Mixto';
   }
 
   /**

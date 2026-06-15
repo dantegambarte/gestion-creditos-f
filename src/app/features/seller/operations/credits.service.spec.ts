@@ -6,10 +6,7 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
 import { jwtInterceptor } from '../../../core/interceptors/jwt.interceptor';
-import {
-  CreditDetailRaw,
-  CreditRaw,
-} from '../models/credit.model';
+import { CreditDetailRaw, CreditRaw } from '../models/credit.model';
 
 import { CreditsService } from './credits.service';
 
@@ -229,7 +226,11 @@ describe('CreditsService', () => {
 
       const req = httpMock.expectOne(`${BASE}/credits/simulate`);
       expect(req.request.body['down_payment']).toBe(200);
-      req.flush({ ok: true, data: mockSimulateSaleWithDownPaymentRaw, message: '' });
+      req.flush({
+        ok: true,
+        data: mockSimulateSaleWithDownPaymentRaw,
+        message: '',
+      });
       expect(result.downPayment).toBe(200);
       expect(result.financedAmount).toBe(800);
     });
@@ -374,7 +375,11 @@ describe('CreditsService', () => {
       expect(req.request.body['down_payment']).toBe(500);
       expect(req.request.body['down_payment_method']).toBe('CASH');
       expect(req.request.body['prepaid_installments']).toBeUndefined();
-      req.flush({ ok: true, data: { id: 'new-id', status: 'PENDING_APPROVAL' }, message: '' });
+      req.flush({
+        ok: true,
+        data: { id: 'new-id', status: 'PENDING_APPROVAL' },
+        message: '',
+      });
     });
 
     it('SALE with prepaid installments includes dedicated prepaid fields', () => {
@@ -395,8 +400,76 @@ describe('CreditsService', () => {
       expect(req.request.body['down_payment']).toBe(0);
       expect(req.request.body['prepaid_installments']).toBe(1);
       expect(req.request.body['prepaid_installments_method']).toBe('TRANSFER');
-      expect(req.request.body['prepaid_installments_transfer_reference']).toBe('TRX-123');
-      req.flush({ ok: true, data: { id: 'new-id', status: 'PENDING_APPROVAL' }, message: '' });
+      expect(req.request.body['prepaid_installments_transfer_reference']).toBe(
+        'TRX-123',
+      );
+      req.flush({
+        ok: true,
+        data: { id: 'new-id', status: 'PENDING_APPROVAL' },
+        message: '',
+      });
+    });
+
+    it('SALE with mixed down payment sends cash and transfer split', () => {
+      service
+        .create({
+          customerId: 'cust-1',
+          type: 'SALE',
+          installmentsCount: 3,
+          paymentFrequency: 'MONTHLY',
+          units: [{ unitId: 'unit-1' }],
+          downPayment: 500,
+          downPaymentMethod: 'MIXED',
+          downPaymentCash: 200,
+          downPaymentTransfer: 300,
+          downPaymentTransferReference: 'DP-MIX-001',
+        } as any)
+        .subscribe();
+
+      const req = httpMock.expectOne(`${BASE}/credits`);
+      expect(req.request.body['down_payment']).toBe(500);
+      expect(req.request.body['down_payment_cash']).toBe(200);
+      expect(req.request.body['down_payment_transfer']).toBe(300);
+      expect(req.request.body['down_payment_method']).toBeUndefined();
+      expect(req.request.body['down_payment_transfer_reference']).toBe(
+        'DP-MIX-001',
+      );
+      req.flush({
+        ok: true,
+        data: { id: 'new-id', status: 'PENDING_APPROVAL' },
+        message: '',
+      });
+    });
+
+    it('SALE with mixed prepaid installments sends cash and transfer split', () => {
+      service
+        .create({
+          customerId: 'cust-1',
+          type: 'SALE',
+          installmentsCount: 4,
+          paymentFrequency: 'MONTHLY',
+          units: [{ unitId: 'unit-1' }],
+          advancedInstallmentsCount: 1,
+          advancedInstallmentsMethod: 'MIXED',
+          advancedInstallmentsCash: 150,
+          advancedInstallmentsTransfer: 250,
+          advancedInstallmentsTransferReference: 'PRE-MIX-001',
+        } as any)
+        .subscribe();
+
+      const req = httpMock.expectOne(`${BASE}/credits`);
+      expect(req.request.body['prepaid_installments']).toBe(1);
+      expect(req.request.body['prepaid_installments_cash']).toBe(150);
+      expect(req.request.body['prepaid_installments_transfer']).toBe(250);
+      expect(req.request.body['prepaid_installments_method']).toBeUndefined();
+      expect(req.request.body['prepaid_installments_transfer_reference']).toBe(
+        'PRE-MIX-001',
+      );
+      req.flush({
+        ok: true,
+        data: { id: 'new-id', status: 'PENDING_APPROVAL' },
+        message: '',
+      });
     });
 
     it('SALE without downPayment does not send down_payment field', () => {
@@ -413,7 +486,11 @@ describe('CreditsService', () => {
       const req = httpMock.expectOne(`${BASE}/credits`);
       expect(req.request.body['down_payment']).toBeUndefined();
       expect(req.request.body['prepaid_installments']).toBeUndefined();
-      req.flush({ ok: true, data: { id: 'new-id', status: 'PENDING_APPROVAL' }, message: '' });
+      req.flush({
+        ok: true,
+        data: { id: 'new-id', status: 'PENDING_APPROVAL' },
+        message: '',
+      });
     });
   });
 
@@ -445,7 +522,9 @@ describe('CreditsService', () => {
 
   describe('reject', () => {
     it('sends rejectionReason as rejection_reason in body', () => {
-      service.reject('credit-1', { rejectionReason: 'Mora activa' }).subscribe();
+      service
+        .reject('credit-1', { rejectionReason: 'Mora activa' })
+        .subscribe();
       const req = httpMock.expectOne(`${BASE}/credits/credit-1/reject`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body['rejection_reason']).toBe('Mora activa');
@@ -459,7 +538,9 @@ describe('CreditsService', () => {
       service
         .earlySettlement('credit-1', { paymentMethod: 'CASH' })
         .subscribe((r) => (result = r));
-      const req = httpMock.expectOne(`${BASE}/credits/credit-1/early-settlement`);
+      const req = httpMock.expectOne(
+        `${BASE}/credits/credit-1/early-settlement`,
+      );
       expect(req.request.method).toBe('PATCH');
       req.flush({
         ok: true,
@@ -481,12 +562,46 @@ describe('CreditsService', () => {
           transferReference: 'REF123',
         })
         .subscribe();
-      const req = httpMock.expectOne(`${BASE}/credits/credit-1/early-settlement`);
+      const req = httpMock.expectOne(
+        `${BASE}/credits/credit-1/early-settlement`,
+      );
       expect(req.request.body['payment_method']).toBe('TRANSFER');
       expect(req.request.body['transfer_reference']).toBe('REF123');
       req.flush({
         ok: true,
-        data: { credit_id: 'credit-1', settlement_amount: 3000, payment_method: 'TRANSFER' },
+        data: {
+          credit_id: 'credit-1',
+          settlement_amount: 3000,
+          payment_method: 'TRANSFER',
+        },
+        message: '',
+      });
+    });
+
+    it('sends mixed split amounts without legacy payment_method', () => {
+      service
+        .earlySettlement('credit-1', {
+          paymentMethod: 'MIXED',
+          amountCash: 1200,
+          amountTransfer: 1800,
+          transferReference: 'SET-MIX-001',
+        } as any)
+        .subscribe();
+
+      const req = httpMock.expectOne(
+        `${BASE}/credits/credit-1/early-settlement`,
+      );
+      expect(req.request.body['amount_cash']).toBe(1200);
+      expect(req.request.body['amount_transfer']).toBe(1800);
+      expect(req.request.body['payment_method']).toBeUndefined();
+      expect(req.request.body['transfer_reference']).toBe('SET-MIX-001');
+      req.flush({
+        ok: true,
+        data: {
+          credit_id: 'credit-1',
+          settlement_amount: 3000,
+          payment_method: 'MIXED',
+        },
         message: '',
       });
     });
