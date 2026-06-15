@@ -165,7 +165,12 @@
               severity="warning"
               [outlined]="true"
               size="small"
-              pTooltip="Recalcular el saldo con la tasa de un plan más corto"
+              [disabled]="planAlreadyChanged"
+              [pTooltip]="
+                planAlreadyChanged
+                  ? 'Este crédito ya tuvo un cambio de plan (solo se permite uno)'
+                  : 'Recalcular el saldo con la tasa de un plan más corto'
+              "
               (onClick)="openPlanChangeDialog()"
             />
           }

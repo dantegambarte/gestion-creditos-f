@@ -370,12 +370,14 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     this.load();
   }
 
-  /** Cambio de plan disponible: solo ADMIN, crédito LOAN ACTIVE. */
-  get canChangePlan(): boolean {
-    return (
-      this.isAdmin &&
-      this.credit?.status === 'ACTIVE' &&
-      this.credit?.type === 'LOAN'
+  /**
+   * Indica si el crédito ya tuvo un cambio de plan. Se infiere de la presencia
+   * de cuotas anuladas por cambio de plan (un cambio exitoso siempre anula al
+   * menos una). Solo se permite un cambio de plan por crédito.
+   */
+  get planAlreadyChanged(): boolean {
+    return !!this.credit?.installments.some(
+      (i) => i.status === 'PLAN_CHANGE_CANCELLED',
     );
   }
 

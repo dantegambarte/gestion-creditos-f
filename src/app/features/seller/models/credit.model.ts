@@ -7,7 +7,12 @@ export type CreditStatus =
   | 'REFINANCED';
 export type CreditType = 'SALE' | 'LOAN';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
-export type InstallmentStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'PARTIAL';
+export type InstallmentStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'OVERDUE'
+  | 'PARTIAL'
+  | 'PLAN_CHANGE_CANCELLED';
 
 export interface Credit {
   id: string;
