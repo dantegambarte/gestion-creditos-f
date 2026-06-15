@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CashRegisterService } from '../../../cash-register/cash-register.service';
 import { BusinessDayListItem } from '../../../models/business-day.model';
@@ -76,6 +77,7 @@ describe('CashMovementsReportComponent', () => {
   let fixture: ComponentFixture<CashMovementsReportComponent>;
   let cashRegisterSpy: jasmine.SpyObj<CashRegisterService>;
   let reportsSpy: jasmine.SpyObj<ReportsService>;
+  let routerSpy: jasmine.SpyObj<Router>;
 
   beforeEach(async () => {
     cashRegisterSpy = jasmine.createSpyObj('CashRegisterService', [
@@ -85,6 +87,7 @@ describe('CashMovementsReportComponent', () => {
     reportsSpy = jasmine.createSpyObj('ReportsService', [
       'getCashMovementsReport',
     ]);
+    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
     cashRegisterSpy.listBusinessDays.and.returnValue(of([mockBusinessDay]));
     cashRegisterSpy.listSessionsByBusinessDay.and.returnValue(
@@ -97,6 +100,7 @@ describe('CashMovementsReportComponent', () => {
       providers: [
         { provide: CashRegisterService, useValue: cashRegisterSpy },
         { provide: ReportsService, useValue: reportsSpy },
+        { provide: Router, useValue: routerSpy },
       ],
     }).compileComponents();
 
@@ -293,6 +297,31 @@ describe('CashMovementsReportComponent', () => {
       expect(component.creditTypeLabel('SALE')).toBe('Venta');
       expect(component.creditTypeLabel('LOAN')).toBe('Préstamo');
       expect(component.creditTypeLabel(null)).toBe('—');
+    });
+
+    it('permite ir a la operación cuando el movimiento tiene crédito', () => {
+      const row = mockReport.rows[0];
+      component.selectedMovement = row;
+
+      expect(component.canOpenOperation(row)).toBeTrue();
+
+      component.openOperation(row);
+
+      expect(component.selectedMovement).toBeNull();
+      expect(routerSpy.navigate).toHaveBeenCalledWith([
+        '/admin/operations',
+        'credit-1',
+      ]);
+    });
+
+    it('no navega a operación si el movimiento no tiene crédito', () => {
+      const row = { ...mockReport.rows[0], creditId: null };
+
+      expect(component.canOpenOperation(row)).toBeFalse();
+
+      component.openOperation(row);
+
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
     });
   });
 

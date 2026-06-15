@@ -1,7 +1,9 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
+import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -13,7 +15,11 @@ import { LoadingStateComponent } from '../../../../../shared/states/loading-stat
 import { CashRegisterService } from '../../../cash-register/cash-register.service';
 import { BusinessDayListItem } from '../../../models/business-day.model';
 import { CashSessionListItem } from '../../../models/cash-session.model';
-import { CashMovementReport, CashMovementType } from '../../report.models';
+import {
+  CashMovementReport,
+  CashMovementReportRow,
+  CashMovementType,
+} from '../../report.models';
 import { ReportsService } from '../../reports.service';
 
 const TYPE_LABELS: Record<CashMovementType, string> = {
@@ -27,6 +33,7 @@ const TYPE_LABELS: Record<CashMovementType, string> = {
 const METHOD_LABELS: Record<string, string> = {
   CASH: 'Efectivo',
   TRANSFER: 'Transferencia',
+  MIXED: 'Mixto',
   CASH_TRANSFER: 'Efectivo → Transferencia',
   TRANSFER_CASH: 'Transferencia → Efectivo',
 };
@@ -43,6 +50,7 @@ const METHOD_LABELS: Record<string, string> = {
     FormsModule,
     ButtonModule,
     CalendarModule,
+    DialogModule,
     DropdownModule,
     LoadingStateComponent,
     ErrorStateComponent,
@@ -54,6 +62,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   private readonly reportsService = inject(ReportsService);
   readonly format = inject(FormatService);
   private readonly dateSvc = inject(DateService);
+  private readonly router = inject(Router);
   private destroy$ = new Subject<void>();
 
   dateFrom: string;
@@ -73,6 +82,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   report: CashMovementReport | null = null;
   loadingReport = false;
   reportError: AppError | null = null;
+  selectedMovement: CashMovementReportRow | null = null;
 
   constructor() {
     const { from, to } = this.defaultRange();
@@ -97,7 +107,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   /** Opciones del dropdown de jornadas. */
   get businessDayOptions(): { label: string; value: string }[] {
     return this.businessDays.map((bd) => ({
-      label: `${this.format.shortDate(bd.business_date)} · ${bd.branch_name || 'Empresa'}`,
+      label: this.format.shortDate(bd.business_date),
       value: bd.id,
     }));
   }
@@ -131,6 +141,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
 
   /** Etiqueta legible del método de pago (incluye combinaciones de conversión). */
   methodLabel(method: string): string {
+    if (!method) return '—';
     return METHOD_LABELS[method] || method;
   }
 
@@ -157,6 +168,40 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   /** Formatea un valor numérico como moneda local. */
   formatCurrency(v: number): string {
     return this.format.currency(v);
+  }
+
+  /** Abre el detalle enriquecido de un movimiento de caja. */
+  openMovementDetail(row: CashMovementReportRow): void {
+    this.selectedMovement = row;
+  }
+
+  /** Cierra el detalle del movimiento seleccionado. */
+  closeMovementDetail(): void {
+    this.selectedMovement = null;
+  }
+
+  /** Indica si el movimiento tiene contexto comercial asociado a cliente/crédito. */
+  hasCommercialContext(row: CashMovementReportRow): boolean {
+    return !!(row.customerName || row.creditId || row.productSummary);
+  }
+
+  /** Indica si el movimiento permite navegar a la operación asociada. */
+  canOpenOperation(row: CashMovementReportRow): boolean {
+    return !!row.creditId;
+  }
+
+  /** Navega al detalle de la operación asociada al movimiento seleccionado. */
+  openOperation(row: CashMovementReportRow): void {
+    if (!row.creditId) return;
+    this.closeMovementDetail();
+    this.router.navigate(['/admin/operations', row.creditId]);
+  }
+
+  /** Traduce el tipo de crédito a etiqueta visible. */
+  creditTypeLabel(type: 'SALE' | 'LOAN' | null): string {
+    if (type === 'SALE') return 'Venta';
+    if (type === 'LOAN') return 'Préstamo';
+    return '—';
   }
 
   /** Carga las jornadas del rango de fechas seleccionado. */
@@ -216,6 +261,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   private fetchReport(sessionId: string): void {
     this.loadingReport = true;
     this.reportError = null;
+    this.selectedMovement = null;
     this.reportsService
       .getCashMovementsReport(sessionId)
       .pipe(
