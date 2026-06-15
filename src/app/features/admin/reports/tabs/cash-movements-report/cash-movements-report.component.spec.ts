@@ -45,9 +45,28 @@ const mockReport: CashMovementReport = {
       branchName: 'Sucursal Centro',
       shiftLabel: null,
       amount: 5000,
-      paymentMethod: 'CASH',
+      paymentMethod: 'MIXED',
       description: 'Cobro cuota #1 · Juan Pérez',
       performedByName: 'Admin',
+      transferReference: 'TR-1',
+      customerId: 'cust-1',
+      customerName: 'Juan Pérez',
+      customerDni: '30111222',
+      creditId: 'credit-1',
+      creditType: 'SALE',
+      installmentId: 'inst-1',
+      installmentNumber: 1,
+      expenseCategoryId: null,
+      expenseCategoryName: null,
+      expenseSource: null,
+      dropDestination: null,
+      dropReason: null,
+      dropStatus: null,
+      receiptReference: null,
+      conversionSourceMethod: null,
+      conversionTargetMethod: null,
+      conversionCriteria: null,
+      productSummary: 'Moto 110 · U-001',
     },
   ],
 };
@@ -152,12 +171,7 @@ describe('CashMovementsReportComponent', () => {
       const options = component.businessDayOptions;
       expect(options.length).toBe(1);
       expect(options[0].value).toBe('bd-1');
-      expect(options[0].label).toContain('Sucursal Centro');
-    });
-
-    it('usa "Empresa" cuando la jornada no tiene branch_name', () => {
-      component.businessDays = [{ ...mockBusinessDay, branch_name: undefined }];
-      expect(component.businessDayOptions[0].label).toContain('Empresa');
+      expect(options[0].label).toBe('10/06/2026');
     });
   });
 
@@ -219,6 +233,7 @@ describe('CashMovementsReportComponent', () => {
     it('methodLabel traduce métodos conocidos y combinaciones de conversión', () => {
       expect(component.methodLabel('CASH')).toBe('Efectivo');
       expect(component.methodLabel('TRANSFER')).toBe('Transferencia');
+      expect(component.methodLabel('MIXED')).toBe('Mixto');
       expect(component.methodLabel('CASH_TRANSFER')).toBe(
         'Efectivo → Transferencia',
       );
@@ -229,6 +244,10 @@ describe('CashMovementsReportComponent', () => {
 
     it('methodLabel devuelve el valor crudo si no hay traducción', () => {
       expect(component.methodLabel('OTRO')).toBe('OTRO');
+    });
+
+    it('methodLabel muestra guion cuando no hay método', () => {
+      expect(component.methodLabel('')).toBe('—');
     });
 
     it('typeBadgeClasses asigna colores según el tipo', () => {
@@ -250,6 +269,30 @@ describe('CashMovementsReportComponent', () => {
     it('formatDateTime delega en DateService con formato dd/MM/yyyy HH:mm', () => {
       const iso = '2026-06-10T10:00:00.000Z';
       expect(component.formatDateTime(iso)).toContain('10/06/2026');
+    });
+  });
+
+  describe('detalle de movimiento', () => {
+    it('abre y cierra el movimiento seleccionado', () => {
+      const row = mockReport.rows[0];
+
+      component.openMovementDetail(row);
+
+      expect(component.selectedMovement).toBe(row);
+
+      component.closeMovementDetail();
+
+      expect(component.selectedMovement).toBeNull();
+    });
+
+    it('detecta contexto comercial cuando hay cliente, crédito o producto', () => {
+      expect(component.hasCommercialContext(mockReport.rows[0])).toBeTrue();
+    });
+
+    it('traduce el tipo de crédito visible en el detalle', () => {
+      expect(component.creditTypeLabel('SALE')).toBe('Venta');
+      expect(component.creditTypeLabel('LOAN')).toBe('Préstamo');
+      expect(component.creditTypeLabel(null)).toBe('—');
     });
   });
 

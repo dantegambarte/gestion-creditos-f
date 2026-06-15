@@ -26,6 +26,8 @@
     <p-button
       label="Consultar"
       icon="pi pi-search"
+      severity="primary"
+      styleClass="h-11 px-5 rounded-xl shadow-sm justify-center"
       [disabled]="!rangeValid"
       [loading]="loading"
       (onClick)="consult()"
@@ -58,11 +60,6 @@
             <th
               class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
             >
-              Empresa
-            </th>
-            <th
-              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
-            >
               Estado
             </th>
             <th class="px-5 py-3 w-32"></th>
@@ -75,9 +72,6 @@
             >
               <td class="px-5 py-3 text-gray-300 font-mono">
                 {{ formatDate(day.business_date) }}
-              </td>
-              <td class="px-5 py-3 text-gray-300">
-                {{ day.branch_name || "—" }}
               </td>
               <td class="px-5 py-3">
                 <span
@@ -135,7 +129,6 @@
         @if (jornadaDetail()) {
           <p class="text-xs text-slate-400 mt-1">
             {{ formatDate(jornadaDetail()!.business_date) }} ·
-            {{ jornadaDetail()!.branch_name || "—" }} ·
             {{ businessDayStatusLabel(jornadaDetail()!.status) }}
           </p>
         }
