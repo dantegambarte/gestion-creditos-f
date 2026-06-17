@@ -31,6 +31,7 @@ import { ApproveDialogComponent } from './approve-dialog/approve-dialog.componen
 import { RejectDialogComponent } from './reject-dialog/reject-dialog.component';
 import { RefinanceDialogComponent } from './refinance-dialog/refinance-dialog.component';
 import { PlanChangeDialogComponent } from './plan-change-dialog/plan-change-dialog.component';
+import { WriteOffDialogComponent } from './write-off-dialog/write-off-dialog.component';
 import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog.component';
 import { CreditSchedulePanelComponent } from './credit-schedule-panel/credit-schedule-panel.component';
 import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
@@ -55,6 +56,7 @@ import { BackButtonComponent } from '../../../../shared/components/back-button/b
     RejectDialogComponent,
     RefinanceDialogComponent,
     PlanChangeDialogComponent,
+    WriteOffDialogComponent,
     SettlementDialogComponent,
     CreditSchedulePanelComponent,
     BackButtonComponent,
@@ -89,6 +91,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   showRejectDialog = false;
   showRefinanceDialog = false;
   showPlanChangeDialog = false;
+  showWriteOffDialog = false;
 
   get installmentAmount(): number | null {
     return this.credit?.installments[0]?.amountDue ?? null;
@@ -261,6 +264,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
       REJECTED: 'Rechazado',
       EXPIRED: 'Vencido',
       REFINANCED: 'Refinanciado',
+      WRITTEN_OFF: 'Castigado',
     };
     return map[status];
   }
@@ -282,6 +286,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
       REJECTED: 'danger',
       EXPIRED: 'danger',
       REFINANCED: 'contrast',
+      WRITTEN_OFF: 'danger',
     };
     return map[status];
   }
@@ -388,6 +393,16 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
 
   /** Recarga el crédito tras un cambio de plan exitoso. */
   onPlanChanged(): void {
+    this.load();
+  }
+
+  /** Abre el diálogo de castigo de crédito. */
+  openWriteOffDialog(): void {
+    this.showWriteOffDialog = true;
+  }
+
+  /** Recarga el crédito tras castigarlo con éxito. */
+  onWrittenOff(): void {
     this.load();
   }
 
