@@ -21,9 +21,42 @@ describe('CashRegisterComponent', () => {
         'createConversion',
         'getSessionMovements',
         'getActiveSession',
+        'getSessionSnapshot',
       ],
     );
-    cashRegisterServiceSpy.getActiveSession.and.returnValue(of(null));
+    const activeSession = {
+      id: 'sess-1',
+      business_day_id: 'bd-1',
+      owner_user_id: 'u-1',
+      opened_at: '2026-06-15T00:00:00Z',
+      opened_by: 'u-1',
+      opening_amount: 0,
+      status: 'OPEN' as const,
+    };
+    cashRegisterServiceSpy.getActiveSession.and.returnValue(of(activeSession));
+    cashRegisterServiceSpy.getSessionMovements.and.returnValue(of([]));
+    cashRegisterServiceSpy.getSessionSnapshot.and.returnValue(
+      of({
+        session_id: 'sess-1',
+        status: 'OPEN',
+        owner_user_id: 'u-1',
+        opened_at: '2026-06-15T00:00:00Z',
+        opening: { cash: 0, transfer: 0 },
+        collections: {
+          payments: { cash: 0, transfer: 0 },
+          down_payments: { cash: 0, transfer: 0 },
+          manual_incomes: { cash: 0, transfer: 0 },
+        },
+        outflows: {
+          expenses: { cash: 0, transfer: 0 },
+          commissions: { cash: 0, transfer: 0 },
+        },
+        conversions: { cash_delta: 0, transfer_delta: 0 },
+        drops: { cash: 0, transfer: 0, items: [] },
+        // disponible en la caja del día (lo que antes simulaba dashboard.cashAmount/transferAmount)
+        expected: { cash: 1000, transfer: 500 },
+      }),
+    );
     cashRegisterServiceSpy.getDashboard.and.returnValue(
       of({
         date: '2026-06-15',
@@ -41,7 +74,7 @@ describe('CashRegisterComponent', () => {
       }),
     );
     cashRegisterServiceSpy.refreshJornadaState.and.returnValue(
-      of({ businessDay: null, activeSession: null }),
+      of({ businessDay: null, activeSession }),
     );
     cashRegisterServiceSpy.getCashAccounts.and.returnValue(
       of([

@@ -449,10 +449,10 @@ export class CashRegisterService {
   }
 
   /**
-   * V4: abre una caja operativa para la jornada actual. Solo puede haber UNA
-   * OPEN por jornada simultáneamente; si ya existe → 409
-   * ACTIVE_SESSION_IN_BUSINESS_DAY. Si la jornada está en READY_TO_CLOSE,
-   * vuelve a OPEN automáticamente.
+   * V4.6: abre la caja operativa de la jornada actual. Cada jornada tiene
+   * una sola caja, siempre — si ya existe cualquier caja (OPEN,
+   * PENDING_RECONCILIATION o CLOSED) para esa jornada, falla con 409
+   * ACTIVE_SESSION_IN_BUSINESS_DAY. No hay reapertura ni multi-turno.
    */
   openSession(payload: CashSessionOpenPayload): Observable<CashSession> {
     const body: Record<string, unknown> = {

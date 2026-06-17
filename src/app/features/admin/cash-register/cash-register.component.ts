@@ -34,7 +34,7 @@ import {
   CashRegisterMovement,
   CashRegisterMovementType,
 } from '../models/cash-register.model';
-import { CashSession } from '../models/cash-session.model';
+import { CashSession, CashSessionSnapshot } from '../models/cash-session.model';
 import { ExpenseCategory } from '../models/interface/expenses';
 import { CashRegisterService } from './cash-register.service';
 import { CashSessionCloseDialogComponent } from './cash-session-close-dialog/cash-session-close-dialog.component';
@@ -93,6 +93,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   readonly activeBusinessDay = signal<ActiveBusinessDay | null>(null);
   readonly activeSession = signal<CashSession | null>(null);
+  /** Snapshot V4 (cash/transfer desglosado) de la única caja de la jornada. */
+  readonly sessionSnapshot = signal<CashSessionSnapshot | null>(null);
   readonly loadingJornada = signal(false);
   readonly errorJornada = signal<AppError | null>(null);
   readonly closingJornada = signal(false);
@@ -158,10 +160,62 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   readonly operationsDisabled = computed(() => !this.activeBusinessDay());
 
+  /** True cuando el dashboard muestra una jornada de un día anterior a hoy (post-medianoche). */
+  readonly isPostMidnightJornada = computed(() => {
+    const d = this.dashboard();
+    if (!d) return false;
+    const today = new Date().toISOString().split('T')[0];
+    return d.date < today;
+  });
+
+  /** Esperado en caja (efectivo + transferencia) según el snapshot V4 de la única sesión de la jornada. */
+  readonly dailyExpected = computed<{ cash: number; transfer: number }>(() => {
+    const snap = this.sessionSnapshot();
+    return snap ? snap.expected : { cash: 0, transfer: 0 };
+  });
+
+  /** Total de cobros (pagos + enganches + ingresos manuales), separado por método. */
+  readonly dailyIncomeTotals = computed<{ cash: number; transfer: number }>(
+    () => {
+      const snap = this.sessionSnapshot();
+      if (!snap) return { cash: 0, transfer: 0 };
+      const c = snap.collections;
+      return {
+        cash: c.payments.cash + c.down_payments.cash + c.manual_incomes.cash,
+        transfer:
+          c.payments.transfer +
+          c.down_payments.transfer +
+          c.manual_incomes.transfer,
+      };
+    },
+  );
+
+  /** Total de egresos (gastos + comisiones), separado por método. */
+  readonly dailyOutflowTotals = computed<{ cash: number; transfer: number }>(
+    () => {
+      const snap = this.sessionSnapshot();
+      if (!snap) return { cash: 0, transfer: 0 };
+      const o = snap.outflows;
+      return {
+        cash: o.expenses.cash + o.commissions.cash,
+        transfer: o.expenses.transfer + o.commissions.transfer,
+      };
+    },
+  );
+
+  /** Delta neto de conversiones internas efectivo↔transferencia de la jornada. */
+  readonly dailyConversions = computed<{ cash: number; transfer: number }>(
+    () => {
+      const snap = this.sessionSnapshot();
+      return snap
+        ? { cash: snap.conversions.cash_delta, transfer: snap.conversions.transfer_delta }
+        : { cash: 0, transfer: 0 };
+    },
+  );
+
   readonly estimatedBalance = computed(() => {
-    const dashboard = this.dashboard();
-    if (!dashboard) return 0;
-    return dashboard.cashAmount + dashboard.transferAmount;
+    const e = this.dailyExpected();
+    return e.cash + e.transfer;
   });
 
   /**
@@ -192,32 +246,33 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     return diff < 0 ? 'danger' : 'warning';
   });
 
+  /**
+   * Cards de resumen: Saldo Total Empresa (Caja General, real) y Saldo del
+   * Día (única caja de la jornada, efectivo y transferencia separados).
+   * Ya no mezcla fuentes legacy con V4 — ver discusión del bug original.
+   */
   readonly summaryCards = computed(() => {
-    const dashboard = this.dashboard();
-    const session = this.activeSession();
-    const initialBalance = session?.opening_amount ?? 0;
-    const incomes = dashboard?.totalCollected ?? 0;
-    const outflows = dashboard?.totalOutflows ?? 0;
-    const strongboxBalance = initialBalance + incomes - outflows;
+    const general = this.generalCashBalance() ?? 0;
+    const daily = this.dailyExpected();
 
     return [
       {
-        label: 'Saldo Fuerte',
-        value: strongboxBalance,
-        tone: strongboxBalance >= 0 ? 'success' : 'danger',
-        hint: 'Total disponible de la jornada',
+        label: 'Saldo Total Empresa',
+        value: general,
+        tone: general >= 0 ? 'success' : 'danger',
+        hint: 'Caja General — tesorería consolidada',
       },
       {
-        label: 'Ingresos',
-        value: incomes,
-        tone: 'success',
-        hint: 'Cobros y entradas confirmadas',
+        label: 'Saldo del Día · Efectivo',
+        value: daily.cash,
+        tone: daily.cash >= 0 ? 'success' : 'danger',
+        hint: 'Esperado en efectivo de la caja de hoy',
       },
       {
-        label: 'Gastos',
-        value: outflows,
-        tone: 'danger',
-        hint: 'Egresos y salidas registradas',
+        label: 'Saldo del Día · Transferencia',
+        value: daily.transfer,
+        tone: daily.transfer >= 0 ? 'success' : 'danger',
+        hint: 'Esperado en transferencia de la caja de hoy',
       },
     ];
   });
@@ -230,11 +285,10 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     if (this.conversionCriteria() === 'COMPANY') {
       return this.generalCashBalance() ?? 0;
     }
-    const dashboard = this.dashboard();
-    if (!dashboard) return 0;
+    const expected = this.dailyExpected();
     return this.conversionSourceMethod() === 'CASH'
-      ? dashboard.cashAmount
-      : dashboard.transferAmount;
+      ? expected.cash
+      : expected.transfer;
   });
 
   /** True si el monto ingresado supera el disponible del origen seleccionado. */
@@ -295,6 +349,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     this.loadExpenseCategories();
     this.loadDashboard();
     this.loadJornadaState();
+    this.loadGeneralCashBalance();
     this.startPolling();
   }
 
@@ -724,10 +779,43 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           this.activeBusinessDay.set(businessDay);
           this.activeSession.set(activeSession);
           this.loadMovements(activeSession?.id ?? null);
+          this.loadSessionSnapshot(activeSession?.id ?? null);
         },
         error: (err: AppError) => {
           this.errorJornada.set(err);
         },
+      });
+  }
+
+  /**
+   * Carga el snapshot V4 (desglose efectivo/transferencia) de la única caja
+   * de la jornada. null si no hay caja activa.
+   */
+  loadSessionSnapshot(sessionId = this.activeSession()?.id ?? null): void {
+    if (!sessionId) {
+      this.sessionSnapshot.set(null);
+      return;
+    }
+    this.service
+      .getSessionSnapshot(sessionId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (snapshot) => this.sessionSnapshot.set(snapshot),
+        error: () => this.sessionSnapshot.set(null),
+      });
+  }
+
+  /** Carga el saldo actual de Caja General (tesorería consolidada). */
+  loadGeneralCashBalance(): void {
+    this.service
+      .getCashAccounts()
+      .pipe(
+        catchError(() => of([])),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((accounts) => {
+        const general = accounts.find((a) => a.type === 'GENERAL_CASH');
+        this.generalCashBalance.set(general?.current_balance ?? null);
       });
   }
 
@@ -766,6 +854,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   onJornadaStateChanged(): void {
     this.loadJornadaState();
     this.loadDashboard();
+    this.loadGeneralCashBalance();
   }
 
   // ── Cierre unificado: caja + jornada en una sola acción ─────────────────
@@ -784,6 +873,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           this.activeBusinessDay.set(businessDay);
           this.activeSession.set(activeSession);
           this.loadMovements(activeSession?.id ?? null);
+          this.loadSessionSnapshot(activeSession?.id ?? null);
           return this.isBusinessDayReadyToClose(businessDay)
             ? this.service.closeBusinessDay(businessDay!.id)
             : of(null);
@@ -801,6 +891,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
             this.loadJornadaState();
           }
           this.loadDashboard();
+          this.loadGeneralCashBalance();
         },
         error: (err: AppError) => {
           this.errorJornada.set(err);
