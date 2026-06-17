@@ -8,25 +8,40 @@
   } @else if (sheet) {
     <div class="sheet-topbar mb-2">
       <app-back-button (back)="goBack()" />
-      <div class="sheet-topbar__crumb">Mi Ruta <span>→</span> Planilla {{ sheet.sheetDate | date: "dd/MM/yyyy" }}</div>
+      <div class="sheet-topbar__crumb">
+        Mi Ruta <span>→</span> Planilla
+        {{ sheet.sheetDate | date: "dd/MM/yyyy" }}
+      </div>
     </div>
 
-    <h1 class="sheet-title">Planilla {{ sheet.sheetDate | date: "dd/MM/yyyy" }}</h1>
+    <h1 class="sheet-title">
+      Planilla {{ sheet.sheetDate | date: "dd/MM/yyyy" }}
+    </h1>
 
     <div class="sheet-header mb-3">
       <i class="pi pi-file text-xs"></i>
-      <span>Planilla del <strong>{{ sheet.sheetDate | date: "dd/MM/yyyy" }}</strong></span>
+      <span
+        >Planilla del
+        <strong>{{ sheet.sheetDate | date: "dd/MM/yyyy" }}</strong></span
+      >
       <span>· {{ sheet.collectorName }}</span>
-      <span>· Filtro: <strong>{{ filterLabel(sheet.filterUsed) }}</strong></span>
+      <span
+        >· Filtro: <strong>{{ filterLabel(sheet.filterUsed) }}</strong></span
+      >
       <span>· {{ items.length }} cuotas</span>
-      <span>· Generada por: <strong>{{ sheet.generatedByName }}</strong></span>
+      <span
+        >· Generada por: <strong>{{ sheet.generatedByName }}</strong></span
+      >
     </div>
 
     @if (sheet.status === "REGENERATED") {
-      <div class="mb-4 p-3 bg-gray-100 border border-gray-300 rounded-lg flex items-center gap-2">
-        <i class="pi pi-history text-gray-500"></i>
-        <span class="text-sm text-gray-700">
-          Esta planilla fue <strong>regenerada</strong>. Se muestra solo para auditoría. No se pueden registrar cobros ni intentos.
+      <div
+        class="mb-4 flex items-center gap-2 rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <i class="pi pi-history text-[var(--ff-text-muted)]"></i>
+        <span class="text-sm text-[var(--ff-text-secondary)]">
+          Esta planilla fue <strong>regenerada</strong>. Se muestra solo para
+          auditoría. No se pueden registrar cobros ni intentos.
         </span>
       </div>
     }
@@ -34,9 +49,30 @@
     <div class="sheet-layout" [class.sheet-layout--panel-open]="sidePanelOpen">
       <section class="sheet-table-wrap">
         <div class="sheet-tabs mb-2">
-          <button type="button" class="sheet-tab" [class.sheet-tab--active]="activeTab === 'ALL'" (click)="setTab('ALL')">Todas ({{ items.length }})</button>
-          <button type="button" class="sheet-tab" [class.sheet-tab--active]="activeTab === 'OVERDUE'" (click)="setTab('OVERDUE')">Con mora ({{ overdueCount() }})</button>
-          <button type="button" class="sheet-tab" [class.sheet-tab--active]="activeTab === 'PENDING_PAYMENT'" (click)="setTab('PENDING_PAYMENT')">Pendiente cobro ({{ pendingPaymentCount() }})</button>
+          <button
+            type="button"
+            class="sheet-tab"
+            [class.sheet-tab--active]="activeTab === 'ALL'"
+            (click)="setTab('ALL')"
+          >
+            Todas ({{ items.length }})
+          </button>
+          <button
+            type="button"
+            class="sheet-tab"
+            [class.sheet-tab--active]="activeTab === 'OVERDUE'"
+            (click)="setTab('OVERDUE')"
+          >
+            Con mora ({{ overdueCount() }})
+          </button>
+          <button
+            type="button"
+            class="sheet-tab"
+            [class.sheet-tab--active]="activeTab === 'PENDING_PAYMENT'"
+            (click)="setTab('PENDING_PAYMENT')"
+          >
+            Pendiente cobro ({{ pendingPaymentCount() }})
+          </button>
         </div>
 
         <div class="sheet-table-scroll">
@@ -56,7 +92,12 @@
             </thead>
             <tbody>
               @for (item of filteredItems; track item.installmentId) {
-                <tr [class.row-selected]="selectedItem?.installmentId === item.installmentId" (click)="selectItem(item)">
+                <tr
+                  [class.row-selected]="
+                    selectedItem?.installmentId === item.installmentId
+                  "
+                  (click)="selectItem(item)"
+                >
                   <td>{{ item.orderNumber }}</td>
                   <td>
                     <div class="cell-main">{{ item.customerName }}</div>
@@ -64,20 +105,42 @@
                   </td>
                   <td>
                     <div class="cell-main">{{ item.customerPhone || "-" }}</div>
-                    <div class="cell-sub">{{ item.customerAddress || "Sin domicilio" }}</div>
+                    <div class="cell-sub">
+                      {{ item.customerAddress || "Sin domicilio" }}
+                    </div>
                   </td>
                   <td>{{ item.installmentNumber }}</td>
                   <td>{{ item.dueDate | date: "dd/MM/yy" }}</td>
                   <td class="amount">{{ item.amountDue | currencyArs: 0 }}</td>
-                  <td class="amount mora">{{ displayPenalty(item) > 0 ? (displayPenalty(item) | currencyArs: 0) : "-" }}</td>
+                  <td class="amount mora">
+                    {{
+                      displayPenalty(item) > 0
+                        ? (displayPenalty(item) | currencyArs: 0)
+                        : "-"
+                    }}
+                  </td>
                   <td>
-                    <span class="status-badge" [class.status-overdue]="item.installmentStatus === 'OVERDUE'" [class.status-paid]="item.installmentStatus === 'PAID'">
+                    <span
+                      class="status-badge"
+                      [class.status-overdue]="
+                        item.installmentStatus === 'OVERDUE'
+                      "
+                      [class.status-paid]="item.installmentStatus === 'PAID'"
+                    >
                       {{ installmentLabel(item.installmentStatus) }}
                     </span>
                   </td>
                   <td>
                     @if (canRegisterPayment(item)) {
-                      <button type="button" class="action-btn" (click)="$event.stopPropagation(); openPaymentDialog(item)">Cobrar</button>
+                      <button
+                        type="button"
+                        class="action-btn"
+                        (click)="
+                          $event.stopPropagation(); openPaymentDialog(item)
+                        "
+                      >
+                        Cobrar
+                      </button>
                     } @else {
                       <span class="cell-sub">—</span>
                     }
@@ -90,147 +153,253 @@
       </section>
 
       @if (!sidePanelOpen) {
-        <button type="button" class="open-side-panel-btn" (click)="openSidePanel()">
+        <button
+          type="button"
+          class="open-side-panel-btn"
+          (click)="openSidePanel()"
+        >
           <i class="pi pi-wallet"></i>
           Abrir registrar cobro
         </button>
       }
 
       @if (sidePanelOpen) {
-      <aside class="sheet-side">
-        <div class="side-head">
-          <h3>Registrar cobro</h3>
-          <button type="button" class="side-close-btn" (click)="closeSidePanel()" aria-label="Cerrar panel de cobro">
-            <i class="pi pi-times"></i>
-          </button>
-        </div>
-        @if (selectedItem) {
-          <div class="side-customer">{{ selectedItem.customerName }}</div>
-          <div class="side-status" [class.side-status--pending]="selectedItem.installmentStatus === 'OVERDUE'">{{ installmentLabel(selectedItem.installmentStatus) }}</div>
-
-          <div class="side-summary">
-            <p><span>Cuota</span><strong>{{ installmentProgress(selectedItem) }}</strong></p>
-            <p><span>Vencimiento</span><strong>{{ selectedItem.dueDate | date: "dd/MM/yy" }}</strong></p>
-            <p><span>Monto cuota</span><strong>{{ displayCapital(selectedItem) | currencyArs: 2 }}</strong></p>
-            <p><span>Mora aplicada</span><strong class="mora">{{ displayPenalty(selectedItem) | currencyArs: 2 }}</strong></p>
-            @if (displayAmountPaid(selectedItem) > 0) {
-              <p><span>Pagado</span><strong>{{ displayAmountPaid(selectedItem) | currencyArs: 2 }}</strong></p>
-            }
-            <p class="total"><span>Saldo total</span><strong>{{ availableBalance(selectedItem) | currencyArs: 2 }}</strong></p>
-          </div>
-
-          @if (selectedItem.live?.hasPendingPayment) {
-            <div class="side-note">Ya tiene una pre-carga pendiente de aprobación.</div>
-          }
-
-          @if (alreadyManagedToday(selectedItem)) {
-            <div class="side-note">
-              Ya gestionada: <strong>{{ managementLabel(selectedItem.managementStatus) }}</strong>
-              @if (canVoidTodayAttempt(selectedItem)) {
-                <p-button
-                  label="Anular gestión"
-                  icon="pi pi-undo"
-                  severity="secondary"
-                  [outlined]="true"
-                  styleClass="w-full justify-center mt-2"
-                  (onClick)="openVoidDialog(selectedItem)"
-                />
-              }
-            </div>
-          }
-
-          <div class="side-actions">
-            <p-button
-              label="Registrar pre-carga"
-              styleClass="w-full justify-center sheet-primary-btn"
-              [disabled]="!canRegisterPayment(selectedItem)"
-              (onClick)="openPaymentDialog(selectedItem)"
-            />
-
-            <div class="attempt-actions">
-              <p-button
-                label="No pagó"
-                severity="warning"
-                [outlined]="true"
-                styleClass="w-full justify-center attempt-btn attempt-btn--warn"
-                [disabled]="!canRegisterAttempt(selectedItem)"
-                (onClick)="openAttemptDialog(selectedItem, 'NO_PAYMENT')"
-              />
-              <p-button
-                label="No encontrado"
-                severity="secondary"
-                [outlined]="true"
-                styleClass="w-full justify-center attempt-btn attempt-btn--neutral"
-                [disabled]="!canRegisterAttempt(selectedItem)"
-                (onClick)="openAttemptDialog(selectedItem, 'NOT_FOUND')"
-              />
-            </div>
-
-            <div class="side-help">
-              <p class="side-help__title">i ¿Qué es una pre-carga?</p>
-              <p class="side-help__text">El cobro queda en estado "Pendiente" hasta que un administrador lo apruebe o rechace.</p>
-            </div>
-          </div>
-
-          <!-- Historial de gestiones (incluye anuladas marcadas ANULADO) -->
-          <div class="side-log mt-3">
+        <aside class="sheet-side">
+          <div class="side-head">
+            <h3>Registrar cobro</h3>
             <button
               type="button"
-              class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"
-              (click)="toggleLog(selectedItem)"
+              class="side-close-btn"
+              (click)="closeSidePanel()"
+              aria-label="Cerrar panel de cobro"
             >
-              <i class="pi text-[10px]" [class.pi-chevron-down]="!isLogExpanded(selectedItem)" [class.pi-chevron-up]="isLogExpanded(selectedItem)"></i>
-              {{ isLogExpanded(selectedItem) ? "Ocultar historial" : "Ver historial de gestiones" }}
+              <i class="pi pi-times"></i>
             </button>
-            @if (isLogExpanded(selectedItem)) {
-              <div class="mt-2">
-                @if (loadingLogItemId === selectedItem.installmentId && !managementLogs[selectedItem.installmentId]) {
-                  <div class="flex items-center gap-2 text-xs text-gray-500">
-                    <p-progressSpinner [style]="{ width: '16px', height: '16px' }" strokeWidth="4" />
-                    <span>Cargando...</span>
-                  </div>
-                } @else if (managementLogs[selectedItem.installmentId] && managementLogs[selectedItem.installmentId].length === 0) {
-                  <p class="text-xs text-gray-500">Sin gestiones registradas.</p>
-                } @else if (managementLogs[selectedItem.installmentId]) {
-                  <ul class="flex flex-col gap-2">
-                    @for (entry of managementLogs[selectedItem.installmentId]; track entry.eventId) {
-                      <li class="flex items-start gap-2 text-xs" [class.opacity-50]="!!entry.voidedAt" [class.line-through]="!!entry.voidedAt">
-                        <p-tag
-                          [value]="eventTypeLabel(entry.eventType)"
-                          [severity]="entry.voidedAt ? 'secondary' : eventSeverity(entry.eventType)"
-                          styleClass="!text-[10px] !py-0.5"
-                        />
-                        <div class="flex-1 min-w-0">
-                          <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                            <span class="text-gray-700">{{ entry.createdAt | date: "dd/MM/yyyy HH:mm" }}</span>
-                            @if (entry.voidedAt) {
-                              <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800" style="text-decoration: none;">ANULADO</span>
-                            }
-                            @if (entry.eventType === "PAYMENT" && entry.amount !== null) {
-                              <span class="font-semibold text-green-700">{{ entry.amount | currencyArs: 2 }}</span>
-                            }
-                            @if (entry.nextVisitDate) {
-                              <span class="text-purple-700">→ próx. visita {{ entry.nextVisitDate | date: "dd/MM/yyyy" }}</span>
-                            }
-                          </div>
-                          @if (entry.reason) {
-                            <p class="text-gray-700 mt-0.5">{{ entry.reason }}</p>
-                          }
-                          @if (entry.notes) {
-                            <p class="text-gray-500 mt-0.5 italic">"{{ entry.notes }}"</p>
-                          }
-                        </div>
-                      </li>
-                    }
-                  </ul>
+          </div>
+          @if (selectedItem) {
+            <div class="side-customer">{{ selectedItem.customerName }}</div>
+            <div
+              class="side-status"
+              [class.side-status--pending]="
+                selectedItem.installmentStatus === 'OVERDUE'
+              "
+            >
+              {{ installmentLabel(selectedItem.installmentStatus) }}
+            </div>
+
+            <div class="side-summary">
+              <p>
+                <span>Cuota</span
+                ><strong>{{ installmentProgress(selectedItem) }}</strong>
+              </p>
+              <p>
+                <span>Vencimiento</span
+                ><strong>{{ selectedItem.dueDate | date: "dd/MM/yy" }}</strong>
+              </p>
+              <p>
+                <span>Monto cuota</span
+                ><strong>{{
+                  displayCapital(selectedItem) | currencyArs: 2
+                }}</strong>
+              </p>
+              <p>
+                <span>Mora aplicada</span
+                ><strong class="mora">{{
+                  displayPenalty(selectedItem) | currencyArs: 2
+                }}</strong>
+              </p>
+              @if (displayAmountPaid(selectedItem) > 0) {
+                <p>
+                  <span>Pagado</span
+                  ><strong>{{
+                    displayAmountPaid(selectedItem) | currencyArs: 2
+                  }}</strong>
+                </p>
+              }
+              <p class="total">
+                <span>Saldo total</span
+                ><strong>{{
+                  availableBalance(selectedItem) | currencyArs: 2
+                }}</strong>
+              </p>
+            </div>
+
+            @if (selectedItem.live?.hasPendingPayment) {
+              <div class="side-note">
+                Ya tiene una pre-carga pendiente de aprobación.
+              </div>
+            }
+
+            @if (alreadyManagedToday(selectedItem)) {
+              <div class="side-note">
+                Ya gestionada:
+                <strong>{{
+                  managementLabel(selectedItem.managementStatus)
+                }}</strong>
+                @if (canVoidTodayAttempt(selectedItem)) {
+                  <p-button
+                    label="Anular gestión"
+                    icon="pi pi-undo"
+                    severity="secondary"
+                    [outlined]="true"
+                    styleClass="w-full justify-center mt-2"
+                    (onClick)="openVoidDialog(selectedItem)"
+                  />
                 }
               </div>
             }
-          </div>
-        } @else {
-          <p class="cell-sub">Seleccioná una cuota para ver el detalle.</p>
-        }
-      </aside>
+
+            <div class="side-actions">
+              <p-button
+                label="Registrar pre-carga"
+                styleClass="w-full justify-center sheet-primary-btn"
+                [disabled]="!canRegisterPayment(selectedItem)"
+                (onClick)="openPaymentDialog(selectedItem)"
+              />
+
+              <div class="attempt-actions">
+                <p-button
+                  label="No pagó"
+                  severity="warning"
+                  [outlined]="true"
+                  styleClass="w-full justify-center attempt-btn attempt-btn--warn"
+                  [disabled]="!canRegisterAttempt(selectedItem)"
+                  (onClick)="openAttemptDialog(selectedItem, 'NO_PAYMENT')"
+                />
+                <p-button
+                  label="No encontrado"
+                  severity="secondary"
+                  [outlined]="true"
+                  styleClass="w-full justify-center attempt-btn attempt-btn--neutral"
+                  [disabled]="!canRegisterAttempt(selectedItem)"
+                  (onClick)="openAttemptDialog(selectedItem, 'NOT_FOUND')"
+                />
+              </div>
+
+              <div class="side-help">
+                <p class="side-help__title">i ¿Qué es una pre-carga?</p>
+                <p class="side-help__text">
+                  El cobro queda en estado "Pendiente" hasta que un
+                  administrador lo apruebe o rechace.
+                </p>
+              </div>
+            </div>
+
+            <!-- Historial de gestiones (incluye anuladas marcadas ANULADO) -->
+            <div class="side-log mt-3">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"
+                (click)="toggleLog(selectedItem)"
+              >
+                <i
+                  class="pi text-[10px]"
+                  [class.pi-chevron-down]="!isLogExpanded(selectedItem)"
+                  [class.pi-chevron-up]="isLogExpanded(selectedItem)"
+                ></i>
+                {{
+                  isLogExpanded(selectedItem)
+                    ? "Ocultar historial"
+                    : "Ver historial de gestiones"
+                }}
+              </button>
+              @if (isLogExpanded(selectedItem)) {
+                <div class="mt-2">
+                  @if (
+                    loadingLogItemId === selectedItem.installmentId &&
+                    !managementLogs[selectedItem.installmentId]
+                  ) {
+                    <div
+                      class="flex items-center gap-2 text-xs text-[var(--ff-text-muted)]"
+                    >
+                      <p-progressSpinner
+                        [style]="{ width: '16px', height: '16px' }"
+                        strokeWidth="4"
+                      />
+                      <span>Cargando...</span>
+                    </div>
+                  } @else if (
+                    managementLogs[selectedItem.installmentId] &&
+                    managementLogs[selectedItem.installmentId].length === 0
+                  ) {
+                    <p class="text-xs text-[var(--ff-text-muted)]">
+                      Sin gestiones registradas.
+                    </p>
+                  } @else if (managementLogs[selectedItem.installmentId]) {
+                    <ul class="flex flex-col gap-2">
+                      @for (
+                        entry of managementLogs[selectedItem.installmentId];
+                        track entry.eventId
+                      ) {
+                        <li
+                          class="flex items-start gap-2 text-xs"
+                          [class.opacity-50]="!!entry.voidedAt"
+                          [class.line-through]="!!entry.voidedAt"
+                        >
+                          <p-tag
+                            [value]="eventTypeLabel(entry.eventType)"
+                            [severity]="
+                              entry.voidedAt
+                                ? 'secondary'
+                                : eventSeverity(entry.eventType)
+                            "
+                            styleClass="!text-[10px] !py-0.5"
+                          />
+                          <div class="flex-1 min-w-0">
+                            <div
+                              class="flex flex-wrap items-center gap-x-2 gap-y-0.5"
+                            >
+                              <span class="text-[var(--ff-text-secondary)]">{{
+                                entry.createdAt | date: "dd/MM/yyyy HH:mm"
+                              }}</span>
+                              @if (entry.voidedAt) {
+                                <span
+                                  class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800"
+                                  style="text-decoration: none"
+                                  >ANULADO</span
+                                >
+                              }
+                              @if (
+                                entry.eventType === "PAYMENT" &&
+                                entry.amount !== null
+                              ) {
+                                <span class="font-semibold text-green-700">{{
+                                  entry.amount | currencyArs: 2
+                                }}</span>
+                              }
+                              @if (entry.nextVisitDate) {
+                                <span class="text-purple-700"
+                                  >→ próx. visita
+                                  {{
+                                    entry.nextVisitDate | date: "dd/MM/yyyy"
+                                  }}</span
+                                >
+                              }
+                            </div>
+                            @if (entry.reason) {
+                              <p class="mt-0.5 text-[var(--ff-text-secondary)]">
+                                {{ entry.reason }}
+                              </p>
+                            }
+                            @if (entry.notes) {
+                              <p
+                                class="mt-0.5 italic text-[var(--ff-text-muted)]"
+                              >
+                                "{{ entry.notes }}"
+                              </p>
+                            }
+                          </div>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="cell-sub">Seleccioná una cuota para ver el detalle.</p>
+          }
+        </aside>
       }
     </div>
   }

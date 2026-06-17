@@ -73,6 +73,7 @@ describe('PaymentsService', () => {
           r.url === `${BASE}/payments` &&
           r.params.get('installment_id') === 'inst-1',
       );
+      expect(req.request.params.get('installment_id')).toBe('inst-1');
       req.flush({ ok: true, data: [mockPaymentRaw], message: '' });
     });
 
