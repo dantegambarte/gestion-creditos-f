@@ -59,7 +59,9 @@
 
       <div class="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <label class="block text-sm font-medium mb-1">Frecuencia de pago *</label>
+          <label class="block text-sm font-medium mb-1"
+            >Frecuencia de pago *</label
+          >
           <p-dropdown
             formControlName="paymentFrequency"
             [options]="frequencyOptions"
@@ -76,7 +78,9 @@
           }
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1">Cantidad de cuotas *</label>
+          <label class="block text-sm font-medium mb-1"
+            >Cantidad de cuotas *</label
+          >
           <p-inputNumber
             formControlName="installmentsCount"
             [min]="1"
@@ -108,7 +112,9 @@
     </div>
 
     @if (!isSale) {
-      <div class="mb-6 p-4 bg-white border rounded">
+      <div
+        class="mb-6 rounded border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+      >
         <h3 class="font-semibold mb-4">Monto del préstamo</h3>
         <div>
           <label class="block text-sm font-medium mb-1">Monto total *</label>
@@ -124,7 +130,9 @@
             styleClass="w-full"
           />
           @if (isInvalid("totalAmount")) {
-            <small class="text-red-500">Monto requerido (entre $1 y $99.999.999).</small>
+            <small class="text-red-500"
+              >Monto requerido (entre $1 y $99.999.999).</small
+            >
           }
         </div>
       </div>
@@ -142,20 +150,19 @@
       <div class="mb-6 p-4 bg-white border rounded">
         <button
           type="button"
-          class="w-full flex items-center justify-between text-sm font-medium text-gray-700"
+          class="flex w-full items-center justify-between text-sm font-medium text-[var(--ff-text-secondary)]"
           data-cy="sale-toggle-down-payment"
           (click)="showExtraSection = !showExtraSection"
         >
           <span class="flex items-center gap-2">
-            <i class="pi pi-wallet text-gray-400"></i>
+            <i class="pi pi-wallet text-[var(--ff-text-secondary)]"></i>
             ¿Incluir enganche?
           </span>
           <i
             [class]="
-              showExtraSection
-                ? 'pi pi-chevron-up text-gray-400'
-                : 'pi pi-chevron-down text-gray-400'
+              showExtraSection ? 'pi pi-chevron-up' : 'pi pi-chevron-down'
             "
+            style="color: var(--ff-text-secondary)"
           ></i>
         </button>
 
@@ -180,7 +187,9 @@
             @if (downPaymentValue > 0) {
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-sm font-medium mb-1">Método de pago del enganche *</label>
+                  <label class="block text-sm font-medium mb-1"
+                    >Método de pago del enganche *</label
+                  >
                   <p-dropdown
                     formControlName="downPaymentMethod"
                     [options]="paymentMethodOptions"
@@ -193,7 +202,9 @@
                 </div>
                 @if (downPaymentMethod === "TRANSFER") {
                   <div>
-                    <label class="block text-sm font-medium mb-1">Referencia transferencia</label>
+                    <label class="block text-sm font-medium mb-1"
+                      >Referencia transferencia</label
+                    >
                     <input
                       pInputText
                       formControlName="downPaymentTransferReference"
@@ -219,7 +230,9 @@
     />
 
     @if (submitError) {
-      <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+      <div
+        class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm"
+      >
         {{ submitError }}
       </div>
     }
