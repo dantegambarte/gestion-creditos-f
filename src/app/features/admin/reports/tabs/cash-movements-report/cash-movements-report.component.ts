@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
@@ -62,8 +62,11 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   private readonly reportsService = inject(ReportsService);
   readonly format = inject(FormatService);
   private readonly dateSvc = inject(DateService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private destroy$ = new Subject<void>();
+  private pendingBusinessDayId: string | null = null;
+  private pendingSessionId: string | null = null;
 
   dateFrom: string;
   dateTo: string;
@@ -91,6 +94,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.restoreContextFromQueryParams();
     this.consult();
   }
 
@@ -156,7 +160,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
       case 'DROP':
         return 'bg-amber-500/15 text-amber-300';
       default:
-        return 'bg-gray-500/15 text-gray-300';
+        return 'bg-[var(--ff-secondary)] text-[var(--ff-text-secondary)]';
     }
   }
 
@@ -194,7 +198,20 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   openOperation(row: CashMovementReportRow): void {
     if (!row.creditId) return;
     this.closeMovementDetail();
-    this.router.navigate(['/admin/operations', row.creditId]);
+    this.router.navigate(['/admin/operations', row.creditId], {
+      queryParams: {
+        returnTo: 'admin-reports',
+        tab: 'cashMovements',
+        dateFrom: this.dateFrom,
+        dateTo: this.dateTo,
+        ...(this.selectedBusinessDayId
+          ? { businessDayId: this.selectedBusinessDayId }
+          : {}),
+        ...(this.selectedSessionId || row.cashSessionId
+          ? { cashSessionId: this.selectedSessionId || row.cashSessionId }
+          : {}),
+      },
+    });
   }
 
   /** Traduce el tipo de crédito a etiqueta visible. */
@@ -224,6 +241,14 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (rows) => {
           this.businessDays = rows;
+          const restoredBusinessDayId = this.pendingBusinessDayId;
+          this.pendingBusinessDayId = null;
+          if (
+            restoredBusinessDayId &&
+            rows.some((bd) => bd.id === restoredBusinessDayId)
+          ) {
+            this.onSelectBusinessDay(restoredBusinessDayId);
+          }
         },
         error: (err: AppError) => {
           this.daysError = err;
@@ -247,8 +272,12 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
         next: (rows) => {
           this.sessions = rows;
           if (rows.length > 0) {
-            this.selectedSessionId = rows[0].id;
-            this.fetchReport(rows[0].id);
+            const restoredSessionId = this.pendingSessionId;
+            this.pendingSessionId = null;
+            const session =
+              rows.find((row) => row.id === restoredSessionId) || rows[0];
+            this.selectedSessionId = session.id;
+            this.fetchReport(session.id);
           }
         },
         error: (err: AppError) => {
@@ -278,6 +307,17 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
           this.reportError = err;
         },
       });
+  }
+
+  /** Restaura el rango, la jornada y la caja cuando se vuelve desde una operación. */
+  private restoreContextFromQueryParams(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const dateFrom = params.get('dateFrom');
+    const dateTo = params.get('dateTo');
+    if (dateFrom) this.dateFrom = dateFrom;
+    if (dateTo) this.dateTo = dateTo;
+    this.pendingBusinessDayId = params.get('businessDayId');
+    this.pendingSessionId = params.get('cashSessionId');
   }
 
   /** Calcula un rango predeterminado de 30 días hasta hoy. */

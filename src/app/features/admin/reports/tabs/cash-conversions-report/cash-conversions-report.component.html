@@ -1,6 +1,6 @@
 <div class="space-y-6">
   <div class="flex flex-wrap items-center gap-3">
-    <span class="text-sm text-gray-400">Desde</span>
+    <span class="text-sm text-[var(--ff-text-secondary)]">Desde</span>
     <p-calendar
       [(ngModel)]="dateFrom"
       dataType="string"
@@ -9,9 +9,9 @@
       iconDisplay="input"
       appendTo="body"
       styleClass="w-44"
-      inputStyleClass="w-full h-10 bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+      inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
     />
-    <span class="text-sm text-gray-400">hasta</span>
+    <span class="text-sm text-[var(--ff-text-secondary)]">hasta</span>
     <p-calendar
       [(ngModel)]="dateTo"
       dataType="string"
@@ -20,7 +20,7 @@
       iconDisplay="input"
       appendTo="body"
       styleClass="w-44"
-      inputStyleClass="w-full h-10 bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+      inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
     />
     <p-button
       label="Consultar"
@@ -33,7 +33,7 @@
   </div>
 
   @if (dateError) {
-    <p class="text-sm text-red-400 flex items-center gap-1.5">
+    <p class="flex items-center gap-1.5 text-sm text-red-400">
       <i class="pi pi-exclamation-circle"></i> {{ dateError }}
     </p>
   }
@@ -43,49 +43,132 @@
   } @else if (error) {
     <app-error-state [message]="error.message" />
   } @else if (report) {
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div class="bg-gray-800 rounded-xl p-4 space-y-1">
-        <p class="text-[10px] text-gray-400 uppercase tracking-widest">Conversiones</p>
-        <p class="text-xl font-extrabold text-white">{{ report.summary.totalConversions }}</p>
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div
+        class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+      >
+        <p
+          class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
+          Conversiones
+        </p>
+        <p class="text-xl font-extrabold text-[var(--ff-text-primary)]">
+          {{ report.summary.totalConversions }}
+        </p>
       </div>
-      <div class="bg-gray-800 rounded-xl p-4 space-y-1">
-        <p class="text-[10px] text-gray-400 uppercase tracking-widest">Monto total</p>
-        <p class="text-xl font-extrabold text-white font-mono">{{ formatCurrency(report.summary.totalAmount) }}</p>
+      <div
+        class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+      >
+        <p
+          class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
+          Monto total
+        </p>
+        <p
+          class="font-mono text-xl font-extrabold text-[var(--ff-text-primary)]"
+        >
+          {{ formatCurrency(report.summary.totalAmount) }}
+        </p>
       </div>
-      <div class="bg-gray-800 rounded-xl p-4 space-y-1">
-        <p class="text-[10px] text-gray-400 uppercase tracking-widest">Efectivo → Transferencia</p>
-        <p class="text-xl font-extrabold text-white font-mono">{{ formatCurrency(report.summary.cashToTransfer) }}</p>
+      <div
+        class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+      >
+        <p
+          class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
+          Efectivo → Transferencia
+        </p>
+        <p
+          class="font-mono text-xl font-extrabold text-[var(--ff-text-primary)]"
+        >
+          {{ formatCurrency(report.summary.cashToTransfer) }}
+        </p>
       </div>
-      <div class="bg-gray-800 rounded-xl p-4 space-y-1">
-        <p class="text-[10px] text-gray-400 uppercase tracking-widest">Transferencia → Efectivo</p>
-        <p class="text-xl font-extrabold text-white font-mono">{{ formatCurrency(report.summary.transferToCash) }}</p>
+      <div
+        class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+      >
+        <p
+          class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
+          Transferencia → Efectivo
+        </p>
+        <p
+          class="font-mono text-xl font-extrabold text-[var(--ff-text-primary)]"
+        >
+          {{ formatCurrency(report.summary.transferToCash) }}
+        </p>
       </div>
     </div>
 
     @if (report.rows.length === 0) {
-      <p class="text-sm text-gray-500 text-center py-10">Sin conversiones en el período seleccionado.</p>
+      <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+        Sin conversiones en el período seleccionado.
+      </p>
     } @else {
-      <div class="bg-gray-800 rounded-xl overflow-hidden">
+      <div
+        class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+      >
         <table class="w-full text-sm">
           <thead>
-            <tr class="border-b border-gray-700">
-              <th class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium">Fecha</th>
-              <th class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium">Criterio</th>
-              <th class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium">Movimiento</th>
-              <th class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium">Monto</th>
-              <th class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium">Usuario</th>
-              <th class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium">Observación</th>
+            <tr class="border-b border-[var(--ff-border-subtle)]">
+              <th
+                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Fecha
+              </th>
+              <th
+                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Criterio
+              </th>
+              <th
+                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Movimiento
+              </th>
+              <th
+                class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Monto
+              </th>
+              <th
+                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Usuario
+              </th>
+              <th
+                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Observación
+              </th>
             </tr>
           </thead>
           <tbody>
             @for (row of report.rows; track row.id) {
-              <tr class="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors">
-                <td class="px-5 py-3 text-gray-300">{{ formatDate(row.registerDate) }}</td>
-                <td class="px-5 py-3 text-gray-300">{{ criteriaLabel(row.criteria) }}</td>
-                <td class="px-5 py-3 text-gray-300">{{ methodLabel(row.sourceMethod) }} → {{ methodLabel(row.targetMethod) }}</td>
-                <td class="px-5 py-3 text-right font-mono font-semibold text-blue-400">{{ formatCurrency(row.amount) }}</td>
-                <td class="px-5 py-3 text-gray-300">{{ row.createdByName }}</td>
-                <td class="px-5 py-3 text-gray-400">{{ row.notes || '—' }}</td>
+              <tr
+                class="border-b border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
+              >
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                  {{ formatDate(row.registerDate) }}
+                </td>
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                  {{ criteriaLabel(row.criteria) }}
+                </td>
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                  {{ methodLabel(row.sourceMethod) }} →
+                  {{ methodLabel(row.targetMethod) }}
+                </td>
+                <td
+                  class="px-5 py-3 text-right font-mono font-semibold text-blue-400"
+                >
+                  {{ formatCurrency(row.amount) }}
+                </td>
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                  {{ row.createdByName }}
+                </td>
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                  {{ row.notes || "—" }}
+                </td>
               </tr>
             }
           </tbody>

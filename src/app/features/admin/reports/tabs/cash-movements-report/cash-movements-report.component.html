@@ -1,7 +1,9 @@
 <div class="space-y-6">
   <div class="flex flex-wrap items-end gap-3">
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Desde</label>
+      <label class="mb-1 block text-xs text-[var(--ff-text-secondary)]"
+        >Desde</label
+      >
       <p-calendar
         [(ngModel)]="dateFrom"
         dataType="string"
@@ -10,11 +12,13 @@
         iconDisplay="input"
         appendTo="body"
         styleClass="w-44"
-        inputStyleClass="w-full h-10 bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+        inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
       />
     </div>
     <div>
-      <label class="block text-xs text-gray-400 mb-1">Hasta</label>
+      <label class="mb-1 block text-xs text-[var(--ff-text-secondary)]"
+        >Hasta</label
+      >
       <p-calendar
         [(ngModel)]="dateTo"
         dataType="string"
@@ -23,7 +27,7 @@
         iconDisplay="input"
         appendTo="body"
         styleClass="w-44"
-        inputStyleClass="w-full h-10 bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+        inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
       />
     </div>
     <p-button
@@ -37,7 +41,7 @@
   </div>
 
   @if (dateError) {
-    <p class="text-sm text-red-400 flex items-center gap-1.5">
+    <p class="flex items-center gap-1.5 text-sm text-red-400">
       <i class="pi pi-exclamation-circle"></i> {{ dateError }}
     </p>
   }
@@ -47,13 +51,15 @@
   } @else if (daysError) {
     <app-error-state [message]="daysError.message" />
   } @else if (businessDays.length === 0) {
-    <p class="text-sm text-gray-500 text-center py-10">
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
       No hay jornadas en el período seleccionado.
     </p>
   } @else {
     <div class="flex flex-wrap items-end gap-3">
       <div class="w-72">
-        <label class="block text-xs text-gray-400 mb-1">Jornada</label>
+        <label class="mb-1 block text-xs text-[var(--ff-text-secondary)]"
+          >Jornada</label
+        >
         <p-dropdown
           [options]="businessDayOptions"
           [ngModel]="selectedBusinessDayId"
@@ -61,8 +67,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Seleccioná una jornada"
-          styleClass="w-full rounded-xl border border-[#252A3A] bg-[#121520] text-white"
-          panelStyleClass="bg-[#121520] border border-[#252A3A] text-white"
+          styleClass="w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] text-[var(--ff-text-primary)]"
+          panelStyleClass="bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)]"
           [style]="{ width: '100%' }"
         />
       </div>
@@ -73,7 +79,7 @@
     } @else if (sessionsError) {
       <app-error-state [message]="sessionsError.message" />
     } @else if (selectedBusinessDayId && sessions.length === 0) {
-      <p class="text-sm text-gray-500 text-center py-10">
+      <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
         Esta jornada no tiene una caja registrada.
       </p>
     }
@@ -85,90 +91,114 @@
     } @else if (reportError) {
       <app-error-state [message]="reportError.message" />
     } @else if (report) {
-      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <div class="bg-gray-800 rounded-xl p-4 space-y-1">
-          <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+      <div class="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+          >
             Movimientos
           </p>
-          <p class="text-xl font-extrabold text-white">
+          <p class="text-xl font-extrabold text-[var(--ff-text-primary)]">
             {{ report.summary.totalMovements }}
           </p>
         </div>
-        <div class="bg-gray-800 rounded-xl p-4 space-y-1">
-          <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+          >
             Cobros
           </p>
           <p class="text-xl font-extrabold text-emerald-300 font-mono">
             {{ formatCurrency(report.summary.totalCollections) }}
           </p>
         </div>
-        <div class="bg-gray-800 rounded-xl p-4 space-y-1">
-          <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+          >
             Enganches
           </p>
           <p class="text-xl font-extrabold text-emerald-300 font-mono">
             {{ formatCurrency(report.summary.totalDownPayments) }}
           </p>
         </div>
-        <div class="bg-gray-800 rounded-xl p-4 space-y-1">
-          <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+          >
             Gastos
           </p>
           <p class="text-xl font-extrabold text-red-300 font-mono">
             {{ formatCurrency(report.summary.totalExpenses) }}
           </p>
         </div>
-        <div class="bg-gray-800 rounded-xl p-4 space-y-1">
-          <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+          >
             Drops
           </p>
-          <p class="text-xl font-extrabold text-white font-mono">
+          <p
+            class="font-mono text-xl font-extrabold text-[var(--ff-text-primary)]"
+          >
             {{ formatCurrency(report.summary.totalDrops) }}
           </p>
         </div>
       </div>
 
       @if (report.rows.length === 0) {
-        <p class="text-sm text-gray-500 text-center py-10">
+        <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
           Esta caja no tiene movimientos registrados.
         </p>
       } @else {
-        <div class="bg-gray-800 rounded-xl overflow-hidden">
+        <div
+          class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+        >
           <table class="w-full text-sm">
             <thead>
-              <tr class="border-b border-gray-700">
+              <tr class="border-b border-[var(--ff-border-subtle)]">
                 <th
-                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                  class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
                 >
                   Fecha
                 </th>
                 <th
-                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                  class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
                 >
                   Tipo
                 </th>
                 <th
-                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                  class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
                 >
                   Método
                 </th>
                 <th
-                  class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                  class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
                 >
                   Monto
                 </th>
                 <th
-                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                  class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
                 >
                   Detalle
                 </th>
                 <th
-                  class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                  class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
                 >
                   Usuario
                 </th>
                 <th
-                  class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+                  class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
                 >
                   Acción
                 </th>
@@ -177,9 +207,11 @@
             <tbody>
               @for (row of report.rows; track row.id) {
                 <tr
-                  class="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors"
+                  class="border-b border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
                 >
-                  <td class="px-5 py-3 text-gray-300 font-mono">
+                  <td
+                    class="px-5 py-3 font-mono text-[var(--ff-text-secondary)]"
+                  >
                     {{ formatDateTime(row.occurredAt) }}
                   </td>
                   <td class="px-5 py-3">
@@ -191,7 +223,7 @@
                       {{ typeLabel(row.type) }}
                     </span>
                   </td>
-                  <td class="px-5 py-3 text-gray-300">
+                  <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
                     {{ methodLabel(row.paymentMethod) }}
                   </td>
                   <td
@@ -199,8 +231,10 @@
                   >
                     {{ formatCurrency(row.amount) }}
                   </td>
-                  <td class="px-5 py-3 text-gray-400">{{ row.description }}</td>
-                  <td class="px-5 py-3 text-gray-300">
+                  <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                    {{ row.description }}
+                  </td>
+                  <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
                     {{ row.performedByName || "—" }}
                   </td>
                   <td class="px-5 py-3 text-right">
@@ -230,13 +264,15 @@
   [draggable]="false"
   [resizable]="false"
   [style]="{ width: '720px', maxWidth: '95vw' }"
-  styleClass="bg-[#121520] border border-[#1A1D27]"
-  contentStyleClass="bg-[#121520] p-0 border-none"
+  styleClass="!bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
+  contentStyleClass="!bg-[var(--ff-panel)] p-0 border-none"
 >
   @if (selectedMovement; as movement) {
-    <section class="overflow-hidden rounded-2xl bg-[#121520] text-slate-200">
+    <section
+      class="overflow-hidden rounded-2xl bg-[var(--ff-panel)] text-[var(--ff-text-primary)]"
+    >
       <header
-        class="flex items-start justify-between gap-4 border-b border-[#252A3A] px-6 py-5"
+        class="flex items-start justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
       >
         <div>
           <p
@@ -244,18 +280,18 @@
           >
             Movimiento de caja
           </p>
-          <h2 class="mt-1 text-xl font-bold text-white">
+          <h2 class="mt-1 text-xl font-bold text-[var(--ff-text-primary)]">
             {{ typeLabel(movement.type) }} ·
             {{ formatCurrency(movement.amount) }}
           </h2>
-          <p class="mt-1 text-sm text-slate-400">
+          <p class="mt-1 text-sm text-[var(--ff-text-secondary)]">
             {{ formatDateTime(movement.occurredAt) }} ·
             {{ methodLabel(movement.paymentMethod) }}
           </p>
         </div>
         <button
           type="button"
-          class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1D2231] text-slate-300 transition hover:bg-[#252A3A] hover:text-white"
+          class="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ff-secondary)] text-[var(--ff-text-secondary)] transition hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
           (click)="closeMovementDetail()"
         >
           <i class="pi pi-times"></i>
@@ -264,45 +300,65 @@
 
       <div class="space-y-4 px-6 py-5">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <div class="rounded-xl border border-[#252A3A] bg-[#0B0D14] p-3">
-            <p class="text-[10px] uppercase tracking-widest text-slate-500">
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3"
+          >
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+            >
               Tipo
             </p>
-            <p class="mt-1 font-semibold text-white">
+            <p class="mt-1 font-semibold text-[var(--ff-text-primary)]">
               {{ typeLabel(movement.type) }}
             </p>
           </div>
-          <div class="rounded-xl border border-[#252A3A] bg-[#0B0D14] p-3">
-            <p class="text-[10px] uppercase tracking-widest text-slate-500">
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3"
+          >
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+            >
               Método
             </p>
-            <p class="mt-1 font-semibold text-white">
+            <p class="mt-1 font-semibold text-[var(--ff-text-primary)]">
               {{ methodLabel(movement.paymentMethod) }}
             </p>
           </div>
-          <div class="rounded-xl border border-[#252A3A] bg-[#0B0D14] p-3">
-            <p class="text-[10px] uppercase tracking-widest text-slate-500">
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3"
+          >
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+            >
               Usuario
             </p>
-            <p class="mt-1 font-semibold text-white">
+            <p class="mt-1 font-semibold text-[var(--ff-text-primary)]">
               {{ movement.performedByName || "—" }}
             </p>
           </div>
         </div>
 
-        <div class="rounded-xl border border-[#252A3A] bg-[#0B0D14] p-4">
-          <p class="text-[10px] uppercase tracking-widest text-slate-500">
+        <div
+          class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+          >
             Detalle
           </p>
-          <p class="mt-2 text-sm text-slate-200">
+          <p class="mt-2 text-sm text-[var(--ff-text-primary)]">
             {{ movement.description || "—" }}
           </p>
         </div>
 
         @if (hasCommercialContext(movement)) {
-          <div class="rounded-xl border border-[#252A3A] bg-[#0B0D14] p-4">
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-3">
-              <h3 class="text-sm font-bold text-white">Origen comercial</h3>
+              <h3 class="text-sm font-bold text-[var(--ff-text-primary)]">
+                Origen comercial
+              </h3>
               @if (canOpenOperation(movement)) {
                 <button
                   type="button"
@@ -316,26 +372,30 @@
             </div>
             <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Cliente
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ movement.customerName || "—" }}
                   @if (movement.customerDni) {
-                    <span class="text-slate-500"
+                    <span class="text-[var(--ff-text-muted)]"
                       >· DNI {{ movement.customerDni }}</span
                     >
                   }
                 </p>
               </div>
               <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Crédito
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ creditTypeLabel(movement.creditType) }}
                   @if (movement.installmentNumber) {
-                    <span class="text-slate-500"
+                    <span class="text-[var(--ff-text-muted)]"
                       >· Cuota #{{ movement.installmentNumber }}</span
                     >
                   }
@@ -344,11 +404,11 @@
               @if (movement.productSummary) {
                 <div class="md:col-span-2">
                   <p
-                    class="text-[10px] uppercase tracking-widest text-slate-500"
+                    class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
                   >
                     Producto / unidad
                   </p>
-                  <p class="mt-1 text-sm text-slate-200">
+                  <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                     {{ movement.productSummary }}
                   </p>
                 </div>
@@ -358,22 +418,30 @@
         }
 
         @if (movement.type === "GASTO") {
-          <div class="rounded-xl border border-[#252A3A] bg-[#0B0D14] p-4">
-            <h3 class="text-sm font-bold text-white">Datos del gasto</h3>
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          >
+            <h3 class="text-sm font-bold text-[var(--ff-text-primary)]">
+              Datos del gasto
+            </h3>
             <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Categoría
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ movement.expenseCategoryName || "Sin categoría" }}
                 </p>
               </div>
               <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Origen
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ movement.expenseSource || "—" }}
                 </p>
               </div>
@@ -382,38 +450,50 @@
         }
 
         @if (movement.type === "DROP") {
-          <div class="rounded-xl border border-[#252A3A] bg-[#0B0D14] p-4">
-            <h3 class="text-sm font-bold text-white">Datos del drop</h3>
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          >
+            <h3 class="text-sm font-bold text-[var(--ff-text-primary)]">
+              Datos del drop
+            </h3>
             <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
               <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Destino
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ movement.dropDestination || "Caja General" }}
                 </p>
               </div>
               <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Estado
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ movement.dropStatus || "—" }}
                 </p>
               </div>
               <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Referencia
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ movement.receiptReference || "—" }}
                 </p>
               </div>
               <div class="md:col-span-3">
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Motivo
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ movement.dropReason || "—" }}
                 </p>
               </div>
@@ -422,30 +502,40 @@
         }
 
         @if (movement.type === "CONVERSION") {
-          <div class="rounded-xl border border-[#252A3A] bg-[#0B0D14] p-4">
-            <h3 class="text-sm font-bold text-white">Datos de conversión</h3>
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          >
+            <h3 class="text-sm font-bold text-[var(--ff-text-primary)]">
+              Datos de conversión
+            </h3>
             <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
               <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Desde
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ methodLabel(movement.conversionSourceMethod || "") }}
                 </p>
               </div>
               <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Hacia
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ methodLabel(movement.conversionTargetMethod || "") }}
                 </p>
               </div>
               <div>
-                <p class="text-[10px] uppercase tracking-widest text-slate-500">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
                   Criterio
                 </p>
-                <p class="mt-1 text-sm text-slate-200">
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
                   {{ movement.conversionCriteria || "—" }}
                 </p>
               </div>
@@ -454,11 +544,15 @@
         }
 
         @if (movement.transferReference) {
-          <div class="rounded-xl border border-[#252A3A] bg-[#0B0D14] p-4">
-            <p class="text-[10px] uppercase tracking-widest text-slate-500">
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          >
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+            >
               Referencia transferencia
             </p>
-            <p class="mt-1 text-sm text-slate-200">
+            <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
               {{ movement.transferReference }}
             </p>
           </div>

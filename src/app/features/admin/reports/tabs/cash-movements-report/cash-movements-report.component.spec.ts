@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CashRegisterService } from '../../../cash-register/cash-register.service';
 import { BusinessDayListItem } from '../../../models/business-day.model';
@@ -78,6 +78,9 @@ describe('CashMovementsReportComponent', () => {
   let cashRegisterSpy: jasmine.SpyObj<CashRegisterService>;
   let reportsSpy: jasmine.SpyObj<ReportsService>;
   let routerSpy: jasmine.SpyObj<Router>;
+  let routeStub: {
+    snapshot: { queryParamMap: ReturnType<typeof convertToParamMap> };
+  };
 
   beforeEach(async () => {
     cashRegisterSpy = jasmine.createSpyObj('CashRegisterService', [
@@ -88,6 +91,7 @@ describe('CashMovementsReportComponent', () => {
       'getCashMovementsReport',
     ]);
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    routeStub = { snapshot: { queryParamMap: convertToParamMap({}) } };
 
     cashRegisterSpy.listBusinessDays.and.returnValue(of([mockBusinessDay]));
     cashRegisterSpy.listSessionsByBusinessDay.and.returnValue(
@@ -101,6 +105,7 @@ describe('CashMovementsReportComponent', () => {
         { provide: CashRegisterService, useValue: cashRegisterSpy },
         { provide: ReportsService, useValue: reportsSpy },
         { provide: Router, useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: routeStub },
       ],
     }).compileComponents();
 
@@ -259,7 +264,9 @@ describe('CashMovementsReportComponent', () => {
       expect(component.typeBadgeClasses('ENGANCHE')).toContain('emerald');
       expect(component.typeBadgeClasses('GASTO')).toContain('red');
       expect(component.typeBadgeClasses('DROP')).toContain('amber');
-      expect(component.typeBadgeClasses('CONVERSION')).toContain('gray');
+      expect(component.typeBadgeClasses('CONVERSION')).toContain(
+        '--ff-secondary',
+      );
     });
   });
 
@@ -302,16 +309,29 @@ describe('CashMovementsReportComponent', () => {
     it('permite ir a la operación cuando el movimiento tiene crédito', () => {
       const row = mockReport.rows[0];
       component.selectedMovement = row;
+      component.dateFrom = '2026-06-01';
+      component.dateTo = '2026-06-10';
+      component.selectedBusinessDayId = 'bd-1';
+      component.selectedSessionId = 'cs-1';
 
       expect(component.canOpenOperation(row)).toBeTrue();
 
       component.openOperation(row);
 
       expect(component.selectedMovement).toBeNull();
-      expect(routerSpy.navigate).toHaveBeenCalledWith([
-        '/admin/operations',
-        'credit-1',
-      ]);
+      expect(routerSpy.navigate).toHaveBeenCalledWith(
+        ['/admin/operations', 'credit-1'],
+        {
+          queryParams: {
+            returnTo: 'admin-reports',
+            tab: 'cashMovements',
+            dateFrom: '2026-06-01',
+            dateTo: '2026-06-10',
+            businessDayId: 'bd-1',
+            cashSessionId: 'cs-1',
+          },
+        },
+      );
     });
 
     it('no navega a operación si el movimiento no tiene crédito', () => {
@@ -329,6 +349,25 @@ describe('CashMovementsReportComponent', () => {
     it('dispara consult() al inicializar el componente', () => {
       fixture.detectChanges();
       expect(cashRegisterSpy.listBusinessDays).toHaveBeenCalled();
+    });
+
+    it('restaura rango, jornada y caja desde query params', () => {
+      routeStub.snapshot.queryParamMap = convertToParamMap({
+        dateFrom: '2026-06-01',
+        dateTo: '2026-06-10',
+        businessDayId: 'bd-1',
+        cashSessionId: 'cs-1',
+      });
+
+      fixture.detectChanges();
+
+      expect(cashRegisterSpy.listBusinessDays).toHaveBeenCalledWith({
+        dateFrom: '2026-06-01',
+        dateTo: '2026-06-10',
+      });
+      expect(component.selectedBusinessDayId).toBe('bd-1');
+      expect(component.selectedSessionId).toBe('cs-1');
+      expect(reportsSpy.getCashMovementsReport).toHaveBeenCalledWith('cs-1');
     });
   });
 });
