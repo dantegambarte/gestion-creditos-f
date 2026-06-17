@@ -1,11 +1,16 @@
 import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
-import { UserFormModalComponent, UserForm, UserRecord } from './user-form-modal/user-form-modal.component';
+import { InputTextModule } from 'primeng/inputtext';
+import { TagModule } from 'primeng/tag';
 import { Roles } from '../../../../shared/models/enums/roles.enum';
+import {
+  UserForm,
+  UserFormModalComponent,
+  UserRecord,
+} from './user-form-modal/user-form-modal.component';
 
 interface SystemUser {
   id: string;
@@ -20,7 +25,15 @@ interface SystemUser {
 @Component({
   selector: 'app-users-config',
   standalone: true,
-  imports: [ButtonModule, TagModule, DropdownModule, InputSwitchModule, FormsModule, UserFormModalComponent],
+  imports: [
+    ButtonModule,
+    TagModule,
+    DropdownModule,
+    InputTextModule,
+    InputSwitchModule,
+    FormsModule,
+    UserFormModalComponent,
+  ],
   templateUrl: './users-config.component.html',
 })
 export class UsersConfigComponent {
@@ -38,18 +51,62 @@ export class UsersConfigComponent {
   ];
 
   allUsers: SystemUser[] = [
-    { id: 'U001', name: 'Carlos Andrade', email: 'c.andrade@siscreditos.com', dni: '30123456', role: Roles.ADMIN, active: true, lastLogin: 'Hoy, 09:42 am' },
-    { id: 'U002', name: 'María López', email: 'm.lopez@siscreditos.com', dni: '32456789', role: Roles.SELLER, active: true, lastLogin: 'Ayer, 03:15 pm' },
-    { id: 'U003', name: 'Roberto García', email: 'r.garcia@siscreditos.com', dni: '28987654', role: Roles.CASHIER, active: true, lastLogin: 'Hoy, 08:00 am' },
-    { id: 'U004', name: 'Jorge Peñafiel', email: 'j.peñafiel@siscreditos.com', dni: '35112233', role: Roles.COLLECTOR, active: true, lastLogin: '18/04/2025' },
-    { id: 'U005', name: 'Ana Torres', email: 'a.torres@siscreditos.com', dni: '29334455', role: Roles.SELLER, active: false, lastLogin: '05/03/2025' },
+    {
+      id: 'U001',
+      name: 'Carlos Andrade',
+      email: 'c.andrade@siscreditos.com',
+      dni: '30123456',
+      role: Roles.ADMIN,
+      active: true,
+      lastLogin: 'Hoy, 09:42 am',
+    },
+    {
+      id: 'U002',
+      name: 'María López',
+      email: 'm.lopez@siscreditos.com',
+      dni: '32456789',
+      role: Roles.SELLER,
+      active: true,
+      lastLogin: 'Ayer, 03:15 pm',
+    },
+    {
+      id: 'U003',
+      name: 'Roberto García',
+      email: 'r.garcia@siscreditos.com',
+      dni: '28987654',
+      role: Roles.CASHIER,
+      active: true,
+      lastLogin: 'Hoy, 08:00 am',
+    },
+    {
+      id: 'U004',
+      name: 'Jorge Peñafiel',
+      email: 'j.peñafiel@siscreditos.com',
+      dni: '35112233',
+      role: Roles.COLLECTOR,
+      active: true,
+      lastLogin: '18/04/2025',
+    },
+    {
+      id: 'U005',
+      name: 'Ana Torres',
+      email: 'a.torres@siscreditos.com',
+      dni: '29334455',
+      role: Roles.SELLER,
+      active: false,
+      lastLogin: '05/03/2025',
+    },
   ];
 
   filteredUsers = computed(() => {
     const q = this.searchQuery().toLowerCase();
     const role = this.selectedRole();
-    return this.allUsers.filter(u => {
-      const matchSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    return this.allUsers.filter((u) => {
+      const matchSearch =
+        !q ||
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.dni.includes(q);
       const matchRole = !role || u.role === role;
       return matchSearch && matchRole;
     });
@@ -67,7 +124,7 @@ export class UsersConfigComponent {
 
   onSaved(form: UserForm): void {
     if (this.editingUser) {
-      const idx = this.allUsers.findIndex(u => u.id === this.editingUser!.id);
+      const idx = this.allUsers.findIndex((u) => u.id === this.editingUser!.id);
       if (idx !== -1) {
         this.allUsers[idx] = {
           ...this.allUsers[idx],
@@ -92,31 +149,55 @@ export class UsersConfigComponent {
   }
 
   initials(name: string): string {
-    return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    return name
+      .split(' ')
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase();
   }
 
   avatarColor(name: string): string {
     const colors = [
-      'bg-blue-500', 'bg-purple-500', 'bg-green-500',
-      'bg-orange-500', 'bg-pink-500', 'bg-teal-500',
+      'bg-blue-500',
+      'bg-purple-500',
+      'bg-green-500',
+      'bg-orange-500',
+      'bg-pink-500',
+      'bg-teal-500',
     ];
     return colors[name.charCodeAt(0) % colors.length];
   }
 
   roleLabel(role: string): string {
     const map: Record<string, string> = {
-      ADMIN: 'Administrador', SELLER: 'Vendedor', COLLECTOR: 'Cobrador', CASHIER: 'Cajero',
+      ADMIN: 'Administrador',
+      SELLER: 'Vendedor',
+      COLLECTOR: 'Cobrador',
+      CASHIER: 'Cajero',
     };
     return map[role] ?? role;
   }
 
-  roleSeverity(role: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
-    const map: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast'> = {
-      ADMIN: 'danger', SELLER: 'info', COLLECTOR: 'warning', CASHIER: 'success',
+  roleSeverity(
+    role: string,
+  ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
+    const map: Record<
+      string,
+      'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast'
+    > = {
+      ADMIN: 'danger',
+      SELLER: 'info',
+      COLLECTOR: 'warning',
+      CASHIER: 'success',
     };
     return map[role] ?? 'secondary';
   }
 
-  onSearch(value: string): void { this.searchQuery.set(value); }
-  onRoleChange(value: string | null): void { this.selectedRole.set(value); }
+  onSearch(value: string): void {
+    this.searchQuery.set(value);
+  }
+  onRoleChange(value: string | null): void {
+    this.selectedRole.set(value);
+  }
 }
