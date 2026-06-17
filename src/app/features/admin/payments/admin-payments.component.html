@@ -44,7 +44,7 @@
           optionValue="value"
           placeholder="Todos los estados"
           [showClear]="!!filterStatus"
-          styleClass="w-48 h-11"
+          styleClass="w-56 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
           appendTo="body"
         />
         <p-dropdown
@@ -54,13 +54,13 @@
           optionValue="value"
           placeholder="Todos los cobradores"
           [showClear]="!!filterCollectorId"
-          styleClass="w-52 h-11"
+          styleClass="w-64 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
           appendTo="body"
         />
       </div>
 
       @if (filteredPayments.length === 0) {
-        <p class="text-sm text-gray-400 text-center py-10">
+        <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
           Sin cobros registrados.
         </p>
       } @else {
@@ -86,7 +86,7 @@
             <tr class="cursor-pointer" (click)="openDetail(p)">
               <td class="font-medium">
                 {{ p.customerName }}
-                <span class="text-xs text-gray-400 ml-1">{{
+                <span class="ml-1 text-xs text-[var(--ff-text-muted)]">{{
                   p.customerDni
                 }}</span>
               </td>
