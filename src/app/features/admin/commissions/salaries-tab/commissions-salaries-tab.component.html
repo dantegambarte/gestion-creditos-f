@@ -4,30 +4,42 @@
       <i class="pi pi-money-bill mr-2 text-emerald-400"></i>Sueldo fijo de
       cobradores
     </h2>
-    <p class="text-xs text-slate-400">
+    <p class="text-xs text-[var(--ff-text-secondary)]">
       Configuración semanal de sueldos para roles con cobranzas.
     </p>
   </div>
 
   <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-2">
-    <div class="rounded-lg border border-slate-700/70 bg-slate-800/40 p-3">
-      <p class="text-[11px] uppercase tracking-wide text-slate-400">
+    <div
+      class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+    >
+      <p
+        class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+      >
         Cobradores
       </p>
       <p class="text-xl font-semibold text-white">
         {{ salaryStats.collectors }}
       </p>
     </div>
-    <div class="rounded-lg border border-slate-700/70 bg-slate-800/40 p-3">
-      <p class="text-[11px] uppercase tracking-wide text-slate-400">
+    <div
+      class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+    >
+      <p
+        class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+      >
         Con sueldo configurado
       </p>
       <p class="text-xl font-semibold text-emerald-400">
         {{ salaryStats.configured }}
       </p>
     </div>
-    <div class="rounded-lg border border-slate-700/70 bg-slate-800/40 p-3">
-      <p class="text-[11px] uppercase tracking-wide text-slate-400">
+    <div
+      class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+    >
+      <p
+        class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+      >
         Total semanal
       </p>
       <p class="text-xl font-semibold text-amber-400">
@@ -49,7 +61,7 @@
       </div>
 
       @if (filteredSalaryRows.length === 0) {
-        <p class="text-sm text-slate-400 py-8 text-center">
+        <p class="py-8 text-center text-sm text-[var(--ff-text-muted)]">
           No hay cobradores disponibles.
         </p>
       } @else {
@@ -91,7 +103,7 @@
                 <td class="text-center">
                   <button
                     type="button"
-                    class="h-7 px-3 rounded-md text-xs border border-slate-600 text-slate-200 hover:bg-slate-700/40"
+                    class="h-7 rounded-md border border-[var(--ff-border)] px-3 text-xs text-[var(--ff-text-primary)] hover:bg-[var(--ff-surface-hover)]"
                     (click)="onSelectCollectorRow(row.userId)"
                   >
                     Editar
@@ -106,15 +118,17 @@
 
     <div class="xl:col-span-5">
       <div
-        class="rounded-lg border border-slate-700/70 bg-slate-800/50 p-4 space-y-3 xl:sticky xl:top-4"
+        class="space-y-3 rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4 xl:sticky xl:top-4"
       >
-        <p class="text-xs uppercase tracking-wide text-slate-400">
+        <p
+          class="text-xs uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
           Editor de sueldo
         </p>
 
         <div class="flex flex-col gap-1.5">
           <label
-            class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+            class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
             >Cobrador</label
           >
           <p-dropdown
@@ -125,17 +139,17 @@
             optionValue="value"
             placeholder="Seleccioná un cobrador"
             [showClear]="true"
-            styleClass="w-full"
+            styleClass="w-full h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
             appendTo="body"
           />
         </div>
 
         @if (loadingSalary) {
-          <p class="text-sm text-slate-400">Cargando...</p>
+          <p class="text-sm text-[var(--ff-text-secondary)]">Cargando...</p>
         } @else if (currentSalary) {
           <div class="flex flex-col gap-1.5">
             <label
-              class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+              class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
               >Sueldo semanal (ARS)</label
             >
             <p-inputNumber
@@ -161,7 +175,7 @@
               styleClass="h-10 px-4"
               (onClick)="onSaveSalary()"
             />
-            <div class="text-sm text-slate-400">
+            <div class="text-sm text-[var(--ff-text-secondary)]">
               Actual:
               <span class="font-semibold text-white">{{
                 formatCurrency(currentSalary.weeklyAmount)

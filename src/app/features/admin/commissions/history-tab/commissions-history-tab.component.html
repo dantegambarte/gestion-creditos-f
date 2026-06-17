@@ -2,37 +2,53 @@
   @if (loadingLiquidations) {
     <app-loading-state />
   } @else if (historyRows.length === 0) {
-    <p class="text-sm text-gray-400 text-center py-10">
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
       Sin liquidaciones registradas.
     </p>
   } @else {
     <div class="mb-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
-      <div class="rounded-lg border border-slate-700/70 bg-slate-800/40 p-3">
-        <p class="text-[11px] uppercase tracking-wide text-slate-400">
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p
+          class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
           Total liquidado
         </p>
         <p class="text-xl font-semibold text-emerald-400">
           {{ formatCurrency(historyStats.totalPaid) }}
         </p>
       </div>
-      <div class="rounded-lg border border-slate-700/70 bg-slate-800/40 p-3">
-        <p class="text-[11px] uppercase tracking-wide text-slate-400">
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p
+          class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
           En comisiones
         </p>
         <p class="text-xl font-semibold text-emerald-400">
           {{ formatCurrency(historyStats.totalCommissions) }}
         </p>
       </div>
-      <div class="rounded-lg border border-slate-700/70 bg-slate-800/40 p-3">
-        <p class="text-[11px] uppercase tracking-wide text-slate-400">
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p
+          class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
           En sueldos fijos
         </p>
         <p class="text-xl font-semibold text-amber-400">
           {{ formatCurrency(historyStats.totalSalary) }}
         </p>
       </div>
-      <div class="rounded-lg border border-slate-700/70 bg-slate-800/40 p-3">
-        <p class="text-[11px] uppercase tracking-wide text-slate-400">
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p
+          class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
           Liquidaciones
         </p>
         <p class="text-xl font-semibold text-white">{{ historyStats.count }}</p>
@@ -48,7 +64,7 @@
           optionLabel="label"
           optionValue="value"
           appendTo="body"
-          styleClass="w-52"
+          styleClass="w-64 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
         />
         <p-dropdown
           [options]="historyMethodOptions"
@@ -57,10 +73,12 @@
           optionLabel="label"
           optionValue="value"
           appendTo="body"
-          styleClass="w-44"
+          styleClass="w-52 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
         />
       </div>
-      <p class="text-xs text-slate-400">{{ historyRows.length }} registros</p>
+      <p class="text-xs text-[var(--ff-text-secondary)]">
+        {{ historyRows.length }} registros
+      </p>
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-12 gap-3">
@@ -115,7 +133,9 @@
                 }}</span>
               </td>
               <td class="text-sm">
-                <span class="inline-flex items-center gap-1.5 text-slate-300">
+                <span
+                  class="inline-flex items-center gap-1.5 text-[var(--ff-text-primary)]"
+                >
                   <i
                     [class]="
                       liq.paymentMethod === 'CASH'
@@ -132,7 +152,7 @@
                 class="text-sm"
                 [class]="
                   liq.paidByName === 'Administrador del Sistema'
-                    ? 'text-slate-400'
+                    ? 'text-[var(--ff-text-secondary)]'
                     : 'text-indigo-300'
                 "
               >
@@ -172,14 +192,14 @@
       @if (selectedHistory) {
         <div class="xl:col-span-4">
           <div
-            class="rounded-lg border border-slate-700/70 bg-slate-800/50 p-4 space-y-3"
+            class="space-y-3 rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
           >
             <div class="flex items-start justify-between gap-2">
               <div>
                 <p class="font-semibold text-white">
                   {{ selectedHistory.userName }}
                 </p>
-                <p class="text-xs text-slate-400">
+                <p class="text-xs text-[var(--ff-text-secondary)]">
                   {{ formatDate(selectedHistory.weekStart) }} -
                   {{ formatDate(selectedHistory.weekEnd) }} ·
                   {{ formatDate(selectedHistory.paidAt) }}
@@ -187,15 +207,17 @@
               </div>
               <button
                 type="button"
-                class="h-7 w-7 rounded-md border border-slate-600/70 text-slate-300 hover:bg-slate-700/40"
+                class="h-7 w-7 rounded-md border border-[var(--ff-border)] text-[var(--ff-text-primary)] hover:bg-[var(--ff-surface-hover)]"
                 (click)="clearHistorySelection()"
               >
                 <i class="pi pi-times text-xs"></i>
               </button>
             </div>
 
-            <div class="rounded-md bg-slate-700/30 p-3 space-y-2">
-              <p class="text-[11px] uppercase tracking-wide text-slate-400">
+            <div class="space-y-2 rounded-md bg-[var(--ff-surface)] p-3">
+              <p
+                class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+              >
                 Desglose del pago
               </p>
               <div class="flex justify-between text-sm">
@@ -211,7 +233,7 @@
                 }}</span>
               </div>
               <div
-                class="flex justify-between text-base font-semibold pt-1 border-t border-slate-600"
+                class="flex justify-between border-t border-[var(--ff-border-subtle)] pt-1 text-base font-semibold"
               >
                 <span>Total pagado</span
                 ><span class="text-emerald-400">{{
@@ -220,23 +242,25 @@
               </div>
             </div>
 
-            <div class="rounded-md bg-slate-700/30 p-3 space-y-2 text-sm">
+            <div
+              class="space-y-2 rounded-md bg-[var(--ff-surface)] p-3 text-sm"
+            >
               <div class="flex justify-between">
-                <span class="text-slate-400">Método</span
+                <span class="text-[var(--ff-text-secondary)]">Método</span
                 ><span>{{
                   paymentMethodLabel(selectedHistory.paymentMethod)
                 }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-slate-400">Pagado por</span
+                <span class="text-[var(--ff-text-secondary)]">Pagado por</span
                 ><span>{{ selectedHistory.paidByName }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-slate-400">Fecha</span
+                <span class="text-[var(--ff-text-secondary)]">Fecha</span
                 ><span>{{ formatDate(selectedHistory.paidAt) }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-slate-400">Período</span
+                <span class="text-[var(--ff-text-secondary)]">Período</span
                 ><span
                   >{{ formatDate(selectedHistory.weekStart) }} —
                   {{ formatDate(selectedHistory.weekEnd) }}</span
