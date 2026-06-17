@@ -5,43 +5,51 @@
     <app-error-state />
   } @else if (portfolioReport) {
     <!-- KPI saldo pendiente activo -->
-    <div class="bg-gray-800 rounded-2xl p-6 space-y-1">
-      <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+    <div
+      class="space-y-1 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-6"
+    >
+      <p
+        class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+      >
         Saldo pendiente activo
       </p>
       <p class="text-3xl font-extrabold text-green-400 font-mono">
         {{ formatCurrency(portfolioReport.activePendingBalance) }}
       </p>
-      <p class="text-xs text-gray-500">Cuotas no pagadas de créditos activos</p>
+      <p class="text-xs text-[var(--ff-text-muted)]">
+        Cuotas no pagadas de créditos activos
+      </p>
     </div>
 
     <!-- Tabla agrupada por estado -->
-    <div class="bg-gray-800 rounded-2xl overflow-hidden">
+    <div
+      class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+    >
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-gray-700">
+          <tr class="border-b border-[var(--ff-border-subtle)]">
             <th
-              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium w-48"
+              class="w-48 px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Estado
             </th>
             <th
-              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Tipo
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Cantidad
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Monto total
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               % del total
             </th>
@@ -50,7 +58,9 @@
         <tbody>
           @for (group of portfolioGrouped; track group.status) {
             <!-- Fila cabecera de estado -->
-            <tr class="bg-gray-700/40 border-t border-gray-700">
+            <tr
+              class="border-t border-[var(--ff-border-subtle)] bg-[var(--ff-surface)]"
+            >
               <td colspan="5" class="px-5 py-2">
                 <div class="flex items-center gap-2">
                   <span
@@ -69,16 +79,18 @@
             <!-- Filas por tipo -->
             @for (row of group.rows; track row.type) {
               <tr
-                class="border-t border-gray-700/40 hover:bg-gray-700/20 transition-colors"
+                class="border-t border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
               >
                 <td class="px-5 py-3"></td>
-                <td class="px-5 py-3 text-gray-300">
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
                   {{ TYPE_LABELS[row.type] ?? row.type }}
                 </td>
                 <td class="px-5 py-3 text-right font-semibold text-white">
                   {{ row.count }}
                 </td>
-                <td class="px-5 py-3 text-right font-mono text-gray-200">
+                <td
+                  class="px-5 py-3 text-right font-mono text-[var(--ff-text-primary)]"
+                >
                   {{ formatCurrency(row.totalAmount) }}
                 </td>
                 <td class="px-5 py-3 text-right">
@@ -90,7 +102,7 @@
                       }}%
                     </span>
                   } @else {
-                    <span class="text-gray-600">—</span>
+                    <span class="text-[var(--ff-text-muted)]">—</span>
                   }
                 </td>
               </tr>
@@ -102,8 +114,12 @@
 
     <!-- Barra Venta vs Préstamo (activos) -->
     @if (activeVentaAmount + activeLoanAmount > 0) {
-      <div class="bg-gray-800 rounded-2xl p-5 space-y-3">
-        <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+      <div
+        class="space-y-3 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5"
+      >
+        <p
+          class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
           Créditos activos — Venta vs Préstamo
         </p>
         <div class="flex h-3 rounded-full overflow-hidden gap-0.5">
@@ -120,7 +136,9 @@
             "
           ></div>
         </div>
-        <div class="flex justify-between text-xs text-gray-400">
+        <div
+          class="flex justify-between text-xs text-[var(--ff-text-secondary)]"
+        >
           <span>
             <span
               class="inline-block w-2 h-2 rounded-full bg-blue-500 mr-1"
