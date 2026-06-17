@@ -158,7 +158,7 @@
             size="small"
             (onClick)="openRefinanceDialog()"
           />
-          @if (credit.type === 'LOAN') {
+          @if (credit.type === 'LOAN' || credit.type === 'SALE') {
             <p-button
               label="Cambiar plan"
               icon="pi pi-sliders-h"
