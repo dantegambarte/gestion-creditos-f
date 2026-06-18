@@ -1,0 +1,83 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Castigar crédito"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    <!-- Advertencia: operación definitiva -->
+    <div
+      class="rounded-lg p-3"
+      style="
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      "
+    >
+      <p class="text-xs" style="color: var(--ff-danger)">
+        <i class="pi pi-exclamation-triangle mr-1"></i>
+        El crédito se retira de la operatoria de cobranza: deja de aparecer en
+        planillas, "cobrar hoy" y gestión de cobranzas, y no genera más mora.
+        Los pagos históricos se conservan. <strong>Esta acción es definitiva</strong>
+        y no se puede deshacer.
+      </p>
+    </div>
+
+    <!-- Saldo que se castiga -->
+    <div class="cr-detail-cell text-center">
+      <div class="ud-label">Saldo pendiente a castigar</div>
+      <div class="ud-value ff-mono" style="color: var(--ff-danger)">
+        {{ pendingBalance | currencyArs: 0 }}
+      </div>
+    </div>
+
+    <!-- Motivo (obligatorio) -->
+    <div class="flex flex-col gap-1">
+      <label class="auth-label">Motivo <span style="color: var(--ff-danger)">*</span></label>
+      <input
+        pInputText
+        [(ngModel)]="reason"
+        maxlength="500"
+        class="w-full px-3 py-2"
+        placeholder="Motivo del castigo (mín. 5 caracteres)..."
+      />
+    </div>
+
+    <!-- Observaciones (opcional) -->
+    <div class="flex flex-col gap-1">
+      <label class="auth-label">Observaciones (opcional)</label>
+      <textarea
+        pInputTextarea
+        [(ngModel)]="observations"
+        rows="2"
+        maxlength="500"
+        class="w-full resize-none px-3 py-2"
+        placeholder="Detalle adicional..."
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+      />
+      <p-button
+        label="Castigar crédito"
+        icon="pi pi-ban"
+        severity="danger"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirm()"
+        [loading]="processing"
+        [disabled]="!canConfirm"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

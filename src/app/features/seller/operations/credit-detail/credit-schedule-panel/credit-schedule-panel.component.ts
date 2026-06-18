@@ -180,6 +180,7 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       OVERDUE: 'danger',
       PARTIAL: 'warning',
       PLAN_CHANGE_CANCELLED: 'secondary',
+      WRITTEN_OFF: 'danger',
     };
     return map[status] ?? 'secondary';
   }
@@ -195,6 +196,7 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       OVERDUE: 'Vencida',
       PARTIAL: 'Parcial',
       PLAN_CHANGE_CANCELLED: 'Anulada (cambio de plan)',
+      WRITTEN_OFF: 'Castigada',
     };
     return map[status] ?? status;
   }

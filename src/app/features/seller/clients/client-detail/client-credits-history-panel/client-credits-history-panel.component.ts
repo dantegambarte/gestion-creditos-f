@@ -36,6 +36,7 @@ export class ClientCreditsHistoryPanelComponent {
       REJECTED: 'Rechazado',
       EXPIRED: 'Vencido',
       REFINANCED: 'Refinanciado',
+      WRITTEN_OFF: 'Castigado',
     };
     return map[status];
   }
@@ -57,6 +58,7 @@ export class ClientCreditsHistoryPanelComponent {
       REJECTED: 'danger',
       EXPIRED: 'danger',
       REFINANCED: 'danger',
+      WRITTEN_OFF: 'danger',
     };
     return map[status];
   }
