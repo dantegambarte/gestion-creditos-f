@@ -82,7 +82,7 @@ export class UserCreateComponent implements OnInit {
           Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
         ],
       ],
-      dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
+      dni: ['', [Validators.required, Validators.pattern(/^\d{7,9}$/)]],
       email: ['', [Validators.email]],
       address: ['', [Validators.maxLength(255)]],
       role: ['', [Validators.required]],
@@ -118,7 +118,7 @@ export class UserCreateComponent implements OnInit {
     if (c.errors['email']) return 'Formato de email inválido.';
     if (c.errors['pattern']) {
       if (field === 'dni')
-        return 'El DNI debe contener entre 7 y 8 dígitos numéricos.';
+        return 'El DNI debe contener entre 7 y 9 dígitos numéricos.';
       return 'Solo se permiten letras y espacios.';
     }
     return 'Campo inválido.';
