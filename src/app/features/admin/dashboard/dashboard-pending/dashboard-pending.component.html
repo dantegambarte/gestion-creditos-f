@@ -46,7 +46,7 @@
                     [class.db-pending-btn--disabled]="isCashClosed"
                     (click)="reviewCredit(credit.id)"
                     [title]="
-                      isCashClosed ? 'La caja está cerrada' : 'Revisar crédito'
+                      isCashClosed ? 'No hay una caja abierta' : 'Revisar crédito'
                     "
                   >
                     Revisar
@@ -113,7 +113,7 @@
                     [class.db-pending-btn--disabled]="isCashClosed"
                     (click)="openApprovePaymentDialog(payment)"
                     [title]="
-                      isCashClosed ? 'La caja está cerrada' : 'Aprobar cobro'
+                      isCashClosed ? 'No hay una caja abierta' : 'Aprobar cobro'
                     "
                   >
                     Aprobar
