@@ -58,10 +58,14 @@ export class CreditsListComponent implements OnInit {
   selectedType: CreditType | null = null;
 
   readonly statusOptions = [
+    { label: 'Todos', value: null },
     { label: 'Pendiente de aprobación', value: 'PENDING_APPROVAL' },
     { label: 'Activo', value: 'ACTIVE' },
     { label: 'Liquidado', value: 'SETTLED' },
     { label: 'Rechazado', value: 'REJECTED' },
+    { label: 'Vencido', value: 'EXPIRED' },
+    { label: 'Refinanciado', value: 'REFINANCED' },
+    { label: 'Castigado', value: 'WRITTEN_OFF' },
   ];
 
   readonly typeOptions = [

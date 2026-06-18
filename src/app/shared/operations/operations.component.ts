@@ -55,6 +55,9 @@ export class OperationsComponent implements OnInit {
     { label: 'Activo', value: 'ACTIVE' as CreditStatus },
     { label: 'Liquidado', value: 'SETTLED' as CreditStatus },
     { label: 'Rechazado', value: 'REJECTED' as CreditStatus },
+    { label: 'Vencido', value: 'EXPIRED' as CreditStatus },
+    { label: 'Refinanciado', value: 'REFINANCED' as CreditStatus },
+    { label: 'Castigado', value: 'WRITTEN_OFF' as CreditStatus },
   ];
 
   typeOptions = [
