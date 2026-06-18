@@ -34,7 +34,7 @@ export class ClientCreditsHistoryPanelComponent {
       ACTIVE: 'Activo',
       SETTLED: 'Liquidado',
       REJECTED: 'Rechazado',
-      EXPIRED: 'Vencido',
+      EXPIRED: 'Aprobación vencida',
       REFINANCED: 'Refinanciado',
       WRITTEN_OFF: 'Castigado',
     };

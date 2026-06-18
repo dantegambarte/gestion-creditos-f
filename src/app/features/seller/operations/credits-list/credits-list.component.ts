@@ -63,7 +63,7 @@ export class CreditsListComponent implements OnInit {
     { label: 'Activo', value: 'ACTIVE' },
     { label: 'Liquidado', value: 'SETTLED' },
     { label: 'Rechazado', value: 'REJECTED' },
-    { label: 'Vencido', value: 'EXPIRED' },
+    { label: 'Aprobación vencida', value: 'EXPIRED' },
     { label: 'Refinanciado', value: 'REFINANCED' },
     { label: 'Castigado', value: 'WRITTEN_OFF' },
   ];
@@ -133,7 +133,7 @@ export class CreditsListComponent implements OnInit {
       ACTIVE: 'Activo',
       SETTLED: 'Liquidado',
       REJECTED: 'Rechazado',
-      EXPIRED: 'Vencido',
+      EXPIRED: 'Aprobación vencida',
       REFINANCED: 'Refinanciado',
       WRITTEN_OFF: 'Castigado',
     };

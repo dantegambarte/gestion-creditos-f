@@ -55,7 +55,7 @@ export class OperationsComponent implements OnInit {
     { label: 'Activo', value: 'ACTIVE' as CreditStatus },
     { label: 'Liquidado', value: 'SETTLED' as CreditStatus },
     { label: 'Rechazado', value: 'REJECTED' as CreditStatus },
-    { label: 'Vencido', value: 'EXPIRED' as CreditStatus },
+    { label: 'Aprobación vencida', value: 'EXPIRED' as CreditStatus },
     { label: 'Refinanciado', value: 'REFINANCED' as CreditStatus },
     { label: 'Castigado', value: 'WRITTEN_OFF' as CreditStatus },
   ];
@@ -119,7 +119,7 @@ export class OperationsComponent implements OnInit {
       case 'REJECTED':
         return 'RECHAZADO';
       case 'EXPIRED':
-        return 'VENCIDO';
+        return 'APROBACIÓN VENCIDA';
       case 'REFINANCED':
         return 'REFINANCIADO';
       case 'WRITTEN_OFF':

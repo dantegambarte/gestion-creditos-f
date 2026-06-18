@@ -262,7 +262,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
       ACTIVE: 'Activo',
       SETTLED: 'Liquidado',
       REJECTED: 'Rechazado',
-      EXPIRED: 'Vencido',
+      EXPIRED: 'Aprobación vencida',
       REFINANCED: 'Refinanciado',
       WRITTEN_OFF: 'Castigado',
     };
