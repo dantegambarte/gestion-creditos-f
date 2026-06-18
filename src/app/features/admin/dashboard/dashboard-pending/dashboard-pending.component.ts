@@ -15,6 +15,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { MessageService } from 'primeng/api';
 import { Subject, combineLatest } from 'rxjs';
 import { catchError, of, takeUntil } from 'rxjs';
+import { AppError } from '../../../../core/models/app-error';
 import { Credit } from '../../../seller/models/credit.model';
 import { CreditsService } from '../../../seller/operations/credits.service';
 import { PaymentsService } from '../../../collector/payments.service';
@@ -32,7 +33,7 @@ import { DashboardApprovePaymentDialogComponent } from '../dashboard-approve-pay
   templateUrl: './dashboard-pending.component.html',
 })
 export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
-  /** Si la caja está cerrada, deshabilita aprobar/revisar. */
+  /** True si no hay caja operativa abierta (V4): deshabilita aprobar/revisar. */
   @Input() isCashClosed = false;
   /** Emite cuando debe mostrarse o limpiarse una alerta en la página. */
   @Output() alertUpdated = new EventEmitter<{
@@ -133,7 +134,8 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
     if (this.isCashClosed) {
       this.alertUpdated.emit({
         show: true,
-        message: 'No puedes aprobar créditos. La caja del día está CERRADA.',
+        message:
+          'No hay una caja operativa abierta. Abrí una caja para aprobar créditos.',
       });
       return;
     }
@@ -149,7 +151,8 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
     if (this.isCashClosed) {
       this.alertUpdated.emit({
         show: true,
-        message: 'No puedes aprobar pagos. La caja del día está CERRADA.',
+        message:
+          'No hay una caja operativa abierta. Abrí una caja para aprobar cobros.',
       });
       return;
     }
@@ -202,12 +205,17 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
           this.loadPending();
           this.paymentApproved.emit();
         },
-        error: (err) => {
+        error: (err: AppError) => {
           this.approvingPaymentId = null;
-          console.error('Error al aprobar pago:', err);
-          this.alertUpdated.emit({
-            show: true,
-            message: 'Error al aprobar el cobro. Intenta nuevamente.',
+          this.closeApprovePaymentDialog();
+          // 409 = condición operativa esperada (sin caja abierta, cuota ya
+          // pagada, etc.): mostramos el mensaje del backend, no uno genérico.
+          this.messageService.add({
+            severity: err.status === 409 ? 'warn' : 'error',
+            summary:
+              err.status === 409 ? 'No se pudo aprobar el cobro' : 'Error',
+            detail: err.message ?? 'Error al aprobar el cobro. Intenta nuevamente.',
+            life: 6000,
           });
         },
       });

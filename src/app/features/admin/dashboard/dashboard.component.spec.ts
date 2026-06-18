@@ -53,7 +53,7 @@ describe('DashboardComponent', () => {
     });
     formatSpy = jasmine.createSpyObj('FormatService', ['currency', 'number']);
     const installmentsSpy = jasmine.createSpyObj('InstallmentsService', ['list']);
-    const cashRegisterSpy = jasmine.createSpyObj('CashRegisterService', ['getDashboard']);
+    const cashRegisterSpy = jasmine.createSpyObj('CashRegisterService', ['getActiveSession']);
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
     reportsSpy.getSummaryReport.and.returnValue(of(mockSummary));
@@ -61,7 +61,7 @@ describe('DashboardComponent', () => {
     reportsSpy.getCollectorsReport.and.returnValue(of([]));
     reportsSpy.getSellersReport.and.returnValue(of([]));
     installmentsSpy.list.and.returnValue(of([]));
-    cashRegisterSpy.getDashboard.and.returnValue(of({ isClosed: false }));
+    cashRegisterSpy.getActiveSession.and.returnValue(of({ id: 'session-1' }));
     formatSpy.currency.and.callFake((v: number) =>
       new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(v),
     );
