@@ -9,38 +9,38 @@
     </div>
   } @else {
     <div
-      class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"
+      class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
     >
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-slate-800">
+          <tr class="border-b border-[var(--ff-border-subtle)]">
             <th
-              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
             >
               Parámetro
             </th>
             <th
-              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
             >
               Valor actual
             </th>
             <th
-              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
             >
               Rango permitido
             </th>
             <th
-              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
             >
               Descripción
             </th>
             <th
-              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
             >
               Última actualización
             </th>
             <th
-              class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+              class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
             >
               Acciones
             </th>
@@ -49,26 +49,33 @@
         <tbody>
           @if (rows.length === 0) {
             <tr>
-              <td colspan="6" class="px-5 py-10 text-center text-slate-500">
+              <td
+                colspan="6"
+                class="px-5 py-10 text-center text-[var(--ff-text-muted)]"
+              >
                 Sin parámetros disponibles.
               </td>
             </tr>
           }
           @for (row of rows; track row.key) {
             <tr
-              class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors"
+              class="border-b border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
             >
               <td class="px-5 py-3">
-                <p class="font-medium text-slate-200">{{ row.meta.label }}</p>
+                <p class="font-medium text-[var(--ff-text-primary)]">
+                  {{ row.meta.label }}
+                </p>
               </td>
               <td class="px-5 py-3 font-bold text-emerald-400">
                 {{ formatValue(row) }}
               </td>
-              <td class="px-5 py-3 text-slate-400">{{ row.meta.range }}</td>
-              <td class="px-5 py-3 text-slate-500 text-xs">
+              <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                {{ row.meta.range }}
+              </td>
+              <td class="px-5 py-3 text-xs text-[var(--ff-text-muted)]">
                 {{ row.meta.hint || "—" }}
               </td>
-              <td class="px-5 py-3 text-slate-500 text-xs">
+              <td class="px-5 py-3 text-xs text-[var(--ff-text-muted)]">
                 @if (row.updatedAt) {
                   {{ row.updatedAt | date: "dd/MM/yyyy" }}
                   @if (row.updatedBy) {
@@ -113,11 +120,13 @@
   @if (editingRow) {
     <div class="space-y-3 py-1">
       @if (editingRow.meta.hint) {
-        <p class="text-xs text-slate-400">{{ editingRow.meta.hint }}</p>
+        <p class="text-xs text-[var(--ff-text-secondary)]">
+          {{ editingRow.meta.hint }}
+        </p>
       }
       <div class="flex flex-col gap-1.5">
         <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+          class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
           >Valor actual</label
         >
         @if (DAY_PARAMS.has(editingRow.key)) {
@@ -126,6 +135,8 @@
             [(ngModel)]="editValue"
             optionLabel="label"
             optionValue="value"
+            [filter]="dayOptions.length > 10"
+            filterBy="label"
             styleClass="w-full h-11 rounded-xl"
             appendTo="body"
           />
@@ -141,7 +152,7 @@
             inputStyleClass="w-full h-11 px-3"
           />
         }
-        <span class="text-xs text-slate-500"
+        <span class="text-xs text-[var(--ff-text-muted)]"
           >Entre {{ editingRow.meta.range }}</span
         >
       </div>

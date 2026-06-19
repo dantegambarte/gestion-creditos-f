@@ -1,7 +1,7 @@
 <div class="space-y-6">
   <!-- Filtro inline -->
   <div class="flex flex-wrap items-center gap-3">
-    <span class="text-sm text-gray-400">Desde</span>
+    <span class="text-sm text-[var(--ff-text-secondary)]">Desde</span>
     <p-calendar
       [(ngModel)]="dateFrom"
       dataType="string"
@@ -10,9 +10,9 @@
       iconDisplay="input"
       appendTo="body"
       styleClass="w-44"
-      inputStyleClass="w-full h-10 bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+      inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
     />
-    <span class="text-sm text-gray-400">hasta</span>
+    <span class="text-sm text-[var(--ff-text-secondary)]">hasta</span>
     <p-calendar
       [(ngModel)]="dateTo"
       dataType="string"
@@ -21,7 +21,7 @@
       iconDisplay="input"
       appendTo="body"
       styleClass="w-44"
-      inputStyleClass="w-full h-10 bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+      inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
     />
     <p-button
       label="Consultar"
@@ -34,7 +34,7 @@
     />
   </div>
   @if (dateError) {
-    <p class="text-sm text-red-400 flex items-center gap-1.5">
+    <p class="flex items-center gap-1.5 text-sm text-red-400">
       <i class="pi pi-exclamation-circle"></i> {{ dateError }}
     </p>
   }
@@ -44,21 +44,23 @@
   } @else if (error) {
     <app-error-state [message]="error.message" />
   } @else if (businessDays.length === 0) {
-    <p class="text-sm text-gray-500 text-center py-10">
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
       Sin jornadas para el período seleccionado.
     </p>
   } @else {
-    <div class="bg-gray-800 rounded-xl overflow-hidden">
+    <div
+      class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+    >
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-gray-700">
+          <tr class="border-b border-[var(--ff-border-subtle)]">
             <th
-              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Fecha
             </th>
             <th
-              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Estado
             </th>
@@ -68,9 +70,9 @@
         <tbody>
           @for (day of businessDays; track day.id) {
             <tr
-              class="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors"
+              class="border-b border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
             >
-              <td class="px-5 py-3 text-gray-300 font-mono">
+              <td class="px-5 py-3 font-mono text-[var(--ff-text-secondary)]">
                 {{ formatDate(day.business_date) }}
               </td>
               <td class="px-5 py-3">
@@ -108,26 +110,28 @@
   [closable]="false"
   [draggable]="false"
   [resizable]="false"
-  styleClass="bg-[#121520] border border-[#1A1D27]"
-  contentStyleClass="bg-[#121520] p-0 border-none"
+  styleClass="!bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
+  contentStyleClass="!bg-[var(--ff-panel)] p-0 border-none"
   [contentStyle]="{
     padding: '0',
-    background: '#121520',
-    color: '#cbd5e1',
-    border: '1px solid #1A1D27',
+    background: 'var(--ff-panel)',
+    color: 'var(--ff-text-secondary)',
+    border: '1px solid var(--ff-border-subtle)',
     borderRadius: '1rem',
     overflow: 'hidden',
   }"
   [style]="{ width: '720px', maxWidth: '95vw' }"
 >
-  <section class="bg-[#121520] text-slate-300">
+  <section class="bg-[var(--ff-panel)] text-[var(--ff-text-secondary)]">
     <header
-      class="flex items-center justify-between gap-4 border-b border-[#252A3A] px-6 py-5"
+      class="flex items-center justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
     >
       <div>
-        <h2 class="text-xl font-bold text-white">Cajas de la jornada</h2>
+        <h2 class="text-xl font-bold text-[var(--ff-text-primary)]">
+          Cajas de la jornada
+        </h2>
         @if (jornadaDetail()) {
-          <p class="text-xs text-slate-400 mt-1">
+          <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
             {{ formatDate(jornadaDetail()!.business_date) }} ·
             {{ businessDayStatusLabel(jornadaDetail()!.status) }}
           </p>
@@ -142,7 +146,7 @@
       </button>
     </header>
 
-    <div class="px-6 py-5 max-h-[60vh] overflow-y-auto">
+    <div class="max-h-[60vh] overflow-y-auto px-6 py-5">
       @if (loadingJornada()) {
         <app-loading-state message="Cargando cajas..."></app-loading-state>
       } @else if (jornadaError()) {
@@ -152,26 +156,28 @@
           {{ jornadaError()!.message }}
         </div>
       } @else if (jornadaSessions().length === 0) {
-        <p class="text-sm text-slate-500 text-center py-8">
+        <p class="py-8 text-center text-sm text-[var(--ff-text-muted)]">
           No hay cajas registradas en esta jornada.
         </p>
       } @else {
         <div class="space-y-3">
           @for (session of jornadaSessions(); track session.id) {
             <div
-              class="rounded-xl border border-[#252A3A] bg-[#0F121B] p-4 space-y-3"
+              class="space-y-3 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
             >
               <div class="flex items-center justify-between gap-4">
                 <div>
-                  <p class="text-sm font-semibold text-white">
+                  <p
+                    class="text-sm font-semibold text-[var(--ff-text-primary)]"
+                  >
                     {{ session.owner_name || "Sin asignar" }}
                     @if (session.shift_label) {
-                      <span class="text-slate-400 font-normal">
+                      <span class="font-normal text-[var(--ff-text-secondary)]">
                         · {{ session.shift_label }}</span
                       >
                     }
                   </p>
-                  <p class="text-xs text-slate-400 mt-0.5">
+                  <p class="mt-0.5 text-xs text-[var(--ff-text-secondary)]">
                     {{ formatDateTime(session.opened_at) }} →
                     {{ formatDateTime(session.closed_at) }}
                   </p>
@@ -186,10 +192,10 @@
               </div>
 
               @if (session.summary) {
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div class="rounded-lg bg-[#121520] px-3 py-2">
+                <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div class="rounded-lg bg-[var(--ff-panel)] px-3 py-2">
                     <p
-                      class="text-[10px] text-slate-500 uppercase tracking-widest"
+                      class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
                     >
                       Cobros
                     </p>
@@ -197,9 +203,9 @@
                       {{ formatCurrency(session.summary.collections) }}
                     </p>
                   </div>
-                  <div class="rounded-lg bg-[#121520] px-3 py-2">
+                  <div class="rounded-lg bg-[var(--ff-panel)] px-3 py-2">
                     <p
-                      class="text-[10px] text-slate-500 uppercase tracking-widest"
+                      class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
                     >
                       Gastos
                     </p>
@@ -207,19 +213,21 @@
                       {{ formatCurrency(session.summary.expenses) }}
                     </p>
                   </div>
-                  <div class="rounded-lg bg-[#121520] px-3 py-2">
+                  <div class="rounded-lg bg-[var(--ff-panel)] px-3 py-2">
                     <p
-                      class="text-[10px] text-slate-500 uppercase tracking-widest"
+                      class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
                     >
                       Drops
                     </p>
-                    <p class="text-sm font-mono font-semibold text-slate-200">
+                    <p
+                      class="font-mono text-sm font-semibold text-[var(--ff-text-primary)]"
+                    >
                       {{ formatCurrency(session.summary.drops) }}
                     </p>
                   </div>
-                  <div class="rounded-lg bg-[#121520] px-3 py-2">
+                  <div class="rounded-lg bg-[var(--ff-panel)] px-3 py-2">
                     <p
-                      class="text-[10px] text-slate-500 uppercase tracking-widest"
+                      class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
                     >
                       Diferencia
                     </p>
@@ -237,7 +245,7 @@
                         differenceTone(session.closure_difference_status) ===
                         'danger'
                       "
-                      [class.text-slate-200]="
+                      [class.text-white]="
                         differenceTone(session.closure_difference_status) ===
                         'neutral'
                       "
@@ -264,7 +272,9 @@
       }
     </div>
 
-    <footer class="flex justify-end border-t border-[#252A3A] px-6 py-4">
+    <footer
+      class="flex justify-end border-t border-[var(--ff-border)] px-6 py-4"
+    >
       <button
         type="button"
         class="h-10 rounded-xl border border-blue-400/40 px-4 text-sm font-semibold text-white transition hover:bg-blue-500/15"
@@ -284,26 +294,28 @@
   [closable]="false"
   [draggable]="false"
   [resizable]="false"
-  styleClass="bg-[#121520] border border-[#1A1D27]"
-  contentStyleClass="bg-[#121520] p-0 border-none"
+  styleClass="!bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
+  contentStyleClass="!bg-[var(--ff-panel)] p-0 border-none"
   [contentStyle]="{
     padding: '0',
-    background: '#121520',
-    color: '#cbd5e1',
-    border: '1px solid #1A1D27',
+    background: 'var(--ff-panel)',
+    color: 'var(--ff-text-secondary)',
+    border: '1px solid var(--ff-border-subtle)',
     borderRadius: '1rem',
     overflow: 'hidden',
   }"
   [style]="{ width: '640px', maxWidth: '95vw' }"
 >
-  <section class="bg-[#121520] text-slate-300">
+  <section class="bg-[var(--ff-panel)] text-[var(--ff-text-secondary)]">
     <header
-      class="flex items-center justify-between gap-4 border-b border-[#252A3A] px-6 py-5"
+      class="flex items-center justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
     >
       <div>
-        <h2 class="text-xl font-bold text-white">Cierre de caja</h2>
+        <h2 class="text-xl font-bold text-[var(--ff-text-primary)]">
+          Cierre de caja
+        </h2>
         @if (sessionDetail()) {
-          <p class="text-xs text-slate-400 mt-1">
+          <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
             {{ sessionDetail()!.owner?.full_name || "Sin asignar" }} ·
             {{ formatDateTime(sessionDetail()!.opened_at) }} →
             {{ formatDateTime(sessionDetail()!.closed_at) }}
@@ -319,7 +331,7 @@
       </button>
     </header>
 
-    <div class="px-6 py-5 max-h-[60vh] overflow-y-auto space-y-4">
+    <div class="max-h-[60vh] space-y-4 overflow-y-auto px-6 py-5">
       @if (loadingSession()) {
         <app-loading-state message="Cargando cierre..."></app-loading-state>
       } @else if (sessionError()) {
@@ -330,57 +342,73 @@
         </div>
       } @else if (sessionDetail()) {
         <!-- Datos generales -->
-        <div class="rounded-xl border border-[#252A3A] bg-[#0F121B] p-4">
-          <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-3">
+        <div
+          class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+        >
+          <p
+            class="mb-3 text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+          >
             Datos generales
           </p>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Apertura
               </p>
-              <p class="text-sm text-slate-200 mt-0.5">
+              <p class="mt-0.5 text-sm text-[var(--ff-text-primary)]">
                 {{ formatDateTime(sessionDetail()!.opened_at) }}
               </p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Cierre
               </p>
-              <p class="text-sm text-slate-200 mt-0.5">
+              <p class="mt-0.5 text-sm text-[var(--ff-text-primary)]">
                 {{ formatDateTime(sessionDetail()!.closed_at) }}
               </p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Estado
               </p>
-              <p class="text-sm text-slate-200 mt-0.5">
+              <p class="mt-0.5 text-sm text-[var(--ff-text-primary)]">
                 {{ sessionStatusLabel(sessionDetail()!.status) }}
               </p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Turno
               </p>
-              <p class="text-sm text-slate-200 mt-0.5">
+              <p class="mt-0.5 text-sm text-[var(--ff-text-primary)]">
                 {{ sessionDetail()!.shift_label || "—" }}
               </p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Monto inicial
               </p>
-              <p class="text-sm font-mono text-slate-200 mt-0.5">
+              <p class="mt-0.5 font-mono text-sm text-[var(--ff-text-primary)]">
                 {{ formatCurrency(sessionDetail()!.opening_amount) }}
               </p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Diferencia de cierre
               </p>
               <p
-                class="text-sm font-mono mt-0.5"
+                class="mt-0.5 font-mono text-sm"
                 [class.text-emerald-300]="
                   differenceTone(sessionDetail()!.closure_difference_status) ===
                   'success'
@@ -393,7 +421,7 @@
                   differenceTone(sessionDetail()!.closure_difference_status) ===
                   'danger'
                 "
-                [class.text-slate-200]="
+                [class.text-white]="
                   differenceTone(sessionDetail()!.closure_difference_status) ===
                   'neutral'
                 "
@@ -406,10 +434,12 @@
               </p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Cerrado por
               </p>
-              <p class="text-sm font-mono text-slate-200 mt-0.5">
+              <p class="mt-0.5 font-mono text-sm text-[var(--ff-text-primary)]">
                 {{ shortId(sessionDetail()!.closed_by) }}
               </p>
             </div>
@@ -418,11 +448,13 @@
 
         <!-- Totales de cobros / gastos / drops / diferencia -->
         @if (sessionDetail()!.closure_snapshot) {
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div
-              class="rounded-lg bg-[#0F121B] border border-[#252A3A] px-3 py-2"
+              class="rounded-lg border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 py-2"
             >
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Cobros
               </p>
               <p class="text-sm font-mono font-semibold text-emerald-300">
@@ -435,9 +467,11 @@
               </p>
             </div>
             <div
-              class="rounded-lg bg-[#0F121B] border border-[#252A3A] px-3 py-2"
+              class="rounded-lg border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 py-2"
             >
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Gastos
               </p>
               <p class="text-sm font-mono font-semibold text-red-300">
@@ -449,12 +483,16 @@
               </p>
             </div>
             <div
-              class="rounded-lg bg-[#0F121B] border border-[#252A3A] px-3 py-2"
+              class="rounded-lg border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 py-2"
             >
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Drops
               </p>
-              <p class="text-sm font-mono font-semibold text-slate-200">
+              <p
+                class="font-mono text-sm font-semibold text-[var(--ff-text-primary)]"
+              >
                 {{
                   formatCurrency(
                     closureSummary(sessionDetail()!.closure_snapshot!).drops
@@ -463,9 +501,11 @@
               </p>
             </div>
             <div
-              class="rounded-lg bg-[#0F121B] border border-[#252A3A] px-3 py-2"
+              class="rounded-lg border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 py-2"
             >
-              <p class="text-[10px] text-slate-500 uppercase tracking-widest">
+              <p
+                class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
                 Diferencia
               </p>
               <p
@@ -482,7 +522,7 @@
                   differenceTone(sessionDetail()!.closure_difference_status) ===
                   'danger'
                 "
-                [class.text-slate-200]="
+                [class.text-white]="
                   differenceTone(sessionDetail()!.closure_difference_status) ===
                   'neutral'
                 "
@@ -501,12 +541,12 @@
         <!-- Arqueo por método de pago -->
         @if (sessionDetail()!.closure_details.length > 0) {
           <div
-            class="overflow-hidden rounded-xl border border-[#252A3A] bg-[#0F121B]"
+            class="overflow-hidden rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)]"
           >
             <table class="w-full border-collapse text-sm">
               <thead>
                 <tr
-                  class="border-b border-[#334155] bg-[#1D2231] text-xs uppercase tracking-[0.14em] text-slate-400"
+                  class="border-b border-[var(--ff-border)] bg-[var(--ff-secondary)] text-xs uppercase tracking-[0.14em] text-[var(--ff-text-secondary)]"
                 >
                   <th class="px-4 py-3 text-left font-semibold">Método</th>
                   <th class="px-4 py-3 text-right font-semibold">Esperado</th>
@@ -514,22 +554,28 @@
                   <th class="px-4 py-3 text-right font-semibold">Diferencia</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#252A3A]">
+              <tbody class="divide-y divide-[var(--ff-border)]">
                 @for (
                   detail of sessionDetail()!.closure_details;
                   track detail.id
                 ) {
-                  <tr class="bg-[#121520]">
-                    <td class="px-4 py-3 font-semibold text-white">
+                  <tr class="bg-[var(--ff-panel)]">
+                    <td
+                      class="px-4 py-3 font-semibold text-[var(--ff-text-primary)]"
+                    >
                       {{
                         paymentMethodLabels[detail.payment_method] ||
                           detail.payment_method
                       }}
                     </td>
-                    <td class="px-4 py-3 text-right font-mono text-slate-200">
+                    <td
+                      class="px-4 py-3 text-right font-mono text-[var(--ff-text-primary)]"
+                    >
                       {{ formatCurrency(detail.expected_amount) }}
                     </td>
-                    <td class="px-4 py-3 text-right font-mono text-slate-200">
+                    <td
+                      class="px-4 py-3 text-right font-mono text-[var(--ff-text-primary)]"
+                    >
                       {{ formatCurrency(detail.declared_amount) }}
                     </td>
                     <td
@@ -548,7 +594,9 @@
                     </td>
                   </tr>
                   @if (detail.notes) {
-                    <tr class="bg-[#0F121B] text-xs text-slate-400">
+                    <tr
+                      class="bg-[var(--ff-bg)] text-xs text-[var(--ff-text-secondary)]"
+                    >
                       <td class="px-4 py-2" colspan="4">{{ detail.notes }}</td>
                     </tr>
                   }
@@ -557,7 +605,7 @@
             </table>
           </div>
         } @else {
-          <p class="text-sm text-slate-500 text-center py-4">
+          <p class="py-4 text-center text-sm text-[var(--ff-text-muted)]">
             Esta caja no tiene arqueo por método de pago registrado.
           </p>
         }
@@ -566,22 +614,22 @@
         @if (sessionDetail()!.drops.length > 0) {
           <div>
             <p
-              class="text-[10px] text-slate-500 uppercase tracking-widest mb-2"
+              class="mb-2 text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Drops a Caja General
             </p>
             <div
-              class="overflow-hidden rounded-xl border border-[#252A3A] bg-[#0F121B] divide-y divide-[#252A3A]"
+              class="divide-y divide-[var(--ff-border)] overflow-hidden rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)]"
             >
               @for (drop of sessionDetail()!.drops; track drop.id) {
                 <div
                   class="flex items-center justify-between px-4 py-2.5 text-sm"
                 >
                   <div>
-                    <span class="font-mono text-slate-200">
+                    <span class="font-mono text-[var(--ff-text-primary)]">
                       {{ formatCurrency(drop.amount) }}
                     </span>
-                    <span class="text-slate-400 text-xs ml-2">
+                    <span class="ml-2 text-xs text-[var(--ff-text-secondary)]">
                       {{
                         paymentMethodLabels[drop.payment_method] ||
                           drop.payment_method
@@ -607,11 +655,11 @@
         @if (sessionDetail()!.observations) {
           <div>
             <p
-              class="text-[10px] text-slate-500 uppercase tracking-widest mb-2"
+              class="mb-2 text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Observaciones
             </p>
-            <p class="text-sm text-slate-300">
+            <p class="text-sm text-[var(--ff-text-secondary)]">
               {{ sessionDetail()!.observations }}
             </p>
           </div>
@@ -619,7 +667,9 @@
       }
     </div>
 
-    <footer class="flex justify-end border-t border-[#252A3A] px-6 py-4">
+    <footer
+      class="flex justify-end border-t border-[var(--ff-border)] px-6 py-4"
+    >
       <button
         type="button"
         class="h-10 rounded-xl border border-blue-400/40 px-4 text-sm font-semibold text-white transition hover:bg-blue-500/15"

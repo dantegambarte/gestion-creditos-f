@@ -1,4 +1,6 @@
-<div class="mb-6 p-4 bg-white border rounded">
+<div
+  class="mb-6 rounded border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+>
   <div class="flex items-center justify-between mb-3">
     <h3 class="font-semibold">Simulación</h3>
     <p-button
@@ -15,46 +17,62 @@
   </div>
 
   @if (error) {
-    <div class="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+    <div
+      class="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm"
+    >
       {{ error }}
     </div>
   }
 
   @if (result) {
-    <div class="p-3 bg-blue-50 border border-blue-200 rounded text-sm space-y-3">
+    <div
+      class="p-3 bg-blue-50 border border-blue-200 rounded text-sm space-y-3"
+    >
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <span class="text-gray-500">Monto total: </span>
-          <span class="font-semibold">{{ result.totalAmount | currencyArs: 2 }}</span>
+          <span class="text-[var(--ff-text-muted)]">Monto total: </span>
+          <span class="font-semibold">{{
+            result.totalAmount | currencyArs: 2
+          }}</span>
         </div>
         <div>
-          <span class="text-gray-500">Cuota estimada: </span>
-          <span class="font-semibold">{{ result.installmentAmount | currencyArs: 2 }}</span>
+          <span class="text-[var(--ff-text-muted)]">Cuota estimada: </span>
+          <span class="font-semibold">{{
+            result.installmentAmount | currencyArs: 2
+          }}</span>
         </div>
         @if (result.totalToReturn) {
           <div>
-            <span class="text-gray-500">Total a devolver: </span>
-            <span class="font-semibold">{{ result.totalToReturn | currencyArs: 2 }}</span>
+            <span class="text-[var(--ff-text-muted)]">Total a devolver: </span>
+            <span class="font-semibold">{{
+              result.totalToReturn | currencyArs: 2
+            }}</span>
           </div>
         }
         <div>
-          <span class="text-gray-500">Cuotas: </span>
+          <span class="text-[var(--ff-text-muted)]">Cuotas: </span>
           <span class="font-semibold">{{ result.installmentsCount }}</span>
         </div>
         @if (result.downPayment !== undefined) {
           <div>
-            <span class="text-gray-500">Enganche: </span>
-            <span class="font-semibold" data-cy="simulate-down-payment">{{ result.downPayment | currencyArs: 2 }}</span>
+            <span class="text-[var(--ff-text-muted)]">Enganche: </span>
+            <span class="font-semibold" data-cy="simulate-down-payment">{{
+              result.downPayment | currencyArs: 2
+            }}</span>
           </div>
         }
         @if (result.financedAmount !== undefined) {
           <div>
-            <span class="text-gray-500">Monto financiado: </span>
-            <span class="font-semibold" data-cy="simulate-financed-amount">{{ result.financedAmount | currencyArs: 2 }}</span>
+            <span class="text-[var(--ff-text-muted)]">Monto financiado: </span>
+            <span class="font-semibold" data-cy="simulate-financed-amount">{{
+              result.financedAmount | currencyArs: 2
+            }}</span>
           </div>
         }
       </div>
-      <div class="text-xs text-gray-500 italic">{{ result.note }}</div>
+      <div class="text-xs italic text-[var(--ff-text-muted)]">
+        {{ result.note }}
+      </div>
     </div>
   }
 </div>

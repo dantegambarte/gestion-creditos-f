@@ -19,41 +19,47 @@
 
     <div class="ff-list-header ff-list-header--filters">
       <div class="ff-list-header__actions" style="flex-wrap: wrap">
-        <span class="p-input-icon-left">
-          <i class="pi pi-search" style="color: var(--ff-text-muted)"></i>
+        <p-iconField iconPosition="left">
+          <p-inputIcon styleClass="pi pi-search ff-muted-icon z-10" />
           <input
             pInputText
             type="text"
             placeholder="Buscar por título o descripción..."
             [(ngModel)]="searchTerm"
             (ngModelChange)="onSearchChange($event)"
-            class="h-11 w-72 pl-10"
+            class="h-11 w-72 pl-10 rounded-xl"
             style="
               background: var(--ff-secondary);
               border-color: var(--ff-border);
               color: var(--ff-text-primary);
             "
           />
-        </span>
+        </p-iconField>
         <p-dropdown
           [options]="statusOptions"
           [(ngModel)]="selectedStatus"
           (onChange)="applyFilters()"
-          placeholder="Todas"
+          placeholder="Estado del producto"
+          [filter]="statusOptions.length > 10"
+          filterBy="label"
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-          styleClass="h-11"
+          styleClass="h-11 min-w-40"
+          ariaLabel="Filtrar productos por estado"
         />
         <p-dropdown
           [options]="categoryOptions"
           [(ngModel)]="selectedCategoryId"
           (onChange)="applyFilters()"
-          placeholder="Todos"
+          placeholder="Categoría"
+          [filter]="categoryOptions.length > 10"
+          filterBy="label"
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-          styleClass="h-11"
+          styleClass="h-11 min-w-48"
+          ariaLabel="Filtrar productos por categoría"
         />
       </div>
     </div>
@@ -85,7 +91,16 @@
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-product>
-          <tr>
+          <tr
+            [style.background]="
+              product.status !== 'ACTIVE' ? 'rgba(239, 68, 68, 0.08)' : null
+            "
+            [style.box-shadow]="
+              product.status !== 'ACTIVE'
+                ? 'inset 3px 0 0 rgba(248, 113, 113, 0.75)'
+                : null
+            "
+          >
             <!-- PRODUCTO -->
             <td style="min-width: 200px">
               <span

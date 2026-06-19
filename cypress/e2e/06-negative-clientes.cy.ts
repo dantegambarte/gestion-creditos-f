@@ -12,7 +12,7 @@ describe('Gestión de Clientes real — Unhappy Paths', () => {
    * Espera a que la pantalla de clientes esté lista para interactuar.
    */
   const waitClientsReady = () => {
-    cy.contains('.ff-list-header__title', 'Gestión de Clientes', { timeout: 20000 }).should('be.visible');
+    cy.contains('.ff-page-title', 'Gestión de Clientes', { timeout: 20000 }).should('be.visible');
     cy.get('p-table', { timeout: 20000 }).should('be.visible');
   };
 

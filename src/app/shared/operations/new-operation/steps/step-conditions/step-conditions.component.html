@@ -58,8 +58,12 @@
                 [options]="installmentsOptions"
                 optionLabel="label"
                 optionValue="value"
+
+
                 formControlName="installmentsCount"
                 placeholder="Seleccionar cuotas"
+                [filter]="installmentsOptions.length > 10"
+                filterBy="label"
                 appendTo="body"
                 [styleClass]="
                   'w-full bg-[var(--ff-panel)] border border-[var(--ff-border-subtle)] text-[var(--ff-text-primary)] rounded-xl focus:border-[#3B82F6] outline-none transition-all'
@@ -139,6 +143,8 @@
                           appendTo="body"
                           [scrollHeight]="'180px'"
                           placeholder="Seleccionar cuotas para este producto"
+                          [filter]="getInstallmentsOptionsForLine(line).length > 10"
+                          filterBy="label"
                           styleClass="w-full bg-[var(--ff-panel)] border border-[var(--ff-border-subtle)] text-[var(--ff-text-primary)] rounded-xl focus:border-[#3B82F6] outline-none transition-all"
                         />
                       </div>

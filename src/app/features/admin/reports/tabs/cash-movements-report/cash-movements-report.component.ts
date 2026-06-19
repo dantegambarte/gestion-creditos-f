@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
@@ -19,6 +19,8 @@ import {
   CashMovementReport,
   CashMovementReportRow,
   CashMovementType,
+  GeneralCashMovementReport,
+  GeneralCashMovementType,
 } from '../../report.models';
 import { ReportsService } from '../../reports.service';
 
@@ -29,6 +31,20 @@ const TYPE_LABELS: Record<CashMovementType, string> = {
   DROP: 'Drop',
   CONVERSION: 'Conversión',
 };
+
+const GENERAL_TYPE_LABELS: Record<GeneralCashMovementType, string> = {
+  DROP_IN: 'Drop',
+  SUPPLIER_PAYMENT: 'Pago a proveedor',
+  SALARY_PAYMENT: 'Pago de sueldo',
+  EXPENSE: 'Gasto',
+  ADJUSTMENT: 'Ajuste',
+  MANUAL_INCOME: 'Ingreso manual',
+};
+
+const SCOPE_OPTIONS: { label: string; value: 'JORNADA' | 'GENERAL' }[] = [
+  { label: 'Caja x Jornada', value: 'JORNADA' },
+  { label: 'Caja General', value: 'GENERAL' },
+];
 
 const METHOD_LABELS: Record<string, string> = {
   CASH: 'Efectivo',
@@ -62,12 +78,22 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   private readonly reportsService = inject(ReportsService);
   readonly format = inject(FormatService);
   private readonly dateSvc = inject(DateService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private destroy$ = new Subject<void>();
+  private pendingBusinessDayId: string | null = null;
+  private pendingSessionId: string | null = null;
 
   dateFrom: string;
   dateTo: string;
   dateError = '';
+
+  readonly scopeOptions = SCOPE_OPTIONS;
+  scope: 'JORNADA' | 'GENERAL' = 'JORNADA';
+
+  generalReport: GeneralCashMovementReport | null = null;
+  loadingGeneralReport = false;
+  generalReportError: AppError | null = null;
 
   businessDays: BusinessDayListItem[] = [];
   selectedBusinessDayId: string | null = null;
@@ -91,6 +117,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.restoreContextFromQueryParams();
     this.consult();
   }
 
@@ -112,14 +139,36 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
     }));
   }
 
-  /** Valida el rango de fechas y dispara la búsqueda de jornadas. */
+  /** Valida el rango de fechas y dispara la búsqueda según el ámbito activo. */
   consult(): void {
     this.dateError = '';
     if (!this.rangeValid) {
       this.dateError = 'Verificá el rango de fechas para continuar.';
       return;
     }
-    this.fetchBusinessDays();
+    if (this.scope === 'GENERAL') {
+      this.fetchGeneralReport();
+    } else {
+      this.fetchBusinessDays();
+    }
+  }
+
+  /** Cambia el ámbito del reporte y limpia el estado del ámbito anterior. */
+  onScopeChange(scope: 'JORNADA' | 'GENERAL'): void {
+    this.scope = scope;
+    this.businessDays = [];
+    this.selectedBusinessDayId = null;
+    this.sessions = [];
+    this.selectedSessionId = null;
+    this.report = null;
+    this.generalReport = null;
+    this.generalReportError = null;
+    this.consult();
+  }
+
+  /** Etiqueta legible del tipo de movimiento de Caja General. */
+  generalTypeLabel(type: GeneralCashMovementType): string {
+    return GENERAL_TYPE_LABELS[type] || type;
   }
 
   /** Maneja la selección de jornada: carga la caja de esa jornada y su reporte. */
@@ -156,8 +205,15 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
       case 'DROP':
         return 'bg-amber-500/15 text-amber-300';
       default:
-        return 'bg-gray-500/15 text-gray-300';
+        return 'bg-[var(--ff-secondary)] text-[var(--ff-text-secondary)]';
     }
+  }
+
+  /** Clases del badge de dirección (IN/OUT) para movimientos de Caja General. */
+  directionBadgeClasses(direction: 'IN' | 'OUT'): string {
+    return direction === 'IN'
+      ? 'bg-emerald-500/15 text-emerald-300'
+      : 'bg-red-500/15 text-red-300';
   }
 
   /** Formatea fecha/hora ISO. */
@@ -194,7 +250,20 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
   openOperation(row: CashMovementReportRow): void {
     if (!row.creditId) return;
     this.closeMovementDetail();
-    this.router.navigate(['/admin/operations', row.creditId]);
+    this.router.navigate(['/admin/operations', row.creditId], {
+      queryParams: {
+        returnTo: 'admin-reports',
+        tab: 'cashMovements',
+        dateFrom: this.dateFrom,
+        dateTo: this.dateTo,
+        ...(this.selectedBusinessDayId
+          ? { businessDayId: this.selectedBusinessDayId }
+          : {}),
+        ...(this.selectedSessionId || row.cashSessionId
+          ? { cashSessionId: this.selectedSessionId || row.cashSessionId }
+          : {}),
+      },
+    });
   }
 
   /** Traduce el tipo de crédito a etiqueta visible. */
@@ -224,6 +293,14 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (rows) => {
           this.businessDays = rows;
+          const restoredBusinessDayId = this.pendingBusinessDayId;
+          this.pendingBusinessDayId = null;
+          if (
+            restoredBusinessDayId &&
+            rows.some((bd) => bd.id === restoredBusinessDayId)
+          ) {
+            this.onSelectBusinessDay(restoredBusinessDayId);
+          }
         },
         error: (err: AppError) => {
           this.daysError = err;
@@ -247,8 +324,12 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
         next: (rows) => {
           this.sessions = rows;
           if (rows.length > 0) {
-            this.selectedSessionId = rows[0].id;
-            this.fetchReport(rows[0].id);
+            const restoredSessionId = this.pendingSessionId;
+            this.pendingSessionId = null;
+            const session =
+              rows.find((row) => row.id === restoredSessionId) || rows[0];
+            this.selectedSessionId = session.id;
+            this.fetchReport(session.id);
           }
         },
         error: (err: AppError) => {
@@ -278,6 +359,42 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
           this.reportError = err;
         },
       });
+  }
+
+  /** Carga el reporte de movimientos de Caja General para el rango de fechas. */
+  private fetchGeneralReport(): void {
+    this.loadingGeneralReport = true;
+    this.generalReportError = null;
+    this.reportsService
+      .getGeneralCashMovementsReport({
+        dateFrom: this.dateFrom,
+        dateTo: this.dateTo,
+      })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.loadingGeneralReport = false;
+        }),
+      )
+      .subscribe({
+        next: (r) => {
+          this.generalReport = r;
+        },
+        error: (err: AppError) => {
+          this.generalReportError = err;
+        },
+      });
+  }
+
+  /** Restaura el rango, la jornada y la caja cuando se vuelve desde una operación. */
+  private restoreContextFromQueryParams(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const dateFrom = params.get('dateFrom');
+    const dateTo = params.get('dateTo');
+    if (dateFrom) this.dateFrom = dateFrom;
+    if (dateTo) this.dateTo = dateTo;
+    this.pendingBusinessDayId = params.get('businessDayId');
+    this.pendingSessionId = params.get('cashSessionId');
   }
 
   /** Calcula un rango predeterminado de 30 días hasta hoy. */

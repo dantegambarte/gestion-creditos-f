@@ -105,7 +105,7 @@
       </div>
     </div>
 
-    <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+    <div class="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
       <div class="flex flex-wrap items-center gap-3 min-w-0">
         @if (credit.customerName) {
           <span class="text-sm font-semibold truncate" style="color: var(--ff-accent)">
@@ -119,7 +119,7 @@
         }
       </div>
 
-      <div class="flex flex-wrap items-center gap-3 xl:justify-end">
+      <div class="credit-action-bar flex flex-wrap items-center gap-3 2xl:justify-end">
         @if (isAdmin && credit.status === 'PENDING_APPROVAL') {
           <p-button
             label="Aprobar"
@@ -146,20 +146,21 @@
           <p-button
             label="Cancelación total anticipada"
             icon="pi pi-wallet"
-            severity="info"
+            severity="secondary"
             [outlined]="true"
             size="small"
             pTooltip="Liquidar todas las cuotas pendientes en un solo pago"
             (onClick)="openSettlementDialog()"
-            styleClass="h-11 px-5 rounded-xl"
+            styleClass="ff-credit-action-btn ff-credit-action-btn--settlement h-11 px-5 rounded-xl"
           />
           <p-button
             label="Refinanciar"
             icon="pi pi-refresh"
-            severity="warning"
+            severity="secondary"
+            [outlined]="true"
             size="small"
             (onClick)="openRefinanceDialog()"
-            styleClass="h-11 px-5 rounded-xl shadow-sm"
+            styleClass="ff-credit-action-btn ff-credit-action-btn--refinance h-11 px-5 rounded-xl"
           />
           @if (credit.type === 'LOAN' || credit.type === 'SALE') {
             <p-button
@@ -175,7 +176,7 @@
                   : 'Recalcular el saldo con la tasa de un plan más corto'
               "
               (onClick)="openPlanChangeDialog()"
-              styleClass="h-11 px-5 rounded-xl"
+              styleClass="ff-credit-action-btn ff-credit-action-btn--plan h-11 px-5 rounded-xl"
             />
           }
           <p-button

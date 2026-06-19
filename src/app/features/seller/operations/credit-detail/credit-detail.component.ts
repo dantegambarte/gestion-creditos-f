@@ -1,23 +1,25 @@
 import { CommonModule, DatePipe, Location } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { MessageModule } from 'primeng/message';
+import { TooltipModule } from 'primeng/tooltip';
+import { Subject, catchError, of, takeUntil } from 'rxjs';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { AppError } from '../../../../core/models/app-error';
+import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { HeaderService } from '../../../../core/services/header.service';
-import { CashRegisterService } from '../../../admin/cash-register/cash-register.service';
-import { Subject } from 'rxjs';
-import { catchError, of, takeUntil } from 'rxjs';
+import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
+import { CashRegisterService } from '../../../admin/cash-register/cash-register.service';
+import { CreditPayment } from '../../../collector/models/payment.model';
+import { PaymentsService } from '../../../collector/payments.service';
 import {
   CreditDetail,
   CreditStatus,
@@ -25,16 +27,13 @@ import {
 } from '../../models/credit.model';
 import { Installment } from '../../models/installment.model';
 import { CreditsService } from '../credits.service';
-import { CreditPayment } from '../../../collector/models/payment.model';
-import { PaymentsService } from '../../../collector/payments.service';
 import { ApproveDialogComponent } from './approve-dialog/approve-dialog.component';
-import { RejectDialogComponent } from './reject-dialog/reject-dialog.component';
-import { RefinanceDialogComponent } from './refinance-dialog/refinance-dialog.component';
-import { PlanChangeDialogComponent } from './plan-change-dialog/plan-change-dialog.component';
 import { WriteOffDialogComponent } from './write-off-dialog/write-off-dialog.component';
-import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog.component';
 import { CreditSchedulePanelComponent } from './credit-schedule-panel/credit-schedule-panel.component';
-import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
+import { PlanChangeDialogComponent } from './plan-change-dialog/plan-change-dialog.component';
+import { RefinanceDialogComponent } from './refinance-dialog/refinance-dialog.component';
+import { RejectDialogComponent } from './reject-dialog/reject-dialog.component';
+import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog.component';
 
 @Component({
   selector: 'app-credit-detail',
@@ -102,7 +101,10 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
    * @returns {string} Etiqueta visible para el bloque financiero.
    */
   get initialPaymentLabel(): string {
-    if (this.credit?.prepaidInstallments && this.credit.prepaidInstallments > 0) {
+    if (
+      this.credit?.prepaidInstallments &&
+      this.credit.prepaidInstallments > 0
+    ) {
       return 'Cuotas adelantadas';
     }
     return 'Enganche';
@@ -136,7 +138,10 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     if (!this.credit || this.credit.prepaidInstallments <= 0) return 0;
     const installmentsCount = this.credit.installmentsCount || 0;
     if (installmentsCount <= 0) return 0;
-    return Math.round((this.credit.financedAmount / installmentsCount) * this.credit.prepaidInstallments);
+    return Math.round(
+      (this.credit.financedAmount / installmentsCount) *
+        this.credit.prepaidInstallments,
+    );
   }
 
   /**
@@ -225,17 +230,36 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Navega hacia atrás o a admin/collections si viene con returnTo.
+   * Navega hacia atrás o a la pantalla contextual indicada por query params.
    */
   goBack(): void {
     const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
     const sheetId = this.route.snapshot.queryParamMap.get('sheetId');
     const openTab = this.route.snapshot.queryParamMap.get('openTab');
+    const reportTab = this.route.snapshot.queryParamMap.get('tab');
+    const dateFrom = this.route.snapshot.queryParamMap.get('dateFrom');
+    const dateTo = this.route.snapshot.queryParamMap.get('dateTo');
+    const businessDayId =
+      this.route.snapshot.queryParamMap.get('businessDayId');
+    const cashSessionId =
+      this.route.snapshot.queryParamMap.get('cashSessionId');
     if (returnTo === 'admin-collections') {
       this.router.navigate(['/admin/collections'], {
         queryParams: {
           ...(sheetId ? { openSheetId: sheetId } : {}),
           ...(openTab ? { openTab } : {}),
+        },
+      });
+      return;
+    }
+    if (returnTo === 'admin-reports') {
+      this.router.navigate(['/admin/reports'], {
+        queryParams: {
+          ...(reportTab ? { tab: reportTab } : {}),
+          ...(dateFrom ? { dateFrom } : {}),
+          ...(dateTo ? { dateTo } : {}),
+          ...(businessDayId ? { businessDayId } : {}),
+          ...(cashSessionId ? { cashSessionId } : {}),
         },
       });
       return;

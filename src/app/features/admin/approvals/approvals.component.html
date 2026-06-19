@@ -52,6 +52,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Todos"
+          [filter]="TYPE_OPTIONS.length > 10"
+          filterBy="label"
           [showClear]="!!filterType"
           styleClass="h-11 w-full md:w-52"
           appendTo="body"

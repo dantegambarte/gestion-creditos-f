@@ -173,7 +173,7 @@ body {
 }
 
 // ─── p-button help (violeta) ─────────────────────────────────────────────────
-.p-button.p-button-help {
+.p-button.p-button-help:not(.p-button-outlined) {
   background: #7c3aed !important;
   border-color: #7c3aed !important;
   color: #ffffff !important;
@@ -197,7 +197,7 @@ body {
 }
 
 // ─── p-button info ───────────────────────────────────────────────────────────
-.p-button.p-button-info {
+.p-button.p-button-info:not(.p-button-outlined) {
   background: #4f6ef7 !important;
   border-color: #4f6ef7 !important;
   color: #ffffff !important;
@@ -209,7 +209,7 @@ body {
 }
 
 // ─── p-button warning ────────────────────────────────────────────────────────
-.p-button.p-button-warning {
+.p-button.p-button-warning:not(.p-button-outlined) {
   background: #fbb040 !important;
   border-color: #fbb040 !important;
   color: #ffffff !important;
@@ -221,7 +221,7 @@ body {
 }
 
 // ─── p-button success ────────────────────────────────────────────────────────
-.p-button.p-button-success {
+.p-button.p-button-success:not(.p-button-outlined) {
   background: #16a34a !important;
   border-color: #16a34a !important;
   color: #ffffff !important;
@@ -255,20 +255,20 @@ body {
 
 // ─── p-button secondary outlined ─────────────────────────────────────────────
 .p-button.p-button-secondary.p-button-outlined {
-  background: transparent !important;
-  border-color: var(--ff-border-subtle) !important;
-  color: var(--ff-text-secondary) !important;
+  background: rgba(148, 163, 184, 0.045) !important;
+  border-color: rgba(148, 163, 184, 0.32) !important;
+  color: #cbd5e1 !important;
   border-radius: 0.75rem !important;
 
   &:hover:not(:disabled) {
-    background: var(--ff-surface-hover) !important;
-    border-color: var(--ff-border) !important;
+    background: rgba(148, 163, 184, 0.095) !important;
+    border-color: rgba(148, 163, 184, 0.52) !important;
     color: var(--ff-text-primary) !important;
   }
 
   &:active:not(:disabled) {
-    background: #2a2f45 !important;
-    border-color: #3a4260 !important;
+    background: rgba(148, 163, 184, 0.14) !important;
+    border-color: rgba(148, 163, 184, 0.64) !important;
     color: var(--ff-text-primary) !important;
   }
 
@@ -337,6 +337,7 @@ body {
   border: 1px solid var(--ff-border) !important;
   border-radius: 0.75rem !important;
   color: var(--ff-text-primary) !important;
+  padding: 0.625rem 0.875rem;
   transition:
     border-color 0.15s,
     box-shadow 0.15s,
@@ -365,6 +366,11 @@ body {
 .p-calendar,
 .p-calendar .p-inputtext {
   width: 100%;
+}
+
+p-iconfield .p-inputtext,
+.p-icon-field-left .p-inputtext {
+  padding-left: 2.5rem;
 }
 
 .p-inputnumber-button,
@@ -414,6 +420,28 @@ body {
   color: var(--ff-text-primary) !important;
   box-shadow: var(--ff-overlay-shadow) !important;
   overflow: hidden;
+}
+
+.p-dropdown-panel .p-dropdown-header {
+  background: var(--ff-panel-raised) !important;
+  border-bottom: 1px solid var(--ff-border-subtle) !important;
+  padding: 0.5rem !important;
+}
+
+.p-dropdown-panel .p-dropdown-filter-container {
+  width: 100%;
+}
+
+.p-dropdown-panel .p-dropdown-filter-container .p-dropdown-filter.p-inputtext {
+  height: 2.5rem !important;
+  padding: 0 2.5rem 0 0.875rem !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.25rem !important;
+}
+
+.p-dropdown-panel .p-dropdown-filter-container .p-dropdown-filter-icon {
+  right: 0.875rem !important;
+  color: var(--ff-text-secondary) !important;
 }
 
 .p-dropdown-panel .p-dropdown-items,
@@ -698,7 +726,7 @@ body {
 }
 
 .auth-subtitle {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ff-text-secondary);
   text-align: center;
   margin-bottom: 28px;
@@ -718,7 +746,7 @@ body {
 
 .auth-label {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -727,7 +755,7 @@ body {
 }
 
 .auth-error {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ff-danger);
   display: flex;
   align-items: center;
@@ -736,14 +764,14 @@ body {
 }
 
 .auth-remember-label {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ff-text-secondary);
   cursor: pointer;
   user-select: none;
 }
 
 .auth-link {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--ff-accent);
   cursor: pointer;
@@ -755,7 +783,7 @@ body {
 }
 
 .auth-footer-note {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ff-text-muted);
   text-align: center;
   padding-top: 12px;
@@ -768,7 +796,7 @@ body {
 }
 
 .auth-copyright {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ff-text-muted);
   margin-top: 20px;
   text-align: center;
@@ -855,7 +883,7 @@ aside.sidebar {
   padding: 14px 12px 4px;
 
   span {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -922,7 +950,7 @@ aside.sidebar {
 }
 
 .nav-item__icon {
-  font-size: 13px;
+  font-size: 14px;
   opacity: 0.6;
   width: 14px;
   text-align: center;
@@ -935,7 +963,7 @@ aside.sidebar {
 }
 
 .nav-item__label {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -944,7 +972,7 @@ aside.sidebar {
 
 .nav-item__badge {
   font-family: var(--ff-font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   background: var(--ff-warning);
   color: #1a1400;
@@ -974,7 +1002,7 @@ aside.sidebar {
   background: rgba(79, 110, 247, 0.2);
   color: var(--ff-accent);
   font-family: var(--ff-font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -984,7 +1012,7 @@ aside.sidebar {
 }
 
 .sidebar__user-name {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ff-text-primary);
   line-height: 1.3;
@@ -994,7 +1022,7 @@ aside.sidebar {
 }
 
 .sidebar__user-role {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--ff-text-muted);
   text-transform: capitalize;
@@ -1029,7 +1057,7 @@ aside.sidebar {
 }
 
 .db-kpi__label {
-  font-size: 10px;
+  font-size: 11px;
   font-family: "Inter", sans-serif;
   font-weight: 600;
   text-transform: uppercase;
@@ -1048,14 +1076,14 @@ aside.sidebar {
 }
 
 .db-kpi__subtitle {
-  font-size: 11px;
+  font-size: 12px;
   font-family: "Inter", sans-serif;
   color: var(--ff-text-secondary);
   margin-top: 2px;
 }
 
 .db-kpi__trend {
-  font-size: 11px;
+  font-size: 12px;
   font-family: "Inter", sans-serif;
   font-weight: 500;
   margin-top: 4px;
@@ -1078,7 +1106,7 @@ aside.sidebar {
 .db-panel__header {
   padding: 14px 16px;
   border-bottom: 1px solid var(--ff-border);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: #f1f5f9;
   display: flex;
@@ -1087,7 +1115,7 @@ aside.sidebar {
 }
 
 .db-panel__link {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   color: var(--ff-accent);
 
@@ -1108,14 +1136,14 @@ aside.sidebar {
 }
 
 .db-placeholder {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--ff-text-muted);
 }
 
 .db-table {
   .p-datatable-thead > tr > th {
     padding: 8px 12px !important;
-    font-size: 11px !important;
+    font-size: 12px !important;
     font-family: "Inter", sans-serif !important;
     color: var(--ff-text-muted) !important;
     text-transform: uppercase;
@@ -1127,7 +1155,7 @@ aside.sidebar {
 
   .p-datatable-tbody > tr > td {
     padding: 10px 12px !important;
-    font-size: 13px !important;
+    font-size: 14px !important;
     font-family: "Inter", sans-serif !important;
     color: #f1f5f9 !important;
     border-bottom: 1px solid rgba(46, 51, 71, 0.3) !important;
@@ -1157,7 +1185,7 @@ aside.sidebar {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 12px;
   font-family: "Inter", sans-serif;
   font-weight: 500;
   letter-spacing: 0.06em;
@@ -1248,21 +1276,21 @@ aside.sidebar {
 }
 
 .db-pending-seller {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #f1f5f9;
   flex: 1;
 }
 
 .db-pending-meta {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ff-text-secondary);
   font-family: "DM Mono", monospace;
   white-space: nowrap;
 }
 
 .db-pending-time {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--ff-text-muted);
 }
 
@@ -1276,7 +1304,7 @@ aside.sidebar {
   display: grid;
   grid-template-columns: auto 1fr auto auto auto;
   gap: 8px;
-  font-size: 11px;
+  font-size: 12px;
   padding: 6px;
   background: rgba(255, 255, 255, 0.01);
   border-radius: 3px;
@@ -1317,7 +1345,7 @@ aside.sidebar {
   border: none;
   border-radius: 4px;
   color: #ffffff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s;
@@ -1347,7 +1375,7 @@ aside.sidebar {
   background: var(--ff-accent);
   color: #ffffff;
   border-radius: 10px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -1386,7 +1414,7 @@ aside.sidebar {
   padding: 12px 16px;
   color: var(--ff-text-primary);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   font-family: "Inter", sans-serif;
   display: flex;
@@ -1430,7 +1458,7 @@ aside.sidebar {
     border-bottom: 1px solid var(--ff-border) !important;
     border-top: none !important;
     padding: 8px 12px !important;
-    font-size: 11px !important;
+    font-size: 12px !important;
     font-family: "Inter", sans-serif !important;
     font-weight: 600 !important;
     text-transform: uppercase !important;
@@ -1444,7 +1472,7 @@ aside.sidebar {
     border-bottom: 1px solid rgba(46, 51, 71, 0.25) !important;
     border-top: none !important;
     padding: 10px 12px !important;
-    font-size: 13px !important;
+    font-size: 14px !important;
     font-family: "Inter", sans-serif !important;
     vertical-align: middle;
   }
@@ -1521,7 +1549,7 @@ table.ff-table {
 
   th {
     padding: 8px 12px;
-    font-size: 11px;
+    font-size: 12px;
     font-family: "Inter", sans-serif;
     font-weight: 600;
     color: var(--ff-text-muted);
@@ -1534,7 +1562,7 @@ table.ff-table {
 
   td {
     padding: 10px 12px;
-    font-size: 13px;
+    font-size: 14px;
     font-family: "Inter", sans-serif;
     color: var(--ff-text-primary);
     border-bottom: 1px solid rgba(46, 51, 71, 0.25);
@@ -1641,7 +1669,7 @@ table.ff-table {
   background: var(--ff-panel);
 
   &__title {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--ff-text-primary);
     font-family: "Inter", sans-serif;
@@ -1673,7 +1701,7 @@ table.ff-table {
   justify-content: center;
   padding: 48px 24px;
   color: var(--ff-text-muted);
-  font-size: 13px;
+  font-size: 14px;
   font-family: "Inter", sans-serif;
   text-align: center;
   gap: 8px;
@@ -1689,7 +1717,7 @@ table.ff-table {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 12px;
   font-family: "Inter", sans-serif;
   font-weight: 600;
   text-transform: uppercase;
@@ -1738,7 +1766,7 @@ table.ff-table {
   align-items: center;
   padding: 2px 10px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1771,7 +1799,7 @@ table.ff-table {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--ff-accent);
   text-decoration: none;
@@ -1793,7 +1821,7 @@ table.ff-table {
   border: 1px solid var(--ff-border);
   background: transparent;
   color: var(--ff-text-secondary);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition:
@@ -1823,6 +1851,15 @@ table.ff-table {
       background: rgba(248, 113, 113, 0.08);
     }
   }
+
+  &--success {
+    border-color: rgba(52, 211, 153, 0.3);
+    color: var(--ff-success);
+
+    &:hover {
+      background: rgba(52, 211, 153, 0.08);
+    }
+  }
 }
 
 .units-filter-tab {
@@ -1833,7 +1870,7 @@ table.ff-table {
   border: 1px solid var(--ff-border);
   background: transparent;
   color: var(--ff-text-muted);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
@@ -1862,7 +1899,7 @@ table.ff-table {
   justify-content: flex-start;
 
   &__label {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.09em;
@@ -2017,7 +2054,7 @@ table.ff-table {
 
 .p-datepicker .p-datepicker-calendar th {
   color: var(--ff-text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -2084,7 +2121,7 @@ table.ff-table {
 // ─── user-detail field labels / values ───────────────────────────────────────
 .ud-label {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -2093,7 +2130,7 @@ table.ff-table {
 }
 
 .ud-value {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--ff-text-primary);
   margin: 0;
@@ -2127,7 +2164,7 @@ table.ff-table {
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--ff-text-muted);
   text-decoration: none;
@@ -2201,7 +2238,7 @@ table.ff-table {
 
 .db-panel__subtitle {
   color: var(--ff-text-secondary);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 400;
 }
 
@@ -2301,7 +2338,7 @@ table.ff-table {
   gap: 0.5rem;
   color: var(--ff-text-secondary);
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   user-select: none;
 }
 
@@ -2331,7 +2368,7 @@ table.ff-table {
   border-radius: 0.375rem;
   background: var(--ff-border);
   color: var(--ff-text-muted);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 700;
   padding: 0.125rem 0.375rem;
 }

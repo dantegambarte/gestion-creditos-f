@@ -134,7 +134,7 @@ describe('Admin Aprobaciones real', () => {
       cy.intercept('PATCH', /\/api\/credits\/[^/]+\/approve$/).as('approveCredit');
 
       cy.get('p-table tbody tr').first().within(() => {
-        cy.get('button').first().click();
+        cy.get('button').eq(1).click();
       });
 
       cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', { timeout: 10000 }).should('be.visible');
@@ -160,7 +160,7 @@ describe('Admin Aprobaciones real', () => {
       cy.intercept('PATCH', /\/api\/credits\/[^/]+\/reject$/).as('rejectCredit');
 
       cy.get('p-table tbody tr').first().within(() => {
-        cy.get('button').eq(1).click();
+        cy.get('button').eq(2).click();
       });
 
       cy.contains('.p-dialog .p-dialog-title', 'Rechazar Operación', { timeout: 10000 }).should('be.visible');
@@ -182,7 +182,7 @@ describe('Admin Aprobaciones real', () => {
       cy.intercept('PATCH', /\/api\/credits\/[^/]+\/approve$/).as('approveWithAdjust');
 
       cy.get('p-table tbody tr').first().within(() => {
-        cy.get('button').first().click();
+        cy.get('button').eq(1).click();
       });
 
       cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', { timeout: 10000 }).should('be.visible');

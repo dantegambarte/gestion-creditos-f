@@ -20,9 +20,13 @@
           [(ngModel)]="selectedStatus"
           (onChange)="applyFilters()"
           placeholder="Estado"
+          [filter]="statusOptions.length > 10"
+          filterBy="label"
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
+
+
         />
         @if (canFilterByCollector) {
           <p-dropdown

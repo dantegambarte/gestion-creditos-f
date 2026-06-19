@@ -72,11 +72,11 @@
   @if (mainTab === "payments") {
     <div class="flex-1 overflow-y-auto p-4">
       @if (loadingPayments) {
-        <div class="text-center text-sm text-gray-400 py-10">
+        <div class="py-10 text-center text-sm text-[var(--ff-text-secondary)]">
           Cargando cobros...
         </div>
       } @else if (creditPayments.length === 0) {
-        <p class="text-center text-sm text-gray-400 py-10">
+        <p class="py-10 text-center text-sm text-[var(--ff-text-secondary)]">
           Sin cobros registrados para este crédito.
         </p>
       } @else {
@@ -119,8 +119,10 @@
                   <span class="ff-badge ff-badge--pagado">Normal</span>
                 }
               </td>
-              <td class="text-sm text-gray-600">{{ p.approverName ?? "—" }}</td>
-              <td class="text-sm ff-mono text-gray-500">
+              <td class="text-sm text-[var(--ff-text-secondary)]">
+                {{ p.approverName ?? "—" }}
+              </td>
+              <td class="ff-mono text-sm text-[var(--ff-text-muted)]">
                 {{ p.approvedAt | date: "dd/MM/yyyy" }}
               </td>
             </tr>

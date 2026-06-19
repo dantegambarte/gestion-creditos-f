@@ -1,0 +1,44 @@
+:host ::ng-deep .dq-action-btn.p-button {
+  height: 36px;
+  min-width: 90px;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+  border-width: 1px;
+  padding: 0 12px;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+:host ::ng-deep .dq-action-btn.p-button .p-button-icon {
+  margin: 0;
+  font-size: 13px;
+}
+
+:host ::ng-deep .dq-action-btn.p-button .p-button-label {
+  flex: 0 0 auto;
+}
+
+:host ::ng-deep .dq-action-btn--apply.p-button,
+:host ::ng-deep .dq-action-btn--condone.p-button {
+  width: 132px;
+}
+
+:host ::ng-deep .dq-action-btn--notify.p-button {
+  background: rgba(82, 111, 255, 0.9);
+  border-color: rgba(130, 152, 255, 0.4);
+}
+
+:host ::ng-deep .dq-action-btn--apply.p-button {
+  background: rgba(245, 158, 11, 0.9);
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+:host ::ng-deep .dq-action-btn--condone.p-button {
+  background: rgba(220, 38, 38, 0.9);
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+:host ::ng-deep .dq-action-btn.p-button:not(:disabled):hover {
+  filter: brightness(1.07);
+}

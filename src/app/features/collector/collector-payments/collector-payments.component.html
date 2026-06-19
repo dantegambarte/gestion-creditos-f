@@ -1,8 +1,12 @@
 <div class="ff-page py-4">
   <div class="flex items-center justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">Mis Cobros</h1>
-      <p class="text-sm text-gray-500">Historial de pre-cargas registradas.</p>
+      <h1 class="text-2xl font-bold text-[var(--ff-text-primary)]">
+        Mis Cobros
+      </h1>
+      <p class="text-sm text-[var(--ff-text-secondary)]">
+        Historial de pre-cargas registradas.
+      </p>
     </div>
     <p-button
       icon="pi pi-refresh"
@@ -26,14 +30,16 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Todos los estados"
+          [filter]="STATUS_OPTIONS.length > 10"
+          filterBy="label"
           [showClear]="!!filterStatus"
-          styleClass="h-10 w-52"
+          styleClass="w-56 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
           appendTo="body"
         />
       </div>
 
       @if (filteredPayments.length === 0) {
-        <p class="text-sm text-gray-400 text-center py-8">
+        <p class="py-8 text-center text-sm text-[var(--ff-text-muted)]">
           Sin cobros registrados.
         </p>
       } @else {
@@ -58,7 +64,7 @@
             <tr>
               <td class="font-medium">
                 {{ p.customerName }}
-                <span class="text-xs text-gray-400 ml-1">{{
+                <span class="ml-1 text-xs text-[var(--ff-text-muted)]">{{
                   p.customerDni
                 }}</span>
               </td>
@@ -91,7 +97,7 @@
                   />
                 }
               </td>
-              <td class="text-sm text-gray-500">
+              <td class="text-sm text-[var(--ff-text-secondary)]">
                 {{ p.createdAt | date: "dd/MM/yyyy HH:mm" }}
               </td>
             </tr>

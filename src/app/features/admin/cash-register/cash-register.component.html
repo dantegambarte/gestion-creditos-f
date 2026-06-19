@@ -31,7 +31,7 @@
           class="overflow-hidden rounded-3xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] shadow-[0_22px_70px_rgba(0,0,0,0.34)]"
         >
           <div
-            class="flex flex-col gap-5 border-b border-[var(--ff-border-subtle)] px-5 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-6"
+            class="flex flex-col gap-5 border-b border-[var(--ff-border-subtle)] px-5 py-6 lg:px-6"
           >
             <div class="flex items-start gap-4">
               <div
@@ -72,6 +72,13 @@
                   }
                 </div>
 
+                @if (isPostMidnightJornada()) {
+                  <span
+                    class="rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300"
+                    data-cy="jornada-post-midnight-badge"
+                  >Jornada: {{ formatDate(dashboard()!.date) }}</span>
+                }
+
                 <h1
                   class="mt-3 text-2xl font-bold tracking-tight text-[var(--ff-text-primary)] md:text-3xl"
                   data-cy="admin-cash-register-title"
@@ -81,13 +88,15 @@
               </div>
             </div>
 
-            <div class="flex flex-wrap gap-3">
+            <div
+              class="flex flex-wrap justify-end gap-3 border-t border-[var(--ff-border-subtle)] pt-4"
+            >
               <p-button
                 label="Historial de cajas"
                 icon="pi pi-wallet"
                 severity="secondary"
                 [outlined]="true"
-                styleClass="h-11 px-5 rounded-xl"
+                styleClass="cr-history-cta h-11 px-5 rounded-xl"
                 (onClick)="goToCashSessionsReport()"
               />
               <p-button
@@ -95,11 +104,16 @@
                 icon="pi pi-refresh"
                 severity="secondary"
                 [outlined]="true"
-                styleClass="h-11 px-5 rounded-xl"
+                styleClass="cr-refresh-cta h-11 px-5 rounded-xl"
                 [loading]="
                   loadingJornada() || loadingDashboard() || loadingMovements()
                 "
-                (onClick)="loadJornadaState(); loadDashboard(); loadMovements()"
+                (onClick)="
+                  loadJornadaState();
+                  loadDashboard();
+                  loadMovements();
+                  loadGeneralCashBalance()
+                "
               />
             </div>
           </div>
@@ -115,42 +129,48 @@
                 <div
                   class="relative overflow-hidden rounded-2xl border px-5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition hover:-translate-y-0.5 hover:border-white/10"
                   [class]="
-                    card.tone === 'success'
-                      ? 'border-emerald-400/20 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.16),transparent_34%),var(--ff-panel)]'
-                      : card.tone === 'danger'
+                    card.tone === 'danger'
                         ? 'border-red-400/20 bg-[radial-gradient(circle_at_top_right,rgba(239,68,68,0.14),transparent_34%),var(--ff-panel)]'
-                        : 'border-[var(--ff-border)] bg-[radial-gradient(circle_at_top_right,rgba(95,122,246,0.12),transparent_34%),var(--ff-panel-raised)]'
+                        : card.kind === 'company'
+                          ? 'border-emerald-400/20 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.16),transparent_34%),var(--ff-panel)]'
+                          : card.kind === 'cash'
+                            ? 'border-amber-400/20 bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.16),transparent_34%),var(--ff-panel)]'
+                            : 'border-sky-400/20 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.16),transparent_34%),var(--ff-panel)]'
                   "
                 >
                   <div
                     class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-xl border"
                     [class]="
-                      card.tone === 'success'
-                        ? 'border-emerald-500/10 bg-emerald-500/10 text-emerald-500/70'
-                        : card.tone === 'danger'
+                      card.tone === 'danger'
                           ? 'border-red-500/10 bg-red-500/10 text-red-500/70'
-                          : 'border-blue-500/10 bg-blue-500/10 text-blue-400/70'
+                          : card.kind === 'company'
+                            ? 'border-emerald-500/10 bg-emerald-500/10 text-emerald-400/80'
+                            : card.kind === 'cash'
+                              ? 'border-amber-500/10 bg-amber-500/10 text-amber-300/80'
+                              : 'border-sky-500/10 bg-sky-500/10 text-sky-300/80'
                     "
                   >
                     <i
                       class="pi text-sm"
                       [class]="
-                        card.label === 'Saldo Fuerte'
-                          ? 'pi-wallet'
-                          : card.label === 'Ingresos'
-                            ? 'pi-arrow-down-left'
-                            : 'pi-arrow-up-right'
+                        card.kind === 'company'
+                          ? 'pi-building'
+                          : card.kind === 'cash'
+                            ? 'pi-money-bill'
+                            : 'pi-credit-card'
                       "
                     ></i>
                   </div>
                   <p
                     class="pr-12 text-[10px] font-semibold uppercase tracking-[0.18em]"
                     [class]="
-                      card.tone === 'success'
-                        ? 'text-emerald-300'
-                        : card.tone === 'danger'
+                      card.tone === 'danger'
                           ? 'text-red-300'
-                          : 'text-[var(--ff-text-secondary)]'
+                          : card.kind === 'company'
+                            ? 'text-emerald-300'
+                            : card.kind === 'cash'
+                              ? 'text-amber-200'
+                              : 'text-sky-200'
                     "
                   >
                     {{ card.label }}
@@ -158,11 +178,13 @@
                   <p
                     class="mt-3 pr-12 font-mono text-3xl font-bold tracking-tight md:text-4xl"
                     [class]="
-                      card.tone === 'success'
-                        ? 'text-emerald-300'
-                        : card.tone === 'danger'
+                      card.tone === 'danger'
                           ? 'text-red-300'
-                          : 'text-[var(--ff-text-primary)]'
+                          : card.kind === 'company'
+                            ? 'text-emerald-300'
+                            : card.kind === 'cash'
+                              ? 'text-amber-200'
+                              : 'text-sky-200'
                     "
                   >
                     {{ formatCurrency(card.value) }}
@@ -269,11 +291,97 @@
           </div>
         </article>
 
+        <article
+          class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] shadow-[0_12px_36px_rgba(0,0,0,0.24)]"
+        >
+          <div
+            class="border-b border-[var(--ff-border-subtle)] px-5 py-4 md:px-6"
+          >
+            <p
+              class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ff-text-muted)]"
+            >
+              Desglose del Día
+            </p>
+            <h2 class="mt-1 text-lg font-semibold text-[var(--ff-text-primary)]">
+              Efectivo vs. Transferencia
+            </h2>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-[var(--ff-border-subtle)] text-sm">
+              <thead
+                class="bg-[var(--ff-bg)] text-[10px] uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
+              >
+                <tr>
+                  <th class="px-5 py-3 text-left font-semibold">Concepto</th>
+                  <th class="px-5 py-3 text-right font-semibold">Efectivo</th>
+                  <th class="px-5 py-3 text-right font-semibold">Transferencia</th>
+                </tr>
+              </thead>
+              <tbody
+                class="divide-y divide-[var(--ff-border-subtle)] text-[var(--ff-text-secondary)]"
+              >
+                <tr>
+                  <td class="px-5 py-3 font-semibold text-emerald-300">
+                    Ingresos del día
+                  </td>
+                  <td class="px-5 py-3 text-right font-mono text-emerald-300">
+                    {{ formatCurrency(dailyIncomeTotals().cash) }}
+                  </td>
+                  <td class="px-5 py-3 text-right font-mono text-emerald-300">
+                    {{ formatCurrency(dailyIncomeTotals().transfer) }}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-5 py-3 font-semibold text-red-300">
+                    Egresos del día
+                  </td>
+                  <td class="px-5 py-3 text-right font-mono text-red-300">
+                    -{{ formatCurrency(dailyOutflowTotals().cash) }}
+                  </td>
+                  <td class="px-5 py-3 text-right font-mono text-red-300">
+                    -{{ formatCurrency(dailyOutflowTotals().transfer) }}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-5 py-3 font-semibold text-blue-300">
+                    Conversiones (delta)
+                  </td>
+                  <td class="px-5 py-3 text-right font-mono text-blue-300">
+                    {{ formatCurrency(dailyConversions().cash) }}
+                  </td>
+                  <td class="px-5 py-3 text-right font-mono text-blue-300">
+                    {{ formatCurrency(dailyConversions().transfer) }}
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot class="bg-[var(--ff-panel-raised)]">
+                <tr>
+                  <td
+                    class="px-5 py-3 font-semibold text-[var(--ff-text-primary)]"
+                  >
+                    Esperado en caja del día
+                  </td>
+                  <td
+                    class="px-5 py-3 text-right font-mono text-lg font-bold text-[var(--ff-text-primary)]"
+                  >
+                    {{ formatCurrency(dailyExpected().cash) }}
+                  </td>
+                  <td
+                    class="px-5 py-3 text-right font-mono text-lg font-bold text-[var(--ff-text-primary)]"
+                  >
+                    {{ formatCurrency(dailyExpected().transfer) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </article>
+
         <div class="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           <article
-            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5 shadow-[0_12px_36px_rgba(0,0,0,0.24)]"
+            class="flex min-h-[280px] flex-col rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5 shadow-[0_12px_36px_rgba(0,0,0,0.24)]"
           >
-            <div class="mb-5 flex items-center justify-between gap-3">
+            <div class="mb-5 flex shrink-0 items-center justify-between gap-3">
               <div>
                 <p
                   class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ff-text-muted)]"
@@ -299,12 +407,12 @@
               }
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid flex-1 auto-rows-fr grid-cols-2 gap-3">
               @if (activeSession(); as session) {
                 <button
                   type="button"
                   data-cy="admin-cash-register-close-day-cta"
-                  class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-500 px-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-500/40 disabled:text-[var(--ff-text-secondary)]"
+                  class="inline-flex h-full min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-amber-400/40 bg-amber-500/15 px-3 text-center text-sm font-semibold text-amber-100 shadow-lg shadow-amber-500/10 transition hover:bg-amber-500/25 disabled:cursor-not-allowed disabled:border-amber-500/20 disabled:bg-amber-500/10 disabled:text-[var(--ff-text-secondary)]"
                   [disabled]="
                     operationsDisabled() ||
                     session.status !== 'OPEN' ||
@@ -327,7 +435,7 @@
               } @else {
                 <button
                   type="button"
-                  class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-500/40 disabled:text-[var(--ff-text-secondary)]"
+                  class="inline-flex h-full min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-3 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-emerald-500/40 disabled:text-[var(--ff-text-secondary)]"
                   (click)="openOpenSessionDialog()"
                 >
                   <i class="pi pi-plus text-xs"></i>
@@ -336,31 +444,26 @@
               }
               <button
                 type="button"
-                class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-secondary)] px-3 text-sm font-semibold text-[var(--ff-text-primary)] transition hover:bg-[var(--ff-surface-hover)] disabled:cursor-not-allowed disabled:opacity-45"
-                [disabled]="operationsDisabled()"
+                class="inline-flex h-full min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 text-center text-sm font-semibold text-emerald-100 transition hover:border-emerald-300/50 hover:bg-emerald-500/18 disabled:cursor-not-allowed disabled:opacity-45"
                 (click)="openManualIncomeDialog()"
               >
-                <i class="pi pi-plus-circle text-xs text-emerald-400"></i>
+                <i class="pi pi-plus-circle text-xs text-emerald-300"></i>
                 Ingreso Manual
               </button>
               <button
                 type="button"
-                class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-secondary)] px-3 text-sm font-semibold text-[var(--ff-text-primary)] transition hover:bg-[var(--ff-surface-hover)] disabled:cursor-not-allowed disabled:opacity-45"
-                [disabled]="operationsDisabled()"
+                class="inline-flex h-full min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-red-400/35 bg-red-500/10 px-3 text-center text-sm font-semibold text-red-100 transition hover:border-red-300/50 hover:bg-red-500/18 disabled:cursor-not-allowed disabled:opacity-45"
                 (click)="openExpenseDialog()"
               >
-                <i class="pi pi-minus-circle text-xs text-red-400"></i>
+                <i class="pi pi-minus-circle text-xs text-red-300"></i>
                 Registrar Gasto
               </button>
               <button
                 type="button"
-                class="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 text-sm font-semibold text-blue-300 transition hover:border-blue-400/50 hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-45"
-                [disabled]="
-                  operationsDisabled() || !activeSession() || !dashboard()
-                "
+                class="inline-flex h-full min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-sky-400/35 bg-sky-500/10 px-3 text-center text-sm font-semibold text-sky-100 transition hover:border-sky-300/50 hover:bg-sky-500/18 disabled:cursor-not-allowed disabled:opacity-45"
                 (click)="openConversionDialog()"
               >
-                <i class="pi pi-sync text-xs"></i>
+                <i class="pi pi-sync text-xs text-sky-300"></i>
                 Convertir Dinero
               </button>
             </div>
@@ -584,6 +687,8 @@
             (ngModelChange)="setMovementTypeFilter($event)"
             optionLabel="label"
             optionValue="value"
+            [filter]="movementTypeOptions.length > 10"
+            filterBy="label"
             styleClass="w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] text-[var(--ff-text-primary)]"
             panelStyleClass="bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)]"
             [style]="{ width: '100%' }"
@@ -784,6 +889,29 @@
       <div>
         <label
           class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
+          >Destino</label
+        >
+        <div class="flex gap-4">
+          @for (opt of conversionCriteriaOptions; track opt.value) {
+            <label
+              class="flex cursor-pointer items-center gap-2 text-sm text-[var(--ff-text-secondary)]"
+            >
+              <p-radioButton
+                name="manualIncomeCriteria"
+                [value]="opt.value"
+                [ngModel]="manualIncomeCriteria()"
+                (ngModelChange)="manualIncomeCriteria.set($event)"
+                [inputId]="'mi_dest_' + opt.value"
+                [disabled]="opt.value === 'DAILY' && !activeSession()"
+              />
+              <span>{{ opt.label }}</span>
+            </label>
+          }
+        </div>
+      </div>
+      <div>
+        <label
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
           for="manual-income-amount"
           >Monto</label
         >
@@ -822,6 +950,8 @@
           "
           optionLabel="label"
           optionValue="value"
+          [filter]="manualIncomeMethodOptions.length > 10"
+          filterBy="label"
           styleClass="w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] text-[var(--ff-text-primary)]"
           panelStyleClass="bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)]"
           [style]="{ width: '100%' }"
@@ -1024,6 +1154,7 @@
                   conversionValidationError.set('')
                 "
                 [inputId]="'conv_src_' + opt.value"
+                [disabled]="opt.value === 'DAILY' && !activeSession()"
               />
               <span>{{ opt.label }}</span>
             </label>
@@ -1048,6 +1179,8 @@
           "
           optionLabel="label"
           optionValue="value"
+          [filter]="conversionSourceOptions.length > 10"
+          filterBy="label"
           styleClass="w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] text-[var(--ff-text-primary)]"
           panelStyleClass="bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)]"
           [style]="{ width: '100%' }"
@@ -1181,6 +1314,9 @@
     [expense]="null"
     [categories]="expenseCategories()"
     [showStats]="false"
+    [activeSessionOverride]="activeSession()"
+    [sessionSnapshotOverride]="sessionSnapshot()"
+    [generalCashBalanceOverride]="generalCashBalance()"
     (closed)="closeExpenseDialog()"
     (saved)="onExpenseSaved()"
     (categoriesChanged)="loadExpenseCategories()"

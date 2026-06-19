@@ -20,8 +20,10 @@
           [(ngModel)]="selectedFilter"
           optionLabel="label"
           optionValue="value"
-          placeholder="Todos"
-          styleClass="h-11"
+          placeholder="Todos los riesgos"
+          [filter]="filterOptions.length > 10"
+          filterBy="label"
+          styleClass="h-11 w-48"
           appendTo="body"
           data-cy="dropdown-filtro-clientes"
         />

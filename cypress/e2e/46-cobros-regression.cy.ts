@@ -210,7 +210,7 @@ describe('CO-01a — Revertir cobro: tag "Revertido" aparece en lista tras confi
 describe('CO-01b — Cuota revertida muestra "Pendiente" en planilla de cobros (Admin)', () => {
   beforeEach(() => {
     // Registrar el detail DESPUÉS del genérico — en Cypress el último match gana
-    cy.intercept('GET', '**/api/collections', {
+    cy.intercept('GET', '**/api/collections?*', {
       statusCode: 200,
       body: MOCK_SHEETS_LIST,
     }).as('getSheets');

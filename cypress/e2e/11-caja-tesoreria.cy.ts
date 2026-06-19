@@ -26,6 +26,18 @@ function kpiValueText(label: string) {
     .invoke('text');
 }
 
+/**
+ * Devuelve el valor en efectivo (texto) de una fila del "Desglose del Día"
+ * (Ingresos del día / Egresos del día / Conversiones), columna Efectivo.
+ */
+function desgloseCashText(rowLabel: string) {
+  return cy
+    .contains('tbody tr', rowLabel)
+    .find('td')
+    .eq(1)
+    .invoke('text');
+}
+
 /** Fecha de hoy en formato YYYY-MM-DD usando hora local (evita el corrimiento UTC de toISOString). */
 function todayIso(): string {
   const d = new Date();
@@ -162,25 +174,29 @@ describe('Admin — Caja Fuerte Central V4 — operatoria diaria', () => {
     cy.intercept('GET', '**/api/cash-register/sessions/*/movements').as(
       'getMovements',
     );
+    cy.intercept('GET', '**/api/cash-sessions/*/snapshot').as('getSnapshot');
 
     cy.loginReal('ADMIN', '/admin/cash-register');
 
     cy.wait('@getActiveBusinessDay');
     cy.wait('@getActiveSession');
     cy.wait('@getDashboard');
+    cy.wait('@getSnapshot');
     cy.get('[data-cy="admin-cash-register-title"]').should('be.visible');
   });
 
   it('muestra la pantalla de Caja Fuerte sin estado de error', () => {
     cy.get('app-error-state').should('not.exist');
     cy.get('[data-cy="admin-cash-register-kpis"]').should('be.visible');
-    cy.get('[data-cy="admin-cash-register-history-title"]').should(
-      'be.visible',
-    );
+    cy.get('[data-cy="admin-cash-register-history-title"]')
+      .scrollIntoView()
+      .should('be.visible');
   });
 
   it('CASO 1 — Apertura de Caja: la jornada queda OPEN (sembrada por API)', () => {
-    cy.contains('span', 'OPEN', { timeout: 15000 }).should('be.visible');
+    cy.contains('span', 'OPEN', { timeout: 15000 })
+      .scrollIntoView()
+      .should('be.visible');
   });
 
   it('TEST 1 — Lectura Unificada: la Caja Fuerte muestra el gasto (EGRESO) y la venta (INGRESO) sembrados por API', () => {
@@ -200,7 +216,7 @@ describe('Admin — Caja Fuerte Central V4 — operatoria diaria', () => {
       'postManualIncome',
     );
 
-    kpiValueText('Ingresos').then((before) => {
+    desgloseCashText('Ingresos del día').then((before) => {
       const ingresosAntes = parseAmount(before);
 
       cy.contains('button', 'Ingreso Manual').click();
@@ -218,8 +234,9 @@ describe('Admin — Caja Fuerte Central V4 — operatoria diaria', () => {
       cy.wait('@getMovements');
       cy.wait('@getDashboard');
 
-      cy.contains('[data-cy="admin-cash-register-kpis"] > div', 'Ingresos')
-        .find('p.font-mono')
+      cy.contains('tbody tr', 'Ingresos del día')
+        .find('td')
+        .eq(1)
         .should(($el) => {
           expect(parseAmount($el.text())).to.be.greaterThan(ingresosAntes);
         });
@@ -238,7 +255,7 @@ describe('Admin — Caja Fuerte Central V4 — operatoria diaria', () => {
       'postManualIncomeMixed',
     );
 
-    kpiValueText('Ingresos').then((before) => {
+    desgloseCashText('Ingresos del día').then((before) => {
       const ingresosAntes = parseAmount(before);
 
       cy.contains('button', 'Ingreso Manual').click();
@@ -275,8 +292,9 @@ describe('Admin — Caja Fuerte Central V4 — operatoria diaria', () => {
       cy.wait('@getMovements');
       cy.wait('@getDashboard');
 
-      cy.contains('[data-cy="admin-cash-register-kpis"] > div', 'Ingresos')
-        .find('p.font-mono')
+      cy.contains('tbody tr', 'Ingresos del día')
+        .find('td')
+        .eq(1)
         .should(($el) => {
           expect(parseAmount($el.text())).to.be.greaterThan(ingresosAntes);
         });
@@ -295,9 +313,15 @@ describe('Admin — Caja Fuerte Central V4 — operatoria diaria', () => {
       'postConversion',
     );
 
+    // Se seedea con opening_amount + gasto + ingreso manual: el saldo
+    // estimado siempre es > 0 una vez que el snapshot terminó de propagarse
+    // a la UI (poll con .should() en vez de leer una sola vez).
     cy.contains('span', 'Saldo Estimado')
       .parent()
       .find('span.font-mono')
+      .should(($el) => {
+        expect(parseAmount($el.text())).to.be.greaterThan(0);
+      })
       .invoke('text')
       .then((before) => {
         const saldoAntes = parseAmount(before);
@@ -374,7 +398,7 @@ describe('Admin — Caja Fuerte Central V4 — operatoria diaria', () => {
   it('TEST 5 — Registrar Gasto (UI): registra un gasto y sube el KPI Gastos con badge EGRESO', () => {
     cy.intercept('POST', '**/api/expenses').as('postExpense');
 
-    kpiValueText('Gastos').then((before) => {
+    desgloseCashText('Egresos del día').then((before) => {
       const gastosAntes = parseAmount(before);
 
       cy.contains('button', 'Registrar Gasto').click();
@@ -413,8 +437,9 @@ describe('Admin — Caja Fuerte Central V4 — operatoria diaria', () => {
       cy.wait('@getMovements');
       cy.wait('@getDashboard');
 
-      cy.contains('[data-cy="admin-cash-register-kpis"] > div', 'Gastos')
-        .find('p.font-mono')
+      cy.contains('tbody tr', 'Egresos del día')
+        .find('td')
+        .eq(1)
         .should(($el) => {
           expect(parseAmount($el.text())).to.be.greaterThan(gastosAntes);
         });
@@ -458,7 +483,10 @@ describe('Admin — Caja Fuerte Central V4 — apertura de jornada (caja cerrada
 
     cy.get('body').then(($body) => {
       if ($body.find('button:contains("Abrir Caja")').length > 0) {
-        cy.contains('button', 'Abrir Caja').should('be.visible').click();
+        cy.contains('button', 'Abrir Caja')
+          .scrollIntoView()
+          .should('be.visible')
+          .click();
 
         cy.contains('.p-dialog:visible', 'Abrir caja operativa').should(
           'be.visible',
@@ -477,5 +505,156 @@ describe('Admin — Caja Fuerte Central V4 — apertura de jornada (caja cerrada
 
     cy.contains('span', 'OPEN', { timeout: 15000 }).should('be.visible');
     cy.contains('Pendiente de Arqueo', { timeout: 10000 }).should('exist');
+  });
+
+  it('los botones de Ingreso Manual, Registrar Gasto y Convertir Dinero quedan habilitados con la caja cerrada', () => {
+    cy.contains('button', 'Ingreso Manual')
+      .scrollIntoView()
+      .should('be.visible')
+      .and('be.enabled');
+    cy.contains('button', 'Registrar Gasto')
+      .scrollIntoView()
+      .should('be.visible')
+      .and('be.enabled');
+    cy.contains('button', 'Convertir Dinero')
+      .scrollIntoView()
+      .should('be.visible')
+      .and('be.enabled');
+  });
+});
+
+describe('Admin — Caja Fuerte Central V4 — operaciones a Caja General con jornada cerrada', () => {
+  beforeEach(() => {
+    cy.viewport(1280, 720);
+
+    // ── Automated Teardown (sin abrir caja ni sembrar datos) ──────────────
+    adminApiToken().then((token) => resetJornadaHoy(token));
+
+    // ── Setup UI ────────────────────────────────────────────────────────
+    cy.intercept('GET', '**/api/business-days/active').as(
+      'getActiveBusinessDay',
+    );
+    cy.intercept('GET', '**/api/cash-sessions/active').as('getActiveSession');
+    cy.intercept('GET', '**/api/cash-register/dashboard*').as('getDashboard');
+    cy.intercept('GET', '**/api/cash-accounts').as('getCashAccounts');
+
+    cy.loginReal('ADMIN', '/admin/cash-register');
+
+    cy.wait('@getActiveBusinessDay');
+    cy.wait('@getActiveSession');
+    cy.wait('@getDashboard');
+    cy.get('[data-cy="admin-cash-register-title"]').should('be.visible');
+  });
+
+  it('Ingreso Manual a Caja General (UI): registra un ingreso sin caja abierta y crece el Saldo Total Empresa', () => {
+    cy.intercept('POST', '**/api/cash-accounts/*/movements').as(
+      'postManualIncomeCompany',
+    );
+
+    kpiValueText('Saldo Total Empresa').then((before) => {
+      const saldoAntes = parseAmount(before);
+
+      cy.contains('button', 'Ingreso Manual').click();
+      cy.contains('.p-dialog:visible h2', 'Ingreso Manual').should(
+        'be.visible',
+      );
+
+      // Sin caja activa: "Caja del día" no es una opción válida, queda deshabilitada.
+      cy.get('.p-dialog:visible #mi_dest_DAILY').should('be.disabled');
+      cy.get('.p-dialog:visible #mi_dest_COMPANY').should('not.be.disabled');
+
+      cy.get('.p-dialog:visible #manual-income-amount').clear().type('1200');
+      cy.get('.p-dialog:visible #manual-income-description').type(
+        'Aporte de capital E2E',
+      );
+      cy.contains('.p-dialog:visible button', 'Registrar ingreso').click();
+
+      cy.wait('@postManualIncomeCompany').then((interception) => {
+        expect(interception.response?.statusCode).to.be.oneOf([200, 201]);
+        expect(interception.request.body.movement_type).to.eq(
+          'MANUAL_INCOME',
+        );
+        expect(interception.request.body.amount).to.eq(1200);
+      });
+
+      cy.get('.p-dialog-mask', { timeout: 10000 }).should('not.exist');
+
+      cy.contains('[data-cy="admin-cash-register-kpis"] > div', 'Saldo Total Empresa')
+        .find('p.font-mono')
+        .should(($el) => {
+          expect(parseAmount($el.text())).to.be.greaterThan(saldoAntes);
+        });
+    });
+  });
+
+  it('Registrar Gasto a Caja General (UI): registra un gasto sin caja abierta y baja el Saldo Total Empresa', () => {
+    cy.intercept('POST', '**/api/expenses').as('postExpenseCompany');
+
+    kpiValueText('Saldo Total Empresa').then((before) => {
+      const saldoAntes = parseAmount(before);
+
+      cy.contains('button', 'Registrar Gasto').click();
+      cy.contains('.p-dialog:visible h2', 'Registrar gasto').should(
+        'be.visible',
+      );
+
+      // Sin caja activa: "Caja del día" no es una opción válida, queda deshabilitada.
+      cy.get('.p-dialog:visible #src_DAILY').should('be.disabled');
+      cy.get('.p-dialog:visible #src_COMPANY').should('not.be.disabled');
+
+      cy.get('.p-dialog:visible input[placeholder="0"]').clear().type('300');
+      cy.get(
+        '.p-dialog:visible input[placeholder="Descripción del gasto..."]',
+      ).type('Gasto E2E a Caja General');
+
+      cy.contains('.p-dialog:visible label', 'Categoría')
+        .parent()
+        .find('.p-dropdown')
+        .click();
+      cy.get('.p-dropdown-panel .p-dropdown-item')
+        .not(':contains("Sin categoría")')
+        .first()
+        .click();
+
+      cy.contains('.p-dialog:visible button', 'Registrar gasto').click();
+
+      cy.wait('@postExpenseCompany').then((interception) => {
+        expect(interception.response?.statusCode).to.eq(201);
+        expect(interception.request.body.source).to.eq('COMPANY');
+      });
+
+      cy.get('.p-dialog-mask', { timeout: 10000 }).should('not.exist');
+
+      cy.contains('[data-cy="admin-cash-register-kpis"] > div', 'Saldo Total Empresa')
+        .find('p.font-mono')
+        .should(($el) => {
+          expect(parseAmount($el.text())).to.be.lessThan(saldoAntes);
+        });
+    });
+  });
+
+  it('Convertir Dinero a Caja General (UI): ejecuta una conversión sin caja abierta', () => {
+    cy.intercept('POST', '**/api/cash-register/conversions').as(
+      'postConversionCompany',
+    );
+
+    cy.contains('button', 'Convertir Dinero').click();
+    cy.contains('.p-dialog:visible h2', 'Convertir Dinero').should(
+      'be.visible',
+    );
+
+    // Sin caja activa: "Caja del día" no es una opción válida, queda deshabilitada.
+    cy.get('.p-dialog:visible #conv_src_DAILY').should('be.disabled');
+    cy.get('.p-dialog:visible #conv_src_COMPANY').should('not.be.disabled');
+
+    cy.get('.p-dialog:visible #conversion-amount').clear().type('100');
+    cy.contains('.p-dialog:visible button', 'Convertir').click();
+
+    cy.wait('@postConversionCompany').then((interception) => {
+      expect(interception.response?.statusCode).to.eq(201);
+      expect(interception.request.body.criteria).to.eq('COMPANY');
+    });
+
+    cy.get('.p-dialog-mask', { timeout: 10000 }).should('not.exist');
   });
 });

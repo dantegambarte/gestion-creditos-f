@@ -6,11 +6,12 @@
         class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 ff-muted-icon text-sm z-10"
       ></i>
       <input
+        pInputText
         type="text"
         placeholder="Buscar por nombre, email o DNI..."
         [value]="searchQuery()"
         (input)="onSearch($any($event.target).value)"
-        class="pl-9 pr-4 h-11 text-sm rounded-xl outline-none w-64"
+        class="w-80 h-9 rounded-md pl-9 pr-3 text-sm"
       />
     </div>
 
@@ -18,9 +19,14 @@
       [options]="roleOptions"
       optionLabel="label"
       optionValue="value"
+      [filter]="roleOptions.length > 10"
+      filterBy="label"
+
+
       [ngModel]="selectedRole()"
       (ngModelChange)="onRoleChange($event)"
-      styleClass="h-10 text-sm rounded-xl"
+      styleClass="w-48 h-9 rounded-md text-sm [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
+      appendTo="body"
     />
 
     <div class="ml-auto">

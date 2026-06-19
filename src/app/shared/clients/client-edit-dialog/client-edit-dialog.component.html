@@ -52,6 +52,10 @@
         [options]="collectorOptions"
         optionLabel="label"
         optionValue="value"
+        [filter]="collectorOptions.length > 10"
+        filterBy="label"
+
+
         [placeholder]="
           collectorsLoading ? 'Cargando cobradores…' : 'Seleccionar cobrador'
         "

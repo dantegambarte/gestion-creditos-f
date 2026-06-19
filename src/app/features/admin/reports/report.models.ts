@@ -335,6 +335,66 @@ export interface CashMovementReportRaw {
   rows: CashMovementReportRowRaw[];
 }
 
+export type GeneralCashMovementType =
+  | 'DROP_IN'
+  | 'SUPPLIER_PAYMENT'
+  | 'SALARY_PAYMENT'
+  | 'EXPENSE'
+  | 'ADJUSTMENT'
+  | 'MANUAL_INCOME';
+
+export interface GeneralCashMovementReportSummary {
+  totalMovements: number;
+  totalIn: number;
+  totalOut: number;
+}
+
+export interface GeneralCashMovementReportRow {
+  id: string;
+  movementType: GeneralCashMovementType;
+  direction: 'IN' | 'OUT';
+  amount: number;
+  amountCash: number;
+  amountTransfer: number;
+  description: string | null;
+  beneficiaryName: string | null;
+  referenceType: string | null;
+  referenceId: string | null;
+  createdAt: string;
+  performedByName: string | null;
+}
+
+export interface GeneralCashMovementReport {
+  summary: GeneralCashMovementReportSummary;
+  rows: GeneralCashMovementReportRow[];
+}
+
+export interface GeneralCashMovementReportSummaryRaw {
+  total_movements: number;
+  total_in: number;
+  total_out: number;
+}
+
+export interface GeneralCashMovementReportRowRaw {
+  id: string;
+  movement_type: GeneralCashMovementType;
+  direction: 'IN' | 'OUT';
+  amount: number;
+  amount_cash: number;
+  amount_transfer: number;
+  description: string | null;
+  beneficiary_name: string | null;
+  reference_type: string | null;
+  reference_id: string | null;
+  created_at: string;
+  performed_by_name: string | null;
+}
+
+export interface GeneralCashMovementReportRaw {
+  summary: GeneralCashMovementReportSummaryRaw;
+  rows: GeneralCashMovementReportRowRaw[];
+}
+
 export interface CollectionSummaryRaw {
   grand_total: number;
   total_cash: number;

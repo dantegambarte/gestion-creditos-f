@@ -240,7 +240,7 @@ export class CashSessionsReportComponent implements OnInit, OnDestroy {
       case 'warning':
         return 'bg-amber-500/15 text-amber-300';
       default:
-        return 'bg-gray-500/15 text-gray-300';
+        return 'bg-[var(--ff-secondary)] text-[var(--ff-text-secondary)]';
     }
   }
 

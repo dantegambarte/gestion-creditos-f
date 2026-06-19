@@ -12,7 +12,7 @@
   >
     <!-- DNI visible but disabled with tooltip -->
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-500">
+      <label class="text-sm font-medium text-[var(--ff-text-muted)]">
         DNI
         <span
           class="ml-1 pi pi-info-circle text-xs cursor-help"
@@ -29,7 +29,9 @@
     </div>
 
     <div class="flex flex-col gap-1">
-      <label for="editFullName" class="text-sm font-medium">Nombre completo *</label>
+      <label for="editFullName" class="text-sm font-medium"
+        >Nombre completo *</label
+      >
       <input
         data-cy="seller-client-detail-edit-fullname-input"
         id="editFullName"
@@ -38,8 +40,8 @@
         [class.ng-invalid]="isInvalid('fullName')"
         [class.ng-dirty]="isInvalid('fullName')"
       />
-      @if (isInvalid('fullName')) {
-        <small class="text-red-500">{{ getError('fullName') }}</small>
+      @if (isInvalid("fullName")) {
+        <small class="text-red-500">{{ getError("fullName") }}</small>
       }
     </div>
 
@@ -52,8 +54,8 @@
         [class.ng-invalid]="isInvalid('address')"
         [class.ng-dirty]="isInvalid('address')"
       />
-      @if (isInvalid('address')) {
-        <small class="text-red-500">{{ getError('address') }}</small>
+      @if (isInvalid("address")) {
+        <small class="text-red-500">{{ getError("address") }}</small>
       }
     </div>
 
@@ -72,19 +74,25 @@
         [class.ng-invalid]="isInvalid('email')"
         [class.ng-dirty]="isInvalid('email')"
       />
-      @if (isInvalid('email')) {
-        <small class="text-red-500">{{ getError('email') }}</small>
+      @if (isInvalid("email")) {
+        <small class="text-red-500">{{ getError("email") }}</small>
       }
     </div>
 
     <div class="flex flex-col gap-1">
-      <label for="editCollector" class="text-sm font-medium">Cobrador asignado</label>
+      <label for="editCollector" class="text-sm font-medium"
+        >Cobrador asignado</label
+      >
       <p-dropdown
         inputId="editCollector"
         formControlName="assignedCollectorId"
         [options]="collectorOptions"
         optionLabel="label"
         optionValue="value"
+        [filter]="collectorOptions.length > 10"
+        filterBy="label"
+
+
         [placeholder]="
           collectorsLoading
             ? 'Cargando cobradores…'
@@ -96,8 +104,10 @@
         [class.ng-invalid]="isInvalid('assignedCollectorId')"
         [class.ng-dirty]="isInvalid('assignedCollectorId')"
       />
-      @if (isInvalid('assignedCollectorId')) {
-        <small class="text-red-500">{{ getError('assignedCollectorId') }}</small>
+      @if (isInvalid("assignedCollectorId")) {
+        <small class="text-red-500">{{
+          getError("assignedCollectorId")
+        }}</small>
       }
     </div>
 

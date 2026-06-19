@@ -6,7 +6,7 @@ function openFirstProductDetailIfExists(): void {
   cy.get('body').then(($body) => {
     const rows = $body.find('p-table tbody tr');
     if (rows.length > 0) {
-      cy.wrap(rows.first()).click();
+      cy.wrap(rows.first()).contains('a', 'Ver').click();
       cy.location('pathname', { timeout: 15000 }).should('match', /^\/seller\/products\//);
     }
   });

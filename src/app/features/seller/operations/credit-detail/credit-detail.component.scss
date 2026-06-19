@@ -4,3 +4,76 @@
   overflow-wrap: normal;
   max-width: none;
 }
+
+.credit-action-bar {
+  align-self: stretch;
+  padding-top: 0.25rem;
+}
+
+@media (min-width: 1536px) {
+  .credit-action-bar {
+    align-self: auto;
+    padding-top: 0;
+  }
+}
+
+:host ::ng-deep .p-button.ff-credit-action-btn.p-button-outlined {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16) !important;
+}
+
+:host ::ng-deep .credit-action-bar .p-button {
+  min-width: 9.75rem;
+  justify-content: center;
+}
+
+:host ::ng-deep .credit-action-bar .p-button.ff-credit-action-btn--settlement {
+  min-width: 17.75rem;
+}
+
+@media (max-width: 900px) {
+  :host ::ng-deep .credit-action-bar .p-button,
+  :host ::ng-deep .credit-action-bar .p-button.ff-credit-action-btn--settlement {
+    min-width: 100%;
+  }
+}
+
+:host ::ng-deep .p-button.ff-credit-action-btn--settlement.p-button-outlined {
+  background: rgba(79, 110, 247, 0.16) !important;
+  border-color: rgba(129, 140, 248, 0.56) !important;
+  color: #c7d2fe !important;
+}
+
+:host ::ng-deep .p-button.ff-credit-action-btn--settlement.p-button-outlined:hover:not(:disabled) {
+  background: rgba(79, 110, 247, 0.26) !important;
+  border-color: rgba(165, 180, 252, 0.82) !important;
+  color: #eef2ff !important;
+}
+
+:host ::ng-deep .p-button.ff-credit-action-btn--refinance.p-button-outlined {
+  background: rgba(251, 176, 64, 0.15) !important;
+  border-color: rgba(251, 176, 64, 0.52) !important;
+  color: #fcd48a !important;
+}
+
+:host ::ng-deep .p-button.ff-credit-action-btn--refinance.p-button-outlined:hover:not(:disabled) {
+  background: rgba(251, 176, 64, 0.25) !important;
+  border-color: rgba(251, 176, 64, 0.78) !important;
+  color: #ffefd0 !important;
+}
+
+:host ::ng-deep .p-button.ff-credit-action-btn--plan.p-button-outlined {
+  background: rgba(124, 58, 237, 0.15) !important;
+  border-color: rgba(167, 139, 250, 0.54) !important;
+  color: #ddd6fe !important;
+}
+
+:host ::ng-deep .p-button.ff-credit-action-btn--plan.p-button-outlined:hover:not(:disabled) {
+  background: rgba(124, 58, 237, 0.25) !important;
+  border-color: rgba(196, 181, 253, 0.8) !important;
+  color: #f5f3ff !important;
+}
+
+:host ::ng-deep .p-button.ff-credit-action-btn.p-button-outlined .p-button-label,
+:host ::ng-deep .p-button.ff-credit-action-btn.p-button-outlined .p-button-icon {
+  color: inherit !important;
+}

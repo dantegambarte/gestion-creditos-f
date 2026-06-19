@@ -94,7 +94,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
   collectorsLoading = false;
 
   filterOptions = [
-    { label: 'Todos', value: null },
+    { label: 'Todos los riesgos', value: null },
     { label: 'Al día', value: 'Al dia' },
     { label: 'Mora leve', value: 'Mora leve' },
     { label: 'Mora alta', value: 'Mora alta' },

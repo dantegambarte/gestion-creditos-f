@@ -100,6 +100,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Seleccionar..."
+          [filter]="roleOptions.length > 10"
+          filterBy="label"
           styleClass="w-full h-11 rounded-xl"
           appendTo="body"
         />
@@ -166,6 +168,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Seleccionar..."
+          [filter]="roleOptions.length > 10"
+          filterBy="label"
           styleClass="w-full h-11 rounded-xl"
           appendTo="body"
         />

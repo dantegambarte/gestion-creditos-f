@@ -106,6 +106,46 @@ describe('Admin — Reportes — Movimientos de caja', () => {
       });
     });
   });
+
+  it('muestra el selector de Ámbito con las opciones Caja x Jornada y Caja General', () => {
+    cy.get('app-cash-movements-report').within(() => {
+      cy.contains('button', 'Caja x Jornada').should('be.visible');
+      cy.contains('button', 'Caja General').should('be.visible');
+    });
+  });
+
+  it('al cambiar a Caja General, oculta el dropdown de Jornada y cambia el botón de búsqueda', () => {
+    cy.get('app-cash-movements-report').within(() => {
+      cy.contains('button', 'Caja General').click();
+      cy.contains('button', 'Buscar movimientos').should('be.visible');
+      cy.get('p-dropdown').should('not.exist');
+    });
+  });
+
+  it('al buscar en Caja General, muestra el resumen o el estado vacío sin romper', () => {
+    cy.get('app-cash-movements-report')
+      .find('button')
+      .contains('Caja General')
+      .click();
+    cy.get('app-cash-movements-report')
+      .find('button')
+      .contains('Buscar movimientos')
+      .click();
+
+    cy.get('app-cash-movements-report')
+      .find('app-error-state')
+      .should('not.exist');
+
+    cy.get('app-cash-movements-report').should(($report) => {
+      const text = $report.text();
+      const hasSummary =
+        text.includes('Movimientos') && text.includes('Total ingresos');
+      const hasEmpty = text.includes(
+        'No hay movimientos de Caja General en el período seleccionado',
+      );
+      expect(hasSummary || hasEmpty).to.be.true;
+    });
+  });
 });
 
 describe('Admin — Morosidad', () => {

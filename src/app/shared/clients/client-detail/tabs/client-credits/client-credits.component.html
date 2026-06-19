@@ -17,6 +17,8 @@
       [(ngModel)]="selectedEstado"
       optionLabel="label"
       optionValue="value"
+      [filter]="estadoOptions.length > 10"
+      filterBy="label"
       styleClass="estado-select"
     />
     <button class="btn-cancelacion">
@@ -92,7 +94,8 @@
           <div class="stat-cell">
             <span class="cell-label">Cuotas</span>
             <span class="cell-value"
-              >{{ credit.currentInstallment }} / {{ credit.totalInstallments }}</span
+              >{{ credit.currentInstallment }} /
+              {{ credit.totalInstallments }}</span
             >
           </div>
           @if (credit.status === "OVERDUE" && credit.accruedLateFee) {
@@ -129,13 +132,17 @@
           <div class="progress-track">
             <div
               class="progress-fill"
-              [ngClass]="credit.status === 'OVERDUE' ? 'fill-danger' : 'fill-success'"
+              [ngClass]="
+                credit.status === 'OVERDUE' ? 'fill-danger' : 'fill-success'
+              "
               [style.width.%]="credit.progress"
             ></div>
           </div>
           <span
             class="progress-pct"
-            [ngClass]="credit.status === 'OVERDUE' ? 'pct-danger' : 'pct-success'"
+            [ngClass]="
+              credit.status === 'OVERDUE' ? 'pct-danger' : 'pct-success'
+            "
           >
             {{ credit.progress }}% completado
             @if (credit.status === "OVERDUE") {
@@ -148,7 +155,9 @@
 
     @if (filteredCredits.length === 0) {
       <div class="empty-state" data-cy="client-detail-credits-empty-state">
-        <i class="pi pi-inbox text-gray-300 text-4xl mb-2"></i>
+        <i
+          class="pi pi-inbox mb-2 text-4xl text-[var(--ff-text-secondary)]"
+        ></i>
         <p>No se encontraron créditos</p>
       </div>
     }
