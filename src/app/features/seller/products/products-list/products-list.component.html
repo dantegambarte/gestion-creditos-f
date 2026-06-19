@@ -39,21 +39,23 @@
           [options]="statusOptions"
           [(ngModel)]="selectedStatus"
           (onChange)="applyFilters()"
-          placeholder="Todas"
+          placeholder="Estado del producto"
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-          styleClass="h-11"
+          styleClass="h-11 min-w-40"
+          ariaLabel="Filtrar productos por estado"
         />
         <p-dropdown
           [options]="categoryOptions"
           [(ngModel)]="selectedCategoryId"
           (onChange)="applyFilters()"
-          placeholder="Todos"
+          placeholder="Categoría"
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-          styleClass="h-11"
+          styleClass="h-11 min-w-48"
+          ariaLabel="Filtrar productos por categoría"
         />
       </div>
     </div>
@@ -85,7 +87,16 @@
           </tr>
         </ng-template>
         <ng-template pTemplate="body" let-product>
-          <tr>
+          <tr
+            [style.background]="
+              product.status !== 'ACTIVE' ? 'rgba(239, 68, 68, 0.08)' : null
+            "
+            [style.box-shadow]="
+              product.status !== 'ACTIVE'
+                ? 'inset 3px 0 0 rgba(248, 113, 113, 0.75)'
+                : null
+            "
+          >
             <!-- PRODUCTO -->
             <td style="min-width: 200px">
               <span
