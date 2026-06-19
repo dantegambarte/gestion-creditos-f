@@ -21,6 +21,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Todos"
+          [filter]="filterOptions.length > 10"
+          filterBy="label"
           styleClass="h-11"
           appendTo="body"
           data-cy="dropdown-filtro-clientes"

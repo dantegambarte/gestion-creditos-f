@@ -90,6 +90,8 @@
           optionValue="value"
           styleClass="w-full"
           placeholder="Seleccionar categoría..."
+          [filter]="createCategoryOptions.length > 10"
+          filterBy="label"
           [showClear]="true"
           appendTo="body"
         />

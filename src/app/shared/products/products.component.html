@@ -177,6 +177,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Seleccionar..."
+          [filter]="categoryOptions.length > 10"
+          filterBy="label"
           [loading]="categoriesLoading"
           appendTo="body"
           styleClass="w-full h-14 rounded-xl flex items-center"
@@ -286,6 +288,10 @@
           formControlName="estado"
           optionLabel="label"
           optionValue="value"
+          [filter]="estadoOptions.length > 10"
+          filterBy="label"
+
+
           appendTo="body"
           styleClass="w-full h-14 rounded-xl flex items-center"
         >

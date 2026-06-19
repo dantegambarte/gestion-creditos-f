@@ -17,6 +17,8 @@
       [(ngModel)]="selectedEstado"
       optionLabel="label"
       optionValue="value"
+      [filter]="estadoOptions.length > 10"
+      filterBy="label"
       styleClass="estado-select"
     />
     <button class="btn-cancelacion">

@@ -38,6 +38,10 @@
         [options]="holidayTypeOptions"
         optionLabel="label"
         optionValue="value"
+        [filter]="holidayTypeOptions.length > 10"
+        filterBy="label"
+
+
         [(ngModel)]="form.type"
         (onChange)="onTypeChanged()"
         styleClass="w-full h-11 rounded-xl"

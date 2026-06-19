@@ -138,6 +138,8 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccioná un cobrador"
+            [filter]="collectorOptions.length > 10"
+            filterBy="label"
             [showClear]="true"
             styleClass="w-full h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
             appendTo="body"

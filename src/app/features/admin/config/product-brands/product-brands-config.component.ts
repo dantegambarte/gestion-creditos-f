@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -19,6 +20,7 @@ import { ProductBrandsService } from '../services/product-brands.service';
   selector: 'app-product-brands-config',
   standalone: true,
   imports: [
+    CommonModule,
     FormsModule,
     ButtonModule,
     ConfirmDialogModule,
@@ -60,6 +62,24 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  /** Cantidad de marcas activas para mostrar el resumen compacto. */
+  get activeCount(): number {
+    return this.rows.filter((brand) => brand.active).length;
+  }
+
+  /** Cantidad de marcas inactivas para mostrar el resumen compacto. */
+  get inactiveCount(): number {
+    return this.rows.filter((brand) => !brand.active).length;
+  }
+
+  /** Cantidad de marcas vinculadas a productos para mostrar el resumen compacto. */
+  get withProductsCount(): number {
+    return this.rows.filter(
+      (brand: ProductBrand & { productCount?: number }) =>
+        (brand.productCount ?? 0) > 0,
+    ).length;
+  }
+
   /** Carga todas las marcas desde el backend y actualiza la tabla. */
   load(): void {
     this.loading = true;
@@ -80,11 +100,18 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
       });
   }
 
-  /** Abre el diálogo de creación con el campo nombre vacío. */
+  /** Abre el panel de creación con el campo nombre vacío. */
   openCreate(): void {
     this.newName = '';
     this.dialogError = '';
     this.showDialog = true;
+  }
+
+  /** Oculta el panel de creación y descarta el nombre cargado. */
+  closeCreate(): void {
+    this.newName = '';
+    this.dialogError = '';
+    this.showDialog = false;
   }
 
   /** Envía el nuevo nombre al backend y recarga la lista al confirmar. */

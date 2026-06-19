@@ -179,6 +179,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Seleccioná una jornada"
+          [filter]="businessDayOptions.length > 10"
+          filterBy="label"
           styleClass="w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] text-[var(--ff-text-primary)]"
           panelStyleClass="bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)]"
           [style]="{ width: '100%' }"

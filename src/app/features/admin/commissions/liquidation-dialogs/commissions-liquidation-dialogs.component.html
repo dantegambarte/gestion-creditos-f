@@ -114,6 +114,8 @@
           (ngModelChange)="onPaymentMethodChange($event)"
           optionLabel="label"
           optionValue="value"
+          [filter]="paymentMethodOptions.length > 10"
+          filterBy="label"
           styleClass="w-full"
           appendTo="body"
         />

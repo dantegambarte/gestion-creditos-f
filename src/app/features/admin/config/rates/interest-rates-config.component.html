@@ -10,6 +10,8 @@
         optionLabel="label"
         optionValue="value"
         placeholder="Frecuencia"
+        [filter]="freqOptions.length > 10"
+        filterBy="label"
         styleClass="h-10 text-sm rounded-xl"
       />
       <p-dropdown
@@ -17,6 +19,8 @@
         [(ngModel)]="filterActive"
         optionLabel="label"
         optionValue="value"
+        [filter]="activeOptions.length > 10"
+        filterBy="label"
         styleClass="h-10 text-sm rounded-xl"
       />
     </div>
@@ -169,6 +173,8 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccionar..."
+            [filter]="freqOptions.length > 11"
+            filterBy="label"
             styleClass="w-full h-11 rounded-xl"
             appendTo="body"
           />

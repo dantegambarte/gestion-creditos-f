@@ -69,6 +69,7 @@
         <p-dropdown
           [options]="rateOptions"
           [(ngModel)]="saleRate"
+          [filter]="rateOptions.length > 10"
           styleClass="w-full h-11 rounded-xl"
           appendTo="body"
         />
@@ -78,6 +79,7 @@
         <p-dropdown
           [options]="rateOptions"
           [(ngModel)]="loanRate"
+          [filter]="rateOptions.length > 10"
           styleClass="w-full h-11 rounded-xl"
           appendTo="body"
         />
@@ -87,6 +89,7 @@
         <p-dropdown
           [options]="moraOptions"
           [(ngModel)]="moraRate"
+          [filter]="moraOptions.length > 10"
           styleClass="w-full h-11 rounded-xl"
           appendTo="body"
         />
@@ -96,6 +99,7 @@
         <p-dropdown
           [options]="commissionOptions"
           [(ngModel)]="sellerCommission"
+          [filter]="commissionOptions.length > 10"
           styleClass="w-full h-11 rounded-xl"
           appendTo="body"
         />

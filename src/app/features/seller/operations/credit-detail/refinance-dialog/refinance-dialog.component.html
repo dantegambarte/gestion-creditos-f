@@ -65,6 +65,8 @@
             [(ngModel)]="refinanceFrequency"
             optionLabel="label"
             optionValue="value"
+            [filter]="FREQUENCY_OPTIONS.length > 10"
+            filterBy="label"
             styleClass="w-full h-11"
             appendTo="body"
           />

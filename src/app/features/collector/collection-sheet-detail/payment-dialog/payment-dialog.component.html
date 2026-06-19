@@ -37,6 +37,8 @@
         (ngModelChange)="onPaymentMethodChange()"
         optionLabel="label"
         optionValue="value"
+        [filter]="PAYMENT_METHOD_OPTIONS.length > 10"
+        filterBy="label"
         styleClass="w-full h-11"
         appendTo="body"
       />

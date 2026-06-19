@@ -43,6 +43,8 @@
         [(ngModel)]="selectedCollectorId"
         optionLabel="label"
         optionValue="value"
+        [filter]="generateCollectorOptions.length > 10"
+        filterBy="label"
         styleClass="w-full"
         appendTo="body"
       />

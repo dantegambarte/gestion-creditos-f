@@ -93,6 +93,8 @@
               optionLabel="label"
               optionValue="value"
               placeholder="Seleccionar marca"
+              [filter]="brandOptions.length > 10"
+              filterBy="label"
               [showClear]="true"
               styleClass="w-full"
             />
@@ -105,6 +107,8 @@
               optionLabel="label"
               optionValue="value"
               placeholder="Seleccionar categoría"
+              [filter]="categoryOptions.length > 10"
+              filterBy="label"
               [showClear]="true"
               styleClass="w-full"
             />

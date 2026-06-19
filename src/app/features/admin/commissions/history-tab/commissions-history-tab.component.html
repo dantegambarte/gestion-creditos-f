@@ -63,6 +63,10 @@
           (ngModelChange)="onHistoryEmployeeFilterChange($event)"
           optionLabel="label"
           optionValue="value"
+          [filter]="historyEmployeeOptions.length > 10"
+          filterBy="label"
+
+
           appendTo="body"
           styleClass="w-64 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
         />
@@ -72,6 +76,10 @@
           (ngModelChange)="onHistoryMethodFilterChange($event)"
           optionLabel="label"
           optionValue="value"
+          [filter]="historyMethodOptions.length > 10"
+          filterBy="label"
+
+
           appendTo="body"
           styleClass="w-52 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
         />

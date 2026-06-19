@@ -110,6 +110,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Estado"
+          [filter]="estadoOptions.length > 10"
+          filterBy="label"
           styleClass="w-40 h-11"
           (onChange)="applyFilters()"
         />
@@ -119,6 +121,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Días en Mora"
+          [filter]="diasOptions.length > 10"
+          filterBy="label"
           styleClass="w-44 h-11"
           (onChange)="applyFilters()"
         />

@@ -173,7 +173,7 @@ body {
 }
 
 // ─── p-button help (violeta) ─────────────────────────────────────────────────
-.p-button.p-button-help {
+.p-button.p-button-help:not(.p-button-outlined) {
   background: #7c3aed !important;
   border-color: #7c3aed !important;
   color: #ffffff !important;
@@ -197,7 +197,7 @@ body {
 }
 
 // ─── p-button info ───────────────────────────────────────────────────────────
-.p-button.p-button-info {
+.p-button.p-button-info:not(.p-button-outlined) {
   background: #4f6ef7 !important;
   border-color: #4f6ef7 !important;
   color: #ffffff !important;
@@ -209,7 +209,7 @@ body {
 }
 
 // ─── p-button warning ────────────────────────────────────────────────────────
-.p-button.p-button-warning {
+.p-button.p-button-warning:not(.p-button-outlined) {
   background: #fbb040 !important;
   border-color: #fbb040 !important;
   color: #ffffff !important;
@@ -221,7 +221,7 @@ body {
 }
 
 // ─── p-button success ────────────────────────────────────────────────────────
-.p-button.p-button-success {
+.p-button.p-button-success:not(.p-button-outlined) {
   background: #16a34a !important;
   border-color: #16a34a !important;
   color: #ffffff !important;
@@ -255,20 +255,20 @@ body {
 
 // ─── p-button secondary outlined ─────────────────────────────────────────────
 .p-button.p-button-secondary.p-button-outlined {
-  background: transparent !important;
-  border-color: var(--ff-border-subtle) !important;
-  color: var(--ff-text-secondary) !important;
+  background: rgba(148, 163, 184, 0.045) !important;
+  border-color: rgba(148, 163, 184, 0.32) !important;
+  color: #cbd5e1 !important;
   border-radius: 0.75rem !important;
 
   &:hover:not(:disabled) {
-    background: var(--ff-surface-hover) !important;
-    border-color: var(--ff-border) !important;
+    background: rgba(148, 163, 184, 0.095) !important;
+    border-color: rgba(148, 163, 184, 0.52) !important;
     color: var(--ff-text-primary) !important;
   }
 
   &:active:not(:disabled) {
-    background: #2a2f45 !important;
-    border-color: #3a4260 !important;
+    background: rgba(148, 163, 184, 0.14) !important;
+    border-color: rgba(148, 163, 184, 0.64) !important;
     color: var(--ff-text-primary) !important;
   }
 
@@ -414,6 +414,28 @@ body {
   color: var(--ff-text-primary) !important;
   box-shadow: var(--ff-overlay-shadow) !important;
   overflow: hidden;
+}
+
+.p-dropdown-panel .p-dropdown-header {
+  background: var(--ff-panel-raised) !important;
+  border-bottom: 1px solid var(--ff-border-subtle) !important;
+  padding: 0.5rem !important;
+}
+
+.p-dropdown-panel .p-dropdown-filter-container {
+  width: 100%;
+}
+
+.p-dropdown-panel .p-dropdown-filter-container .p-dropdown-filter.p-inputtext {
+  height: 2.5rem !important;
+  padding: 0 2.5rem 0 0.875rem !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.25rem !important;
+}
+
+.p-dropdown-panel .p-dropdown-filter-container .p-dropdown-filter-icon {
+  right: 0.875rem !important;
+  color: var(--ff-text-secondary) !important;
 }
 
 .p-dropdown-panel .p-dropdown-items,
@@ -1821,6 +1843,15 @@ table.ff-table {
 
     &:hover {
       background: rgba(248, 113, 113, 0.08);
+    }
+  }
+
+  &--success {
+    border-color: rgba(52, 211, 153, 0.3);
+    color: var(--ff-success);
+
+    &:hover {
+      background: rgba(52, 211, 153, 0.08);
     }
   }
 }

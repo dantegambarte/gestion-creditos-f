@@ -9,6 +9,8 @@
       optionLabel="label"
       optionValue="value"
       placeholder="Todos los productos"
+      [filter]="productFilterOptions.length > 10"
+      filterBy="label"
       styleClass="h-10 text-sm rounded-xl"
     />
     <p-button
@@ -160,7 +162,7 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccionar producto..."
-            [filter]="true"
+            [filter]="activeProductOptions.length > 10"
             filterBy="label"
             styleClass="w-full h-11 rounded-xl"
             appendTo="body"
@@ -175,6 +177,8 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccionar..."
+            [filter]="freqOptions.length > 10"
+            filterBy="label"
             styleClass="w-full h-11 rounded-xl"
           />
         </div>

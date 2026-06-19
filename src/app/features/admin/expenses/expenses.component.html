@@ -68,6 +68,8 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Todas las categorías"
+            [filter]="filterCategoryOptions.length > 10"
+            filterBy="label"
             appendTo="body"
             styleClass="h-11 text-sm w-[130px]"
           />
