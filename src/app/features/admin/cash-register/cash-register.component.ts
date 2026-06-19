@@ -115,6 +115,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   readonly generalCashBalance = signal<number | null>(null);
 
   readonly showManualIncomeDialog = signal(false);
+  /** Destino del ingreso: caja operativa de la jornada o Caja General directa. */
+  readonly manualIncomeCriteria = signal<'DAILY' | 'COMPANY'>('DAILY');
   readonly manualIncomeAmount = signal<number | null>(null);
   readonly manualIncomePaymentMethod = signal<'CASH' | 'TRANSFER' | 'MIXED'>(
     'CASH',
@@ -259,18 +261,21 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       {
         label: 'Saldo Total Empresa',
         value: general,
+        kind: 'company',
         tone: general >= 0 ? 'success' : 'danger',
         hint: 'Caja General — tesorería consolidada',
       },
       {
         label: 'Saldo del Día · Efectivo',
         value: daily.cash,
+        kind: 'cash',
         tone: daily.cash >= 0 ? 'success' : 'danger',
         hint: 'Esperado en efectivo de la caja de hoy',
       },
       {
         label: 'Saldo del Día · Transferencia',
         value: daily.transfer,
+        kind: 'transfer',
         tone: daily.transfer >= 0 ? 'success' : 'danger',
         hint: 'Esperado en transferencia de la caja de hoy',
       },
@@ -497,6 +502,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * Abre el alta rápida de ingreso manual sin crear una operación comercial.
    */
   openManualIncomeDialog(): void {
+    this.manualIncomeCriteria.set(this.activeSession() ? 'DAILY' : 'COMPANY');
     this.manualIncomeAmount.set(null);
     this.manualIncomePaymentMethod.set('CASH');
     this.manualIncomeCashAmount.set(null);
@@ -508,16 +514,18 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Registra una entrada manual en la caja operativa activa.
+   * Registra una entrada manual: en la caja operativa de la jornada (DAILY)
+   * o directo en Caja General (COMPANY), sin depender de ninguna sesión.
    */
   submitManualIncome(): void {
     this.manualIncomeValidationError.set('');
+    const criteria = this.manualIncomeCriteria();
     const session = this.activeSession();
     const amount = this.manualIncomeAmount();
     const amountCash = this.manualIncomeCashAmount() ?? 0;
     const amountTransfer = this.manualIncomeTransferAmount() ?? 0;
     const description = this.manualIncomeDescription().trim();
-    if (!session) {
+    if (criteria === 'DAILY' && !session) {
       this.manualIncomeValidationError.set(
         'No hay una caja abierta para imputar el ingreso.',
       );
@@ -546,16 +554,35 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const paymentMethod = this.manualIncomePaymentMethod();
+    const splitByMethod: Record<
+      'CASH' | 'TRANSFER' | 'MIXED',
+      { amountCash: number; amountTransfer: number }
+    > = {
+      CASH: { amountCash: amount, amountTransfer: 0 },
+      TRANSFER: { amountCash: 0, amountTransfer: amount },
+      MIXED: { amountCash, amountTransfer },
+    };
+
     this.manualIncomeSubmitting.set(true);
-    this.service
-      .createManualIncome(session.id, {
-        amount,
-        ...(this.manualIncomePaymentMethod() === 'MIXED'
-          ? { amountCash, amountTransfer }
-          : { paymentMethod: this.manualIncomePaymentMethod() }),
-        description,
-        receiptReference: this.manualIncomeReference().trim() || undefined,
-      })
+    const request$ =
+      criteria === 'COMPANY'
+        ? this.service.createManualIncomeCompany({
+            amount,
+            ...splitByMethod[paymentMethod],
+            description,
+            receiptReference: this.manualIncomeReference().trim() || undefined,
+          })
+        : this.service.createManualIncome(session!.id, {
+            amount,
+            ...(paymentMethod === 'MIXED'
+              ? { amountCash, amountTransfer }
+              : { paymentMethod }),
+            description,
+            receiptReference: this.manualIncomeReference().trim() || undefined,
+          });
+
+    request$
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => this.manualIncomeSubmitting.set(false)),
@@ -565,7 +592,10 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           this.msg.add({
             severity: 'success',
             summary: 'Ingreso registrado',
-            detail: 'La entrada manual se imputó a la caja activa.',
+            detail:
+              criteria === 'COMPANY'
+                ? 'La entrada manual se imputó a Caja General.'
+                : 'La entrada manual se imputó a la caja activa.',
           });
           this.showManualIncomeDialog.set(false);
           this.onJornadaStateChanged();
@@ -607,7 +637,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * Abre el diálogo de conversión entre efectivo y transferencia.
    */
   openConversionDialog(): void {
-    this.conversionCriteria.set('DAILY');
+    this.conversionCriteria.set(this.activeSession() ? 'DAILY' : 'COMPANY');
     this.conversionSourceMethod.set('CASH');
     this.conversionAmount.set(null);
     this.conversionNotes.set('');

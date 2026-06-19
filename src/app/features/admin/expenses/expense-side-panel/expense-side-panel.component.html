@@ -108,6 +108,7 @@
                   [value]="opt.value"
                   [(ngModel)]="createSource"
                   [inputId]="'src_' + opt.value"
+                  [disabled]="opt.value === 'DAILY' && !hasActiveSession"
                 />
                 <span>{{ opt.label }}</span>
               </label>

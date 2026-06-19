@@ -22,6 +22,8 @@ describe('CashRegisterComponent', () => {
         'getSessionMovements',
         'getActiveSession',
         'getSessionSnapshot',
+        'createManualIncome',
+        'createManualIncomeCompany',
       ],
     );
     const activeSession = {
@@ -175,6 +177,66 @@ describe('CashRegisterComponent', () => {
       expect(cashRegisterServiceSpy.createConversion).toHaveBeenCalledWith(
         jasmine.objectContaining({ criteria: 'COMPANY' }),
       );
+    });
+  });
+
+  describe('operaciones a Caja General sin caja activa (jornada cerrada)', () => {
+    it('openConversionDialog defaultea criteria a COMPANY cuando no hay caja activa', () => {
+      component.activeSession.set(null);
+
+      component.openConversionDialog();
+
+      expect(component.conversionCriteria()).toBe('COMPANY');
+    });
+
+    it('openManualIncomeDialog defaultea criteria a COMPANY cuando no hay caja activa', () => {
+      component.activeSession.set(null);
+
+      component.openManualIncomeDialog();
+
+      expect(component.manualIncomeCriteria()).toBe('COMPANY');
+    });
+
+    it('openManualIncomeDialog defaultea criteria a DAILY cuando hay caja activa', () => {
+      component.openManualIncomeDialog();
+
+      expect(component.manualIncomeCriteria()).toBe('DAILY');
+    });
+
+    it('submitManualIncome con criteria COMPANY no exige caja activa y llama createManualIncomeCompany', () => {
+      cashRegisterServiceSpy.createManualIncomeCompany.and.returnValue(of({}));
+      component.activeSession.set(null);
+
+      component.openManualIncomeDialog();
+      component.manualIncomeAmount.set(1000);
+      component.manualIncomeDescription.set('Aporte de capital');
+
+      component.submitManualIncome();
+
+      expect(
+        cashRegisterServiceSpy.createManualIncomeCompany,
+      ).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          amount: 1000,
+          description: 'Aporte de capital',
+        }),
+      );
+      expect(cashRegisterServiceSpy.createManualIncome).not.toHaveBeenCalled();
+    });
+
+    it('submitManualIncome con criteria DAILY y sin caja activa muestra error de validación', () => {
+      component.activeSession.set(null);
+      component.manualIncomeCriteria.set('DAILY');
+      component.manualIncomeAmount.set(1000);
+      component.manualIncomeDescription.set('Intento sin caja');
+
+      component.submitManualIncome();
+
+      expect(component.manualIncomeValidationError()).toBeTruthy();
+      expect(cashRegisterServiceSpy.createManualIncome).not.toHaveBeenCalled();
+      expect(
+        cashRegisterServiceSpy.createManualIncomeCompany,
+      ).not.toHaveBeenCalled();
     });
   });
 });

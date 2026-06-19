@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { ApiHttpService } from '../../../core/http/api-http.service';
 import {
   ActiveBusinessDay,
@@ -363,6 +363,44 @@ export class CashRegisterService {
         body,
       )
       .pipe(map(toManualIncome));
+  }
+
+  /**
+   * Registra un ingreso manual directo en Caja General (tesorería), sin
+   * pasar por ninguna caja operativa. Útil cuando la jornada está cerrada.
+   * @param payload - Datos del ingreso manual.
+   */
+  createManualIncomeCompany(payload: {
+    amount: number;
+    description: string;
+    amountCash?: number;
+    amountTransfer?: number;
+    receiptReference?: string;
+  }): Observable<unknown> {
+    const description = payload.receiptReference
+      ? `${payload.description} (Ref: ${payload.receiptReference})`
+      : payload.description;
+    const body: Record<string, unknown> = {
+      movement_type: 'MANUAL_INCOME',
+      amount: payload.amount,
+      description,
+    };
+    if (
+      payload.amountCash !== undefined ||
+      payload.amountTransfer !== undefined
+    ) {
+      body['amount_cash'] = payload.amountCash ?? 0;
+      body['amount_transfer'] = payload.amountTransfer ?? 0;
+    }
+    return this.getCashAccounts().pipe(
+      switchMap((accounts) => {
+        const general = accounts.find((a) => a.type === 'GENERAL_CASH');
+        if (!general) {
+          throw { status: 409, message: 'No existe una Caja General activa.' };
+        }
+        return this.api.post(`cash-accounts/${general.id}/movements`, body);
+      }),
+    );
   }
 
   /**
