@@ -337,6 +337,7 @@ body {
   border: 1px solid var(--ff-border) !important;
   border-radius: 0.75rem !important;
   color: var(--ff-text-primary) !important;
+  padding: 0.625rem 0.875rem;
   transition:
     border-color 0.15s,
     box-shadow 0.15s,
@@ -365,6 +366,11 @@ body {
 .p-calendar,
 .p-calendar .p-inputtext {
   width: 100%;
+}
+
+p-iconfield .p-inputtext,
+.p-icon-field-left .p-inputtext {
+  padding-left: 2.5rem;
 }
 
 .p-inputnumber-button,
