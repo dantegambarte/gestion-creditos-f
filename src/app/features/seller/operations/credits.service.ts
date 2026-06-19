@@ -31,6 +31,7 @@ import {
   SimulateResultItem,
   SimulateScheduleRow,
   SimulateSummary,
+  WriteOffResult,
 } from '../models/credit.model';
 
 /**
@@ -511,6 +512,34 @@ export class CreditsService {
               (raw['cancelledInstallments'] as number[]) ?? [],
             creditWillBeSettled: raw['creditWillBeSettled'] as boolean,
             planChangeId: raw['plan_change_id'] as string,
+            executedAt: raw['executed_at'] as string,
+            message: raw['message'] as string,
+          }),
+        ),
+      );
+  }
+
+  /**
+   * Castiga un crédito ACTIVE (write off): lo retira de la operatoria de
+   * cobranza. Admin-only, definitivo. El motivo es obligatorio.
+   * @param id - ID del crédito ACTIVE.
+   * @param payload - Motivo (obligatorio) y observaciones (opcional).
+   * @returns Resultado con el saldo castigado y el id de auditoría.
+   */
+  writeOff(
+    id: string,
+    payload: { reason: string; observations?: string },
+  ): Observable<WriteOffResult> {
+    const body: Record<string, unknown> = { reason: payload.reason };
+    if (payload.observations) body['observations'] = payload.observations;
+    return this.api
+      .post<Record<string, unknown>>(`credits/${id}/write-off`, body)
+      .pipe(
+        map(
+          (raw): WriteOffResult => ({
+            creditId: raw['credit_id'] as string,
+            writtenOffBalance: raw['written_off_balance'] as number,
+            writeOffId: raw['write_off_id'] as string,
             executedAt: raw['executed_at'] as string,
             message: raw['message'] as string,
           }),

@@ -74,17 +74,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Verifica el estado de cierre de caja del día actual.
+   * Verifica si hay una caja operativa abierta en la jornada actual (V4).
+   * Es la condición real que el backend exige para aprobar cobros; el flag
+   * legacy de cash_registers (is_closed) ya no se puebla y daba siempre false.
    */
   private checkCashRegisterStatus(): void {
     this.cashRegisterSvc
-      .getDashboard()
+      .getActiveSession()
       .pipe(
         catchError(() => of(null)),
         takeUntil(this.destroy$),
       )
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
+      .subscribe((session) => {
+        this.isCashClosed = !session;
       });
   }
 

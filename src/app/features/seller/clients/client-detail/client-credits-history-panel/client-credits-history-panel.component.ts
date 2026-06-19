@@ -34,8 +34,9 @@ export class ClientCreditsHistoryPanelComponent {
       ACTIVE: 'Activo',
       SETTLED: 'Liquidado',
       REJECTED: 'Rechazado',
-      EXPIRED: 'Vencido',
+      EXPIRED: 'Aprobación vencida',
       REFINANCED: 'Refinanciado',
+      WRITTEN_OFF: 'Castigado',
     };
     return map[status];
   }
@@ -57,6 +58,7 @@ export class ClientCreditsHistoryPanelComponent {
       REJECTED: 'danger',
       EXPIRED: 'danger',
       REFINANCED: 'danger',
+      WRITTEN_OFF: 'danger',
     };
     return map[status];
   }

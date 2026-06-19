@@ -145,11 +145,13 @@
         @if (isAdmin && credit.status === 'ACTIVE') {
           <p-button
             label="Cancelación total anticipada"
-            severity="secondary"
+            icon="pi pi-wallet"
+            severity="info"
             [outlined]="true"
             size="small"
             pTooltip="Liquidar todas las cuotas pendientes en un solo pago"
             (onClick)="openSettlementDialog()"
+            styleClass="h-11 px-5 rounded-xl"
           />
           <p-button
             label="Refinanciar"
@@ -157,12 +159,13 @@
             severity="warning"
             size="small"
             (onClick)="openRefinanceDialog()"
+            styleClass="h-11 px-5 rounded-xl shadow-sm"
           />
-          @if (credit.type === 'LOAN') {
+          @if (credit.type === 'LOAN' || credit.type === 'SALE') {
             <p-button
               label="Cambiar plan"
               icon="pi pi-sliders-h"
-              severity="warning"
+              severity="help"
               [outlined]="true"
               size="small"
               [disabled]="planAlreadyChanged"
@@ -172,8 +175,18 @@
                   : 'Recalcular el saldo con la tasa de un plan más corto'
               "
               (onClick)="openPlanChangeDialog()"
+              styleClass="h-11 px-5 rounded-xl"
             />
           }
+          <p-button
+            label="Castigar crédito"
+            icon="pi pi-ban"
+            severity="danger"
+            size="small"
+            pTooltip="Retirar el crédito de la operatoria de cobranza (incobrable)"
+            (onClick)="openWriteOffDialog()"
+            styleClass="h-11 px-5 rounded-xl shadow-sm"
+          />
         }
       </div>
     </div>
@@ -363,4 +376,10 @@
   [(visible)]="showPlanChangeDialog"
   [credit]="credit"
   (planChanged)="onPlanChanged()"
+/>
+
+<app-write-off-dialog
+  [(visible)]="showWriteOffDialog"
+  [credit]="credit"
+  (writtenOff)="onWrittenOff()"
 />

@@ -4,7 +4,8 @@ export type CreditStatus =
   | 'SETTLED'
   | 'REJECTED'
   | 'EXPIRED'
-  | 'REFINANCED';
+  | 'REFINANCED'
+  | 'WRITTEN_OFF';
 export type CreditType = 'SALE' | 'LOAN';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 export type IntakePaymentMethod = 'CASH' | 'TRANSFER' | 'MIXED';
@@ -13,7 +14,17 @@ export type InstallmentStatus =
   | 'PAID'
   | 'OVERDUE'
   | 'PARTIAL'
-  | 'PLAN_CHANGE_CANCELLED';
+  | 'PLAN_CHANGE_CANCELLED'
+  | 'WRITTEN_OFF';
+
+/** Resultado del castigo de un crédito (write off). */
+export interface WriteOffResult {
+  creditId: string;
+  writtenOffBalance: number;
+  writeOffId: string;
+  executedAt: string;
+  message: string;
+}
 
 export interface Credit {
   id: string;
