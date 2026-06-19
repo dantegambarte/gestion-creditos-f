@@ -3,7 +3,7 @@
     Completá las filas que necesites. Dejá vacías las que no apliquen.
   </p>
 
-  <div class="grid gap-2 text-[10px] uppercase font-semibold" style="color: var(--ff-text-muted); grid-template-columns: 24px minmax(0, 1.3fr) minmax(0, 0.95fr) minmax(0, 0.95fr) minmax(0, 1.5fr) 52px 24px;">
+  <div class="grid gap-1.5 text-[10px] uppercase font-semibold" style="color: var(--ff-text-muted); grid-template-columns: 24px minmax(96px, 1fr) 64px minmax(94px, 0.95fr) minmax(124px, 1.25fr) 52px 24px;">
     <span>#</span>
     <span>Color</span>
     <span>Talle</span>
@@ -15,7 +15,7 @@
 
   @for (row of bulkRows; track $index) {
     <div class="space-y-1">
-      <div class="grid gap-2.5 items-start" style="grid-template-columns: 24px minmax(0, 1.3fr) minmax(0, 0.95fr) minmax(0, 0.95fr) minmax(0, 1.5fr) 52px 24px;">
+      <div class="grid gap-1.5 items-start" style="grid-template-columns: 24px minmax(96px, 1fr) 64px minmax(94px, 0.95fr) minmax(124px, 1.25fr) 52px 24px;">
         <span class="text-xs pt-2" style="color: var(--ff-text-muted)">{{ $index + 1 }}</span>
         <input pInputText [(ngModel)]="row.color" (ngModelChange)="onBulkRowChange($index)" [ngModelOptions]="{ standalone: true }" class="h-9 rounded-xl px-3 min-w-0" placeholder="Ej: Negro" [class.ng-invalid]="!!getBulkFieldError($index, 'color') || !!getBulkFieldError($index, 'attributes')" />
         <input pInputText [(ngModel)]="row.size" (ngModelChange)="onBulkRowChange($index)" [ngModelOptions]="{ standalone: true }" class="h-9 rounded-xl px-3 min-w-0" placeholder="Ej: M" [class.ng-invalid]="!!getBulkFieldError($index, 'size') || !!getBulkFieldError($index, 'attributes')" />
