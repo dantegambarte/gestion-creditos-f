@@ -395,4 +395,76 @@ describe('ReportsService', () => {
       });
     });
   });
+
+  describe('getGeneralCashMovementsReport', () => {
+    const mockGeneralRaw = {
+      summary: { total_movements: 2, total_in: 1200, total_out: 500 },
+      rows: [
+        {
+          id: 'gm-1',
+          movement_type: 'MANUAL_INCOME',
+          direction: 'IN',
+          amount: 1200,
+          amount_cash: 1200,
+          amount_transfer: 0,
+          description: 'Aporte de capital',
+          beneficiary_name: null,
+          reference_type: null,
+          reference_id: null,
+          created_at: '2026-06-17T10:00:00.000Z',
+          performed_by_name: 'Admin',
+        },
+      ],
+    };
+
+    it('mapea summary y rows a camelCase', (done) => {
+      apiSpy.get.and.returnValue(of(mockGeneralRaw));
+
+      service
+        .getGeneralCashMovementsReport({
+          dateFrom: '2026-06-01',
+          dateTo: '2026-06-17',
+        })
+        .subscribe((r) => {
+          expect(r.summary).toEqual({
+            totalMovements: 2,
+            totalIn: 1200,
+            totalOut: 500,
+          });
+          expect(r.rows[0].movementType).toBe('MANUAL_INCOME');
+          expect(r.rows[0].direction).toBe('IN');
+          expect(r.rows[0].performedByName).toBe('Admin');
+          done();
+        });
+    });
+
+    it('envía date_from y date_to como params', () => {
+      apiSpy.get.and.returnValue(of(mockGeneralRaw));
+
+      service
+        .getGeneralCashMovementsReport({
+          dateFrom: '2026-06-01',
+          dateTo: '2026-06-17',
+        })
+        .subscribe(() => {});
+
+      const [path, params] = apiSpy.get.calls.mostRecent().args;
+      expect(path).toBe('reports/general-cash-movements');
+      expect(params).toEqual({
+        date_from: '2026-06-01',
+        date_to: '2026-06-17',
+      });
+    });
+
+    it('falla con 400 si falta dateFrom o dateTo', (done) => {
+      service
+        .getGeneralCashMovementsReport({ dateFrom: '', dateTo: '2026-06-17' })
+        .subscribe({
+          error: (err) => {
+            expect(err.status).toBe(400);
+            done();
+          },
+        });
+    });
+  });
 });

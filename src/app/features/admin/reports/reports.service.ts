@@ -15,6 +15,12 @@ import {
   CashMovementReportRowRaw,
   CashMovementReportSummary,
   CashMovementReportSummaryRaw,
+  GeneralCashMovementReport,
+  GeneralCashMovementReportRaw,
+  GeneralCashMovementReportRow,
+  GeneralCashMovementReportRowRaw,
+  GeneralCashMovementReportSummary,
+  GeneralCashMovementReportSummaryRaw,
   CollectionDailyRaw,
   CollectionDailyRow,
   CollectionReport,
@@ -207,6 +213,59 @@ function toCashMovementReport(r: CashMovementReportRaw): CashMovementReport {
   return {
     summary: toCashMovementSummary(r.summary),
     rows: r.rows.map(toCashMovementRow),
+  };
+}
+
+/**
+ * Convierte un objeto GeneralCashMovementReportSummaryRaw a GeneralCashMovementReportSummary.
+ * @param r
+ * @returns
+ */
+function toGeneralCashMovementSummary(
+  r: GeneralCashMovementReportSummaryRaw,
+): GeneralCashMovementReportSummary {
+  return {
+    totalMovements: r.total_movements,
+    totalIn: r.total_in,
+    totalOut: r.total_out,
+  };
+}
+
+/**
+ * Convierte un objeto GeneralCashMovementReportRowRaw a GeneralCashMovementReportRow.
+ * @param r
+ * @returns
+ */
+function toGeneralCashMovementRow(
+  r: GeneralCashMovementReportRowRaw,
+): GeneralCashMovementReportRow {
+  return {
+    id: r.id,
+    movementType: r.movement_type,
+    direction: r.direction,
+    amount: r.amount,
+    amountCash: r.amount_cash,
+    amountTransfer: r.amount_transfer,
+    description: r.description,
+    beneficiaryName: r.beneficiary_name,
+    referenceType: r.reference_type,
+    referenceId: r.reference_id,
+    createdAt: r.created_at,
+    performedByName: r.performed_by_name,
+  };
+}
+
+/**
+ * Convierte un objeto GeneralCashMovementReportRaw a GeneralCashMovementReport.
+ * @param r
+ * @returns
+ */
+function toGeneralCashMovementReport(
+  r: GeneralCashMovementReportRaw,
+): GeneralCashMovementReport {
+  return {
+    summary: toGeneralCashMovementSummary(r.summary),
+    rows: r.rows.map(toGeneralCashMovementRow),
   };
 }
 
@@ -500,6 +559,30 @@ export class ReportsService {
         cash_session_id: cashSessionId,
       })
       .pipe(map(toCashMovementReport));
+  }
+
+  /**
+   * Obtiene el ledger de movimientos de Caja General (tesorería) en un rango
+   * de fechas, sin depender de ninguna jornada/caja operativa.
+   * @param range
+   * @returns
+   */
+  getGeneralCashMovementsReport(
+    range: ReportDateRange,
+  ): Observable<GeneralCashMovementReport> {
+    if (!range.dateFrom || !range.dateTo) {
+      return throwError(() => ({
+        status: 400,
+        message: 'Los parámetros date_from y date_to son obligatorios.',
+      }));
+    }
+    const params = { date_from: range.dateFrom, date_to: range.dateTo };
+    return this.api
+      .get<GeneralCashMovementReportRaw>(
+        'reports/general-cash-movements',
+        params,
+      )
+      .pipe(map(toGeneralCashMovementReport));
   }
 }
 

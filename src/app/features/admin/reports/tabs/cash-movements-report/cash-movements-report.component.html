@@ -1,4 +1,26 @@
 <div class="space-y-6">
+  <div>
+    <label class="mb-1 block text-xs text-[var(--ff-text-secondary)]"
+      >Ámbito</label
+    >
+    <div class="flex gap-2">
+      @for (opt of scopeOptions; track opt.value) {
+        <button
+          type="button"
+          class="h-10 rounded-lg px-4 text-sm font-semibold transition"
+          [class]="
+            scope === opt.value
+              ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
+              : 'border border-[var(--ff-border)] bg-[var(--ff-panel)] text-[var(--ff-text-secondary)] hover:bg-[var(--ff-panel-raised)]'
+          "
+          (click)="onScopeChange(opt.value)"
+        >
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+  </div>
+
   <div class="flex flex-wrap items-end gap-3">
     <div>
       <label class="mb-1 block text-xs text-[var(--ff-text-secondary)]"
@@ -31,10 +53,10 @@
       />
     </div>
     <p-button
-      label="Buscar jornadas"
+      [label]="scope === 'GENERAL' ? 'Buscar movimientos' : 'Buscar jornadas'"
       icon="pi pi-search"
       [disabled]="!rangeValid"
-      [loading]="loadingDays"
+      [loading]="scope === 'GENERAL' ? loadingGeneralReport : loadingDays"
       styleClass="h-10 px-4 rounded-lg"
       (onClick)="consult()"
     />
@@ -46,7 +68,97 @@
     </p>
   }
 
-  @if (loadingDays) {
+  @if (scope === "GENERAL") {
+    @if (loadingGeneralReport) {
+      <app-loading-state />
+    } @else if (generalReportError) {
+      <app-error-state [message]="generalReportError.message" />
+    } @else if (generalReport) {
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div
+          class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4"
+        >
+          <p class="text-xs text-[var(--ff-text-secondary)]">Movimientos</p>
+          <p class="mt-1 text-xl font-bold text-[var(--ff-text-primary)]">
+            {{ generalReport.summary.totalMovements }}
+          </p>
+        </div>
+        <div
+          class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4"
+        >
+          <p class="text-xs text-[var(--ff-text-secondary)]">Total ingresos</p>
+          <p class="mt-1 text-xl font-bold text-emerald-300">
+            {{ formatCurrency(generalReport.summary.totalIn) }}
+          </p>
+        </div>
+        <div
+          class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4"
+        >
+          <p class="text-xs text-[var(--ff-text-secondary)]">Total egresos</p>
+          <p class="mt-1 text-xl font-bold text-red-300">
+            {{ formatCurrency(generalReport.summary.totalOut) }}
+          </p>
+        </div>
+      </div>
+
+      @if (generalReport.rows.length === 0) {
+        <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+          No hay movimientos de Caja General en el período seleccionado.
+        </p>
+      } @else {
+        <div
+          class="overflow-x-auto rounded-xl border border-[var(--ff-border)]"
+        >
+          <table class="w-full text-sm">
+            <thead
+              class="bg-[var(--ff-panel)] text-xs uppercase text-[var(--ff-text-secondary)]"
+            >
+              <tr>
+                <th class="px-4 py-3 text-left">Fecha</th>
+                <th class="px-4 py-3 text-left">Tipo</th>
+                <th class="px-4 py-3 text-left">Dirección</th>
+                <th class="px-4 py-3 text-right">Monto</th>
+                <th class="px-4 py-3 text-left">Descripción</th>
+                <th class="px-4 py-3 text-left">Beneficiario</th>
+                <th class="px-4 py-3 text-left">Usuario</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[var(--ff-border)]">
+              @for (row of generalReport.rows; track row.id) {
+                <tr class="hover:bg-[var(--ff-panel-raised)]">
+                  <td class="whitespace-nowrap px-4 py-3">
+                    {{ formatDateTime(row.createdAt) }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="rounded-full px-2.5 py-1 text-xs font-semibold"
+                      [class]="
+                        'bg-[var(--ff-secondary)] text-[var(--ff-text-secondary)]'
+                      "
+                      >{{ generalTypeLabel(row.movementType) }}</span
+                    >
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="rounded-full px-2.5 py-1 text-xs font-semibold"
+                      [class]="directionBadgeClasses(row.direction)"
+                      >{{ row.direction === "IN" ? "Ingreso" : "Egreso" }}</span
+                    >
+                  </td>
+                  <td class="whitespace-nowrap px-4 py-3 text-right font-semibold">
+                    {{ formatCurrency(row.amount) }}
+                  </td>
+                  <td class="px-4 py-3">{{ row.description || "—" }}</td>
+                  <td class="px-4 py-3">{{ row.beneficiaryName || "—" }}</td>
+                  <td class="px-4 py-3">{{ row.performedByName || "—" }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  } @else if (loadingDays) {
     <app-loading-state />
   } @else if (daysError) {
     <app-error-state [message]="daysError.message" />
