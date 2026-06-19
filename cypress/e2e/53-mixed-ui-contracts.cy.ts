@@ -24,6 +24,11 @@ const ACTIVE_CASH_DASHBOARD = {
   },
 };
 
+const CLOSED_CASH_DASHBOARD = {
+  ok: true,
+  data: { ...ACTIVE_CASH_DASHBOARD.data, is_closed: true },
+};
+
 const CREDIT_DETAIL = {
   id: 'cred-mixed-ui',
   type: 'LOAN',
@@ -102,6 +107,40 @@ function visitWithAdminSession(path: string): void {
   cy.wait('@authMe');
 }
 
+function visitWithSellerSession(path: string): void {
+  cy.intercept('GET', '**/auth/me', {
+    ok: true,
+    data: {
+      id: 'usr-003',
+      full_name: 'María Sánchez',
+      dni: '20202020',
+      role: 'SELLER',
+      is_temp_password: false,
+      force_relogin_at: null,
+    },
+  }).as('authMe');
+  cy.visit(path, {
+    onBeforeLoad(win) {
+      win.localStorage.setItem('sgcf_token', 'mock_seller_token');
+      win.localStorage.setItem(
+        'sgcf_user',
+        JSON.stringify({
+          id: 'usr-003',
+          full_name: 'María Sánchez',
+          name: 'María Sánchez',
+          dni: '20202020',
+          email: 'seller@siscreditos.com',
+          roles: ['SELLER'],
+          is_temp_password: false,
+          force_relogin_at: null,
+          token: 'mock_seller_token',
+        }),
+      );
+    },
+  });
+  cy.wait('@authMe');
+}
+
 function selectDropdownValue(dropdownSelector: string, label: string): void {
   cy.get(dropdownSelector)
     .find('.p-dropdown-trigger, .p-select-dropdown')
@@ -111,12 +150,12 @@ function selectDropdownValue(dropdownSelector: string, label: string): void {
   });
 }
 
-function stubCreditDetail(): void {
-  cy.intercept(
-    'GET',
-    '**/api/cash-register/dashboard*',
-    ACTIVE_CASH_DASHBOARD,
-  ).as('getDashboard');
+function stubCreditDetail(
+  dashboard: typeof ACTIVE_CASH_DASHBOARD = ACTIVE_CASH_DASHBOARD,
+): void {
+  cy.intercept('GET', '**/api/cash-register/dashboard*', dashboard).as(
+    'getDashboard',
+  );
   cy.intercept('GET', '**/api/credits/cred-mixed-ui', {
     ok: true,
     data: CREDIT_DETAIL,
@@ -223,5 +262,101 @@ describe('Contratos UI mixtos — dialogs financieros', () => {
     cy.get('[data-cy="settlement-submit"] button').click();
 
     cy.wait('@patchSettlement');
+  });
+});
+
+describe('Cronograma de cuotas — toggle pre-carga / cobro directo (admin)', () => {
+  beforeEach(() => {
+    cy.viewport(1280, 720);
+  });
+
+  it('el modo por defecto es pre-carga y no exige caja abierta', () => {
+    stubCreditDetail(CLOSED_CASH_DASHBOARD);
+    cy.intercept('POST', '**/api/payments', (req) => {
+      expect(req.body).to.include({
+        installment_id: '11111111-1111-4111-8111-111111111111',
+        amount_received: 10000,
+        payment_method: 'CASH',
+      });
+      req.reply({
+        ok: true,
+        data: { id: 'pay-precarga-ui', status: 'PENDING' },
+      });
+    }).as('postPrecarga');
+
+    visitWithAdminSession('/seller/operations/cred-mixed-ui');
+    cy.wait('@getCredit');
+    cy.get('[data-cy="installment-direct-payment"]')
+      .first()
+      .find('button')
+      .click({ force: true });
+
+    cy.get('[data-cy="seller-direct-submit"] button').click();
+
+    cy.wait('@postPrecarga');
+    cy.contains('pendiente de aprobación').should('be.visible');
+  });
+
+  it('en modo cobro directo, si la caja está cerrada no se registra el cobro', () => {
+    stubCreditDetail(CLOSED_CASH_DASHBOARD);
+    let adminDirectCalled = false;
+    cy.intercept('POST', '**/api/payments/admin-direct', () => {
+      adminDirectCalled = true;
+    }).as('postAdminDirectBlocked');
+
+    visitWithAdminSession('/seller/operations/cred-mixed-ui');
+    cy.wait('@getCredit');
+    cy.get('[data-cy="installment-direct-payment"]')
+      .first()
+      .find('button')
+      .click({ force: true });
+
+    cy.get('[data-cy="seller-direct-mode-direct"]').click();
+    cy.get('[data-cy="seller-direct-submit"] button').click();
+    cy.wait('@getDashboard');
+
+    cy.contains('Caja Cerrada').should('be.visible');
+    cy.then(() => expect(adminDirectCalled).to.eq(false));
+  });
+
+  it('cobro parcial en modo pre-carga exige fecha de próxima visita antes de habilitar el envío', () => {
+    stubCreditDetail();
+    cy.intercept('POST', '**/api/payments', (req) => {
+      expect(req.body).to.include({
+        installment_id: '11111111-1111-4111-8111-111111111111',
+        amount_received: 4000,
+        payment_method: 'CASH',
+        next_visit_date: '2026-07-01',
+      });
+      req.reply({
+        ok: true,
+        data: { id: 'pay-partial-ui', status: 'PENDING' },
+      });
+    }).as('postPartial');
+
+    visitWithAdminSession('/seller/operations/cred-mixed-ui');
+    cy.wait('@getCredit');
+    cy.get('[data-cy="installment-direct-payment"]')
+      .first()
+      .find('button')
+      .click({ force: true });
+
+    cy.get('[data-cy="seller-direct-payment-amount"] input').clear().type('4000');
+    cy.get('[data-cy="seller-direct-submit"] button').should('be.disabled');
+
+    cy.get('[data-cy="seller-direct-next-visit"] input').type(
+      '2026-07-01{enter}',
+    );
+    cy.get('[data-cy="seller-direct-submit"] button').should('be.enabled');
+    cy.get('[data-cy="seller-direct-submit"] button').click();
+
+    cy.wait('@postPartial');
+  });
+
+  it('un seller no ve el botón "Cobrar cuota" — acción exclusiva de admin', () => {
+    stubCreditDetail();
+    visitWithSellerSession('/seller/operations/cred-mixed-ui');
+    cy.wait('@getCredit');
+    cy.get('[data-cy="installment-direct-payment"]').should('not.exist');
   });
 });
