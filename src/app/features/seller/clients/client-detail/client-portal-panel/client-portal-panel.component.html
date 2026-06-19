@@ -40,8 +40,7 @@
         label="Habilitar portal"
         icon="pi pi-globe"
         severity="success"
-        size="small"
-        styleClass="px-4 rounded-xl"
+        styleClass="h-11 px-5 rounded-xl shadow-sm"
         (onClick)="confirmEnablePortal()"
       />
     } @else {
@@ -49,16 +48,14 @@
         label="Deshabilitar portal"
         icon="pi pi-eye-slash"
         severity="danger"
-        size="small"
-        styleClass="px-4 rounded-xl"
+        styleClass="h-11 px-5 rounded-xl shadow-sm"
         (onClick)="confirmDisablePortal()"
       />
       <p-button
         label="Resetear contraseña"
         icon="pi pi-refresh"
         severity="warning"
-        size="small"
-        styleClass="px-4 rounded-xl"
+        styleClass="h-11 px-5 rounded-xl shadow-sm"
         (onClick)="confirmResetPortalPassword()"
       />
       @if (customer.portalLockedAt) {
@@ -66,8 +63,7 @@
           label="Desbloquear"
           icon="pi pi-lock-open"
           severity="info"
-          size="small"
-          styleClass="px-4 rounded-xl"
+          styleClass="h-11 px-5 rounded-xl shadow-sm"
           (onClick)="confirmUnlockPortal()"
         />
       }
