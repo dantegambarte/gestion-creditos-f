@@ -282,12 +282,61 @@ const MOCK_SESSION_SNAPSHOT = {
 
 // ── CA-02b: Cerrar caja post-medianoche ────────────────────────────────────────
 
+/** Jornada activa (ayer) — evita depender del estado real de caja/jornada compartido entre specs. */
+const MOCK_ACTIVE_BUSINESS_DAY_CA02B = {
+  ok: true,
+  data: {
+    id: 'business-day-ca02b',
+    business_date: YESTERDAY,
+    branch_id: 'branch-hq',
+    status: 'OPEN',
+    opened_at: `${YESTERDAY}T08:00:00.000Z`,
+    session_counts: {
+      open_count: 1,
+      pending_count: 0,
+      closed_count: 0,
+      total_count: 1,
+    },
+  },
+};
+
+/** Caja operativa activa de la jornada — mismo session_id que MOCK_SESSION_SNAPSHOT. */
+const MOCK_ACTIVE_SESSION_CA02B = {
+  ok: true,
+  data: {
+    id: 'sess-active',
+    business_day_id: 'business-day-ca02b',
+    owner_user_id: 'usr-001',
+    opened_at: `${YESTERDAY}T08:00:00.000Z`,
+    opened_by: 'usr-001',
+    opening_amount: 0,
+    status: 'OPEN',
+    cash_counted: null,
+    closure_total_difference: null,
+  },
+};
+
 describe('CA-02b — Cerrar caja post-medianoche cierra la jornada del día anterior', () => {
   beforeEach(() => {
     cy.intercept('GET', '**/api/cash-register/dashboard', {
       statusCode: 200,
       body: MOCK_DASHBOARD_JORNADA_YESTERDAY,
     }).as('getDashboard');
+
+    cy.intercept('GET', '**/api/business-days/active', {
+      statusCode: 200,
+      body: MOCK_ACTIVE_BUSINESS_DAY_CA02B,
+    }).as('getActiveBusinessDay');
+
+    cy.intercept('GET', '**/api/cash-sessions/active', {
+      statusCode: 200,
+      body: MOCK_ACTIVE_SESSION_CA02B,
+    }).as('getActiveSession');
+
+    cy.intercept('GET', '**/api/cash-register/sessions/*/movements', {
+      statusCode: 200,
+      body: { ok: true, data: [] },
+    }).as('getSessionMovements');
 
     cy.intercept('GET', '**/api/cash-sessions/*/snapshot', {
       statusCode: 200,
@@ -310,26 +359,32 @@ describe('CA-02b — Cerrar caja post-medianoche cierra la jornada del día ante
 
     cy.viewport(1280, 720);
     cy.loginAs('ADMIN', '/admin/cash-register');
+    cy.wait('@getActiveBusinessDay');
+    cy.wait('@getActiveSession');
     cy.wait('@getDashboard');
   });
 
   it('CA-02b — el botón de cerrar caja existe cuando la jornada no está cerrada', () => {
-    cy.get('[data-cy="admin-cash-register-close-day-cta"]').should(
-      'be.visible',
-    );
+    cy.get('[data-cy="admin-cash-register-close-day-cta"]')
+      .scrollIntoView()
+      .should('be.visible');
   });
 
   it('CA-02b — al confirmar el cierre, el diálogo se abre con el snapshot de la caja activa', () => {
-    cy.get('[data-cy="admin-cash-register-close-day-cta"]').click();
+    cy.get('[data-cy="admin-cash-register-close-day-cta"]')
+      .scrollIntoView()
+      .click();
     cy.wait('@getSnapshot');
 
     // El diálogo debe mostrar "Cerrar caja operativa" y los montos del snapshot
     cy.contains('Cerrar caja operativa').should('be.visible');
-    cy.contains('Esperado').should('be.visible');
+    cy.get('.p-dialog:visible').contains('Esperado').should('be.visible');
   });
 
   it('CA-02b — el POST de cierre se llama SIN register_date (backend auto-detecta la jornada)', () => {
-    cy.get('[data-cy="admin-cash-register-close-day-cta"]').click();
+    cy.get('[data-cy="admin-cash-register-close-day-cta"]')
+      .scrollIntoView()
+      .click();
     cy.wait('@getSnapshot');
 
     // Ingresar efectivo declarado en la primera fila (CASH)

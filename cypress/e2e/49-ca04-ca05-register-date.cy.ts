@@ -121,6 +121,7 @@ const MOCK_SESSION_SNAPSHOT = {
     collections: {
       payments: { cash: 45000, transfer: 20000 },
       down_payments: { cash: 8000, transfer: 2000 },
+      manual_incomes: { cash: 0, transfer: 0 },
     },
     outflows: {
       expenses: { cash: 3000, transfer: 1500 },
@@ -396,7 +397,9 @@ describe('CA-04 + CA-05 mock — pre-cierre de jornada anterior muestra enganche
     cy.wait('@getDashboard');
 
     // Abrir el cierre V4 de caja operativa, reemplazo del pre-cierre legacy.
-    cy.get('[data-cy="admin-cash-register-close-day-cta"]').click();
+    cy.get('[data-cy="admin-cash-register-close-day-cta"]')
+      .scrollIntoView()
+      .click();
     cy.wait('@getSessionSnapshot');
     cy.contains('Cerrar caja operativa', { timeout: 10000 }).should(
       'be.visible',
@@ -404,23 +407,23 @@ describe('CA-04 + CA-05 mock — pre-cierre de jornada anterior muestra enganche
   });
 
   it('CA-04 — el cierre V4 muestra esperado de efectivo con enganches de jornada anterior', () => {
-    cy.contains('Efectivo').should('be.visible');
-    cy.contains(/50[\.,]000|50000/).should('exist');
+    cy.get('.p-dialog:visible').contains('Efectivo').should('be.visible');
+    cy.get('.p-dialog:visible').contains(/50[\.,]000|50000/).should('exist');
   });
 
   it('CA-04 — el cierre V4 muestra esperado de transferencia con enganches de jornada anterior', () => {
-    cy.contains('Transferencia').should('be.visible');
-    cy.contains(/20[\.,]500|20500/).should('exist');
+    cy.get('.p-dialog:visible').contains('Transferencia').should('be.visible');
+    cy.get('.p-dialog:visible').contains(/20[\.,]500|20500/).should('exist');
   });
 
   it('CA-04 + CA-05 — el total esperado descuenta los gastos registrados', () => {
-    cy.contains('Total').should('be.visible');
-    cy.contains(/70[\.,]500|70500/).should('exist');
+    cy.get('.p-dialog:visible').contains('Total').should('be.visible');
+    cy.get('.p-dialog:visible').contains(/70[\.,]500|70500/).should('exist');
   });
 
   it('CA-05 — el cierre V4 permite declarar montos físicos contra el snapshot', () => {
-    cy.contains('Declarado').should('be.visible');
-    cy.contains('Diferencia').should('be.visible');
+    cy.get('.p-dialog:visible').contains('Declarado').should('be.visible');
+    cy.get('.p-dialog:visible').contains('Diferencia').should('be.visible');
   });
 
   it('CA-04 + CA-05 — la jornada del pre-cierre corresponde al día anterior (no hoy)', () => {
