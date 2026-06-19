@@ -13,10 +13,15 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
+import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
-import { Payment, PaymentStatus } from '../../collector/models/payment.model';
+import {
+  Payment,
+  PaymentMethod,
+  PaymentStatus,
+} from '../../collector/models/payment.model';
 import { PaymentsService } from '../../collector/payments.service';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
@@ -50,6 +55,7 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-de
 export class AdminPaymentsComponent implements OnInit {
   private readonly paymentsService = inject(PaymentsService);
   private readonly usersService = inject(UsersService);
+  private readonly dateSvc = inject(DateService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
 
@@ -142,6 +148,49 @@ export class AdminPaymentsComponent implements OnInit {
     if (p.adminDirect) return 'info';
     if (p.parentPaymentId) return 'secondary';
     return null;
+  }
+
+  /**
+   * Devuelve la etiqueta legible del tipo de crédito asociado al cobro.
+   * @param creditType tipo de crédito recibido desde la API
+   */
+  creditTypeLabel(creditType: Payment['creditType']): string {
+    return { SALE: 'Venta', LOAN: 'Préstamo' }[creditType];
+  }
+
+  /**
+   * Devuelve la etiqueta legible del método de pago.
+   * @param method método de pago registrado en el cobro
+   */
+  paymentMethodLabel(method: PaymentMethod): string {
+    return {
+      CASH: 'Efectivo',
+      TRANSFER: 'Transferencia',
+      MIXED: 'Mixto',
+    }[method];
+  }
+
+  /**
+   * Devuelve la severidad visual del método de pago para distinguirlo rápido.
+   * @param method método de pago registrado en el cobro
+   */
+  paymentMethodSeverity(
+    method: PaymentMethod,
+  ): 'info' | 'secondary' | 'warning' {
+    return {
+      CASH: 'warning',
+      TRANSFER: 'info',
+      MIXED: 'secondary',
+    }[method] as 'info' | 'secondary' | 'warning';
+  }
+
+  /**
+   * Indica si la cuota del cobro ya venció y todavía requiere atención.
+   * @param payment cobro de la lista
+   */
+  isOverdue(payment: Payment): boolean {
+    if (payment.status !== 'PENDING') return false;
+    return this.dateSvc.isOverdue(payment.dueDate);
   }
 
   ngOnInit(): void {

@@ -78,7 +78,7 @@
           <ng-template pTemplate="header">
             <tr>
               <th>Cliente</th>
-              <th>Cuota</th>
+              <th>Crédito / cuota</th>
               <th>Cobrador</th>
               <th class="text-right">Monto</th>
               <th>Método</th>
@@ -87,53 +87,116 @@
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-p>
-            <tr class="cursor-pointer" (click)="openDetail(p)">
+            <tr
+              class="cursor-pointer border-l-4 transition-colors"
+              [class.border-l-amber-400]="p.status === 'PENDING'"
+              [class.border-l-emerald-400]="p.status === 'APPROVED'"
+              [class.border-l-rose-400]="
+                p.status === 'REJECTED' || p.isReversal
+              "
+              [class.border-l-sky-400]="
+                p.adminDirect && p.status !== 'REJECTED'
+              "
+              (click)="openDetail(p)"
+            >
               <td class="font-medium">
-                {{ p.customerName }}
-                <span class="ml-1 text-xs text-[var(--ff-text-muted)]">{{
-                  p.customerDni
-                }}</span>
-              </td>
-              <td>Cuota {{ p.installmentNumber }}</td>
-              <td style="color: var(--ff-text-secondary)">
-                {{ p.collectorName ?? "—" }}
-              </td>
-              <td
-                class="text-right font-semibold"
-                style="color: var(--ff-text-primary)"
-              >
-                {{ p.amountReceived | currencyArs: 2 }}
-              </td>
-              <td>
-                {{
-                  p.paymentMethod === "CASH"
-                    ? "Efectivo"
-                    : p.paymentMethod === "TRANSFER"
-                      ? "Transferencia"
-                      : "Mixto"
-                }}
-              </td>
-              <td class="text-center">
-                @if (p.reversalPaymentId) {
-                  <p-tag value="Revertido" severity="warning" />
-                } @else if (p.isReversal) {
-                  <p-tag value="Reversión" severity="danger" />
-                } @else if (p.adminDirect) {
-                  <p-tag value="Pago directo" severity="info" />
-                } @else {
-                  <div class="flex flex-wrap justify-center gap-1">
+                <div class="flex flex-col gap-1.5">
+                  <div>
+                    {{ p.customerName }}
+                    <span class="ml-1 text-xs text-[var(--ff-text-muted)]">{{
+                      p.customerDni
+                    }}</span>
+                  </div>
+                  <div class="flex flex-wrap gap-1">
                     <p-tag
-                      [value]="statusLabel(p.status)"
-                      [severity]="statusSeverity(p.status)"
+                      [value]="creditTypeLabel(p.creditType)"
+                      severity="secondary"
+                      styleClass="text-[10px] uppercase tracking-wide"
                     />
-                    @if (paymentTypeLabel(p)) {
+                    @if (p.rejectionReason) {
                       <p-tag
-                        [value]="paymentTypeLabel(p)!"
-                        [severity]="paymentTypeSeverity(p)!"
+                        value="Con motivo"
+                        severity="danger"
+                        styleClass="text-[10px] uppercase tracking-wide"
                       />
                     }
                   </div>
-                }
+                </div>
+              </td>
+              <td>
+                <div class="flex flex-col gap-1.5">
+                  <span class="font-semibold"
+                    >Cuota {{ p.installmentNumber }}</span
+                  >
+                  <div class="flex flex-wrap gap-1">
+                    <p-tag
+                      [value]="p.amountDue | currencyArs: 0"
+                      severity="secondary"
+                      styleClass="text-[10px]"
+                    />
+                    @if (isOverdue(p)) {
+                      <p-tag
+                        value="Vencida"
+                        severity="danger"
+                        styleClass="text-[10px] uppercase tracking-wide"
+                      />
+                    }
+                  </div>
+                </div>
+              </td>
+              <td style="color: var(--ff-text-secondary)">
+                {{ p.collectorName ?? "—" }}
+              </td>
+              <td class="text-right" style="color: var(--ff-text-primary)">
+                <div class="flex flex-col items-end gap-1.5">
+                  <span class="text-base font-bold text-emerald-200">
+                    {{ p.amountReceived | currencyArs: 2 }}
+                  </span>
+                  @if (p.paymentMethod === "MIXED") {
+                    <div class="flex flex-wrap justify-end gap-1">
+                      <p-tag
+                        [value]="'Ef. ' + (p.amountCash | currencyArs: 0)"
+                        severity="warning"
+                        styleClass="text-[10px]"
+                      />
+                      <p-tag
+                        [value]="'Tr. ' + (p.amountTransfer | currencyArs: 0)"
+                        severity="info"
+                        styleClass="text-[10px]"
+                      />
+                    </div>
+                  }
+                </div>
+              </td>
+              <td>
+                <div class="flex flex-col gap-1.5">
+                  <p-tag
+                    [value]="paymentMethodLabel(p.paymentMethod)"
+                    [severity]="paymentMethodSeverity(p.paymentMethod)"
+                    styleClass="w-fit"
+                  />
+                  @if (p.transferReference) {
+                    <span
+                      class="max-w-36 truncate text-xs text-[var(--ff-text-muted)]"
+                    >
+                      Ref. {{ p.transferReference }}
+                    </span>
+                  }
+                </div>
+              </td>
+              <td class="text-center">
+                <div class="flex flex-wrap justify-center gap-1">
+                  <p-tag
+                    [value]="statusLabel(p.status)"
+                    [severity]="statusSeverity(p.status)"
+                  />
+                  @if (paymentTypeLabel(p)) {
+                    <p-tag
+                      [value]="paymentTypeLabel(p)!"
+                      [severity]="paymentTypeSeverity(p)!"
+                    />
+                  }
+                </div>
               </td>
               <td style="color: var(--ff-text-secondary)">
                 {{ p.createdAt | date: "dd/MM/yyyy HH:mm" }}
