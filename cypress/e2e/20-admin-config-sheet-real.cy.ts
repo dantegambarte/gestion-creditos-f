@@ -19,15 +19,15 @@ describe('Admin — Configuración', () => {
   });
 
   it('muestra el panel lateral de navegación de tabs', () => {
-    cy.get('nav.flex.items-end a').should('have.length.gte', 4);
+    cy.get('nav.ff-tab-nav a').should('have.length.gte', 4);
   });
 
   it('tiene al menos 4 opciones de configuración en el panel', () => {
-    cy.get('nav.flex.items-end a').should('have.length.gte', 4);
+    cy.get('nav.ff-tab-nav a').should('have.length.gte', 4);
   });
 
   it('la tab activa tiene estilo visual de selección', () => {
-    cy.get('nav.flex.items-end a').first().should('have.class', 'border-blue-500');
+    cy.get('nav.ff-tab-nav a').first().should('have.class', 'ff-tab--active');
   });
 
   it('muestra tabs de navegación de configuración', () => {
@@ -40,15 +40,15 @@ describe('Admin — Configuración', () => {
   });
 
   it('muestra la opción de tab "General"', () => {
-    cy.contains('nav.flex.items-end a', 'General').should('be.visible');
+    cy.contains('nav.ff-tab-nav a', 'General').should('be.visible');
   });
 
   it('muestra la opción de tab "Usuarios"', () => {
-    cy.contains('nav.flex.items-end a', 'Usuarios').scrollIntoView().should('be.visible');
+    cy.contains('nav.ff-tab-nav a', 'Usuarios').scrollIntoView().should('be.visible');
   });
 
   it('muestra la opción de tab "Notificaciones"', () => {
-    cy.contains('nav.flex.items-end a', 'Notificaciones').should('exist');
+    cy.contains('nav.ff-tab-nav a', 'Notificaciones').should('exist');
   });
 });
 
