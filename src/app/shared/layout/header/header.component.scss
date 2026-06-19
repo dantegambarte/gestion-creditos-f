@@ -21,7 +21,7 @@
 
 .app-header__crumb {
   font-family: var(--ff-font-ui);
-  font-size: 13px;
+  font-size: 14px;
 
   &--link {
     color: var(--ff-text-secondary);
@@ -41,7 +41,7 @@
 
 .app-header__crumb-separator {
   font-family: var(--ff-font-ui);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ff-text-muted);
   padding: 0 2px;
 }
@@ -49,7 +49,7 @@
 // ─── Fecha ───────────────────────────────────────────────────────────────────
 .app-header__date {
   font-family: var(--ff-font-ui);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ff-text-secondary);
 }
 
@@ -77,7 +77,7 @@
 
 .app-header__live-text {
   font-family: var(--ff-font-ui);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--ff-success);
 }
@@ -119,7 +119,7 @@
 
 .app-header__user-name {
   font-family: var(--ff-font-ui);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ff-text-primary);
 }
@@ -137,7 +137,7 @@
   background: rgba(95, 122, 246, 0.18);
   color: var(--ff-accent);
   font-family: var(--ff-font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
