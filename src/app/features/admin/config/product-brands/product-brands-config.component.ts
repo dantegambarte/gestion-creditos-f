@@ -74,10 +74,7 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
 
   /** Cantidad de marcas vinculadas a productos para mostrar el resumen compacto. */
   get withProductsCount(): number {
-    return this.rows.filter(
-      (brand: ProductBrand & { productCount?: number }) =>
-        (brand.productCount ?? 0) > 0,
-    ).length;
+    return this.rows.filter((brand) => brand.productCount > 0).length;
   }
 
   /** Carga todas las marcas desde el backend y actualiza la tabla. */

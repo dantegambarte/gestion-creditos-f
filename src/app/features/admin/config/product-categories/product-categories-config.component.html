@@ -64,21 +64,15 @@
                   {{ cat.name }}
                 </td>
                 <td class="text-center">
-                  @if (cat.productCount != null) {
-                    <span
-                      class="ff-badge"
-                      style="
-                        background: rgba(79, 110, 247, 0.18);
-                        color: var(--ff-accent);
-                      "
-                    >
-                      {{ cat.productCount }}
-                    </span>
-                  } @else {
-                    <span class="text-xs" style="color: var(--ff-text-muted)"
-                      >—</span
-                    >
-                  }
+                  <span
+                    class="ff-badge"
+                    style="
+                      background: rgba(79, 110, 247, 0.18);
+                      color: var(--ff-accent);
+                    "
+                  >
+                    {{ cat.productCount }}
+                  </span>
                 </td>
                 <td class="text-center">
                   <span
@@ -89,7 +83,7 @@
                   >
                 </td>
                 <td class="text-xs ff-mono" style="color: var(--ff-text-muted)">
-                  —
+                  {{ cat.createdAt | date: "dd/MM/yyyy" }}
                 </td>
                 <td>
                   <div class="flex items-center gap-2">

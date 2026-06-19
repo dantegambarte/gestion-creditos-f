@@ -74,10 +74,7 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
 
   /** Cantidad de categorías vinculadas a productos para mostrar el resumen compacto. */
   get withProductsCount(): number {
-    return this.rows.filter(
-      (cat: ProductCategory & { productCount?: number }) =>
-        (cat.productCount ?? 0) > 0,
-    ).length;
+    return this.rows.filter((cat) => cat.productCount > 0).length;
   }
 
   /** Carga todas las categorías desde el backend y actualiza la tabla. */
