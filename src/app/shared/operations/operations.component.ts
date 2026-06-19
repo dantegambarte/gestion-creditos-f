@@ -47,7 +47,7 @@ export class OperationsComponent implements OnInit {
   loading = false;
 
   statusOptions = [
-    { label: 'Todos', value: null },
+    { label: 'Estado', value: null },
     {
       label: 'Pendiente de aprobación',
       value: 'PENDING_APPROVAL' as CreditStatus,
@@ -61,7 +61,7 @@ export class OperationsComponent implements OnInit {
   ];
 
   typeOptions = [
-    { label: 'Todos', value: null },
+    { label: 'Tipo', value: null },
     { label: 'Venta', value: 'SALE' as CreditType },
     { label: 'Préstamo', value: 'LOAN' as CreditType },
   ];
@@ -213,7 +213,7 @@ export class OperationsComponent implements OnInit {
     ).sort((a, b) => a.localeCompare(b));
 
     return [
-      { label: 'Todos', value: null },
+      { label: 'Vendedor', value: null },
       ...sellers.map((seller) => ({ label: seller, value: seller })),
     ];
   }

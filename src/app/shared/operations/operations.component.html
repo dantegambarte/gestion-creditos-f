@@ -21,13 +21,13 @@
         type="text"
         placeholder="Buscar por cliente o DNI"
         [(ngModel)]="searchTerm"
-        class="operations-search h-9 px-3 rounded-md text-sm"
+        class="operations-search h-11 px-3 rounded-xl text-sm"
       />
 
       <p-dropdown
         [options]="statusOptions"
         [(ngModel)]="selectedStatus"
-        placeholder="Todos"
+        placeholder="Estado"
         [filter]="statusOptions.length > 10"
         filterBy="label"
         optionLabel="label"
@@ -39,7 +39,7 @@
       <p-dropdown
         [options]="typeOptions"
         [(ngModel)]="selectedType"
-        placeholder="Todos"
+        placeholder="Tipo"
         [filter]="typeOptions.length > 10"
         filterBy="label"
         optionLabel="label"
@@ -51,7 +51,7 @@
       <p-dropdown
         [options]="sellerOptions"
         [(ngModel)]="selectedSeller"
-        placeholder="Todos"
+        placeholder="Vendedor"
         [filter]="sellerOptions.length > 10"
         filterBy="label"
         optionLabel="label"
