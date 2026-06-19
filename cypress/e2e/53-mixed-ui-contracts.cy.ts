@@ -132,54 +132,25 @@ describe('Contratos UI mixtos — dialogs financieros', () => {
     cy.viewport(1280, 720);
   });
 
-  it('admin payments: cobro directo mixto envía split al backend', () => {
+  it('admin payments: botón "Cobro directo" lleva al listado de operaciones', () => {
     cy.intercept('GET', '**/api/users*', { ok: true, data: [] }).as('getUsers');
     cy.intercept('GET', '**/api/payments', { ok: true, data: [] }).as(
       'getPayments',
     );
-    cy.intercept(
-      'GET',
-      '**/api/cash-register/dashboard*',
-      ACTIVE_CASH_DASHBOARD,
-    ).as('getDashboard');
-    cy.intercept('POST', '**/api/payments/admin-direct', (req) => {
-      expect(req.body).to.include({
-        installment_id: '11111111-1111-4111-8111-111111111111',
-        amount_cash: 3500,
-        amount_transfer: 6500,
-        transfer_reference: 'ADM-UI-MIX',
-      });
-      expect(req.body.payment_method).to.eq(undefined);
-      req.reply({
-        ok: true,
-        data: { ...CREDIT_DETAIL.installments[0], id: 'pay-ui' },
-      });
-    }).as('postAdminDirect');
+    cy.intercept('GET', '**/api/credits*', { ok: true, data: [] }).as(
+      'getOperations',
+    );
 
     visitWithAdminSession('/admin/payments');
     cy.wait('@getPayments');
 
     cy.contains('button', 'Cobro directo').click();
-    cy.get('[data-cy="admin-direct-installment-id"]').type(
-      '11111111-1111-4111-8111-111111111111',
-    );
-    selectDropdownValue(
-      '[data-cy="admin-direct-payment-method"]',
-      'Efectivo + transferencia',
-    );
-    cy.get('[data-cy="admin-direct-cash-amount"] input').clear().type('3500');
-    cy.get('[data-cy="admin-direct-transfer-amount"] input')
-      .clear()
-      .type('6500');
-    cy.get('[data-cy="admin-direct-transfer-reference"]').type('ADM-UI-MIX');
-    cy.get('[data-cy="admin-direct-submit"] button').click();
-
-    cy.wait('@postAdminDirect');
+    cy.url().should('include', '/admin/operations');
   });
 
-  it('detalle de crédito: cobro de cuota mixto envía split como pre-carga', () => {
+  it('detalle de crédito: cobro directo mixto envía split al backend (admin-direct)', () => {
     stubCreditDetail();
-    cy.intercept('POST', '**/api/payments', (req) => {
+    cy.intercept('POST', '**/api/payments/admin-direct', (req) => {
       expect(req.body).to.include({
         installment_id: '11111111-1111-4111-8111-111111111111',
         amount_cash: 4000,
@@ -187,8 +158,8 @@ describe('Contratos UI mixtos — dialogs financieros', () => {
         transfer_reference: 'PAY-UI-MIX',
       });
       expect(req.body.payment_method).to.eq(undefined);
-      req.reply({ ok: true, data: { id: 'pay-pending-ui' } });
-    }).as('postPayment');
+      req.reply({ ok: true, data: { id: 'pay-direct-ui' } });
+    }).as('postAdminDirect');
 
     visitWithAdminSession('/seller/operations/cred-mixed-ui');
     cy.wait('@getCredit');
@@ -197,6 +168,7 @@ describe('Contratos UI mixtos — dialogs financieros', () => {
       .find('button')
       .click({ force: true });
 
+    cy.get('[data-cy="seller-direct-mode-direct"]').click();
     selectDropdownValue(
       '[data-cy="seller-direct-payment-method"]',
       'Efectivo + transferencia',
@@ -208,7 +180,7 @@ describe('Contratos UI mixtos — dialogs financieros', () => {
     cy.get('[data-cy="seller-direct-transfer-reference"]').type('PAY-UI-MIX');
     cy.get('[data-cy="seller-direct-submit"] button').click();
 
-    cy.wait('@postPayment');
+    cy.wait('@postAdminDirect');
   });
 
   it('detalle de crédito: cancelación anticipada mixta envía split total', () => {

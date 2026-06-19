@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -25,7 +26,6 @@ import {
 import { PaymentsService } from '../../collector/payments.service';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
-import { DirectPaymentDialogComponent } from './direct-payment-dialog/direct-payment-dialog.component';
 import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-detail-dialog.component';
 
 @Component({
@@ -47,7 +47,6 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-de
     ErrorStateComponent,
     MessageModule,
     PaymentDetailDialogComponent,
-    DirectPaymentDialogComponent,
   ],
   providers: [MessageService],
   templateUrl: './admin-payments.component.html',
@@ -58,6 +57,7 @@ export class AdminPaymentsComponent implements OnInit {
   private readonly dateSvc = inject(DateService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
+  private readonly router = inject(Router);
 
   payments: Payment[] = [];
   collectors: User[] = [];
@@ -69,8 +69,6 @@ export class AdminPaymentsComponent implements OnInit {
 
   showDetailDialog = false;
   selectedPaymentId: string | null = null;
-
-  showDirectDialog = false;
 
   readonly STATUS_OPTIONS = [
     { label: 'Pendiente', value: 'PENDING' as PaymentStatus },
@@ -201,6 +199,14 @@ export class AdminPaymentsComponent implements OnInit {
 
   refresh(): void {
     this.load();
+  }
+
+  /**
+   * Lleva al admin al listado de operaciones para buscar el crédito y
+   * registrar el cobro directo desde el cronograma de cuotas.
+   */
+  goToDirectPayment(): void {
+    this.router.navigate(['/admin/operations']);
   }
 
   /**

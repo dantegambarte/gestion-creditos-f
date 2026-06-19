@@ -14,7 +14,7 @@
         icon="pi pi-plus"
         severity="primary"
         styleClass="h-11 px-5 rounded-xl shadow-sm"
-        (onClick)="showDirectDialog = true"
+        (onClick)="goToDirectPayment()"
       />
       <p-button
         label="Actualizar"
@@ -214,9 +214,4 @@
   [paymentId]="selectedPaymentId"
   (statusChanged)="onStatusChanged($event)"
   (reloaded)="onReloaded()"
-/>
-
-<app-direct-payment-dialog
-  [(visible)]="showDirectDialog"
-  (created)="onReloaded()"
 />
