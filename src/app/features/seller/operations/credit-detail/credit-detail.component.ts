@@ -162,6 +162,42 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
       .reduce((sum, inst) => sum + (inst.amountDue - inst.amountPaid), 0);
   }
 
+  /**
+   * Tasa efectiva del crédito: interestRate para LOAN; para SALE la tasa
+   * histórica congelada en el producto (units[0].historicalRate).
+   * @returns {number | null} Tasa en decimal (0.5 = 50%) o null si aún no hay.
+   */
+  get effectiveRate(): number | null {
+    if (!this.credit) return null;
+    if (this.credit.interestRate != null) return this.credit.interestRate;
+    const unit = this.credit.units?.[0];
+    return unit && unit.historicalRate != null ? unit.historicalRate : null;
+  }
+
+  /**
+   * Total a devolver = suma de las cuotas vigentes (excluye anuladas por cambio
+   * de plan y castigadas). Es lo que efectivamente paga el cliente en cuotas.
+   * @returns {number}
+   */
+  get totalToReturn(): number {
+    if (!this.credit?.installments) return 0;
+    return this.credit.installments
+      .filter(
+        (inst) =>
+          inst.status !== 'PLAN_CHANGE_CANCELLED' &&
+          inst.status !== 'WRITTEN_OFF',
+      )
+      .reduce((sum, inst) => sum + inst.amountDue, 0);
+  }
+
+  /**
+   * Total de interés = total a devolver − monto financiado.
+   * @returns {number}
+   */
+  get totalInterest(): number {
+    return Math.max(this.totalToReturn - (this.credit?.financedAmount ?? 0), 0);
+  }
+
   get hasPendingPayments(): boolean {
     return this.settlementPayments.some((p) => p.status === 'PENDING');
   }
