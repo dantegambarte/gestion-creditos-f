@@ -737,7 +737,7 @@ p-iconfield .p-inputtext,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 16px;
+  padding: max(env(safe-area-inset-top), 24px) 16px max(env(safe-area-inset-bottom), 24px);
   background-color: var(--ff-bg);
   background-image:
     linear-gradient(rgba(46, 51, 71, 0.4) 1px, transparent 1px),
@@ -2692,6 +2692,48 @@ table.ff-table {
 .collection-regenerated-badge {
   background: rgba(148, 163, 184, 0.14) !important;
   color: var(--ff-text-secondary) !important;
+}
+
+.portal-page-shell {
+  width: 100%;
+  max-width: 100%;
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+
+.portal-skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  border: 1px solid var(--ff-border);
+  border-radius: 0.75rem;
+  background: var(--ff-panel);
+  padding: 1rem;
+}
+
+.portal-skeleton-block {
+  display: block;
+  border: 1px solid var(--ff-border);
+}
+
+@media (max-width: 767.98px) {
+  .auth-card {
+    max-width: min(100%, 360px);
+    border-radius: 1rem;
+  }
+
+  .auth-page,
+  .portal-page-shell {
+    overflow-x: hidden;
+  }
+
+  .portal-page-shell {
+    padding-bottom: max(env(safe-area-inset-bottom), 1.25rem);
+  }
+
+  .portal-page-shell button,
+  .portal-page-shell a {
+    touch-action: manipulation;
+  }
 }
 
 .db-mobile-quick-panel,
