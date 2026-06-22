@@ -869,8 +869,12 @@ type ApiRole = InternalRole;
 Cypress.Commands.add(
   'getAuthToken',
   (role: ApiRole): Cypress.Chainable<string> => {
-    const dniKey = `real${role.charAt(0) + role.slice(1).toLowerCase()}Dni`;
-    const passKey = `real${role.charAt(0) + role.slice(1).toLowerCase()}Password`;
+    const pascalRole = role
+      .split('_')
+      .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+      .join('');
+    const dniKey = `real${pascalRole}Dni`;
+    const passKey = `real${pascalRole}Password`;
 
     const dni = String(Cypress.env(dniKey) ?? '').trim();
     const password = String(Cypress.env(passKey) ?? '').trim();
@@ -1017,6 +1021,30 @@ Cypress.Commands.add(
   },
 );
 
+/**
+ * Fuerza el created_at de un crédito vía la ruta test-only del backend
+ * (PATCH /api/test/credits/:id/force-created-at, requiere
+ * ENABLE_TEST_ROUTES=true). Para E2E del cron creditExpiry.
+ */
+Cypress.Commands.add(
+  'apiForceCreditCreatedAt',
+  (creditId: string, createdAt: string): Cypress.Chainable<Record<string, unknown>> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest(
+          'PATCH',
+          `/test/credits/${creditId}/force-created-at`,
+          { created_at: createdAt },
+          token,
+        )
+        .then((res) => {
+          expect(res.status, 'forzar created_at de crédito (test route)').to.eq(200);
+          return res.body.data as Record<string, unknown>;
+        }),
+    );
+  },
+);
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -1056,6 +1084,10 @@ declare global {
       apiForceInstallmentDueDate(
         installmentId: string,
         dueDate: string,
+      ): Chainable<Record<string, unknown>>;
+      apiForceCreditCreatedAt(
+        creditId: string,
+        createdAt: string,
       ): Chainable<Record<string, unknown>>;
     }
   }
