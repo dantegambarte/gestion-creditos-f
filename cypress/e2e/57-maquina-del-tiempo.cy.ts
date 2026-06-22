@@ -74,43 +74,67 @@ describe('Máquina del Tiempo — Mora y Cron Job (real)', () => {
             token,
           )
           .then((createRes) => {
-            expect(createRes.status, 'alta de préstamo por API (inyección de setup)').to.eq(201);
+            expect(
+              createRes.status,
+              'alta de préstamo por API (inyección de setup)',
+            ).to.eq(201);
             const creditId = String(createRes.body?.data?.id);
 
             cy.apiApproveCredit(creditId).then((approved) => {
-              expect(approved['status'], 'crédito activo tras aprobación').to.eq('ACTIVE');
+              expect(
+                approved['status'],
+                'crédito activo tras aprobación',
+              ).to.eq('ACTIVE');
 
-              cy.apiRequest('GET', `/installments?credit_id=${creditId}`, null, token).then(
-                (instRes) => {
-                  expect(instRes.status, 'cuotas del préstamo aprobado').to.eq(200);
-                  const installments = (instRes.body?.data ?? []) as Array<Record<string, unknown>>;
-                  expect(installments, 'al menos una cuota generada').to.have.length.greaterThan(0);
+              cy.apiRequest(
+                'GET',
+                `/installments?credit_id=${creditId}`,
+                null,
+                token,
+              ).then((instRes) => {
+                expect(instRes.status, 'cuotas del préstamo aprobado').to.eq(
+                  200,
+                );
+                const installments = (instRes.body?.data ?? []) as Array<
+                  Record<string, unknown>
+                >;
+                expect(
+                  installments,
+                  'al menos una cuota generada',
+                ).to.have.length.greaterThan(0);
 
-                  installmentId = String(installments[0]['id']);
-                  originalAmountDue = Number(installments[0]['amount_due']);
+                installmentId = String(installments[0]['id']);
+                originalAmountDue = Number(installments[0]['amount_due']);
 
-                  cy.apiRequest('GET', '/system-config/penalty_grace_days', null, token).then(
-                    (configRes) => {
-                      const graceDays = Number(
-                        (configRes.body?.data as { value?: string } | undefined)?.value ?? 3,
-                      );
-
-                      // due_date = hoy − (grace_days + 2): dos días vencido el período
-                      // de gracia, margen de sobra para que el cron aplique mora
-                      // independientemente de cómo esté configurado grace_days.
-                      const due = new Date();
-                      due.setDate(due.getDate() - (graceDays + 2));
-                      forcedDueDate = `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}`;
-
-                      cy.apiForceInstallmentDueDate(installmentId, forcedDueDate).then((forced) => {
-                        expect(String(forced['due_date']).slice(0, 10), 'due_date forzado').to.eq(
-                          forcedDueDate,
-                        );
-                      });
-                    },
+                cy.apiRequest(
+                  'GET',
+                  '/system-config/penalty_grace_days',
+                  null,
+                  token,
+                ).then((configRes) => {
+                  const graceDays = Number(
+                    (configRes.body?.data as { value?: string } | undefined)
+                      ?.value ?? 3,
                   );
-                },
-              );
+
+                  // due_date = hoy − (grace_days + 2): dos días vencido el período
+                  // de gracia, margen de sobra para que el cron aplique mora
+                  // independientemente de cómo esté configurado grace_days.
+                  const due = new Date();
+                  due.setDate(due.getDate() - (graceDays + 2));
+                  forcedDueDate = `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, '0')}-${String(due.getDate()).padStart(2, '0')}`;
+
+                  cy.apiForceInstallmentDueDate(
+                    installmentId,
+                    forcedDueDate,
+                  ).then((forced) => {
+                    expect(
+                      String(forced['due_date']).slice(0, 10),
+                      'due_date forzado',
+                    ).to.eq(forcedDueDate);
+                  });
+                });
+              });
             });
           }),
       );
@@ -118,42 +142,78 @@ describe('Máquina del Tiempo — Mora y Cron Job (real)', () => {
   });
 
   it('ejecución — corre el cron overdueInstallments real', () => {
-    expect(installmentId, 'cuota con due_date forzado (setup)').to.be.a('string').and.not.be.empty;
+    expect(installmentId, 'cuota con due_date forzado (setup)').to.be.a(
+      'string',
+    ).and.not.be.empty;
 
     cy.task('cron:run', 'overdueInstallments').then((result) => {
-      const taskResult = result as { ok: boolean; error?: string; output?: string };
-      expect(taskResult.ok, `cron:run overdueInstallments — ${taskResult.error ?? ''}`).to.eq(true);
+      const taskResult = result as {
+        ok: boolean;
+        error?: string;
+        output?: string;
+      };
+      expect(
+        taskResult.ok,
+        `cron:run overdueInstallments — ${taskResult.error ?? ''}`,
+      ).to.eq(true);
     });
   });
 
   it('aserción API — la cuota queda OVERDUE con penalidad aplicada', () => {
     cy.getAuthToken('ADMIN').then((token) =>
-      cy.apiRequest('GET', `/installments/${installmentId}`, null, token).then((res) => {
-        expect(res.status, 'detalle de cuota post-cron').to.eq(200);
-        const updated = res.body?.data as Record<string, unknown>;
+      cy
+        .apiRequest('GET', `/installments/${installmentId}`, null, token)
+        .then((res) => {
+          expect(res.status, 'detalle de cuota post-cron').to.eq(200);
+          const updated = res.body?.data as Record<string, unknown>;
 
-        expect(updated['status'], 'estado tras cron de mora').to.eq('OVERDUE');
-        expect(Number(updated['penalty_amount']), 'penalidad aplicada').to.be.greaterThan(0);
-        expect(Number(updated['amount_due']), 'amount_due incrementado por mora').to.be.greaterThan(
-          originalAmountDue,
-        );
-      }),
+          expect(updated['status'], 'estado tras cron de mora').to.eq(
+            'OVERDUE',
+          );
+          expect(
+            Number(updated['penalty_amount']),
+            'penalidad aplicada',
+          ).to.be.greaterThan(0);
+          expect(
+            Number(updated['amount_due']),
+            'amount_due incrementado por mora',
+          ).to.be.greaterThan(originalAmountDue);
+        }),
     );
   });
 
   it('aserción UI — ADMIN ve la cuota morosa reflejada en Morosidad', () => {
     cy.viewport(1280, 720);
+    cy.intercept('GET', '**/installments*').as('listInstallments');
     cy.loginReal('ADMIN', '/admin/delinquency');
 
-    cy.location('pathname', { timeout: 15000 }).should('eq', '/admin/delinquency');
+    cy.location('pathname', { timeout: 15000 }).should(
+      'eq',
+      '/admin/delinquency',
+    );
     cy.get('app-error-state').should('not.exist');
-    cy.get('p-table, app-loading-state, p-skeleton', { timeout: 15000 }).should('exist');
+    cy.get('p-table, app-loading-state, p-skeleton', { timeout: 15000 }).should(
+      'exist',
+    );
+
+    // Esperar a que termine la carga real ANTES de tipear: el componente
+    // tenía una carrera real (loadClients sobrescribía filteredClients con
+    // la lista cruda al resolver, descartando lo que el usuario ya hubiese
+    // escrito en el buscador) — fixeado en delinquency.component.ts. Este
+    // wait además evita que el test mismo dependa del timing de red.
+    cy.wait('@listInstallments');
+    cy.get('p-table tbody tr', { timeout: 20000 }).should(
+      'have.length.greaterThan',
+      0,
+    );
 
     // El listado pagina (10 filas por defecto) y acumula mora de toda la
     // base seedeada — sin filtrar, nuestro cliente puede no estar en la
     // primera página. El propio componente filtra cliente-side por dni
     // (`c.dni.includes(term)`), así que usamos ese buscador real.
-    cy.get('input[placeholder="Buscar cliente..."]', { timeout: 15000 }).clear().type(customer.dni);
+    cy.get('input[placeholder="Buscar cliente..."]', { timeout: 15000 })
+      .clear()
+      .type(customer.dni);
     cy.contains(customer.dni, { timeout: 20000 }).should('be.visible');
   });
 });

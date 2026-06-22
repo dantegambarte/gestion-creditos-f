@@ -297,7 +297,7 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
         next: (installments) => {
           const rows = installments.map((inst) => this.toRow(inst));
           this.clients = rows;
-          this.filteredClients = rows;
+          this.applyFilters();
           this.stats = this.calcStats(rows);
           this.loadingClients = false;
         },
