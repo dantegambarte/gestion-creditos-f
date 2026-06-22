@@ -992,6 +992,31 @@ Cypress.Commands.add(
   },
 );
 
+/**
+ * Fuerza el due_date de una cuota vía la ruta test-only del backend
+ * (PATCH /api/test/installments/:id/force-due-date, requiere
+ * ENABLE_TEST_ROUTES=true). Resetea last_penalty_applied_at para que el
+ * cron de mora la trate como vencida desde la nueva fecha.
+ */
+Cypress.Commands.add(
+  'apiForceInstallmentDueDate',
+  (installmentId: string, dueDate: string): Cypress.Chainable<Record<string, unknown>> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest(
+          'PATCH',
+          `/test/installments/${installmentId}/force-due-date`,
+          { due_date: dueDate },
+          token,
+        )
+        .then((res) => {
+          expect(res.status, 'forzar due_date de cuota (test route)').to.eq(200);
+          return res.body.data as Record<string, unknown>;
+        }),
+    );
+  },
+);
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -1028,6 +1053,10 @@ declare global {
       }): Chainable<Record<string, unknown>>;
       apiUnlockUser(userId: string): Chainable<void>;
       apiApproveCredit(creditId: string): Chainable<Record<string, unknown>>;
+      apiForceInstallmentDueDate(
+        installmentId: string,
+        dueDate: string,
+      ): Chainable<Record<string, unknown>>;
     }
   }
 }

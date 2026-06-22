@@ -92,6 +92,35 @@ export default defineConfig({
           console.log('[cy:task]', message);
           return null;
         },
+
+        /**
+         * Corre un cron job del backend de forma síncrona vía
+         * `src/scripts/run-cron.js <jobName>` (mismo binario que QA/ops usan
+         * en producción — no reimplementa la lógica del job).
+         * Requiere que el backend corra con la MISMA base de datos que usa
+         * el server de `npm start` (no un proceso aparte con su propio pool).
+         */
+        'cron:run'(jobName: string) {
+          const ALLOWED_JOBS = [
+            'overdueInstallments',
+            'creditExpiry',
+            'tokenCleanup',
+            'weeklyCommissionCycle',
+          ];
+          if (!ALLOWED_JOBS.includes(jobName)) {
+            return { ok: false, error: `Job no permitido: ${jobName}` };
+          }
+          try {
+            const output = execSync(`node src/scripts/run-cron.js ${jobName}`, {
+              cwd: BACKEND_DIR,
+              stdio: 'pipe',
+            }).toString();
+            return { ok: true, output };
+          } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : String(err);
+            return { ok: false, error: msg };
+          }
+        },
       });
     },
   },
