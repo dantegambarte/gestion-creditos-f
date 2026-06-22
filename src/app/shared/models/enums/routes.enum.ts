@@ -10,6 +10,7 @@ export enum AppRoutes {
   COLLECTOR = 'collector',
   CONFIG = 'config',
   DASHBOARD = 'dashboard',
+  HELP = 'help',
   DELINQUENCY = 'delinquency',
   FORGOT_PASSWORD = 'forgot-password',
   LOGIN = 'login',
