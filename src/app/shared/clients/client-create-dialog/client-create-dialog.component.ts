@@ -31,6 +31,7 @@ import { CustomersService } from '../../../features/seller/clients/customers.ser
     InputTextModule,
   ],
   templateUrl: './client-create-dialog.component.html',
+  styleUrl: './client-create-dialog.component.scss',
 })
 export class ClientCreateDialogComponent implements OnChanges {
   @Input() visible = false;

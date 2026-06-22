@@ -75,7 +75,7 @@
           </button>
         </div>
 
-        <div class="sheet-table-scroll">
+        <div class="sheet-table-scroll hidden md:block">
           <table class="sheet-table">
             <thead>
               <tr>
@@ -149,6 +149,95 @@
               }
             </tbody>
           </table>
+        </div>
+
+        <div class="sheet-mobile-list block md:hidden">
+          @for (item of filteredItems; track item.installmentId) {
+            <article
+              class="sheet-mobile-card"
+              [class.sheet-mobile-card--selected]="
+                selectedItem?.installmentId === item.installmentId
+              "
+              [class.sheet-mobile-card--overdue]="
+                item.installmentStatus === 'OVERDUE'
+              "
+              [class.sheet-mobile-card--paid]="
+                item.installmentStatus === 'PAID'
+              "
+              (click)="selectItem(item)"
+            >
+              <div class="sheet-mobile-card__head">
+                <div class="sheet-mobile-card__identity">
+                  <div class="sheet-mobile-card__title-row">
+                    <span class="sheet-mobile-card__order"
+                      >#{{ item.orderNumber }}</span
+                    >
+                    <h2>{{ item.customerName }}</h2>
+                  </div>
+                  <p>{{ item.collectionReference }}</p>
+                </div>
+                <div class="sheet-mobile-card__amount">
+                  {{ availableBalance(item) | currencyArs: 0 }}
+                </div>
+              </div>
+
+              <div class="sheet-mobile-card__meta">
+                <span>
+                  <i class="pi pi-calendar"></i>
+                  Cuota {{ item.installmentNumber }} ·
+                  {{ item.dueDate | date: "dd/MM/yy" }}
+                </span>
+                <span>
+                  <i class="pi pi-phone"></i>
+                  {{ item.customerPhone || "Sin teléfono" }}
+                </span>
+                <span class="sheet-mobile-card__address">
+                  <i class="pi pi-map-marker"></i>
+                  {{ item.customerAddress || "Sin domicilio" }}
+                </span>
+              </div>
+
+              <div class="sheet-mobile-card__chips">
+                <span
+                  class="status-badge"
+                  [class.status-overdue]="item.installmentStatus === 'OVERDUE'"
+                  [class.status-paid]="item.installmentStatus === 'PAID'"
+                >
+                  {{ installmentLabel(item.installmentStatus) }}
+                </span>
+                @if (displayPenalty(item) > 0) {
+                  <span class="sheet-mobile-card__penalty">
+                    +{{ displayPenalty(item) | currencyArs: 0 }} mora
+                  </span>
+                }
+                @if (item.live?.hasPendingPayment) {
+                  <span class="sheet-mobile-card__pending">
+                    Pre-carga pendiente
+                  </span>
+                }
+              </div>
+
+              <div class="sheet-mobile-card__actions">
+                @if (canRegisterPayment(item)) {
+                  <button
+                    type="button"
+                    class="action-btn action-btn--mobile"
+                    (click)="$event.stopPropagation(); openPaymentDialog(item)"
+                  >
+                    Cobrar
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="action-btn action-btn--mobile"
+                    disabled
+                  >
+                    No disponible
+                  </button>
+                }
+              </div>
+            </article>
+          }
         </div>
       </section>
 

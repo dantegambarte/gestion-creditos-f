@@ -52,3 +52,153 @@
 :host ::ng-deep .client-action-button .p-button-icon {
   font-size: 0.8rem;
 }
+
+@media (max-width: 767.98px) {
+  :host ::ng-deep .clients-page-mobile {
+    padding: 0;
+  }
+
+  .clients-mobile-header {
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .clients-mobile-header .ff-page-title {
+    max-width: 9rem;
+    font-size: 1.65rem;
+    line-height: 1.08;
+  }
+
+  :host ::ng-deep .clients-new-button.p-button {
+    width: 8rem;
+    min-height: 3rem;
+    justify-content: center;
+    align-self: flex-start;
+    white-space: normal;
+  }
+
+  .clients-mobile-filters {
+    display: block;
+  }
+
+  .clients-mobile-filter-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .clients-mobile-list {
+    padding: 0.75rem 0 0.25rem;
+  }
+
+  .clients-mobile-card {
+    border: 1px solid var(--ff-border);
+    border-radius: 0.625rem;
+    background: var(--ff-panel);
+    padding: 0.75rem 0.875rem;
+  }
+
+  .clients-mobile-card + .clients-mobile-card {
+    margin-top: 0.75rem;
+  }
+
+  .clients-mobile-card__main {
+    display: flex;
+    width: 100%;
+    min-height: 3.25rem;
+    align-items: center;
+    gap: 0.75rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    text-align: left;
+  }
+
+  .clients-mobile-card__avatar {
+    display: inline-flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: 0 0 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .clients-mobile-card__identity {
+    display: grid;
+    min-width: 0;
+    flex: 1;
+    gap: 0.125rem;
+  }
+
+  .clients-mobile-card__identity strong {
+    overflow: hidden;
+    color: var(--ff-text-primary);
+    font-size: 0.875rem;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .clients-mobile-card__identity span {
+    color: var(--ff-text-muted);
+    font-size: 0.75rem;
+  }
+
+  .clients-mobile-card__chevron {
+    color: var(--ff-text-muted);
+    font-size: 0.75rem;
+  }
+
+  .clients-mobile-card__meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .clients-mobile-card__meta div {
+    min-width: 0;
+    border-radius: 0.5rem;
+    background: var(--ff-secondary);
+    padding: 0.5rem;
+  }
+
+  .clients-mobile-card__meta span {
+    display: block;
+    color: var(--ff-text-muted);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .clients-mobile-card__meta strong {
+    display: block;
+    overflow: hidden;
+    margin-top: 0.25rem;
+    color: var(--ff-text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .clients-mobile-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  :host ::ng-deep .client-action-button--mobile.p-button {
+    width: 3rem !important;
+    height: 3rem !important;
+    min-width: 3rem !important;
+  }
+}
