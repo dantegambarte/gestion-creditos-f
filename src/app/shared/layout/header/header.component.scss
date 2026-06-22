@@ -11,6 +11,18 @@
   padding: 0 20px;
 }
 
+.app-header__mobile-brand {
+  display: none;
+}
+
+.app-header__mobile-logo {
+  font-family: var(--ff-font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ff-text-primary);
+  letter-spacing: -0.04em;
+}
+
 // ─── Título / breadcrumbs ─────────────────────────────────────────────────────
 .app-header__title {
   font-family: var(--ff-font-ui);
@@ -143,4 +155,48 @@
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(95, 122, 246, 0.32);
+}
+
+@media (max-width: 767.98px) {
+  .app-header {
+    height: calc(48px + var(--ff-safe-top));
+    padding: var(--ff-safe-top) 16px 0;
+    border-bottom-color: var(--ff-border);
+    background: var(--ff-sidebar);
+    backdrop-filter: none;
+  }
+
+  .app-header__mobile-brand {
+    display: flex;
+    align-items: center;
+  }
+
+  .app-header__mobile-logo {
+    font-size: 15px;
+  }
+
+  .app-header__actions {
+    max-width: 48vw;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .app-header__live-text {
+    display: none;
+  }
+
+  .app-header__bell {
+    padding: 5px;
+  }
+
+  .app-header__user-section {
+    border-left: 0;
+    padding-left: 0 !important;
+  }
+
+  .app-header__avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
 }

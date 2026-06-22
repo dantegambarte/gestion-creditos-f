@@ -1,8 +1,12 @@
 <header class="app-header">
   <!-- Izquierda: solo acciones contextuales -->
   <div class="flex items-center gap-3">
+    <div class="app-header__mobile-brand">
+      <span class="app-header__mobile-logo">finFlow</span>
+    </div>
+
     @if (headerService.actions().length > 0) {
-      <div class="flex items-center gap-2">
+      <div class="app-header__actions flex items-center gap-2">
         @for (action of headerService.actions(); track action.label) {
           <p-button
             [label]="action.label"
