@@ -1,0 +1,2693 @@
+
+> gestion-creditos-f@0.0.0 e2e:run:all
+> cypress run
+
+
+
+DevTools listening on ws://127.0.0.1:57529/devtools/browser/0d031b15-931d-472e-a1f9-92b229247b29
+Missing baseUrl in compilerOptions. tsconfig-paths will be skipped
+
+====================================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        13.17.0                                                                        │
+  │ Browser:        Electron 118 (headless)                                                        │
+  │ Node Version:   v22.22.2 (C:\Program Files\nodejs\node.exe)                                    │
+  │ Specs:          64 found (01-auth.cy.ts, 02-sidebar-navigation.cy.ts, 03-nueva-operacion-real. │
+  │                 cy.ts, 04-clientes-real.cy.ts, 05-negative-auth.cy.ts, 06-negative-clientes.cy │
+  │                 .ts, 07-negative-nueva-operacion.cy.ts, 08-negative-guards.cy.ts, 09-admin-usu │
+  │                 arios.cy.ts, 09-cobranz...)                                                    │
+  │ Searched:       cypress/e2e/**/*.cy.ts                                                         │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  01-auth.cy.ts                                                                  (1 of 64)
+
+
+  CU01 — Autenticar usuario (backend real)
+    √ ADMIN autentica y abre dashboard (CU01 principal)
+    √ SELLER autentica y abre módulo de operaciones (CU01 principal)
+    √ COLLECTOR autentica y abre módulo de cobros (CU01 principal)
+    √ CU01-A: contraseña incorrecta muestra error y no redirige
+    √ CU01-A: DNI inexistente muestra error genérico y no redirige
+    √ CU01-B: 3 intentos fallidos mantienen error de autenticación
+    √ CU01-B: admin temporal muestra error tras intentos fallidos (sin asumir bloqueo)
+    √ CU01-G: logout borra sesión y redirige a /login
+    √ noAuthGuard: con sesión activa, el ADMIN puede continuar al dashboard
+    √ JWT audiencias separadas: token interno no da acceso al portal
+
+
+  10 passing (12s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_451.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        10                                                                               │
+  │ Passing:      10                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     12 seconds                                                                       │
+  │ Spec Ran:     01-auth.cy.ts                                                                    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  02-sidebar-navigation.cy.ts                                                    (2 of 64)
+
+
+  Sidebar y Guardias de Ruta
+    Admin
+      √ muestra grupos Principal, Gestión, Administración y Sistema
+      √ muestra items exclusivos de admin: Usuarios, Aprobaciones, Reportes, Configuración
+      √ el badge de Aprobaciones (si existe) tiene formato visible y no vacío
+      √ navega a /admin/clients al hacer clic en Clientes
+      √ navega a /admin/approvals al hacer clic en Aprobaciones
+      √ el ítem activo tiene estilo de selección
+      √ muestra información del usuario autenticado en el sidebar
+    Seller
+      √ muestra sección Gestión pero NO Administración ni Sistema
+      √ muestra Operaciones, Clientes y Productos pero no Dashboard ni Usuarios
+      √ no muestra el grupo "Principal" de admin
+    Collector
+      √ muestra sección "Cobranza en campo" con Mi Ruta, Mis cobros, Mis comisiones
+      √ no muestra secciones de Admin ni Seller
+    authGuard
+      √ redirige a /login cuando no hay sesión activa
+      √ redirige a /login cuando accede a ruta de seller sin sesión
+    roleGuard
+      √ Admin accediendo a /collector/route es redirigido (guard activo)
+      √ Collector accediendo a /admin/dashboard es redirigido (guard activo)
+
+
+  16 passing (10s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_452.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        16                                                                               │
+  │ Passing:      16                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     9 seconds                                                                        │
+  │ Spec Ran:     02-sidebar-navigation.cy.ts                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  03-nueva-operacion-real.cy.ts                                                  (3 of 64)
+
+
+  Nueva Operación real — Admin
+    √ crea préstamo real y retorna id en alta de crédito (5435ms)
+    √ préstamo: permite cambiar a fecha personalizada en condiciones
+    √ venta: permite configurar enganche en condiciones
+    √ venta: permite configurar cuotas adelantadas en condiciones
+    √ venta: detalle y aprobación respetan cuotas ya definidas
+    √ venta: approvals muestra cuotas adelantadas enriquecidas en modal
+    √ préstamo: aprobación mantiene input editable de cuotas
+
+
+  7 passing (20s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_453.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        7                                                                                │
+  │ Passing:      7                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     20 seconds                                                                       │
+  │ Spec Ran:     03-nueva-operacion-real.cy.ts                                                    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  04-clientes-real.cy.ts                                                         (4 of 64)
+
+
+  Gestión de Clientes real — Admin
+    √ CU03 principal: crea y edita cliente real con persistencia cruzada (8229ms)
+    √ CU03 alternativo: DNI duplicado muestra error y mantiene el modal abierto
+    Tabla y filtros
+      √ la tabla tiene las columnas: DNI, Nombre, Teléfono, Créditos, Riesgo, Acciones
+      √ muestra badge .ff-badge en la primera fila
+      √ filtra clientes al escribir en el campo de búsqueda
+      √ limpiar búsqueda restaura la lista completa
+      √ el dropdown de filtro tiene las opciones: Todos, Al día, Mora leve, Mora alta
+      √ clic en btn-ver navega a la ruta de detalle del cliente
+    Modal Editar Cliente — estructura
+      √ el formulario de edición tiene campos nombre, apellido y phone
+      √ el botón "Guardar Cambios" no está deshabilitado con el formulario pre-poblado
+    Modal Crear Cliente — validaciones
+      √ muestra los campos del formulario de creación
+      √ el botón "Crear Cliente" está deshabilitado con el formulario vacío
+      √ muestra errores de validación al tocar un campo vacío
+      √ el botón Cancelar cierra el modal sin crear
+
+  Gestión de Clientes real — Seller
+    √ Seller ve la tabla de clientes sin botones de edición
+
+
+  15 passing (32s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_454.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        15                                                                               │
+  │ Passing:      15                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     31 seconds                                                                       │
+  │ Spec Ran:     04-clientes-real.cy.ts                                                           │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  05-negative-auth.cy.ts                                                         (5 of 64)
+
+
+  Autenticación — Unhappy Paths
+    √ token corrupto en localStorage → app redirige a /login
+    √ usuario con is_temp_password=true → tempPasswordGuard redirige a /change-password
+    √ noAuthGuard redirige a /seller/operations si el usuario autenticado es SELLER
+    √ noAuthGuard redirige a /collector/route si el usuario autenticado es COLLECTOR
+    √ SELLER_COLLECTOR accede a /seller/clients sin ser bloqueado por roleGuard
+
+
+  5 passing (4s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_455.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        5                                                                                │
+  │ Passing:      5                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     3 seconds                                                                        │
+  │ Spec Ran:     05-negative-auth.cy.ts                                                           │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  06-negative-clientes.cy.ts                                                     (6 of 64)
+
+
+  Gestión de Clientes real — Unhappy Paths
+    √ búsqueda con string sin coincidencias → tabla muestra 0 filas
+    √ crear cliente con campos vacíos muestra errores de validación
+    √ crear cliente con DNI no numérico muestra error de formato
+    √ cancelar creación no persiste cliente nuevo
+    √ CL-18 — formulario completo sin cobrador mantiene Crear Cliente deshabilitado
+    √ crear cliente con DNI duplicado muestra error backend y mantiene modal abierto
+
+
+  6 passing (11s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_456.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        6                                                                                │
+  │ Passing:      6                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     10 seconds                                                                       │
+  │ Spec Ran:     06-negative-clientes.cy.ts                                                       │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  07-negative-nueva-operacion.cy.ts                                              (7 of 64)
+
+
+  Wizard Nueva Operación real — Unhappy Paths
+    √ recarga en paso intermedio vuelve al inicio del wizard
+    √ cancelar en el paso inicial abandona el wizard
+    √ paso confirmación: con 3 de 4 checks enviar queda deshabilitado
+    √ paso confirmación: con 4 checks enviar queda habilitado
+
+
+  4 passing (5s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_457.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        4                                                                                │
+  │ Passing:      4                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     4 seconds                                                                        │
+  │ Spec Ran:     07-negative-nueva-operacion.cy.ts                                                │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  08-negative-guards.cy.ts                                                       (8 of 64)
+
+
+  Guards & Roles — Unhappy Paths
+    √ usuario no autenticado en /admin/dashboard → redirige a /login
+    √ usuario no autenticado en /seller/clients → redirige a /login
+    √ usuario no autenticado en /collector/route → redirige a /login
+    √ usuario no autenticado en /profile → redirige a /login
+    √ SELLER intenta /admin/dashboard → bloqueado por roleGuard
+    √ SELLER intenta /admin/users → bloqueado por roleGuard
+    √ COLLECTOR intenta /admin/dashboard → bloqueado por roleGuard
+    √ COLLECTOR intenta /seller/operations/new → bloqueado por roleGuard
+    √ SELLER_COLLECTOR accede a /seller/clients sin ser bloqueado
+    √ SELLER_COLLECTOR accede a /collector/route sin ser bloqueado
+    √ ruta inexistente → redirige a /login (no autenticado)
+
+
+  11 passing (6s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_458.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        11                                                                               │
+  │ Passing:      11                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     5 seconds                                                                        │
+  │ Spec Ran:     08-negative-guards.cy.ts                                                         │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  09-admin-usuarios.cy.ts                                                        (9 of 64)
+
+
+  Admin — Gestión de Usuarios
+    √ renderiza listado con buscador y tabla
+    √ filtra usando el buscador actual
+    √ el botón "Nuevo usuario" abre modal (no ruta /new)
+    √ valida email en el formulario modal
+    √ permite completar el formulario base de alta
+
+
+  5 passing (5s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_459.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        5                                                                                │
+  │ Passing:      5                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     5 seconds                                                                        │
+  │ Spec Ran:     09-admin-usuarios.cy.ts                                                          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  09-cobranzas-collector.cy.ts                                                  (10 of 64)
+
+
+  Cobranzas — Collector Route (real)
+    √ renderiza la pantalla de ruta de cobro sin estado de error
+    √ mantiene acceso a /collector/route luego de recargar
+    √ si hay planillas permite navegar al detalle y volver
+
+
+  3 passing (2s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_460.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        3                                                                                │
+  │ Passing:      3                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     2 seconds                                                                        │
+  │ Spec Ran:     09-cobranzas-collector.cy.ts                                                     │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  10-admin-aprobaciones-real.cy.ts                                              (11 of 64)
+
+
+  Admin Aprobaciones real
+    √ aprueba una operación pendiente real y persiste estado (5072ms)
+    √ rechaza una operación pendiente real y la remueve de pendientes (5205ms)
+    √ aprueba ajustando cuotas y backend responde 200 o 409 de dominio
+
+
+  3 passing (15s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_461.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        3                                                                                │
+  │ Passing:      3                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     14 seconds                                                                       │
+  │ Spec Ran:     10-admin-aprobaciones-real.cy.ts                                                 │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  11-caja-tesoreria.cy.ts                                                       (12 of 64)
+
+
+  Admin — Caja Fuerte Central V4 — operatoria diaria
+    √ muestra la pantalla de Caja Fuerte sin estado de error
+    √ CASO 1 — Apertura de Caja: la jornada queda OPEN (sembrada por API)
+    √ TEST 1 — Lectura Unificada: la Caja Fuerte muestra el gasto (EGRESO) y la venta (INGRESO) sembrados por API
+    √ TEST 2 — Ingreso Manual (UI): registra un ingreso, suben los Ingresos y aparece badge INGRESO
+    √ TEST 2b — Ingreso Manual Mixto (UI): envía efectivo y transferencia al backend real
+    √ TEST 3 — Convertir Dinero: Efectivo → Transferencia, aparece badge CONVERSION y el Saldo Estimado se mantiene
+    1) TEST 4 — Cierre de Jornada: cierra caja + jornada y deshabilita la botonera
+    √ TEST 5 — Registrar Gasto (UI): registra un gasto y sube el KPI Gastos con badge EGRESO
+
+  Admin — Caja Fuerte Central V4 — apertura de jornada (caja cerrada)
+    2) CASO 0 — Apertura de Caja (UI): abre la caja operativa y la jornada queda OPEN con Pendiente de Arqueo
+    √ los botones de Ingreso Manual, Registrar Gasto y Convertir Dinero quedan habilitados con la caja cerrada
+
+  Admin — Caja Fuerte Central V4 — operaciones a Caja General con jornada cerrada
+    3) Ingreso Manual a Caja General (UI): registra un ingreso sin caja abierta y crece el Saldo Total Empresa
+    4) Registrar Gasto a Caja General (UI): registra un gasto sin caja abierta y baja el Saldo Total Empresa
+    5) Convertir Dinero a Caja General (UI): ejecuta una conversión sin caja abierta
+
+
+  8 passing (1m)
+  5 failing
+
+  1) Admin — Caja Fuerte Central V4 — operatoria diaria
+       TEST 4 — Cierre de Jornada: cierra caja + jornada y deshabilita la botonera:
+     AssertionError: Timed out retrying after 8000ms: Expected to find content: 'Abrir Caja' within the selector: 'button' but never did.
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/11-caja-tesoreria.cy.ts:395:40)
+
+  2) Admin — Caja Fuerte Central V4 — apertura de jornada (caja cerrada)
+       CASO 0 — Apertura de Caja (UI): abre la caja operativa y la jornada queda OPEN con Pendiente de Arqueo:
+     AssertionError: Timed out retrying after 15000ms: expected '<span.rounded-full.border.border-emerald-400/30.bg-emerald-400/10.px-3.py-1.text-xs.font-semibold.text-emerald-300.ng-star-inserted>' to be 'visible'
+
+This element `<span.rounded-full.border.border-emerald-400/30.bg-emerald-400/10.px-3.py-1.text-xs.font-semibold.text-emerald-300.ng-star-inserted>` is not visible because its content is being clipped by one of its parent elements, which has a CSS property of overflow: `hidden`, `scroll` or `auto`
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/11-caja-tesoreria.cy.ts:506:52)
+
+  3) Admin — Caja Fuerte Central V4 — operaciones a Caja General con jornada cerrada
+       Ingreso Manual a Caja General (UI): registra un ingreso sin caja abierta y crece el Saldo Total Empresa:
+     AssertionError: Timed out retrying after 8000ms: expected '<input#mi_dest_DAILY.p-element>' to be 'disabled'
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/11-caja-tesoreria.cy.ts:563:49)
+
+  4) Admin — Caja Fuerte Central V4 — operaciones a Caja General con jornada cerrada
+       Registrar Gasto a Caja General (UI): registra un gasto sin caja abierta y baja el Saldo Total Empresa:
+     AssertionError: Timed out retrying after 8000ms: expected '<input#src_DAILY.p-element>' to be 'disabled'
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/11-caja-tesoreria.cy.ts:602:45)
+
+  5) Admin — Caja Fuerte Central V4 — operaciones a Caja General con jornada cerrada
+       Convertir Dinero a Caja General (UI): ejecuta una conversión sin caja abierta:
+     AssertionError: Timed out retrying after 8000ms: expected '<input#conv_src_DAILY.p-element>' to be 'disabled'
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/11-caja-tesoreria.cy.ts:647:48)
+
+
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_462.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        13                                                                               │
+  │ Passing:      8                                                                                │
+  │ Failing:      5                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  5                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 minute, 7 seconds                                                              │
+  │ Spec Ran:     11-caja-tesoreria.cy.ts                                                          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\1     (1280x720)
+     1-caja-tesoreria.cy.ts\Admin — Caja Fuerte Central V4 — operatoria diaria -- TES               
+     T 4 — Cierre de Jornada cierra caja + jornada y deshabilita la botonera (failed)               
+     .png                                                                                           
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\1     (1280x720)
+     1-caja-tesoreria.cy.ts\Admin — Caja Fuerte Central V4 — apertura de jornada (caj               
+     a cerrada) -- CASO 0 — Apertura de Caja (UI) abre la caja operativa y la jornada               
+      queda OPEN con Pendiente de Arqueo (failed).png                                               
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\1     (1280x720)
+     1-caja-tesoreria.cy.ts\Admin — Caja Fuerte Central V4 — operaciones a Caja Gener               
+     al con jornada cerrada -- Ingreso Manual a Caja General (UI) registra un ingreso               
+      sin caja abierta y crece el Saldo Total Empresa (failed).png                                  
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\1     (1280x720)
+     1-caja-tesoreria.cy.ts\Admin — Caja Fuerte Central V4 — operaciones a Caja Gener               
+     al con jornada cerrada -- Registrar Gasto a Caja General (UI) registra un gasto                
+     sin caja abierta y baja el Saldo Total Empresa (failed).png                                    
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\1     (1280x720)
+     1-caja-tesoreria.cy.ts\Admin — Caja Fuerte Central V4 — operaciones a Caja Gener               
+     al con jornada cerrada -- Convertir Dinero a Caja General (UI) ejecuta una conve               
+     rsión sin caja abierta (failed).png                                                            
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  12-portal-clientes.cy.ts                                                      (13 of 64)
+
+
+  Portal Cliente — Dashboard y Créditos
+    √ muestra dashboard portal sin error de app
+    √ en lista de creditos, abre detalle si existen tarjetas
+    √ muestra pagina de creditos sin romper contrato visual basico
+
+
+  3 passing (2s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_463.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        3                                                                                │
+  │ Passing:      3                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     12-portal-clientes.cy.ts                                                         │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  13-admin-dashboard.cy.ts                                                      (14 of 64)
+
+
+  Admin — Dashboard
+    √ renderiza la grilla KPI actual
+    √ muestra panel de últimas operaciones con tabla
+    √ muestra el panel de próximos vencimientos
+    √ DV-01 — requiere doble validación al aprobar un cobro desde dashboard
+    √ DV-02 — permite cancelar la doble validación sin aprobar el cobro
+    √ DV-03 — permite cerrar el modal desde la X sin aprobar el cobro
+    √ DV-04 — no cierra el modal al hacer click en el backdrop
+
+
+  7 passing (6s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_464.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        7                                                                                │
+  │ Passing:      7                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     6 seconds                                                                        │
+  │ Spec Ran:     13-admin-dashboard.cy.ts                                                         │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  14-seller-operaciones.cy.ts                                                   (15 of 64)
+
+
+  Seller — Lista de Operaciones
+    √ renderiza la página sin error
+    √ muestra el dropdown de filtro por Estado
+    √ muestra el dropdown de filtro por Tipo
+    √ el botón "Nueva operación" es visible para SELLER
+    √ clic en "Nueva operación" navega al wizard
+    √ muestra tabla o estado vacío (no error)
+
+  Admin — Lista de Operaciones (misma vista vía /admin)
+    √ renderiza sin error
+    √ botón "Nueva operación" existe para ADMIN
+    √ CR-07: filtra operaciones por estado Activo
+    √ CR-08: filtra por cliente al buscar "Perez"
+
+
+  10 passing (6s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_465.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        10                                                                               │
+  │ Passing:      10                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     5 seconds                                                                        │
+  │ Spec Ran:     14-seller-operaciones.cy.ts                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  15-seller-productos.cy.ts                                                     (16 of 64)
+
+
+  Admin — Lista de Productos
+    √ renderiza sin error
+    √ muestra campo de búsqueda por título o descripción
+    √ muestra dropdown de filtro por Estado
+    √ muestra dropdown de filtro por Categoría
+    √ el botón "Nuevo producto" es visible para ADMIN
+    √ clic en "Nuevo producto" navega al formulario
+    √ muestra tabla o estado vacío (no error)
+
+  Seller — Lista de Productos (sin botón crear)
+    √ SELLER no ve el botón "Nuevo producto"
+    √ muestra campo de búsqueda
+
+
+  9 passing (5s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_466.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        9                                                                                │
+  │ Passing:      9                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     4 seconds                                                                        │
+  │ Spec Ran:     15-seller-productos.cy.ts                                                        │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  16-comisiones.cy.ts                                                           (17 of 64)
+
+
+  Seller — Mis Comisiones
+    √ muestra el título "Mis comisiones"
+    √ muestra el subtítulo de ventas
+    √ existe acción de refresh
+    √ muestra dropdown de filtro por estado
+    √ muestra tabla, vacío o loading (no error)
+
+  Collector — Mis Comisiones
+    √ muestra el título "Mis comisiones"
+    √ muestra el subtítulo de cobros
+    √ existe acción de refresh
+    √ muestra tabla, vacío o loading (no error)
+
+  Admin — Gestión de Comisiones (liquidaciones)
+    √ renderiza sin error
+    √ muestra tabs Liquidaciones / Historial
+    √ muestra tabla o skeleton en la tab activa
+
+
+  12 passing (6s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_467.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        12                                                                               │
+  │ Passing:      12                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     5 seconds                                                                        │
+  │ Spec Ran:     16-comisiones.cy.ts                                                              │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  17-admin-colecciones-gastos-pagos-real.cy.ts                                  (18 of 64)
+
+
+  Admin — Planillas de Cobro
+    √ muestra el título "Planillas de cobro"
+    √ muestra el botón "Generar nueva planilla"
+    √ tiene dropdown de filtro por cobrador
+    √ tiene selector de fecha para filtro
+    √ renderiza sin error
+    √ clic en "Generar nueva planilla" navega al flujo de generación
+
+  Admin — Gastos
+    √ muestra el título "Gastos"
+    √ muestra botón "Registrar gasto"
+    √ muestra botón para gestionar categorías
+    √ renderiza sin error
+    √ al hacer clic en "Gestionar categorías" muestra el panel
+    √ el panel de categorías tiene botón "Nueva categoría"
+
+  Admin — Cobros (Payments)
+    √ muestra el título "Cobros"
+    √ muestra el botón de refresh
+    √ tiene dropdowns de filtro
+    √ renderiza sin error
+
+
+  16 passing (9s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_468.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        16                                                                               │
+  │ Passing:      16                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     9 seconds                                                                        │
+  │ Spec Ran:     17-admin-colecciones-gastos-pagos-real.cy.ts                                     │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  17-admin-colecciones-gastos-pagos.cy.ts                                       (19 of 64)
+
+
+  Admin — Gastos (real)
+    √ renderiza pantalla de gastos sin estado de error
+    √ muestra acciones principales de gastos
+    √ abre panel de categorias desde la accion de gestion
+
+  Admin — Cobros (real)
+    √ renderiza pantalla de cobros sin estado de error
+    √ muestra controles base del listado de cobros
+
+
+  5 passing (3s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_469.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        5                                                                                │
+  │ Passing:      5                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     3 seconds                                                                        │
+  │ Spec Ran:     17-admin-colecciones-gastos-pagos.cy.ts                                          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  18-admin-reportes-mora.cy.ts                                                  (20 of 64)
+
+
+  Admin — Reportes
+    √ renderiza sin error
+    √ muestra al menos 2 tabs de navegación
+    √ la primera tab está activa con estilo resaltado
+    √ muestra contenido financiero (montos o skeletons)
+    √ se puede navegar entre tabs sin error
+
+  Admin — Reportes — Movimientos de caja
+    √ renderiza la tab sin error
+    √ muestra el selector de rango de fechas y el botón de búsqueda
+    √ al buscar, muestra jornadas, estado vacío o reporte sin romper
+    √ si hay una jornada disponible, muestra el resumen de movimientos o el estado vacío de la caja
+    √ muestra el selector de Ámbito con las opciones Caja x Jornada y Caja General
+    √ al cambiar a Caja General, oculta el dropdown de Jornada y cambia el botón de búsqueda
+    √ al buscar en Caja General, muestra el resumen o el estado vacío sin romper
+
+  Admin — Morosidad
+    √ renderiza sin error
+    √ muestra KPI cards de mora (skeleton o reales)
+    √ muestra métricas o estados visuales sin romper
+    √ muestra grilla o estado de carga
+
+
+  16 passing (8s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_470.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        16                                                                               │
+  │ Passing:      16                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     8 seconds                                                                        │
+  │ Spec Ran:     18-admin-reportes-mora.cy.ts                                                     │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  19-public-password.cy.ts                                                      (21 of 64)
+
+
+  Cambio de contraseña interno (/change-password)
+    √ sin sesión redirige a login
+    √ con sesión real interna permite abrir la pantalla
+
+  Cambio de contraseña portal (/portal/change-password)
+    √ sin sesión redirige a /portal/login
+    √ con sesión portal real permite abrir change-password
+
+
+  4 passing (2s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_471.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        4                                                                                │
+  │ Passing:      4                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     19-public-password.cy.ts                                                         │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  20-admin-config-sheet-real.cy.ts                                              (22 of 64)
+
+
+  Admin — Configuración
+    √ renderiza sin error
+    √ muestra el panel lateral de navegación de tabs
+    √ tiene al menos 4 opciones de configuración en el panel
+    √ la tab activa tiene estilo visual de selección
+    √ muestra tabs de navegación de configuración
+    √ renderiza contenido de la tab activa
+    √ muestra la opción de tab "General"
+    √ muestra la opción de tab "Usuarios"
+    √ muestra la opción de tab "Notificaciones"
+
+  Admin — Planilla Legacy (/admin/sheet)
+    √ renderiza sin error
+    √ muestra título o acción principal de planillas
+    √ tiene dropdown de cobrador
+    √ tiene selector de fecha
+    √ tiene dropdown de filtro de cuotas
+    √ muestra el botón "Generar planilla"
+
+
+  15 passing (6s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_472.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        15                                                                               │
+  │ Passing:      15                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     6 seconds                                                                        │
+  │ Spec Ran:     20-admin-config-sheet-real.cy.ts                                                 │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  20-admin-config-sheet.cy.ts                                                   (23 of 64)
+
+
+  Admin — Configuracion (real)
+    √ renderiza pantalla de configuracion sin estado de error
+    √ muestra tabs base de configuracion
+
+  Admin — Sheet legacy (real)
+    √ ruta legacy /admin/sheet no rompe la app y redirige a ruta valida
+    √ el fallback muestra una pantalla admin utilizable
+
+
+  4 passing (3s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_473.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        4                                                                                │
+  │ Passing:      4                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     3 seconds                                                                        │
+  │ Spec Ran:     20-admin-config-sheet.cy.ts                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  21-seller-clientes-nuevo-real.cy.ts                                           (24 of 64)
+
+
+  Seller clientes real
+    √ muestra campos principales y CTA de registro
+    √ mantiene Registrar cliente deshabilitado con formulario vacío
+    √ email inválido muestra error de formato
+    √ botón Cancelar vuelve a /seller/clients
+    √ crea cliente real desde /seller/clients/new y persiste en listado
+
+
+  5 passing (7s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_474.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        5                                                                                │
+  │ Passing:      5                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     7 seconds                                                                        │
+  │ Spec Ran:     21-seller-clientes-nuevo-real.cy.ts                                              │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  22-admin-generar-planilla-real.cy.ts                                          (25 of 64)
+
+
+  Admin — Generar Planilla de Cobro
+    √ muestra el título "Generar planilla de cobro"
+    √ muestra bloque de impacto de generación
+    √ tiene dropdown de cobrador
+    √ tiene selector de fecha
+    √ tiene filtro de cuotas
+    √ muestra botón "Generar"
+    √ botón Cancelar navega a /admin/collections
+
+
+  7 passing (10s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_475.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        7                                                                                │
+  │ Passing:      7                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     9 seconds                                                                        │
+  │ Spec Ran:     22-admin-generar-planilla-real.cy.ts                                             │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  22-admin-generar-planilla.cy.ts                                               (26 of 64)
+
+
+  Admin — Generar Planilla de Cobro (real)
+    √ muestra titulo y descripcion base del formulario
+    √ renderiza controles del formulario
+    √ boton Cancelar vuelve a /admin/collections
+
+
+  3 passing (3s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_476.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        3                                                                                │
+  │ Passing:      3                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     2 seconds                                                                        │
+  │ Spec Ran:     22-admin-generar-planilla.cy.ts                                                  │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  23-credit-detail.cy.ts                                                        (27 of 64)
+
+
+  Detalle de Crédito — Seller (real)
+    √ lista de operaciones carga sin error
+    √ si existe un crédito, se puede abrir el detalle y volver
+    √ seller no ve acciones administrativas en detalle
+
+  Detalle de Crédito — Admin (real)
+    √ admin puede abrir detalle desde operaciones
+    √ si el estado del crédito lo permite, aparecen acciones admin
+
+
+  5 passing (2s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_477.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        5                                                                                │
+  │ Passing:      5                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     2 seconds                                                                        │
+  │ Spec Ran:     23-credit-detail.cy.ts                                                           │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  24-producto-detalle-editar.cy.ts                                              (28 of 64)
+
+
+  Producto — Detalle y Edición (real)
+    √ listado de productos carga sin error
+    √ si hay producto, abre detalle y muestra acciones base
+    √ si hay producto, editar y cancelar vuelve al detalle
+
+  Producto — Variantes y Unidades (real)
+    √ si hay producto, navega a variantes
+    √ en variantes, seller no ve creación
+
+
+  5 passing (2s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_478.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        5                                                                                │
+  │ Passing:      5                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     2 seconds                                                                        │
+  │ Spec Ran:     24-producto-detalle-editar.cy.ts                                                 │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  25-seller-cliente-detalle.cy.ts                                               (29 of 64)
+
+
+  Detalle de Cliente — Admin
+    √ muestra el nombre del cliente
+    √ muestra el tag de estado Activo
+    √ Admin ve el botón Editar
+    √ Admin ve el botón Desactivar
+    √ botón Volver navega a la lista
+    √ clic en Editar activa el modo edición
+    √ en modo edición: campo fullName visible y prellenado
+    √ Cancelar edición vuelve a la vista read-only
+
+  Detalle de Cliente — Seller
+    √ muestra el nombre del cliente
+    √ Seller NO ve el botón Desactivar
+    √ botón Volver existe
+
+  Detalle de Cliente — Estado de carga/error
+    √ muestra loading mientras carga
+    √ muestra error si no existe el cliente
+
+
+  13 passing (7s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_479.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        13                                                                               │
+  │ Passing:      13                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     7 seconds                                                                        │
+  │ Spec Ran:     25-seller-cliente-detalle.cy.ts                                                  │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  26-collector-planilla-detalle.cy.ts                                           (30 of 64)
+
+
+  Collector — Detalle de Planilla (real)
+    √ desde la ruta abre detalle de planilla cuando hay datos
+    √ en detalle muestra items o estado vacio sin romper
+    √ boton Volver regresa a /collector/route
+
+
+  3 passing (2s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_480.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        3                                                                                │
+  │ Passing:      3                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     26-collector-planilla-detalle.cy.ts                                              │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  27-portal-credits.cy.ts                                                       (31 of 64)
+
+
+  Portal — Lista de Créditos (/portal/credits)
+    √ muestra el titulo de creditos y no rompe la app
+    √ renderiza tarjetas o estado vacio
+    √ si hay tarjetas, navegar a detalle funciona
+
+  Portal — Detalle de Crédito (/portal/credits/:id)
+    √ si existe detalle accesible, muestra secciones base y permite volver
+
+
+  4 passing (1s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_481.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        4                                                                                │
+  │ Passing:      4                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     27-portal-credits.cy.ts                                                          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  28-admin-user-detail.cy.ts                                                    (32 of 64)
+
+
+  Admin — Detalle de Usuario (real)
+    √ listado de usuarios carga sin error
+    √ si hay usuarios, se puede abrir detalle y volver
+    √ si abre detalle, muestra acciones principales
+    √ si abre detalle, editar entra y sale de modo edición
+
+
+  4 passing (3s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_482.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        4                                                                                │
+  │ Passing:      4                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     3 seconds                                                                        │
+  │ Spec Ran:     28-admin-user-detail.cy.ts                                                       │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  29-admin-collection-detail.cy.ts                                              (33 of 64)
+
+
+  Admin — Detalle de Planilla de Cobro (real)
+    √ abre detalle de planilla desde el listado cuando hay datos
+    √ en detalle muestra informacion base sin romper
+    √ boton Volver regresa a /admin/collections
+
+
+  3 passing (1s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_483.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        3                                                                                │
+  │ Passing:      3                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     29-admin-collection-detail.cy.ts                                                 │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  30-producto-crear.cy.ts                                                       (34 of 64)
+
+
+  Admin — Crear Producto
+    √ muestra el título "Nuevo producto"
+    √ tiene el campo título
+    √ tiene el campo descripción
+    √ tiene el campo modelo
+    √ botón Crear producto deshabilitado con formulario vacío
+    √ tocar campo título sin completar muestra error
+    √ botón Cancelar navega a la lista de productos
+    √ completar el título habilita el botón Crear producto
+
+
+  8 passing (5s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_484.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        8                                                                                │
+  │ Passing:      8                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     4 seconds                                                                        │
+  │ Spec Ran:     30-producto-crear.cy.ts                                                          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  31-qa-regression-issues.cy.ts                                                 (35 of 64)
+
+
+  QA Regression — SALE frontend integration
+    √ simula SALE con down_payment, muestra monto financiado y no usa prepaid_installments
+    √ crea SALE con unit_ids y down_payment, sin prepaid_installments
+    √ crea SALE con enganche mixto y envía split del pago inicial
+    √ crea SALE con cuotas adelantadas mixtas y envía split del adelanto
+    √ bloquea la venta cuando el enganche supera el total del carrito
+    √ CR-22 — respeta la unidad puntual elegida y no reemplaza por la primera disponible
+
+
+  6 passing (2s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_485.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        6                                                                                │
+  │ Passing:      6                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     2 seconds                                                                        │
+  │ Spec Ran:     31-qa-regression-issues.cy.ts                                                    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  32-client-detail-regression.cy.ts                                             (36 of 64)
+
+
+  Client detail regression — CL-02
+    √ loads the real client detail from service after clicking Ver
+    √ shows not found only when the backend returns 404
+
+
+  2 passing (2s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_486.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        2                                                                                │
+  │ Passing:      2                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     32-client-detail-regression.cy.ts                                                │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  33-product-create-modal-regression.cy.ts                                      (37 of 64)
+
+
+  Admin — Crear producto
+    √ mantiene Crear producto deshabilitado hasta completar los campos requeridos
+
+
+  1 passing (2s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_487.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     33-product-create-modal-regression.cy.ts                                         │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  34-product-list-regression.cy.ts                                              (38 of 64)
+
+
+  Admin — Alta de producto
+    √ redirige al detalle luego de confirmar la creación
+
+
+  1 passing (3s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_488.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     3 seconds                                                                        │
+  │ Spec Ran:     34-product-list-regression.cy.ts                                                 │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  35-product-success-toast-regression.cy.ts                                     (39 of 64)
+
+
+  Admin — Toast de alta producto
+    √ muestra el mensaje de éxito luego de guardar el producto
+
+
+  1 passing (2s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_489.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     35-product-success-toast-regression.cy.ts                                        │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  36-product-edit-category-regression.cy.ts                                     (40 of 64)
+
+
+  Admin — Edición y categoría en productos
+    √ muestra la categoría y permite navegar a editar
+
+
+  1 passing (1s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_490.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        1                                                                                │
+  │ Passing:      1                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     36-product-edit-category-regression.cy.ts                                        │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  37-portal-auth-use-cases.cy.ts                                                (41 of 64)
+
+
+  Portal Cliente — autenticación y guards
+    √ redirige a /portal/login si se intenta abrir /portal/dashboard sin sesión
+    √ autentica por DNI real y redirige al dashboard del portal
+    √ con contraseña inválida mantiene al usuario en login sin crear sesión
+    √ sin sesión, rutas privadas de portal redirigen a login
+    √ si existe sesión portal, puede abrir una ruta privada
+
+
+  5 passing (3s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_491.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        5                                                                                │
+  │ Passing:      5                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     2 seconds                                                                        │
+  │ Spec Ran:     37-portal-auth-use-cases.cy.ts                                                   │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  38-dropdown-overflow-regression.cy.ts                                         (42 of 64)
+
+
+  Regresión — Dropdowns con appendTo="body" (US-01, US-02, CL-09, CR-14, GA-02)
+    US-02 — Filtro Rol en /admin/users
+      √ panel de Rol no queda cortado — se adjunta a body via p-overlay
+      √ panel de Estado no queda cortado — se adjunta a body via p-overlay
+    US-01 — Dropdown Rol en modal Nuevo Usuario
+      √ dropdown Rol dentro del modal se adjunta a body y es visible
+    CL-09 — Filtro riesgo en /admin/clients
+      √ dropdown de filtro se adjunta a body y no queda cortado
+    CR-14 — Filtro estado en /admin/operations
+      √ panel de estado se adjunta a body — puede abrirse más de una vez
+
+
+  5 passing (4s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_492.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        5                                                                                │
+  │ Passing:      5                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     4 seconds                                                                        │
+  │ Spec Ran:     38-dropdown-overflow-regression.cy.ts                                            │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  39-calendar-overflow-regression.cy.ts                                         (43 of 64)
+
+
+  CR-10 — Calendario primer pago: panel adjunto a body
+    √ step de nueva operación carga correctamente con tipo Venta
+    √ p-calendar existe en el DOM de nueva operación
+
+  CL-05 — Calendarios de período en historial de cliente (Admin)
+    √ la página de detalle de cliente carga correctamente
+    √ panel de calendario Desde se adjunta a body — no clipado por tab-content
+    √ panel de calendario Hasta se adjunta a body
+    √ dropdown de tipo de evento se adjunta a body
+
+
+  6 passing (4s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_493.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        6                                                                                │
+  │ Passing:      6                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     4 seconds                                                                        │
+  │ Spec Ran:     39-calendar-overflow-regression.cy.ts                                            │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  40-contrast-color-regression.cy.ts                                            (44 of 64)
+
+
+  CL-02 — Ver cliente (Seller): texto visible sobre fondo oscuro
+    √ el card de detalle NO usa bg-white — usa fondo del tema oscuro
+    √ el nombre del cliente es visible (contraste texto/fondo)
+
+  CR-15 — Checkboxes en step-confirm: tilde visible
+    √ el ícono de tilde en p-checkbox tiene color blanco cuando está marcado
+    √ al marcar un checkbox, el ícono es visible (no negro sobre oscuro)
+
+  CR-13 — Texto en nueva operación legible (headings con color explícito)
+    √ step-type renderiza texto visible en el primer paso
+    √ URL de nueva operación carga correctamente para Seller
+
+  PR-09 — Editar Producto: formulario distinguible del fondo
+    √ el formulario está envuelto en ff-panel — visible sobre el fondo
+    √ el título "Editar producto" es visible
+    √ los inputs del formulario son interactuables
+
+
+  9 passing (5s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_494.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        9                                                                                │
+  │ Passing:      9                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     5 seconds                                                                        │
+  │ Spec Ran:     40-contrast-color-regression.cy.ts                                               │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  41-pagination-regression.cy.ts                                                (45 of 64)
+
+
+  CR-17 — Paginación de operaciones (Seller)
+    √ el paginador existe en la tabla de operaciones
+    √ inicialmente muestra 10 registros (primera página)
+    √ navegar a la página 2 muestra los siguientes 10 registros
+    √ la última página muestra los registros restantes (25 total → pág 3 = 5)
+    √ el informe de página muestra el rango correcto
+
+  CL-08 — Paginación de clientes (Seller)
+    √ el paginador existe en la tabla de clientes
+    √ inicialmente muestra 10 clientes (primera página)
+    √ navegar a la página 2 muestra los siguientes 10 clientes
+    √ la última página muestra los 2 clientes restantes (22 total → pág 3 = 2)
+    √ el informe de página muestra el rango correcto
+    √ cambiar a 25 filas muestra todos los registros en una sola página
+
+
+  11 passing (6s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_495.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        11                                                                               │
+  │ Passing:      11                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     5 seconds                                                                        │
+  │ Spec Ran:     41-pagination-regression.cy.ts                                                   │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  42-group-e-regression.cy.ts                                                   (46 of 64)
+
+
+  CL-10 — Créditos del cliente: muestra activeCredits del backend
+    √ muestra 3 créditos para Ana García (no 0)
+    √ muestra 0 créditos para Carlos Ruiz (sin créditos)
+
+  PR-07 — Desactivar Categoría: confirm dialog antes de ejecutar
+    √ al hacer click en Desactivar aparece un confirm dialog
+    √ cancelar NO llama a la API
+    √ confirmar SÍ llama a la API de desactivación
+    √ categoría inactiva muestra opción de Activar — puede reactivarse
+
+  PR-08 — Desactivar Marca: confirm dialog antes de ejecutar
+    √ al hacer click en Desactivar aparece confirm dialog para marca
+    √ cancelar NO llama a la API de marcas
+    √ marca inactiva muestra opción Activar
+
+  CR-09 — Unidad no disponible: mensaje claro y recarga automática
+    √ error de unidad no encontrada muestra "Unidad no disponible" en el toast
+
+
+  10 passing (10s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_496.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        10                                                                               │
+  │ Passing:      10                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     10 seconds                                                                       │
+  │ Spec Ran:     42-group-e-regression.cy.ts                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  43-admin-config-holidays.cy.ts                                                (47 of 64)
+
+
+  Admin — Configuración — Feriados
+    √ renderiza el listado de feriados
+    √ no expande el calendario automáticamente al abrir el modal de alta
+    √ crea un feriado extraordinario y envía el payload correcto con recálculo
+    √ edita un feriado existente
+    √ muestra la vista previa de duplicación y luego confirma la duplicación
+    √ muestra advertencia si el año del preview es inválido
+
+
+  6 passing (7s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_497.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        6                                                                                │
+  │ Passing:      6                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     6 seconds                                                                        │
+  │ Spec Ran:     43-admin-config-holidays.cy.ts                                                   │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  43-session-changes-regression.cy.ts                                           (48 of 64)
+
+
+  A — Sidebar: badge de aprobaciones pendientes
+    √ muestra el badge con el conteo cuando pending_approvals_count > 0
+    √ no muestra el badge cuando pending_approvals_count es 0
+    √ no muestra el badge cuando pending_approvals_count no viene en la respuesta
+
+  B — Productos: categorías cargadas desde el backend (filtro)
+    √ llama al endpoint de categorías al cargar el listado
+    √ el dropdown de filtro de categorías recibe opciones del backend
+
+  E — Planillas: AdminCollectionsComponent en /admin/collections
+    √ carga el listado de planillas con datos del cobrador
+    √ muestra la fecha y el filtro de la planilla
+    √ hacer clic en una fila carga el detalle en el panel derecho
+    √ el panel derecho muestra el botón de descarga PDF
+    √ el botón "Generar nueva planilla" es visible
+    √ el intercept de GET /collections devuelve los datos del fixture
+
+
+  11 passing (6s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_498.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        11                                                                               │
+  │ Passing:      11                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     6 seconds                                                                        │
+  │ Spec Ran:     43-session-changes-regression.cy.ts                                              │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  44-qa-regression-batch2.cy.ts                                                 (49 of 64)
+
+
+  CL-11/CL-12 — Validación nombres y DNI en modal crear cliente (Admin)
+    √ CL-11 — no permite ingresar números en el campo nombres
+    √ CL-12 — DNI fuera del rango 7-8 dígitos muestra error y bloquea el botón
+
+  CL-13 — Modal crear cliente sin campo ingresos, con cobrador
+    √ modal no tiene campo Ingresos
+    √ modal tiene dropdown Cobrador asignado
+
+  CL-16 — Modal editar cliente expone email, dirección y cobrador
+    √ modal editar tiene campos email, dirección y cobrador
+
+  US-03 — Validación campos Nombre y DNI en formulario de usuario
+    √ nombre con símbolos invalida el campo
+    √ DNI de un solo dígito invalida el campo
+
+  US-04 — Dropdown Rol en editar usuario usa appendTo="body"
+    √ dropdown Rol del formulario de edición tiene appendTo body
+
+  US-05 — Botón Guardar Cambios deshabilitado sin cambios (editar usuario)
+    √ al entrar en modo edición el botón Guardar está deshabilitado
+    √ al modificar un campo el botón Guardar se habilita
+
+  PR-10 — Botón Guardar Cambios deshabilitado sin cambios (editar producto)
+    √ al cargar la página el botón Guardar Cambios está deshabilitado
+    √ al modificar título el botón se habilita
+
+  CR-18 — Tasa de interés visible en detalle de operación
+    √ muestra la tasa de interés como porcentaje (no vacío)
+    √ la tasa de 0.15 se muestra como 15.00%
+
+  CR-19 — Diálogo de cancelación anticipada es claro
+    √ botón de cancelación anticipada dice "Cancelación total anticipada"
+    √ diálogo explica que es para pago total y menciona pago anticipado por cuota
+
+  PR-14 — Edición de categorías y marcas disponible
+    √ tabla de categorías tiene botón Editar por fila
+    √ click en Editar categoría abre diálogo con el nombre actual
+    √ tabla de marcas tiene botón Editar por fila
+    √ click en Editar marca abre diálogo con el nombre actual
+
+  PR-12 — Tabla de variantes muestra color, talle y capacidad
+    √ variante muestra color, talle y capacidad en la tabla
+
+
+  21 passing (13s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_499.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        21                                                                               │
+  │ Passing:      21                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     12 seconds                                                                       │
+  │ Spec Ran:     44-qa-regression-batch2.cy.ts                                                    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  45-liquidaciones-regression.cy.ts                                             (50 of 64)
+
+
+  LI-01/LI-02 — Sueldo Fijo: actualización y limpieza del editor (Admin)
+    √ LI-01 — la tabla de cobradores refleja el nuevo sueldo sin refresh manual
+    √ LI-02 — el editor de sueldo queda limpio después de guardar
+
+  LI-03 — Dialog de liquidación muestra el detalle de ventas (Admin)
+    √ LI-03 — abre el dialog con tabla de ventas al hacer click en "Liquidar"
+    √ LI-03 — el dialog muestra la tabla con las ventas individuales del empleado
+    √ LI-03 — muestra "Sin ventas pendientes." si no hay comisiones
+
+
+  5 passing (4s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_500.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        5                                                                                │
+  │ Passing:      5                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     4 seconds                                                                        │
+  │ Spec Ran:     45-liquidaciones-regression.cy.ts                                                │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  46-cobros-regression.cy.ts                                                    (51 of 64)
+
+
+  CO-01a — Revertir cobro: tag "Revertido" aparece en lista tras confirmar
+    √ CO-01a — el pago aprobado no muestra "Revertido" antes de la reversión
+    √ CO-01a — tras confirmar la reversión la lista muestra tag "Revertido"
+
+  CO-01b — Cuota revertida muestra "Pendiente" en planilla de cobros (Admin)
+    √ CO-01b — planilla con installment_status PENDING muestra tag "Pendiente"
+    √ CO-01b — planilla con installment_status PENDING NO muestra tag "Cobrado"
+
+
+  4 passing (4s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_501.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        4                                                                                │
+  │ Passing:      4                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     4 seconds                                                                        │
+  │ Spec Ran:     46-cobros-regression.cy.ts                                                       │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  47-full-width-layout-smoke.cy.ts                                              (52 of 64)
+
+
+  47 - Full width layout smoke
+    √ mantiene ancho completo en /collector/route (desktop)
+    √ mantiene ancho completo en /collector/payments (desktop)
+    √ mantiene ancho completo en /collector/commissions (desktop)
+    √ mantiene ancho completo en /admin/users/new (desktop)
+    √ mantiene ancho completo en /admin/collections/sheet-1 (desktop)
+    √ mantiene ancho completo en /seller/clients/new (desktop)
+    √ mantiene ancho completo en /profile (desktop)
+
+
+  7 passing (4s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_502.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        7                                                                                │
+  │ Passing:      7                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     3 seconds                                                                        │
+  │ Spec Ran:     47-full-width-layout-smoke.cy.ts                                                 │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  47-jornada-regression.cy.ts                                                   (53 of 64)
+
+
+  CA-02a — Dashboard muestra badge de jornada cuando la fecha activa es anterior a hoy
+    √ CA-02a — muestra el badge de jornada anterior cuando dashboard.date < hoy
+    √ CA-02a — el badge contiene la fecha de la jornada activa
+    √ CA-02a — NO muestra el badge cuando dashboard.date == hoy
+
+  CA-02b — Cerrar caja post-medianoche cierra la jornada del día anterior
+    √ CA-02b — el botón de cerrar caja existe cuando la jornada no está cerrada
+    √ CA-02b — al confirmar el cierre, el diálogo se abre con el snapshot de la caja activa
+    √ CA-02b — el POST de cierre se llama SIN register_date (backend auto-detecta la jornada)
+
+  CA-02c — Aprobar cobro post-medianoche: el endpoint responde correctamente
+    √ CA-02c — cobro PENDING aparece en la lista y puede aprobarse
+    √ CA-02c — el endpoint de aprobación responde 200 (backend gestiona jornada internamente)
+
+  CA-02d — Revertir cobro de jornada activa post-medianoche funciona sin error de caja cerrada
+    √ CA-02d — la reversión de un cobro aprobado responde 200 (jornada aún abierta)
+
+
+  9 passing (8s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_503.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        9                                                                                │
+  │ Passing:      9                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     8 seconds                                                                        │
+  │ Spec Ran:     47-jornada-regression.cy.ts                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  48-full-width-layout-mobile-observability.cy.ts                               (54 of 64)
+
+
+  48 - Full width layout mobile observability
+    pending responsive mobile rollout
+      - captura estado mobile en /collector/route
+      - captura estado mobile en /collector/payments
+      - captura estado mobile en /collector/commissions
+      - captura estado mobile en /admin/users/new
+      - captura estado mobile en /admin/collections/sheet-1
+      - captura estado mobile en /seller/clients/new
+      - captura estado mobile en /profile
+
+
+  0 passing (26ms)
+  7 pending
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_504.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        7                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      7                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     0 seconds                                                                        │
+  │ Spec Ran:     48-full-width-layout-mobile-observability.cy.ts                                  │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  49-ca04-ca05-register-date.cy.ts                                              (55 of 64)
+
+
+  CA-05 real — gasto creado hoy queda en la jornada activa (register_date)
+    √ CA-05 — gasto POST retorna 201 y el pre-cierre refleja el egreso en la jornada activa
+
+  CA-05 real — estructura de /cash-register/pre-close incluye gastos desagregados
+    √ CA-05 — pre-cierre retorna gastos_efectivo y gastos_transferencia como campos numéricos
+    √ CA-05 — dashboard retorna down_payments_total y down_payments_count como campos numéricos
+
+  CA-04 mock — dashboard muestra enganches de jornada anterior a hoy
+    √ CA-04 — el dashboard carga sin error cuando down_payments_total > 0 para jornada anterior
+    √ CA-04 — el badge de jornada anterior está visible junto con los enganches en el dashboard
+
+  CA-04 + CA-05 mock — pre-cierre de jornada anterior muestra enganches y gastos
+    √ CA-04 — el cierre V4 muestra esperado de efectivo con enganches de jornada anterior
+    √ CA-04 — el cierre V4 muestra esperado de transferencia con enganches de jornada anterior
+    √ CA-04 + CA-05 — el total esperado descuenta los gastos registrados
+    √ CA-05 — el cierre V4 permite declarar montos físicos contra el snapshot
+    √ CA-04 + CA-05 — la jornada del pre-cierre corresponde al día anterior (no hoy)
+
+
+  10 passing (5s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_505.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        10                                                                               │
+  │ Passing:      10                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     5 seconds                                                                        │
+  │ Spec Ran:     49-ca04-ca05-register-date.cy.ts                                                 │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  50-admin-collections-hardening-real.cy.ts                                     (56 of 64)
+
+
+  Admin Collections — hardening real
+    √ soporta query params inválidos sin romper la pantalla
+    √ preserva contexto al ir a Ver crédito y volver
+    √ muestra impacto de generación batch y no rompe al alternar regeneración
+    √ tolera abrir/cerrar modal repetidamente sin degradar estado
+    √ resiste navegación browser back/forward manteniendo vista estable
+    √ evita estado roto con doble click rápido en abrir generación
+    √ mantiene estabilidad si se refresca estando en detalle abierto
+
+
+  7 passing (7s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_506.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        7                                                                                │
+  │ Passing:      7                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     7 seconds                                                                        │
+  │ Spec Ran:     50-admin-collections-hardening-real.cy.ts                                        │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  51-simulator-real-roles.cy.ts                                                 (57 of 64)
+
+
+  Simulador — roles internos con backend real
+    √ ADMIN carga y simula préstamo real
+    √ SELLER carga y simula préstamo real
+    √ SELLER_COLLECTOR carga y simula préstamo real
+    √ COLLECTOR carga y simula préstamo real
+
+  Simulador — portal cliente con backend real
+    √ CLIENT carga y simula préstamo real desde portal
+
+
+  5 passing (5s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_507.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        5                                                                                │
+  │ Passing:      5                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     5 seconds                                                                        │
+  │ Spec Ran:     51-simulator-real-roles.cy.ts                                                    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  52-money-intakes-mixed-real.cy.ts                                             (58 of 64)
+
+
+  Ingresos mixtos reales — API backend
+    √ registra pre-carga de cobro mixto y persiste el split
+    √ aprueba cobro directo mixto desde admin
+    √ paga anticipadamente una cuota con split mixto exacto
+    √ cancela anticipadamente un crédito con split mixto total
+    √ registra ingreso manual mixto en caja operativa real
+    √ registra ajuste IN mixto en Caja General
+
+
+  6 passing (568ms)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_508.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        6                                                                                │
+  │ Passing:      6                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     0 seconds                                                                        │
+  │ Spec Ran:     52-money-intakes-mixed-real.cy.ts                                                │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  53-expenses-source-real.cy.ts                                                 (59 of 64)
+
+
+  Expenses source (DAILY/COMPANY) — real backend
+    √ DAILY (default) dentro del efectivo disponible → 201 imputado a la caja activa
+    √ DAILY + CASH supera el efectivo disponible de la caja → 409 INSUFFICIENT_CASH
+    √ COMPANY → 201 sin cash_session_id, descuenta de Caja General
+    √ COMPANY + monto supera el saldo de Caja General → 409 INSUFFICIENT_BALANCE
+
+
+  4 passing (365ms)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_509.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        4                                                                                │
+  │ Passing:      4                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     0 seconds                                                                        │
+  │ Spec Ran:     53-expenses-source-real.cy.ts                                                    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  53-mixed-ui-contracts.cy.ts                                                   (60 of 64)
+
+
+  Contratos UI mixtos — dialogs financieros
+    √ admin payments: botón "Cobro directo" lleva al listado de operaciones
+    √ detalle de crédito: cobro directo mixto envía split al backend (admin-direct)
+    √ detalle de crédito: cancelación anticipada mixta envía split total
+
+  Cronograma de cuotas — toggle pre-carga / cobro directo (admin)
+    √ el modo por defecto es pre-carga y no exige caja abierta
+    √ en modo cobro directo, si la caja está cerrada no se registra el cobro
+    √ cobro parcial en modo pre-carga exige fecha de próxima visita antes de habilitar el envío
+    √ un seller no ve el botón "Cobrar cuota" — acción exclusiva de admin
+
+
+  7 passing (8s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_510.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        7                                                                                │
+  │ Passing:      7                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     7 seconds                                                                        │
+  │ Spec Ran:     53-mixed-ui-contracts.cy.ts                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  54-cash-conversions-criteria-real.cy.ts                                       (61 of 64)
+
+
+  Cash conversions criteria (DAILY/COMPANY) — real backend
+    √ DAILY (default) con caja activa → 201 imputado a la caja activa
+    √ COMPANY dentro del saldo de Caja General → 201 sin cash_session_id
+    √ COMPANY + monto supera el saldo de Caja General → 409 saldo insuficiente
+
+
+  3 passing (275ms)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_511.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        3                                                                                │
+  │ Passing:      3                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     0 seconds                                                                        │
+  │ Spec Ran:     54-cash-conversions-criteria-real.cy.ts                                          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  55-liquidaciones-caja-fuerte-real.cy.ts                                       (62 of 64)
+
+
+  Liquidaciones × Caja Fuerte Central — escenarios límite (real)
+    √ CASO 1 — fondos suficientes en Caja General: liquidación EFECTIVO baja el saldo y marca comisiones PAID
+    √ CASO 2 — Caja General sin fondos: liquidación rechaza 409 INSUFFICIENT_BALANCE y revierte (comisiones siguen PENDING)
+    √ CASO 3 — jornada CERRADA (sin caja operativa): la liquidación de todos modos sucede en 201 porque imputa a Caja General, no a la caja operativa
+    √ CASO 4 — liquidación duplicada en el mismo período: 409 (constraint único user_id+week_start+week_end)
+    √ CASO 5 — rol no liquidable (ADMIN): 409 "Solo se pueden liquidar Vendedores y Cobradores"
+    √ CASO 6 — usuario inexistente: 404 "Usuario no encontrado o inactivo"
+    √ CASO 7 — total neto $0 (sin comisiones pendientes ni sueldo): 409 "No hay monto positivo a liquidar"
+    √ CASO 8 — payment_method TRANSFER: liquida igual contra Caja General y persiste el método
+    √ CASO 9 — sueldo fijo + comisiones: total_paid suma ambos componentes
+    √ CASO 10 — payment_method inválido (MIXED no soportado en liquidación): 400 validación
+
+
+  10 passing (1s)
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_512.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        10                                                                               │
+  │ Passing:      10                                                                               │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     1 second                                                                         │
+  │ Spec Ran:     55-liquidaciones-caja-fuerte-real.cy.ts                                          │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  56-flujo-transversal.cy.ts                                                    (63 of 64)
+
+
+  El Viaje del Crédito — Multi-Rol (real)
+    1) paso a — SELLER crea el cliente y origina la solicitud de crédito
+    2) paso b — ADMIN aprueba el crédito desde Aprobaciones
+    3) paso c — COLLECTOR cobra la cuota desde su ruta
+    4) paso d — ADMIN aprueba el cobro y el PORTAL del cliente refleja el saldo actualizado
+
+
+  0 passing (11s)
+  4 failing
+
+  1) El Viaje del Crédito — Multi-Rol (real)
+       paso a — SELLER crea el cliente y origina la solicitud de crédito:
+     CypressError: Timed out retrying after 8050ms: `cy.click()` failed because this element is `disabled`:
+
+`<button pripple="" pautofocus="" class="p-ripple p-element p-button p-component p-button-primary h-11 px-5 rounded-xl" disabled="" ng-reflect-ng-class="[object Object]" type="submit" data-pc-name="button" data-pc-section="root">...</button>`
+
+Fix this problem, or use `{force: true}` to disable error checking.
+
+https://on.cypress.io/element-cannot-be-interacted-with
+      at Object.isNotDisabled (http://localhost:4200/__cypress/runner/cypress_runner.js:144923:58)
+      at runAllChecks (http://localhost:4200/__cypress/runner/cypress_runner.js:113250:26)
+      at retryActionability (http://localhost:4200/__cypress/runner/cypress_runner.js:113339:16)
+      at tryCatcher (http://localhost:4200/__cypress/runner/cypress_runner.js:1830:23)
+      at Promise.attempt.Promise.try (http://localhost:4200/__cypress/runner/cypress_runner.js:4338:29)
+      at whenStable (http://localhost:4200/__cypress/runner/cypress_runner.js:143744:68)
+      at <unknown> (http://localhost:4200/__cypress/runner/cypress_runner.js:143685:14)
+      at tryCatcher (http://localhost:4200/__cypress/runner/cypress_runner.js:1830:23)
+      at Promise._settlePromiseFromHandler (http://localhost:4200/__cypress/runner/cypress_runner.js:1542:31)
+      at Promise._settlePromise (http://localhost:4200/__cypress/runner/cypress_runner.js:1599:18)
+      at Promise._settlePromise0 (http://localhost:4200/__cypress/runner/cypress_runner.js:1644:10)
+      at Promise._settlePromises (http://localhost:4200/__cypress/runner/cypress_runner.js:1724:18)
+      at Promise._fulfill (http://localhost:4200/__cypress/runner/cypress_runner.js:1668:18)
+      at <unknown> (http://localhost:4200/__cypress/runner/cypress_runner.js:5473:46)
+  From Your Spec Code:
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/56-flujo-transversal.cy.ts:67:47)
+
+  2) El Viaje del Crédito — Multi-Rol (real)
+       paso b — ADMIN aprueba el crédito desde Aprobaciones:
+     AssertionError: crédito originado en paso a: expected undefined to be a string
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/56-flujo-transversal.cy.ts:106:59)
+
+  3) El Viaje del Crédito — Multi-Rol (real)
+       paso c — COLLECTOR cobra la cuota desde su ruta:
+     AssertionError: cuota a cobrar (paso b): expected undefined to be a string
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/56-flujo-transversal.cy.ts:173:60)
+
+  4) El Viaje del Crédito — Multi-Rol (real)
+       paso d — ADMIN aprueba el cobro y el PORTAL del cliente refleja el saldo actualizado:
+     AssertionError: pre-carga registrada en paso c: expected undefined to be a string
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/56-flujo-transversal.cy.ts:204:63)
+
+
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_513.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        4                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      4                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  4                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     11 seconds                                                                       │
+  │ Spec Ran:     56-flujo-transversal.cy.ts                                                       │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\5     (1280x720)
+     6-flujo-transversal.cy.ts\El Viaje del Crédito — Multi-Rol (real) -- paso a — SE               
+     LLER crea el cliente y origina la solicitud de crédito (failed).png                            
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\5     (1280x720)
+     6-flujo-transversal.cy.ts\El Viaje del Crédito — Multi-Rol (real) -- paso b — AD               
+     MIN aprueba el crédito desde Aprobaciones (failed).png                                         
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\5     (1280x720)
+     6-flujo-transversal.cy.ts\El Viaje del Crédito — Multi-Rol (real) -- paso c — CO               
+     LLECTOR cobra la cuota desde su ruta (failed).png                                              
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\5     (1280x720)
+     6-flujo-transversal.cy.ts\El Viaje del Crédito — Multi-Rol (real) -- paso d — AD               
+     MIN aprueba el cobro y el PORTAL del cliente refleja el saldo actualizado (faile               
+     d).png                                                                                         
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  57-maquina-del-tiempo.cy.ts                                                   (64 of 64)
+
+
+  Máquina del Tiempo — Mora y Cron Job (real)
+    1) setup — crea cliente, crédito aprobado y fuerza vencimiento atrasado
+    2) ejecución — corre el cron overdueInstallments real
+    3) aserción API — la cuota queda OVERDUE con penalidad aplicada
+    4) aserción UI — ADMIN ve la cuota morosa reflejada en Morosidad
+
+
+  0 passing (22s)
+  4 failing
+
+  1) Máquina del Tiempo — Mora y Cron Job (real)
+       setup — crea cliente, crédito aprobado y fuerza vencimiento atrasado:
+
+      aprobar crédito
+      + expected - actual
+
+      -500
+      +200
+      
+      at Context.eval (webpack://gestion-creditos-f/./cypress/support/commands.ts:988:51)
+
+  2) Máquina del Tiempo — Mora y Cron Job (real)
+       ejecución — corre el cron overdueInstallments real:
+     AssertionError: cuota con due_date forzado (setup): expected undefined to be a string
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/57-maquina-del-tiempo.cy.ts:117:71)
+
+  3) Máquina del Tiempo — Mora y Cron Job (real)
+       aserción API — la cuota queda OVERDUE con penalidad aplicada:
+
+      detalle de cuota post-cron
+      + expected - actual
+
+      -400
+      +200
+      
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/57-maquina-del-tiempo.cy.ts:128:60)
+
+  4) Máquina del Tiempo — Mora y Cron Job (real)
+       aserción UI — ADMIN ve la cuota morosa reflejada en Morosidad:
+     AssertionError: Timed out retrying after 20000ms: Expected to find content: '80389841' but never did.
+      at Context.eval (webpack://gestion-creditos-f/./cypress/e2e/57-maquina-del-tiempo.cy.ts:147:50)
+
+
+
+[mochawesome] Report JSON saved to C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\reports\mocha\mochawesome_514.json
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        4                                                                                │
+  │ Passing:      0                                                                                │
+  │ Failing:      4                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  4                                                                                │
+  │ Video:        false                                                                            │
+  │ Duration:     22 seconds                                                                       │
+  │ Spec Ran:     57-maquina-del-tiempo.cy.ts                                                      │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Screenshots)
+
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\5     (1280x720)
+     7-maquina-del-tiempo.cy.ts\Máquina del Tiempo — Mora y Cron Job (real) -- setup                
+     — crea cliente, crédito aprobado y fuerza vencimiento atrasado (failed).png                    
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\5     (1280x720)
+     7-maquina-del-tiempo.cy.ts\Máquina del Tiempo — Mora y Cron Job (real) -- ejecuc               
+     ión — corre el cron overdueInstallments real (failed).png                                      
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\5     (1280x720)
+     7-maquina-del-tiempo.cy.ts\Máquina del Tiempo — Mora y Cron Job (real) -- aserci               
+     ón API — la cuota queda OVERDUE con penalidad aplicada (failed).png                            
+  -  C:\Users\Dante\Desktop\finFlow\frontend\gestion-creditos-f\cypress\screenshots\5     (1280x720)
+     7-maquina-del-tiempo.cy.ts\Máquina del Tiempo — Mora y Cron Job (real) -- aserci               
+     ón UI — ADMIN ve la cuota morosa reflejada en Morosidad (failed).png                           
+
+
+====================================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped  
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ✔  01-auth.cy.ts                            00:12       10       10        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  02-sidebar-navigation.cy.ts              00:09       16       16        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  03-nueva-operacion-real.cy.ts            00:20        7        7        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  04-clientes-real.cy.ts                   00:31       15       15        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  05-negative-auth.cy.ts                   00:03        5        5        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  06-negative-clientes.cy.ts               00:10        6        6        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  07-negative-nueva-operacion.cy.ts        00:04        4        4        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  08-negative-guards.cy.ts                 00:05       11       11        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  09-admin-usuarios.cy.ts                  00:05        5        5        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  09-cobranzas-collector.cy.ts             00:02        3        3        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  10-admin-aprobaciones-real.cy.ts         00:14        3        3        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✖  11-caja-tesoreria.cy.ts                  01:07       13        8        5        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  12-portal-clientes.cy.ts                 00:01        3        3        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  13-admin-dashboard.cy.ts                 00:06        7        7        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  14-seller-operaciones.cy.ts              00:05       10       10        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  15-seller-productos.cy.ts                00:04        9        9        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  16-comisiones.cy.ts                      00:05       12       12        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  17-admin-colecciones-gastos-pagos-r      00:09       16       16        -        -        - │
+  │    eal.cy.ts                                                                                   │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  17-admin-colecciones-gastos-pagos.c      00:03        5        5        -        -        - │
+  │    y.ts                                                                                        │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  18-admin-reportes-mora.cy.ts             00:08       16       16        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  19-public-password.cy.ts                 00:01        4        4        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  20-admin-config-sheet-real.cy.ts         00:06       15       15        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  20-admin-config-sheet.cy.ts              00:03        4        4        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  21-seller-clientes-nuevo-real.cy.ts      00:07        5        5        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  22-admin-generar-planilla-real.cy.t      00:09        7        7        -        -        - │
+  │    s                                                                                           │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  22-admin-generar-planilla.cy.ts          00:02        3        3        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  23-credit-detail.cy.ts                   00:02        5        5        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  24-producto-detalle-editar.cy.ts         00:02        5        5        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  25-seller-cliente-detalle.cy.ts          00:07       13       13        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  26-collector-planilla-detalle.cy.ts      00:01        3        3        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  27-portal-credits.cy.ts                  00:01        4        4        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  28-admin-user-detail.cy.ts               00:03        4        4        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  29-admin-collection-detail.cy.ts         00:01        3        3        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  30-producto-crear.cy.ts                  00:04        8        8        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  31-qa-regression-issues.cy.ts            00:02        6        6        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  32-client-detail-regression.cy.ts        00:01        2        2        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  33-product-create-modal-regression.      00:01        1        1        -        -        - │
+  │    cy.ts                                                                                       │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  34-product-list-regression.cy.ts         00:03        1        1        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  35-product-success-toast-regression      00:01        1        1        -        -        - │
+  │    .cy.ts                                                                                      │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  36-product-edit-category-regression      00:01        1        1        -        -        - │
+  │    .cy.ts                                                                                      │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  37-portal-auth-use-cases.cy.ts           00:02        5        5        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  38-dropdown-overflow-regression.cy.      00:04        5        5        -        -        - │
+  │    ts                                                                                          │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  39-calendar-overflow-regression.cy.      00:04        6        6        -        -        - │
+  │    ts                                                                                          │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  40-contrast-color-regression.cy.ts       00:05        9        9        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  41-pagination-regression.cy.ts           00:05       11       11        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  42-group-e-regression.cy.ts              00:10       10       10        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  43-admin-config-holidays.cy.ts           00:06        6        6        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  43-session-changes-regression.cy.ts      00:06       11       11        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  44-qa-regression-batch2.cy.ts            00:12       21       21        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  45-liquidaciones-regression.cy.ts        00:04        5        5        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  46-cobros-regression.cy.ts               00:04        4        4        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  47-full-width-layout-smoke.cy.ts         00:03        7        7        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  47-jornada-regression.cy.ts              00:08        9        9        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  48-full-width-layout-mobile-observa       27ms        7        -        -        7        - │
+  │    bility.cy.ts                                                                                │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  49-ca04-ca05-register-date.cy.ts         00:05       10       10        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  50-admin-collections-hardening-real      00:07        7        7        -        -        - │
+  │    .cy.ts                                                                                      │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  51-simulator-real-roles.cy.ts            00:05        5        5        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  52-money-intakes-mixed-real.cy.ts        571ms        6        6        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  53-expenses-source-real.cy.ts            368ms        4        4        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  53-mixed-ui-contracts.cy.ts              00:07        7        7        -        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  54-cash-conversions-criteria-real.c      277ms        3        3        -        -        - │
+  │    y.ts                                                                                        │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✔  55-liquidaciones-caja-fuerte-real.c      00:01       10       10        -        -        - │
+  │    y.ts                                                                                        │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✖  56-flujo-transversal.cy.ts               00:11        4        -        4        -        - │
+  ├────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ ✖  57-maquina-del-tiempo.cy.ts              00:22        4        -        4        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ✖  3 of 64 failed (5%)                      07:22      447      427       13        7        -  
+
