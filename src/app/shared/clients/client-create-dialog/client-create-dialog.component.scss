@@ -1,12 +1,22 @@
 @media (max-width: 767.98px) {
   :host ::ng-deep .client-create-dialog.p-dialog {
+    display: flex;
+    flex-direction: column;
     margin: 0 1rem;
     max-height: calc(100dvh - 2rem);
   }
 
+  :host ::ng-deep .client-create-dialog .p-dialog-header,
+  :host ::ng-deep .client-create-dialog .p-dialog-footer {
+    flex-shrink: 0;
+  }
+
   :host ::ng-deep .client-create-dialog .p-dialog-content {
+    min-height: 0;
+    overflow-y: auto;
     padding-left: 1rem;
     padding-right: 1rem;
+    padding-bottom: 0.75rem;
   }
 
   :host ::ng-deep .client-create-dialog .p-dialog-footer {

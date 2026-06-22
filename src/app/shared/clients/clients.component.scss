@@ -53,6 +53,60 @@
   font-size: 0.8rem;
 }
 
+.clients-table-skeleton {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.clients-table-skeleton__row {
+  display: grid;
+  grid-template-columns: 7rem minmax(10rem, 1fr) 8rem 4rem 5rem 6rem;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid var(--ff-border);
+  border-radius: 0.75rem;
+  background: var(--ff-panel);
+  padding: 0.875rem 1rem;
+}
+
+.clients-empty-state {
+  display: grid;
+  min-height: 12rem;
+  place-items: center;
+  gap: 0.65rem;
+  border-top: 1px solid var(--ff-border-subtle);
+  padding: 2.25rem 1rem;
+  text-align: center;
+}
+
+.clients-empty-state__icon {
+  display: inline-flex;
+  width: 3rem;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(95, 122, 246, 0.12);
+  color: var(--ff-accent);
+  font-size: 1.2rem;
+}
+
+.clients-empty-state h2 {
+  margin: 0;
+  color: var(--ff-text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.clients-empty-state p {
+  max-width: 30rem;
+  margin: 0;
+  color: var(--ff-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
 @media (max-width: 767.98px) {
   :host ::ng-deep .clients-page-mobile {
     padding: 0;
@@ -90,6 +144,61 @@
 
   .clients-mobile-list {
     padding: 0.75rem 0 0.25rem;
+  }
+
+  .clients-mobile-skeleton {
+    padding: 0.75rem 0 0.25rem;
+  }
+
+  .clients-mobile-skeleton-card {
+    display: grid;
+    gap: 0.75rem;
+    border: 1px solid var(--ff-border);
+    border-radius: 0.625rem;
+    background: var(--ff-panel);
+    padding: 0.75rem 0.875rem;
+  }
+
+  .clients-mobile-skeleton-card + .clients-mobile-skeleton-card {
+    margin-top: 0.75rem;
+  }
+
+  .clients-mobile-skeleton-card__head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .clients-mobile-skeleton-card__title {
+    display: grid;
+    min-width: 0;
+    flex: 1;
+    gap: 0.35rem;
+  }
+
+  .clients-mobile-skeleton-card__meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .clients-empty-state {
+    min-height: 17rem;
+    border-top: 0;
+    padding: 2.25rem 1.25rem 2.75rem;
+  }
+
+  .clients-empty-state__icon {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+
+  .clients-empty-state h2 {
+    font-size: 0.95rem;
+  }
+
+  .clients-empty-state p {
+    font-size: 0.82rem;
   }
 
   .clients-mobile-card {
