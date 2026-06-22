@@ -43,6 +43,31 @@ describe('57 - Mobile UX validation', () => {
   };
 
   /**
+   * Verifica que la pantalla no genere scroll horizontal en mobile.
+   */
+  const shouldNotHaveHorizontalOverflow = () => {
+    cy.document().should((doc) => {
+      const root = doc.documentElement;
+      const body = doc.body;
+      const viewportWidth = root.clientWidth;
+
+      expect(root.scrollWidth, 'documentElement scrollWidth').to.be.at.most(
+        viewportWidth + 1,
+      );
+      expect(body.scrollWidth, 'body scrollWidth').to.be.at.most(
+        viewportWidth + 1,
+      );
+    });
+
+    cy.get('[data-cy="admin-dashboard"]').should(($dashboard) => {
+      const el = $dashboard[0];
+      expect(el.scrollWidth, 'dashboard scrollWidth').to.be.at.most(
+        el.clientWidth + 1,
+      );
+    });
+  };
+
+  /**
    * Valida que los botones críticos del dialog estén visibles y dentro de pantalla.
    */
   const assertDialogFooterButtonsVisible = () => {
@@ -93,6 +118,26 @@ describe('57 - Mobile UX validation', () => {
       cy.contains('.mobile-bottom-nav__item', label).should('be.visible');
     });
 
+    shouldBeInsideViewport('.mobile-bottom-nav');
+  });
+
+  it('Fase 2 - dashboard mobile no tiene overflow horizontal', () => {
+    cy.get('[data-cy="admin-dashboard"]', { timeout: 15000 }).should(
+      'be.visible',
+    );
+    cy.get('.db-kpis').should('be.visible');
+    cy.get('.db-pending-row', { timeout: 15000 })
+      .scrollIntoView({ block: 'center' })
+      .should('be.visible');
+    cy.get('.db-overdue-mobile', { timeout: 15000 })
+      .scrollIntoView({ block: 'center' })
+      .should('be.visible');
+    cy.get('.db-overdue-table').should('not.be.visible');
+    cy.get('.db-analysis-row', { timeout: 15000 })
+      .scrollIntoView({ block: 'center' })
+      .should('be.visible');
+
+    shouldNotHaveHorizontalOverflow();
     shouldBeInsideViewport('.mobile-bottom-nav');
   });
 

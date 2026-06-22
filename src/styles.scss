@@ -2693,3 +2693,170 @@ table.ff-table {
   background: rgba(148, 163, 184, 0.14) !important;
   color: var(--ff-text-secondary) !important;
 }
+
+@media (max-width: 767.98px) {
+  .db-main {
+    width: 100%;
+    max-width: 100%;
+    padding: 16px;
+    padding-bottom: calc(88px + max(env(safe-area-inset-bottom), 0px));
+    gap: 16px;
+    overflow-x: hidden;
+  }
+
+  .db-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .db-kpi {
+    min-width: 0;
+    min-height: 124px;
+    padding: 14px;
+  }
+
+  .db-kpi__label,
+  .db-kpi__subtitle,
+  .db-kpi__trend {
+    overflow-wrap: anywhere;
+  }
+
+  .db-kpi__value {
+    font-size: clamp(1.25rem, 6vw, 1.5rem);
+    overflow-wrap: anywhere;
+  }
+
+  .db-pending-row,
+  .db-overdue-row,
+  .db-analysis-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .db-panel,
+  .db-pending-col,
+  .db-chart-panel {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .db-panel__header {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .db-pending-body {
+    max-height: none;
+    overflow: visible;
+    padding: 12px;
+  }
+
+  .db-pending-group {
+    min-width: 0;
+  }
+
+  .db-pending-group-header {
+    align-items: flex-start;
+  }
+
+  .db-pending-seller,
+  .db-pending-meta {
+    min-width: 0;
+  }
+
+  .db-pending-meta {
+    white-space: normal;
+    text-align: right;
+  }
+
+  .db-pending-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 10px;
+    padding: 10px;
+  }
+
+  .db-pending-type,
+  .db-pending-customer,
+  .db-pending-amount,
+  .db-pending-installments {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+
+  .db-pending-amount,
+  .db-pending-btn {
+    justify-self: end;
+  }
+
+  .db-pending-installments {
+    color: var(--ff-text-muted);
+  }
+
+  .db-overdue-table {
+    display: none !important;
+  }
+
+  .db-overdue-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .db-overdue-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--ff-border-subtle);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .db-overdue-card__top,
+  .db-overdue-card__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--ff-text-secondary);
+    font-size: 0.8125rem;
+  }
+
+  .db-overdue-card__customer {
+    color: var(--ff-text-primary);
+    overflow-wrap: anywhere;
+  }
+
+  .db-panel__body--quick-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .db-quick-btn {
+    min-width: 0;
+    min-height: 88px;
+    justify-content: center;
+    padding: 12px 8px;
+    text-align: center;
+  }
+
+  .db-chart {
+    height: 240px;
+    padding: 10px 8px 20px;
+  }
+
+  .db-chart canvas {
+    height: 210px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .db-overdue-mobile {
+    display: none !important;
+  }
+}
