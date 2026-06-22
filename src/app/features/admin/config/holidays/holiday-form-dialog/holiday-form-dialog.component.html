@@ -1,0 +1,195 @@
+<p-dialog
+  [(visible)]="visible"
+  [header]="isEditMode ? 'Editar feriado' : 'Nuevo feriado'"
+  [modal]="true"
+  [style]="{ width: '34rem' }"
+  [closable]="!saving"
+  (onHide)="close()"
+>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+    <div class="flex flex-col gap-1.5">
+      <label
+        class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
+      >
+        Fecha{{ isEditMode ? " (no editable)" : "" }}
+      </label>
+      <p-calendar
+        [(ngModel)]="form.date"
+        [inputId]="isEditMode ? 'edit-holiday-date' : 'create-holiday-date'"
+        dateFormat="dd/mm/yy"
+        [showIcon]="true"
+        [showOnFocus]="false"
+        [readonlyInput]="true"
+        [disabled]="isEditMode"
+        [baseZIndex]="1200"
+        [autoZIndex]="true"
+        appendTo="body"
+        styleClass="w-full op-calendar"
+        inputStyleClass="w-full bg-[var(--ff-panel)] border border-[var(--ff-border-subtle)] text-[var(--ff-text-primary)] px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <label
+        class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >Tipo</label
+      >
+      <p-dropdown
+        [options]="holidayTypeOptions"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="holidayTypeOptions.length > 10"
+        filterBy="label"
+
+
+        [(ngModel)]="form.type"
+        (onChange)="onTypeChanged()"
+        styleClass="w-full h-11 rounded-xl"
+        appendTo="body"
+      />
+    </div>
+
+    <div class="md:col-span-2 flex flex-col gap-1.5">
+      <label
+        class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >Nombre</label
+      >
+      <input
+        pInputText
+        [(ngModel)]="form.name"
+        [attr.data-cy]="
+          isEditMode ? 'holidays-edit-name' : 'holidays-create-name'
+        "
+        maxlength="150"
+        class="w-full h-11 px-3"
+        [placeholder]="isEditMode ? '' : 'Ej: Feriado puente regional'"
+      />
+    </div>
+
+    <div
+      class="md:col-span-2 space-y-3 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+    >
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm text-[var(--ff-text-primary)]">
+            Afecta vencimientos
+          </p>
+          <p class="text-xs text-[var(--ff-text-muted)]">
+            {{
+              isEditMode
+                ? "Controla si este feriado debe intervenir en fechas de cuota."
+                : "Si está activo, mueve vencimientos al próximo día hábil."
+            }}
+          </p>
+        </div>
+        <p-checkbox [(ngModel)]="form.affectsDueDates" [binary]="true" />
+      </div>
+
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm text-[var(--ff-text-primary)]">Anual repetible</p>
+          <p class="text-xs text-[var(--ff-text-muted)]">
+            {{
+              isEditMode
+                ? "Solo se duplica automáticamente si este flag está activo."
+                : "Solo estos feriados se duplican automáticamente al próximo año."
+            }}
+          </p>
+        </div>
+        <p-checkbox
+          [(ngModel)]="form.repeatsAnnually"
+          [binary]="true"
+          [disabled]="form.type === 'EXTRAORDINARY'"
+        />
+      </div>
+
+      @if (form.type === "EXTRAORDINARY") {
+        <p
+          class="text-xs text-amber-200/90 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2"
+        >
+          {{
+            isEditMode
+              ? "Los extraordinarios quedan fuera de la duplicación automática salvo cambio explícito."
+              : "Los feriados extraordinarios se consideran casos puntuales y no se duplican automáticamente."
+          }}
+        </p>
+      }
+
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="text-sm text-[var(--ff-text-primary)]">Activo</p>
+          <p class="text-xs text-[var(--ff-text-muted)]">
+            {{
+              isEditMode
+                ? "Podés desactivarlo sin borrar histórico."
+                : "Desactivalo para mantener el registro sin aplicar efectos."
+            }}
+          </p>
+        </div>
+        <p-checkbox [(ngModel)]="form.active" [binary]="true" />
+      </div>
+
+      @if (shouldShowRecalculation()) {
+        <div
+          class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-sm font-medium text-amber-300">
+                Recalcular cuotas futuras
+              </p>
+              <p class="text-xs text-amber-200/90">
+                {{
+                  isEditMode
+                    ? "Usalo solo si querés forzar un nuevo ajuste para cuotas futuras impactadas por este feriado extraordinario."
+                    : "Acción sensible: al crear este feriado extraordinario se pueden ajustar vencimientos futuros."
+                }}
+              </p>
+            </div>
+            <p-checkbox
+              [(ngModel)]="form.recalculateFutureInstallments"
+              [attr.data-cy]="
+                isEditMode
+                  ? 'holidays-edit-recalculate-checkbox'
+                  : 'holidays-create-recalculate-checkbox'
+              "
+              [binary]="true"
+            />
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (errorMessage) {
+      <p
+        class="md:col-span-2 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2"
+      >
+        {{ errorMessage }}
+      </p>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex gap-3 justify-end pt-2">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="close()"
+        [disabled]="saving"
+      />
+      <p-button
+        [label]="isEditMode ? 'Guardar' : 'Crear feriado'"
+        icon="pi pi-check"
+        severity="primary"
+        [attr.data-cy]="
+          isEditMode ? 'holidays-submit-edit-btn' : 'holidays-submit-create-btn'
+        "
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="submit()"
+        [loading]="saving"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

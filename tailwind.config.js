@@ -24,6 +24,10 @@ module.exports = {
         ui: ["Inter", "sans-serif"],
         mono: ["DM Mono", "monospace"],
       },
+      fontSize: {
+        xs: ["0.8125rem", { lineHeight: "1.125rem" }],
+        sm: ["0.9375rem", { lineHeight: "1.375rem" }],
+      },
     },
   },
   plugins: [],

@@ -1,18 +1,9 @@
 import { CommonModule, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { DialogModule } from 'primeng/dialog';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -26,6 +17,7 @@ import { LoadingStateComponent } from '../../../../shared/states/loading-state/l
 import { ProductVariant } from '../../models/product-variant.model';
 import { ProductVariantsService } from '../product-variants.service';
 import { ProductsService } from '../products.service';
+import { VariantFormPanelComponent } from './variant-form-panel/variant-form-panel.component';
 
 @Component({
   selector: 'app-product-variants',
@@ -33,18 +25,15 @@ import { ProductsService } from '../products.service';
   providers: [MessageService, ConfirmationService],
   imports: [
     CommonModule,
-    ReactiveFormsModule,
     ButtonModule,
     TableModule,
     TagModule,
     ToastModule,
     ConfirmDialogModule,
-    DialogModule,
-    InputTextModule,
-    InputNumberModule,
     CurrencyArsPipe,
     LoadingStateComponent,
     ErrorStateComponent,
+    VariantFormPanelComponent,
   ],
   templateUrl: './product-variants.component.html',
 })
@@ -52,7 +41,6 @@ export class ProductVariantsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
-  private readonly fb = inject(FormBuilder);
   private readonly productsService = inject(ProductsService);
   private readonly variantsService = inject(ProductVariantsService);
   private readonly auth = inject(AuthServiceBase);
@@ -65,12 +53,10 @@ export class ProductVariantsComponent implements OnInit {
   error: AppError | null = null;
   productName = '';
 
-  showDialog = false;
   showPanel = false;
+  isBulkMode = false;
   editingVariant: ProductVariant | null = null;
-  dialogSubmitting = false;
-  dialogError: string | null = null;
-  form!: FormGroup;
+  expandedVariantIds = new Set<string>();
 
   get isAdmin(): boolean {
     return this.auth.hasRole(UserRoleEnum.ADMIN);
@@ -86,7 +72,7 @@ export class ProductVariantsComponent implements OnInit {
     return this.variants.some((v) => !!v.capacity);
   }
 
-  private get productId(): string {
+  get productId(): string {
     return this.route.snapshot.paramMap.get('id')!;
   }
 
@@ -95,13 +81,11 @@ export class ProductVariantsComponent implements OnInit {
       { label: 'Productos', route: `/${this.routePrefix}/products` },
       { label: 'Variantes' },
     ]);
-    this.buildForm();
     this.loadProduct();
     this.loadVariants();
   }
 
-  // TODO: agregar documentacion de las funciones
-
+  /** Vuelve a la pantalla anterior del historial de navegación. */
   goBack(): void {
     this.location.back();
   }
@@ -115,102 +99,81 @@ export class ProductVariantsComponent implements OnInit {
     return parts.length > 0 ? parts.join(' · ') : 'Estándar';
   }
 
+  /** Abre el panel lateral en modo alta y limpia el estado de edición. */
   openCreate(): void {
     this.editingVariant = null;
-    this.form.reset({ currentPrice: null });
-    this.dialogError = null;
-    this.showDialog = true;
     this.showPanel = true;
   }
 
+  /**
+   * Abre el panel lateral en modo edición con los datos de la variante seleccionada.
+   * @param variant - Variante a editar.
+   */
   openEdit(variant: ProductVariant): void {
     this.editingVariant = variant;
-    this.form.patchValue({
-      color: variant.color ?? '',
-      size: variant.size ?? '',
-      capacity: variant.capacity ?? '',
-      currentPrice: variant.currentPrice,
-    });
-    this.dialogError = null;
-    this.showDialog = true;
     this.showPanel = true;
   }
 
-  /** Cierra el panel lateral de creación/edición. */
-  closePanel(): void {
-    this.showPanel = false;
-    this.showDialog = false;
-    this.editingVariant = null;
-    this.form.reset({ currentPrice: null });
-    this.dialogError = null;
+  /**
+   * Indica si el ingreso bulk está activo — usado para ajustar colspans de la tabla.
+   * @returns True cuando el panel está abierto en modo múltiple.
+   */
+  isBulkModeActive(): boolean {
+    return this.showPanel && this.isBulkMode;
   }
 
-  saveDialog(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+  /**
+   * Alterna la expansión de una variante en la grilla.
+   * @param variant - Variante objetivo del toggle.
+   */
+  toggleVariantExpanded(variant: ProductVariant): void {
+    if (this.expandedVariantIds.has(variant.id)) {
+      this.expandedVariantIds.delete(variant.id);
       return;
     }
-    const v = this.form.getRawValue();
-    this.dialogSubmitting = true;
-    this.dialogError = null;
-
-    if (this.editingVariant) {
-      this.variantsService
-        .update(this.editingVariant.id, {
-          color: v.color || undefined,
-          size: v.size || undefined,
-          capacity: v.capacity || undefined,
-          currentPrice: v.currentPrice,
-        })
-        .subscribe({
-          next: () => {
-            this.dialogSubmitting = false;
-            this.showDialog = false;
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Variante actualizada',
-            });
-            this.loadVariants();
-          },
-          error: (err: AppError) => {
-            this.dialogSubmitting = false;
-            this.dialogError = err.message;
-          },
-        });
-    } else {
-      this.variantsService
-        .create({
-          productId: this.productId,
-          color: v.color || undefined,
-          size: v.size || undefined,
-          capacity: v.capacity || undefined,
-          currentPrice: v.currentPrice,
-        })
-        .subscribe({
-          next: () => {
-            this.dialogSubmitting = false;
-            this.showDialog = false;
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Variante creada',
-            });
-            this.loadVariants();
-          },
-          error: (err: AppError) => {
-            this.dialogSubmitting = false;
-            this.dialogError = err.message;
-          },
-        });
-    }
+    this.expandedVariantIds.add(variant.id);
   }
 
+  /**
+   * Informa si una variante está expandida en la tabla.
+   * @param variant - Variante a evaluar.
+   * @returns True cuando la fila está desplegada.
+   */
+  isVariantExpanded(variant: ProductVariant): boolean {
+    return this.expandedVariantIds.has(variant.id);
+  }
+
+  /**
+   * Indica si todas las filas visibles están expandidas.
+   * @returns True cuando no hay filas colapsadas.
+   */
+  areAllVariantsExpanded(): boolean {
+    if (this.variants.length === 0) return false;
+    return this.variants.every((variant) =>
+      this.expandedVariantIds.has(variant.id),
+    );
+  }
+
+  /** Expande o colapsa todas las variantes de la tabla. */
+  toggleAllVariantsExpanded(): void {
+    if (this.areAllVariantsExpanded()) {
+      this.expandedVariantIds.clear();
+      return;
+    }
+    this.expandedVariantIds = new Set(
+      this.variants.map((variant) => variant.id),
+    );
+  }
+
+  /** Solicita confirmación antes de desactivar la variante indicada. */
   confirmDeactivate(variant: ProductVariant): void {
     this.confirmationService.confirm({
       header: 'Desactivar variante',
       message: `¿Desactivar variante <strong>${variant.color ?? ''} ${variant.size ?? ''} ${variant.capacity ?? ''}</strong>?`,
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
+      acceptButtonStyleClass:
+        'p-button-danger p-button-outlined h-11 px-5 rounded-xl',
       rejectButtonStyleClass:
         'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
@@ -227,6 +190,7 @@ export class ProductVariantsComponent implements OnInit {
     });
   }
 
+  /** Solicita confirmación antes de activar la variante indicada. */
   confirmActivate(variant: ProductVariant): void {
     this.confirmationService.confirm({
       header: 'Activar variante',
@@ -250,6 +214,7 @@ export class ProductVariantsComponent implements OnInit {
     });
   }
 
+  /** Navega al listado de unidades de la variante indicada. */
   navigateToUnits(variant: ProductVariant): void {
     this.router.navigate([
       `/${this.routePrefix}/products`,
@@ -260,42 +225,13 @@ export class ProductVariantsComponent implements OnInit {
     ]);
   }
 
-  private get routePrefix(): string {
-    return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
+  /** Recarga variantes cuando el panel hijo notifica una creación o edición exitosa. */
+  onVariantSaved(): void {
+    this.loadVariants();
   }
 
-  isInvalid(field: string): boolean {
-    const c = this.form.get(field);
-    return !!(c && c.invalid && (c.dirty || c.touched));
-  }
-
-  private buildForm(): void {
-    this.form = this.fb.group({
-      color: [''],
-      size: [''],
-      capacity: [''],
-      currentPrice: [null, [Validators.required, Validators.min(0.01)]],
-    });
-  }
-
-  private loadProduct(): void {
-    this.productsService.getById(this.productId).subscribe({
-      next: (p) => {
-        this.productName = p.title;
-        this.header.set([
-          { label: 'Productos', route: `/${this.routePrefix}/products` },
-          {
-            label: p.title,
-            route: `/${this.routePrefix}/products/${this.productId}`,
-          },
-          { label: 'Variantes' },
-        ]);
-      },
-      error: () => {},
-    });
-  }
-
-  private loadVariants(): void {
+  /** Carga todas las variantes del producto actual desde el backend. */
+  loadVariants(): void {
     this.loading = true;
     this.error = null;
     this.variantsService.getAll({ productId: this.productId }).subscribe({
@@ -310,11 +246,34 @@ export class ProductVariantsComponent implements OnInit {
     });
   }
 
+  private get routePrefix(): string {
+    return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
+  }
+
+  /** Muestra un toast de conflicto o error según el código HTTP de la respuesta. */
   private handleError(err: AppError): void {
     this.messageService.add({
       severity: err.status === 409 ? 'warn' : 'error',
       summary: err.status === 409 ? 'Conflicto' : 'Error',
       detail: err.message,
+    });
+  }
+
+  /** Carga el nombre del producto para construir el breadcrumb. */
+  private loadProduct(): void {
+    this.productsService.getById(this.productId).subscribe({
+      next: (p) => {
+        this.productName = p.title;
+        this.header.set([
+          { label: 'Productos', route: `/${this.routePrefix}/products` },
+          {
+            label: p.title,
+            route: `/${this.routePrefix}/products/${this.productId}`,
+          },
+          { label: 'Variantes' },
+        ]);
+      },
+      error: () => {},
     });
   }
 }

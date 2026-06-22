@@ -31,9 +31,24 @@ export class ClientContactarComponent {
     return this.message.length;
   }
 
+  /**
+   * Abre WhatsApp con el teléfono del cliente y el texto indicado.
+   * Si no se pasa texto, usa un mensaje predefinido con el nombre del cliente.
+   * @param text - Mensaje a enviar; opcional.
+   */
+  openWhatsApp(text?: string): void {
+    const phone = this.client.phone.replace(/\D/g, '');
+    if (!phone) return;
+    const body = text?.trim() || `Hola ${this.client.name}, le contactamos desde finFlow.`;
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(body)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   send(): void {
     if (!this.message.trim()) return;
-    // TODO: integrate with API
+    if (this.channel === 'WhatsApp') {
+      this.openWhatsApp(this.message);
+    }
     this.message = '';
   }
 

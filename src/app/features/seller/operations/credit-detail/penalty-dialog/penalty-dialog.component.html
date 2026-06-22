@@ -1,0 +1,63 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Aplicar Mora"
+  [modal]="true"
+  [style]="{ width: '400px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    <div class="flex flex-col gap-1">
+      <label class="auth-label">Monto de mora</label>
+      <input
+        type="number"
+        [(ngModel)]="amount"
+        min="0.01"
+        step="0.01"
+        class="w-full rounded-xl p-3 text-sm outline-none"
+        style="
+          border: 1px solid var(--ff-border);
+          background: var(--ff-secondary);
+          color: var(--ff-text-primary);
+        "
+        placeholder="0.00"
+      />
+    </div>
+    <div class="flex flex-col gap-1">
+      <label class="auth-label">Motivo (opcional)</label>
+      <input
+        type="text"
+        [(ngModel)]="reason"
+        maxlength="255"
+        class="w-full rounded-xl p-3 text-sm outline-none"
+        style="
+          border: 1px solid var(--ff-border);
+          background: var(--ff-secondary);
+          color: var(--ff-text-primary);
+        "
+        placeholder="Motivo..."
+      />
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+      />
+      <p-button
+        label="Aplicar"
+        severity="danger"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirm()"
+        [loading]="processing"
+        [disabled]="!amount || amount <= 0"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

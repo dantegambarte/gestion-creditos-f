@@ -33,6 +33,7 @@ function toSheet(raw: CollectionSheetRaw): CollectionSheet {
     filterUsed: raw.filter_used,
     status: raw.status,
     createdAt: raw.created_at,
+    sentAt: raw.sent_at ?? null,
     collectorId: raw.collector_id,
     collectorName: raw.collector_name,
     totalItems: raw.total_items,
@@ -65,6 +66,9 @@ function toSheetItem(raw: CollectionSheetItemRaw): CollectionSheetItem {
     orderNumber: raw.order_number,
     plannedAmount: raw.planned_amount,
     inclusionCriteria: raw.inclusion_criteria,
+    inclusionReason: raw.inclusion_reason,
+    opPriority: raw.op_priority,
+    remainingAmount: raw.remaining_amount,
     antecedentId: raw.antecedent_id,
     antecedentType: raw.antecedent_type,
     antecedentDate: raw.antecedent_date,
@@ -84,6 +88,19 @@ function toSheetItem(raw: CollectionSheetItemRaw): CollectionSheetItem {
     customerName: raw.customer_name,
     customerPhone: raw.customer_phone,
     customerAddress: raw.customer_address,
+    customerDni: raw.customer_dni,
+    managementStatus: raw.management_status,
+    live: raw.live
+      ? {
+          installmentStatus: raw.live.installment_status,
+          amountDue: raw.live.amount_due,
+          amountPaid: raw.live.amount_paid,
+          penaltyAmount: raw.live.penalty_amount,
+          hasPendingPayment: !!raw.live.has_pending_payment,
+          todayAttemptId: raw.live.today_attempt_id,
+          todayAttemptType: raw.live.today_attempt_type,
+        }
+      : null,
   };
 }
 
@@ -168,6 +185,13 @@ export class CollectionsService {
    * Genera una nueva planilla de cobranza. Devuelve la planilla creada junto con las alertas
    * operativas asociadas (visitas vencidas y clientes sin cobrador).
    */
+  /**
+   * Marca una planilla activa como enviada al cobrador.
+   */
+  send(id: string): Observable<void> {
+    return this.api.patch<void>(`collections/${id}/send`).pipe(map(() => undefined));
+  }
+
   generate(
     payload: CollectionGeneratePayload,
   ): Observable<CollectionGenerateOutcome> {

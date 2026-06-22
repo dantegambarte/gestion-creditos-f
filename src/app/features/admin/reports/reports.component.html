@@ -1,14 +1,33 @@
-<div class="p-6 space-y-6">
-  <div class="flex gap-1 border-b border-gray-200 overflow-x-auto">
+<div class="p-6">
+  <div class="ff-page-header">
+    <div>
+      <h1 class="ff-page-title">Reportes</h1>
+      <p class="ff-page-subtitle">
+        Indicadores operativos y financieros del sistema.
+      </p>
+    </div>
+  </div>
+
+  @if (returnTo) {
+    <div class="mb-6">
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 text-sm font-medium transition-colors"
+        style="color: #67e8f9"
+        (click)="goBackToOrigin()"
+      >
+        <i class="pi pi-arrow-left text-xs"></i>
+        Volver a Caja
+      </button>
+    </div>
+  }
+
+  <div class="ff-tab-nav mb-8">
     @for (tab of TABS; track tab.id) {
       <button
         (click)="setTab(tab.id)"
-        [class]="
-          'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ' +
-          (activeTab === tab.id
-            ? 'border-blue-600 text-blue-600'
-            : 'border-transparent text-gray-500 hover:text-gray-700')
-        "
+        class="ff-tab"
+        [class.ff-tab--active]="activeTab === tab.id"
       >
         <i [class]="tab.icon + ' text-xs'"></i>
         {{ tab.label }}
@@ -21,6 +40,9 @@
   }
   @if (activeTab === "collection") {
     <app-collection-report />
+  }
+  @if (activeTab === "cashSessions") {
+    <app-cash-sessions-report />
   }
   @if (activeTab === "portfolio") {
     <app-portfolio-report />
@@ -36,5 +58,11 @@
   }
   @if (activeTab === "upcoming") {
     <app-upcoming-report />
+  }
+  @if (activeTab === "cashConversions") {
+    <app-cash-conversions-report />
+  }
+  @if (activeTab === "cashMovements") {
+    <app-cash-movements-report />
   }
 </div>

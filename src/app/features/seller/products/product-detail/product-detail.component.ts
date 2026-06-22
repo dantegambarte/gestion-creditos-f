@@ -64,8 +64,6 @@ export class ProductDetailComponent implements OnInit {
     this.load();
   }
 
-  // TODO: agregar documentacion de las funciones
-
   /**
    * Navega de forma determinística al listado de productos para evitar loops de historial.
    */
@@ -73,12 +71,14 @@ export class ProductDetailComponent implements OnInit {
     this.router.navigate([`/${this.routePrefix}/products`]);
   }
 
+  /** Navega a la pantalla de edición del producto actual. */
   navigateToEdit(): void {
     this.router.navigate([
       `/${this.routePrefix}/products/${this.productId}/edit`,
     ]);
   }
 
+  /** Navega al listado de variantes del producto actual. */
   navigateToVariants(): void {
     this.router.navigate([
       `/${this.routePrefix}/products`,
@@ -87,6 +87,7 @@ export class ProductDetailComponent implements OnInit {
     ]);
   }
 
+  /** Navega al listado de unidades de la variante indicada. */
   navigateToUnits(variantId: string): void {
     this.router.navigate([
       `/${this.routePrefix}/products`,
@@ -101,6 +102,7 @@ export class ProductDetailComponent implements OnInit {
     return this.router.url.startsWith('/admin') ? 'admin' : 'seller';
   }
 
+  /** Solicita confirmación antes de desactivar el producto. */
   confirmDeactivate(): void {
     this.confirmationService.confirm({
       header: 'Desactivar producto',
@@ -108,7 +110,8 @@ export class ProductDetailComponent implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
+      acceptButtonStyleClass:
+        'p-button-danger p-button-outlined h-11 px-5 rounded-xl',
       rejectButtonStyleClass:
         'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
@@ -126,6 +129,7 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  /** Solicita confirmación antes de activar el producto. */
   confirmActivate(): void {
     this.confirmationService.confirm({
       header: 'Activar producto',
@@ -151,6 +155,7 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  /** Carga el producto desde el backend y actualiza el breadcrumb. */
   private load(): void {
     this.loading = true;
     this.error = null;
@@ -170,6 +175,7 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  /** Recarga el producto silenciosamente sin mostrar spinner de carga. */
   private refresh(): void {
     this.productsService.getById(this.productId).subscribe({
       next: (data) => {
@@ -183,6 +189,7 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  /** Muestra un toast de conflicto o error según el código HTTP de la respuesta. */
   private handleActionError(err: AppError): void {
     this.messageService.add({
       severity: err.status === 409 ? 'warn' : 'error',

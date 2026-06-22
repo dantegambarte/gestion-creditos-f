@@ -1,0 +1,58 @@
+<div class="db-analysis-row">
+  <!-- Weekly collection -->
+  <div class="db-chart-panel">
+    <div class="db-panel__header">
+      <span>Recaudación semana</span>
+    </div>
+    @if (loadingCharts) {
+      <div class="db-chart-body">
+        <p-skeleton width="100%" height="250px" />
+      </div>
+    } @else {
+      <p-chart
+        class="db-chart"
+        type="bar"
+        [data]="chartWeeklyData"
+        [options]="chartWeeklyOptions"
+      />
+    }
+  </div>
+
+  <!-- Collectors ranking -->
+  <div class="db-chart-panel">
+    <div class="db-panel__header">
+      <span>Top 5 cobradores</span>
+    </div>
+    @if (loadingCharts) {
+      <div class="db-chart-body">
+        <p-skeleton width="100%" height="250px" />
+      </div>
+    } @else {
+      <p-chart
+        class="db-chart"
+        type="bar"
+        [data]="chartCollectorsData"
+        [options]="chartCollectorsOptions"
+      />
+    }
+  </div>
+
+  <!-- Sellers ranking -->
+  <div class="db-chart-panel">
+    <div class="db-panel__header">
+      <span>Top 5 vendedores</span>
+    </div>
+    @if (loadingCharts) {
+      <div class="db-chart-body">
+        <p-skeleton width="100%" height="250px" />
+      </div>
+    } @else {
+      <p-chart
+        class="db-chart"
+        type="bar"
+        [data]="chartSellersData"
+        [options]="chartSellersOptions"
+      />
+    }
+  </div>
+</div>

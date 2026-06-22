@@ -26,7 +26,19 @@
 | **CR-17** | Operaciones - Seller. | Click en paginación debe mostrar los siguientes registros. | Corregido / Validado — agregado `[paginator]="true" [rows]="10"` en `operations.component.html` |
 | **CR-18** | Operaciones - Admin. | Se hizo click en "Ver" en una operación pendiente de aprobación. | Debería mostrar la tasa de interés | Corregido / Validado — `!= null` para capturar `undefined`; tasa multiplicada ×100 para display como %; tipo SALE muestra "N/A (Venta)"; status EXPIRED agregado al tipo y mapas de label/severity |
 | **CR-19** | Cancelación Anticipada - Admin. | Se hizo click en "Cancelación Anticipada" en una operación aprobada. | Debería poder adelantar cuotas. | Corregido / Validado — botón renombrado a "Cancelación total anticipada"; diálogo explica que es pago total de todas las cuotas y menciona la opción de pago anticipado por cuota individual |
-| **CR-19** | Nueva Operació. | Se hizo click en "Nueva Operación". | Debería estar debajo la cantidad de cuotas al elegir el plan de pago. | Error |
+| **CR-20** | Nueva Operación. | Se hizo click en "Nueva Operación". | Debería estar debajo la cantidad de cuotas al elegir el plan de pago. | Corregido / Validado — panel "Cantidad de cuotas" movido arriba de "Fecha de inicio de pago" para LOAN; `mt-6` para separación visual |
+| **CR-21** | Operación Crédito - Declaraciones y Autorizaciones | Faltaba un control para marcar todas las declaraciones en la pantalla de confirmación | Debe existir un botón para marcar todas las declaraciones y que las casillas queden efectivamente marcadas | Corregido / Validado — agregado botón "Marcar todas" (`data-cy="btn-mark-all"`) en `step-confirm.component.html`; método `setAllDeclarations` añadido en `step-confirm.component.ts`; test E2E `cypress/e2e/03-nueva-operacion-real.cy.ts` actualizado para usar el nuevo botón |
+| **CR-22** | Nueva Operación. | Se hizo click en "Nueva Operación" - Venta. | Debería poder elegir la unidad del producto. | Corregido / Validado — test Cypress agregado: al elegir `U-002`, el POST envía `unit_ids: ['unit-2']` y no reemplaza por la primera unidad disponible |
+| **CR-23** | Aprobar Crédito. | Se hizo click en "Aprobar Crédito". | Debería poder ver la cantidad de cuotas que se eligió en el plan. | Corregido / Validado — Cypress real confirma que la aprobación de venta muestra "Cantidad de cuotas definida" y las cuotas elegidas en la preventa |
+| **CR-24** | Adelanto de cuotas. | Se hizo click en "Venta de producto" con adelanto de cuotas. | Si se adelantan cuotas, las restantes deben reprogramarse correctamente. | Corregido / Validado — backend reprograma cuotas mensuales con intervalos de 30 días; validado con `payments.queries.test.js` |
+| **CR-25** | Aprobación de Crédito. | Se hizo click en "Venta de producto" o "Préstamo". | Deberían aparecer las cuotas si son mensuales 30 días corridos. | Corregido / Validado — frontend y backend usan 30 días corridos para frecuencia mensual; validado con `operation-form.service.spec.ts` y `creditCalculator.test.js` |
+| **CR-26** | Simulación de Crédito. | Se hizo click en "Ver Simulación". | Deberían aparecer correctamente las cuotas. | Corregido / Validado — simulación/cronograma mensual validado con 30 días corridos en frontend y backend |
+| **CR-27** | Nuevo Crédito | Se hizo click en "Nueva Operación". | Deberían aparecer correctamente los créditos que posee el cliente. | Corregido / Validado — resumen enriquecido de créditos del cliente cubierto en `step-client.component.spec.ts` |
+| **CR-28** | Aprobaciones - Dashboard | En la sección "Aprobaciones" debería aparecer la cantidad de operaciones para aprobar. | Debe refrescar KPIs/listados tras aprobar cobros. | Corregido / Validado — dashboard recarga KPIs al aprobar cobros; validado con `dashboard.component.spec.ts` |
+| **CR-29** | Adelanto de cuotas | Debería permitir ingresar un número menor a la cantidad de cuotas. | No debe permitir exceder el máximo permitido. | Corregido / Validado — adelanto acotado al máximo permitido; validado con `operation-form.service.spec.ts` y `step-conditions.component.spec.ts` |
+| **CR-30** | Resumen de plan | Se hizo click en "Semanal", "Quincenal" en un crédito. | Debería cambiar la frecuencia en los datos. | Corregido / Validado — resumen muestra la frecuencia real seleccionada; validado con `step-conditions.component.spec.ts` |
+| **CR-31** | Préstamo de efectivo | Se hizo click en "Préstamo de efectivo". | El input de "Anticipo / Entrega" no debería aparecer. | Corregido / Validado — préstamo efectivo limpia anticipo/cuotas adelantadas; validado con `operation-form.service.spec.ts` |
+
 
 
 ## 🟢 2. Módulo: Cliente
@@ -50,7 +62,8 @@
 | **CL-14** | Clientes | Click en el filtro de búsqueda. | Debería poder filtrar los estados. | Corregido / Validado — `includeSummary: true` en llamada al listado; `toClient()` mapea `c.delinquency ?? 'Al dia'` en lugar de hardcodear "Al dia" |
 | **CL-15** | Ver Clientes | Click en "Ver Clientes". | Debería poder mostrar los datos. | Corregido / Validado — `CreditsService` inyectado en `client-detail`; créditos cargados desde API por `customerId` después de cargar el cliente |
 | **CL-16** | Editar Clientes | Click en "Editar" en un cliente. | Debería permitir editar todos los campos. | Corregido / Validado — modal editar expandido con Email, Dirección y Cobrador Asignado; pre-carga datos existentes del cliente; error visible si email inválido |
-| **CL-16** | Nuevo Cliente | Click en "Nuevo Cliente" en Seller y Seller-Collector. | Error: no mantiene el mismo formato |
+| **CL-17** | Nuevo Cliente | Click en "Nuevo Cliente" en Seller y Seller-Collector. | Corregido / Validado — inputs con `h-11 px-3`; labels con `auth-label`; orden de botones: Cancelar izquierda / Registrar derecha; dropdown Cobrador con `appendTo="body"` y deshabilitado cuando no hay cobradores activos |
+| **CL-18** | Nuevo Cliente | Click en "Nuevo Cliente". | Debería no dejar crear el cliente si no tiene un cobrador asignado. | Corregido / Validado — `assignedCollectorId` es requerido; tests de componente y Cypress real verifican que sin cobrador no se llama API y el botón queda deshabilitado |
 
 
 ## 🟢 3. Módulo: Producto
@@ -67,11 +80,12 @@
 | **PR-08** | Desactivar Marca - Admin | Se hizo click en "Desactivar Marca". | Debería salir un cartel de confirmación y poder activarla de nuevo. | Corregido / Validado — ídem PR-07 para marcas |
 | **PR-09** | Editar Producto - Admin | Se hizo click en "Editar Producto". | El formulario debe ser distinguible del fondo. | Corregido / Validado — formulario envuelto en `ff-panel` con heading con color explícito |
 | **PR-10** | Editar Producto | Se hizo click en "Guardar Cambios". | No se hizo ninguna modificación y me permitió "Guardar Cambios". | Corregido / Validado — `[disabled]="form.invalid \|\| !form.dirty \|\| submitting"` en botón Guardar Cambios |
-| **PR-11** | Desactivar Producto | Se hizo click en "Desactivar Producto". | Debería permitir desactivar productos por mas que tengan unidades vendidas. | Error |
+| **PR-11** | Desactivar Producto | Se hizo click en "Desactivar Producto". | Debería permitir desactivar productos por mas que tengan unidades vendidas. | Corregido / Validado — backend acepta `force: true` en body; sin force bloquea RESERVED+SOLD; con force solo bloquea RESERVED (créditos pendientes); `hasReservedUnits` query agregada |
 | **PR-12** | Variantes Productos | Se hizo click en "Editar Variantes". | Debería poder mostrar todos los campos en la tabla de la izquierda. | Corregido / Validado — tabla con columnas COLOR, TALLE, CAPACIDAD dinámicas (ocultas si ninguna variante las usa); panel de formulario a demanda (click "Nueva variante" o "Editar"); acciones de texto horizontal |
-| **PR-13** | Múltiples Variantes Producto | Se hizo click en "Ingresar Múltiples Variantes". | Se ingresaron datos erróneos. | Pendiente — feature "Múltiples Variantes" no existe en el codebase actual; requiere implementación desde cero |
+| **PR-13** | Múltiples Variantes Producto | Se hizo click en "Ingresar Múltiples Variantes". | Se ingresaron datos erróneos. | Corregido / Validado — feature implementada: ingreso individual con validación inline + toast en duplicado; ingreso múltiple con tabla de filas, skip de filas vacías, remapeo de errores por índice original, y summary de variantes/precio total; filas vacías entre filas cargadas se ignoran correctamente |
 | **PR-14** | Categoría y Marca | Categoría y Marca solo permite creación y no edición. | Corregido / Validado — botón "Editar" por fila en tablas de Categorías y Marcas; diálogo de edición con nombre pre-cargado |
-| **PR-15** | Nuevo Producto - Admin | Se hizo click en "Nuevo Producto". | El menú desplegable sale cortado en "Categoria" y "Marca". |Error |
+| **PR-15** | Nuevo Producto - Admin | Se hizo click en "Nuevo Producto". | El menú desplegable sale cortado en "Categoria" y "Marca". | Corregido / Validado — `appendTo="body"` en dropdowns Categoría y Estado del modal de creación (`products.component.html`) |
+| **PR-16** | Crear Variante | Se hizo click en "Nueva Variante". | Debería permitirme crear la variante para luego ingresar productos de esa variante. | Corregido / Validado — crear variante usa `/product-variants` con `product_id` e `initial_units`, sin crear un producto nuevo; validado con `product-variants.service.spec.ts` |
 
 
 ## 🟢 Módulo: Planilla
@@ -82,6 +96,7 @@
 | **PL-02** | Botones | Los botones no están correctamente ubicados. | Deberían seguir los patrones visuales. | Corregido / Validado |
 | **PL-03** | Generar Planilla | Se hizo click en "Generar Planilla". | Debería deshabilitar "Generar Planilla para todos". | Corregido |
 | **PL-04** | Mi Ruta - Collector | Se hizo click en "Ver Planilla". | Al seleccionar el ícono del calendario, el mismo ocupa toda la pantalla. | Corregido |
+| **PL-05** | Generar Planilla | Se hizo click en "Generar Planilla" del día. | Debería mostrar solo cuotas que vencen hoy y visitas agendadas hoy. | Corregido / Validado — `TODAY` ya no arrastra mora vieja sin agenda; validado con integración `planilla-inclusion-rules.test.js` sobre Postgres local (`9/9`) |
 
 
 ## 🟢 Módulo: Gastos
@@ -90,7 +105,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **GA-01** | Gastos | Se hizo click en desactivar gasto "Alquiler". | Debería poder activarlo nuevamente. | Corregido / Validado |
 | **GA-02** | Gastos | Se hizo click en "Registrar Gasto" - Admin. | Debería poder seleccionar el método de pago. | Corregido / Validado — `appendTo="body"` en dropdowns del formulario de gastos |
-| **GA-03** | Gastos | Se hizo click en "Registrar Gasto" - Admin. | Debería poder seleccionar la fecha si no cerraron caja. | Error |
+| **GA-03** | Gastos | Se hizo click en "Registrar Gasto" - Admin. | Debería poder seleccionar la fecha si no cerraron caja. | Corregido / Validado — campo "Fecha del gasto" agregado al panel de registro con `min`/`max` = hoy; impide fechas pasadas y futuras; `todayIsoPublic` getter expuesto desde el TS |
 
 
 ## 🟢 Módulo: Usuarios
@@ -110,16 +125,30 @@
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
 | **CA-01** | Cierre de caja | Se hizo click en "Cierre de caja". | Debería poder realizar el cierre de caja. | Corregido / Validado — bug backend: `totalEgresos` vs `totalOutflows` naming mismatch causaba error 500; controller ahora también maneja 422 correctamente |
-| **CA-02** | Cierre de caja | Se hizo click en "Cierre de caja" al pasar las 00:00. | Debería permitirme cerrar la caja del día anterior pasadas las 00:00. | Error |
-| **CA-03** | Cierre de caja | Se hizo click en "Estado". | Debería poder ver todas las opciones. | Error |
+| **CA-02** | Cierre de caja | Se hizo click en "Cierre de caja" al pasar las 00:00. | Debería permitirme cerrar la caja del día anterior pasadas las 00:00. | Corregido / Validado — jornada anterior activa cubierta por `cashRegister.service.test.js` |
+| **CA-03** | Cierre de caja | Se hizo click en "Estado". | Debería poder ver todas las opciones. | Corregido / Validado — `appendTo="body"` en dropdown de Estado en historial de cierres (`cash-register.component.html`) |
+| **CA-04** | Enganche post-medianoche | Se aprueba una operación con enganche pasada la medianoche con jornada anterior activa. | El enganche debe figurar en la jornada activa. | Corregido / Validado — `credit_down_payments.register_date` usa jornada activa; validado con `credits.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts` |
+| **CA-05** | Gasto post-medianoche | Se registra un gasto pasada la medianoche con jornada anterior activa. | El gasto debe descontarse de la jornada activa. | Corregido / Validado — `expenses.register_date` usa jornada activa; validado con `expenses.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts` (`10/10`) |
 
 
 ## 🟢 Módulo: Cobro
 
 | ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
 | :--- | :--- | :--- | :--- | :--- |
-| **CO-01** | Reversión de cuota | Se hizo click en "Revertir Cuota". | Debería volver al estado pendiente en la planilla de "Cobros". | Error |
+| **CO-01** | Reversión de cuota | Se hizo click en "Revertir Cuota". | Debería volver al estado pendiente en la planilla de "Cobros". | Corregido / Validado — cobro original muestra tag "Aprobado" + "Revertido" (warning); payment de reversión muestra "Aprobado" + "Reversión" (danger); toast confirma la operación; `reversalPaymentId` mapeado en model + service; `reloadDetail()` agregado en planilla de cobros |
+| **CO-02** | Cobro directo - Admin | Se hizo click en "Cobro directo" y se completaron los campos. | Debería registrar y aprobar el cobro en el mismo paso (`admin_direct: true`, `status: APPROVED`). | Corregido / Validado — `processDirectPayment()` llamaba a `create` (PENDING) en vez de `adminDirect` (APPROVED); corregido en `admin-payments.component.ts` |
+| **CO-03** | Cobro directo parcial - Admin | Se intentó registrar un cobro con monto menor al de la cuota. | El form debería pedir "Fecha de próxima visita" para cobros parciales. | Corregido / Validado — campo `p-calendar` agregado al dialog con `[minDate]="todayDate"`; `nextVisitDate` agregado a `AdminDirectPayload`, mapeado en service y enviado al backend |
+| **CO-04** | Registrar Cobro - Collector | Se hizo click en "Cobrar" en la cuota de la planilla generada. | El form debería permitir solo ingresar números. | Corregido / Validado — `@HostListener('keydown')` en `CurrencyAmountInputDirective` bloquea `e`, `E` y `+`; aplica a todos los `p-inputNumber[appCurrencyAmountInput]` del sistema |
+| **CO-05** | Cobros por aprobar | Se hizo click en "Aprobar" en el dashboard. | Debería salir un cartel que se aprobó un cobro. | Corregido / Validado — toast de aprobación cubierto en `dashboard-pending.component.spec.ts` |
 
+
+## 🟢 Módulo: Liquidación
+
+| ID | Caso de Uso / Prueba | Acción Realizada | Resultado Esperado (Éxito) | Estado |
+| :--- | :--- | :--- | :--- | :--- |
+| **LI-01** | Sueldo Fijo | Se hizo click en "Sueldo Fijo" en Liquidaciones. | Al poner un nuevo valor la página se debe actualizar. | La página no se actualiza, hay que refrescar manual, lo mismo en "Resumen Semanal". | Corregido / Validado — `saveSalary()` ahora llama `loadSummary()` tras el PUT; `salaryRows` se recalcula desde `employees()` que se actualiza con la segunda llamada a `weekly-summary` |
+| **LI-02** | Sueldo Fijo | Se hizo click en "Sueldo Fijo" en Liquidaciones. | Al poner un importe en "Sueldo Fijo" el editor de sueldo debería limpiarse. | El editor de sueldo sigue mostrando los valores. | Corregido / Validado — tras el save, `selectedCollectorId`, `currentSalary` y `newWeeklyAmount` se resetean a `null`; el `p-inputNumber` desaparece y el dropdown vuelve al placeholder |
+| **LI-03** | Liquidar | Se hizo click en "Liquidar". | Debería mostrar cuáles fueron las ventas de la liquidación. | No muestra las ventas para corroborar la liquidación. | Corregido / Validado — `openLiquidateDialog()` carga comisiones PENDING del empleado vía `getCommissions({ userId, status: 'PENDING' })`; dialog muestra tabla "Ventas incluidas" con columnas Cliente / Venta / Comisión |
 
 ---
 
@@ -191,6 +220,51 @@
 
 ---
 
+## ✅ Correcciones validadas — Sesión 4 (Grupo 1 Frontend)
+
+### Módulo Crédito
+- **CR-20**: Nueva Operación LOAN — panel "Cantidad de cuotas" movido por encima de "Fecha de inicio de pago" en `step-conditions.component.html`; `mt-6` agrega separación visual; ya no requiere scroll para ver las cuotas
+
+### Módulo Cliente
+- **CL-17**: Nuevo Cliente Seller/Seller-Collector — inputs con `h-11 px-3`; labels con `auth-label`; orden de botones corregido (Cancelar izquierda, Registrar derecha); dropdown Cobrador con `appendTo="body"` y deshabilitado cuando `collectorOptions.length === 0`
+
+### Módulo Producto
+- **PR-15**: Dropdowns Categoría y Estado en modal "Nuevo Producto" — `appendTo="body"` en ambos (`shared/products/products.component.html`)
+
+### Módulo Gastos
+- **GA-03**: Formulario "Registrar Gasto" — nuevo campo "Fecha del gasto" con `min`/`max` = hoy; impide registrar con fechas pasadas o futuras; `todayIsoPublic` getter en `expenses.component.ts`
+
+### Módulo Caja
+- **CA-03**: Dropdown "Estado" en historial de cierres — `appendTo="body"` en `cash-register.component.html`
+
+---
+
+---
+
+## ✅ Correcciones validadas — Sesión 5
+
+### Módulo Cobro
+- **CO-01**: Reversión de cuota — `reversalPaymentId` agregado a `Payment` model y mapper; `paymentTypeLabel` muestra tag único "Revertido" (warning) para cobros revertidos; `reloadDetail()` agregado en planilla de cobros
+- **CO-02**: Cobro directo — `processDirectPayment()` corregido para llamar a `adminDirect()` en lugar de `create()`; cobro queda APPROVED con `admin_direct: true`
+- **CO-03**: Cobro directo parcial — campo `p-calendar` "Próxima visita" agregado al dialog; `nextVisitDate` agregado a `AdminDirectPayload` y mapeado en service
+
+### Módulo Producto
+- **PR-11**: Desactivar producto con unidades vendidas — backend acepta `force: true`; `hasReservedUnits` query agregada; sin force bloquea RESERVED+SOLD; con force solo bloquea RESERVED
+- **PR-13**: Múltiples variantes — feature implementada desde cero: ingreso individual con toast en duplicado; ingreso múltiple con skip de filas vacías, remapeo de errores por índice original, y summary de variantes cargadas
+
+### Módulo Cobros — UX
+- Tags unificados: cobro revertido → "Revertido" (ámbar); cobro de reversión → "Reversión" (rojo); cobro directo → "Pago directo" (azul); todos tag único sin stacking
+
+---
+
+## ✅ Pendientes diferidos cerrados
+
+| ID | Bug | Estado |
+| :--- | :--- | :--- |
+| **CA-02** | Cierre de caja pasadas 00:00 | Corregido / Validado — jornada comercial activa y cierre post-medianoche cubiertos por `cashRegister.service.test.js` |
+
+---
+
 ## 🔵 Pendientes por datos (no son bugs de código)
 
 | ID | Descripción | Acción requerida |
@@ -219,3 +293,6 @@
 - `cypress/e2e/40-contrast-color-regression.cy.ts` → CL-02b, CR-13, PR-09 (Grupo C)
 - `cypress/e2e/41-pagination-regression.cy.ts` → CR-17, CL-08 (Grupo D)
 - `cypress/e2e/42-group-e-regression.cy.ts` → CL-10, PR-07, PR-08, CR-09 (Grupo E)
+- `cypress/e2e/43-session-changes-regression.cy.ts` → CO-02, CO-03, CO-04, PR-11, PR-13 (Sesión 5)
+- `cypress/e2e/45-liquidaciones-regression.cy.ts` → LI-01, LI-02, LI-03 (Sesión 7) — 4 tests
+- `cypress/e2e/46-cobros-regression.cy.ts` → CO-01a, CO-01b (Sesión 8) — 4 tests

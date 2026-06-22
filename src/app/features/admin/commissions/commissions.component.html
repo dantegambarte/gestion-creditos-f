@@ -1,383 +1,121 @@
 <p-toast />
 
 <div class="p-6 space-y-6">
+  <div class="ff-page-header mb-0">
+    <div>
+      <h1 class="ff-page-title">Liquidaciones</h1>
+      <p class="ff-page-subtitle">Comisiones, historial y sueldo fijo del equipo.</p>
+    </div>
+  </div>
+
   <!-- Tabs -->
-  <div class="flex gap-2 border-b border-gray-200">
+  <div class="ff-tab-nav">
     <button
-      (click)="setTab('liquidaciones')"
-      [class]="
-        'px-4 py-2 text-sm font-medium border-b-2 transition-colors ' +
-        (activeTab === 'liquidaciones'
-          ? 'border-blue-600 text-blue-600'
-          : 'border-transparent text-gray-500 hover:text-gray-700')
-      "
+      (click)="vm.setTab('resumen')"
+      class="ff-tab"
+      [class.ff-tab--active]="vm.activeTab() === 'resumen'"
     >
-      <i class="pi pi-wallet mr-1.5"></i> Liquidaciones
+      <i class="pi pi-wallet mr-1.5"></i> Resumen semanal
     </button>
     <button
-      (click)="setTab('historial')"
-      [class]="
-        'px-4 py-2 text-sm font-medium border-b-2 transition-colors ' +
-        (activeTab === 'historial'
-          ? 'border-blue-600 text-blue-600'
-          : 'border-transparent text-gray-500 hover:text-gray-700')
-      "
+      (click)="vm.setTab('historial')"
+      class="ff-tab"
+      [class.ff-tab--active]="vm.activeTab() === 'historial'"
     >
       <i class="pi pi-history mr-1.5"></i> Historial
     </button>
+    <button
+      (click)="vm.setTab('sueldos')"
+      class="ff-tab"
+      [class.ff-tab--active]="vm.activeTab() === 'sueldos'"
+    >
+      <i class="pi pi-money-bill mr-1.5"></i> Sueldo fijo
+    </button>
   </div>
 
-  <!-- TAB: Liquidaciones -->
-  @if (activeTab === "liquidaciones") {
-    <!-- Weekly Summary -->
-    <p-card styleClass="shadow-sm">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h2 class="text-base font-semibold text-gray-800">Resumen semanal</h2>
-          <p class="text-xs text-gray-400">
-            Empleados con comisiones pendientes de liquidar.
-          </p>
-        </div>
-        <p-button
-          icon="pi pi-refresh"
-          severity="secondary"
-          [outlined]="true"
-          [loading]="loadingSummary"
-          (onClick)="loadSummary()"
-        />
-      </div>
-
-      @if (loadingSummary) {
-        <app-loading-state />
-      } @else if (errorSummary) {
-        <app-error-state />
-      } @else if (employees.length === 0) {
-        <p class="text-sm text-gray-400 text-center py-10">
-          No hay empleados con comisiones pendientes.
-        </p>
-      } @else {
-        <p-table
-          [value]="employees"
-          styleClass="p-datatable-sm p-datatable-hoverable-rows"
-          responsiveLayout="scroll"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Empleado</th>
-              <th>Rol</th>
-              <th class="text-right">Comisiones</th>
-              <th class="text-right">Sueldo fijo</th>
-              <th class="text-right">Total neto</th>
-              <th>Período</th>
-              <th class="text-center">Acción</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-emp>
-            <tr [class]="rowDisabled(emp) ? 'opacity-50' : ''">
-              <td class="font-medium">{{ emp.fullName }}</td>
-              <td>
-                <p-tag [value]="roleLabel(emp.role)" severity="secondary" />
-              </td>
-              <td class="text-right font-mono">
-                {{ formatCurrency(emp.commissionsTotal) }}
-              </td>
-              <td class="text-right font-mono">
-                {{ formatCurrency(emp.salaryAmount) }}
-              </td>
-              <td class="text-right font-semibold text-blue-600 font-mono">
-                {{ formatCurrency(emp.totalNet) }}
-              </td>
-              <td class="text-sm text-gray-500">
-                @if (emp.earliestWeek) {
-                  {{ formatDate(emp.earliestWeek) }} —
-                  {{ formatDate(emp.latestWeek ?? "") }}
-                } @else {
-                  —
-                }
-              </td>
-              <td class="text-center">
-                <p-button
-                  label="Liquidar"
-                  icon="pi pi-send"
-                  size="small"
-                  [disabled]="rowDisabled(emp)"
-                  [pTooltip]="rowDisabled(emp) ? 'No hay monto a liquidar' : ''"
-                  tooltipPosition="left"
-                  (onClick)="openLiquidateDialog(emp)"
-                />
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      }
-    </p-card>
-
-    <!-- Salary Panel -->
-    <p-card styleClass="shadow-sm">
-      <div
-        class="flex items-center justify-between cursor-pointer"
-        (click)="toggleSalaryPanel()"
-      >
-        <h2 class="text-base font-semibold text-gray-800">
-          <i class="pi pi-money-bill mr-2 text-green-600"></i>Sueldo fijo de
-          cobradores
-        </h2>
-        <i
-          [class]="
-            'pi ' +
-            (showSalaryPanel ? 'pi-chevron-up' : 'pi-chevron-down') +
-            ' text-gray-400'
-          "
-        ></i>
-      </div>
-
-      @if (showSalaryPanel) {
-        <div class="mt-4 flex flex-wrap items-end gap-4">
-          <div class="flex flex-col gap-1.5">
-            <label
-              class="text-xs font-medium text-gray-500 uppercase tracking-wide"
-              >Cobrador</label
-            >
-            <p-dropdown
-              [options]="collectorOptions"
-              [(ngModel)]="selectedCollectorId"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Seleccioná un cobrador"
-              styleClass="w-64"
-              appendTo="body"
-              (onChange)="onCollectorChange()"
-            />
-          </div>
-
-          @if (loadingSalary) {
-            <p class="text-sm text-gray-400">Cargando...</p>
-          } @else if (currentSalary) {
-            <div class="flex flex-col gap-1.5">
-              <label
-                class="text-xs font-medium text-gray-500 uppercase tracking-wide"
-                >Sueldo semanal (ARS)</label
-              >
-              <p-inputNumber
-                [(ngModel)]="newWeeklyAmount"
-                mode="currency"
-                currency="ARS"
-                locale="es-AR"
-                [min]="0"
-                styleClass="w-48"
-              />
-            </div>
-            <p-button
-              label="Guardar"
-              icon="pi pi-check"
-              [loading]="savingSalary"
-              [disabled]="newWeeklyAmount == null"
-              (onClick)="saveSalary()"
-            />
-            <div class="text-sm text-gray-500">
-              Actual:
-              <span class="font-semibold text-gray-800">{{
-                formatCurrency(currentSalary.weeklyAmount)
-              }}</span>
-              &nbsp;·&nbsp;
-              <span
-                [class]="
-                  currentSalary.active ? 'text-green-600' : 'text-red-500'
-                "
-              >
-                {{ currentSalary.active ? "Activo" : "Inactivo" }}
-              </span>
-            </div>
-          }
-        </div>
-      }
-    </p-card>
+  <!-- TAB: Resumen semanal -->
+  @if (vm.activeTab() === "resumen") {
+    <app-commissions-summary-tab
+      class="block mt-4"
+      [loadingSummary]="vm.loadingSummary()"
+      [errorSummary]="vm.errorSummary()"
+      [employees]="vm.employees()"
+      [loadingLiquidations]="vm.loadingLiquidations()"
+      [recentLiquidations]="vm.recentLiquidations()"
+      [roleLabel]="vm.roleLabel.bind(vm)"
+      [roleTagClass]="vm.roleTagClass.bind(vm)"
+      [rowDisabled]="vm.rowDisabled.bind(vm)"
+      [formatCurrency]="vm.formatCurrency.bind(vm)"
+      [formatDate]="vm.formatDate.bind(vm)"
+      [paymentMethodLabel]="vm.paymentMethodLabel.bind(vm)"
+      (reloadSummary)="vm.loadSummary()"
+      (liquidate)="vm.openLiquidateDialog($event)"
+    />
   }
 
   <!-- TAB: Historial -->
-  @if (activeTab === "historial") {
-    <p-card styleClass="shadow-sm">
-      <div class="mb-4">
-        <h2 class="text-base font-semibold text-gray-800">
-          Historial de liquidaciones
-        </h2>
-        <p class="text-xs text-gray-400">Todas las liquidaciones ejecutadas.</p>
-      </div>
+  @if (vm.activeTab() === "historial") {
+    <app-commissions-history-tab
+      [loadingLiquidations]="vm.loadingLiquidations()"
+      [historyRows]="vm.historyRows()"
+      [historyStats]="vm.historyStats()"
+      [selectedHistory]="vm.selectedHistory()"
+      [historyEmployeeFilter]="vm.historyEmployeeFilter()"
+      [historyEmployeeOptions]="vm.historyEmployeeOptions()"
+      [historyMethodFilter]="vm.historyMethodFilter()"
+      [historyMethodOptions]="vm.historyMethodOptions()"
+      [roleByUserId]="vm.roleByUserId.bind(vm)"
+      [roleClassByUserId]="vm.roleClassByUserId.bind(vm)"
+      [formatCurrency]="vm.formatCurrency.bind(vm)"
+      [formatDate]="vm.formatDate.bind(vm)"
+      [paymentMethodLabel]="vm.paymentMethodLabel.bind(vm)"
+      (historyEmployeeFilterChange)="vm.setHistoryEmployeeFilter($event)"
+      (historyMethodFilterChange)="vm.setHistoryMethodFilter($event)"
+      (historySelected)="vm.selectHistory($event)"
+      (historyCleared)="vm.clearSelectedHistory()"
+    />
+  }
 
-      @if (loadingLiquidations) {
-        <app-loading-state />
-      } @else if (liquidations.length === 0) {
-        <p class="text-sm text-gray-400 text-center py-10">
-          Sin liquidaciones registradas.
-        </p>
-      } @else {
-        <p-table
-          [value]="liquidations"
-          [paginator]="true"
-          [rows]="20"
-          styleClass="p-datatable-sm p-datatable-hoverable-rows"
-          responsiveLayout="scroll"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Empleado</th>
-              <th>Período</th>
-              <th class="text-right">Comisiones</th>
-              <th class="text-right">Sueldo</th>
-              <th class="text-right">Total pagado</th>
-              <th>Método</th>
-              <th>Pagado por</th>
-              <th>Fecha</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-liq>
-            <tr>
-              <td class="font-medium">{{ liq.userName }}</td>
-              <td class="text-sm text-gray-500">
-                {{ formatDate(liq.weekStart) }} — {{ formatDate(liq.weekEnd) }}
-              </td>
-              <td class="text-right font-mono">
-                {{ formatCurrency(liq.commissionsTotal) }}
-              </td>
-              <td class="text-right font-mono">
-                {{ formatCurrency(liq.salaryAmount) }}
-              </td>
-              <td class="text-right font-semibold text-blue-600 font-mono">
-                {{ formatCurrency(liq.totalPaid) }}
-              </td>
-              <td>
-                <p-tag
-                  [value]="paymentMethodLabel(liq.paymentMethod)"
-                  [severity]="
-                    liq.paymentMethod === 'CASH' ? 'secondary' : 'info'
-                  "
-                />
-              </td>
-              <td class="text-sm text-gray-600">{{ liq.paidByName }}</td>
-              <td class="text-sm text-gray-500">
-                {{ formatDate(liq.paidAt) }}
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      }
-    </p-card>
+  <!-- TAB: Sueldo fijo -->
+  @if (vm.activeTab() === "sueldos") {
+    <app-commissions-salaries-tab
+      [salaryStats]="vm.salaryStats()"
+      [salarySearchTerm]="vm.salarySearchTerm()"
+      [filteredSalaryRows]="vm.filteredSalaryRows()"
+      [selectedCollectorId]="vm.selectedCollectorId()"
+      [collectorOptions]="vm.collectorOptions()"
+      [loadingSalary]="vm.loadingSalary()"
+      [currentSalary]="vm.currentSalary()"
+      [newWeeklyAmount]="vm.newWeeklyAmount()"
+      [savingSalary]="vm.savingSalary()"
+      [roleLabel]="vm.roleLabel.bind(vm)"
+      [roleTagClass]="vm.roleTagClass.bind(vm)"
+      [formatCurrency]="vm.formatCurrency.bind(vm)"
+      (salarySearchTermChange)="vm.setSalarySearchTerm($event)"
+      (selectedCollectorIdChange)="vm.setSelectedCollectorId($event)"
+      (collectorChanged)="vm.onCollectorChange()"
+      (collectorRowSelected)="vm.selectCollectorFromRow($event)"
+      (newWeeklyAmountChange)="vm.setNewWeeklyAmount($event)"
+      (salarySaved)="vm.saveSalary()"
+    />
   }
 </div>
 
-<!-- Dialog: Liquidar -->
-<p-dialog
-  [(visible)]="showLiquidateDialog"
-  [modal]="true"
-  [style]="{ width: '480px' }"
-  header="Liquidar empleado"
-  [closable]="!liquidating"
->
-  @if (selectedEmployee) {
-    <div class="space-y-4">
-      <div class="bg-gray-50 rounded-xl p-4 space-y-2">
-        <div class="flex justify-between text-sm">
-          <span class="text-gray-500">Empleado</span>
-          <span class="font-semibold">{{ selectedEmployee.fullName }}</span>
-        </div>
-        <div class="flex justify-between text-sm">
-          <span class="text-gray-500">Comisiones acumuladas</span>
-          <span class="font-mono">{{
-            formatCurrency(selectedEmployee.commissionsTotal)
-          }}</span>
-        </div>
-        <div class="flex justify-between text-sm">
-          <span class="text-gray-500">Sueldo fijo</span>
-          <span class="font-mono">{{
-            formatCurrency(selectedEmployee.salaryAmount)
-          }}</span>
-        </div>
-        <div
-          class="flex justify-between text-sm border-t border-gray-200 pt-2 mt-2"
-        >
-          <span class="font-semibold text-gray-700">Total a pagar</span>
-          <span class="font-bold text-blue-600 font-mono text-base">{{
-            formatCurrency(selectedEmployee.totalNet)
-          }}</span>
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-1.5">
-        <label class="text-xs font-medium text-gray-500 uppercase tracking-wide"
-          >Método de pago</label
-        >
-        <p-dropdown
-          [options]="paymentMethodOptions"
-          [(ngModel)]="liquidatePaymentMethod"
-          optionLabel="label"
-          optionValue="value"
-          styleClass="w-full"
-          appendTo="body"
-        />
-      </div>
-
-      @if (liquidatePaymentMethod === "TRANSFER") {
-        <div class="flex flex-col gap-1.5">
-          <label
-            class="text-xs font-medium text-gray-500 uppercase tracking-wide"
-            >Referencia de transferencia</label
-          >
-          <input
-            type="text"
-            [(ngModel)]="liquidateTransferReference"
-            maxlength="100"
-            placeholder="N° comprobante o referencia"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-      }
-    </div>
-  }
-
-  <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [outlined]="true"
-      styleClass="h-11 px-5 rounded-xl"
-      [disabled]="liquidating"
-      (onClick)="showLiquidateDialog = false"
-    />
-    <p-button
-      label="Confirmar liquidación"
-      icon="pi pi-send"
-      styleClass="h-11 px-5 rounded-xl"
-      [loading]="liquidating"
-      (onClick)="openConfirmDialog()"
-    />
-  </ng-template>
-</p-dialog>
-
-<!-- Dialog: Confirm -->
-<p-dialog
-  [(visible)]="showConfirmDialog"
-  [modal]="true"
-  [style]="{ width: '380px' }"
-  header="¿Confirmar liquidación?"
->
-  <p class="text-sm text-gray-600">
-    Esta acción marcará todas las comisiones pendientes como pagadas y no se
-    puede deshacer.
-  </p>
-  <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [outlined]="true"
-      styleClass="h-11 px-5 rounded-xl"
-      (onClick)="showConfirmDialog = false"
-    />
-    <p-button
-      label="Sí, liquidar"
-      icon="pi pi-check"
-      severity="danger"
-      styleClass="h-11 px-5 rounded-xl"
-      (onClick)="confirmLiquidate()"
-    />
-  </ng-template>
-</p-dialog>
+<app-commissions-liquidation-dialogs
+  [showLiquidateDialog]="vm.showLiquidateDialog()"
+  [showConfirmDialog]="vm.showConfirmDialog()"
+  [selectedEmployee]="vm.selectedEmployee()"
+  [liquidating]="vm.liquidating()"
+  [liquidatePaymentMethod]="vm.liquidatePaymentMethod()"
+  [liquidateTransferReference]="vm.liquidateTransferReference()"
+  [paymentMethodOptions]="vm.paymentMethodOptions"
+  [formatCurrency]="vm.formatCurrency.bind(vm)"
+  [employeeCommissions]="vm.employeeCommissions()"
+  [loadingCommissions]="vm.loadingCommissions()"
+  (showLiquidateDialogChange)="vm.setShowLiquidateDialog($event)"
+  (showConfirmDialogChange)="vm.setShowConfirmDialog($event)"
+  (liquidatePaymentMethodChange)="vm.setLiquidatePaymentMethod($event)"
+  (liquidateTransferReferenceChange)="vm.setLiquidateTransferReference($event)"
+  (openConfirm)="vm.openConfirmDialog()"
+  (confirmLiquidate)="vm.confirmLiquidate()"
+/>

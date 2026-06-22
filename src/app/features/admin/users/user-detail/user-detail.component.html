@@ -7,16 +7,7 @@
 />
 
 <div class="p-6" data-cy="admin-user-detail-page">
-  <div class="mb-4">
-    <p-button
-      data-cy="admin-user-detail-back-action"
-      label="Volver"
-      icon="pi pi-arrow-left"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="goBack()"
-    />
-  </div>
+  <app-back-button dataCy="admin-user-detail-back-action" (back)="goBack()" />
 
   @if (loading) {
     <app-loading-state />
@@ -158,136 +149,13 @@
       </div>
     }
 
-    <!-- EDIT FORM (inline) -->
-    @if (editMode && editForm) {
-      <div class="ff-panel p-6">
-        <h3
-          class="text-lg font-semibold mb-4"
-          style="color: var(--ff-text-primary)"
-        >
-          Editar usuario
-        </h3>
-
-        @if (roleChanged) {
-          <div class="auth-warning-banner mb-4">
-            <i class="pi pi-exclamation-triangle shrink-0"></i>
-            <p class="text-sm">
-              Cambiar el rol invalidará la sesión activa del usuario.
-            </p>
-          </div>
-        }
-
-        <form
-          data-cy="admin-user-detail-edit-form"
-          [formGroup]="editForm"
-          (ngSubmit)="onEditSubmit()"
-          class="space-y-4"
-        >
-          <div class="flex flex-col gap-1">
-            <label for="editFullName" class="auth-label"
-              >Nombre completo *</label
-            >
-            <input
-              data-cy="admin-user-detail-edit-fullname-input"
-              id="editFullName"
-              pInputText
-              formControlName="fullName"
-              [class.ng-invalid]="isEditInvalid('fullName')"
-              [class.ng-dirty]="isEditInvalid('fullName')"
-            />
-            @if (isEditInvalid("fullName")) {
-              <small class="auth-error">
-                <i class="pi pi-exclamation-circle text-xs"></i>
-                {{ getEditError("fullName") }}
-              </small>
-            }
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label for="editDni" class="auth-label">DNI *</label>
-            <input
-              id="editDni"
-              pInputText
-              formControlName="dni"
-              [class.ng-invalid]="isEditInvalid('dni')"
-              [class.ng-dirty]="isEditInvalid('dni')"
-            />
-            @if (isEditInvalid("dni")) {
-              <small class="auth-error">
-                <i class="pi pi-exclamation-circle text-xs"></i>
-                {{ getEditError("dni") }}
-              </small>
-            }
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label for="editEmail" class="auth-label">Email</label>
-            <input
-              data-cy="admin-user-detail-edit-email-input"
-              id="editEmail"
-              pInputText
-              formControlName="email"
-              [class.ng-invalid]="isEditInvalid('email')"
-              [class.ng-dirty]="isEditInvalid('email')"
-            />
-            @if (isEditInvalid("email")) {
-              <small class="auth-error">
-                <i class="pi pi-exclamation-circle text-xs"></i>
-                {{ getEditError("email") }}
-              </small>
-            }
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label for="editAddress" class="auth-label">Dirección</label>
-            <input
-              id="editAddress"
-              pInputText
-              formControlName="address"
-              [class.ng-invalid]="isEditInvalid('address')"
-              [class.ng-dirty]="isEditInvalid('address')"
-            />
-            @if (isEditInvalid("address")) {
-              <small class="auth-error">
-                <i class="pi pi-exclamation-circle text-xs"></i>
-                {{ getEditError("address") }}
-              </small>
-            }
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label for="editRole" class="auth-label">Rol *</label>
-            <p-dropdown
-              inputId="editRole"
-              formControlName="role"
-              [options]="roleOptions"
-              optionLabel="label"
-              optionValue="value"
-              styleClass="w-full"
-              appendTo="body"
-            />
-          </div>
-
-          <div class="flex gap-3 pt-2">
-            <p-button
-              data-cy="admin-user-detail-save-action"
-              type="submit"
-              label="Guardar cambios"
-              icon="pi pi-check"
-              [loading]="saving"
-              [disabled]="editForm.invalid || !formHasChanges || saving"
-            />
-            <p-button
-              data-cy="admin-user-detail-cancel-edit-action"
-              type="button"
-              label="Cancelar"
-              severity="secondary"
-              [outlined]="true"
-              (onClick)="cancelEdit()"
-            />
-          </div>
-        </form>
-      </div>
+    <!-- EDIT FORM -->
+    @if (editMode) {
+      <app-user-edit-form
+        [user]="user"
+        (saved)="onSaved($event)"
+        (cancelled)="cancelEdit()"
+      />
     }
   }
 </div>

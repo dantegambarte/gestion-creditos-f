@@ -10,6 +10,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { Observable } from 'rxjs';
 import { AppError } from '../../../../core/models/app-error';
 import { Product } from '../../../seller/models/product.model';
 import { ProductsService } from '../../../seller/products/products.service';
@@ -218,7 +219,7 @@ export class ProductRatesConfigComponent implements OnInit {
   }
 
   private executeToggle(rate: ProductRate): void {
-    const obs: any = rate.active
+    const obs: Observable<ProductRate | void> = rate.active
       ? this.svc.deactivate(rate.id)
       : this.svc.activate(rate.id);
     obs.subscribe({

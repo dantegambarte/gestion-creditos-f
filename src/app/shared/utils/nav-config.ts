@@ -60,13 +60,12 @@ export const NAV_CONFIG: NavItem[] = [
     route: `/${AppRoutes.ADMIN}/${AppRoutes.USERS}`,
     requiredRoles: ['ADMIN'],
   },
-  // TODO: implementar la cantidad de "aprobaciones" (falta que devuelve el backend en el me, la cantidad de aprobaciones)
   {
     label: 'Aprobaciones',
     icon: 'pi pi-check-square',
     route: `/${AppRoutes.ADMIN}/${AppRoutes.APPROVALS}`,
     requiredRoles: ['ADMIN'],
-    badge: 3,
+    badge: (user) => user?.pending_approvals_count || undefined,
     testId: 'nav-aprobaciones',
   },
   {
@@ -122,6 +121,12 @@ export const NAV_CONFIG: NavItem[] = [
     label: 'Configuración',
     icon: 'pi pi-cog',
     route: `/${AppRoutes.ADMIN}/${AppRoutes.CONFIG}`,
+    requiredRoles: ['ADMIN'],
+  },
+  {
+    label: 'Ayuda',
+    icon: 'pi pi-question-circle',
+    route: `/${AppRoutes.ADMIN}/${AppRoutes.HELP}`,
     requiredRoles: ['ADMIN'],
   },
 

@@ -1,16 +1,109 @@
-﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
 
 import { CashRegisterComponent } from './cash-register.component';
+import { CashRegisterService } from './cash-register.service';
+import { ExpenseCategoriesService } from '../expenses/expense-categories.service';
 
 describe('CashRegisterComponent', () => {
   let component: CashRegisterComponent;
   let fixture: ComponentFixture<CashRegisterComponent>;
+  let cashRegisterServiceSpy: jasmine.SpyObj<CashRegisterService>;
 
   beforeEach(async () => {
+    cashRegisterServiceSpy = jasmine.createSpyObj<CashRegisterService>(
+      'CashRegisterService',
+      [
+        'getDashboard',
+        'refreshJornadaState',
+        'getCashAccounts',
+        'createConversion',
+        'getSessionMovements',
+        'getActiveSession',
+        'getSessionSnapshot',
+        'createManualIncome',
+        'createManualIncomeCompany',
+      ],
+    );
+    const activeSession = {
+      id: 'sess-1',
+      business_day_id: 'bd-1',
+      owner_user_id: 'u-1',
+      opened_at: '2026-06-15T00:00:00Z',
+      opened_by: 'u-1',
+      opening_amount: 0,
+      status: 'OPEN' as const,
+    };
+    cashRegisterServiceSpy.getActiveSession.and.returnValue(of(activeSession));
+    cashRegisterServiceSpy.getSessionMovements.and.returnValue(of([]));
+    cashRegisterServiceSpy.getSessionSnapshot.and.returnValue(
+      of({
+        session_id: 'sess-1',
+        status: 'OPEN',
+        owner_user_id: 'u-1',
+        opened_at: '2026-06-15T00:00:00Z',
+        opening: { cash: 0, transfer: 0 },
+        collections: {
+          payments: { cash: 0, transfer: 0 },
+          down_payments: { cash: 0, transfer: 0 },
+          manual_incomes: { cash: 0, transfer: 0 },
+        },
+        outflows: {
+          expenses: { cash: 0, transfer: 0 },
+          commissions: { cash: 0, transfer: 0 },
+        },
+        conversions: { cash_delta: 0, transfer_delta: 0 },
+        drops: { cash: 0, transfer: 0, items: [] },
+        // disponible en la caja del día (lo que antes simulaba dashboard.cashAmount/transferAmount)
+        expected: { cash: 1000, transfer: 500 },
+      }),
+    );
+    cashRegisterServiceSpy.getDashboard.and.returnValue(
+      of({
+        date: '2026-06-15',
+        isClosed: false,
+        cashAmount: 1000,
+        transferAmount: 500,
+        totalCollected: 0,
+        totalOutflows: 0,
+        approvedCount: 0,
+        pendingCount: 0,
+        netBalance: 0,
+        pendingAmount: 0,
+        downPaymentsTotal: 0,
+        downPaymentsCount: 0,
+      }),
+    );
+    cashRegisterServiceSpy.refreshJornadaState.and.returnValue(
+      of({ businessDay: null, activeSession }),
+    );
+    cashRegisterServiceSpy.getCashAccounts.and.returnValue(
+      of([
+        {
+          id: 'acc-general',
+          name: 'Caja General',
+          type: 'GENERAL_CASH',
+          is_active: true,
+          current_balance: 5000,
+          created_at: '2026-06-15T00:00:00Z',
+        },
+      ]),
+    );
+
+    const expenseCategoriesSpy = jasmine.createSpyObj<ExpenseCategoriesService>(
+      'ExpenseCategoriesService',
+      ['getAll'],
+    );
+    expenseCategoriesSpy.getAll.and.returnValue(of([]));
+
     await TestBed.configureTestingModule({
       imports: [CashRegisterComponent],
-      providers: [provideHttpClient()],
+      providers: [
+        provideHttpClient(),
+        { provide: CashRegisterService, useValue: cashRegisterServiceSpy },
+        { provide: ExpenseCategoriesService, useValue: expenseCategoriesSpy },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CashRegisterComponent);
@@ -20,5 +113,130 @@ describe('CashRegisterComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('conversión: selector de Origen (DAILY/COMPANY)', () => {
+    it('openConversionDialog resetea criteria a DAILY y carga el saldo de Caja General', () => {
+      component.openConversionDialog();
+
+      expect(component.conversionCriteria()).toBe('DAILY');
+      expect(component.generalCashBalance()).toBe(5000);
+    });
+
+    it('conversionSourceAvailable usa el disponible de la caja activa cuando criteria es DAILY', () => {
+      component.openConversionDialog();
+      component.conversionSourceMethod.set('CASH');
+
+      expect(component.conversionSourceAvailable()).toBe(1000);
+    });
+
+    it('conversionSourceAvailable usa el saldo de Caja General cuando criteria es COMPANY', () => {
+      component.openConversionDialog();
+      component.conversionCriteria.set('COMPANY');
+
+      expect(component.conversionSourceAvailable()).toBe(5000);
+    });
+
+    it('conversionExceedsAvailable es true cuando el monto supera el disponible', () => {
+      component.openConversionDialog();
+      component.conversionSourceMethod.set('CASH');
+      component.conversionAmount.set(1500);
+
+      expect(component.conversionExceedsAvailable()).toBe(true);
+    });
+
+    it('conversionExceedsAvailable es false cuando el monto está dentro del disponible', () => {
+      component.openConversionDialog();
+      component.conversionSourceMethod.set('CASH');
+      component.conversionAmount.set(500);
+
+      expect(component.conversionExceedsAvailable()).toBe(false);
+    });
+
+    it('submitConversion envía el criteria seleccionado en el payload', () => {
+      cashRegisterServiceSpy.createConversion.and.returnValue(
+        of({
+          id: 'conv-001',
+          registerDate: '2026-06-15',
+          criteria: 'COMPANY',
+          sourceMethod: 'CASH',
+          targetMethod: 'TRANSFER',
+          amount: 100,
+          notes: null,
+          createdBy: 'admin-001',
+          createdAt: '2026-06-15T00:00:00Z',
+        }),
+      );
+
+      component.openConversionDialog();
+      component.conversionCriteria.set('COMPANY');
+      component.conversionAmount.set(100);
+
+      component.submitConversion();
+
+      expect(cashRegisterServiceSpy.createConversion).toHaveBeenCalledWith(
+        jasmine.objectContaining({ criteria: 'COMPANY' }),
+      );
+    });
+  });
+
+  describe('operaciones a Caja General sin caja activa (jornada cerrada)', () => {
+    it('openConversionDialog defaultea criteria a COMPANY cuando no hay caja activa', () => {
+      component.activeSession.set(null);
+
+      component.openConversionDialog();
+
+      expect(component.conversionCriteria()).toBe('COMPANY');
+    });
+
+    it('openManualIncomeDialog defaultea criteria a COMPANY cuando no hay caja activa', () => {
+      component.activeSession.set(null);
+
+      component.openManualIncomeDialog();
+
+      expect(component.manualIncomeCriteria()).toBe('COMPANY');
+    });
+
+    it('openManualIncomeDialog defaultea criteria a DAILY cuando hay caja activa', () => {
+      component.openManualIncomeDialog();
+
+      expect(component.manualIncomeCriteria()).toBe('DAILY');
+    });
+
+    it('submitManualIncome con criteria COMPANY no exige caja activa y llama createManualIncomeCompany', () => {
+      cashRegisterServiceSpy.createManualIncomeCompany.and.returnValue(of({}));
+      component.activeSession.set(null);
+
+      component.openManualIncomeDialog();
+      component.manualIncomeAmount.set(1000);
+      component.manualIncomeDescription.set('Aporte de capital');
+
+      component.submitManualIncome();
+
+      expect(
+        cashRegisterServiceSpy.createManualIncomeCompany,
+      ).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          amount: 1000,
+          description: 'Aporte de capital',
+        }),
+      );
+      expect(cashRegisterServiceSpy.createManualIncome).not.toHaveBeenCalled();
+    });
+
+    it('submitManualIncome con criteria DAILY y sin caja activa muestra error de validación', () => {
+      component.activeSession.set(null);
+      component.manualIncomeCriteria.set('DAILY');
+      component.manualIncomeAmount.set(1000);
+      component.manualIncomeDescription.set('Intento sin caja');
+
+      component.submitManualIncome();
+
+      expect(component.manualIncomeValidationError()).toBeTruthy();
+      expect(cashRegisterServiceSpy.createManualIncome).not.toHaveBeenCalled();
+      expect(
+        cashRegisterServiceSpy.createManualIncomeCompany,
+      ).not.toHaveBeenCalled();
+    });
   });
 });

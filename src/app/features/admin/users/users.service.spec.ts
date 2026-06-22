@@ -62,15 +62,16 @@ describe('UsersService', () => {
     req.flush({ ok: true, message: 'ok', data: [rawUser] });
   });
 
-  it('listCollectors() — llama list con role=COLLECTOR y status=ACTIVE', (done) => {
+  it('listCollectors() — llama list con roles=COLLECTOR,SELLER_COLLECTOR y status=ACTIVE', (done) => {
     service.listCollectors().subscribe((users) => {
       expect(users.length).toBe(1);
       done();
     });
 
     const req = http.expectOne((r) => r.url === BASE);
-    expect(req.request.params.get('role')).toBe('COLLECTOR');
+    expect(req.request.params.get('roles')).toBe('COLLECTOR,SELLER_COLLECTOR');
     expect(req.request.params.get('status')).toBe('ACTIVE');
+    expect(req.request.params.has('role')).toBeFalse();
     req.flush({ ok: true, message: 'ok', data: [rawUser] });
   });
 

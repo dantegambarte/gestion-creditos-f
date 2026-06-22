@@ -1,0 +1,138 @@
+<div class="db-pending-row">
+  <!-- Pending Credits -->
+  <div class="db-pending-col">
+    <div class="db-panel__header">
+      <span>Créditos por aprobar</span>
+      <span class="db-badge">{{ getTotalCredits() }}</span>
+    </div>
+    <div class="db-pending-body">
+      @if (loadingPending) {
+        @for (i of [1, 2]; track i) {
+          <div class="db-pending-group">
+            <p-skeleton width="80%" height="0.75rem" styleClass="mb-2" />
+            <p-skeleton width="60%" height="0.65rem" />
+          </div>
+        }
+      } @else if (pendingCredits.length === 0) {
+        <span class="db-placeholder">Sin créditos pendientes</span>
+      } @else {
+        @for (group of pendingCredits; track group.sellerName) {
+          <div class="db-pending-group">
+            <div class="db-pending-group-header">
+              <span class="db-pending-seller">{{ group.sellerName }}</span>
+              <span class="db-pending-meta"
+                >{{ group.count }} · {{ group.totalAmount | currencyArs }}</span
+              >
+            </div>
+            <span class="db-pending-time">{{ timeAgo(group.oldestDate) }}</span>
+            <div class="db-pending-items">
+              @for (credit of group.credits; track credit.id) {
+                <div class="db-pending-item">
+                  <span class="db-pending-type">{{
+                    credit.type === "SALE" ? "VENTA" : "PRÉSTAMO"
+                  }}</span>
+                  <span class="db-pending-customer">{{
+                    credit.customerName
+                  }}</span>
+                  <span class="db-pending-amount">{{
+                    credit.totalAmount | currencyArs
+                  }}</span>
+                  <span class="db-pending-installments"
+                    >{{ credit.installmentsCount }} cuotas</span
+                  >
+                  <button
+                    class="db-pending-btn"
+                    [disabled]="isCashClosed"
+                    [class.db-pending-btn--disabled]="isCashClosed"
+                    (click)="reviewCredit(credit.id)"
+                    [title]="
+                      isCashClosed ? 'No hay una caja abierta' : 'Revisar crédito'
+                    "
+                  >
+                    Revisar
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Pending Payments -->
+  <div class="db-pending-col">
+    <div class="db-panel__header">
+      <span>Cobros por aprobar</span>
+      <span class="db-badge">{{ getTotalPayments() }}</span>
+    </div>
+    <div class="db-pending-body">
+      @if (loadingPending) {
+        @for (i of [1, 2]; track i) {
+          <div class="db-pending-group">
+            <p-skeleton width="80%" height="0.75rem" styleClass="mb-2" />
+            <p-skeleton width="60%" height="0.65rem" />
+          </div>
+        }
+      } @else if (pendingPayments.length === 0) {
+        <span class="db-placeholder">Sin cobros pendientes</span>
+      } @else {
+        @for (group of pendingPayments; track group.collectorName) {
+          <div class="db-pending-group">
+            <div class="db-pending-group-header">
+              <span class="db-pending-seller">{{ group.collectorName }}</span>
+              <span class="db-pending-meta"
+                >{{ group.count }} · {{ group.totalAmount | currencyArs }}</span
+              >
+            </div>
+            <span class="db-pending-time">{{ timeAgo(group.oldestDate) }}</span>
+            <div class="db-pending-items">
+              @for (payment of group.payments; track payment.id) {
+                <div class="db-pending-item">
+                  <span class="db-pending-type">{{
+                    payment.paymentMethod === "CASH"
+                      ? "EFECTIVO"
+                      : payment.paymentMethod === "TRANSFER"
+                        ? "TRANSF."
+                        : "MIXTO"
+                  }}</span>
+                  <span class="db-pending-customer">{{
+                    payment.customerName
+                  }}</span>
+                  <span class="db-pending-amount">{{
+                    payment.amountReceived | currencyArs
+                  }}</span>
+                  <span class="db-pending-installments"
+                    >Cuota {{ payment.installmentNumber }}</span
+                  >
+                  <button
+                    class="db-pending-btn"
+                    [disabled]="
+                      isCashClosed || approvingPaymentId === payment.id
+                    "
+                    [class.db-pending-btn--disabled]="isCashClosed"
+                    (click)="openApprovePaymentDialog(payment)"
+                    [title]="
+                      isCashClosed ? 'No hay una caja abierta' : 'Aprobar cobro'
+                    "
+                  >
+                    Aprobar
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>
+
+<app-dashboard-approve-payment-dialog
+  [visible]="approveDialogVisible"
+  [payment]="selectedPaymentToApprove"
+  [processing]="approvingPaymentId !== null"
+  (visibleChange)="onApproveDialogVisibleChange($event)"
+  (cancelled)="closeApprovePaymentDialog()"
+  (confirmed)="confirmApprovePayment()"
+/>

@@ -1,0 +1,135 @@
+<div
+  class="rounded-lg p-6"
+  style="background: var(--ff-panel); border: 1px solid var(--ff-border)"
+>
+  <h3 class="text-lg font-semibold mb-4">Editar cliente</h3>
+
+  <form
+    data-cy="seller-client-detail-edit-form"
+    [formGroup]="editForm"
+    (ngSubmit)="onSubmit()"
+    class="space-y-4"
+  >
+    <!-- DNI visible but disabled with tooltip -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-[var(--ff-text-muted)]">
+        DNI
+        <span
+          class="ml-1 pi pi-info-circle text-xs cursor-help"
+          pTooltip="El DNI no puede modificarse"
+          tooltipPosition="right"
+        ></span>
+      </label>
+      <input
+        pInputText
+        [value]="customer.dni"
+        [disabled]="true"
+        class="opacity-60 cursor-not-allowed"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="editFullName" class="text-sm font-medium"
+        >Nombre completo *</label
+      >
+      <input
+        data-cy="seller-client-detail-edit-fullname-input"
+        id="editFullName"
+        pInputText
+        formControlName="fullName"
+        [class.ng-invalid]="isInvalid('fullName')"
+        [class.ng-dirty]="isInvalid('fullName')"
+      />
+      @if (isInvalid("fullName")) {
+        <small class="text-red-500">{{ getError("fullName") }}</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="editAddress" class="text-sm font-medium">Dirección</label>
+      <input
+        id="editAddress"
+        pInputText
+        formControlName="address"
+        [class.ng-invalid]="isInvalid('address')"
+        [class.ng-dirty]="isInvalid('address')"
+      />
+      @if (isInvalid("address")) {
+        <small class="text-red-500">{{ getError("address") }}</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="editPhone" class="text-sm font-medium">Teléfono</label>
+      <input id="editPhone" pInputText formControlName="phone" />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="editEmail" class="text-sm font-medium">Email</label>
+      <input
+        data-cy="seller-client-detail-edit-email-input"
+        id="editEmail"
+        pInputText
+        formControlName="email"
+        [class.ng-invalid]="isInvalid('email')"
+        [class.ng-dirty]="isInvalid('email')"
+      />
+      @if (isInvalid("email")) {
+        <small class="text-red-500">{{ getError("email") }}</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label for="editCollector" class="text-sm font-medium"
+        >Cobrador asignado</label
+      >
+      <p-dropdown
+        inputId="editCollector"
+        formControlName="assignedCollectorId"
+        [options]="collectorOptions"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="collectorOptions.length > 10"
+        filterBy="label"
+
+
+        [placeholder]="
+          collectorsLoading
+            ? 'Cargando cobradores…'
+            : collectorOptions.length === 0
+              ? 'No hay cobradores activos'
+              : 'Seleccionar cobrador'
+        "
+        [showClear]="true"
+        [class.ng-invalid]="isInvalid('assignedCollectorId')"
+        [class.ng-dirty]="isInvalid('assignedCollectorId')"
+      />
+      @if (isInvalid("assignedCollectorId")) {
+        <small class="text-red-500">{{
+          getError("assignedCollectorId")
+        }}</small>
+      }
+    </div>
+
+    <div class="flex gap-3 pt-2">
+      <p-button
+        data-cy="seller-client-detail-cancel-edit-action"
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl"
+        (onClick)="cancelled.emit()"
+      />
+      <p-button
+        data-cy="seller-client-detail-save-action"
+        type="submit"
+        label="Guardar cambios"
+        icon="pi pi-check"
+        styleClass="h-11 px-5 rounded-xl"
+        [loading]="saving"
+        [disabled]="editForm.invalid || saving"
+      />
+    </div>
+  </form>
+</div>

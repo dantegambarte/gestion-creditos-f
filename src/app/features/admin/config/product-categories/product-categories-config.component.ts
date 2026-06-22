@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -19,6 +20,7 @@ import { ProductCategoriesService } from '../services/product-categories.service
   selector: 'app-product-categories-config',
   standalone: true,
   imports: [
+    CommonModule,
     FormsModule,
     ButtonModule,
     ConfirmDialogModule,
@@ -60,12 +62,26 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // TODO: agregar documentacion de las funciones
+  /** Cantidad de categorías activas para mostrar el resumen compacto. */
+  get activeCount(): number {
+    return this.rows.filter((cat) => cat.active).length;
+  }
 
+  /** Cantidad de categorías inactivas para mostrar el resumen compacto. */
+  get inactiveCount(): number {
+    return this.rows.filter((cat) => !cat.active).length;
+  }
+
+  /** Cantidad de categorías vinculadas a productos para mostrar el resumen compacto. */
+  get withProductsCount(): number {
+    return this.rows.filter((cat) => cat.productCount > 0).length;
+  }
+
+  /** Carga todas las categorías desde el backend y actualiza la tabla. */
   load(): void {
     this.loading = true;
     this.svc
-      .getAll()
+      .getAll(true)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.loading = false)),
@@ -81,12 +97,21 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Abre el panel de creación con el campo nombre vacío. */
   openCreate(): void {
     this.newName = '';
     this.dialogError = '';
     this.showDialog = true;
   }
 
+  /** Oculta el panel de creación y descarta el nombre cargado. */
+  closeCreate(): void {
+    this.newName = '';
+    this.dialogError = '';
+    this.showDialog = false;
+  }
+
+  /** Envía el nuevo nombre al backend y recarga la lista al confirmar. */
   submitCreate(): void {
     if (!this.newName.trim()) return;
     this.saving = true;
@@ -185,12 +210,13 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
       : this.svc.activate(cat.id);
     call.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
+        cat.active = !cat.active;
+        this.rows = [...this.rows];
         this.msg.add({
           severity: 'success',
-          summary: cat.active ? 'Desactivada' : 'Activada',
+          summary: cat.active ? 'Activada' : 'Desactivada',
           detail: cat.name,
         });
-        this.load();
       },
       error: (err: AppError) =>
         this.msg.add({

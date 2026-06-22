@@ -271,5 +271,10 @@ export const ADMIN_ROUTES: Routes = [
         (c) => c.SimulatorComponent,
       ),
   },
+  {
+    path: AppRoutes.HELP,
+    loadComponent: () =>
+      import('./help/help.component').then((c) => c.HelpComponent),
+  },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 ];

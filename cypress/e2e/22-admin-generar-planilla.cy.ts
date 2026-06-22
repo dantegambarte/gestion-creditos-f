@@ -1,50 +1,34 @@
 /**
- * SUITE: Admin — Generar Planilla de Cobro (/admin/collections/new)
+ * SUITE: Admin — Generar Planilla de Cobro (real)
  *
  * Cubre:
- *  - Título y descripción del formulario
- *  - Aviso de reemplazo (p-message warning)
- *  - Dropdown de cobrador
- *  - Input de fecha
- *  - Dropdown de filtro de cuotas
- *  - Botón Cancelar
- *  - Botón Generar
+ *  - Render base del formulario real en /admin/collections/new
+ *  - Controles principales (cobrador, fecha, filtro)
+ *  - Navegacion con boton Cancelar
  */
 
-describe('Admin — Generar Planilla de Cobro', () => {
+describe('Admin — Generar Planilla de Cobro (real)', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-    cy.loginAs('ADMIN', '/admin/collections/new');
+    cy.loginReal('ADMIN', '/admin/collections/new');
   });
 
-  it('muestra el título "Generar planilla de cobro"', () => {
-    cy.contains('h1', 'Generar planilla de cobro').should('be.visible');
+  it('muestra titulo y descripcion base del formulario', () => {
+    cy.contains(/Generar planilla de cobro|Generar nueva planilla/i, { timeout: 15000 }).should(
+      'be.visible',
+    );
+    cy.contains(/destinatario|cobrador|fecha|filtro/i).should('exist');
+    cy.get('app-error-state').should('not.exist');
   });
 
-  it('muestra aviso de advertencia sobre reemplazo', () => {
-    cy.get('p-message[severity="warn"]').should('exist');
-    cy.contains('reemplazada automáticamente').should('exist');
+  it('renderiza controles del formulario', () => {
+    cy.get('p-dropdown, p-select').should('have.length.gte', 1);
+    cy.get('input').filter(':visible').should('have.length.gte', 1);
+    cy.contains('button', /Generar/i).should('be.visible');
   });
 
-  it('tiene dropdown de cobrador', () => {
-    cy.get('p-dropdown').should('have.length.gte', 1);
-  });
-
-  it('tiene input de fecha', () => {
-    cy.get('input[type="date"]').should('exist');
-  });
-
-  it('tiene dropdown de filtro de cuotas', () => {
-    cy.get('p-dropdown').should('have.length.gte', 2);
-  });
-
-  it('muestra botón "Generar"', () => {
-    cy.contains('button', 'Generar').should('exist');
-  });
-
-  it('botón Cancelar navega a /admin/collections', () => {
+  it('boton Cancelar vuelve a /admin/collections', () => {
     cy.contains('button', 'Cancelar').click();
-    cy.url().should('include', '/admin/collections');
-    cy.url().should('not.include', '/new');
+    cy.location('pathname', { timeout: 15000 }).should('eq', '/admin/collections');
   });
 });

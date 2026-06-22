@@ -2,232 +2,183 @@ import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { jsPDF } from 'jspdf';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
-import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { Subject, forkJoin, of } from 'rxjs';
-import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { debounceTime, switchMap, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
-import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
+import { DateService } from '../../../core/services/date.service';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { CollectionsService } from '../../collector/collections.service';
 import {
   COLLECTION_FILTER_LABELS,
   CollectionAlerts,
   CollectionFilter,
-  CollectionGenerateOutcome,
   CollectionGenerateResult,
   CollectionSheet,
-  CollectionSheetDetail,
-  CollectionSheetItem,
   SHEET_STATUS_LABELS,
 } from '../../collector/models/collection.model';
-import {
-  MANAGEMENT_EVENT_LABELS,
-  ManagementEventType,
-  ManagementLogEntry,
-} from '../../collector/models/management-log.model';
-import { InstallmentsService } from '../../seller/operations/installments.service';
-import {
-  GeneratedPlanillaResult,
-  PlanillaEntry,
-} from '../models/interface/sheet';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
-
-type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
+import { CollectionAlertsDialogComponent } from './collection-alerts-dialog/collection-alerts-dialog.component';
+import {
+  CollectionSheetDetailPanelComponent,
+  DetailTab,
+} from './collection-sheet-detail-panel/collection-sheet-detail-panel.component';
+import { GenerateCollectionDialogComponent } from './generate-collection-dialog/generate-collection-dialog.component';
 
 @Component({
   selector: 'app-admin-collections',
   standalone: true,
   imports: [
-    CurrencyArsPipe,
     DatePipe,
     FormsModule,
     ButtonModule,
+    CalendarModule,
     CardModule,
-    DialogModule,
     DropdownModule,
     InputSwitchModule,
-    ProgressSpinnerModule,
     SkeletonModule,
     TableModule,
     TagModule,
     ToastModule,
     TooltipModule,
-    LoadingStateComponent,
     ErrorStateComponent,
+    GenerateCollectionDialogComponent,
+    CollectionSheetDetailPanelComponent,
+    CollectionAlertsDialogComponent,
   ],
   providers: [MessageService],
   templateUrl: './admin-collections.component.html',
+  styleUrl: './admin-collections.component.scss',
 })
 export class AdminCollectionsComponent implements OnInit, OnDestroy {
   private readonly collectionsService = inject(CollectionsService);
-  private readonly installmentsService = inject(InstallmentsService);
   private readonly usersService = inject(UsersService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
   readonly format = inject(FormatService);
+  readonly dateSvc = inject(DateService);
+  readonly today = new Date();
   private destroy$ = new Subject<void>();
 
-  // List
   sheets: CollectionSheet[] = [];
   collectors: User[] = [];
   loading = true;
   error: AppError | null = null;
   filterCollectorId: string | null = null;
-  filterDate = '';
+  filterDate = this.dateSvc.toLocalIso(new Date());
   filterIncludeRegenerated = false;
+  filterUsed: CollectionFilter | null = null;
 
-  // Alerts dialog (mostrado tras generar una planilla)
-  showAlertsDialog = false;
-  lastAlerts: CollectionAlerts | null = null;
-  lastGeneratedSheetId: string | null = null;
-  alertsOverdueExpanded = true;
-  alertsUnassignedExpanded = false;
-
-  readonly SHEET_STATUS_LABELS = SHEET_STATUS_LABELS;
-
-  // ── Panel de log cronológico por cuota (auditoría admin) ─────────────────────
-  expandedLogItemId: string | null = null;
-  managementLogs: Record<string, ManagementLogEntry[]> = {};
-  loadingLogItemId: string | null = null;
-
-  // Detail panel
-  selectedSheetMeta: CollectionSheet | null = null;
-  selectedSheet: CollectionSheetDetail | null = null;
-  loadingDetail = false;
-  activeTab: DetailTab = 'ALL';
-  leftPanelCollapsed = false;
-
-  // Generation dialog
-  /** Valor especial del dropdown que representa "todos los cobradores". */
-  readonly ALL_COLLECTORS = 'ALL';
-  showGenerateDialog = false;
-  /** UUID de un cobrador específico o 'ALL' para modo batch. Default 'ALL'. */
-  selectedCollectorId: string = this.ALL_COLLECTORS;
-  selectedDate: string = new Date().toISOString().split('T')[0];
-  /** Fecha mínima del input de generación: hoy. Bloquea seleccionar fechas pasadas. */
-  readonly todayIsoDate: string = new Date().toISOString().split('T')[0];
-  selectedFilter: CollectionFilter = 'OVERDUE';
-  filterOptions: { label: string; value: CollectionFilter }[] = [
+  readonly filterUsedOptions: { label: string; value: CollectionFilter }[] = [
     { label: 'Solo vencidas', value: 'OVERDUE' },
     { label: 'Del día', value: 'TODAY' },
     { label: 'Vencidas + hoy', value: 'TODAY_AND_OVERDUE' },
     { label: 'Todas pendientes', value: 'ALL_PENDING' },
   ];
-  generating = false;
-  generatingAll = false;
 
-  // ── Estado del modal de generación (resumen y conflictos) ─────────────────
-  /** Planillas ACTIVE del día seleccionado en el modal — fuente del resumen. */
-  dialogSheets: CollectionSheet[] = [];
-  /** Mini-loader local mientras se trae dialogSheets para evitar mostrar datos stale. */
-  loadingDialogSheets = false;
-  /** Toggle del bloque batch: si true, el "Generar para todos" regenera también las existentes. */
-  regenerateExisting = false;
+  get visibleSheets(): CollectionSheet[] {
+    if (!this.filterUsed) return this.sheets;
+    return this.sheets.filter((s) => s.filterUsed === this.filterUsed);
+  }
+
+  showAlertsDialog = false;
+  lastAlerts: CollectionAlerts | null = null;
+
+  readonly SHEET_STATUS_LABELS = SHEET_STATUS_LABELS;
+
+  selectedSheetMeta: CollectionSheet | null = null;
+  openTabForPanel: DetailTab | null = null;
+  leftPanelCollapsed = false;
+
+  showGenerateDialog = false;
+
+  private pendingOpenSheetId: string | null = null;
+  private pendingOpenTab: DetailTab | null = null;
+  private readonly load$ = new Subject<void>();
 
   /**
-   * Opciones de cobrador para el dropdown del filtro (sin "Todos" — el filtro
-   * ya tiene su propio showClear y placeholder).
+   * Opciones de cobrador para el dropdown del filtro.
    */
   get collectorOptions(): { label: string; value: string }[] {
     return this.collectors.map((c) => ({ label: c.fullName, value: c.id }));
   }
 
-  /**
-   * Opciones del dropdown del modal de generación, con "Todos los cobradores"
-   * como primer item. Es la única vía para elegir el modo batch (no hay un
-   * botón separado). El conteo dinámico ayuda al admin a tomar decisión.
-   */
-  get generateCollectorOptions(): { label: string; value: string }[] {
-    return [
-      {
-        label: `Todos los cobradores (${this.collectors.length})`,
-        value: this.ALL_COLLECTORS,
-      },
-      ...this.collectors.map((c) => ({ label: c.fullName, value: c.id })),
-    ];
-  }
-
-  /** True si el dropdown del modal está en modo "todos los cobradores". */
-  get isBatchMode(): boolean {
-    return this.selectedCollectorId === this.ALL_COLLECTORS;
-  }
-
-  /** Nombre del cobrador seleccionado en el modal (single mode), o '' en batch. */
-  get selectedCollectorName(): string {
-    if (this.isBatchMode) return '';
-    return (
-      this.collectors.find((c) => c.id === this.selectedCollectorId)?.fullName ??
-      ''
-    );
-  }
-
-  /**
-   * Items del detalle filtrados por tab activa.
-   */
-  get filteredItems(): CollectionSheetItem[] {
-    if (!this.selectedSheet) return [];
-    if (this.activeTab === 'ALL') return this.selectedSheet.items;
-    return this.selectedSheet.items.filter(
-      (i) => i.installmentStatus === this.activeTab,
-    );
-  }
-
-  /**
-   * True si la planilla seleccionada está en estado REGENERATED.
-   * En ese caso no se permiten acciones operativas (solo lectura/auditoría).
-   */
-  get isSelectedSheetReadonly(): boolean {
-    return this.selectedSheetMeta?.status === 'REGENERATED';
-  }
-
-  /**
-   * Cuenta los items por estado para mostrar en las tabs.
-   * @param status Estado a contar
-   * @returns Cantidad de items con ese estado
-   */
-  countByStatus(status: string): number {
-    if (!this.selectedSheet) return 0;
-    return this.selectedSheet.items.filter(
-      (i) => i.installmentStatus === status,
-    ).length;
-  }
-
   ngOnInit(): void {
     this.header.set([{ label: 'Planillas de cobro' }]);
+    this.pendingOpenSheetId =
+      this.route.snapshot.queryParamMap.get('openSheetId');
+    const tabParam = this.route.snapshot.queryParamMap.get('openTab');
+    if (
+      tabParam &&
+      ['ALL', 'PENDING', 'OVERDUE', 'PARTIAL', 'PAID'].includes(tabParam)
+    ) {
+      this.pendingOpenTab = tabParam as DetailTab;
+    }
     this.usersService
       .listCollectors()
       .pipe(takeUntil(this.destroy$))
       .subscribe((c) => (this.collectors = c));
+
+    this.load$
+      .pipe(
+        debounceTime(150),
+        switchMap(() => {
+          this.loading = true;
+          this.error = null;
+          const filters: { collectorId?: string; date?: string; includeRegenerated?: boolean } = {};
+          if (this.filterCollectorId) filters.collectorId = this.filterCollectorId;
+          if (this.filterDate) filters.date = this.filterDate;
+          if (this.filterIncludeRegenerated) filters.includeRegenerated = true;
+          return this.collectionsService.list(filters);
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe({
+        next: (data) => {
+          this.sheets = data;
+          this.loading = false;
+          if (this.pendingOpenSheetId) {
+            const sheetToOpen = data.find((s) => s.id === this.pendingOpenSheetId);
+            this.pendingOpenSheetId = null;
+            this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+            if (sheetToOpen) {
+              this.openTabForPanel = this.pendingOpenTab;
+              this.selectedSheetMeta = sheetToOpen;
+            }
+            this.pendingOpenTab = null;
+          }
+        },
+        error: (err: AppError) => {
+          this.error = err;
+          this.loading = false;
+        },
+      });
+
     this.load();
     this.maybeAutoOpenGenerate();
   }
 
   /**
-   * Abre automáticamente el diálogo de generación si llegamos con
-   * ?openGenerate=true (por ej. desde el botón del dashboard o la ruta
-   * legada /admin/collections/new). Limpia el query param con replaceUrl
-   * para que un refresh o un "atrás" no reabran el modal.
+   * Abre automáticamente el diálogo de generación si llegamos con ?openGenerate=true.
    */
   private maybeAutoOpenGenerate(): void {
-    if (this.route.snapshot.queryParamMap.get('openGenerate') !== 'true') return;
+    if (this.route.snapshot.queryParamMap.get('openGenerate') !== 'true')
+      return;
     this.openGenerateDialog();
     this.router.navigate([], {
       relativeTo: this.route,
@@ -251,7 +202,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Recarga la lista con los filtros actuales.
+   * Recarga la lista con los filtros activos.
    */
   applyFilters(): void {
     this.load();
@@ -262,27 +213,10 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
    */
   clearFilters(): void {
     this.filterCollectorId = null;
-    this.filterDate = '';
+    this.filterDate = this.dateSvc.toLocalIso(new Date());
     this.filterIncludeRegenerated = false;
+    this.filterUsed = null;
     this.load();
-  }
-
-  /**
-   * Cierra el diálogo de alertas y opcionalmente foco la planilla generada.
-   */
-  closeAlertsDialog(): void {
-    this.showAlertsDialog = false;
-  }
-
-  /**
-   * True si la última generación devolvió al menos un tipo de alerta.
-   */
-  get hasAlerts(): boolean {
-    if (!this.lastAlerts) return false;
-    return (
-      this.lastAlerts.overdueNextVisits.length > 0 ||
-      this.lastAlerts.unassignedCustomers.length > 0
-    );
   }
 
   /**
@@ -291,234 +225,63 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
    */
   selectSheet(sheet: CollectionSheet): void {
     this.selectedSheetMeta = sheet;
-    this.selectedSheet = null;
-    this.loadingDetail = true;
-    this.activeTab = 'ALL';
-    this.collectionsService
-      .getById(sheet.id)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.loadingDetail = false)),
-      )
-      .subscribe({
-        next: (detail) => (this.selectedSheet = detail),
-        error: () => {},
-      });
+    this.openTabForPanel = null;
   }
 
   /**
-   * Abre el diálogo de generación de planilla. Default conservador:
-   *   - Cobrador: "Todos" (intent mayoritario del quick-action).
-   *   - Toggle de regenerar: OFF.
-   *   - Fecha: hoy (ya inicializada).
-   * Dispara la carga del resumen del día.
+   * Cierra el panel de detalle y resetea el estado de colapso.
+   */
+  onDetailClosed(): void {
+    this.selectedSheetMeta = null;
+    this.leftPanelCollapsed = false;
+  }
+
+  /**
+   * Abre el diálogo de generación de planilla.
    */
   openGenerateDialog(): void {
     this.showGenerateDialog = true;
-    this.selectedCollectorId = this.ALL_COLLECTORS;
-    this.regenerateExisting = false;
-    this.loadDialogSheets();
   }
 
   /**
-   * Único punto de entrada del modal: despacha al flujo correcto según el
-   * modo (batch o individual). Reemplaza los dos botones que existían antes
-   * y elimina la ambigüedad de "¿cuál apretar?".
+   * Handler del evento planillaGenerated: aplica el resultado y recarga la lista.
+   * @param result Resultado de la generación emitido por el diálogo hijo
    */
-  submit(): void {
-    if (this.submitDisabled) return;
-    if (this.isBatchMode) {
-      this.generateForAll();
-    } else {
-      this.generatePlanilla();
-    }
+  onPlanillaGenerated(result: CollectionGenerateResult): void {
+    this.applyGenerationResult(result);
+    this.load();
   }
 
   /**
-   * Handler del input de fecha del modal. Refresca el resumen batch para que
-   * conflicto y faltantes/existentes correspondan a la nueva fecha.
+   * Handler del evento batchCompleted: recarga la lista tras una generación batch.
    */
-  onDialogDateChange(): void {
-    this.loadDialogSheets();
+  onBatchCompleted(): void {
+    this.load();
   }
 
   /**
-   * Trae las planillas ACTIVE del día elegido para alimentar el resumen del
-   * modal (conflicto single + faltantes/existentes batch). NO usa los filtros
-   * actuales del listado principal — apunta directamente a selectedDate para
-   * que el resumen sea consistente sin depender del estado de la página.
-   */
-  private loadDialogSheets(): void {
-    if (!this.selectedDate) {
-      this.dialogSheets = [];
-      return;
-    }
-    this.loadingDialogSheets = true;
-    this.collectionsService
-      .list({ date: this.selectedDate, includeRegenerated: false })
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.loadingDialogSheets = false)),
-      )
-      .subscribe({
-        next: (sheets) => (this.dialogSheets = sheets),
-        error: () => (this.dialogSheets = []),
-      });
-  }
-
-  /**
-   * Planilla ACTIVE existente para el cobrador específico (single mode) en la
-   * fecha elegida. Alimenta el banner ámbar y el cambio de CTA a "Regenerar".
-   * En modo batch (selectedCollectorId === 'ALL') siempre es null.
-   */
-  get conflictingSheet(): CollectionSheet | null {
-    if (this.isBatchMode) return null;
-    return (
-      this.dialogSheets.find(
-        (s) =>
-          s.collectorId === this.selectedCollectorId && s.status === 'ACTIVE',
-      ) ?? null
-    );
-  }
-
-  /** Cobradores que YA tienen planilla ACTIVE para selectedDate. */
-  get batchExistingCount(): number {
-    return this.dialogSheets.filter((s) => s.status === 'ACTIVE').length;
-  }
-
-  /** Cobradores SIN planilla ACTIVE para selectedDate. */
-  get batchMissingCount(): number {
-    const activeCollectorIds = new Set(
-      this.dialogSheets
-        .filter((s) => s.status === 'ACTIVE')
-        .map((s) => s.collectorId),
-    );
-    return this.collectors.filter((c) => !activeCollectorIds.has(c.id)).length;
-  }
-
-  /**
-   * Label del único botón de acción del modal. Depende del modo y los
-   * conteos/conflictos. Una sola acción visible, sin ambigüedad.
-   */
-  get submitLabel(): string {
-    if (this.isBatchMode) {
-      const missing = this.batchMissingCount;
-      const existing = this.batchExistingCount;
-      if (this.regenerateExisting) {
-        if (existing > 0 && missing > 0) return `Regenerar ${existing} y generar ${missing}`;
-        if (existing > 0) return `Regenerar ${existing}`;
-        return `Generar ${missing}`;
-      }
-      if (missing > 0) return `Generar ${missing} planilla${missing === 1 ? '' : 's'}`;
-      return 'Sin pendientes';
-    }
-    return this.conflictingSheet ? 'Regenerar planilla' : 'Generar planilla';
-  }
-
-  /** Severity de PrimeNG para el botón principal: warning si va a regenerar. */
-  get submitSeverity(): 'primary' | 'warning' {
-    if (this.isBatchMode) {
-      return this.regenerateExisting && this.batchExistingCount > 0
-        ? 'warning'
-        : 'primary';
-    }
-    return this.conflictingSheet ? 'warning' : 'primary';
-  }
-
-  /** Deshabilita el botón principal cuando no hay acción válida posible. */
-  get submitDisabled(): boolean {
-    if (this.generating || this.generatingAll || this.loadingDialogSheets) return true;
-    if (this.isBatchMode) {
-      if (this.regenerateExisting) {
-        return this.batchExistingCount + this.batchMissingCount === 0;
-      }
-      return this.batchMissingCount === 0;
-    }
-    return !this.selectedCollectorId; // single: requiere cobrador elegido
-  }
-
-  /**
-   * Genera una planilla para el cobrador seleccionado en el diálogo.
-   * Tras éxito, si la respuesta trae alertas operativas, muestra el diálogo
-   * de alertas con `overdueNextVisits` priorizado (más crítico).
-   */
-  generatePlanilla(): void {
-    if (this.isBatchMode || this.generating || this.generatingAll) return;
-    if (this.selectedDate < this.todayIsoDate) {
-      this.msg.add({
-        severity: 'warn',
-        summary: 'Fecha inválida',
-        detail: 'No se puede generar una planilla para una fecha pasada.',
-        life: 4000,
-      });
-      return;
-    }
-    this.generating = true;
-    this.collectionsService
-      .generate({
-        collectorId: this.selectedCollectorId,
-        date: this.selectedDate,
-        filter: this.selectedFilter,
-      })
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.generating = false)),
-      )
-      .subscribe({
-        next: (result: CollectionGenerateOutcome) => {
-          if ('skipped' in result) {
-            // El single NO envía skip_if_exists; este branch es solo defensivo
-            // por si el contrato cambia en el futuro.
-            this.msg.add({
-              severity: 'info',
-              summary: 'Sin cambios',
-              detail: 'Ya existía una planilla activa para esta fecha.',
-              life: 4000,
-            });
-            return;
-          }
-          this.showGenerateDialog = false;
-          this.applyGenerationResult(result);
-          this.load();
-        },
-        error: (err: AppError) => {
-          this.msg.add({
-            severity: err.status === 409 ? 'warn' : 'error',
-            summary: err.status === 409 ? 'Sin cuotas' : 'Error',
-            detail: err.message ?? 'No se pudo generar la planilla.',
-            life: 5000,
-          });
-        },
-      });
-  }
-
-  /**
-   * Aplica el resultado de una generación al panel derecho y dispara el diálogo
-   * de alertas cuando corresponda (overdue priorizado y expandido por defecto).
+   * Aplica el resultado de una generación al panel derecho y dispara el diálogo de alertas.
    */
   private applyGenerationResult(result: CollectionGenerateResult): void {
-    this.selectedSheet = result.sheet;
     this.selectedSheetMeta = {
       id: result.sheet.id,
       sheetDate: result.sheet.sheetDate,
       filterUsed: result.sheet.filterUsed,
       status: result.sheet.status,
       createdAt: result.sheet.createdAt,
+      sentAt: result.sheet.sentAt,
       collectorId: result.sheet.collectorId,
       collectorName: result.sheet.collectorName,
       totalItems: result.sheet.totalItems,
     };
-    this.activeTab = 'ALL';
+    this.openTabForPanel = null;
     this.leftPanelCollapsed = false;
 
     this.lastAlerts = result.alerts;
-    this.lastGeneratedSheetId = result.sheet.id;
     const hasOverdue = result.alerts.overdueNextVisits.length > 0;
     const hasUnassigned = result.alerts.unassignedCustomers.length > 0;
 
     if (hasOverdue || hasUnassigned) {
-      this.alertsOverdueExpanded = hasOverdue;
-      this.alertsUnassignedExpanded = !hasOverdue && hasUnassigned;
       this.showAlertsDialog = true;
     } else {
       this.msg.add({
@@ -528,339 +291,6 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
         life: 4000,
       });
     }
-  }
-
-  /**
-   * Genera planillas para todos los cobradores en paralelo.
-   *
-   * Política según `regenerateExisting`:
-   *   - false (default): skip_if_exists=true en cada llamado → backend NO toca
-   *     los que ya tienen ACTIVE; solo genera para los faltantes.
-   *   - true: skip_if_exists=false → backend regenera las existentes y crea
-   *     las faltantes.
-   *
-   * Snapshot pre-batch de `dialogSheets` para clasificar resultados como
-   * generated (nuevo) vs regenerated (existía y se reemplazó). El backend
-   * comunica skipped explícitamente mediante el shape de la respuesta.
-   */
-  generateForAll(): void {
-    if (this.generatingAll || this.generating) return;
-    if (this.selectedDate < this.todayIsoDate) {
-      this.msg.add({
-        severity: 'warn',
-        summary: 'Fecha inválida',
-        detail: 'No se puede generar una planilla para una fecha pasada.',
-        life: 4000,
-      });
-      return;
-    }
-    // Guarda equivalente a submitDisabled en batch mode, pero sin depender
-    // del modo del dropdown (generateForAll también puede invocarse via submit()).
-    if (this.loadingDialogSheets) return;
-    const nothingToDo = this.regenerateExisting
-      ? this.batchExistingCount + this.batchMissingCount === 0
-      : this.batchMissingCount === 0;
-    if (nothingToDo) return;
-
-    const preExistingCollectorIds = new Set(
-      this.dialogSheets
-        .filter((s) => s.status === 'ACTIVE')
-        .map((s) => s.collectorId),
-    );
-    const skipIfExists = !this.regenerateExisting;
-
-    this.generatingAll = true;
-    this.usersService
-      .listCollectors()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (collectors) => {
-          if (collectors.length === 0) {
-            this.generatingAll = false;
-            return;
-          }
-          const requests = collectors.map((c) =>
-            this.collectionsService
-              .generate({
-                collectorId: c.id,
-                date: this.selectedDate,
-                filter: this.selectedFilter,
-                skipIfExists,
-              })
-              .pipe(
-                map((result) => ({
-                  success: true as const,
-                  collectorId: c.id,
-                  collectorName: c.fullName,
-                  result,
-                })),
-                catchError((err: AppError) =>
-                  of({
-                    success: false as const,
-                    collectorId: c.id,
-                    collectorName: c.fullName,
-                    error: err,
-                  }),
-                ),
-              ),
-          );
-          forkJoin(requests)
-            .pipe(
-              takeUntil(this.destroy$),
-              finalize(() => (this.generatingAll = false)),
-            )
-            .subscribe((outcomes) => {
-              let generated = 0;
-              let regenerated = 0;
-              let skipped = 0;
-              const failures: { collectorName: string; error: AppError }[] = [];
-              let withAlerts = 0;
-
-              for (const o of outcomes) {
-                if (!o.success) {
-                  failures.push({ collectorName: o.collectorName, error: o.error });
-                  continue;
-                }
-                if ('skipped' in o.result) {
-                  skipped++;
-                  continue;
-                }
-                if (preExistingCollectorIds.has(o.collectorId)) {
-                  regenerated++;
-                } else {
-                  generated++;
-                }
-                if (
-                  o.result.alerts.overdueNextVisits.length > 0 ||
-                  o.result.alerts.unassignedCustomers.length > 0
-                ) {
-                  withAlerts++;
-                }
-              }
-
-              const summaryParts: string[] = [];
-              if (generated > 0) summaryParts.push(`${generated} generada${generated === 1 ? '' : 's'}`);
-              if (regenerated > 0) summaryParts.push(`${regenerated} regenerada${regenerated === 1 ? '' : 's'}`);
-              if (skipped > 0) summaryParts.push(`${skipped} omitida${skipped === 1 ? '' : 's'}`);
-              const summary = summaryParts.join(' · ') || 'Sin cambios';
-
-              const totalSuccess = generated + regenerated;
-              if (totalSuccess > 0 || skipped > 0) {
-                const alertsNote = withAlerts > 0
-                  ? ` ${withAlerts} con alertas operativas — abrilas para revisarlas.`
-                  : '';
-                this.msg.add({
-                  severity: 'success',
-                  summary: 'Planillas procesadas',
-                  detail: `${summary}.${alertsNote}`,
-                  life: 6000,
-                });
-                this.showGenerateDialog = false;
-                this.load();
-              }
-              if (failures.length > 0) {
-                const names = failures.map((f) => f.collectorName).join(', ');
-                this.msg.add({
-                  severity: 'warn',
-                  summary: 'Sin cuotas',
-                  detail: `Sin cuotas para: ${names}`,
-                  life: 8000,
-                });
-              }
-            });
-        },
-        error: () => (this.generatingAll = false),
-      });
-  }
-
-  /**
-   * Descarga el detalle de la planilla seleccionada en formato PDF.
-   */
-  downloadPdf(): void {
-    if (!this.selectedSheet) return;
-    const result = this.mapDetailToResult(this.selectedSheet);
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const startX = 14;
-    let y = 20;
-
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Planilla de Cobro', pageWidth / 2, y, { align: 'center' });
-    y += 8;
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Cobrador: ${result.collectorName}`, startX, y);
-    doc.text(`Fecha: ${this.formatDate(result.fecha)}`, pageWidth - 14, y, {
-      align: 'right',
-    });
-    y += 6;
-    doc.text(`Cuotas: ${result.clientCount}`, startX, y);
-    doc.text(
-      `Total: ${this.formatCurrency(result.totalAmount)}`,
-      pageWidth - 14,
-      y,
-      { align: 'right' },
-    );
-    y += 8;
-
-    const colWidths = [60, 18, 15, 20, 25, 29];
-    const headers = [
-      'Cliente',
-      'Tipo',
-      'N° Cuota',
-      'Estado',
-      'Vencimiento',
-      'Monto',
-    ];
-    const tableWidth = colWidths.reduce((a, b) => a + b, 0);
-
-    doc.setFillColor(41, 98, 255);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.rect(startX, y - 4, tableWidth, 7, 'F');
-    let x = startX;
-    headers.forEach((h, i) => {
-      doc.text(h, x + 2, y);
-      x += colWidths[i];
-    });
-    y += 5;
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'normal');
-    result.entries.forEach((entry, idx) => {
-      const subLines: string[] = [];
-      if (entry.clientPhone) subLines.push(`Tel: ${entry.clientPhone}`);
-      if (entry.clientAddress)
-        subLines.push(entry.clientAddress.substring(0, 35));
-      const rowHeight = 6 + subLines.length * 4;
-
-      if (y + rowHeight > 275) {
-        doc.addPage();
-        y = 20;
-      }
-      if (idx % 2 === 0) {
-        doc.setFillColor(245, 247, 250);
-        doc.rect(startX, y - 4, tableWidth, rowHeight, 'F');
-      }
-
-      x = startX;
-      const mainRow = [
-        entry.clientName.substring(0, 32),
-        entry.creditType === 'SALE' ? 'Venta' : 'Préstamo',
-        String(entry.installmentNumber),
-        entry.paymentStatus,
-        this.formatDate(entry.dueDate),
-        this.formatCurrency(entry.amount),
-      ];
-      mainRow.forEach((cell, i) => {
-        doc.text(cell, x + 2, y);
-        x += colWidths[i];
-      });
-
-      if (subLines.length > 0) {
-        doc.setFontSize(6.5);
-        doc.setTextColor(100, 100, 100);
-        subLines.forEach((line, li) => {
-          doc.text(line, startX + 2, y + 4 + li * 4);
-        });
-        doc.setFontSize(8);
-        doc.setTextColor(0, 0, 0);
-      }
-
-      y += rowHeight;
-    });
-
-    const safeName = (result.collectorName ?? 'cobrador').replace(/\s+/g, '-');
-    const safeDate = result.fecha ?? new Date().toISOString().split('T')[0];
-    doc.save(`planilla-${safeName}-${safeDate}.pdf`);
-  }
-
-  /**
-   * Navega al detalle del crédito.
-   * @param creditId ID del crédito
-   */
-  goToCredit(creditId: string): void {
-    this.router.navigate(['/admin/operations', creditId]);
-  }
-
-  /**
-   * Abre/cierra el panel del log para una cuota; carga si no hay cache.
-   */
-  toggleLog(installmentId: string): void {
-    if (this.expandedLogItemId === installmentId) {
-      this.expandedLogItemId = null;
-      return;
-    }
-    this.expandedLogItemId = installmentId;
-    if (!this.managementLogs[installmentId]) {
-      this.loadingLogItemId = installmentId;
-      this.installmentsService
-        .getManagementLog(installmentId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (log) => {
-            this.managementLogs[installmentId] = log;
-            this.loadingLogItemId = null;
-          },
-          error: () => {
-            this.managementLogs[installmentId] = [];
-            this.loadingLogItemId = null;
-          },
-        });
-    }
-  }
-
-  isLogExpanded(installmentId: string): boolean {
-    return this.expandedLogItemId === installmentId;
-  }
-
-  eventTypeLabel(type: ManagementEventType): string {
-    return MANAGEMENT_EVENT_LABELS[type];
-  }
-
-  eventSeverity(type: ManagementEventType): 'success' | 'warning' | 'secondary' {
-    const map: Record<ManagementEventType, 'success' | 'warning' | 'secondary'> = {
-      PAYMENT: 'success',
-      NO_PAYMENT: 'warning',
-      NOT_FOUND: 'secondary',
-    };
-    return map[type];
-  }
-
-  /**
-   * Devuelve la severidad de color según el estado de la cuota.
-   * @param status Estado de la cuota
-   */
-  installmentSeverity(
-    status: string,
-  ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
-    const map: Record<
-      string,
-      'success' | 'info' | 'warning' | 'danger' | 'secondary'
-    > = {
-      PENDING: 'info',
-      OVERDUE: 'danger',
-      PAID: 'success',
-      PARTIAL: 'warning',
-    };
-    return map[status] ?? 'secondary';
-  }
-
-  /**
-   * Devuelve la etiqueta de estado de una cuota.
-   * @param status Estado de la cuota
-   */
-  installmentLabel(status: string): string {
-    const map: Record<string, string> = {
-      PENDING: 'Pendiente',
-      OVERDUE: 'En mora',
-      PAID: 'Cobrado',
-      PARTIAL: 'Cob. pend.',
-    };
-    return map[status] ?? status;
   }
 
   /**
@@ -882,75 +312,11 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga la lista de planillas aplicando los filtros activos.
-   * Si `filterIncludeRegenerated` está activo, también lista planillas REGENERATED
-   * (auditoría — solo lectura).
+   * Dispara una recarga de planillas. Debounceado — llamadas rápidas colapsan en una sola.
    */
   private load(): void {
-    this.loading = true;
-    this.error = null;
-    const filters: {
-      collectorId?: string;
-      date?: string;
-      includeRegenerated?: boolean;
-    } = {};
-    if (this.filterCollectorId) filters.collectorId = this.filterCollectorId;
-    if (this.filterDate) filters.date = this.filterDate;
-    if (this.filterIncludeRegenerated) filters.includeRegenerated = true;
-    this.collectionsService.list(filters).subscribe({
-      next: (data) => {
-        this.sheets = data;
-        this.loading = false;
-      },
-      error: (err: AppError) => {
-        this.error = err;
-        this.loading = false;
-      },
-    });
+    this.load$.next();
   }
 
-  /**
-   * Mapea el detalle de una planilla al formato requerido para el PDF.
-   * @param detail Detalle completo de la planilla
-   */
-  private mapDetailToResult(
-    detail: CollectionSheetDetail,
-  ): GeneratedPlanillaResult {
-    const entries: PlanillaEntry[] = detail.items.map((item) => ({
-      clientName: item.customerName,
-      clientDni: 'N/D',
-      clientPhone: item.customerPhone,
-      clientAddress: item.customerAddress,
-      creditId: item.creditId,
-      creditType: item.creditType,
-      installmentNumber: item.installmentNumber,
-      amount: item.amountDue,
-      paidAmount: item.amountPaid,
-      dueDate: item.dueDate,
-      paymentStatus: this.mapInstallmentStatus(item.installmentStatus),
-    }));
-    return {
-      collectorId: detail.collectorId,
-      collectorName: detail.collectorName,
-      fecha: detail.sheetDate,
-      clientCount: detail.items.length,
-      totalAmount: detail.items.reduce((sum, i) => sum + i.amountDue, 0),
-      sheetId: detail.id,
-      entries,
-    };
-  }
-
-  /**
-   * Mapea el estado interno al texto de la planilla PDF.
-   * @param status Estado de pago
-   */
-  private mapInstallmentStatus(status: string): string {
-    const map: Record<string, string> = {
-      PENDING: 'PENDIENTE',
-      OVERDUE: 'EN_MORA',
-      PARTIAL: 'PARCIAL',
-      PAID: 'COBRADO',
-    };
-    return map[status] ?? status;
-  }
 }
+

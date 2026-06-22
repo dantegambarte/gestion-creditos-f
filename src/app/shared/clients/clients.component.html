@@ -1,32 +1,34 @@
 <p-toast />
-<div class="p-6">
+<div class="ff-complex-page">
   <div class="ff-panel">
     <div class="ff-list-header">
-      <span class="ff-list-header__title">Gestión de Clientes</span>
+      <h1 class="ff-page-title">Gestión de Clientes</h1>
+      <p-button
+        label="Nuevo Cliente"
+        icon="pi pi-plus"
+        severity="primary"
+        styleClass="h-11 px-5 rounded-xl shadow-sm"
+        data-cy="btn-nuevo-cliente"
+        (onClick)="showCreateModal = true"
+      />
+    </div>
+
+    <div class="ff-list-header ff-list-header--filters">
       <div class="ff-list-header__actions">
-        <p-button
-          label="Nuevo Cliente"
-          icon="pi pi-plus"
-          severity="primary"
-          styleClass="h-11 px-5 rounded-xl shadow-sm"
-          data-cy="btn-nuevo-cliente"
-          (onClick)="showCreateModal = true"
-        />
         <p-dropdown
           [options]="filterOptions"
           [(ngModel)]="selectedFilter"
           optionLabel="label"
           optionValue="value"
-          placeholder="Todos"
-          styleClass="h-11"
+          placeholder="Todos los riesgos"
+          [filter]="filterOptions.length > 10"
+          filterBy="label"
+          styleClass="h-11 w-48"
           appendTo="body"
           data-cy="dropdown-filtro-clientes"
         />
         <p-iconField iconPosition="left">
-          <p-inputIcon
-            styleClass="pi pi-search z-10"
-            style="color: var(--ff-text-muted)"
-          />
+          <p-inputIcon styleClass="pi pi-search z-10 ff-muted-icon" />
           <input
             pInputText
             type="text"
@@ -41,7 +43,7 @@
 
     <p-table
       [value]="filteredClients"
-      styleClass="p-datatable-sm"
+      styleClass="p-datatable-sm ff-data-table"
       [tableStyle]="{ 'min-width': '50rem' }"
       [paginator]="true"
       [rows]="10"
@@ -73,7 +75,7 @@
             </div>
           </td>
           <td class="font-medium">{{ client.name }}</td>
-          <td style="color: var(--ff-text-secondary)">{{ client.phone }}</td>
+          <td class="ff-text-secondary">{{ client.phone }}</td>
           <td>{{ client.credits }}</td>
           <td>
             <span
@@ -91,33 +93,49 @@
             >
           </td>
           <td>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <p-button
-                label="Ver"
-                severity="secondary"
-                size="small"
-                [outlined]="true"
+                icon="pi pi-eye"
+                severity="info"
+                [rounded]="true"
+                styleClass="client-action-button"
+                pTooltip="Ver"
+                tooltipPosition="top"
                 [attr.data-cy]="'btn-ver-' + client.dni"
                 (onClick)="openView(client)"
               />
               @if (canEditClients) {
                 <p-button
-                  label="Editar"
-                  severity="secondary"
-                  size="small"
-                  [outlined]="true"
+                  icon="pi pi-pencil"
+                  severity="warning"
+                  [rounded]="true"
+                  styleClass="client-action-button"
+                  pTooltip="Editar"
+                  tooltipPosition="top"
                   [attr.data-cy]="'btn-editar-' + client.dni"
                   (onClick)="openEdit(client)"
                 />
               }
               @if (client.credits > 0) {
                 <p-button
-                  label="Créditos"
-                  severity="secondary"
-                  size="small"
-                  [outlined]="true"
+                  icon="pi pi-credit-card"
+                  severity="help"
+                  [rounded]="true"
+                  styleClass="client-action-button"
+                  pTooltip="Créditos"
+                  tooltipPosition="top"
                   [attr.data-cy]="'btn-creditos-' + client.dni"
                   (onClick)="openCredits(client)"
+                />
+              }
+              @if (client.phone) {
+                <p-button
+                  icon="pi pi-whatsapp"
+                  styleClass="p-button-whatsapp client-action-button"
+                  [rounded]="true"
+                  pTooltip="WhatsApp"
+                  tooltipPosition="top"
+                  (onClick)="openWhatsApp(client.phone, client.name)"
                 />
               }
             </div>
@@ -146,10 +164,10 @@
           >{{ selectedClient.initials }}</span
         >
         <div>
-          <p class="font-semibold" style="color: var(--ff-text-primary)">
+          <p class="font-semibold ff-text-primary">
             {{ selectedClient.name }}
           </p>
-          <p class="text-sm ff-mono" style="color: var(--ff-text-muted)">
+          <p class="text-sm ff-mono ff-text-muted">
             DNI: {{ selectedClient.dni }}
           </p>
         </div>
@@ -183,246 +201,28 @@
     </div>
   }
   <ng-template pTemplate="footer">
-    <button type="button" class="cancel-btn" (click)="showViewModal = false">
-      Cerrar
-    </button>
+    <p-button
+      type="button"
+      label="Cerrar"
+      severity="secondary"
+      [outlined]="true"
+      styleClass="h-11 px-5 rounded-xl justify-center"
+      (onClick)="showViewModal = false"
+    />
   </ng-template>
 </p-dialog>
 
-<!-- Dialog: Editar cliente -->
-<p-dialog
+<app-client-edit-dialog
   [(visible)]="showEditModal"
-  [modal]="true"
-  [draggable]="false"
-  [resizable]="false"
-  [style]="{ width: '480px' }"
-  header="Editar Cliente"
->
-  <form [formGroup]="editForm" class="flex flex-col gap-4 py-2">
-    <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Nombre</label>
-        <input pInputText formControlName="nombre" class="client-input" />
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Apellido</label>
-        <input pInputText formControlName="apellido" class="client-input" />
-      </div>
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Teléfono</label>
-      <input pInputText formControlName="phone" class="client-input" />
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Email</label>
-      <input
-        pInputText
-        formControlName="email"
-        placeholder="ejemplo@correo.com"
-        [class]="'client-input' + (isEditInvalid('email') ? ' client-input--error' : '')"
-      />
-      @if (isEditInvalid('email')) {
-        <span class="auth-error">{{ getEditError('email') }}</span>
-      }
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Dirección</label>
-      <input pInputText formControlName="direccion" placeholder="Ej: Av. Corrientes 1234" class="client-input" />
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Cobrador asignado</label>
-      <p-dropdown
-        formControlName="assignedCollectorId"
-        [options]="collectorOptions"
-        optionLabel="label"
-        optionValue="value"
-        [placeholder]="collectorsLoading ? 'Cargando cobradores…' : 'Seleccionar cobrador'"
-        [disabled]="collectorsLoading"
-        [showClear]="true"
-        styleClass="w-full"
-        appendTo="body"
-      />
-    </div>
-  </form>
-  <ng-template pTemplate="footer">
-    <div class="flex justify-end gap-3 pt-2">
-      <button type="button" class="cancel-btn" (click)="showEditModal = false">
-        Cancelar
-      </button>
-      <p-button
-        label="Guardar Cambios"
-        icon="pi pi-save"
-        severity="primary"
-        styleClass="h-11 px-5 rounded-xl"
-        [disabled]="editForm.invalid"
-        (onClick)="saveEdit()"
-      />
-    </div>
-  </ng-template>
-</p-dialog>
+  [client]="selectedClient"
+  [collectorOptions]="collectorOptions"
+  [collectorsLoading]="collectorsLoading"
+  (saved)="loadClients()"
+/>
 
-<!-- Dialog: Crear cliente -->
-<p-dialog
+<app-client-create-dialog
   [(visible)]="showCreateModal"
-  [modal]="true"
-  [draggable]="false"
-  [resizable]="false"
-  [style]="{ width: '480px' }"
-  header="Crear Cliente"
->
-  <form [formGroup]="form" class="flex flex-col gap-4 py-2">
-    <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Nombres</label>
-        <input
-          pInputText
-          formControlName="nombres"
-          placeholder="María"
-          [class]="
-            'client-input' +
-            (isInvalid('nombres') ? ' client-input--error' : '')
-          "
-        />
-        @if (isInvalid("nombres")) {
-          <span class="auth-error">{{ getError("nombres") }}</span>
-        }
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Apellidos</label>
-        <input
-          pInputText
-          formControlName="apellidos"
-          placeholder="Garcia López"
-          [class]="
-            'client-input' +
-            (isInvalid('apellidos') ? ' client-input--error' : '')
-          "
-        />
-        @if (isInvalid("apellidos")) {
-          <span class="auth-error">{{ getError("apellidos") }}</span>
-        }
-      </div>
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">DNI</label>
-      <input
-        pInputText
-        formControlName="dni"
-        inputmode="numeric"
-        placeholder="12345678"
-        [class]="
-          'client-input' + (isDniInvalid() ? ' client-input--error' : '')
-        "
-      />
-      @if (isDniInvalid()) {
-        <span class="auth-error">{{ getError("dni") }}</span>
-      }
-    </div>
-
-    <div class="grid grid-cols-2 gap-4">
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Teléfono Principal</label>
-        <input
-          pInputText
-          formControlName="telefonoPrincipal"
-          placeholder="3811234567"
-          [class]="
-            'client-input' +
-            (isInvalid('telefonoPrincipal') ? ' client-input--error' : '')
-          "
-        />
-        @if (isInvalid("telefonoPrincipal")) {
-          <span class="auth-error">{{ getError("telefonoPrincipal") }}</span>
-        }
-      </div>
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Teléfono Alterno</label>
-        <input
-          pInputText
-          formControlName="telefonoAlterno"
-          placeholder="3817654321"
-          [class]="
-            'client-input' +
-            (isInvalid('telefonoAlterno') ? ' client-input--error' : '')
-          "
-        />
-        @if (isInvalid("telefonoAlterno")) {
-          <span class="auth-error">{{ getError("telefonoAlterno") }}</span>
-        }
-      </div>
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Correo Electrónico</label>
-      <input
-        pInputText
-        formControlName="email"
-        placeholder="m.garcia@email.com"
-        [class]="
-          'client-input' + (isInvalid('email') ? ' client-input--error' : '')
-        "
-      />
-      @if (isInvalid("email")) {
-        <span class="auth-error">{{ getError("email") }}</span>
-      }
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Dirección</label>
-      <input
-        pInputText
-        formControlName="direccion"
-        placeholder="Calle 5 #23-10, Sector Norte"
-        [class]="
-          'client-input' +
-          (isInvalid('direccion') ? ' client-input--error' : '')
-        "
-      />
-      @if (isInvalid("direccion")) {
-        <span class="auth-error">{{ getError("direccion") }}</span>
-      }
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Cobrador asignado</label>
-      <p-dropdown
-        formControlName="assignedCollectorId"
-        [options]="collectorOptions"
-        optionLabel="label"
-        optionValue="value"
-        [placeholder]="collectorsLoading ? 'Cargando cobradores…' : collectorOptions.length === 0 ? 'No hay cobradores activos' : 'Seleccionar cobrador'"
-        [disabled]="collectorsLoading"
-        [showClear]="true"
-        styleClass="w-full"
-        appendTo="body"
-      />
-    </div>
-  </form>
-
-  <ng-template pTemplate="footer">
-    <div class="flex justify-end gap-3 pt-2">
-      <button type="button" class="cancel-btn" (click)="cancelCreate()">
-        Cancelar
-      </button>
-      <button
-        type="button"
-        class="cancel-btn cancel-btn--danger"
-        (click)="form.reset()"
-        [disabled]="creatingClient"
-        title="Borrar campos"
-      >
-        <i class="pi pi-trash mr-1"></i>Borrar
-      </button>
-      <p-button
-        label="Crear Cliente"
-        icon="pi pi-user"
-        severity="primary"
-        styleClass="h-11 px-5 rounded-xl"
-        [loading]="creatingClient"
-        [disabled]="form.invalid || creatingClient"
-        (onClick)="createClient()"
-      />
-    </div>
-  </ng-template>
-</p-dialog>
+  [collectorOptions]="collectorOptions"
+  [collectorsLoading]="collectorsLoading"
+  (created)="loadClients()"
+/>

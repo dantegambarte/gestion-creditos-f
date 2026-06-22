@@ -1,0 +1,107 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [header]="attemptTitle()"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    @if (item) {
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p class="text-sm font-semibold text-[var(--ff-text-primary)]">
+          {{ item.customerName }}
+        </p>
+        <p class="mt-0.5 text-xs text-[var(--ff-text-secondary)]">
+          {{ item.collectionReference }}
+        </p>
+        <p class="mt-1 text-xs text-[var(--ff-text-muted)]">
+          Vence {{ item.dueDate | date: "dd/MM/yyyy" }}
+        </p>
+      </div>
+    }
+
+    @if (attemptType === "NO_PAYMENT") {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
+          >Motivo <span class="text-red-600">*</span></label
+        >
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="attemptReason"
+          maxlength="200"
+          class="w-full h-11 px-3"
+          placeholder="Ej: no tenía plata, prometió pagar mañana..."
+        />
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
+          >Próxima visita <span class="text-red-600">*</span></label
+        >
+        <p-calendar
+          [(ngModel)]="attemptNextVisitDate"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          [minDate]="todayDate"
+          styleClass="w-full"
+          inputStyleClass="native-date-input h-10"
+        />
+      </div>
+    } @else {
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3 text-sm text-[var(--ff-text-secondary)]"
+      >
+        Registrar que el cliente <strong>no fue encontrado</strong> en el
+        domicilio. La cuota seguirá apareciendo en próximas planillas.
+      </div>
+    }
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
+        >Notas (opcional)</label
+      >
+      <textarea
+        pInputTextarea
+        [(ngModel)]="attemptNotes"
+        rows="2"
+        maxlength="500"
+        class="w-full resize-none px-3 py-2"
+        placeholder="Observaciones..."
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+        [disabled]="processingAttempt"
+      />
+      <p-button
+        label="Confirmar"
+        severity="warning"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirmAttempt()"
+        [loading]="processingAttempt"
+        [disabled]="
+          !!processingAttempt ||
+          (attemptType === 'NO_PAYMENT' &&
+            (!attemptReason.trim() || !attemptNextVisitDate))
+        "
+      />
+    </div>
+  </ng-template>
+</p-dialog>

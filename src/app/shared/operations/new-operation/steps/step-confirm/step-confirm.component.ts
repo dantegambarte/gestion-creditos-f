@@ -3,6 +3,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
+import { SimulateResult } from '../../../../../features/seller/models/credit.model';
 import { ClientOperation } from '../../../../models/interface/client';
 import { CartLine } from '../../operation-form.service';
 
@@ -26,6 +27,17 @@ export class StepConfirmComponent {
   @Input() totalADevolver = 0;
   @Input() validatedDownPayment = 0;
   @Input() installmentsCount: number | null = null;
+  /**
+   * Resultado de la ultima simulacion del backend (paso 4). Si esta
+   * presente, el cronograma del resumen lo usa tal cual — incluye la
+   * regla de dia habil aplicada en backend (fines de semana + feriados).
+   * Si no esta (raro, deberia estarlo siempre en paso 5), cae al
+   * calculo local sin day-shift como fallback.
+   */
+  @Input() simulationResult: SimulateResult | null = null;
+
+  /** Cuantas filas como maximo mostramos del cronograma en el resumen. */
+  private static readonly SCHEDULE_PREVIEW_LIMIT = 4;
 
   /**
    * Expone el tipo de operación actual de forma segura para la vista.
@@ -77,19 +89,18 @@ export class StepConfirmComponent {
   }
 
   /**
-   * Expande las unidades serializadas del carrito para renderizarlas una por una en el resumen lateral.
+   * Expande las unidades serializadas del carrito para renderizarlas una por una
+   * en el resumen lateral. Usa las unidades REALMENTE seleccionadas (en su orden
+   * de selección), no las primeras del catálogo — sino el resumen mostraba un
+   * IMEI distinto al que el usuario eligió.
    * @returns {{ title: string; unitCode: string }[]} Lista plana de unidades visibles.
    */
   get selectedUnitsSummary(): { title: string; unitCode: string }[] {
     return this.cartLines.flatMap((line) => {
       const baseTitle = `${line.nombre} ${this.getVariantLabel(line)}`.trim();
-      const unitCodes = line.unitCodes?.length
-        ? line.unitCodes.slice(0, Math.max(1, Number(line.cantidad ?? 0)))
-        : ['-'];
-      return unitCodes.map((unitCode) => ({
-        title: baseTitle,
-        unitCode,
-      }));
+      const unitCodes = this.selectedUnitCodes(line);
+      const codes = unitCodes.length ? unitCodes : ['-'];
+      return codes.map((unitCode) => ({ title: baseTitle, unitCode }));
     });
   }
 
@@ -129,7 +140,7 @@ export class StepConfirmComponent {
   get initialPaymentSummary(): string {
     if (this.operationType !== 'SALE') return 'Sin pago inicial';
 
-    const type = this.form?.controls['initialPaymentType']?.value;
+    const type = this.initialPaymentType;
     if (type === 'DOWN_PAYMENT' && this.validatedDownPayment > 0) {
       return `${this.formatCurrency(this.validatedDownPayment)} · ${this.paymentMethodLabel(this.form?.controls['downPaymentMethod']?.value)}`;
     }
@@ -142,6 +153,48 @@ export class StepConfirmComponent {
     }
 
     return 'Sin pago inicial';
+  }
+
+  /**
+   * Tipo de pago inicial seleccionado para adaptar etiquetas y montos del resumen.
+   * @returns {'NONE' | 'DOWN_PAYMENT' | 'ADVANCED_INSTALLMENTS'} Tipo activo en el formulario.
+   */
+  get initialPaymentType(): 'NONE' | 'DOWN_PAYMENT' | 'ADVANCED_INSTALLMENTS' {
+    const type = this.form?.controls['initialPaymentType']?.value;
+    if (type === 'DOWN_PAYMENT' || type === 'ADVANCED_INSTALLMENTS') {
+      return type;
+    }
+    return 'NONE';
+  }
+
+  /**
+   * Etiqueta de negocio del pago inicial para el panel lateral.
+   * @returns {string} Nombre del concepto a mostrar.
+   */
+  get initialPaymentLabel(): string {
+    if (this.operationType !== 'SALE') return 'Detalle';
+    if (this.initialPaymentType === 'DOWN_PAYMENT') return 'Enganche';
+    if (this.initialPaymentType === 'ADVANCED_INSTALLMENTS')
+      return 'Cuotas adelantadas';
+    return 'Sin pago inicial';
+  }
+
+  /**
+   * Monto total del pago inicial según el tipo elegido.
+   * @returns {number} Importe que se descuenta del capital al inicio.
+   */
+  get initialPaymentAmount(): number {
+    if (this.operationType !== 'SALE') return 0;
+    if (this.initialPaymentType === 'DOWN_PAYMENT') {
+      return Math.max(0, this.validatedDownPayment);
+    }
+    if (this.initialPaymentType === 'ADVANCED_INSTALLMENTS') {
+      const count = Number(
+        this.form?.controls['advancedInstallmentsCount']?.value ?? 0,
+      );
+      return Math.max(0, count) * Math.max(0, this.valorCuota);
+    }
+    return 0;
   }
 
   /**
@@ -170,17 +223,32 @@ export class StepConfirmComponent {
   }
 
   /**
-   * Construye un preview corto del cronograma usando la fecha inicial y la frecuencia actual.
+   * Construye un preview corto del cronograma. Si el backend ya devolvio
+   * la simulacion del paso 4, la usamos: las fechas ya tienen aplicada
+   * la regla de dia habil (fines de semana + feriados) y son las mismas
+   * que se persistiran al aprobar. Si no hay simulacion (caso raro),
+   * fallback al calculo local — sin day-shift, pero al menos no rompe.
    * @returns {{ label: string; dueDate: string; amount: number }[]} Primeras filas visibles del plan.
    */
   get schedulePreview(): { label: string; dueDate: string; amount: number }[] {
+    const limit = StepConfirmComponent.SCHEDULE_PREVIEW_LIMIT;
+
+    const backendSchedule = this.simulationResult?.schedule ?? [];
+    if (backendSchedule.length > 0) {
+      return backendSchedule.slice(0, limit).map((row) => ({
+        label: `Cuota ${row.installmentNumber}`,
+        dueDate: this.formatDate(this.parseLocalDate(row.dueDate)),
+        amount: row.amount,
+      }));
+    }
+
     const firstPaymentDate = this.form?.controls['firstPaymentDate']
       ?.value as Date | null;
     const installments = this.summaryInstallmentsCount;
     if (!firstPaymentDate || installments <= 0 || this.valorCuota <= 0)
       return [];
 
-    const rows = Math.min(installments, 4);
+    const rows = Math.min(installments, limit);
     return Array.from({ length: rows }).map((_, index) => ({
       label: `Cuota ${index + 1}`,
       dueDate: this.formatDate(
@@ -188,6 +256,18 @@ export class StepConfirmComponent {
       ),
       amount: this.valorCuota,
     }));
+  }
+
+  /**
+   * Titulo dinamico del bloque de cronograma. Antes era hardcoded en
+   * "primeras 4 cuotas" aunque el plan tuviera menos (o mas).
+   */
+  get schedulePreviewTitle(): string {
+    const shown = this.schedulePreview.length;
+    if (shown === 0) return 'Cronograma';
+    const total = this.summaryInstallmentsCount;
+    if (total > 0 && total <= shown) return `Cronograma (${total} cuota${total === 1 ? '' : 's'})`;
+    return `Cronograma (primeras ${shown} cuotas)`;
   }
 
   /**
@@ -233,7 +313,18 @@ export class StepConfirmComponent {
    * @returns {string} Texto compacto con seriales o guion si no hay datos.
    */
   getUnitCodesLabel(line: CartLine): string {
-    return line.unitCodes?.length ? line.unitCodes.join(', ') : '-';
+    const codes = this.selectedUnitCodes(line);
+    return codes.length ? codes.join(', ') : '-';
+  }
+
+  /**
+   * Mapea selectedUnitIds de una línea a sus códigos (IMEI/serial) en el orden
+   * de selección. Devuelve la lista real de unidades que se van a vender.
+   */
+  selectedUnitCodes(line: CartLine): string[] {
+    return line.selectedUnitIds
+      .map((id) => line.unitCodes[line.unitIds.indexOf(id)])
+      .filter((code): code is string => !!code);
   }
 
   /**
@@ -242,25 +333,10 @@ export class StepConfirmComponent {
    * @returns {number} Valor de cuota estimado para mostrar en la UI.
    */
   getCuotaPorLinea(line: CartLine): number {
-    const directCuota = Number(
-      (line as any)?.installmentAmount ?? (line as any)?.valorCuota ?? 0,
-    );
-    if (directCuota > 0) {
-      return directCuota;
-    }
-
     const cuotas = Number(line.selectedInstallments ?? 0);
-    const subtotal = Number(
-      (line as any)?.subtotal ??
-        (line as any)?.total ??
-        (line as any)?.precioTotal ??
-        0,
-    );
-
-    if (cuotas > 0 && subtotal > 0) {
-      return subtotal / cuotas;
+    if (cuotas > 0 && line.subtotal > 0) {
+      return line.subtotal / cuotas;
     }
-
     return 0;
   }
 
@@ -284,6 +360,19 @@ export class StepConfirmComponent {
    */
   private paymentMethodLabel(value: string | null | undefined): string {
     return value === 'TRANSFER' ? 'Transferencia' : 'Efectivo';
+  }
+
+  /**
+   * Parsea un string 'YYYY-MM-DD' como fecha local sin sesgo UTC.
+   * new Date('YYYY-MM-DD') lo interpreta como medianoche UTC y en zonas
+   * horarias negativas (AR GMT-3) muestra el dia anterior. Reconstruir
+   * con componentes locales evita el drift.
+   */
+  private parseLocalDate(value: string): Date {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    if (!match) return new Date(value);
+    const [, year, month, day] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
   }
 
   /**
@@ -321,5 +410,36 @@ export class StepConfirmComponent {
 
     date.setMonth(date.getMonth() + index);
     return date;
+  }
+
+  /** Nombres de los checks de declaraciones (orden de aparicion en la UI). */
+  private static readonly DECLARATION_FIELDS = [
+    'chkIdentity', 'chkConditions', 'chkDisbursement', 'chkCapacity',
+  ];
+
+  /**
+   * True si las 4 declaraciones estan tildadas. Habilita el modo "desmarcar"
+   * del boton toggle (cambia label + color).
+   */
+  get allDeclarationsChecked(): boolean {
+    if (!this.form) return false;
+    return StepConfirmComponent.DECLARATION_FIELDS.every(
+      (n) => !!this.form.controls[n]?.value,
+    );
+  }
+
+  /**
+   * Toggle: si todas estan tildadas las destilda, si no las tilda. Reemplaza
+   * al setAllDeclarations(value) previo — un solo boton para ambos sentidos.
+   */
+  toggleAllDeclarations(): void {
+    if (!this.form) return;
+    const next = !this.allDeclarationsChecked;
+    StepConfirmComponent.DECLARATION_FIELDS.forEach((n) => {
+      if (this.form.controls[n]) {
+        this.form.controls[n].setValue(next);
+        this.form.controls[n].markAsDirty();
+      }
+    });
   }
 }

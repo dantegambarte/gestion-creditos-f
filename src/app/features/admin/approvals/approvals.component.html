@@ -5,7 +5,7 @@
   <div class="p-4">
     <p-message
       severity="warn"
-      text="⚠️ La caja del día está CERRADA. No se pueden aprobar créditos de hoy. Los créditos y sus enganches se aprobarán juntos cuando se abra una nueva caja."
+      text="⚠️ La caja del día está CERRADA. No se pueden aprobar créditos de hoy. Los créditos y sus pagos iniciales, incluyendo enganches o cuotas adelantadas, se aprobarán juntos cuando se abra una nueva caja."
       styleClass="w-full"
     />
   </div>
@@ -14,18 +14,18 @@
 <div class="p-6">
   <div
     class="ff-list-header mb-6"
-    style="border-radius: 6px 6px 0 0; border-bottom: none"
+    style="border-radius: 12px; border-bottom: none"
   >
     <div>
-      <h1 class="text-xl font-bold" style="color: var(--ff-text-primary)">
+      <h1 class="ff-page-title">
         Aprobación de Operaciones
       </h1>
-      <p class="text-sm" style="color: var(--ff-text-muted)">
+      <p class="ff-page-subtitle">
         Revisa y valida las solicitudes entrantes.
       </p>
     </div>
     @if (approvals.length > 0 && !loading) {
-      <p-badge [value]="approvals.length" severity="warning" size="large" />
+      <p-badge [value]="approvals.length" severity="warning" badgeSize="large" />
     }
   </div>
 
@@ -52,6 +52,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Todos"
+          [filter]="TYPE_OPTIONS.length > 10"
+          filterBy="label"
           [showClear]="!!filterType"
           styleClass="h-11 w-full md:w-52"
           appendTo="body"
@@ -107,6 +109,7 @@
               <div class="flex justify-center gap-2">
                 <p-skeleton shape="circle" size="2rem" />
                 <p-skeleton shape="circle" size="2rem" />
+                <p-skeleton shape="circle" size="2rem" />
               </div>
             </td>
           </tr>
@@ -133,7 +136,7 @@
         </ng-template>
         <ng-template pTemplate="body" let-app>
           <tr>
-            <td>{{ app.createdAt | date: "short" }}</td>
+            <td>{{ app.createdAt | date: 'dd/MM/yy' }}</td>
             <td class="font-medium">
               {{ app.customerName }}
               <span
@@ -158,18 +161,32 @@
             <td class="text-center">
               <div class="flex justify-center gap-2">
                 <p-button
+                  icon="pi pi-eye"
+                  severity="secondary"
+                  [rounded]="true"
+                  [outlined]="true"
+                  styleClass="approval-action-button"
+                  (onClick)="viewDetail(app.id)"
+                  pTooltip="Ver detalle"
+                  tooltipPosition="top"
+                />
+                <p-button
                   icon="pi pi-check"
                   severity="success"
                   [rounded]="true"
+                  styleClass="approval-action-button"
                   (onClick)="onApprove(app)"
                   pTooltip="Aprobar"
+                  tooltipPosition="top"
                 />
                 <p-button
                   icon="pi pi-times"
                   severity="danger"
                   [rounded]="true"
+                  styleClass="approval-action-button"
                   (onClick)="onReject(app)"
                   pTooltip="Rechazar"
+                  tooltipPosition="top"
                 />
               </div>
             </td>
@@ -217,23 +234,55 @@
           </span>
         </p>
       }
+      @if (approvingRowPrepaidInstallments > 0) {
+        <p class="text-sm mt-2 p-2 rounded" style="
+          background: rgba(59, 130, 246, 0.10);
+          border: 1px solid rgba(59, 130, 246, 0.45);
+          color: #93C5FD;
+        ">
+          ⏩ Cuotas adelantadas: {{ approvingRowPrepaidInstallments }} cuota(s)
+          <br />
+          <span style="font-size: 0.75rem; opacity: 0.85;">
+            Método: {{ paymentMethodLabel(approvingRowPaymentMethod) }}
+          </span>
+        </p>
+      }
     </div>
 
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Cantidad de cuotas (puede ajustarse)</label>
-      <input
-        type="number"
-        [(ngModel)]="approveInstallmentsCount"
-        min="1"
-        max="120"
-        class="w-full rounded-xl p-3 text-sm outline-none"
-        style="
-          border: 1px solid var(--ff-border);
-          background: var(--ff-secondary);
-          color: var(--ff-text-primary);
-        "
-      />
-    </div>
+    @if (approvingRowUsesFixedInstallments) {
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Cantidad de cuotas definida</label>
+        <div
+          class="w-full rounded-xl p-3 text-sm font-medium"
+          style="
+            border: 1px solid var(--ff-border);
+            background: var(--ff-secondary);
+            color: var(--ff-text-primary);
+          "
+        >
+          {{ approvingRow?.installmentsCount }} cuota(s)
+        </div>
+        <p class="text-xs" style="color: var(--ff-text-muted)">
+          Se aprobará la operación con las cuotas ya definidas en la pre-operación.
+        </p>
+      </div>
+    } @else {
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Cantidad de cuotas (puede ajustarse)</label>
+        <input
+          type="number"
+          [(ngModel)]="approveInstallmentsCount"
+          min="1"
+          max="120"
+          class="w-full rounded-xl p-3 text-sm outline-none"
+          style="
+            border: 1px solid var(--ff-border);
+            background: var(--ff-secondary);
+            color: var(--ff-text-primary);
+          "
+        />
+      </div>
+    }
 
     <div class="flex flex-col gap-3">
       <div class="flex items-center gap-2">
@@ -268,17 +317,18 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
+      <p-button
         type="button"
-        class="cancel-btn w-full"
-        (click)="showApproveDialog = false"
-      >
-        Cancelar
-      </button>
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showApproveDialog = false"
+      />
       <p-button
         label="Confirmar Aprobación"
-        severity="success"
-        styleClass="h-11 rounded-xl w-full"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmApprove()"
         [loading]="processingApprove"
         [disabled]="isCashClosed || processingApprove"
@@ -322,10 +372,11 @@
         >Motivo de rechazo (obligatorio, mín. 5 caracteres)</label
       >
       <textarea
+        pInputTextarea
         [(ngModel)]="rejectReason"
         rows="4"
         maxlength="500"
-        class="w-full resize-none rounded-xl p-3 text-sm outline-none"
+        class="w-full resize-none px-3 py-2"
         style="
           border: 1px solid var(--ff-border);
           background: var(--ff-secondary);
@@ -352,17 +403,19 @@
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
-      <button
+      <p-button
         type="button"
-        class="cancel-btn w-full"
-        (click)="showRejectDialog = false"
-      >
-        Cancelar
-      </button>
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="showRejectDialog = false"
+      />
       <p-button
         label="Rechazar Operación"
         severity="danger"
-        styleClass="h-11 rounded-xl w-full"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmReject()"
         [loading]="processingReject"
         [disabled]="rejectCharCount() < 5"

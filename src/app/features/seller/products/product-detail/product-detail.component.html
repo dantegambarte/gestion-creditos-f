@@ -191,7 +191,10 @@
                 <i class="pi pi-ban"></i> Desactivar producto
               </button>
             } @else {
-              <button class="prod-action-btn" (click)="confirmActivate()">
+              <button
+                class="prod-action-btn prod-action-btn--success"
+                (click)="confirmActivate()"
+              >
                 <i class="pi pi-check-circle"></i> Activar producto
               </button>
             }
@@ -224,7 +227,7 @@
                 label="Nueva variante"
                 icon="pi pi-plus"
                 severity="primary"
-                styleClass="h-9 px-4 rounded-xl"
+                styleClass="h-11 px-5 rounded-xl shadow-sm"
                 (onClick)="navigateToVariants()"
               />
             }

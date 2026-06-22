@@ -1,0 +1,238 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Registrar cobro"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+        >Tipo de registro</label
+      >
+      <div class="flex flex-col gap-2">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <p-radioButton
+            name="registerMode"
+            data-cy="seller-direct-mode-pre-carga"
+            [(ngModel)]="registerMode"
+            value="PRE_CARGA"
+          />
+          <span class="text-sm">
+            Pre-carga (queda pendiente de aprobación)
+          </span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <p-radioButton
+            name="registerMode"
+            data-cy="seller-direct-mode-direct"
+            [(ngModel)]="registerMode"
+            value="DIRECT"
+          />
+          <span class="text-sm"
+            >Cobro directo (se registra y aprueba ahora)</span
+          >
+        </label>
+      </div>
+    </div>
+
+    <div class="rounded-lg bg-blue-50 border border-blue-200 p-3">
+      <p class="text-xs text-blue-700">
+        <i class="pi pi-info-circle mr-1"></i>
+        @if (registerMode === "DIRECT") {
+          El cobro se registra y aprueba en el mismo paso. La caja del día debe
+          estar abierta.
+        } @else {
+          El cobro queda como pre-carga pendiente de aprobación, igual que un
+          cobrador en la calle.
+        }
+        Saldo máximo: <strong>{{ maxAmount | currencyArs: 2 }}</strong>
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+        >Monto cobrado</label
+      >
+      <p-inputNumber
+        inputId="seller-direct-payment-amount"
+        data-cy="seller-direct-payment-amount"
+        appCurrencyAmountInput
+        [(ngModel)]="amount"
+        mode="currency"
+        currency="ARS"
+        locale="es-AR"
+        [minFractionDigits]="0"
+        [min]="0.01"
+        [max]="maxAmount"
+        styleClass="w-full"
+        inputStyleClass="w-full h-11 px-3"
+      />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+        >Método de pago</label
+      >
+      <p-dropdown
+        inputId="seller-direct-payment-method"
+        data-cy="seller-direct-payment-method"
+        [options]="PAYMENT_METHOD_OPTIONS"
+        [(ngModel)]="method"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="PAYMENT_METHOD_OPTIONS.length > 10"
+        filterBy="label"
+        styleClass="w-full h-11"
+        appendTo="body"
+      />
+    </div>
+
+    @if (method === "TRANSFER") {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+          >Referencia de transferencia</label
+        >
+        <input
+          pInputText
+          [(ngModel)]="transferRef"
+          placeholder="N° de operación o referencia"
+          class="w-full h-11 px-3"
+          maxlength="100"
+        />
+      </div>
+    }
+
+    @if (method === "MIXED") {
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-sm font-medium"
+            style="color: var(--ff-text-primary)"
+            >Efectivo</label
+          >
+          <p-inputNumber
+            inputId="seller-direct-cash-amount"
+            data-cy="seller-direct-cash-amount"
+            appCurrencyAmountInput
+            [(ngModel)]="amountCash"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [minFractionDigits]="0"
+            [allowEmpty]="true"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-sm font-medium"
+            style="color: var(--ff-text-primary)"
+            >Transferencia</label
+          >
+          <p-inputNumber
+            inputId="seller-direct-transfer-amount"
+            data-cy="seller-direct-transfer-amount"
+            appCurrencyAmountInput
+            [(ngModel)]="amountTransfer"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [minFractionDigits]="0"
+            [allowEmpty]="true"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+          />
+        </div>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+          >Referencia de transferencia</label
+        >
+        <input
+          pInputText
+          data-cy="seller-direct-transfer-reference"
+          [(ngModel)]="transferRef"
+          placeholder="N° de operación o referencia"
+          class="w-full h-11 px-3"
+          maxlength="100"
+        />
+      </div>
+      @if (!formValid) {
+        <p class="text-xs text-amber-600">
+          El efectivo y la transferencia deben sumar el monto cobrado, y la
+          referencia es obligatoria.
+        </p>
+      }
+    }
+
+    @if (registerMode === "PRE_CARGA" && isPartial) {
+      <div class="flex flex-col gap-1">
+        <label
+          class="text-sm font-medium"
+          style="color: var(--ff-text-primary)"
+        >
+          Próxima visita
+          <span class="ml-1 text-xs font-normal text-[var(--ff-text-secondary)]"
+            >(requerida en cobro parcial)</span
+          >
+        </label>
+        <p-calendar
+          data-cy="seller-direct-next-visit"
+          [(ngModel)]="nextVisitDate"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          [minDate]="todayDate"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 px-3"
+          placeholder="Seleccioná una fecha..."
+        />
+      </div>
+    }
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+        >Notas (opcional)</label
+      >
+      <textarea
+        pInputTextarea
+        [(ngModel)]="notes"
+        rows="2"
+        maxlength="500"
+        class="w-full px-3 py-2"
+        placeholder="Observaciones adicionales..."
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+      />
+      <p-button
+        label="Registrar cobro"
+        data-cy="seller-direct-submit"
+        icon="pi pi-check"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirm()"
+        [loading]="processing"
+        [disabled]="!formValid"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

@@ -74,13 +74,13 @@
   border-radius: 0.75rem;
   padding: 1rem 1.25rem;
 
-  &.card-activo {
+  &.card-active {
     border-left: 4px solid #22c55e;
   }
-  &.card-en-mora {
+  &.card-overdue {
     border-left: 4px solid #ef4444;
   }
-  &.card-pagado {
+  &.card-paid {
     border-left: 4px solid #9ca3af;
   }
 }
@@ -110,15 +110,15 @@
   font-weight: 700;
   text-transform: uppercase;
 
-  &.badge-activo {
+  &.badge-active {
     background: #dcfce7;
     color: #15803d;
   }
-  &.badge-en-mora {
+  &.badge-overdue {
     background: #fee2e2;
     color: #dc2626;
   }
-  &.badge-pagado {
+  &.badge-paid {
     background: #f3f4f6;
     color: #6b7280;
   }
@@ -141,7 +141,7 @@
   gap: 0.3rem;
   background: #fef2f2;
   color: #dc2626;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   padding: 0.15rem 0.55rem;
   border-radius: 999px;
@@ -162,7 +162,7 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.3rem 0.7rem;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   border-radius: 0.4rem;
   background: #eff6ff;
@@ -171,7 +171,7 @@
   border: 1px solid transparent;
 
   i {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
   }
 }
 
@@ -237,7 +237,7 @@
 }
 
 .progress-label {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: #6b7280;
   white-space: nowrap;
 }
@@ -265,7 +265,7 @@
 }
 
 .progress-pct {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
 

@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 
 import { FormatService } from '../../core/services/format.service';
 import { provideAuthTesting } from '../../core/auth/testing/auth-testing';
+import { ProductCategoriesService } from '../../features/admin/config/services/product-categories.service';
 import { ProductUnitsService } from '../../features/seller/products/product-units.service';
 import { ProductVariantsService } from '../../features/seller/products/product-variants.service';
 import { ProductsService } from '../../features/seller/products/products.service';
@@ -37,6 +38,10 @@ describe('ProductsComponent', () => {
 
   const messageServiceMock = {
     add: jasmine.createSpy('add'),
+  };
+
+  const productCategoriesServiceMock = {
+    getAll: jasmine.createSpy('getAll'),
   };
 
   function buildListItem(overrides: Partial<Record<string, unknown>> = {}) {
@@ -85,6 +90,7 @@ describe('ProductsComponent', () => {
     }));
     productUnitsServiceMock.createBulk.and.returnValue(of({ created: 3, units: [] }));
     messageServiceMock.add.calls.reset();
+    productCategoriesServiceMock.getAll.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [ProductsComponent],
@@ -98,6 +104,7 @@ describe('ProductsComponent', () => {
         { provide: ProductUnitsService, useValue: productUnitsServiceMock },
         { provide: FormatService, useValue: formatServiceMock },
         { provide: MessageService, useValue: messageServiceMock },
+        { provide: ProductCategoriesService, useValue: productCategoriesServiceMock },
         ...provideAuthTesting(),
         provideNoopAnimations(),
       ],

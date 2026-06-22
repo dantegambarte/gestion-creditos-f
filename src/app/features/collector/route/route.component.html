@@ -1,140 +1,168 @@
-<div class="p-4 max-w-4xl mx-auto">
-  <div class="flex items-center justify-between mb-6">
+<div class="ff-page collector-route">
+  <div class="route-header mb-4">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">Mi Ruta de Cobro</h1>
-      <p class="text-sm text-gray-500">
-        {{ today | date: "EEEE, d MMMM yyyy" }}
+      <h1 class="route-title">Mi Ruta</h1>
+      <p class="route-subtitle">
+        {{ today | date: "EEEE, d 'de' MMMM, yyyy" }}
       </p>
     </div>
     @if (!loadingSheets && !errorSheets) {
-      <span class="text-sm text-gray-500">
-        Tenés {{ sheets.length }} planilla{{
-          sheets.length !== 1 ? "s" : ""
-        }}
-        generada{{ sheets.length !== 1 ? "s" : "" }}
+      <span class="route-counter">
+        {{ sheets.length }} PLANILLA{{ sheets.length !== 1 ? "S" : "" }}
       </span>
     }
   </div>
 
-  <p-card styleClass="mb-6 shadow-sm">
-    <ng-template pTemplate="header">
-      <div
-        class="px-4 pt-4 pb-2 font-semibold text-gray-700 flex items-center gap-2"
-      >
-        <i class="pi pi-list text-blue-500"></i>
-        Mis planillas
+  <div class="route-grid">
+    <p-card styleClass="route-card route-card--main">
+      <ng-template pTemplate="header">
+        <div class="route-card__header">
+          <span>Planillas asignadas</span>
+          @if (!loadingSheets && !errorSheets) {
+            <span class="route-badge route-badge--primary">
+              {{ sheets.length }} planilla{{ sheets.length !== 1 ? "s" : "" }}
+            </span>
+          }
+        </div>
+      </ng-template>
+
+      <div class="route-card-scroll">
+        @if (loadingSheets) {
+          <p-table [value]="[1, 2, 3]" styleClass="p-datatable-sm">
+            <ng-template pTemplate="body">
+              <tr>
+                <td><p-skeleton width="80%" /></td>
+                <td><p-skeleton width="60%" /></td>
+                <td><p-skeleton width="40%" /></td>
+                <td><p-skeleton width="3rem" height="2rem" /></td>
+              </tr>
+            </ng-template>
+          </p-table>
+        } @else if (errorSheets) {
+          <app-error-state />
+        } @else if (sheets.length === 0) {
+          <p class="py-6 text-center text-sm text-[var(--ff-text-muted)]">
+            No tenés planillas generadas.
+          </p>
+        } @else {
+          <p-table
+            [value]="sheets"
+            styleClass="p-datatable-sm"
+            responsiveLayout="scroll"
+          >
+            <ng-template pTemplate="header">
+              <tr class="route-row">
+                <th>Fecha</th>
+                <th>Filtro</th>
+                <th class="text-center">Cuotas</th>
+                <th>Generada por</th>
+                <th class="text-center">Acción</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-sheet>
+              <tr class="route-row">
+                <td>
+                  <div class="route-date-cell">
+                    <span>{{ sheet.sheetDate | date: "dd/MM/yyyy" }}</span>
+                    @if (isTodaySheet(sheet.sheetDate)) {
+                      <span class="route-badge route-badge--today">Hoy</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <p-tag
+                    [value]="filterLabel(sheet.filterUsed)"
+                    severity="info"
+                  />
+                </td>
+                <td class="text-center font-semibold">
+                  {{ sheet.totalItems }}
+                </td>
+                <td>{{ sheet.collectorName }}</td>
+                <td class="text-center">
+                  <p-button
+                    label="Ver planilla →"
+                    size="small"
+                    severity="primary"
+                    [outlined]="true"
+                    styleClass="!h-7 !px-3 !rounded-md !text-xs !font-semibold"
+                    (onClick)="goToSheet(sheet)"
+                  />
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        }
       </div>
-    </ng-template>
+    </p-card>
 
-    @if (loadingSheets) {
-      <p-table [value]="[1, 2, 3]" styleClass="p-datatable-sm">
-        <ng-template pTemplate="body">
-          <tr>
-            <td><p-skeleton width="80%" /></td>
-            <td><p-skeleton width="60%" /></td>
-            <td><p-skeleton width="40%" /></td>
-            <td><p-skeleton width="3rem" height="2rem" /></td>
-          </tr>
-        </ng-template>
-      </p-table>
-    } @else if (errorSheets) {
-      <app-error-state />
-    } @else if (sheets.length === 0) {
-      <p class="text-sm text-gray-400 text-center py-6">
-        No tenés planillas generadas.
-      </p>
-    } @else {
-      <p-table
-        [value]="sheets"
-        styleClass="p-datatable-sm"
-        responsiveLayout="scroll"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Fecha</th>
-            <th>Filtro</th>
-            <th class="text-center">Cuotas</th>
-            <th class="text-center">Acción</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-sheet>
-          <tr>
-            <td>{{ sheet.sheetDate | date: "dd/MM/yyyy" }}</td>
-            <td>
-              <p-tag [value]="filterLabel(sheet.filterUsed)" severity="info" />
-            </td>
-            <td class="text-center font-semibold">{{ sheet.totalItems }}</td>
-            <td class="text-center">
-              <p-button
-                label="Ver planilla"
-                icon="pi pi-eye"
-                size="small"
-                (onClick)="goToSheet(sheet)"
-              />
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    }
-  </p-card>
+    <p-card styleClass="route-card route-card--aside">
+      <ng-template pTemplate="header">
+        <div class="route-card__header">
+          <div class="route-card__header-main">
+            <span>Cobros recientes</span>
+            <button
+              type="button"
+              class="route-header-link"
+              (click)="goToPayments()"
+            >
+              Ver todos mis cobros →
+            </button>
+          </div>
+          @if (!loadingPayments) {
+            <span class="route-badge route-badge--warning">
+              {{ recentPayments.length }} cobros
+            </span>
+          }
+        </div>
+      </ng-template>
 
-  <p-card styleClass="shadow-sm">
-    <ng-template pTemplate="header">
-      <div
-        class="px-4 pt-4 pb-2 font-semibold text-gray-700 flex items-center gap-2"
-      >
-        <i class="pi pi-clock text-orange-400"></i>
-        Mis cobros pendientes de aprobación
+      <div class="payments-panel">
+        @if (loadingPayments) {
+          <p-table [value]="[1, 2, 3]" styleClass="p-datatable-sm">
+            <ng-template pTemplate="body">
+              <tr>
+                <td><p-skeleton width="80%" /></td>
+                <td><p-skeleton width="60%" /></td>
+                <td><p-skeleton width="50%" /></td>
+              </tr>
+            </ng-template>
+          </p-table>
+        } @else if (recentPayments.length === 0) {
+          <p class="py-6 text-center text-sm text-[var(--ff-text-muted)]">
+            Sin cobros pendientes.
+          </p>
+        } @else {
+          <div class="payments-list">
+            @for (p of recentPayments; track p.id) {
+              <div class="payment-item">
+                <div class="payment-item__top">
+                  <span class="payment-item__name">{{ p.customerName }}</span>
+                  <span
+                    class="route-badge route-badge--tiny"
+                    [class.route-badge--warning]="p.status === 'PENDING'"
+                    [class.route-badge--success]="p.status === 'APPROVED'"
+                    [class.route-badge--danger]="p.status === 'REJECTED'"
+                    >{{ paymentStatusLabel(p.status) }}</span
+                  >
+                </div>
+                <p class="payment-item__meta">
+                  Cuota {{ p.installmentNumber }} · Crédito #{{
+                    p.creditId.slice(0, 8)
+                  }}
+                </p>
+                <p class="payment-item__amount">
+                  {{ p.amountReceived | currencyArs: 2 }} ·
+                  {{ paymentMethodLabel(p.paymentMethod) }}
+                </p>
+                <p class="payment-item__time">
+                  {{ p.createdAt | date: "dd/MM HH:mm" }}
+                </p>
+              </div>
+            }
+          </div>
+        }
       </div>
-    </ng-template>
-
-    @if (loadingPayments) {
-      <p-table [value]="[1, 2, 3]" styleClass="p-datatable-sm">
-        <ng-template pTemplate="body">
-          <tr>
-            <td><p-skeleton width="80%" /></td>
-            <td><p-skeleton width="60%" /></td>
-            <td><p-skeleton width="50%" /></td>
-          </tr>
-        </ng-template>
-      </p-table>
-    } @else if (recentPayments.length === 0) {
-      <p class="text-sm text-gray-400 text-center py-6">
-        Sin cobros pendientes.
-      </p>
-    } @else {
-      <p-table
-        [value]="recentPayments"
-        styleClass="p-datatable-sm"
-        responsiveLayout="scroll"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Cliente</th>
-            <th>Cuota</th>
-            <th class="text-right">Monto</th>
-            <th>Método</th>
-            <th>Registrado</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-p>
-          <tr>
-            <td class="font-medium">{{ p.customerName }}</td>
-            <td>Cuota {{ p.installmentNumber }}</td>
-            <td class="text-right font-semibold text-blue-600">
-              {{
-                p.amountReceived | currencyArs: 2
-              }}
-            </td>
-            <td>
-              {{ p.paymentMethod === "CASH" ? "Efectivo" : "Transferencia" }}
-            </td>
-            <td class="text-sm text-gray-500">
-              {{ p.createdAt | date: "dd/MM HH:mm" }}
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    }
-  </p-card>
+    </p-card>
+  </div>
 </div>

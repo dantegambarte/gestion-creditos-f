@@ -1,28 +1,40 @@
 <div class="space-y-6">
   <!-- Filtro inline -->
   <div class="flex flex-wrap items-center gap-3">
-    <span class="text-sm text-gray-400">Desde</span>
-    <input
-      type="date"
+    <span class="text-sm text-[var(--ff-text-secondary)]">Desde</span>
+    <p-calendar
       [(ngModel)]="collectorsDateFrom"
-      class="bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      dataType="string"
+      dateFormat="yy-mm-dd"
+      [showIcon]="true"
+      iconDisplay="input"
+      appendTo="body"
+      styleClass="w-44"
+      inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
     />
-    <span class="text-sm text-gray-400">hasta</span>
-    <input
-      type="date"
+    <span class="text-sm text-[var(--ff-text-secondary)]">hasta</span>
+    <p-calendar
       [(ngModel)]="collectorsDateTo"
-      class="bg-gray-800 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      dataType="string"
+      dateFormat="yy-mm-dd"
+      [showIcon]="true"
+      iconDisplay="input"
+      appendTo="body"
+      styleClass="w-44"
+      inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
     />
     <p-button
       label="Consultar"
       icon="pi pi-search"
+      severity="primary"
+      styleClass="h-11 px-5 rounded-xl shadow-sm justify-center"
       [disabled]="!rangeValid"
       [loading]="loading"
       (onClick)="consultCollectors()"
     />
   </div>
   @if (dateError) {
-    <p class="text-sm text-red-400 flex items-center gap-1.5">
+    <p class="flex items-center gap-1.5 text-sm text-red-400">
       <i class="pi pi-exclamation-circle"></i> {{ dateError }}
     </p>
   }
@@ -32,37 +44,39 @@
   } @else if (error) {
     <app-error-state [message]="error.message" />
   } @else if (collectorsRows.length > 0) {
-    <div class="bg-gray-800 rounded-2xl overflow-hidden">
+    <div
+      class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+    >
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-gray-700">
+          <tr class="border-b border-[var(--ff-border-subtle)]">
             <th
-              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Cobrador
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Cobros totales
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Aprobados
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Rechazados
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Monto recaudado
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Tasa aprobación
             </th>
@@ -72,7 +86,7 @@
         <tbody>
           @for (row of collectorsRows; track row.collectorId) {
             <tr
-              class="border-t border-gray-700/50 hover:bg-gray-700/20 transition-colors"
+              class="border-t border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
             >
               <!-- Avatar + nombre -->
               <td class="px-5 py-3">
@@ -87,12 +101,12 @@
                   >
                     {{ row.collectorName.slice(0, 2).toUpperCase() }}
                   </span>
-                  <span class="font-semibold text-white">{{
+                  <span class="font-semibold text-[var(--ff-text-primary)]">{{
                     row.collectorName
                   }}</span>
                 </div>
               </td>
-              <td class="px-5 py-3 text-right text-gray-300">
+              <td class="px-5 py-3 text-right text-[var(--ff-text-secondary)]">
                 {{ row.totalPayments || "—" }}
               </td>
               <td class="px-5 py-3 text-right font-semibold text-green-400">
@@ -101,7 +115,9 @@
               <td class="px-5 py-3 text-right font-semibold text-red-400">
                 {{ row.rejectedCount || "—" }}
               </td>
-              <td class="px-5 py-3 text-right font-mono text-gray-200">
+              <td
+                class="px-5 py-3 text-right font-mono text-[var(--ff-text-primary)]"
+              >
                 {{
                   row.totalCollected > 0
                     ? formatCurrency(row.totalCollected)
@@ -110,7 +126,7 @@
               </td>
               <td class="px-5 py-3 text-right">
                 @if (row.approvalRate == null) {
-                  <span class="text-gray-600">—</span>
+                  <span class="text-[var(--ff-text-muted)]">—</span>
                 } @else {
                   <span
                     class="font-semibold"
@@ -130,7 +146,7 @@
               <td class="px-5 py-3">
                 @if (row.approvalRate != null) {
                   <div
-                    class="h-1 bg-gray-700 rounded-full overflow-hidden w-24"
+                    class="h-1 w-24 overflow-hidden rounded-full bg-[var(--ff-secondary)]"
                   >
                     <div
                       class="h-full rounded-full"
@@ -152,7 +168,7 @@
       </table>
     </div>
   } @else if (!loading && !error) {
-    <p class="text-sm text-gray-500 text-center py-10">
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
       Sin datos para el período seleccionado.
     </p>
   }

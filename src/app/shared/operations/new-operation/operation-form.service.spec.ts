@@ -1,8 +1,12 @@
-﻿import { TestBed } from '@angular/core/testing';
+/// <reference types="jasmine" />
+declare const expect: any;
+declare const spyOn: any;
+import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
 
 import { OperationFormService } from './operation-form.service';
+import { OperationCatalogService } from './operation-catalog.service';
 import { CreditsService } from '../../../features/seller/operations/credits.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
 import { ProductUnitsService } from '../../../features/seller/products/product-units.service';
@@ -22,6 +26,7 @@ describe('OperationFormService', () => {
     TestBed.configureTestingModule({
       providers: [
         OperationFormService,
+        OperationCatalogService,
         MessageService,
         { provide: CreditsService, useValue: creditsServiceSpy },
         { provide: CustomersService, useValue: { list: () => of([]), getWizardSummary: () => of({ phone: null, email: null, status: 'ACTIVE', address: null, collectorName: null, activeCredits: 0, delinquency: 'sin mora', paymentCapacity: 0, createdAt: '', paidInstallments: 0, pendingInstallments: 0, overdueInstallments: 0, credits: [] }) } },
@@ -34,8 +39,8 @@ describe('OperationFormService', () => {
     service = TestBed.inject(OperationFormService);
   });
 
-  it('agrupa el catÃ¡logo por productId real aunque coincidan nombre y precio', () => {
-    service.availableProducts = [
+  it('agrupa el catálogo por productId real aunque coincidan nombre y precio', () => {
+    service.catalogSvc.availableProducts = [
       {
         id: 'unit-1',
         productId: 'prod-1',
@@ -56,7 +61,7 @@ describe('OperationFormService', () => {
       },
     ];
 
-    const result = service.buildCatalogProducts();
+    const result = service.catalogSvc.buildCatalogProducts();
 
     expect(result.length).toBe(2);
     expect(result.map((item) => item.productoId)).toEqual(['prod-1', 'prod-2']);
@@ -64,7 +69,7 @@ describe('OperationFormService', () => {
     expect(result[1].unitIds).toEqual(['unit-2']);
   });
 
-  it('envÃ­a unidades seleccionadas de SALE usando ids reales del carrito', () => {
+  it('envía unidades seleccionadas de SALE usando ids reales del carrito', () => {
     service.selectClient({
       id: 'client-1',
       name: 'Juan Perez',
@@ -79,12 +84,12 @@ describe('OperationFormService', () => {
     service.operationForm.controls.operationType.setValue('SALE');
     service.operationForm.controls.paymentFrequency.setValue('MONTHLY');
     service.operationForm.controls.firstPaymentDate.setValue(new Date(2026, 4, 10));
-    service.cartLines = [
+    service.cartLines.set([
       {
         productoId: 'prod-1',
         nombre: 'Heladera',
         variantId: 'var-1',
-        variantLabel: 'Variante estÃ¡ndar',
+        variantLabel: 'Variante estándar',
         cantidad: 1,
         precio: 1000,
         subtotal: 1000,
@@ -92,11 +97,12 @@ describe('OperationFormService', () => {
         unitIds: ['unit-1'],
         unitCodes: ['SN-001'],
         productIds: ['prod-1'],
+        selectedUnitIds: ['unit-1'],
         rates: [],
         selectedInstallments: 1,
       },
-    ];
-    service.availableProducts = [
+    ]);
+    service.catalogSvc.availableProducts = [
       {
         id: 'unit-1',
         productId: 'prod-1',
@@ -119,15 +125,15 @@ describe('OperationFormService', () => {
     );
   });
 
-  it('permite avanzar en condiciones con fecha derivada cuando usa fecha de aprobaciÃ³n', () => {
+  it('permite avanzar en condiciones con fecha derivada cuando usa fecha de aprobación', () => {
     service.operationForm.controls.operationType.setValue('SALE');
     service.operationForm.controls.paymentFrequency.setValue('BIWEEKLY');
-    service.cartLines = [
+    service.cartLines.set([
       {
         productoId: 'prod-1',
         nombre: 'Heladera',
         variantId: 'var-1',
-        variantLabel: 'Variante estÃ¡ndar',
+        variantLabel: 'Variante estándar',
         cantidad: 1,
         precio: 1000,
         subtotal: 1000,
@@ -135,10 +141,11 @@ describe('OperationFormService', () => {
         unitIds: ['unit-1'],
         unitCodes: ['SN-001'],
         productIds: ['prod-1'],
+        selectedUnitIds: ['unit-1'],
         rates: [],
         selectedInstallments: 1,
       },
-    ];
+    ]);
 
     service.syncFirstPaymentDateWithMode();
 
@@ -151,12 +158,12 @@ describe('OperationFormService', () => {
     service.operationForm.controls.paymentFrequency.setValue('BIWEEKLY');
     service.operationForm.controls.firstPaymentDateMode.setValue('CUSTOM_DATE');
     service.operationForm.controls.firstPaymentDate.setValue(null);
-    service.cartLines = [
+    service.cartLines.set([
       {
         productoId: 'prod-1',
         nombre: 'Heladera',
         variantId: 'var-1',
-        variantLabel: 'Variante estÃ¡ndar',
+        variantLabel: 'Variante estándar',
         cantidad: 1,
         precio: 1000,
         subtotal: 1000,
@@ -164,12 +171,69 @@ describe('OperationFormService', () => {
         unitIds: ['unit-1'],
         unitCodes: ['SN-001'],
         productIds: ['prod-1'],
+        selectedUnitIds: ['unit-1'],
         rates: [],
         selectedInstallments: 1,
       },
-    ];
+    ]);
 
     expect(service.canNext(2)).toBeFalse();
   });
-});
 
+  it('acota las cuotas adelantadas al máximo permitido del plan — CR-29', () => {
+    service.initialize().subscribe();
+    service.operationForm.controls.operationType.setValue('SALE');
+    service.operationForm.controls.paymentFrequency.setValue('MONTHLY');
+    service.cartLines.set([
+      {
+        productoId: 'prod-1',
+        nombre: 'Heladera',
+        variantId: 'var-1',
+        variantLabel: 'Variante estándar',
+        cantidad: 1,
+        precio: 1000,
+        subtotal: 1000,
+        stockDisponible: 1,
+        unitIds: ['unit-1'],
+        unitCodes: ['SN-001'],
+        productIds: ['prod-1'],
+        selectedUnitIds: ['unit-1'],
+        rates: [],
+        selectedInstallments: 4,
+      },
+    ]);
+
+    service.operationForm.controls.advancedInstallmentsCount.setValue(99);
+
+    expect(service.operationForm.controls.advancedInstallmentsCount.value).toBe(3);
+  });
+
+  it('limpia anticipo y cuotas adelantadas cuando se cambia a préstamo de efectivo — CR-31', () => {
+    service.initialize().subscribe();
+    service.operationForm.controls.operationType.setValue('SALE');
+    service.operationForm.controls.initialPaymentType.setValue('DOWN_PAYMENT');
+    service.operationForm.controls.downPayment.setValue(1000);
+    service.operationForm.controls.downPaymentMethod.setValue('CASH');
+    service.operationForm.controls.advancedInstallmentsCount.setValue(2);
+    service.operationForm.controls.advancedInstallmentsMethod.setValue('CASH');
+
+    service.operationForm.controls.operationType.setValue('LOAN');
+
+    expect(service.operationForm.controls.initialPaymentType.value).toBe('NONE');
+    expect(service.operationForm.controls.downPayment.value).toBeNull();
+    expect(service.operationForm.controls.downPaymentMethod.value).toBeNull();
+    expect(service.operationForm.controls.advancedInstallmentsCount.value).toBeNull();
+    expect(service.operationForm.controls.advancedInstallmentsMethod.value).toBeNull();
+  });
+
+  it('calcula la primera cuota mensual a 30 días corridos desde aprobación — CR-25', () => {
+    const approvalDate = new Date(2026, 0, 1);
+
+    const result = service.getFirstPaymentDateFromApprovalRule(
+      approvalDate,
+      'MONTHLY',
+    );
+
+    expect(service.toApiDate(result)).toBe('2026-01-31');
+  });
+});

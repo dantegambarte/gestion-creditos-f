@@ -176,14 +176,224 @@ export interface UpcomingReportRaw {
   by_customer: UpcomingByCustomerRaw[];
 }
 
+export interface CashConversionReportSummary {
+  totalConversions: number;
+  totalAmount: number;
+  cashToTransfer: number;
+  transferToCash: number;
+}
+
+export interface CashConversionReportRow {
+  id: string;
+  registerDate: string;
+  criteria: 'DAILY' | 'COMPANY';
+  sourceMethod: 'CASH' | 'TRANSFER';
+  targetMethod: 'CASH' | 'TRANSFER';
+  amount: number;
+  notes: string | null;
+  createdByName: string;
+  createdAt: string;
+}
+
+export interface CashConversionReport {
+  summary: CashConversionReportSummary;
+  rows: CashConversionReportRow[];
+}
+
+export interface CashConversionReportSummaryRaw {
+  total_conversions: number;
+  total_amount: number;
+  cash_to_transfer: number;
+  transfer_to_cash: number;
+}
+
+export interface CashConversionReportRowRaw {
+  id: string;
+  register_date: string;
+  criteria: 'DAILY' | 'COMPANY';
+  source_method: 'CASH' | 'TRANSFER';
+  target_method: 'CASH' | 'TRANSFER';
+  amount: number;
+  notes: string | null;
+  created_by_name: string;
+  created_at: string;
+}
+
+export interface CashConversionReportRaw {
+  summary: CashConversionReportSummaryRaw;
+  rows: CashConversionReportRowRaw[];
+}
+
 export type ReportTab =
   | 'summary'
   | 'collection'
+  | 'cashSessions'
   | 'portfolio'
   | 'overdue'
   | 'collectors'
   | 'products'
-  | 'upcoming';
+  | 'upcoming'
+  | 'cashConversions'
+  | 'cashMovements';
+
+export type CashMovementType =
+  | 'COBRO'
+  | 'ENGANCHE'
+  | 'GASTO'
+  | 'DROP'
+  | 'CONVERSION';
+
+export interface CashMovementReportSummary {
+  totalMovements: number;
+  totalCollections: number;
+  totalDownPayments: number;
+  totalExpenses: number;
+  totalDrops: number;
+}
+
+export interface CashMovementReportRow {
+  id: string;
+  type: CashMovementType;
+  occurredAt: string;
+  cashSessionId: string;
+  businessDate: string;
+  branchName: string;
+  shiftLabel: string | null;
+  amount: number;
+  paymentMethod: string;
+  description: string;
+  performedByName: string | null;
+  transferReference: string | null;
+  customerId: string | null;
+  customerName: string | null;
+  customerDni: string | null;
+  creditId: string | null;
+  creditType: 'SALE' | 'LOAN' | null;
+  installmentId: string | null;
+  installmentNumber: number | null;
+  expenseCategoryId: string | null;
+  expenseCategoryName: string | null;
+  expenseSource: string | null;
+  dropDestination: string | null;
+  dropReason: string | null;
+  dropStatus: string | null;
+  receiptReference: string | null;
+  conversionSourceMethod: string | null;
+  conversionTargetMethod: string | null;
+  conversionCriteria: string | null;
+  productSummary: string | null;
+}
+
+export interface CashMovementReport {
+  summary: CashMovementReportSummary;
+  rows: CashMovementReportRow[];
+}
+
+export interface CashMovementReportSummaryRaw {
+  total_movements: number;
+  total_collections: number;
+  total_down_payments: number;
+  total_expenses: number;
+  total_drops: number;
+}
+
+export interface CashMovementReportRowRaw {
+  id: string;
+  type: CashMovementType;
+  occurred_at: string;
+  cash_session_id: string;
+  business_date: string;
+  branch_name: string;
+  shift_label: string | null;
+  amount: number;
+  payment_method: string;
+  description: string;
+  performed_by_name: string | null;
+  transfer_reference: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  customer_dni: string | null;
+  credit_id: string | null;
+  credit_type: 'SALE' | 'LOAN' | null;
+  installment_id: string | null;
+  installment_number: number | null;
+  expense_category_id: string | null;
+  expense_category_name: string | null;
+  expense_source: string | null;
+  drop_destination: string | null;
+  drop_reason: string | null;
+  drop_status: string | null;
+  receipt_reference: string | null;
+  conversion_source_method: string | null;
+  conversion_target_method: string | null;
+  conversion_criteria: string | null;
+  product_summary: string | null;
+}
+
+export interface CashMovementReportRaw {
+  summary: CashMovementReportSummaryRaw;
+  rows: CashMovementReportRowRaw[];
+}
+
+export type GeneralCashMovementType =
+  | 'DROP_IN'
+  | 'SUPPLIER_PAYMENT'
+  | 'SALARY_PAYMENT'
+  | 'EXPENSE'
+  | 'ADJUSTMENT'
+  | 'MANUAL_INCOME';
+
+export interface GeneralCashMovementReportSummary {
+  totalMovements: number;
+  totalIn: number;
+  totalOut: number;
+}
+
+export interface GeneralCashMovementReportRow {
+  id: string;
+  movementType: GeneralCashMovementType;
+  direction: 'IN' | 'OUT';
+  amount: number;
+  amountCash: number;
+  amountTransfer: number;
+  description: string | null;
+  beneficiaryName: string | null;
+  referenceType: string | null;
+  referenceId: string | null;
+  createdAt: string;
+  performedByName: string | null;
+}
+
+export interface GeneralCashMovementReport {
+  summary: GeneralCashMovementReportSummary;
+  rows: GeneralCashMovementReportRow[];
+}
+
+export interface GeneralCashMovementReportSummaryRaw {
+  total_movements: number;
+  total_in: number;
+  total_out: number;
+}
+
+export interface GeneralCashMovementReportRowRaw {
+  id: string;
+  movement_type: GeneralCashMovementType;
+  direction: 'IN' | 'OUT';
+  amount: number;
+  amount_cash: number;
+  amount_transfer: number;
+  description: string | null;
+  beneficiary_name: string | null;
+  reference_type: string | null;
+  reference_id: string | null;
+  created_at: string;
+  performed_by_name: string | null;
+}
+
+export interface GeneralCashMovementReportRaw {
+  summary: GeneralCashMovementReportSummaryRaw;
+  rows: GeneralCashMovementReportRowRaw[];
+}
 
 export interface CollectionSummaryRaw {
   grand_total: number;

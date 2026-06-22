@@ -10,6 +10,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { Observable } from 'rxjs';
 import { AppError } from '../../../../core/models/app-error';
 import {
   CreateForm,
@@ -270,7 +271,7 @@ export class InterestRatesConfigComponent implements OnInit {
    * @param rate
    */
   private executeToggle(rate: InterestRate): void {
-    const obs: any = rate.active
+    const obs: Observable<InterestRate | void> = rate.active
       ? this.svc.deactivate(rate.id)
       : this.svc.activate(rate.id);
     obs.subscribe({

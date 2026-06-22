@@ -17,6 +17,8 @@
       [(ngModel)]="selectedEstado"
       optionLabel="label"
       optionValue="value"
+      [filter]="estadoOptions.length > 10"
+      filterBy="label"
       styleClass="estado-select"
     />
     <button class="btn-cancelacion">
@@ -30,24 +32,22 @@
       <div
         data-cy="client-detail-credits-card"
         class="credit-card"
-        [ngClass]="'card-' + credit.estado.toLowerCase().replace(' ', '-')"
+        [ngClass]="'card-' + credit.status.toLowerCase()"
       >
         <div class="card-header">
           <div class="card-header-left">
             <span
               class="estado-badge"
-              [ngClass]="
-                'badge-' + credit.estado.toLowerCase().replace(' ', '-')
-              "
+              [ngClass]="'badge-' + credit.status.toLowerCase()"
             >
-              {{ credit.estado }}
+              {{ credit.status }}
             </span>
             <span class="credit-id">{{ credit.id }}</span>
-            <span class="credit-tipo">{{ credit.tipo }}</span>
-            @if (credit.diasMora) {
+            <span class="credit-tipo">{{ credit.type }}</span>
+            @if (credit.overdueDays) {
               <span class="mora-alert">
                 <i class="pi pi-exclamation-triangle"></i>
-                {{ credit.diasMora }} días de mora
+                {{ credit.overdueDays }} días de mora
               </span>
             }
           </div>
@@ -59,13 +59,13 @@
               <i class="pi pi-eye"></i>
               Ver detalle
             </button>
-            @if (credit.estado === "ACTIVO") {
+            @if (credit.status === "ACTIVE") {
               <button class="action-btn btn-outline-warning">
                 <i class="pi pi-exclamation-circle"></i>
                 Mora
               </button>
             }
-            @if (credit.estado === "EN MORA") {
+            @if (credit.status === "OVERDUE") {
               <button class="action-btn btn-outline-warning">
                 <i class="pi pi-percentage"></i>
                 Aplicar Mora
@@ -82,49 +82,48 @@
           <div class="stat-cell">
             <span class="cell-label">Monto Original</span>
             <span class="cell-value"
-              >${{ credit.montoOriginal.toLocaleString("es-AR") }}</span
+              >${{ credit.originalAmount.toLocaleString("es-AR") }}</span
             >
           </div>
           <div class="stat-cell">
             <span class="cell-label">Saldo Pendiente</span>
             <span class="cell-value"
-              >${{ credit.saldoPendiente.toLocaleString("es-AR") }}</span
+              >${{ credit.pendingBalance.toLocaleString("es-AR") }}</span
             >
           </div>
           <div class="stat-cell">
             <span class="cell-label">Cuotas</span>
             <span class="cell-value"
-              >{{ credit.cuotaActual }} / {{ credit.totalCuotas }}</span
+              >{{ credit.currentInstallment }} /
+              {{ credit.totalInstallments }}</span
             >
           </div>
-          @if (credit.estado === "EN MORA" && credit.moraAcumulada) {
+          @if (credit.status === "OVERDUE" && credit.accruedLateFee) {
             <div class="stat-cell">
               <span class="cell-label">Mora Acumulada</span>
               <span class="cell-value danger"
-                >${{ credit.moraAcumulada.toLocaleString("es-AR") }}</span
+                >${{ credit.accruedLateFee.toLocaleString("es-AR") }}</span
               >
             </div>
             <div class="stat-cell">
               <span class="cell-label">Vencimiento Mora</span>
-              <span class="cell-value danger">{{
-                credit.vencimientoMora
-              }}</span>
+              <span class="cell-value danger">{{ credit.lateFeeExpiry }}</span>
             </div>
           } @else {
             <div class="stat-cell">
               <span class="cell-label">Cuota Mensual</span>
               <span class="cell-value"
-                >${{ credit.cuotaMensual.toLocaleString("es-AR") }}</span
+                >${{ credit.monthlyInstallment.toLocaleString("es-AR") }}</span
               >
             </div>
             <div class="stat-cell">
               <span class="cell-label">Próximo Vencimiento</span>
-              <span class="cell-value">{{ credit.proximoVencimiento }}</span>
+              <span class="cell-value">{{ credit.nextDueDate }}</span>
             </div>
           }
           <div class="stat-cell">
             <span class="cell-label">Tasa</span>
-            <span class="cell-value">{{ credit.tasa }}</span>
+            <span class="cell-value">{{ credit.rate }}</span>
           </div>
         </div>
 
@@ -134,19 +133,19 @@
             <div
               class="progress-fill"
               [ngClass]="
-                credit.estado === 'EN MORA' ? 'fill-danger' : 'fill-success'
+                credit.status === 'OVERDUE' ? 'fill-danger' : 'fill-success'
               "
-              [style.width.%]="credit.progreso"
+              [style.width.%]="credit.progress"
             ></div>
           </div>
           <span
             class="progress-pct"
             [ngClass]="
-              credit.estado === 'EN MORA' ? 'pct-danger' : 'pct-success'
+              credit.status === 'OVERDUE' ? 'pct-danger' : 'pct-success'
             "
           >
-            {{ credit.progreso }}% completado
-            @if (credit.estado === "EN MORA") {
+            {{ credit.progress }}% completado
+            @if (credit.status === "OVERDUE") {
               <span class="mora-tag">▲ En mora</span>
             }
           </span>
@@ -156,7 +155,9 @@
 
     @if (filteredCredits.length === 0) {
       <div class="empty-state" data-cy="client-detail-credits-empty-state">
-        <i class="pi pi-inbox text-gray-300 text-4xl mb-2"></i>
+        <i
+          class="pi pi-inbox mb-2 text-4xl text-[var(--ff-text-secondary)]"
+        ></i>
         <p>No se encontraron créditos</p>
       </div>
     }

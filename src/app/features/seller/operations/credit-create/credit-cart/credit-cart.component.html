@@ -1,0 +1,191 @@
+<div class="mb-6 p-4 bg-white border rounded">
+  <h3 class="font-semibold mb-4">Selector de unidades</h3>
+
+  <div class="mb-3">
+    <label class="block text-sm font-medium mb-1">Producto</label>
+    <p-dropdown
+      [options]="productSelectorOptions"
+      [(ngModel)]="selectedProductId"
+      optionLabel="label"
+      optionValue="value"
+      placeholder="Seleccionar producto"
+      [filter]="productSelectorOptions.length > 10"
+      filterBy="label"
+      [showClear]="true"
+      styleClass="w-full"
+      inputId="sale-product-selector"
+      data-cy="sale-product-selector"
+      (onChange)="onProductSelected()"
+    />
+  </div>
+
+  @if (selectorVariants.length > 0 || loadingVariants) {
+    <div class="mb-3">
+      <label class="block text-sm font-medium mb-1">Variante</label>
+      <p-dropdown
+        [options]="variantSelectorOptions"
+        [(ngModel)]="selectedVariantId"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Seleccionar variante"
+        [filter]="variantSelectorOptions.length > 10"
+        filterBy="label"
+        [showClear]="true"
+        styleClass="w-full"
+        inputId="sale-variant-selector"
+        data-cy="sale-variant-selector"
+        [disabled]="loadingVariants"
+        (onChange)="onVariantSelected()"
+      />
+    </div>
+  }
+
+  @if (selectorUnits.length > 0 || loadingUnits) {
+    <div class="mb-3 flex gap-2 items-end">
+      <div class="flex-1">
+        <label class="block text-sm font-medium mb-1">Unidad (código)</label>
+        <p-dropdown
+          [options]="unitSelectorOptions"
+          [(ngModel)]="selectedUnitId"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccionar unidad"
+          [filter]="unitSelectorOptions.length > 10"
+          filterBy="label"
+          [showClear]="true"
+          styleClass="w-full"
+          inputId="sale-unit-selector"
+          data-cy="sale-unit-selector"
+          [disabled]="loadingUnits"
+        />
+      </div>
+      <p-button
+        label="Agregar"
+        icon="pi pi-plus"
+        type="button"
+        data-cy="sale-add-unit"
+        [disabled]="!selectedUnitId"
+        (onClick)="addToCart()"
+      />
+    </div>
+  }
+
+  @if (selectorVariants.length === 0 && selectedProductId && !loadingVariants) {
+    <p class="text-sm text-amber-600 mb-3">
+      Este producto no tiene variantes activas.
+    </p>
+  }
+  @if (selectorUnits.length === 0 && selectedVariantId && !loadingUnits) {
+    <p class="text-sm text-amber-600 mb-3">
+      Esta variante no tiene unidades disponibles.
+    </p>
+  }
+
+  @if (cart.length > 0) {
+    <div
+      class="mt-4 overflow-hidden rounded border border-[var(--ff-border-subtle)]"
+    >
+      <div class="sr-only" data-cy="sale-cart-count">{{ cart.length }}</div>
+      <table class="w-full text-sm">
+        <thead class="bg-[var(--ff-surface)]">
+          <tr>
+            <th class="text-left px-3 py-2">Producto</th>
+            <th class="text-left px-3 py-2">Variante</th>
+            <th class="text-left px-3 py-2 font-mono">Código</th>
+            <th class="text-right px-3 py-2">Precio</th>
+            <th class="px-3 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of cart; track $index; let i = $index) {
+            <tr class="border-t">
+              <td class="px-3 py-2">{{ item.productName }}</td>
+              <td class="px-3 py-2 text-[var(--ff-text-muted)]">
+                {{ item.variantLabel || "—" }}
+              </td>
+              <td class="px-3 py-2 font-mono font-semibold">
+                {{ item.unitCode }}
+              </td>
+              <td class="px-3 py-2 text-right">
+                {{ item.price | currencyArs: 2 }}
+              </td>
+              <td class="px-3 py-2 text-center">
+                <p-button
+                  icon="pi pi-trash"
+                  severity="danger"
+                  [outlined]="true"
+                  size="small"
+                  type="button"
+                  (onClick)="removeFromCart(i)"
+                />
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot
+          class="border-t border-[var(--ff-border-subtle)] bg-[var(--ff-surface)]"
+        >
+          <tr>
+            <td
+              colspan="3"
+              class="px-3 py-2 text-sm text-[var(--ff-text-muted)]"
+            >
+              Subtotal
+            </td>
+            <td
+              class="px-3 py-2 text-right font-semibold"
+              data-cy="sale-cart-total"
+            >
+              {{ cartTotal | currencyArs: 2 }}
+            </td>
+            <td></td>
+          </tr>
+          @if (downPayment > 0) {
+            <tr>
+              <td
+                colspan="3"
+                class="px-3 py-2 text-sm text-[var(--ff-text-muted)]"
+              >
+                Enganche
+              </td>
+              <td
+                class="px-3 py-2 text-right font-semibold"
+                data-cy="sale-down-payment-preview"
+              >
+                {{ downPayment | currencyArs: 2 }}
+              </td>
+              <td></td>
+            </tr>
+            <tr>
+              <td
+                colspan="3"
+                class="px-3 py-2 text-sm text-[var(--ff-text-muted)]"
+              >
+                Monto financiado
+              </td>
+              <td
+                class="px-3 py-2 text-right font-semibold"
+                data-cy="sale-financed-amount-preview"
+              >
+                {{ financedAmountPreview | currencyArs: 2 }}
+              </td>
+              <td></td>
+            </tr>
+          }
+        </tfoot>
+      </table>
+    </div>
+  } @else {
+    <p class="mt-2 text-sm text-[var(--ff-text-secondary)]">
+      Sin unidades en el carrito.
+    </p>
+  }
+
+  @if (error) {
+    <div
+      class="mt-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm"
+    >
+      {{ error }}
+    </div>
+  }
+</div>

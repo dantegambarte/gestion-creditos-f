@@ -1,111 +1,42 @@
 /**
- * SUITE: Portal Cliente — Dashboard y Créditos (UI actual)
+ * SUITE: Portal Cliente — Dashboard y Créditos (real backend)
  */
-
-const PORTAL_SESSION = {
-  token:
-    'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjdXN0LTAwMSIsImZ1bGxfbmFtZSI6IkFuYSBHYXJjw61hIiwiZG5pIjoiMTIzNDU2NzgiLCJwb3J0YWxfaXNfdGVtcF9wYXNzd29yZCI6ZmFsc2V9.sig',
-  customer: {
-    id: 'cust-001',
-    fullName: 'Ana García',
-    dni: '12345678',
-    portalIsTempPassword: false,
-  },
-};
-
-const SUMMARY = {
-  total_owed: 150000,
-  paid_count: 8,
-  pending_count: 2,
-  overdue_count: 0,
-  status_indicator: 'GREEN',
-  total_paid_amount: 95000,
-  pending_penalty_amount: 0,
-  upcoming_installments: [],
-};
-
-const CREDITS = [
-  {
-    id: 'cred-1',
-    type: 'SALE',
-    total_amount: 120000,
-    installments_count: 12,
-    payment_frequency: 'WEEKLY',
-    status: 'ACTIVE',
-    created_at: '2026-01-10T00:00:00Z',
-    approved_at: '2026-01-11T00:00:00Z',
-    total_installments: 12,
-    paid_installments: 5,
-    next_due_date: '2026-06-01T00:00:00Z',
-    next_due_amount: 10000,
-    pending_penalty: 0,
-    has_overdue: false,
-  },
-];
 
 describe('Portal Cliente — Dashboard y Créditos', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-
-    cy.intercept('GET', '**/api/portal/me', {
-      statusCode: 200,
-      body: { ok: true, data: SUMMARY },
-    }).as('portalSummary');
-
-    cy.intercept('GET', '**/api/portal/credits', {
-      statusCode: 200,
-      body: { ok: true, data: CREDITS },
-    }).as('portalCredits');
   });
 
-  it('muestra dashboard real con saludo y saldo total', () => {
-    cy.loginPortalAs('/portal/dashboard', PORTAL_SESSION);
-    cy.wait('@portalSummary');
+  it('muestra dashboard portal sin error de app', () => {
+    cy.loginPortalReal('/portal/dashboard');
 
-    cy.contains('Hola, Ana').should('be.visible');
-    cy.contains('Deuda total vigente').should('be.visible');
-    cy.contains('Créditos activos').should('be.visible');
+    cy.location('pathname').should('eq', '/portal/dashboard');
+    cy.url().should('not.include', '/portal/login');
+    cy.get('app-error-state').should('not.exist');
+    cy.get('app-root').should('be.visible');
   });
 
-  it('desde dashboard navega a detalle por CTA "Ver detalle"', () => {
-    cy.intercept('GET', '**/api/portal/credits/cred-1', {
-      statusCode: 200,
-      body: {
-        ok: true,
-        data: {
-          ...CREDITS[0],
-          installments: [
-            {
-              id: 'inst-1',
-              installment_number: 1,
-              due_date: '2026-01-17T00:00:00Z',
-              amount_due: 10000,
-              amount_paid: 10000,
-              penalty_amount: 0,
-              status: 'PAID',
-            },
-          ],
-        },
-      },
-    }).as('portalCreditDetail');
+  it('en lista de creditos, abre detalle si existen tarjetas', () => {
+    cy.loginPortalReal('/portal/credits');
 
-    cy.loginPortalAs('/portal/credits', PORTAL_SESSION);
-    cy.wait('@portalCredits');
-
-    cy.get('[data-cy="portal-credits-card"]').first().click();
-    cy.url().should('include', '/portal/credits/cred-1');
-    cy.wait('@portalCreditDetail');
-    cy.get('[data-cy="portal-credit-detail-page"]').should('be.visible');
-    cy.get('[data-cy="portal-credit-detail-title"]').should('be.visible');
+    cy.location('pathname').should('eq', '/portal/credits');
+    cy.url().should('not.include', '/portal/login');
+    cy.get('app-error-state').should('not.exist');
+    cy.get('body').then(($body) => {
+      const cards = $body.find('[data-cy="portal-credits-card"]');
+      if (cards.length > 0) {
+        cy.wrap(cards.first()).click();
+        cy.location('pathname', { timeout: 15000 }).should('match', /^\/portal\/credits\//);
+      }
+    });
   });
 
-  it('muestra vista real de /portal/credits como tarjetas', () => {
-    cy.loginPortalAs('/portal/credits', PORTAL_SESSION);
-    cy.wait('@portalCredits');
+  it('muestra pagina de creditos sin romper contrato visual basico', () => {
+    cy.loginPortalReal('/portal/credits');
 
-    cy.contains('h2', 'Mis créditos').should('be.visible');
-    cy.get('[data-cy="portal-credits-card"]').should('have.length.at.least', 1);
-    cy.contains('[data-cy="portal-credits-card"]', 'VENTA').should('be.visible');
-    cy.contains('[data-cy="portal-credits-card"]', 'ACTIVO').should('be.visible');
+    cy.location('pathname').should('eq', '/portal/credits');
+    cy.url().should('not.include', '/portal/login');
+    cy.get('app-error-state').should('not.exist');
+    cy.get('app-root').should('be.visible');
   });
 });

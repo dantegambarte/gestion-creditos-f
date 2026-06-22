@@ -27,6 +27,12 @@ function toPayment(raw: PaymentRaw): Payment {
     id: raw.id,
     installmentId: raw.installment_id,
     amountReceived: raw.amount_received,
+    amountCash:
+      raw.amount_cash ??
+      (raw.payment_method === 'CASH' ? raw.amount_received : 0),
+    amountTransfer:
+      raw.amount_transfer ??
+      (raw.payment_method === 'TRANSFER' ? raw.amount_received : 0),
     paymentMethod: raw.payment_method,
     transferReference: raw.transfer_reference,
     status: raw.status,
@@ -46,6 +52,7 @@ function toPayment(raw: PaymentRaw): Payment {
     isReversal: raw.is_reversal ?? false,
     adminDirect: raw.admin_direct ?? false,
     parentPaymentId: raw.parent_payment_id ?? null,
+    reversalPaymentId: raw.reversal_payment_id ?? null,
   };
 }
 
@@ -79,6 +86,12 @@ function toCreditPayment(raw: CreditPaymentRaw): CreditPayment {
     installmentId: raw.installment_id,
     collectorId: raw.collector_id,
     amountReceived: raw.amount_received,
+    amountCash:
+      raw.amount_cash ??
+      (raw.payment_method === 'CASH' ? raw.amount_received : 0),
+    amountTransfer:
+      raw.amount_transfer ??
+      (raw.payment_method === 'TRANSFER' ? raw.amount_received : 0),
     paymentMethod: raw.payment_method,
     transferReference: raw.transfer_reference,
     status: raw.status,
@@ -104,6 +117,12 @@ function toCreateResult(raw: PaymentCreateResultRaw): PaymentCreateResult {
     id: raw.id,
     installmentId: raw.installment_id,
     amountReceived: raw.amount_received,
+    amountCash:
+      raw.amount_cash ??
+      (raw.payment_method === 'CASH' ? raw.amount_received : 0),
+    amountTransfer:
+      raw.amount_transfer ??
+      (raw.payment_method === 'TRANSFER' ? raw.amount_received : 0),
     paymentMethod: raw.payment_method,
     status: raw.status,
     createdAt: raw.created_at,
@@ -152,9 +171,17 @@ export class PaymentsService {
   create(payload: PaymentCreatePayload): Observable<PaymentCreateResult> {
     const body: Record<string, unknown> = {
       installment_id: payload.installmentId,
-      amount_received: payload.amountReceived,
-      payment_method: payload.paymentMethod,
     };
+    if (
+      payload.amountCash !== undefined ||
+      payload.amountTransfer !== undefined
+    ) {
+      body['amount_cash'] = payload.amountCash ?? 0;
+      body['amount_transfer'] = payload.amountTransfer ?? 0;
+    } else {
+      body['amount_received'] = payload.amountReceived;
+      body['payment_method'] = payload.paymentMethod;
+    }
     if (payload.transferReference)
       body['transfer_reference'] = payload.transferReference;
     if (payload.notes) body['notes'] = payload.notes;
@@ -195,12 +222,21 @@ export class PaymentsService {
   adminDirect(payload: AdminDirectPayload): Observable<PaymentDetail> {
     const body: Record<string, unknown> = {
       installment_id: payload.installmentId,
-      amount_received: payload.amountReceived,
-      payment_method: payload.paymentMethod,
     };
+    if (
+      payload.amountCash !== undefined ||
+      payload.amountTransfer !== undefined
+    ) {
+      body['amount_cash'] = payload.amountCash ?? 0;
+      body['amount_transfer'] = payload.amountTransfer ?? 0;
+    } else {
+      body['amount_received'] = payload.amountReceived;
+      body['payment_method'] = payload.paymentMethod;
+    }
     if (payload.transferReference)
       body['transfer_reference'] = payload.transferReference;
     if (payload.notes) body['notes'] = payload.notes;
+    if (payload.nextVisitDate) body['next_visit_date'] = payload.nextVisitDate;
     return this.api
       .post<PaymentDetailRaw>('payments/admin-direct', body)
       .pipe(map(toPaymentDetail));
@@ -214,7 +250,9 @@ export class PaymentsService {
    */
   reverse(id: string, payload: ReversePayload): Observable<PaymentDetail> {
     return this.api
-      .post<PaymentDetailRaw>(`payments/${id}/reverse`, { reason: payload.reason })
+      .post<PaymentDetailRaw>(`payments/${id}/reverse`, {
+        reason: payload.reason,
+      })
       .pipe(map(toPaymentDetail));
   }
 

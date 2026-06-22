@@ -8,6 +8,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { AppError } from '../../../core/models/app-error';
+import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
@@ -42,6 +43,7 @@ export class RouteComponent implements OnInit {
   private readonly paymentsService = inject(PaymentsService);
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
+  private readonly dateSvc = inject(DateService);
 
   sheets: CollectionSheet[] = [];
   recentPayments: Payment[] = [];
@@ -50,6 +52,10 @@ export class RouteComponent implements OnInit {
   errorSheets: AppError | null = null;
 
   today = new Date();
+
+  private get todayIso(): string {
+    return this.dateSvc.toLocalIso(new Date());
+  }
 
   ngOnInit(): void {
     this.header.set([{ label: 'Mi Ruta' }]);
@@ -67,11 +73,49 @@ export class RouteComponent implements OnInit {
   }
 
   /**
+   * Indica si la fecha de planilla coincide con el día actual.
+   * @param sheetDate Fecha de planilla en formato ISO corto (yyyy-mm-dd).
+   * @returns `true` cuando la planilla es de hoy.
+   */
+  isTodaySheet(sheetDate: string): boolean {
+    return sheetDate === this.todayIso;
+  }
+
+  /**
+   * Construye la etiqueta breve del método de pago para la lista lateral.
+   * @param method Método de pago guardado en el cobro.
+   * @returns Texto corto para mostrar en UI.
+   */
+  paymentMethodLabel(method: Payment['paymentMethod']): string {
+    if (method === 'CASH') return 'Efectivo';
+    if (method === 'TRANSFER') return 'Transferencia';
+    return 'Mixto';
+  }
+
+  /**
+   * Traduce el estado del cobro a una etiqueta amigable para la UI.
+   * @param status Estado técnico devuelto por backend.
+   * @returns Estado legible para el usuario.
+   */
+  paymentStatusLabel(status: Payment['status']): string {
+    if (status === 'APPROVED') return 'Aprobado';
+    if (status === 'REJECTED') return 'Rechazado';
+    return 'Pendiente';
+  }
+
+  /**
    * Navega a la vista de una planilla específica.
    * @param sheet
    */
   goToSheet(sheet: CollectionSheet): void {
     this.router.navigate(['/collector/route', sheet.id]);
+  }
+
+  /**
+   * Navega al listado completo de cobros del cobrador.
+   */
+  goToPayments(): void {
+    this.router.navigate(['/collector/payments']);
   }
 
   /**
@@ -96,7 +140,7 @@ export class RouteComponent implements OnInit {
    */
   private loadRecentPayments(): void {
     this.loadingPayments = true;
-    this.paymentsService.list({ status: 'PENDING' }).subscribe({
+    this.paymentsService.list().subscribe({
       next: (data) => {
         this.recentPayments = data;
         this.loadingPayments = false;

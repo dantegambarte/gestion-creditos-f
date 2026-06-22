@@ -4,10 +4,27 @@ export type CreditStatus =
   | 'SETTLED'
   | 'REJECTED'
   | 'EXPIRED'
-  | 'REFINANCED';
+  | 'REFINANCED'
+  | 'WRITTEN_OFF';
 export type CreditType = 'SALE' | 'LOAN';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
-export type InstallmentStatus = 'PENDING' | 'PAID' | 'OVERDUE' | 'PARTIAL';
+export type IntakePaymentMethod = 'CASH' | 'TRANSFER' | 'MIXED';
+export type InstallmentStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'OVERDUE'
+  | 'PARTIAL'
+  | 'PLAN_CHANGE_CANCELLED'
+  | 'WRITTEN_OFF';
+
+/** Resultado del castigo de un crédito (write off). */
+export interface WriteOffResult {
+  creditId: string;
+  writtenOffBalance: number;
+  writeOffId: string;
+  executedAt: string;
+  message: string;
+}
 
 export interface Credit {
   id: string;
@@ -24,6 +41,10 @@ export interface Credit {
   customerDni: string;
   createdById: string | null;
   createdByName: string | null;
+  downPayment?: number;
+  prepaidInstallments?: number;
+  downPaymentMethod?: string | null;
+  prepaidInstallmentsMethod?: string | null;
 }
 
 export interface CreditInstallment {
@@ -88,6 +109,9 @@ export interface CreditDetail extends Credit {
   financedAmount: number;
   downPaymentMethod: string | null;
   downPaymentTransferReference: string | null;
+  prepaidInstallments: number;
+  prepaidInstallmentsMethod: string | null;
+  prepaidInstallmentsTransferReference: string | null;
   settledAt: string | null;
   settlementAmount: number | null;
   settlementType: string | null;
@@ -164,11 +188,20 @@ export interface SaleCreditPayload {
   type: 'SALE';
   installmentsCount: number;
   paymentFrequency: PaymentFrequency;
+  /** Fecha de la primera cuota en formato 'YYYY-MM-DD' (sin TZ). */
+  firstPaymentDate?: string;
   units: Array<{ unitId: string }>;
   notes?: string;
   downPayment?: number;
-  downPaymentMethod?: 'CASH' | 'TRANSFER';
+  downPaymentMethod?: IntakePaymentMethod;
+  downPaymentCash?: number;
+  downPaymentTransfer?: number;
   downPaymentTransferReference?: string;
+  advancedInstallmentsCount?: number;
+  advancedInstallmentsMethod?: IntakePaymentMethod;
+  advancedInstallmentsCash?: number;
+  advancedInstallmentsTransfer?: number;
+  advancedInstallmentsTransferReference?: string;
 }
 
 export interface LoanCreditPayload {
@@ -177,6 +210,8 @@ export interface LoanCreditPayload {
   totalAmount: number;
   installmentsCount: number;
   paymentFrequency: PaymentFrequency;
+  /** Fecha de la primera cuota en formato 'YYYY-MM-DD' (sin TZ). */
+  firstPaymentDate?: string;
   notes?: string;
 }
 
@@ -245,6 +280,9 @@ export interface CreditDetailRaw extends CreditRaw {
   financed_amount?: number;
   down_payment_method: string | null;
   down_payment_transfer_reference: string | null;
+  prepaid_installments: number;
+  prepaid_installments_method: string | null;
+  prepaid_installments_transfer_reference: string | null;
   settled_at: string | null;
   settlement_amount: number | null;
   settlement_type: string | null;
@@ -268,7 +306,9 @@ export interface RejectPayload {
 }
 
 export interface EarlySettlementPayload {
-  paymentMethod: 'CASH' | 'TRANSFER';
+  paymentMethod?: IntakePaymentMethod;
+  amountCash?: number;
+  amountTransfer?: number;
   transferReference?: string;
 }
 
@@ -284,6 +324,29 @@ export interface RefinancePayload {
   reason: string;
   extraCharges?: number;
   notes?: string;
+}
+
+// ── Cambio de plan ──────────────────────────────────────────────
+export interface PlanChangePlan {
+  installments: number;
+  rate: number; // porcentaje (ej: 20 = 20%)
+}
+
+export interface PlanChangeSimulation {
+  currentPlan: PlanChangePlan;
+  newPlan: PlanChangePlan;
+  totalPaid: number;
+  newCreditTotal: number;
+  newBalance: number;
+  survivingInstallmentId: string | null;
+  cancelledInstallments: number[];
+  creditWillBeSettled: boolean;
+}
+
+export interface PlanChangeResult extends PlanChangeSimulation {
+  planChangeId: string;
+  executedAt: string;
+  message: string;
 }
 
 export interface RefinanceResult {

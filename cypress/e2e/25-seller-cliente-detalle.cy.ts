@@ -33,7 +33,7 @@ function stubCustomer(role: 'ADMIN' | 'SELLER') {
     body: { ok: true, data: CUSTOMER_MOCK },
   }).as('customerDetail');
 
-  cy.intercept('GET', /\/api\/customers\/12345678\/credits/, {
+  cy.intercept('GET', /\/api\/credits/, {
     statusCode: 200,
     body: { ok: true, data: [] },
   }).as('customerCredits');

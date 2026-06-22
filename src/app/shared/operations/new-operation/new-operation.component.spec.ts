@@ -19,14 +19,37 @@ describe('NewOperationComponent', () => {
 
   beforeEach(async () => {
     creditsServiceSpy = jasmine.createSpyObj('CreditsService', ['create']);
-    creditsServiceSpy.create.and.returnValue(of({ id: 'new-id', status: 'PENDING_APPROVAL' } as any));
+    creditsServiceSpy.create.and.returnValue(
+      of({ id: 'new-id', status: 'PENDING_APPROVAL' } as any),
+    );
 
     await TestBed.configureTestingModule({
       imports: [NewOperationComponent],
       providers: [
         provideRouter([]),
         { provide: CreditsService, useValue: creditsServiceSpy },
-        { provide: CustomersService, useValue: { list: () => of([]), getWizardSummary: () => of({ phone: null, email: null, status: 'ACTIVE', address: null, collectorName: null, activeCredits: 0, delinquency: 'sin mora', paymentCapacity: 0, createdAt: '', paidInstallments: 0, pendingInstallments: 0, overdueInstallments: 0, credits: [] }) } },
+        {
+          provide: CustomersService,
+          useValue: {
+            list: () => of([]),
+            getWizardSummary: () =>
+              of({
+                phone: null,
+                email: null,
+                status: 'ACTIVE',
+                address: null,
+                collectorName: null,
+                activeCredits: 0,
+                delinquency: 'sin mora',
+                paymentCapacity: 0,
+                createdAt: '',
+                paidInstallments: 0,
+                pendingInstallments: 0,
+                overdueInstallments: 0,
+                credits: [],
+              }),
+          },
+        },
         { provide: ProductUnitsService, useValue: { getAll: () => of([]) } },
         { provide: InterestRatesService, useValue: { getAll: () => of([]) } },
         { provide: ProductRatesService, useValue: { getAll: () => of([]) } },
@@ -69,11 +92,20 @@ describe('NewOperationComponent', () => {
     });
 
     it('permite avanzar con cliente activo seleccionado', () => {
-      formService.clients = [{
-        id: 'c1', name: 'Test', dni: '123', phone: '', email: '',
-        status: 'ACTIVE', previousCredits: 0, delinquency: '', paymentCapacity: 0,
-      }];
-      formService.selectClient(formService.clients[0]);
+      formService.clients.set([
+        {
+          id: 'c1',
+          name: 'Test',
+          dni: '123',
+          phone: '',
+          email: '',
+          status: 'ACTIVE',
+          previousCredits: 0,
+          delinquency: '',
+          paymentCapacity: 0,
+        },
+      ]);
+      formService.selectClient(formService.clients()[0]);
       expect(formService.canNext(0)).toBeTrue();
     });
   });
@@ -91,7 +123,7 @@ describe('NewOperationComponent', () => {
 
     it('bloquea avanzar en SALE con carrito vacÃ­o', () => {
       formService.operationForm.controls.operationType.setValue('SALE');
-      formService.cartLines = [];
+      formService.cartLines.set([]);
       expect(formService.canNext(1)).toBeFalse();
     });
   });
@@ -111,5 +143,3 @@ describe('NewOperationComponent', () => {
     });
   });
 });
-
-

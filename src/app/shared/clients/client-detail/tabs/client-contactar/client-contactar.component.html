@@ -37,7 +37,10 @@
         <i class="pi pi-phone"></i>
         Llamar ahora
       </button>
-      <button class="contact-channel-btn channel-whatsapp">
+      <button
+        class="contact-channel-btn channel-whatsapp"
+        (click)="openWhatsApp()"
+      >
         <i class="pi pi-whatsapp"></i>
         WhatsApp
       </button>
@@ -97,7 +100,7 @@
 
     <div class="contact-card">
       <div class="contact-card-title">
-        <i class="pi pi-history text-gray-500"></i>
+        <i class="pi pi-history text-[var(--ff-text-muted)]"></i>
         Historial de Contacto
         <span class="contact-count-badge"
           >{{ client.contactHistory.length }} interacciones</span
@@ -130,7 +133,7 @@
         }
         @if (client.contactHistory.length === 0) {
           <div class="empty-state">
-            <i class="pi pi-inbox text-gray-300 text-3xl"></i>
+            <i class="pi pi-inbox text-3xl text-[var(--ff-text-secondary)]"></i>
             <p>Sin interacciones aún</p>
           </div>
         }

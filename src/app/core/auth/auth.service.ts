@@ -123,6 +123,13 @@ export class AuthService extends AuthServiceBase {
     this.clear();
   }
 
+  patchCurrentUser(update: Partial<AuthUser>): void {
+    const currentUser = this._user$.value;
+    if (!currentUser) return;
+    const patchedUser = { ...currentUser, ...update };
+    this.persist(patchedUser);
+  }
+
   /**
    * Cambia la contraseña del usuario actual.
    * @param currentPassword
@@ -199,6 +206,7 @@ export class AuthService extends AuthServiceBase {
       avatar: this.initials(me.full_name),
       is_temp_password: me.is_temp_password,
       force_relogin_at: me.force_relogin_at ?? null,
+      pending_approvals_count: me.pending_approvals_count,
       token,
     };
   }

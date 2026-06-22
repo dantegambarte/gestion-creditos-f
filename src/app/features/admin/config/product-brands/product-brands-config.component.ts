@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -19,6 +20,7 @@ import { ProductBrandsService } from '../services/product-brands.service';
   selector: 'app-product-brands-config',
   standalone: true,
   imports: [
+    CommonModule,
     FormsModule,
     ButtonModule,
     ConfirmDialogModule,
@@ -60,12 +62,26 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // TODO: agregar documentacion de las funciones
+  /** Cantidad de marcas activas para mostrar el resumen compacto. */
+  get activeCount(): number {
+    return this.rows.filter((brand) => brand.active).length;
+  }
 
+  /** Cantidad de marcas inactivas para mostrar el resumen compacto. */
+  get inactiveCount(): number {
+    return this.rows.filter((brand) => !brand.active).length;
+  }
+
+  /** Cantidad de marcas vinculadas a productos para mostrar el resumen compacto. */
+  get withProductsCount(): number {
+    return this.rows.filter((brand) => brand.productCount > 0).length;
+  }
+
+  /** Carga todas las marcas desde el backend y actualiza la tabla. */
   load(): void {
     this.loading = true;
     this.svc
-      .getAll()
+      .getAll(true)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.loading = false)),
@@ -81,12 +97,21 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Abre el panel de creación con el campo nombre vacío. */
   openCreate(): void {
     this.newName = '';
     this.dialogError = '';
     this.showDialog = true;
   }
 
+  /** Oculta el panel de creación y descarta el nombre cargado. */
+  closeCreate(): void {
+    this.newName = '';
+    this.dialogError = '';
+    this.showDialog = false;
+  }
+
+  /** Envía el nuevo nombre al backend y recarga la lista al confirmar. */
   submitCreate(): void {
     if (!this.newName.trim()) return;
     this.saving = true;
@@ -185,12 +210,13 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
       : this.svc.activate(brand.id);
     call.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
+        brand.active = !brand.active;
+        this.rows = [...this.rows];
         this.msg.add({
           severity: 'success',
-          summary: brand.active ? 'Desactivada' : 'Activada',
+          summary: brand.active ? 'Activada' : 'Desactivada',
           detail: brand.name,
         });
-        this.load();
       },
       error: (err: AppError) =>
         this.msg.add({

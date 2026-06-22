@@ -30,7 +30,7 @@ export class PortalLoginComponent {
   private readonly router = inject(Router);
 
   form = this.fb.group({
-    dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
+    dni: ['', [Validators.required, Validators.pattern(/^\d{7,9}$/)]],
     password: ['', Validators.required],
   });
 

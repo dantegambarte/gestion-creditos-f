@@ -4,6 +4,7 @@ import { MenuItem, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { OperationFormService } from './operation-form.service';
+import { OperationCatalogService } from './operation-catalog.service';
 import { StepClientComponent } from './steps/step-client/step-client.component';
 import { StepConditionsComponent } from './steps/step-conditions/step-conditions.component';
 import { StepConfirmComponent } from './steps/step-confirm/step-confirm.component';
@@ -24,7 +25,7 @@ import { CustomerCreatePayload } from '../../../features/seller/models/customer.
     StepConditionsComponent,
     StepConfirmComponent,
   ],
-  providers: [OperationFormService, MessageService],
+  providers: [OperationFormService, OperationCatalogService, MessageService],
   templateUrl: './new-operation.component.html',
   styleUrl: './new-operation.component.scss',
 })
@@ -148,7 +149,6 @@ export class NewOperationComponent implements OnInit {
   submitOperation(): void {
     this.state.submit().subscribe({
       next: () => {
-        this.state.submitting = false;
         this.messageService.add({
           severity: 'success',
           summary: 'Operación enviada',
@@ -157,10 +157,14 @@ export class NewOperationComponent implements OnInit {
         });
         this.onComplete.emit();
         const base = this.router.url.split('/operations')[0];
-        setTimeout(() => this.router.navigate([base, 'operations']), 1500);
+        const destination = base === '/admin' ? 'approvals' : 'operations';
+        setTimeout(() => {
+          this.router.navigate([base, destination]);
+          this.state.submitting.set(false);
+        }, 1500);
       },
       error: (err: unknown) => {
-        this.state.submitting = false;
+        this.state.submitting.set(false);
         const apiMessage =
           typeof err === 'object' &&
           err !== null &&

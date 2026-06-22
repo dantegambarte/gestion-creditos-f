@@ -1,0 +1,407 @@
+<div
+  class="ff-panel flex flex-col overflow-hidden"
+  style="min-height: 400px; height: calc(100vh - 200px)"
+>
+  <!-- Main tab selector: Cronograma / Cobros -->
+  <div
+    class="flex items-center gap-1 px-4 pt-3 pb-0 flex-shrink-0 border-b"
+    style="border-color: var(--ff-border)"
+  >
+    <button
+      class="px-4 py-2 text-sm font-semibold border-b-2 transition-colors"
+      [style.borderColor]="
+        mainTab === 'installments' ? 'var(--ff-accent)' : 'transparent'
+      "
+      [style.color]="
+        mainTab === 'installments' ? 'var(--ff-accent)' : 'var(--ff-text-muted)'
+      "
+      (click)="mainTab = 'installments'"
+    >
+      Cronograma
+    </button>
+    <button
+      class="px-4 py-2 text-sm font-semibold border-b-2 transition-colors"
+      [style.borderColor]="
+        mainTab === 'payments' ? 'var(--ff-accent)' : 'transparent'
+      "
+      [style.color]="
+        mainTab === 'payments' ? 'var(--ff-accent)' : 'var(--ff-text-muted)'
+      "
+      (click)="switchToPayments()"
+    >
+      Cobros
+    </button>
+  </div>
+
+  <!-- Sub-tabs for installments view -->
+  @if (mainTab === "installments") {
+    <div
+      class="flex items-center gap-3 px-4 pt-3 pb-3 flex-shrink-0 border-b"
+      style="border-color: var(--ff-border)"
+    >
+      <div class="flex gap-2">
+        <button
+          class="px-3 py-1 text-xs font-semibold rounded-full transition-opacity"
+          [style.opacity]="activeTab !== 'paid' ? '0.5' : '1'"
+          style="background: rgba(52, 211, 153, 0.15); color: var(--ff-success)"
+          (click)="activeTab = 'paid'"
+        >
+          {{ paidCount }} PAGADAS
+        </button>
+        <button
+          class="px-3 py-1 text-xs font-semibold rounded-full transition-opacity"
+          [style.opacity]="activeTab !== 'pending' ? '0.5' : '1'"
+          style="background: rgba(79, 110, 247, 0.15); color: var(--ff-accent)"
+          (click)="activeTab = 'pending'"
+        >
+          {{ pendingCount }} PENDIENTES
+        </button>
+        <button
+          class="px-3 py-1 text-xs font-semibold rounded-full transition-opacity"
+          [style.opacity]="activeTab !== 'overdue' ? '0.5' : '1'"
+          style="background: rgba(248, 113, 113, 0.12); color: var(--ff-danger)"
+          (click)="activeTab = 'overdue'"
+        >
+          {{ overdueCount }} VENCIDAS
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Cobros panel -->
+  @if (mainTab === "payments") {
+    <div class="flex-1 overflow-y-auto p-4">
+      @if (loadingPayments) {
+        <div class="py-10 text-center text-sm text-[var(--ff-text-secondary)]">
+          Cargando cobros...
+        </div>
+      } @else if (creditPayments.length === 0) {
+        <p class="py-10 text-center text-sm text-[var(--ff-text-secondary)]">
+          Sin cobros registrados para este crédito.
+        </p>
+      } @else {
+        <p-table
+          [value]="creditPayments"
+          styleClass="p-datatable-sm p-datatable-hoverable-rows"
+          responsiveLayout="scroll"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Cuota</th>
+              <th class="text-right">Monto</th>
+              <th>Método</th>
+              <th>Tipo</th>
+              <th>Aprobado por</th>
+              <th>Fecha</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-p>
+            <tr [class.opacity-50]="p.isReversal">
+              <td class="ff-mono">Cuota {{ p.installmentNumber }}</td>
+              <td
+                class="text-right ff-mono"
+                [style.color]="
+                  p.isReversal ? 'var(--ff-danger)' : 'var(--ff-success)'
+                "
+              >
+                {{ p.isReversal ? "−" : ""
+                }}{{ p.amountReceived | currencyArs: 2 }}
+              </td>
+              <td>{{ paymentMethodLabel(p.paymentMethod) }}</td>
+              <td>
+                @if (p.isReversal) {
+                  <span class="ff-badge ff-badge--vencido">Reversión</span>
+                } @else if (p.adminDirect) {
+                  <span class="ff-badge ff-badge--liquidado">Directo</span>
+                } @else if (p.parentPaymentId) {
+                  <span class="ff-badge ff-badge--pendiente">Adelanto</span>
+                } @else {
+                  <span class="ff-badge ff-badge--pagado">Normal</span>
+                }
+              </td>
+              <td class="text-sm text-[var(--ff-text-secondary)]">
+                {{ p.approverName ?? "—" }}
+              </td>
+              <td class="ff-mono text-sm text-[var(--ff-text-muted)]">
+                {{ p.approvedAt | date: "dd/MM/yyyy" }}
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </div>
+  }
+
+  <!-- Table + side panel row -->
+  @if (mainTab === "installments" && credit) {
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Table -->
+      <div class="flex-1 overflow-y-auto">
+        <p-table [value]="credit.installments" styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Nº</th>
+              <th>Vencimiento</th>
+              <th class="text-right">Monto</th>
+              <th class="text-right">Pagado</th>
+              <th class="text-right">Mora</th>
+              <th>Estado</th>
+              @if (canActOnInstallments) {
+                <th class="text-center">Acciones</th>
+              }
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-inst>
+            <tr
+              class="cursor-pointer"
+              [class.inst-overdue]="inst.status === 'OVERDUE'"
+              [class.inst-paid]="inst.status === 'PAID'"
+              [style.background]="
+                selectedInstallment?.id === inst.id
+                  ? 'rgba(79,110,247,0.1)'
+                  : ''
+              "
+              (click)="selectInstallment(inst)"
+            >
+              <td class="ff-mono">{{ inst.installmentNumber }}</td>
+              <td class="ff-mono">{{ inst.dueDate | date: "dd/MM/yyyy" }}</td>
+              <td class="text-right ff-mono">
+                {{ inst.amountDue | currencyArs: 0 }}
+              </td>
+              <td
+                class="text-right ff-mono"
+                [style.color]="inst.amountPaid > 0 ? 'var(--ff-success)' : ''"
+              >
+                {{
+                  inst.amountPaid > 0 ? (inst.amountPaid | currencyArs: 0) : "—"
+                }}
+              </td>
+              <td
+                class="text-right ff-mono"
+                [style.color]="inst.penaltyAmount > 0 ? 'var(--ff-danger)' : ''"
+              >
+                {{
+                  inst.penaltyAmount > 0
+                    ? (inst.penaltyAmount | currencyArs: 0)
+                    : "—"
+                }}
+              </td>
+              <td>
+                <span
+                  class="ff-badge"
+                  [class.ff-badge--pagado]="inst.status === 'PAID'"
+                  [class.ff-badge--pendiente]="
+                    inst.status === 'PENDING' || inst.status === 'PARTIAL'
+                  "
+                  [class.ff-badge--vencido]="inst.status === 'OVERDUE'"
+                  [class.ff-badge--liquidado]="
+                    inst.status === 'WAIVED' || inst.status === 'SETTLED'
+                  "
+                  >{{ installmentLabel(inst.status) }}</span
+                >
+              </td>
+              @if (canActOnInstallments) {
+                <td class="text-center">
+                  <div class="flex justify-center gap-1">
+                    @if (inst.status === "OVERDUE") {
+                      <p-button
+                        icon="pi pi-exclamation-circle"
+                        severity="danger"
+                        [text]="true"
+                        size="small"
+                        pTooltip="Aplicar mora"
+                        tooltipStyleClass="ff-action-tooltip"
+                        tooltipPosition="top"
+                        (onClick)="
+                          $event.stopPropagation(); openPenaltyDialog(inst)
+                        "
+                      />
+                      @if (inst.penaltyAmount > 0) {
+                        <p-button
+                          icon="pi pi-minus-circle"
+                          severity="warning"
+                          [text]="true"
+                          size="small"
+                          pTooltip="Condonar mora"
+                          tooltipStyleClass="ff-action-tooltip"
+                          tooltipPosition="top"
+                          (onClick)="
+                            $event.stopPropagation(); openWaiveDialog(inst)
+                          "
+                        />
+                      }
+                    }
+                    @if (
+                      inst.status === "PENDING" || inst.status === "OVERDUE"
+                    ) {
+                      <p-button
+                        data-cy="installment-direct-payment"
+                        icon="pi pi-credit-card"
+                        severity="info"
+                        [text]="true"
+                        size="small"
+                        pTooltip="Cobrar cuota"
+                        tooltipStyleClass="ff-action-tooltip"
+                        tooltipPosition="top"
+                        (onClick)="
+                          $event.stopPropagation(); openDirectDialog(inst)
+                        "
+                      />
+                    }
+                    @if (inst.status === "PARTIAL") {
+                      <p-button
+                        data-cy="installment-direct-payment"
+                        icon="pi pi-credit-card"
+                        severity="info"
+                        [text]="true"
+                        size="small"
+                        pTooltip="Cobrar saldo restante"
+                        tooltipStyleClass="ff-action-tooltip"
+                        tooltipPosition="top"
+                        (onClick)="
+                          $event.stopPropagation(); openDirectDialog(inst)
+                        "
+                      />
+                    }
+                  </div>
+                </td>
+              }
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <!-- Cuota side panel -->
+      @if (selectedInstallment) {
+        <div
+          class="flex flex-col flex-shrink-0 border-l"
+          style="
+            width: 220px;
+            border-color: var(--ff-border);
+            background: var(--ff-secondary);
+          "
+        >
+          <div
+            class="flex items-start justify-between px-4 pt-4 pb-3 border-b"
+            style="border-color: var(--ff-border)"
+          >
+            <div>
+              <div
+                class="text-sm font-semibold"
+                style="color: var(--ff-text-primary)"
+              >
+                Cuota {{ selectedInstallment.installmentNumber }} de
+                {{ credit.installmentsCount }}
+              </div>
+              <div class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
+                Vence {{ selectedInstallment.dueDate | date: "dd/MM/yyyy" }}
+              </div>
+            </div>
+            <button
+              class="text-sm mt-0.5"
+              style="color: var(--ff-text-muted)"
+              (click)="selectedInstallment = null"
+            >
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+
+          <div
+            class="grid grid-cols-2 gap-3 px-4 py-3 border-b"
+            style="border-color: var(--ff-border)"
+          >
+            <div>
+              <div class="ud-label text-xs">Vencimiento</div>
+              <div
+                class="text-sm ff-mono"
+                style="color: var(--ff-text-primary)"
+              >
+                {{ selectedInstallment.dueDate | date: "dd/MM/yyyy" }}
+              </div>
+            </div>
+            <div>
+              <div class="ud-label text-xs">Monto</div>
+              <div
+                class="text-sm ff-mono font-semibold"
+                style="color: var(--ff-text-primary)"
+              >
+                {{ selectedInstallment.amountDue | currencyArs: 0 }}
+              </div>
+            </div>
+            <div>
+              <div class="ud-label text-xs">Saldo pendiente</div>
+              <div
+                class="text-sm ff-mono"
+                style="color: var(--ff-text-primary)"
+              >
+                {{
+                  selectedInstallment.amountDue - selectedInstallment.amountPaid
+                    | currencyArs: 0
+                }}
+              </div>
+            </div>
+            <div>
+              <div class="ud-label text-xs">Estado</div>
+              <span
+                class="ff-badge"
+                style="font-size: 10px"
+                [class.ff-badge--pagado]="selectedInstallment.status === 'PAID'"
+                [class.ff-badge--pendiente]="
+                  selectedInstallment.status === 'PENDING' ||
+                  selectedInstallment.status === 'PARTIAL'
+                "
+                [class.ff-badge--vencido]="
+                  selectedInstallment.status === 'OVERDUE'
+                "
+                >{{ installmentLabel(selectedInstallment.status) }}</span
+              >
+            </div>
+          </div>
+
+          @if (canActOnInstallments) {
+            <div class="flex flex-col gap-2 px-4 py-3">
+              @if (selectedInstallment.status === "OVERDUE") {
+                <p-button
+                  label="Aplicar mora"
+                  severity="warning"
+                  [outlined]="true"
+                  styleClass="w-full"
+                  size="small"
+                  (onClick)="openPenaltyDialog(selectedInstallment)"
+                />
+                @if (selectedInstallment.penaltyAmount > 0) {
+                  <p-button
+                    label="Condonar mora"
+                    severity="secondary"
+                    [outlined]="true"
+                    styleClass="w-full"
+                    size="small"
+                    (onClick)="openWaiveDialog(selectedInstallment)"
+                  />
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<app-penalty-dialog
+  [(visible)]="showPenaltyDialog"
+  [installment]="penaltyInstallment"
+  (penaltyApplied)="onInstallmentPatched($event)"
+/>
+
+<app-waive-dialog
+  [(visible)]="showWaiveDialog"
+  [installment]="waiveInstallment"
+  (waived)="onInstallmentPatched($event)"
+/>
+
+<app-direct-payment-dialog
+  [(visible)]="showDirectDialog"
+  [installment]="directInstallment"
+  (paid)="onDirectPaid()"
+/>

@@ -1,399 +1,246 @@
 <p-toast />
 
-<div class="p-6 space-y-6">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold text-gray-800">Gastos</h1>
-    <div class="flex gap-2">
+<div class="flex h-full flex-col overflow-hidden">
+  <!-- ── Header full-width ───────────────────────────────────── -->
+  <div
+    class="flex flex-shrink-0 items-center justify-between border-b border-[var(--ff-border-subtle)] px-6 pb-4 pt-6"
+  >
+    <h1 class="ff-page-title">Gastos</h1>
+    <div class="flex items-center gap-3">
+      @if (rows.length && !showCatsPanel) {
+        <span class="font-bold text-red-400 font-mono">
+          {{ fmt.currency(periodTotal) }}
+          <span class="ml-1 text-sm font-normal text-[var(--ff-text-secondary)]"
+            >en {{ currentMonthLabel }}</span
+          >
+        </span>
+      }
       <p-button
-        [label]="showCatsPanel ? 'Ocultar categorías' : 'Gestionar categorías'"
-        icon="pi pi-list"
-        severity="secondary"
-        [outlined]="true"
-        (onClick)="toggleCatsPanel()"
-      />
-      <p-button
-        label="Registrar gasto"
-        icon="pi pi-plus"
+        label="Registrar gasto +"
+        severity="primary"
+        styleClass="h-11 px-5 rounded-xl shadow-sm"
         (onClick)="openCreate()"
       />
     </div>
   </div>
 
-  @if (showCatsPanel) {
+  <!-- ── Body: columnas ─────────────────────────────────────── -->
+  <div class="flex min-h-0 flex-1">
+    <!-- Columna principal -->
     <div
-      class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3"
+      class="min-w-0 flex-1 space-y-4 overflow-y-auto px-6 pb-6"
+      [style.width]="showSidePanel ? 'calc(100% - 480px)' : null"
     >
-      <div class="flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-gray-700">
-          Categorías de gastos
-        </h2>
-        <p-button
-          label="Nueva categoría"
-          icon="pi pi-plus"
-          size="small"
-          (onClick)="openCatCreate()"
-        />
-      </div>
-      @if (loadingCats) {
-        <div class="space-y-2">
-          @for (_ of [1, 2]; track $index) {
-            <p-skeleton height="2rem" />
+      <!-- Filtros -->
+      <div
+        class="mt-0.5 grid grid-cols-1 items-center gap-2 xl:grid-cols-[1fr_auto] xl:gap-3"
+      >
+        <div class="flex min-w-0 flex-wrap items-center gap-2 xl:flex-nowrap">
+          <span
+            class="text-xs font-semibold uppercase tracking-wider text-[var(--ff-text-secondary)]"
+            >Filtrar:</span
+          >
+          <p-calendar
+            [(ngModel)]="filterDateFrom"
+            dataType="string"
+            dateFormat="yy-mm-dd"
+            [showIcon]="true"
+            iconDisplay="input"
+            appendTo="body"
+            placeholder="dd/mm/aaaa"
+            styleClass="w-[170px]"
+            inputStyleClass="w-full h-11 border border-[var(--ff-border)] bg-[var(--ff-panel)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
+          />
+          <p-calendar
+            [(ngModel)]="filterDateTo"
+            dataType="string"
+            dateFormat="yy-mm-dd"
+            [showIcon]="true"
+            iconDisplay="input"
+            appendTo="body"
+            placeholder="dd/mm/aaaa"
+            styleClass="w-[170px]"
+            inputStyleClass="w-full h-11 border border-[var(--ff-border)] bg-[var(--ff-panel)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
+          />
+          <p-dropdown
+            [options]="filterCategoryOptions"
+            [(ngModel)]="filterCategoryId"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Todas las categorías"
+            [filter]="filterCategoryOptions.length > 10"
+            filterBy="label"
+            appendTo="body"
+            styleClass="h-11 text-sm w-[130px]"
+          />
+          <p-button
+            label="Filtrar"
+            icon="pi pi-search"
+            severity="secondary"
+            [outlined]="true"
+            styleClass="ff-filter-btn ml-1"
+            (onClick)="applyFilters()"
+          />
+          @if (filterDateFrom || filterDateTo || filterCategoryId) {
+            <p-button
+              label="Limpiar"
+              icon="pi pi-times"
+              severity="secondary"
+              [text]="true"
+              (onClick)="clearFilters()"
+            />
           }
         </div>
-      } @else if (catRows.length === 0) {
-        <p class="text-sm text-gray-400 text-center py-4">
-          Sin categorías registradas.
+        <p-button
+          [label]="showCatsPanel ? 'Cerrar categorías' : 'Gestionar categorías'"
+          icon="pi pi-tags"
+          [outlined]="true"
+          styleClass="h-10 px-4 shrink-0 xl:justify-self-end !border-cyan-400/80 !text-cyan-200 !bg-cyan-500/10 hover:!bg-cyan-500/20 shadow-[0_0_0_1px_rgba(34,211,238,0.25)]"
+          (onClick)="toggleCatsPanel()"
+        />
+      </div>
+
+      <!-- Tabla -->
+      @if (loading) {
+        <app-loading-state />
+      } @else if (rows.length === 0) {
+        <p class="py-16 text-center text-2xl text-[var(--ff-text-muted)]">
+          Sin gastos para el período seleccionado.
         </p>
       } @else {
-        <p-table
-          [value]="catRows"
-          styleClass="p-datatable-sm"
-          responsiveLayout="scroll"
-        >
-          <ng-template pTemplate="header">
-            <tr>
-              <th>Nombre</th>
-              <th class="text-center">Estado</th>
-              <th class="text-center">Acciones</th>
-            </tr>
-          </ng-template>
-          <ng-template pTemplate="body" let-cat>
-            <tr>
-              <td class="font-medium">{{ cat.name }}</td>
-              <td class="text-center">
-                <p-tag
-                  [value]="cat.active ? 'Activa' : 'Inactiva'"
-                  [severity]="cat.active ? 'success' : 'secondary'"
-                />
-              </td>
-              <td class="text-center">
-                <p-button
-                  [label]="cat.active ? 'Desactivar' : 'Activar'"
-                  [severity]="cat.active ? 'danger' : 'secondary'"
-                  [outlined]="true"
-                  size="small"
-                  (onClick)="toggleCat(cat)"
-                />
-              </td>
-            </tr>
-          </ng-template>
-        </p-table>
-      }
-    </div>
-  }
+        <div class="ff-panel">
+          <p-table
+            [value]="rows"
+            styleClass="p-datatable-sm p-datatable-hoverable-rows"
+            responsiveLayout="scroll"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th
+                  class="text-[11px] font-semibold uppercase tracking-wider text-[var(--ff-text-secondary)]"
+                >
+                  Fecha
+                </th>
+                <th
+                  class="text-[11px] font-semibold uppercase tracking-wider text-[var(--ff-text-secondary)]"
+                >
+                  Descripción
+                </th>
+                <th
+                  class="text-[11px] font-semibold uppercase tracking-wider text-[var(--ff-text-secondary)]"
+                >
+                  Categoría
+                </th>
+                <th
+                  class="w-[150px] text-[11px] font-semibold uppercase tracking-wider text-[var(--ff-text-secondary)]"
+                >
+                  Método
+                </th>
+                <th
+                  class="text-right text-[11px] font-semibold uppercase tracking-wider text-[var(--ff-text-secondary)]"
+                >
+                  Monto
+                </th>
+                <th
+                  class="text-[11px] font-semibold uppercase tracking-wider text-[var(--ff-text-secondary)]"
+                >
+                  Registrado por
+                </th>
+              </tr>
+            </ng-template>
 
-  <div class="flex flex-wrap gap-3 items-end">
-    <div class="flex flex-col gap-1">
-      <label class="text-xs text-gray-400 uppercase tracking-wide">Desde</label>
-      <input
-        type="date"
-        [(ngModel)]="filterDateFrom"
-        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="text-xs text-gray-400 uppercase tracking-wide">Hasta</label>
-      <input
-        type="date"
-        [(ngModel)]="filterDateTo"
-        class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="text-xs text-gray-400 uppercase tracking-wide"
-        >Categoría</label
-      >
-      <p-dropdown
-        [options]="filterCategoryOptions"
-        [(ngModel)]="filterCategoryId"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="text-sm"
-        placeholder="Todas"
-        appendTo="body"
-      />
-    </div>
-    <p-button
-      label="Filtrar"
-      icon="pi pi-search"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="applyFilters()"
-    />
-    @if (filterDateFrom || filterDateTo || filterCategoryId) {
-      <p-button
-        label="Limpiar"
-        icon="pi pi-times"
-        severity="secondary"
-        [text]="true"
-        (onClick)="clearFilters()"
-      />
-    }
-  </div>
+            <ng-template pTemplate="body" let-e>
+              <tr class="cursor-pointer" (click)="selectExpense(e)">
+                <td class="whitespace-nowrap text-sm text-indigo-200/80">
+                  {{ formatDate(e.expenseDate || e.createdAt) }}
+                </td>
+                <td>
+                  <div class="font-medium text-sm">{{ e.description }}</div>
+                  @if (e.transferReference) {
+                    <div class="mt-0.5 text-xs text-[var(--ff-text-muted)]">
+                      {{ e.transferReference }}
+                    </div>
+                  }
+                </td>
+                <td>
+                  @if (e.categoryName) {
+                    <span
+                      class="rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide"
+                      [style.background-color]="
+                        getCategoryBadgeColor(e.categoryName)
+                      "
+                      [style.color]="getCategoryBadgeTextColor(e.categoryName)"
+                    >
+                      {{ e.categoryName }}
+                    </span>
+                  } @else {
+                    <span class="text-xs text-[var(--ff-text-muted)]">—</span>
+                  }
+                </td>
+                <td class="w-[150px] whitespace-nowrap">
+                  <span
+                    class="flex items-center gap-1.5 text-sm text-indigo-200/80"
+                  >
+                    @if (e.paymentMethod === "CASH") {
+                      <i class="pi pi-wallet text-green-400 text-xs"></i>
+                      <span>Efectivo</span>
+                    } @else {
+                      <i class="pi pi-credit-card text-cyan-300 text-xs"></i>
+                      <span>Transferencia</span>
+                    }
+                  </span>
+                </td>
+                <td class="text-right font-mono font-semibold text-red-400">
+                  {{ fmt.currency(e.amount) }}
+                </td>
+                <td class="text-sm text-[var(--ff-text-secondary)]">
+                  {{ e.createdByName }}
+                </td>
+              </tr>
+            </ng-template>
 
-  <div
-    class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between"
-  >
-    <span class="text-sm text-gray-500">Total de registros</span>
-    <span class="text-lg font-bold text-gray-800">{{ total }}</span>
-  </div>
+            <ng-template pTemplate="footer">
+              <tr class="font-semibold text-sm">
+                <td colspan="4">Total del período</td>
+                <td class="text-right font-mono text-red-400">
+                  {{ fmt.currency(periodTotal) }}
+                </td>
+                <td></td>
+              </tr>
+            </ng-template>
+          </p-table>
 
-  @if (loading) {
-    <app-loading-state />
-  } @else if (rows.length === 0) {
-    <p class="text-sm text-gray-400 text-center py-10">
-      Sin gastos para el período seleccionado.
-    </p>
-  } @else {
-    <div
-      class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
-    >
-      <p-table
-        [value]="rows"
-        styleClass="p-datatable-sm p-datatable-hoverable-rows"
-        responsiveLayout="scroll"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Fecha gasto</th>
-            <th>Descripción</th>
-            <th>Categoría</th>
-            <th>Método</th>
-            <th>Referencia</th>
-            <th class="text-right">Monto</th>
-            <th>Registrado por</th>
-            <th class="text-center">Acciones</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-e>
-          <tr>
-            <td class="whitespace-nowrap">
-              {{ formatDate(e.expenseDate || e.createdAt) }}
-            </td>
-            <td>{{ e.description }}</td>
-            <td class="text-sm text-gray-500">{{ e.categoryName ?? "—" }}</td>
-            <td>
-              <p-tag
-                [value]="
-                  e.paymentMethod === 'CASH' ? 'Efectivo' : 'Transferencia'
-                "
-                [severity]="e.paymentMethod === 'CASH' ? 'secondary' : 'info'"
+          @if (total > limit) {
+            <div class="px-4 pb-3">
+              <p-paginator
+                [rows]="limit"
+                [totalRecords]="total"
+                [first]="(page - 1) * limit"
+                (onPageChange)="onPageChange($event)"
+                [rowsPerPageOptions]="[]"
               />
-            </td>
-            <td class="text-sm text-gray-500">
-              {{ e.transferReference ?? "—" }}
-            </td>
-            <td class="text-right font-mono font-semibold text-red-600">
-              {{ fmt.currency(e.amount) }}
-            </td>
-            <td class="text-sm text-gray-600">{{ e.createdByName }}</td>
-            <td class="text-center">
-              <button
-                (click)="confirmDelete(e.id)"
-                title="Eliminar"
-                class="w-8 h-8 flex items-center justify-center rounded-lg border border-red-200 text-red-400 hover:border-red-400 hover:text-red-600 transition-colors mx-auto"
-              >
-                <i class="pi pi-trash text-xs"></i>
-              </button>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-
-      @if (total > limit) {
-        <div class="px-4 pb-3">
-          <p-paginator
-            [rows]="limit"
-            [totalRecords]="total"
-            [first]="(page - 1) * limit"
-            (onPageChange)="onPageChange($event)"
-            [rowsPerPageOptions]="[]"
-          />
+            </div>
+          }
         </div>
       }
     </div>
-  }
+
+    <!-- ── Panel derecho ─────────────────────────────────────── -->
+    @if (showSidePanel) {
+      <app-expense-side-panel
+        [showCats]="showCatsPanel"
+        [expense]="selectedExpense"
+        [categories]="categories"
+        [periodTotal]="periodTotal"
+        [totalCount]="total"
+        [periodMax]="periodMaxExpense"
+        [periodMostFrequent]="periodMostFrequentMethod"
+        [showStats]="rows.length > 0"
+        (closed)="onSidePanelClosed()"
+        (saved)="onExpenseSaved()"
+        (deleted)="onExpenseDeleted()"
+        (categoriesChanged)="onCategoriesChanged()"
+      />
+    }
+  </div>
 </div>
-
-<p-dialog
-  [(visible)]="showCreateDialog"
-  [modal]="true"
-  [style]="{ width: '460px' }"
-  header="Registrar gasto"
-  [closable]="!saving"
->
-  <div class="space-y-4 py-1">
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Fecha del gasto *</label>
-      <input
-        type="date"
-        [(ngModel)]="createExpenseDate"
-        class="border border-gray-300 rounded-lg px-3 h-11 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Monto *</label>
-      <p-inputNumber
-        [(ngModel)]="createAmount"
-        mode="currency"
-        currency="ARS"
-        locale="es-AR"
-        [min]="0.01"
-        styleClass="w-full"
-        inputStyleClass="w-full"
-      />
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Descripción *</label>
-      <input
-        pInputText
-        [(ngModel)]="createDescription"
-        maxlength="255"
-        class="w-full h-11"
-        placeholder="Motivo del gasto..."
-      />
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Categoría</label>
-      <p-dropdown
-        [options]="createCategoryOptions"
-        [(ngModel)]="createCategoryId"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="w-full"
-        placeholder="Sin categoría"
-        appendTo="body"
-      />
-    </div>
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Método de pago *</label>
-      <p-dropdown
-        [options]="paymentMethodOptions"
-        [(ngModel)]="createPaymentMethod"
-        optionLabel="label"
-        optionValue="value"
-        styleClass="w-full"
-        appendTo="body"
-      />
-    </div>
-    @if (createPaymentMethod === "TRANSFER") {
-      <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-gray-700"
-          >Referencia de transferencia *</label
-        >
-        <input
-          pInputText
-          [(ngModel)]="createTransferRef"
-          maxlength="100"
-          class="w-full h-11"
-          placeholder="Nro. de operación..."
-        />
-      </div>
-    }
-    @if (createError) {
-      <p class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
-        {{ createError }}
-      </p>
-    }
-  </div>
-  <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [text]="true"
-      (onClick)="showCreateDialog = false"
-      [disabled]="saving"
-    />
-    <p-button
-      label="Registrar"
-      icon="pi pi-check"
-      (onClick)="submitCreate()"
-      [loading]="saving"
-      [disabled]="
-        !createAmount ||
-        createAmount <= 0 ||
-        !createDescription.trim() ||
-        (createPaymentMethod === 'TRANSFER' && !createTransferRef.trim())
-      "
-    />
-  </ng-template>
-</p-dialog>
-
-<p-dialog
-  [(visible)]="showConfirmDelete"
-  [modal]="true"
-  [style]="{ width: '380px' }"
-  header="Eliminar gasto"
->
-  <div class="py-2 space-y-3">
-    <div
-      class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 p-3"
-    >
-      <i class="pi pi-exclamation-triangle text-red-500 mt-0.5"></i>
-      <p class="text-sm font-semibold text-red-700">
-        Esta acción no se puede deshacer.
-      </p>
-    </div>
-    <p class="text-sm text-gray-600">
-      ¿Confirmás la eliminación de este gasto?
-    </p>
-  </div>
-  <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="showConfirmDelete = false"
-      [disabled]="deleting"
-    />
-    <p-button
-      label="Eliminar"
-      severity="danger"
-      icon="pi pi-trash"
-      (onClick)="doDelete()"
-      [loading]="deleting"
-    />
-  </ng-template>
-</p-dialog>
-
-<p-dialog
-  [(visible)]="showCatDialog"
-  [modal]="true"
-  [style]="{ width: '380px' }"
-  header="Nueva categoría de gastos"
-  [closable]="!savingCat"
->
-  <div class="space-y-4 py-1">
-    <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700">Nombre *</label>
-      <input
-        pInputText
-        [(ngModel)]="newCatName"
-        maxlength="100"
-        class="w-full h-11"
-        placeholder="Nombre de la categoría..."
-      />
-    </div>
-    @if (catDialogError) {
-      <p class="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
-        {{ catDialogError }}
-      </p>
-    }
-  </div>
-  <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [text]="true"
-      (onClick)="showCatDialog = false"
-      [disabled]="savingCat"
-    />
-    <p-button
-      label="Crear"
-      icon="pi pi-check"
-      (onClick)="submitCatCreate()"
-      [loading]="savingCat"
-      [disabled]="!newCatName.trim()"
-    />
-  </ng-template>
-</p-dialog>

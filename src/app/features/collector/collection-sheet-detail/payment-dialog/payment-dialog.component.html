@@ -1,0 +1,169 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Registrar Cobro"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    @if (item) {
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p class="text-sm font-semibold text-[var(--ff-text-primary)]">
+          {{ item.customerName }}
+        </p>
+        <p class="mt-0.5 text-xs text-[var(--ff-text-secondary)]">
+          {{ item.collectionReference }}
+        </p>
+        <p class="mt-1 text-sm text-[var(--ff-text-muted)]">
+          Saldo disponible:
+          <span class="font-bold text-blue-600">{{
+            availableBalance(item) | currencyArs: 2
+          }}</span>
+        </p>
+      </div>
+    }
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
+        >Método de pago</label
+      >
+      <p-dropdown
+        [options]="PAYMENT_METHOD_OPTIONS"
+        [(ngModel)]="paymentMethod"
+        (ngModelChange)="onPaymentMethodChange()"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="PAYMENT_METHOD_OPTIONS.length > 10"
+        filterBy="label"
+        styleClass="w-full h-11"
+        appendTo="body"
+      />
+    </div>
+
+    @if (usesCash) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
+          >Monto en efectivo</label
+        >
+        <p-inputNumber
+          appCurrencyAmountInput
+          [(ngModel)]="paymentCashAmount"
+          (ngModelChange)="onPaymentAmountChange()"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [minFractionDigits]="0"
+          [min]="0"
+          [max]="item ? availableBalance(item) : null"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 rounded-xl bg-[var(--ff-panel)] px-3 text-sm text-[var(--ff-text-primary)]"
+          placeholder="$ 0"
+        />
+      </div>
+    }
+
+    @if (usesTransfer) {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
+          >Monto en transferencia</label
+        >
+        <p-inputNumber
+          appCurrencyAmountInput
+          [(ngModel)]="paymentTransferAmount"
+          (ngModelChange)="onPaymentAmountChange()"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [minFractionDigits]="0"
+          [min]="0"
+          [max]="item ? availableBalance(item) : null"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 rounded-xl bg-[var(--ff-panel)] px-3 text-sm text-[var(--ff-text-primary)]"
+          placeholder="$ 0"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
+          >Referencia de transferencia</label
+        >
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="transferReference"
+          maxlength="100"
+          class="w-full h-11 px-3"
+          placeholder="Número de operación..."
+        />
+      </div>
+    }
+
+    <p class="text-xs text-[var(--ff-text-muted)]">
+      Total a registrar: <strong>{{ paymentAmount | currencyArs: 2 }}</strong>
+    </p>
+
+    @if (isPartialPayment()) {
+      <div
+        class="flex flex-col gap-1 p-3 bg-amber-50 border border-amber-200 rounded-lg"
+      >
+        <label class="text-sm font-semibold text-amber-900">
+          Próxima visita <span class="text-red-600">*</span>
+        </label>
+        <p class="text-xs text-amber-800 mb-1">
+          El cobro es parcial. Indicá cuándo volverás a visitar al cliente.
+        </p>
+        <p-calendar
+          [(ngModel)]="paymentNextVisitDate"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          [minDate]="todayDate"
+          styleClass="w-full"
+          inputStyleClass="native-date-input h-10"
+        />
+      </div>
+    }
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
+        >Notas (opcional)</label
+      >
+      <textarea
+        pInputTextarea
+        [(ngModel)]="paymentNotes"
+        rows="2"
+        maxlength="500"
+        class="w-full resize-none px-3 py-2"
+        placeholder="Observaciones..."
+      ></textarea>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+        [disabled]="processingPayment"
+      />
+      <p-button
+        label="Confirmar"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirmPayment()"
+        [loading]="processingPayment"
+        [disabled]="!!processingPayment || paymentFormInvalid"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

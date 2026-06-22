@@ -138,6 +138,58 @@ export interface CashRegisterClosePayload {
   registerDate?: string;
 }
 
+export interface CashConversionPayload {
+  criteria: 'DAILY' | 'COMPANY';
+  sourceMethod: 'CASH' | 'TRANSFER';
+  amount: number;
+  notes?: string;
+  registerDate?: string;
+}
+
+export interface CashSessionManualIncomePayload {
+  amount: number;
+  paymentMethod?: 'CASH' | 'TRANSFER' | 'MIXED';
+  amountCash?: number;
+  amountTransfer?: number;
+  description: string;
+  receiptReference?: string;
+}
+
+export interface CashSessionManualIncome {
+  id: string;
+  cashSessionId: string;
+  amount: number;
+  paymentMethod: 'CASH' | 'TRANSFER';
+  description: string;
+  receiptReference: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CashConversion {
+  id: string;
+  registerDate: string;
+  criteria: 'DAILY' | 'COMPANY';
+  sourceMethod: 'CASH' | 'TRANSFER';
+  targetMethod: 'CASH' | 'TRANSFER';
+  amount: number;
+  notes: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export type CashRegisterMovementType = 'INGRESO' | 'EGRESO' | 'CONVERSION';
+
+export interface CashRegisterMovement {
+  id: string;
+  concepto: string;
+  fechaHora: string;
+  responsable: string;
+  tipo: CashRegisterMovementType;
+  monto: number;
+  metodoPago: string;
+}
+
 export interface CashRegisterDashboardRaw {
   date: string;
   is_closed: boolean;
@@ -168,26 +220,56 @@ export interface CashRegisterRaw {
   closed_by_name: string;
 }
 
+export interface CashRegisterMovementRaw {
+  id: string;
+  concepto: string;
+  fecha_hora: string;
+  responsable: string;
+  tipo: CashRegisterMovementType;
+  monto: number;
+  metodo_pago: string;
+}
+
 export interface CashRegisterDetailRaw extends CashRegisterRaw {
   breakdown: {
     payments: Array<{
-      id: string; amount_received: number; payment_method: string;
-      transfer_reference: string | null; approved_at: string;
-      customer_name: string; collector_name: string; installment_number: number;
+      id: string;
+      amount_received: number;
+      payment_method: string;
+      transfer_reference: string | null;
+      approved_at: string;
+      customer_name: string;
+      collector_name: string;
+      installment_number: number;
     }>;
     down_payments: Array<{
-      id: string; amount: number; payment_method: string;
-      transfer_reference: string | null; payment_type: string;
-      created_at: string; customer_name: string; approved_by_name: string;
+      id: string;
+      amount: number;
+      payment_method: string;
+      transfer_reference: string | null;
+      payment_type: string;
+      created_at: string;
+      customer_name: string;
+      approved_by_name: string;
     }>;
     liquidations: Array<{
-      id: string; total_paid: number; commissions_total: number;
-      salary_amount: number; payment_method: string;
-      transfer_reference: string | null; paid_at: string; employee_name: string;
+      id: string;
+      total_paid: number;
+      commissions_total: number;
+      salary_amount: number;
+      payment_method: string;
+      transfer_reference: string | null;
+      paid_at: string;
+      employee_name: string;
     }>;
     expenses: Array<{
-      id: string; amount: number; description: string; payment_method: string;
-      transfer_reference: string | null; created_at: string; created_by_name: string;
+      id: string;
+      amount: number;
+      description: string;
+      payment_method: string;
+      transfer_reference: string | null;
+      created_at: string;
+      created_by_name: string;
     }>;
   };
 }

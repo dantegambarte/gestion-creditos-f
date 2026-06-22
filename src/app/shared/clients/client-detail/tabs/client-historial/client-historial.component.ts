@@ -60,8 +60,8 @@ export class ClientHistorialComponent {
 
   get diasMora(): number {
     return this.client.credits
-      .filter((c) => c.estado === 'EN MORA')
-      .reduce((max, c) => Math.max(max, c.diasMora ?? 0), 0);
+      .filter((c) => c.status === 'OVERDUE')
+      .reduce((max, c) => Math.max(max, c.overdueDays ?? 0), 0);
   }
 
   get movimientos(): number {

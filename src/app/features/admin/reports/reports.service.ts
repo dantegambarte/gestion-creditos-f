@@ -3,6 +3,24 @@ import { Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ApiHttpService } from '../../../core/http/api-http.service';
 import {
+  CashConversionReport,
+  CashConversionReportRaw,
+  CashConversionReportRow,
+  CashConversionReportRowRaw,
+  CashConversionReportSummary,
+  CashConversionReportSummaryRaw,
+  CashMovementReport,
+  CashMovementReportRaw,
+  CashMovementReportRow,
+  CashMovementReportRowRaw,
+  CashMovementReportSummary,
+  CashMovementReportSummaryRaw,
+  GeneralCashMovementReport,
+  GeneralCashMovementReportRaw,
+  GeneralCashMovementReportRow,
+  GeneralCashMovementReportRowRaw,
+  GeneralCashMovementReportSummary,
+  GeneralCashMovementReportSummaryRaw,
   CollectionDailyRaw,
   CollectionDailyRow,
   CollectionReport,
@@ -75,6 +93,179 @@ function toCollectionReport(r: CollectionReportRaw): CollectionReport {
   return {
     summary: toCollectionSummary(r.summary),
     daily: r.daily.map(toCollectionDaily),
+  };
+}
+
+/**
+ * Convierte un objeto CashConversionReportSummaryRaw a CashConversionReportSummary.
+ * @param r
+ * @returns
+ */
+function toCashConversionSummary(
+  r: CashConversionReportSummaryRaw,
+): CashConversionReportSummary {
+  return {
+    totalConversions: r.total_conversions,
+    totalAmount: r.total_amount,
+    cashToTransfer: r.cash_to_transfer,
+    transferToCash: r.transfer_to_cash,
+  };
+}
+
+/**
+ * Convierte un objeto CashConversionReportRowRaw a CashConversionReportRow.
+ * @param r
+ * @returns
+ */
+function toCashConversionRow(
+  r: CashConversionReportRowRaw,
+): CashConversionReportRow {
+  return {
+    id: r.id,
+    registerDate: r.register_date,
+    criteria: r.criteria,
+    sourceMethod: r.source_method,
+    targetMethod: r.target_method,
+    amount: r.amount,
+    notes: r.notes,
+    createdByName: r.created_by_name,
+    createdAt: r.created_at,
+  };
+}
+
+/**
+ * Convierte un objeto CashConversionReportRaw a CashConversionReport.
+ * @param r
+ * @returns
+ */
+function toCashConversionReport(
+  r: CashConversionReportRaw,
+): CashConversionReport {
+  return {
+    summary: toCashConversionSummary(r.summary),
+    rows: r.rows.map(toCashConversionRow),
+  };
+}
+
+/**
+ * Convierte un objeto CashMovementReportSummaryRaw a CashMovementReportSummary.
+ * @param r
+ * @returns
+ */
+function toCashMovementSummary(
+  r: CashMovementReportSummaryRaw,
+): CashMovementReportSummary {
+  return {
+    totalMovements: r.total_movements,
+    totalCollections: r.total_collections,
+    totalDownPayments: r.total_down_payments,
+    totalExpenses: r.total_expenses,
+    totalDrops: r.total_drops,
+  };
+}
+
+/**
+ * Convierte un objeto CashMovementReportRowRaw a CashMovementReportRow.
+ * @param r
+ * @returns
+ */
+function toCashMovementRow(r: CashMovementReportRowRaw): CashMovementReportRow {
+  return {
+    id: r.id,
+    type: r.type,
+    occurredAt: r.occurred_at,
+    cashSessionId: r.cash_session_id,
+    businessDate: r.business_date,
+    branchName: r.branch_name,
+    shiftLabel: r.shift_label,
+    amount: r.amount,
+    paymentMethod: r.payment_method,
+    description: r.description,
+    performedByName: r.performed_by_name,
+    transferReference: r.transfer_reference,
+    customerId: r.customer_id,
+    customerName: r.customer_name,
+    customerDni: r.customer_dni,
+    creditId: r.credit_id,
+    creditType: r.credit_type,
+    installmentId: r.installment_id,
+    installmentNumber: r.installment_number,
+    expenseCategoryId: r.expense_category_id,
+    expenseCategoryName: r.expense_category_name,
+    expenseSource: r.expense_source,
+    dropDestination: r.drop_destination,
+    dropReason: r.drop_reason,
+    dropStatus: r.drop_status,
+    receiptReference: r.receipt_reference,
+    conversionSourceMethod: r.conversion_source_method,
+    conversionTargetMethod: r.conversion_target_method,
+    conversionCriteria: r.conversion_criteria,
+    productSummary: r.product_summary,
+  };
+}
+
+/**
+ * Convierte un objeto CashMovementReportRaw a CashMovementReport.
+ * @param r
+ * @returns
+ */
+function toCashMovementReport(r: CashMovementReportRaw): CashMovementReport {
+  return {
+    summary: toCashMovementSummary(r.summary),
+    rows: r.rows.map(toCashMovementRow),
+  };
+}
+
+/**
+ * Convierte un objeto GeneralCashMovementReportSummaryRaw a GeneralCashMovementReportSummary.
+ * @param r
+ * @returns
+ */
+function toGeneralCashMovementSummary(
+  r: GeneralCashMovementReportSummaryRaw,
+): GeneralCashMovementReportSummary {
+  return {
+    totalMovements: r.total_movements,
+    totalIn: r.total_in,
+    totalOut: r.total_out,
+  };
+}
+
+/**
+ * Convierte un objeto GeneralCashMovementReportRowRaw a GeneralCashMovementReportRow.
+ * @param r
+ * @returns
+ */
+function toGeneralCashMovementRow(
+  r: GeneralCashMovementReportRowRaw,
+): GeneralCashMovementReportRow {
+  return {
+    id: r.id,
+    movementType: r.movement_type,
+    direction: r.direction,
+    amount: r.amount,
+    amountCash: r.amount_cash,
+    amountTransfer: r.amount_transfer,
+    description: r.description,
+    beneficiaryName: r.beneficiary_name,
+    referenceType: r.reference_type,
+    referenceId: r.reference_id,
+    createdAt: r.created_at,
+    performedByName: r.performed_by_name,
+  };
+}
+
+/**
+ * Convierte un objeto GeneralCashMovementReportRaw a GeneralCashMovementReport.
+ * @param r
+ * @returns
+ */
+function toGeneralCashMovementReport(
+  r: GeneralCashMovementReportRaw,
+): GeneralCashMovementReport {
+  return {
+    summary: toGeneralCashMovementSummary(r.summary),
+    rows: r.rows.map(toGeneralCashMovementRow),
   };
 }
 
@@ -256,7 +447,10 @@ export class ReportsService {
         message: 'Los parámetros date_from y date_to son obligatorios.',
       }));
     }
-    const params: Record<string, string> = { date_from: range.dateFrom, date_to: range.dateTo };
+    const params: Record<string, string> = {
+      date_from: range.dateFrom,
+      date_to: range.dateTo,
+    };
     if (nocache) {
       params['t'] = Date.now().toString();
     }
@@ -281,7 +475,10 @@ export class ReportsService {
         message: 'Los parámetros date_from y date_to son obligatorios.',
       }));
     }
-    const params: Record<string, string> = { date_from: range.dateFrom, date_to: range.dateTo };
+    const params: Record<string, string> = {
+      date_from: range.dateFrom,
+      date_to: range.dateTo,
+    };
     if (nocache) {
       params['t'] = Date.now().toString();
     }
@@ -321,6 +518,71 @@ export class ReportsService {
     return this.api
       .get<UpcomingReportRaw>('reports/upcoming', params)
       .pipe(map(toUpcomingReport));
+  }
+
+  /**
+   * Obtiene el reporte de conversiones de caja para un rango de fechas.
+   * @param range
+   * @returns
+   */
+  getCashConversionsReport(
+    range: ReportDateRange,
+  ): Observable<CashConversionReport> {
+    if (!range.dateFrom || !range.dateTo) {
+      return throwError(() => ({
+        status: 400,
+        message: 'Los parámetros date_from y date_to son obligatorios.',
+      }));
+    }
+    const params = { date_from: range.dateFrom, date_to: range.dateTo };
+    return this.api
+      .get<CashConversionReportRaw>('reports/cash-conversions', params)
+      .pipe(map(toCashConversionReport));
+  }
+
+  /**
+   * Obtiene el reporte de movimientos de una caja operativa puntual.
+   * @param cashSessionId - ID de la caja (cash_sessions.id)
+   * @returns
+   */
+  getCashMovementsReport(
+    cashSessionId: string,
+  ): Observable<CashMovementReport> {
+    if (!cashSessionId) {
+      return throwError(() => ({
+        status: 400,
+        message: 'Debe seleccionar una caja para ver sus movimientos.',
+      }));
+    }
+    return this.api
+      .get<CashMovementReportRaw>('reports/cash-movements', {
+        cash_session_id: cashSessionId,
+      })
+      .pipe(map(toCashMovementReport));
+  }
+
+  /**
+   * Obtiene el ledger de movimientos de Caja General (tesorería) en un rango
+   * de fechas, sin depender de ninguna jornada/caja operativa.
+   * @param range
+   * @returns
+   */
+  getGeneralCashMovementsReport(
+    range: ReportDateRange,
+  ): Observable<GeneralCashMovementReport> {
+    if (!range.dateFrom || !range.dateTo) {
+      return throwError(() => ({
+        status: 400,
+        message: 'Los parámetros date_from y date_to son obligatorios.',
+      }));
+    }
+    const params = { date_from: range.dateFrom, date_to: range.dateTo };
+    return this.api
+      .get<GeneralCashMovementReportRaw>(
+        'reports/general-cash-movements',
+        params,
+      )
+      .pipe(map(toGeneralCashMovementReport));
   }
 }
 

@@ -1,81 +1,64 @@
 /**
- * SUITE: Gestión de Clientes — Unhappy Paths (modo mock)
+ * SUITE REAL: Gestión de Clientes — Unhappy Paths (backend real).
  *
- * Cubre validaciones de frontend y edge cases testables sin backend real:
- *  - Búsqueda sin resultados → empty state visible
- *  - Crear cliente: campos vacíos / inválidos → errores de validación en formulario
- *  - Crear cliente: cancelar no agrega fila a la tabla
- *  - Editar cliente: cancelar no modifica los datos en la tabla
- *  - Modal créditos: badge "0 créditos" en clientes sin créditos
- *
- * NOTA: Tests de errores HTTP (500, 400 duplicate, 403) requieren backend real.
- * Ver BACKEND REQUIREMENTS en TEST_PLAN.md.
+ * Reglas:
+ * - Usa login real
+ * - No mockea /api/customers*
+ * - Verifica errores/validaciones con estado real de la UI
  */
 
-describe('Gestión de Clientes — Unhappy Paths', () => {
+describe('Gestión de Clientes real — Unhappy Paths', () => {
+  /**
+   * Espera a que la pantalla de clientes esté lista para interactuar.
+   */
+  const waitClientsReady = () => {
+    cy.contains('.ff-page-title', 'Gestión de Clientes', { timeout: 20000 }).should('be.visible');
+    cy.get('p-table', { timeout: 20000 }).should('be.visible');
+  };
+
+  /**
+   * Devuelve el dialog visible de PrimeNG para evitar selectores frágiles.
+   */
+  const getVisibleDialog = () => cy.get('.p-dialog:visible', { timeout: 10000 }).first();
+
+  /**
+   * Selecciona el primer cobrador disponible en el modal de creación.
+   */
+  const selectFirstCollector = () => {
+    getVisibleDialog()
+      .find('p-dropdown[formControlName="assignedCollectorId"] .p-dropdown')
+      .click({ force: true });
+    cy.get('.p-dropdown-panel .p-dropdown-item', { timeout: 10000 })
+      .first()
+      .click({ force: true });
+  };
+
   beforeEach(() => {
-    cy.intercept('GET', '**/api/customers*', {
-      statusCode: 200,
-      body: {
-        ok: true,
-        data: [
-          {
-            id: 'cust-001',
-            full_name: 'Ana Garcia',
-            dni: '12345678',
-            address: null,
-            phone: '3811234567',
-            email: null,
-            status: 'ACTIVE',
-            portal_enabled: false,
-            created_at: '2024-01-15T00:00:00Z',
-            collector_id: null,
-            collector_name: null,
-          },
-          {
-            id: 'cust-002',
-            full_name: 'Sin Creditos',
-            dni: '22222222',
-            address: null,
-            phone: '3810000000',
-            email: null,
-            status: 'ACTIVE',
-            portal_enabled: false,
-            created_at: '2024-01-20T00:00:00Z',
-            collector_id: null,
-            collector_name: null,
-          },
-        ],
-      },
-    }).as('getCustomers');
     cy.viewport(1280, 720);
-    cy.loginAs('ADMIN', '/admin/clients');
-    cy.wait('@getCustomers');
+    cy.loginReal('ADMIN', '/admin/clients');
+    waitClientsReady();
   });
 
   // ── Búsqueda sin resultados ──────────────────────────────────────────────────
   it('búsqueda con string sin coincidencias → tabla muestra 0 filas', () => {
+    const searchValue = `NO_MATCH_${Date.now()}`;
     cy.get('[data-cy="input-buscar-cliente"]').should('not.be.disabled');
-    cy.get('[data-cy="input-buscar-cliente"]').type('XNOMATCHZZZZZZ999');
-    // La tabla filtra por el getter filteredClients → 0 resultados
+    cy.get('[data-cy="input-buscar-cliente"]').clear().type(searchValue);
     cy.get('tbody tr').should('have.length', 0);
-    // PrimeNG renderiza una fila de empty state — verificamos que no hay filas de datos
     cy.get('tbody tr[data-cy]').should('not.exist');
   });
 
   // ── Crear: campos requeridos vacíos ─────────────────────────────────────────
   it('crear cliente con campos vacíos muestra errores de validación', () => {
-    cy.get('[data-cy="btn-nuevo-cliente"]').click();
-    cy.get('p-dialog input[formControlName="nombres"]').should('be.visible');
+    cy.get('[data-cy="btn-nuevo-cliente"] button', { timeout: 15000 }).click({ force: true });
+    getVisibleDialog().find('input[formControlName="nombres"]').should('be.visible');
 
-    // Forzar touched sin completar → disparar validadores
-    cy.get('p-dialog input[formControlName="nombres"]').click().blur();
-    cy.get('p-dialog input[formControlName="apellidos"]').click().blur();
-    cy.get('p-dialog input[formControlName="dni"]').click().blur();
+    getVisibleDialog().find('input[formControlName="nombres"]').click().blur();
+    getVisibleDialog().find('input[formControlName="apellidos"]').click().blur();
+    getVisibleDialog().find('input[formControlName="dni"]').click().blur();
 
-    cy.get('p-dialog').contains('span', /obligatorio|requerido/i).should('exist');
-    // Botón sigue deshabilitado
-    cy.get('p-dialog p-button[label="Crear Cliente"]').should(
+    getVisibleDialog().contains('span', /obligatorio|requerido/i).should('exist');
+    getVisibleDialog().find('p-button[label="Crear Cliente"]').should(
       'have.attr',
       'ng-reflect-disabled',
       'true',
@@ -84,68 +67,84 @@ describe('Gestión de Clientes — Unhappy Paths', () => {
 
   // ── Crear: DNI con caracteres inválidos ──────────────────────────────────────
   it('crear cliente con DNI no numérico muestra error de formato', () => {
-    cy.get('[data-cy="btn-nuevo-cliente"]').click();
-    cy.contains('Crear Cliente').should('be.visible');
+    cy.get('[data-cy="btn-nuevo-cliente"] button', { timeout: 15000 }).click({ force: true });
+    getVisibleDialog().contains('.p-dialog-title', 'Crear Cliente').should('be.visible');
 
-    cy.get('p-dialog input[formControlName="dni"]').click().type('ABCDE123');
-    // Hacer click en otro campo dispara blur en dni → Angular marca touched
-    cy.get('p-dialog input[formControlName="nombres"]').click();
+    getVisibleDialog().find('input[formControlName="dni"]').click().type('ABCDE123');
+    getVisibleDialog().find('input[formControlName="nombres"]').click();
 
-    cy.get('p-dialog').find('.auth-error').should('exist');
+    getVisibleDialog().find('.auth-error').should('exist');
   });
 
-  // ── Crear: cancelar no modifica tabla ────────────────────────────────────────
-  it('cancelar creación no agrega fila a la tabla', () => {
-    cy.get('tbody tr').its('length').then((initialCount) => {
-      cy.get('[data-cy="btn-nuevo-cliente"]').click();
-      cy.contains('Crear Cliente').should('be.visible');
+  // ── Crear: cancelar no persiste ──────────────────────────────────────────────
+  it('cancelar creación no persiste cliente nuevo', () => {
+    const stamp = Date.now().toString().slice(-6);
+    const dni = `7${stamp}3`;
 
-      // .last() porque el orden en el DOM es: Ver (0), Editar (1), Crear (2)
-      cy.get('p-dialog').last().within(() => {
-        cy.get('input[formControlName="nombres"]').type('Cancelado');
-      });
+    cy.get('[data-cy="btn-nuevo-cliente"] button', { timeout: 15000 }).click({ force: true });
+    getVisibleDialog().contains('.p-dialog-title', 'Crear Cliente').should('be.visible');
 
-      cy.get('p-dialog button').contains('Cancelar').click();
-      cy.get('p-dialog[ng-reflect-visible="true"]').should('not.exist');
+    getVisibleDialog().find('input[formControlName="nombres"]').clear().type(`Cancel${stamp}`);
+    getVisibleDialog().find('input[formControlName="apellidos"]').clear().type('Cliente');
+    getVisibleDialog().find('input[formControlName="dni"]').clear().type(dni);
+    getVisibleDialog().find('input[formControlName="telefonoPrincipal"]').clear().type(`381${stamp}`);
+    getVisibleDialog().contains('button.p-button', 'Cancelar').click();
 
-      cy.get('tbody tr').should('have.length', initialCount);
+    cy.get('.p-dialog:visible').should('not.exist');
+    cy.get('[data-cy="input-buscar-cliente"]').clear().type(dni);
+    cy.get('tbody tr').should('have.length', 0);
+  });
+
+  // ── Crear: cobrador requerido ────────────────────────────────────────────────
+  it('CL-18 — formulario completo sin cobrador mantiene Crear Cliente deshabilitado', () => {
+    const stamp = Date.now().toString().slice(-6);
+
+    cy.get('[data-cy="btn-nuevo-cliente"] button', { timeout: 15000 }).click({ force: true });
+    getVisibleDialog().contains('.p-dialog-title', 'Crear Cliente').should('be.visible');
+
+    getVisibleDialog().find('input[formControlName="nombres"]').clear().type('Sin');
+    getVisibleDialog().find('input[formControlName="apellidos"]').clear().type('Cobrador');
+    getVisibleDialog().find('input[formControlName="dni"]').clear().type(`6${stamp}2`);
+    getVisibleDialog().find('input[formControlName="telefonoPrincipal"]').clear().type(`381${stamp}`);
+    getVisibleDialog().find('input[formControlName="direccion"]').clear().type(`Calle Sin Cobrador ${stamp}`);
+
+    getVisibleDialog()
+      .contains('button.p-button', 'Crear Cliente')
+      .should('be.visible')
+      .and('be.disabled');
+  });
+
+  // ── Crear: DNI duplicado real ────────────────────────────────────────────────
+  it('crear cliente con DNI duplicado muestra error backend y mantiene modal abierto', () => {
+    const stamp = Date.now().toString().slice(-6);
+    const duplicateDni = `8${stamp}4`;
+
+    cy.apiCreateCustomer({
+      full_name: `Duplicado Neg ${stamp}`,
+      dni: duplicateDni,
+      address: 'Calle Duplicado 200',
+      phone: `389${stamp}`,
     });
-  });
 
-  // ── Editar: cancelar no modifica tabla ───────────────────────────────────────
-  it('cancelar edición no modifica datos en la tabla', () => {
-    cy.get('tbody tr')
-      .first()
-      .find('[data-cy^="btn-editar-"]')
+    cy.get('[data-cy="btn-nuevo-cliente"] button', { timeout: 15000 }).click({ force: true });
+    getVisibleDialog().contains('.p-dialog-title', 'Crear Cliente').should('be.visible');
+
+    getVisibleDialog().find('input[formControlName="nombres"]').clear().type('Duplicado');
+    getVisibleDialog().find('input[formControlName="apellidos"]').clear().type('Negativo');
+    getVisibleDialog().find('input[formControlName="dni"]').clear().type(duplicateDni);
+    getVisibleDialog().find('input[formControlName="telefonoPrincipal"]').clear();
+    getVisibleDialog().find('input[formControlName="telefonoPrincipal"]').type(`381${stamp}`).blur();
+    getVisibleDialog().find('input[formControlName="direccion"]').clear();
+    getVisibleDialog().find('input[formControlName="direccion"]').type(`Calle Negativa ${stamp}`);
+    selectFirstCollector();
+
+    getVisibleDialog()
+      .contains('button.p-button', 'Crear Cliente')
+      .should('be.visible')
+      .and('not.be.disabled')
       .click();
-    cy.contains('Editar Cliente').should('be.visible');
 
-    // Leer valor original del campo nombre
-    cy.get('p-dialog input[formControlName="nombre"]')
-      .invoke('val')
-      .then((originalValue) => {
-        cy.get('p-dialog input[formControlName="nombre"]')
-          .clear()
-          .type('VALOR_TEMPORAL_TEST');
-
-        // Cancelar en lugar de guardar
-        cy.get('p-dialog button').contains('Cancelar').click();
-        cy.get('p-dialog[ng-reflect-visible="true"]').should('not.exist');
-
-        // El valor original sigue en la tabla (no se modificó)
-        cy.get('tbody').contains(originalValue as string).should('exist');
-      });
-  });
-
-  // ── Tabla: botón Créditos solo visible cuando credits > 0 ───────────────────
-  it('botón Créditos no aparece en filas con 0 créditos activos', () => {
-    cy.get('tbody tr').each(($row) => {
-      const creditsBadge = $row.find('[data-cy^="btn-creditos-"]');
-      if (creditsBadge.length === 0) {
-        // Fila sin créditos → verificar que no hay botón créditos
-        cy.wrap($row).find('[data-cy^="btn-creditos-"]').should('not.exist');
-        return false; // detener iteración tras verificar primera fila sin créditos
-      }
-    });
+    cy.contains('.p-toast-message', 'Ya existe un cliente con ese DNI.', { timeout: 10000 }).should('be.visible');
+    cy.get('.p-dialog:visible').should('exist');
   });
 });

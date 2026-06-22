@@ -2,27 +2,25 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
+import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { MessageModule } from 'primeng/message';
-import { Subject, catchError, of } from 'rxjs';
+import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
-import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
-import { Expense, ExpenseCreatePayload } from './expense.model';
-import { ExpensesService } from './expenses.service';
-import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategory } from '../models/interface/expenses';
-import { CashRegisterService } from '../cash-register/cash-register.service';
+import { CategoryColorService } from './category-color.service';
+import { ExpenseCategoriesService } from './expense-categories.service';
+import { ExpenseSidePanelComponent } from './expense-side-panel/expense-side-panel.component';
+import { Expense } from './expense.model';
+import { ExpensesService } from './expenses.service';
 
 @Component({
   selector: 'app-expenses',
@@ -30,10 +28,8 @@ import { CashRegisterService } from '../cash-register/cash-register.service';
   imports: [
     FormsModule,
     ButtonModule,
-    DialogModule,
+    CalendarModule,
     DropdownModule,
-    InputNumberModule,
-    InputTextModule,
     PaginatorModule,
     SkeletonModule,
     TableModule,
@@ -41,6 +37,7 @@ import { CashRegisterService } from '../cash-register/cash-register.service';
     ToastModule,
     LoadingStateComponent,
     MessageModule,
+    ExpenseSidePanelComponent,
   ],
   providers: [MessageService],
   templateUrl: './expenses.component.html',
@@ -48,11 +45,10 @@ import { CashRegisterService } from '../cash-register/cash-register.service';
 export class ExpensesComponent implements OnInit, OnDestroy {
   private readonly svc = inject(ExpensesService);
   private readonly catSvc = inject(ExpenseCategoriesService);
+  private readonly colorSvc = inject(CategoryColorService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
   readonly fmt = inject(FormatService);
-  isCashClosed = false;
   private destroy$ = new Subject<void>();
 
   rows: Expense[] = [];
@@ -67,32 +63,48 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
   categories: ExpenseCategory[] = [];
 
-  showCreateDialog = false;
-  saving = false;
-  createAmount: number | null = null;
-  createDescription = '';
-  createPaymentMethod: 'CASH' | 'TRANSFER' = 'CASH';
-  createTransferRef = '';
-  createCategoryId: string | null = null;
-  createExpenseDate: string = this.todayIso();
-  createError = '';
-
-  showConfirmDelete = false;
-  deletingId: string | null = null;
-  deleting = false;
-
+  showSidePanel = false;
   showCatsPanel = false;
-  catRows: ExpenseCategory[] = [];
-  loadingCats = false;
-  showCatDialog = false;
-  savingCat = false;
-  newCatName = '';
-  catDialogError = '';
+  selectedExpense: Expense | null = null;
 
-  readonly paymentMethodOptions = [
-    { label: 'Efectivo', value: 'CASH' },
-    { label: 'Transferencia', value: 'TRANSFER' },
-  ];
+  get periodTotal(): number {
+    return this.rows.reduce((sum, e) => sum + e.amount, 0);
+  }
+
+  get periodMaxExpense(): Expense | null {
+    if (!this.rows.length) return null;
+    return this.rows.reduce((max, e) => (e.amount > max.amount ? e : max));
+  }
+
+  get periodMostFrequentMethod(): string {
+    const cash = this.rows.filter((e) => e.paymentMethod === 'CASH').length;
+    const transfer = this.rows.filter(
+      (e) => e.paymentMethod === 'TRANSFER',
+    ).length;
+    return cash >= transfer
+      ? `Efectivo (${cash})`
+      : `Transferencia (${transfer})`;
+  }
+
+  get currentMonthLabel(): string {
+    return new Date().toLocaleString('es-AR', { month: 'long' });
+  }
+
+  /**
+   * Devuelve el color de fondo para el badge de categoría en la tabla.
+   * @param categoryName nombre de la categoría
+   */
+  getCategoryBadgeColor(categoryName: string): string {
+    return this.colorSvc.getColor(categoryName);
+  }
+
+  /**
+   * Devuelve el color de texto con contraste adecuado para el badge de categoría.
+   * @param categoryName nombre de la categoría
+   */
+  getCategoryBadgeTextColor(categoryName: string): string {
+    return this.colorSvc.getTextColor(categoryName);
+  }
 
   get categoryOptions(): { label: string; value: string | null }[] {
     return this.categories
@@ -104,29 +116,10 @@ export class ExpensesComponent implements OnInit, OnDestroy {
     return [{ label: 'Todas', value: null }, ...this.categoryOptions];
   }
 
-  get createCategoryOptions(): { label: string; value: string | null }[] {
-    return [{ label: 'Sin categoría', value: null }, ...this.categoryOptions];
-  }
-
   ngOnInit(): void {
     this.header.set([{ label: 'Gastos' }]);
-    this.checkCashRegisterStatus();
     this.loadCategories();
     this.load();
-  }
-
-  /**
-   * Verifica el estado de cierre de caja del día actual.
-   */
-  private checkCashRegisterStatus(): void {
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-      )
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
-      });
   }
 
   ngOnDestroy(): void {
@@ -136,7 +129,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga las categorías de gastos para los filtros y el formulario de creación.
+   * Carga las categorías activas para los filtros del listado.
    */
   loadCategories(): void {
     this.catSvc
@@ -146,7 +139,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga los gastos aplicando los filtros y la paginación actuales. Muestra mensajes de error en caso de fallo.
+   * Carga los gastos aplicando los filtros y la paginación actuales.
    */
   load(): void {
     this.loading = true;
@@ -178,7 +171,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Aplica los filtros de fecha y recarga la lista de gastos. Resetea a la primera página.
+   * Aplica los filtros activos y recarga desde la primera página.
    */
   applyFilters(): void {
     this.page = 1;
@@ -186,7 +179,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Limpia los filtros de fecha y recarga la lista de gastos. Resetea a la primera página.
+   * Limpia todos los filtros y recarga desde la primera página.
    */
   clearFilters(): void {
     this.filterDateFrom = null;
@@ -198,7 +191,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
   /**
    * Maneja el cambio de página en el paginador.
-   * @param event
+   * @param event estado del paginador
    */
   onPageChange(event: PaginatorState): void {
     this.page = Math.floor((event.first ?? 0) / (event.rows ?? this.limit)) + 1;
@@ -206,247 +199,69 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abre el diálogo para crear un nuevo gasto, reseteando los campos y errores previos.
+   * Abre el panel lateral en modo creación.
    */
   openCreate(): void {
-    this.createAmount = null;
-    this.createDescription = '';
-    this.createPaymentMethod = 'CASH';
-    this.createTransferRef = '';
-    this.createCategoryId = null;
-    this.createExpenseDate = this.todayIso();
-    this.createError = '';
-    this.showCreateDialog = true;
+    this.selectedExpense = null;
+    this.showCatsPanel = false;
+    this.showSidePanel = true;
   }
 
   /**
-   * Envía la solicitud para crear un nuevo gasto.
-   * @returns
+   * Abre el panel lateral cargando el gasto seleccionado para editar.
+   * @param expense gasto a editar
    */
-  submitCreate(): void {
-    if (
-      !this.createAmount ||
-      this.createAmount <= 0 ||
-      !this.createDescription.trim()
-    )
-      return;
-
-    this.saving = true;
-    this.createError = '';
-
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
-
-        if (this.isCashClosed) {
-          this.saving = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes crear gastos. La caja del día está CERRADA.',
-            life: 5000,
-          });
-          return;
-        }
-
-        this.processCreateExpense();
-      });
-  }
-
-  private processCreateExpense(): void {
-    const payload: ExpenseCreatePayload = {
-      amount: this.createAmount!,
-      description: this.createDescription.trim(),
-      paymentMethod: this.createPaymentMethod,
-      expenseDate: this.createExpenseDate || undefined,
-    };
-    if (
-      this.createPaymentMethod === 'TRANSFER' &&
-      this.createTransferRef.trim()
-    ) {
-      payload.transferReference = this.createTransferRef.trim();
-    }
-    if (this.createCategoryId) {
-      payload.categoryId = this.createCategoryId;
-    }
-
-    this.svc
-      .create(payload)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.saving = false)),
-      )
-      .subscribe({
-        next: () => {
-          this.showCreateDialog = false;
-          this.msg.add({
-            severity: 'success',
-            summary: 'Gasto registrado',
-            detail: 'El gasto fue registrado correctamente.',
-          });
-          this.page = 1;
-          this.load();
-        },
-        error: (err: AppError) => {
-          this.createError = err.message ?? 'No se pudo registrar el gasto.';
-        },
-      });
+  selectExpense(expense: Expense): void {
+    this.selectedExpense = expense;
+    this.showCatsPanel = false;
+    this.showSidePanel = true;
   }
 
   /**
-   * Confirma la eliminación de un gasto.
-   * @param id
-   */
-  confirmDelete(id: string): void {
-    this.deletingId = id;
-    this.showConfirmDelete = true;
-  }
-
-  /**
-   * Ejecuta la eliminación del gasto confirmado.
-   * @returns
-   */
-  doDelete(): void {
-    if (!this.deletingId) return;
-    this.deleting = true;
-    this.svc
-      .remove(this.deletingId)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.deleting = false)),
-      )
-      .subscribe({
-        next: () => {
-          this.showConfirmDelete = false;
-          this.deletingId = null;
-          this.msg.add({
-            severity: 'success',
-            summary: 'Eliminado',
-            detail: 'Gasto eliminado.',
-          });
-          this.load();
-        },
-        error: (err: AppError) => {
-          this.showConfirmDelete = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: err.message ?? 'No se pudo eliminar.',
-          });
-        },
-      });
-  }
-
-  /**
-   * Alterna la visibilidad del panel de categorías. Si se muestra, carga las categorías para mostrar en el panel.
+   * Alterna la visibilidad del panel de administración de categorías.
    */
   toggleCatsPanel(): void {
     this.showCatsPanel = !this.showCatsPanel;
-    if (this.showCatsPanel) this.loadCatRows();
+    if (this.showCatsPanel) {
+      this.selectedExpense = null;
+      this.showSidePanel = true;
+    }
   }
 
   /**
-   * Carga las categorías de gastos para mostrarlas en el panel de administración de categorías. Muestra mensajes de error en caso de fallo.
+   * Cierra el panel lateral y limpia el estado de selección.
    */
-  loadCatRows(): void {
-    this.loadingCats = true;
-    this.catSvc
-      .getAll(true)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.loadingCats = false)),
-      )
-      .subscribe({
-        next: (r) => {
-          this.catRows = r;
-          this.categories = r;
-        },
-        error: () =>
-          this.msg.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se pudieron cargar las categorías.',
-          }),
-      });
+  onSidePanelClosed(): void {
+    this.showSidePanel = false;
+    this.showCatsPanel = false;
+    this.selectedExpense = null;
   }
 
   /**
-   * Abre el diálogo para crear una nueva categoría de gasto, reseteando los campos y errores previos.
+   * Recarga la lista desde la primera página tras guardar un gasto.
    */
-  openCatCreate(): void {
-    this.newCatName = '';
-    this.catDialogError = '';
-    this.showCatDialog = true;
+  onExpenseSaved(): void {
+    this.page = 1;
+    this.load();
   }
 
   /**
-   * Envía la solicitud para crear una nueva categoría de gasto.
-   * @returns
+   * Recarga la lista tras eliminar un gasto.
    */
-  submitCatCreate(): void {
-    if (!this.newCatName.trim()) return;
-    this.savingCat = true;
-    this.catDialogError = '';
-    this.catSvc
-      .create(this.newCatName.trim())
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => (this.savingCat = false)),
-      )
-      .subscribe({
-        next: () => {
-          this.showCatDialog = false;
-          this.msg.add({
-            severity: 'success',
-            summary: 'Categoría creada',
-            detail: '',
-          });
-          this.loadCatRows();
-        },
-        error: (err: AppError) => {
-          this.catDialogError = err.message ?? 'No se pudo crear la categoría.';
-        },
-      });
+  onExpenseDeleted(): void {
+    this.load();
   }
 
   /**
-   * Alterna el estado activo/inactivo de una categoría de gasto. Muestra mensajes de éxito o error según corresponda.
-   * @param cat
+   * Recarga las categorías tras crear o cambiar el estado de una.
    */
-  toggleCat(cat: ExpenseCategory): void {
-    const call = cat.active
-      ? this.catSvc.deactivate(cat.id)
-      : this.catSvc.activate(cat.id);
-    call.pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.msg.add({
-          severity: 'success',
-          summary: cat.active ? 'Desactivada' : 'Activada',
-          detail: cat.name,
-        });
-        this.loadCatRows();
-      },
-      error: (err: AppError) =>
-        this.msg.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: err.message ?? 'Error.',
-        }),
-    });
+  onCategoriesChanged(): void {
+    this.loadCategories();
   }
 
   formatDate(iso: string): string {
     if (!iso) return '—';
     const d = iso.split('T')[0].split('-');
     return `${d[2]}/${d[1]}/${d[0]}`;
-  }
-
-  private todayIso(): string {
-    return new Date().toISOString().split('T')[0];
   }
 }

@@ -1,0 +1,288 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [header]="
+    refinanceStep === 1
+      ? 'Refinanciar crédito — Paso 1 de 2'
+      : 'Refinanciar crédito — Paso 2 de 2'
+  "
+  [modal]="true"
+  [style]="{ width: '560px' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <!-- ── Paso 1: parámetros ─────────────────────────────────── -->
+  @if (refinanceStep === 1) {
+    <div class="flex flex-col gap-4 py-2">
+      <div
+        class="rounded-lg p-3"
+        style="
+          background: rgba(251, 176, 64, 0.08);
+          border: 1px solid rgba(251, 176, 64, 0.3);
+        "
+      >
+        <p class="text-xs" style="color: var(--ff-warning)">
+          <i class="pi pi-exclamation-triangle mr-1"></i>
+          El crédito actual pasará a estado <strong>Refinanciado</strong>. La
+          deuda pendiente se traslada a un nuevo crédito que deberá ser
+          aprobado.
+        </p>
+      </div>
+
+      <!-- Resumen de saldo -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="cr-detail-cell">
+          <div class="ud-label">Saldo pendiente</div>
+          <div class="ud-value ff-mono text-lg">
+            {{ refinancePendingBalance | currencyArs: 2 }}
+          </div>
+        </div>
+        <div class="cr-detail-cell">
+          <div class="ud-label">Total a refinanciar</div>
+          <div class="ud-value ff-mono text-lg" style="color: var(--ff-accent)">
+            {{ refinanceTotalTransferred | currencyArs: 2 }}
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Cuotas</label>
+          <p-inputNumber
+            [(ngModel)]="refinanceInstallmentsCount"
+            [min]="1"
+            [max]="120"
+            [useGrouping]="false"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+            placeholder="Ej: 12"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Frecuencia</label>
+          <p-dropdown
+            [options]="FREQUENCY_OPTIONS"
+            [(ngModel)]="refinanceFrequency"
+            optionLabel="label"
+            optionValue="value"
+            [filter]="FREQUENCY_OPTIONS.length > 10"
+            filterBy="label"
+            styleClass="w-full h-11"
+            appendTo="body"
+          />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Cargos adicionales (opcional)</label>
+        <p-inputNumber
+          appCurrencyAmountInput
+          [(ngModel)]="refinanceExtraCharges"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [minFractionDigits]="0"
+          [min]="0"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 px-3"
+          placeholder="Gastos, intereses punitorios, etc."
+        />
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="auth-label"
+          >Motivo de refinanciación (mín. 5 caracteres)</label
+        >
+        <textarea
+          pInputTextarea
+          [(ngModel)]="refinanceReason"
+          rows="3"
+          maxlength="500"
+          class="w-full resize-none px-3 py-2"
+          placeholder="Describe el motivo..."
+        ></textarea>
+        <div
+          class="flex justify-between text-xs mt-1"
+          style="color: var(--ff-text-muted)"
+        >
+          <span
+            [style.color]="
+              refinanceReason.length > 0 && refinanceReason.length < 5
+                ? 'var(--ff-danger)'
+                : ''
+            "
+          >
+            Mínimo 5 caracteres
+          </span>
+          <span>{{ refinanceReason.length }}/500</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Notas (opcional)</label>
+        <textarea
+          pInputTextarea
+          [(ngModel)]="refinanceNotes"
+          rows="2"
+          maxlength="500"
+          class="w-full resize-none px-3 py-2"
+          placeholder="Observaciones adicionales..."
+        ></textarea>
+      </div>
+    </div>
+  }
+
+  <!-- ── Paso 2: simulación ────────────────────────────────── -->
+  @if (refinanceStep === 2 && refinanceSimulation) {
+    <div class="flex flex-col gap-4 py-2">
+      <div
+        class="rounded-lg p-3"
+        style="
+          background: rgba(79, 110, 247, 0.08);
+          border: 1px solid rgba(79, 110, 247, 0.2);
+        "
+      >
+        <p class="text-xs" style="color: var(--ff-text-secondary)">
+          <i class="pi pi-info-circle mr-1"></i>
+          Revisá el cronograma del nuevo crédito antes de confirmar. Esta acción
+          no se puede deshacer.
+        </p>
+      </div>
+
+      <!-- KPIs del nuevo crédito -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="cr-detail-cell text-center">
+          <div class="ud-label">Monto total</div>
+          <div class="ud-value ff-mono">
+            {{ refinanceSimulation.totalAmount | currencyArs: 0 }}
+          </div>
+        </div>
+        <div class="cr-detail-cell text-center">
+          <div class="ud-label">Cuota</div>
+          <div class="ud-value ff-mono" style="color: var(--ff-accent)">
+            {{ refinanceSimulation.installmentAmount | currencyArs: 0 }}
+          </div>
+        </div>
+        <div class="cr-detail-cell text-center">
+          <div class="ud-label">Total a devolver</div>
+          <div class="ud-value ff-mono">
+            {{ refinanceSimulation.totalToReturn | currencyArs: 0 }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Cronograma resumido (primeras 6 cuotas) -->
+      @if (
+        refinanceSimulation.schedule && refinanceSimulation.schedule.length > 0
+      ) {
+        <div>
+          <p
+            class="text-xs font-semibold mb-2"
+            style="color: var(--ff-text-muted)"
+          >
+            CRONOGRAMA (primeras cuotas)
+          </p>
+          <table class="ff-table w-full text-xs">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Vencimiento</th>
+                <th class="text-right">Monto</th>
+                <th class="text-right">Capital</th>
+                <th class="text-right">Interés</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (
+                row of refinanceSimulation.schedule.slice(0, 6);
+                track row.installmentNumber
+              ) {
+                <tr>
+                  <td class="ff-mono">{{ row.installmentNumber }}</td>
+                  <td>{{ row.dueDate | date: "dd/MM/yyyy" }}</td>
+                  <td class="text-right ff-mono">
+                    {{ row.amount | currencyArs: 0 }}
+                  </td>
+                  <td class="text-right ff-mono">
+                    {{ row.capital ?? 0 | currencyArs: 0 }}
+                  </td>
+                  <td class="text-right ff-mono">
+                    {{ row.interest ?? 0 | currencyArs: 0 }}
+                  </td>
+                </tr>
+              }
+              @if (refinanceSimulation.schedule.length > 6) {
+                <tr>
+                  <td
+                    colspan="5"
+                    class="text-center"
+                    style="color: var(--ff-text-muted)"
+                  >
+                    ... y {{ refinanceSimulation.schedule.length - 6 }} cuotas
+                    más
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <p class="text-xs" style="color: var(--ff-text-muted)">
+        {{ refinanceSimulation.note }}
+      </p>
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    @if (refinanceStep === 1) {
+      <div class="grid grid-cols-2 gap-3 w-full">
+        <p-button
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="w-full h-11 px-5 rounded-xl justify-center"
+          (onClick)="close()"
+        />
+        <p-button
+          label="Simular nuevo crédito"
+          icon="pi pi-arrow-right"
+          severity="warning"
+          styleClass="w-full h-11 px-5 rounded-xl justify-center"
+          (onClick)="goToStep2()"
+          [loading]="refinanceSimulating"
+          [disabled]="!refinanceStep1Valid"
+        />
+      </div>
+    }
+    @if (refinanceStep === 2) {
+      <div class="grid grid-cols-3 gap-3 w-full">
+        <p-button
+          type="button"
+          label="Volver"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="w-full h-11 px-5 rounded-xl justify-center"
+          (onClick)="refinanceStep = 1"
+        />
+        <p-button
+          type="button"
+          label="Cancelar"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="w-full h-11 px-5 rounded-xl justify-center"
+          (onClick)="close()"
+        />
+        <p-button
+          label="Confirmar refinanciación"
+          icon="pi pi-check"
+          severity="warning"
+          styleClass="w-full h-11 px-5 rounded-xl justify-center"
+          (onClick)="confirm()"
+          [loading]="processingRefinance"
+        />
+      </div>
+    }
+  </ng-template>
+</p-dialog>

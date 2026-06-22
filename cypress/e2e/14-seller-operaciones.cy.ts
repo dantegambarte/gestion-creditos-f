@@ -155,7 +155,7 @@ describe('Admin — Lista de Operaciones (misma vista vía /admin)', () => {
   });
 
   it('botón "Nueva operación" existe para ADMIN', () => {
-    cy.contains('button', 'Nueva Operación').should('exist');
+    cy.contains('button', /Nueva operaci[oó]n/i).should('exist');
   });
 
   it('CR-07: filtra operaciones por estado Activo', () => {

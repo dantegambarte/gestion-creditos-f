@@ -1,0 +1,329 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="generate-sheet-dialog"
+>
+  <ng-template pTemplate="header">
+    <div class="generate-header flex items-center gap-2.5">
+      <div
+        class="w-9 h-9 rounded-xl flex items-center justify-center"
+        style="background: rgba(59, 130, 246, 0.12)"
+      >
+        <i class="pi pi-file-export text-base" style="color: #5f7af6"></i>
+      </div>
+      <div>
+        <h2
+          class="text-base font-semibold"
+          style="color: var(--ff-text-primary)"
+        >
+          Generar planilla de cobro
+        </h2>
+        <p class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
+          Elegí destinatario, fecha y filtro
+        </p>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="generate-body flex flex-col gap-5 pt-2">
+    <!-- ── ¿Para quién? ──────────────────────────────────────────────────── -->
+    <div class="flex flex-col gap-1.5">
+      <label
+        class="text-xs font-semibold uppercase tracking-wide"
+        style="color: var(--ff-text-muted)"
+      >
+        ¿Para quién?
+      </label>
+      <p-dropdown
+        [options]="generateCollectorOptions"
+        [(ngModel)]="selectedCollectorId"
+        optionLabel="label"
+        optionValue="value"
+        [filter]="generateCollectorOptions.length > 10"
+        filterBy="label"
+        styleClass="w-full"
+        appendTo="body"
+      />
+    </div>
+
+    <!-- ── Fecha + Filtro ───────────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label
+          class="text-xs font-semibold uppercase tracking-wide"
+          style="color: var(--ff-text-muted)"
+        >
+          Fecha
+        </label>
+        <p-calendar
+          [(ngModel)]="selectedDate"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          [minDate]="todayDate"
+          styleClass="w-full"
+          inputStyleClass="native-date-input h-10"
+          (ngModelChange)="onDialogDateChange()"
+        />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label
+          class="text-xs font-semibold uppercase tracking-wide"
+          style="color: var(--ff-text-muted)"
+        >
+          Filtro de cuotas
+        </label>
+        <div class="generate-filter-radios">
+          @for (opt of filterOptions; track opt.value) {
+            <label class="generate-filter-radio">
+              <input
+                type="radio"
+                name="generateFilter"
+                [value]="opt.value"
+                [checked]="selectedFilter === opt.value"
+                (change)="selectedFilter = opt.value"
+              />
+              <span>{{ opt.label }}</span>
+            </label>
+          }
+        </div>
+        @if (selectedFilterDescription) {
+          <p
+            class="text-[11px] italic mt-1"
+            style="color: var(--ff-text-muted)"
+          >
+            <i class="pi pi-info-circle text-[10px] mr-1"></i>
+            {{ selectedFilterDescription }}
+          </p>
+        }
+      </div>
+    </div>
+
+    <!-- ── Bloque contextual ─────────────────────────────────────────────── -->
+    @if (loadingDialogSheets) {
+      <div
+        class="generate-state-block p-4 rounded-xl flex items-center gap-2.5"
+        style="background: #f9fafb; border: 1px solid var(--ff-border)"
+      >
+        <i
+          class="pi pi-spin pi-spinner text-sm"
+          style="color: var(--ff-text-muted)"
+        ></i>
+        <span class="text-xs" style="color: var(--ff-text-muted)">
+          Analizando planillas existentes…
+        </span>
+      </div>
+    } @else if (isBatchMode) {
+      <!-- Modo batch: resumen del día + toggle -->
+      <div
+        class="generate-state-block p-4 rounded-xl flex flex-col gap-3"
+        style="background: #f9fafb; border: 1px solid var(--ff-border)"
+      >
+        <div class="flex items-center gap-2">
+          <i
+            class="pi pi-globe text-xs"
+            style="color: var(--ff-text-muted)"
+          ></i>
+          <span
+            class="text-xs font-semibold uppercase tracking-wide"
+            style="color: var(--ff-text-muted)"
+          >
+            Estado del día
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div
+            class="p-3 rounded-lg flex items-center gap-3"
+            style="
+              background: rgba(34, 197, 94, 0.08);
+              border: 1px solid rgba(34, 197, 94, 0.25);
+            "
+          >
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center text-base font-bold"
+              style="background: rgba(34, 197, 94, 0.18); color: #15803d"
+            >
+              {{ batchMissingCount }}
+            </div>
+            <div class="text-xs leading-tight" style="color: #166534">
+              <p class="font-semibold">Sin planilla</p>
+              <p style="color: #15803d">listos para generar</p>
+              @if (batchMissingCollectorNames.length > 0) {
+                <p
+                  class="generate-mini-list"
+                  [pTooltip]="batchMissingCollectorNames.join(', ')"
+                  tooltipPosition="bottom"
+                >
+                  {{ batchMissingCollectorNames[0] }}
+                  @if (batchMissingCollectorNames.length > 1) {
+                    +{{ batchMissingCollectorNames.length - 1 }} más
+                  }
+                </p>
+              }
+            </div>
+          </div>
+          <div
+            class="p-3 rounded-lg flex items-center gap-3"
+            style="
+              background: rgba(245, 158, 11, 0.08);
+              border: 1px solid rgba(245, 158, 11, 0.25);
+            "
+          >
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center text-base font-bold"
+              style="background: rgba(245, 158, 11, 0.18); color: #b45309"
+            >
+              {{ batchExistingCount }}
+            </div>
+            <div class="text-xs leading-tight" style="color: #78350f">
+              <p class="font-semibold">Con planilla</p>
+              <p style="color: #b45309">ya generada activa</p>
+              @if (batchExistingCollectorNames.length > 0) {
+                <p
+                  class="generate-mini-list"
+                  [pTooltip]="batchExistingCollectorNames.join(', ')"
+                  tooltipPosition="bottom"
+                >
+                  {{ batchExistingCollectorNames[0] }}
+                  @if (batchExistingCollectorNames.length > 1) {
+                    +{{ batchExistingCollectorNames.length - 1 }} más
+                  }
+                </p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="generate-impact-lists">
+          @if (batchMissingCollectorNames.length > 0) {
+            <div class="generate-impact-card generate-impact-card--create">
+              <p class="generate-impact-title">Se van a generar</p>
+              <p class="generate-impact-names">
+                {{ batchMissingCollectorNames.join(" · ") }}
+              </p>
+            </div>
+          }
+
+          @if (regenerateExisting && batchExistingCollectorNames.length > 0) {
+            <div class="generate-impact-card generate-impact-card--regen">
+              <p class="generate-impact-title">Se van a regenerar</p>
+              <p class="generate-impact-names">
+                {{ batchExistingCollectorNames.join(" · ") }}
+              </p>
+            </div>
+          }
+        </div>
+
+        @if (batchExistingCount > 0) {
+          <div
+            class="generate-regenerate-box flex items-start gap-2.5 p-2.5 rounded-lg cursor-pointer transition-colors"
+            style="border: 1px solid var(--ff-border)"
+            (click)="onRegenerateBoxClick($event)"
+          >
+            <p-inputSwitch
+              [(ngModel)]="regenerateExisting"
+              (onChange)="regenerateExisting = $event.checked"
+              (click)="$event.stopPropagation()"
+            />
+            <div
+              class="text-xs leading-relaxed"
+              style="color: var(--ff-text-secondary)"
+            >
+              <span class="font-semibold"
+                >Regenerar también las {{ batchExistingCount }} existentes</span
+              >
+              <p class="mt-0.5" style="color: var(--ff-text-muted)">
+                Las planillas actuales pasan a REGENERADAS (quedan en historial)
+                y se crean nuevas activas.
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (conflictingSheet) {
+      <!-- Modo single con conflicto: banner ámbar -->
+      <div
+        class="generate-state-block p-4 rounded-xl flex items-start gap-3"
+        style="
+          background: rgba(245, 158, 11, 0.08);
+          border: 1px solid rgba(245, 158, 11, 0.35);
+        "
+      >
+        <div
+          class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+          style="background: rgba(245, 158, 11, 0.2)"
+        >
+          <i
+            class="pi pi-exclamation-triangle text-sm"
+            style="color: #b45309"
+          ></i>
+        </div>
+        <div class="text-xs leading-relaxed flex-1" style="color: #78350f">
+          <p class="font-semibold text-sm mb-1" style="color: #92400e">
+            Ya tiene planilla activa
+          </p>
+          <p>
+            <strong>{{ selectedCollectorName }}</strong> ya tiene planilla del
+            <strong>{{
+              conflictingSheet.sheetDate | date: "dd/MM/yyyy"
+            }}</strong
+            >, generada el
+            <strong>{{
+              conflictingSheet.createdAt | date: "dd/MM HH:mm"
+            }}</strong
+            >.
+          </p>
+          <p class="mt-1.5">
+            Si continuás, esa planilla pasa a <strong>REGENERADA</strong> (queda
+            en el historial para auditoría) y se crea una nueva activa con el
+            filtro elegido.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <!-- Modo single sin conflicto: confirmación verde sutil -->
+      <div
+        class="generate-state-block p-3 rounded-xl flex items-center gap-2.5"
+        style="
+          background: rgba(34, 197, 94, 0.08);
+          border: 1px solid rgba(34, 197, 94, 0.25);
+        "
+      >
+        <i class="pi pi-check-circle text-sm" style="color: #15803d"></i>
+        <span class="text-xs" style="color: #166534">
+          <strong>{{ selectedCollectorName }}</strong> no tiene planilla activa
+          para esta fecha.
+        </span>
+      </div>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="generate-footer w-full">
+      <p-button
+        [label]="submitLabel"
+        icon="pi pi-file-export"
+        [severity]="submitSeverity"
+        styleClass="w-full h-11 rounded-xl font-semibold justify-center"
+        [loading]="generating || generatingAll"
+        [disabled]="submitDisabled"
+        (onClick)="submit()"
+      />
+      <button
+        type="button"
+        class="generate-cancel-btn"
+        [disabled]="generating || generatingAll"
+        (click)="close()"
+      >
+        Cancelar
+      </button>
+    </div>
+  </ng-template>
+</p-dialog>

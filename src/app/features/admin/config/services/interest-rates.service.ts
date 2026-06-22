@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, shareReplay, tap } from 'rxjs/operators';
 import { ApiHttpService } from '../../../../core/http/api-http.service';
 import {
   InterestRate,
@@ -32,21 +32,39 @@ function toInterestRate(r: InterestRateRaw): InterestRate {
 @Injectable({ providedIn: 'root' })
 export class InterestRatesService {
   private readonly api = inject(ApiHttpService);
+  private readonly cache = new Map<string, Observable<InterestRate[]>>();
+
+  /** Invalida todo el caché en memoria para forzar una nueva consulta al backend. */
+  invalidateCache(): void {
+    this.cache.clear();
+  }
 
   /**
    * Obtiene todas las tasas de interés con los filtros especificados.
+   * El resultado se cachea por combinación de filtros y se comparte entre suscriptores.
    * @param filters
    * @returns
    */
   getAll(filters?: InterestRateListFilters): Observable<InterestRate[]> {
-    const params: Record<string, string> = {};
-    if (filters?.paymentFrequency)
-      params['payment_frequency'] = filters.paymentFrequency;
-    if (filters?.active !== undefined)
-      params['active'] = String(filters.active);
-    return this.api
-      .get<InterestRateRaw[]>('interest-rates', params)
-      .pipe(map((items) => items.map(toInterestRate)));
+    const key = JSON.stringify({
+      paymentFrequency: filters?.paymentFrequency ?? null,
+      active: filters?.active ?? null,
+    });
+    if (!this.cache.has(key)) {
+      const params: Record<string, string> = {};
+      if (filters?.paymentFrequency)
+        params['payment_frequency'] = filters.paymentFrequency;
+      if (filters?.active !== undefined)
+        params['active'] = String(filters.active);
+      this.cache.set(
+        key,
+        this.api.get<InterestRateRaw[]>('interest-rates', params).pipe(
+          map((items) => items.map(toInterestRate)),
+          shareReplay(1),
+        ),
+      );
+    }
+    return this.cache.get(key)!;
   }
 
   /**
@@ -61,7 +79,7 @@ export class InterestRatesService {
   }
 
   /**
-   * Crea una nueva tasa de interés.
+   * Crea una nueva tasa de interés e invalida el caché.
    * @param payload
    * @returns
    */
@@ -75,13 +93,14 @@ export class InterestRatesService {
     if (payload.maxAmount !== undefined) {
       body['max_amount'] = payload.maxAmount;
     }
-    return this.api
-      .post<InterestRateRaw>('interest-rates', body)
-      .pipe(map(toInterestRate));
+    return this.api.post<InterestRateRaw>('interest-rates', body).pipe(
+      map(toInterestRate),
+      tap(() => this.invalidateCache()),
+    );
   }
 
   /**
-   * Actualiza una tasa de interés existente.
+   * Actualiza una tasa de interés existente e invalida el caché.
    * @param id
    * @param payload
    * @returns
@@ -93,28 +112,34 @@ export class InterestRatesService {
     const body: Record<string, unknown> = {};
     if (payload.rate !== undefined) body['rate'] = payload.rate;
     if (payload.active !== undefined) body['active'] = payload.active;
-    return this.api
-      .put<InterestRateRaw>(`interest-rates/${id}`, body)
-      .pipe(map(toInterestRate));
+    return this.api.put<InterestRateRaw>(`interest-rates/${id}`, body).pipe(
+      map(toInterestRate),
+      tap(() => this.invalidateCache()),
+    );
   }
 
   /**
-   * Desactiva una tasa de interés existente.
+   * Desactiva una tasa de interés existente e invalida el caché.
    * @param id
    * @returns
    */
   deactivate(id: string): Observable<void> {
-    return this.api.patch<void>(`interest-rates/${id}/deactivate`, {});
+    return this.api
+      .patch<void>(`interest-rates/${id}/deactivate`, {})
+      .pipe(tap(() => this.invalidateCache()));
   }
 
   /**
-   * Activa una tasa de interés existente.
+   * Activa una tasa de interés existente e invalida el caché.
    * @param id
    * @returns
    */
   activate(id: string): Observable<InterestRate> {
     return this.api
       .patch<InterestRateRaw>(`interest-rates/${id}/activate`, {})
-      .pipe(map(toInterestRate));
+      .pipe(
+        map(toInterestRate),
+        tap(() => this.invalidateCache()),
+      );
   }
 }

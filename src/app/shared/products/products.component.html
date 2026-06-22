@@ -2,7 +2,7 @@
 
 <div class="p-6">
   <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-semibold text-gray-800">Gestión de Productos</h1>
+    <h1 class="text-2xl font-semibold ff-text-primary">Gestión de Productos</h1>
     <div class="flex items-center gap-3">
       <p-button
         label="Nuevo Producto"
@@ -12,13 +12,13 @@
         (onClick)="showCreateModal = true"
       />
       <p-iconField iconPosition="left">
-        <p-inputIcon styleClass="pi pi-search text-gray-400 z-10" />
+        <p-inputIcon styleClass="pi pi-search ff-muted-icon z-10" />
         <input
           pInputText
           type="text"
           [(ngModel)]="searchTerm"
           placeholder="Buscar producto..."
-          class="w-64 h-11 pl-10 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+          class="w-64 h-11 pl-10"
         />
       </p-iconField>
     </div>
@@ -31,21 +31,22 @@
   >
     <ng-template pTemplate="header">
       <tr>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Código</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Producto</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Precio</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Stock</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Categoría</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Estado</th>
-        <th class="text-xs font-semibold text-gray-500 uppercase">Acciones</th>
+        <th class="text-xs font-semibold ff-text-muted uppercase">Código</th>
+        <th class="text-xs font-semibold ff-text-muted uppercase">Producto</th>
+        <th class="text-xs font-semibold ff-text-muted uppercase">Precio</th>
+        <th class="text-xs font-semibold ff-text-muted uppercase">Stock</th>
+        <th class="text-xs font-semibold ff-text-muted uppercase">Categoría</th>
+        <th class="text-xs font-semibold ff-text-muted uppercase">Estado</th>
+        <th class="text-xs font-semibold ff-text-muted uppercase">Acciones</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-product>
       <tr
-        class="border-b border-gray-100"
+        class="border-b"
+        style="border-color: var(--ff-border-subtle)"
         [ngClass]="getRowClass(product.stock)"
       >
-        <td class="text-sm font-mono text-gray-500">{{ product.code }}</td>
+        <td class="text-sm font-mono ff-text-muted">{{ product.code }}</td>
         <td>
           <div class="flex items-center gap-3">
             <span
@@ -57,12 +58,12 @@
                 [style.color]="product.iconColor"
               ></i>
             </span>
-            <span class="text-sm font-medium text-gray-800">{{
+            <span class="text-sm font-medium ff-text-primary">{{
               product.name
             }}</span>
           </div>
         </td>
-        <td class="text-sm font-semibold text-gray-800">
+        <td class="text-sm font-semibold ff-text-primary">
           {{ formatPrice(product.price) }}
         </td>
         <td>
@@ -71,32 +72,44 @@
             [ngClass]="{
               'text-red-600': product.stock === 0,
               'text-amber-600': product.stock > 0 && product.stock <= 3,
-              'text-gray-700': product.stock > 3,
+              'ff-text-secondary': product.stock > 3,
             }"
           >
             {{ product.stock }} uds.
           </span>
         </td>
-        <td class="text-sm text-gray-600">{{ product.category }}</td>
+        <td class="text-sm ff-text-secondary">{{ product.category }}</td>
         <td>
           @switch (getStockStatus(product.stock)) {
             @case ("activo") {
               <span
-                class="inline-flex items-center gap-1 text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full"
+                class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full"
+                style="
+                  color: var(--ff-success);
+                  background: rgba(52, 211, 153, 0.12);
+                "
               >
                 <i class="pi pi-check text-xs"></i> Activo
               </span>
             }
             @case ("stock-bajo") {
               <span
-                class="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full"
+                class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full"
+                style="
+                  color: var(--ff-warning);
+                  background: rgba(251, 176, 64, 0.12);
+                "
               >
                 <i class="pi pi-exclamation-triangle text-xs"></i> Stock Bajo
               </span>
             }
             @case ("sin-stock") {
               <span
-                class="inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-full"
+                class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full"
+                style="
+                  color: var(--ff-danger);
+                  background: rgba(248, 113, 113, 0.12);
+                "
               >
                 <i class="pi pi-times text-xs"></i> Sin Stock
               </span>
@@ -128,8 +141,10 @@
 >
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
-      <span class="font-semibold text-gray-800 text-base">Nuevo Producto</span>
-      <span class="text-sm text-gray-400 font-normal"
+      <span class="font-semibold ff-text-primary text-base"
+        >Nuevo Producto</span
+      >
+      <span class="text-sm ff-text-muted font-normal"
         >Registra un producto en el inventario</span
       >
     </div>
@@ -138,71 +153,148 @@
   <form [formGroup]="form" class="flex flex-col gap-4 py-2">
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-2">
-        <label class="text-xs font-bold text-gray-500 uppercase">Código de Producto</label>
-        <div class="flex items-center gap-2 border border-gray-300 rounded-xl h-14 px-3 bg-gray-50">
-          <i class="pi pi-hashtag text-gray-400 text-sm flex-shrink-0"></i>
-          <input formControlName="codigo" placeholder="Ej. PRD-0001"
-            class="flex-1 h-full bg-transparent border-none outline-none text-sm text-gray-700" />
+        <label class="auth-label">Código de Producto</label>
+        <div
+          class="flex items-center gap-2 border rounded-xl h-14 px-3"
+          style="
+            border-color: var(--ff-border);
+            background: var(--ff-secondary);
+          "
+        >
+          <i class="pi pi-hashtag ff-muted-icon text-sm flex-shrink-0"></i>
+          <input
+            formControlName="codigo"
+            placeholder="Ej. PRD-0001"
+            class="flex-1 h-full bg-transparent border-none outline-none text-sm ff-text-primary"
+          />
         </div>
       </div>
       <div class="flex flex-col gap-2 field-dark-border">
-        <label class="text-xs font-bold text-gray-500 uppercase">Categoría</label>
-        <p-dropdown [options]="categoryOptions" formControlName="categoria"
-          optionLabel="label" optionValue="value" placeholder="Seleccionar..."
-          styleClass="w-full h-14 rounded-xl flex items-center bg-gray-50" />
+        <label class="auth-label">Categoría</label>
+        <p-dropdown
+          [options]="categoryOptions"
+          formControlName="categoria"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccionar..."
+          [filter]="categoryOptions.length > 10"
+          filterBy="label"
+          [loading]="categoriesLoading"
+          appendTo="body"
+          styleClass="w-full h-14 rounded-xl flex items-center"
+        />
       </div>
     </div>
 
     <div class="flex flex-col gap-2">
-      <label class="text-xs font-bold text-gray-500 uppercase">Descripción</label>
-      <textarea formControlName="descripcion" placeholder="Describe el producto..." rows="3"
-        class="w-full resize-none rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm text-gray-700 outline-none focus:border-blue-500"></textarea>
+      <label class="auth-label">Descripción</label>
+      <textarea
+        formControlName="descripcion"
+        placeholder="Describe el producto..."
+        rows="3"
+        class="w-full resize-none rounded-xl border p-3 text-sm ff-text-primary outline-none"
+        style="border-color: var(--ff-border); background: var(--ff-secondary)"
+      ></textarea>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-2">
-        <label class="text-xs font-bold text-gray-500 uppercase">Marca</label>
-        <div class="border border-gray-300 rounded-xl h-14 px-3 flex items-center bg-gray-50">
-          <input formControlName="marca" placeholder="Ej. Samsung"
-            class="flex-1 h-full bg-transparent border-none outline-none text-sm text-gray-700" />
+        <label class="auth-label">Marca</label>
+        <div
+          class="border rounded-xl h-14 px-3 flex items-center"
+          style="
+            border-color: var(--ff-border);
+            background: var(--ff-secondary);
+          "
+        >
+          <input
+            formControlName="marca"
+            placeholder="Ej. Samsung"
+            class="flex-1 h-full bg-transparent border-none outline-none text-sm ff-text-primary"
+          />
         </div>
       </div>
       <div class="flex flex-col gap-2">
-        <label class="text-xs font-bold text-gray-500 uppercase">Modelo</label>
-        <div class="border border-gray-300 rounded-xl h-14 px-3 flex items-center bg-gray-50">
-          <input formControlName="modelo" placeholder="Ej. Galaxy A54"
-            class="flex-1 h-full bg-transparent border-none outline-none text-sm text-gray-700" />
+        <label class="auth-label">Modelo</label>
+        <div
+          class="border rounded-xl h-14 px-3 flex items-center"
+          style="
+            border-color: var(--ff-border);
+            background: var(--ff-secondary);
+          "
+        >
+          <input
+            formControlName="modelo"
+            placeholder="Ej. Galaxy A54"
+            class="flex-1 h-full bg-transparent border-none outline-none text-sm ff-text-primary"
+          />
         </div>
       </div>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-2 field-dark-border">
-        <label class="text-xs font-bold text-gray-500 uppercase">Precio de Compra</label>
-        <p-inputNumber formControlName="precioCompra" mode="currency" currency="ARS" locale="es-AR"
-          inputStyleClass="w-full h-14 rounded-xl bg-gray-50" styleClass="w-full" />
+        <label class="auth-label">Precio de Compra</label>
+        <p-inputNumber
+          appCurrencyAmountInput
+          formControlName="precioCompra"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [minFractionDigits]="0"
+          inputStyleClass="w-full h-14 rounded-xl"
+          styleClass="w-full"
+        />
       </div>
       <div class="flex flex-col gap-2 field-dark-border">
-        <label class="text-xs font-bold text-gray-500 uppercase">Precio de Venta</label>
-        <p-inputNumber formControlName="precioVenta" mode="currency" currency="ARS" locale="es-AR"
-          inputStyleClass="w-full h-14 rounded-xl bg-gray-50" styleClass="w-full" />
+        <label class="auth-label">Precio de Venta</label>
+        <p-inputNumber
+          appCurrencyAmountInput
+          formControlName="precioVenta"
+          mode="currency"
+          currency="ARS"
+          locale="es-AR"
+          [minFractionDigits]="0"
+          inputStyleClass="w-full h-14 rounded-xl"
+          styleClass="w-full"
+        />
       </div>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div class="flex flex-col gap-2">
-        <label class="text-xs font-bold text-gray-500 uppercase">Stock Inicial</label>
-        <div class="flex items-center gap-2 border border-gray-300 rounded-xl h-14 px-3 bg-gray-50">
-          <i class="pi pi-box text-gray-400 text-sm flex-shrink-0"></i>
-          <input type="number" formControlName="stockInicial" placeholder="0" min="0"
-            class="flex-1 h-full bg-transparent border-none outline-none text-sm text-gray-700" />
+        <label class="auth-label">Stock Inicial</label>
+        <div
+          class="flex items-center gap-2 border rounded-xl h-14 px-3"
+          style="
+            border-color: var(--ff-border);
+            background: var(--ff-secondary);
+          "
+        >
+          <i class="pi pi-box ff-muted-icon text-sm flex-shrink-0"></i>
+          <input
+            type="number"
+            formControlName="stockInicial"
+            placeholder="0"
+            min="0"
+            class="flex-1 h-full bg-transparent border-none outline-none text-sm ff-text-primary"
+          />
         </div>
       </div>
       <div class="flex flex-col gap-2 field-dark-border">
-        <label class="text-xs font-bold text-gray-500 uppercase">Estado</label>
-        <p-dropdown [options]="estadoOptions" formControlName="estado"
-          optionLabel="label" optionValue="value"
-          styleClass="w-full h-14 rounded-xl flex items-center bg-gray-50">
+        <label class="auth-label">Estado</label>
+        <p-dropdown
+          [options]="estadoOptions"
+          formControlName="estado"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="estadoOptions.length > 10"
+          filterBy="label"
+
+
+          appendTo="body"
+          styleClass="w-full h-14 rounded-xl flex items-center"
+        >
           <ng-template pTemplate="selectedItem" let-item>
             <div class="flex items-center gap-2">
               <i class="pi pi-check-circle text-green-500 text-sm"></i>
@@ -216,9 +308,14 @@
 
   <ng-template pTemplate="footer">
     <div class="flex justify-end gap-3 pt-2">
-      <button type="button" class="cancel-btn" (click)="cancelCreate()">
-        Cancelar
-      </button>
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 px-5 rounded-xl justify-center"
+        (onClick)="cancelCreate()"
+      />
       <p-button
         label="Guardar Producto"
         icon="pi pi-save"

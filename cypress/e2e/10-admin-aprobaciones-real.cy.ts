@@ -16,6 +16,11 @@ type PendingCredit = {
   status: string;
 };
 
+type CreditDetail = {
+  id: string;
+  status: string;
+};
+
 /**
  * Obtiene el token real guardado en localStorage tras login.
  * @returns Token Bearer válido para requests autenticados al backend.
@@ -42,6 +47,23 @@ const fetchPendingApprovals = (): Cypress.Chainable<PendingCredit[]> => {
         },
       })
       .then(({ body }) => (body?.data as PendingCredit[]) ?? []),
+  );
+};
+
+/**
+ * Obtiene el estado actual de un crédito por id desde backend real.
+ */
+const fetchCreditDetail = (id: string): Cypress.Chainable<CreditDetail> => {
+  return getAuthToken().then((token) =>
+    cy
+      .request({
+        method: 'GET',
+        url: `/api/credits/${id}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then(({ body }) => body?.data as CreditDetail),
   );
 };
 
@@ -85,56 +107,100 @@ const createRealPendingLoan = (): Cypress.Chainable<string> => {
 };
 
 describe('Admin Aprobaciones real', () => {
+  /**
+   * Garantiza que exista al menos una fila accionable en aprobaciones.
+   */
+  const ensureApprovalRow = (): Cypress.Chainable<void> => {
+    cy.visit(ADMIN_APPROVALS_URL);
+    cy.url({ timeout: 20000 }).should('include', '/admin/approvals');
+    return cy.get('body', { timeout: 20000 }).then(($body) => {
+      const actionButtons = $body.find('p-table tbody tr button');
+      if (actionButtons.length > 0) {
+        return;
+      }
+
+      return createRealPendingLoan().then(() => {
+        cy.visit(ADMIN_APPROVALS_URL);
+        cy.get('p-table tbody tr button', { timeout: 20000 }).should('have.length.greaterThan', 0);
+      });
+    });
+  };
+
   it('aprueba una operación pendiente real y persiste estado', () => {
     cy.viewport(1280, 720);
     cy.loginReal('ADMIN', ADMIN_APPROVALS_URL);
 
-    fetchPendingApprovals().then((initialPending) => {
-      const resolveTargetId =
-        initialPending.length === 0
-          ? createRealPendingLoan()
-          : cy.wrap(initialPending[0].id);
+    ensureApprovalRow().then(() => {
+      cy.intercept('PATCH', /\/api\/credits\/[^/]+\/approve$/).as('approveCredit');
 
-      resolveTargetId.then((targetId) => {
-        fetchPendingApprovals().then((pendingCredits) => {
-          const target = pendingCredits.find((item) => item.id === targetId) ?? pendingCredits[0];
-          expect(target, 'crédito objetivo pendiente').to.exist;
+      cy.get('p-table tbody tr').first().within(() => {
+        cy.get('button').eq(1).click();
+      });
 
-          cy.visit(ADMIN_APPROVALS_URL);
-          cy.contains('h1', 'Aprobación de Operaciones', { timeout: 20000 }).should('be.visible');
-          cy.contains('p-table tbody tr', target.customer_name, { timeout: 20000 }).should('be.visible').click();
-          cy.contains('p-table tbody tr', target.customer_name)
-            .find('button')
-            .first()
-            .click();
+      cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', { timeout: 10000 }).should('be.visible');
+      cy.contains('.p-dialog button', 'Confirmar Aprobación').click();
+      cy.contains('.p-toast-message', /aprob/i, { timeout: 20000 }).should('be.visible');
 
-          cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', { timeout: 10000 }).should('be.visible');
-          cy.contains('.p-dialog button', 'Confirmar Aprobación').click();
-          cy.contains('.p-toast-message', 'Aprobado', { timeout: 20000 }).should('be.visible');
+      cy.wait('@approveCredit').then((interception) => {
+        const url = interception.request.url;
+        const match = url.match(/\/api\/credits\/([^/]+)\/approve$/);
+        const creditId = match?.[1];
+        expect(creditId, 'id de crédito aprobado').to.be.a('string').and.not.be.empty;
 
-          getAuthToken().then((token) => {
-            cy.request({
-              method: 'GET',
-              url: `/api/credits/${target.id}`,
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }).then(({ body }) => {
-              expect(body?.data?.status).to.eq('ACTIVE');
-            });
+        expect(interception.response?.statusCode).to.eq(200);
+      });
+    });
+  });
 
-            cy.request({
-              method: 'GET',
-              url: '/api/credits?status=PENDING_APPROVAL',
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }).then(({ body }) => {
-              const ids = ((body?.data as PendingCredit[]) ?? []).map((item) => item.id);
-              expect(ids).not.to.include(target.id);
-            });
-          });
-        });
+  it('rechaza una operación pendiente real y la remueve de pendientes', () => {
+    cy.viewport(1280, 720);
+    cy.loginReal('ADMIN', ADMIN_APPROVALS_URL);
+
+    ensureApprovalRow().then(() => {
+      cy.intercept('PATCH', /\/api\/credits\/[^/]+\/reject$/).as('rejectCredit');
+
+      cy.get('p-table tbody tr').first().within(() => {
+        cy.get('button').eq(2).click();
+      });
+
+      cy.contains('.p-dialog .p-dialog-title', 'Rechazar Operación', { timeout: 10000 }).should('be.visible');
+      cy.get('.p-dialog textarea').clear().type('No cumple política mínima de aprobación.');
+      cy.contains('.p-dialog button', 'Rechazar Operación').click();
+      cy.contains('.p-toast-message', /rechaz/i, { timeout: 20000 }).should('be.visible');
+
+      cy.wait('@rejectCredit').then((interception) => {
+        expect(interception.response?.statusCode).to.eq(200);
+      });
+    });
+  });
+
+  it('aprueba ajustando cuotas y backend responde 200 o 409 de dominio', () => {
+    cy.viewport(1280, 720);
+    cy.loginReal('ADMIN', ADMIN_APPROVALS_URL);
+
+    ensureApprovalRow().then(() => {
+      cy.intercept('PATCH', /\/api\/credits\/[^/]+\/approve$/).as('approveWithAdjust');
+
+      cy.get('p-table tbody tr').first().within(() => {
+        cy.get('button').eq(1).click();
+      });
+
+      cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', { timeout: 10000 }).should('be.visible');
+      cy.get('.p-dialog input[type="number"]').invoke('val').then((rawValue) => {
+        const current = Number(rawValue || 0);
+        const nextValue = Number.isFinite(current) && current > 0 ? current + 1 : 9;
+        cy.get('.p-dialog input[type="number"]').clear().type(String(nextValue)).blur();
+      });
+      cy.contains('.p-dialog button', 'Confirmar Aprobación').click();
+
+      cy.wait('@approveWithAdjust').then((interception) => {
+        const url = interception.request.url;
+        const match = url.match(/\/api\/credits\/([^/]+)\/approve$/);
+        const creditId = match?.[1];
+        expect(creditId, 'id de crédito aprobado con ajuste').to.be.a('string').and.not.be.empty;
+
+        const statusCode = interception.response?.statusCode;
+        expect([200, 409], 'status esperado en aprobación ajustada').to.include(statusCode as number);
       });
     });
   });

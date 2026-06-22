@@ -6,7 +6,9 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
-import { CartLine, CartLineRef, CatalogProduct, CatalogVariant } from '../../operation-form.service';
+import { CurrencyAmountInputDirective } from '../../../../directives/currency-amount-input.directive';
+import { CartLine, CartLineRef } from '../../operation-form.service';
+import { CatalogProduct, CatalogVariant } from '../../operation-catalog.service';
 
 @Component({
   selector: 'app-step-products',
@@ -17,6 +19,7 @@ import { CartLine, CartLineRef, CatalogProduct, CatalogVariant } from '../../ope
     ButtonModule,
     DropdownModule,
     InputNumberModule,
+    CurrencyAmountInputDirective,
     InputTextModule,
     CurrencyArsPipe,
   ],
@@ -35,6 +38,10 @@ export class StepProductsComponent implements OnChanges {
 
   @Output() productAdded = new EventEmitter<CatalogProduct>();
   @Output() productVariantAdded = new EventEmitter<{ product: CatalogProduct; variantId: string }>();
+  /** Agrega una unidad PUNTUAL clickeada en el paso 2. Es la vía granular. */
+  @Output() unitAdded = new EventEmitter<{ product: CatalogProduct; variantId: string; unitId: string }>();
+  /** Quita una unidad PUNTUAL del carrito desde el paso 2. */
+  @Output() unitRemoved = new EventEmitter<{ productoId: string; variantId: string; unitId: string }>();
   @Output() productRemoved = new EventEmitter<string | CartLineRef>();
   @Output() quantityIncreased = new EventEmitter<string | CartLineRef>();
   @Output() quantityDecreased = new EventEmitter<string | CartLineRef>();
@@ -149,7 +156,9 @@ export class StepProductsComponent implements OnChanges {
   }
 
   /**
-   * Agrega al carrito la variante actualmente activa usando el nuevo contrato enriquecido.
+   * Agrega al carrito la variante actualmente activa eligiendo automáticamente
+   * la primera unidad libre. Conservado para el botón genérico del carrito; el
+   * flujo principal usa addUnit() con la unidad clickeada.
    */
   addSelectedVariant(): void {
     if (!this.selectedProduct || !this.selectedVariant) return;
@@ -157,6 +166,49 @@ export class StepProductsComponent implements OnChanges {
       product: this.selectedProduct,
       variantId: this.selectedVariant.variantId,
     });
+  }
+
+  /**
+   * Agrega al carrito la unidad PUNTUAL clickeada en el listado de unidades.
+   * Esta es la vía granular: se agrega exactamente la unidad que el usuario
+   * eligió (no la primera del array).
+   * @param {string} unitId - Unidad del catálogo a agregar.
+   */
+  addUnit(unitId: string): void {
+    if (!this.selectedProduct || !this.selectedVariant || !unitId) return;
+    this.unitAdded.emit({
+      product: this.selectedProduct,
+      variantId: this.selectedVariant.variantId,
+      unitId,
+    });
+  }
+
+  /**
+   * Quita una unidad PUNTUAL ya agregada al carrito desde el listado.
+   * @param {string} unitId - Unidad a quitar.
+   */
+  removeUnit(unitId: string): void {
+    if (!this.selectedProduct || !this.selectedVariant || !unitId) return;
+    this.unitRemoved.emit({
+      productoId: this.selectedProduct.productoId,
+      variantId: this.selectedVariant.variantId,
+      unitId,
+    });
+  }
+
+  /** True si la unidad puntual ya está agregada al carrito en la línea activa. */
+  isUnitSelected(unitId: string): boolean {
+    return this.selectedCartLine?.selectedUnitIds.includes(unitId) ?? false;
+  }
+
+  /**
+   * Mapea los unitIds seleccionados de una línea a sus códigos (IMEI/serial) en
+   * el orden en que fueron agregados. Usado en el resumen del carrito.
+   */
+  selectedUnitCodes(line: CartLine): string[] {
+    return line.selectedUnitIds
+      .map((id) => line.unitCodes[line.unitIds.indexOf(id)])
+      .filter((code): code is string => !!code);
   }
 
   /**
@@ -186,14 +238,6 @@ export class StepProductsComponent implements OnChanges {
    */
   isVariantFullyReserved(variant: CatalogVariant): boolean {
     return this.getVariantRemainingStock(variant) === 0;
-  }
-
-  /**
-   * Indica si una unidad serializada de la variante activa ya quedó tomada por el carrito.
-   * @param {number} index - Posición de la unidad dentro del stock visible.
-   */
-  isUnitReserved(index: number): boolean {
-    return index < (this.selectedCartLine?.cantidad ?? 0);
   }
 
   /**

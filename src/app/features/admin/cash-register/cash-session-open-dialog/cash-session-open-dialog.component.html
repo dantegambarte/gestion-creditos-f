@@ -1,0 +1,132 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [showHeader]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!submitting"
+  (visibleChange)="visibleChange.emit($event)"
+  styleClass="!bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
+  contentStyleClass="!bg-[var(--ff-panel)] p-0 border-none"
+  [contentStyle]="{
+    padding: '0',
+    background: 'var(--ff-panel)',
+    color: 'var(--ff-text-secondary)',
+    border: '1px solid var(--ff-border-subtle)',
+    borderRadius: '1rem',
+    overflow: 'hidden',
+  }"
+  [style]="{ width: '420px' }"
+>
+  <section class="bg-[var(--ff-panel)] text-[var(--ff-text-secondary)]">
+    <header
+      class="flex items-center justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
+    >
+      <h2 class="text-xl font-bold text-[var(--ff-text-primary)]">
+        Abrir caja operativa
+      </h2>
+      <button
+        type="button"
+        class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:opacity-50"
+        [disabled]="submitting"
+        (click)="close()"
+      >
+        <i class="pi pi-times text-base"></i>
+      </button>
+    </header>
+
+    <div class="flex flex-col gap-4 px-6 py-5">
+      <p class="text-sm text-[var(--ff-text-secondary)]">
+        Abrí la caja operativa del turno. En V4 solo puede haber una caja
+        <strong class="text-[var(--ff-text-primary)]">OPEN</strong> simultánea
+        por jornada.
+      </p>
+
+      <div>
+        <label
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
+          for="opening-amount"
+        >
+          Monto inicial (efectivo)
+        </label>
+        <p-inputNumber
+          inputId="opening-amount"
+          [(ngModel)]="openingAmount"
+          mode="currency"
+          currency="ARS"
+          appCurrencyAmountInput
+          [min]="0"
+          [showButtons]="false"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-[var(--ff-text-primary)] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        ></p-inputNumber>
+      </div>
+
+      <div>
+        <label
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
+          for="shift-label"
+        >
+          Etiqueta del turno
+          <span class="text-[var(--ff-text-secondary)]">(opcional)</span>
+        </label>
+        <input
+          pInputText
+          id="shift-label"
+          [(ngModel)]="shiftLabel"
+          placeholder="Mañana / Tarde / Noche"
+          maxlength="40"
+          class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-[var(--ff-text-primary)] placeholder-[var(--ff-text-muted)] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label
+          class="mb-1.5 block text-sm font-semibold text-[var(--ff-text-primary)]"
+          for="observations"
+        >
+          Observaciones
+          <span class="text-[var(--ff-text-secondary)]">(opcional)</span>
+        </label>
+        <textarea
+          pInputTextarea
+          id="observations"
+          [(ngModel)]="observations"
+          rows="2"
+          maxlength="500"
+          class="w-full resize-none rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3 text-[var(--ff-text-primary)] placeholder-[var(--ff-text-muted)] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        ></textarea>
+      </div>
+
+      @if (errorMessage) {
+        <div
+          class="rounded-xl border border-red-400/25 bg-red-500/10 p-3 text-sm text-red-200"
+        >
+          {{ errorMessage }}
+        </div>
+      }
+    </div>
+
+    <footer
+      class="flex justify-end gap-3 border-t border-[var(--ff-border)] px-6 py-4"
+    >
+      <button
+        type="button"
+        class="h-11 rounded-xl border border-[var(--ff-border)] px-5 text-sm font-semibold text-[var(--ff-text-primary)] transition hover:bg-[var(--ff-panel-raised)] disabled:opacity-50"
+        [disabled]="submitting"
+        (click)="close()"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="inline-flex h-11 items-center gap-2 rounded-xl bg-blue-500 px-5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:bg-blue-500/40 disabled:text-[var(--ff-text-secondary)]"
+        [disabled]="!canSubmit()"
+        (click)="submit()"
+      >
+        <i class="pi pi-check text-xs"></i>
+        {{ submitting ? "Abriendo..." : "Abrir caja" }}
+      </button>
+    </footer>
+  </section>
+</p-dialog>

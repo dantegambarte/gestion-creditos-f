@@ -1,33 +1,25 @@
-<div class="p-4 max-w-5xl mx-auto">
+<div class="ff-page py-4">
   @if (loading) {
     <app-loading-state />
   } @else if (error) {
     <app-error-state />
   } @else if (sheet) {
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="text-xl font-bold text-gray-800">
-          Planilla {{ sheet.sheetDate | date: "dd/MM/yyyy" }}
-        </h1>
-        <p class="text-sm text-gray-500">
-          {{ sheet.collectorName }} · Generada por {{ sheet.generatedByName }} ·
-          <span class="font-medium">{{ filterLabel(sheet.filterUsed) }}</span> ·
-          {{ sheet.totalItems }} cuota{{ sheet.totalItems !== 1 ? "s" : "" }}
-        </p>
-      </div>
-      <p-button
-        label="Volver"
-        icon="pi pi-arrow-left"
-        severity="secondary"
-        [outlined]="true"
-        (onClick)="goBack()"
-      />
+    <app-back-button (back)="goBack()" />
+    <div class="mb-6">
+      <h1 class="text-xl font-bold text-[var(--ff-text-primary)]">
+        Planilla {{ sheet.sheetDate | date: "dd/MM/yyyy" }}
+      </h1>
+      <p class="text-sm text-[var(--ff-text-secondary)]">
+        {{ sheet.collectorName }} · Generada por {{ sheet.generatedByName }} ·
+        <span class="font-medium">{{ filterLabel(sheet.filterUsed) }}</span> ·
+        {{ sheet.totalItems }} cuota{{ sheet.totalItems !== 1 ? "s" : "" }}
+      </p>
     </div>
 
     <div class="flex flex-col gap-3">
       @for (item of sheet.items; track item.installmentId) {
         <div
-          class="p-4 bg-white border rounded-lg shadow-sm"
+          class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4 shadow-sm"
           [class.border-red-200]="item.installmentStatus === 'OVERDUE'"
           [class.bg-red-50]="item.installmentStatus === 'OVERDUE'"
           [class.border-green-200]="item.installmentStatus === 'PAID'"
@@ -36,10 +28,10 @@
           <div class="flex items-start justify-between gap-4">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1">
-                <span class="text-xs text-gray-400 font-mono"
+                <span class="font-mono text-xs text-[var(--ff-text-muted)]"
                   >#{{ item.orderNumber }}</span
                 >
-                <span class="font-semibold text-gray-800">{{
+                <span class="font-semibold text-[var(--ff-text-primary)]">{{
                   item.customerName
                 }}</span>
                 <p-tag
@@ -48,17 +40,17 @@
                 />
               </div>
               @if (item.customerPhone) {
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-[var(--ff-text-secondary)]">
                   <i class="pi pi-phone mr-1"></i>{{ item.customerPhone }}
                 </p>
               }
               @if (item.customerAddress) {
-                <p class="text-sm text-gray-500">
+                <p class="text-sm text-[var(--ff-text-secondary)]">
                   <i class="pi pi-map-marker mr-1"></i
                   >{{ item.customerAddress }}
                 </p>
               }
-              <p class="text-sm text-gray-600 mt-1">
+              <p class="mt-1 text-sm text-[var(--ff-text-secondary)]">
                 Cuota {{ item.installmentNumber }} · Vence
                 {{ item.dueDate | date: "dd/MM/yyyy" }}
               </p>
@@ -68,18 +60,15 @@
               <div>
                 @if (item.plannedAmount !== item.amountDue) {
                   <span
-                    class="text-sm text-gray-400 line-through mr-2"
+                    class="mr-2 text-sm text-[var(--ff-text-muted)] line-through"
                     pTooltip="Monto al generar la planilla"
                     tooltipPosition="left"
                   >
-                    {{
-                      item.plannedAmount
-                        | currencyArs: 2
-                    }}
+                    {{ item.plannedAmount | currencyArs: 2 }}
                   </span>
                 }
                 <span
-                  class="font-bold text-gray-800"
+                  class="font-bold text-[var(--ff-text-primary)]"
                   [pTooltip]="
                     item.plannedAmount !== item.amountDue
                       ? 'El monto cambió por mora aplicada'
@@ -87,18 +76,13 @@
                   "
                   tooltipPosition="left"
                 >
-                  {{
-                    item.amountDue | currencyArs: 2
-                  }}
+                  {{ item.amountDue | currencyArs: 2 }}
                 </span>
               </div>
               @if (item.penaltyAmount > 0) {
                 <p class="text-xs text-red-600">
                   Mora:
-                  {{
-                    item.penaltyAmount
-                      | currencyArs: 2
-                  }}
+                  {{ item.penaltyAmount | currencyArs: 2 }}
                 </p>
               }
               <p-button

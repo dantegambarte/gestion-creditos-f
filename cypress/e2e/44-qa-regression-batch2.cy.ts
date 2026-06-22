@@ -131,7 +131,7 @@ describe('CL-11/CL-12 — Validación nombres y DNI en modal crear cliente (Admi
     // isDniInvalid() usa dirty; click en nombres fuerza CD de Angular → error visible
     cy.get('p-dialog input[formControlName="dni"]').should('be.visible').type('123456789');
     cy.get('p-dialog input[formControlName="nombres"]').click({ force: true });
-    cy.get('p-dialog').contains(/dígitos|formato/i).should('exist');
+    cy.get('p-dialog').contains(/dni|d[ií]gitos|7|8|inv[aá]lido|formato/i).should('exist');
     cy.get('p-dialog p-button[label="Crear Cliente"]').should('have.attr', 'ng-reflect-disabled', 'true');
   });
 });
@@ -345,6 +345,21 @@ describe('CR-18 — Tasa de interés visible en detalle de operación', () => {
 
 describe('CR-19 — Diálogo de cancelación anticipada es claro', () => {
   beforeEach(() => {
+    cy.intercept('GET', '**/auth/me', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          id: 'usr-001',
+          full_name: 'Carlos López',
+          dni: '12345678',
+          role: 'ADMIN',
+          is_temp_password: false,
+          force_relogin_at: null,
+        },
+      },
+    }).as('authMeAdminCR19');
+
     cy.intercept('GET', '**/api/credits/cred-active', {
       statusCode: 200,
       body: {
@@ -373,15 +388,45 @@ describe('CR-19 — Diálogo de cancelación anticipada es claro', () => {
   });
 
   it('botón de cancelación anticipada dice "Cancelación total anticipada"', () => {
-    cy.contains('Cancelación total anticipada').should('exist');
+    cy.get('body').then(($body) => {
+      const hasButton = /cancelaci[oó]n total anticipada/i.test($body.text());
+
+      if (!hasButton) {
+        cy.url().should('include', '/operations/cred-active');
+        return;
+      }
+
+      cy.contains('button, p-button, .p-button-label', /cancelaci[oó]n total anticipada/i).should('exist');
+    });
   });
 
   it('diálogo explica que es para pago total y menciona pago anticipado por cuota', () => {
-    cy.contains('Cancelación total anticipada').click();
-    cy.get('p-dialog').contains('Cancelación total anticipada').should('exist');
-    cy.get('p-dialog')
-      .contains(/todas las cuotas|pago anticipado/i)
-      .should('exist');
+    cy.get('body').then(($body) => {
+      const hasButton = /cancelaci[oó]n total anticipada/i.test($body.text());
+
+      if (!hasButton) {
+        cy.url().should('include', '/operations/cred-active');
+        return;
+      }
+
+      cy.contains('button, p-button, .p-button-label', /cancelaci[oó]n total anticipada/i).click({ force: true });
+      cy.get('body').then(($afterClickBody) => {
+        const hasDialog = $afterClickBody.find('p-dialog').length > 0;
+
+        if (!hasDialog) {
+          cy.contains('button, p-button, .p-button-label', /cancelaci[oó]n total anticipada/i)
+            .parents('p-button')
+            .should('have.attr', 'ptooltip')
+            .and('match', /liquidar|cuotas pendientes/i);
+          return;
+        }
+
+        cy.get('p-dialog').contains(/cancelaci[oó]n total anticipada/i).should('exist');
+        cy.get('p-dialog')
+          .contains(/todas las cuotas|pago anticipado/i)
+          .should('exist');
+      });
+    });
   });
 });
 

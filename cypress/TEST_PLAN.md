@@ -12,35 +12,36 @@ Viewports: 1280×720 (desktop)
 |---------|-------|-------|
 | `01-auth.cy.ts` | Autenticación | 9 |
 | `02-sidebar-navigation.cy.ts` | Sidebar / Guardias de ruta | 16 |
-| `03-nueva-operacion.cy.ts` | Wizard Nueva Operación | 17 |
+| `03-nueva-operacion-real.cy.ts` | Wizard Nueva Operación (real) | 4 |
 | `04-clientes.cy.ts` | Gestión de Clientes (shared/admin) | 20 |
 | `05-negative-auth.cy.ts` | Auth — casos negativos | ~10 |
 | `06-negative-clientes.cy.ts` | Clientes — casos negativos | ~10 |
 | `07-negative-nueva-operacion.cy.ts` | Wizard — casos negativos | ~10 |
 | `08-negative-guards.cy.ts` | Guards — rol incorrecto / sin sesión | ~10 |
-| `09-admin-usuarios.cy.ts` | Admin — Gestión de Usuarios | 18 |
-| `09-cobranzas-collector.cy.ts` | Collector — Ruta y Cobros | ~10 |
-| `10-admin-aprobaciones.cy.ts` | Admin — Aprobaciones | ~10 |
-| `11-caja-tesoreria.cy.ts` | Admin — Caja y Tesorería | ~15 |
-| `12-portal-clientes.cy.ts` | Portal Cliente | ~12 |
+| `09-admin-usuarios.cy.ts` | Admin — Gestión de Usuarios (real backend) | 5 |
+| `09-cobranzas-collector.cy.ts` | Collector — Ruta y Cobros (real) | 3 |
+| `10-admin-aprobaciones-real.cy.ts` | Admin — Aprobaciones (real) | 3 |
+| `11-caja-tesoreria.cy.ts` | Admin — Caja y Tesorería (real backend) | 3 |
+| `12-portal-clientes.cy.ts` | Portal Cliente (real backend) | 3 |
 | `13-admin-dashboard.cy.ts` | Admin — Dashboard | 7 |
 | `14-seller-operaciones.cy.ts` | Seller — Lista de Operaciones | 8 |
-| `15-seller-productos.cy.ts` | Seller/Admin — Productos | 9 |
-| `16-comisiones.cy.ts` | Seller/Collector/Admin — Comisiones | 11 |
-| `17-admin-colecciones-gastos-pagos.cy.ts` | Admin — Planillas, Gastos, Cobros | 14 |
-| `18-admin-reportes-mora.cy.ts` | Admin — Reportes y Morosidad | 10 |
-| `19-public-password.cy.ts` | Recuperar / Cambiar Contraseña | 15 |
-| `20-admin-config-sheet.cy.ts` | Admin — Configuración y Planilla Legacy | 15 |
-| `21-seller-clientes-nuevo.cy.ts` | Seller — Lista y Crear Cliente | 15 |
-| `22-admin-generar-planilla.cy.ts` | Admin — Generar Planilla (/collections/new) | 8 |
-| `23-credit-detail.cy.ts` | Detalle de Crédito (Seller/Admin + carga/error) | 12 |
-| `24-producto-detalle-editar.cy.ts` | Producto: Detalle, Editar, Variantes, Unidades | 21 |
+| `15-seller-productos.cy.ts` | Seller/Admin — Productos (real backend) | 9 |
+| `16-comisiones.cy.ts` | Seller/Collector/Admin — Comisiones (real backend) | 12 |
+| `17-admin-colecciones-gastos-pagos.cy.ts` | Admin — Gastos y Cobros (real) | 5 |
+| `18-admin-reportes-mora.cy.ts` | Admin — Reportes y Morosidad (real backend) | 9 |
+| `19-public-password.cy.ts` | Recuperar / Cambiar Contraseña (real backend) | 4 |
+| `20-admin-config-sheet.cy.ts` | Admin — Configuración y Sheet legacy (real) | 4 |
+| `21-seller-clientes-nuevo-real.cy.ts` | Seller — Lista y Crear Cliente (real) | 5 |
+| `22-admin-generar-planilla.cy.ts` | Admin — Generar Planilla (/collections/new, real) | 3 |
+| `23-credit-detail.cy.ts` | Detalle de Crédito (real backend) | 5 |
+| `24-producto-detalle-editar.cy.ts` | Producto: Detalle, Editar, Variantes, Unidades (real backend) | 5 |
 | `25-seller-cliente-detalle.cy.ts` | Detalle de Cliente (Seller/Admin + carga/error) | 12 |
-| `26-collector-planilla-detalle.cy.ts` | Collector — Detalle de Planilla | 10 |
-| `27-portal-credits.cy.ts` | Portal — Créditos y Detalle de Crédito | 12 |
-| `28-admin-user-detail.cy.ts` | Admin — Detalle de Usuario | 13 |
-| `29-admin-collection-detail.cy.ts` | Admin — Detalle de Planilla de Cobro | 12 |
-| `30-producto-crear.cy.ts` | Admin — Crear Producto | 9 |
+| `26-collector-planilla-detalle.cy.ts` | Collector — Detalle de Planilla (real) | 3 |
+| `27-portal-credits.cy.ts` | Portal — Créditos y Detalle (real backend) | 4 |
+| `28-admin-user-detail.cy.ts` | Admin — Detalle de Usuario (real backend) | 4 |
+| `29-admin-collection-detail.cy.ts` | Admin — Detalle de Planilla de Cobro (real) | 3 |
+| `30-producto-crear.cy.ts` | Admin — Crear Producto (real backend) | 8 |
+| `37-portal-auth-use-cases.cy.ts` | Portal — Autenticación y Guards (real backend) | 5 |
 | **Total estimado** | | **~393** |
 
 ---

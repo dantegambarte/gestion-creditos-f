@@ -110,6 +110,24 @@ http://localhost:3000/api/credits - POST
 ---
 
 **Módulo:** [Crédito]
+**ID de Prueba:** [CR-21]
+**Título / Descripción:** [Declaraciones y Autorizaciones — Botón "Marcar todas".]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** En el paso "Declaraciones y Autorizaciones" se requería marcar 4 casillas de forma manual; no existía control para marcarlas todas.
+* **Resultado Esperado:** Debe existir un control (botón) que marque todas las declaraciones obligatorias y deje las casillas en estado marcado.
+* **Resultado Obtenido (Error):** No existía un botón; los tests E2E marcaban cada checkbox individualmente.
+
+### 2. Fix implementado
+* **Descripción del Fix:** Se agregó un botón "Marcar todas" en la plantilla del paso de confirmación y un método `setAllDeclarations(value: boolean)` que marca los controles del formulario: `chkIdentity`, `chkConditions`, `chkDisbursement`, `chkCapacity`.
+* **Archivos modificados:**
+    - `src/app/shared/operations/new-operation/steps/step-confirm/step-confirm.component.html` (botón `data-cy="btn-mark-all"`)
+    - `src/app/shared/operations/new-operation/steps/step-confirm/step-confirm.component.ts` (`setAllDeclarations`)
+    - `cypress/e2e/03-nueva-operacion-real.cy.ts` (test actualizado para usar el botón y verificar checkboxes)
+* **Resultado Obtenido (Actual):** [Corregido. Botón "Marcar todas" marca las 4 casillas; E2E actualizado y pasando en local tras validar manualmente.]
+
+---
+
+**Módulo:** [Crédito]
 **ID de Prueba:** [CR-07]
 **Título / Descripción:** [Operaciones.]
 ### 1. Contexto de la Prueba
@@ -286,6 +304,117 @@ http://localhost:3000/api/credits - POST
 
 ---
 
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-21]
+**Título / Descripción:** [Operación Crédito]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [se hizo click en "Nueva Operación".]
+* **Resultado Esperado:** [Debería poder marcar todas las casilla.]
+* **Resultado Obtenido (Corregido):** [Se agregó un botón para marcar todos.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-22]
+**Título / Descripción:** [Nueva Operación]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nueva Operación" - Venta.]
+* **Resultado Esperado:** [Debería poder elegir la unidad del producto.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El flujo respeta la unidad puntual elegida: al seleccionar `U-002`, el POST de creación envía `unit_ids: ['unit-2']` y no reemplaza por la primera unidad disponible. Validado con Cypress en `cypress/e2e/31-qa-regression-issues.cy.ts` (caso CR-22).]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-23]
+**Título / Descripción:** [Aprobar Crédito]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Aprobar Crédito".]
+* **Resultado Esperado:** [Debería poder ver la cantidad de cuotas que se eligió en el plan.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. En venta, el detalle y el modal de aprobación muestran "Cantidad de cuotas definida" y las cuotas elegidas en la preventa; no aparece input editable para cambiar cuotas en SALE. Validado con Cypress real en `cypress/e2e/03-nueva-operacion-real.cy.ts` (`venta: detalle y aprobación respetan cuotas ya definidas` y `venta: approvals muestra cuotas adelantadas enriquecidas en modal`).]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-24]
+**Título / Descripción:** [Adelanto de cuotas]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Venta de producto" con adelanto de cuotas.]
+* **Resultado Esperado:** [Debería la cuota siguiente adelantarse.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. La reprogramación de cuotas restantes por adelanto usa la frecuencia real del crédito y, para mensual, intervalos de 30 días corridos. Validado con `src/modules/payments/payments.queries.test.js` (`CR-24/CR-26`).]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-25]
+**Título / Descripción:** [Aprobación de Crédito]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Venta de producto" o "Préstamo".]
+* **Resultado Esperado:** [Deberían aparecer las cuotas si son mensuales 30 días corridos.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. Frontend y backend calculan cuotas mensuales con 30 días corridos, no con `setMonth` ni intervalo calendario. Validado con `operation-form.service.spec.ts` y `creditCalculator.test.js`.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-26]
+**Título / Descripción:** [Simulación de Crédito]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Ver Simulación".]
+* **Resultado Esperado:** [Deberían aparecer correctamente las cuotas.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. La simulación y el cronograma generado desde primera cuota respetan 30 días corridos para frecuencia mensual. Validado con `operation-form.service.spec.ts` y `creditCalculator.test.js`.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-27]
+**Título / Descripción:** [Nuevo Crédito]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nueva Operación".]
+* **Resultado Esperado:** [Deberían aparecer correctamente los créditos que posee el cliente.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El paso de cliente muestra resumen enriquecido de créditos, cuotas pagadas/pendientes/vencidas y mora del cliente seleccionado. Validado con `step-client.component.spec.ts`.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-28]
+**Título / Descripción:** [Aprobaciones]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Dashboard.]
+* **Resultado Esperado:** [En la sección "Aprobaciones" debería aparecer la cantidad de operaciones para aprobar.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El dashboard recarga KPIs/listados cuando se aprueba un cobro desde pendientes. Validado con `dashboard.component.spec.ts`.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-29]
+**Título / Descripción:** [Adelanto de cuotas]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Adelanto de cuotas".]
+* **Resultado Esperado:** [Debería permitir ingresar un número menor a la cantidad de cuotas.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El adelanto de cuotas queda acotado al máximo permitido y no permite exceder la cantidad válida. Validado con `operation-form.service.spec.ts` y `step-conditions.component.spec.ts`.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-30]
+**Título / Descripción:** [Resumen de plan]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Semanal", "Quincenal" en un crédito.]
+* **Resultado Esperado:** [Debería cambiar la frecuencia en los datos.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El resumen de plan muestra la frecuencia real seleccionada (semanal, quincenal o mensual). Validado con `step-conditions.component.spec.ts`.]
+
+---
+
+**Módulo:** [Crédito]
+**ID de Prueba:** [CR-31]
+**Título / Descripción:** [Préstamo de efectivo]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Préstamo de efectivo".]
+* **Resultado Esperado:** [El input de "Anticipo / Entrega" no debería aparecer.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. En préstamo de efectivo se limpian y ocultan anticipo/cuotas adelantadas, evitando controles propios de venta. Validado con `operation-form.service.spec.ts`.]
+
+---
+
+
 
 Módulo Clientes
 
@@ -452,6 +581,19 @@ Módulo Clientes
 * **Resultado Obtenido (Error):** [No mantiene el mismo formato que en Admin.]
 
 ---
+
+
+**Módulo:** [Clientes]
+**ID de Prueba:** [CL-18]
+**Título / Descripción:** [Nuevo Cliente]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nuevo Cliente".]
+* **Resultado Esperado:** [Debería no crear el cliente si no tiene un cobrador asignado.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. `assignedCollectorId` es obligatorio en el formulario; si se completan todos los campos pero no se elige cobrador, el botón "Crear Cliente" queda deshabilitado y no se llama a la API. Validado con `client-create-dialog.component.spec.ts` y Cypress real en `cypress/e2e/06-negative-clientes.cy.ts` (caso CL-18).]
+
+---
+
+
 
 Módulo Producto
 
@@ -640,7 +782,7 @@ http://localhost:3000/api/products - POST
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Ingresar Múltiples Variantes".]
 * **Resultado Esperado:** [Al ingresar datos erróneos el mensaje me muestra en "Ingreso individual".]
-* **Resultado Obtenido (Pendiente):** [La feature "Ingresar Múltiples Variantes" no existe en el codebase actual. Requiere implementación desde cero (UI, validación por fila, mapeo de errores por campo). No atacado en esta sesión.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. Feature implementada: tab "Ingresar múltiples" con tabla de filas (COLOR, TALLE, CAPACIDAD, PRECIO, UNITS); filas completamente vacías se ignoran; errores por fila remapeados al índice original de UI; summary de variantes cargadas/suma de precios/total estimado; toast de éxito al confirmar. Ingreso individual: toast adicional en error 409 (duplicado) además del mensaje inline.]
 
 ---
 
@@ -659,6 +801,16 @@ http://localhost:3000/api/products - POST
 * **Acción Realizada:** [Se hizo click en "Nuevo Producto".]
 * **Resultado Esperado:** [El menú desplegable de "Marca" y "Categoría" deberia mostrarse todas las opciones.]
 * **Resultado Obtenido (Pendiente):** [El menú desplegable de "Marca" y "Producto" sale cortado, las últimas opciones no salen.]
+
+---
+
+**Módulo:** [Producto]
+**ID de Prueba:** [PR-16]
+**Título / Descripción:** [Nuevo Variante - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Nueva Variante".]
+* **Resultado Esperado:** [Debería permitirme crear la variante para luego ingresar productos de esa variante.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. Crear variante usa el endpoint `/product-variants` con `product_id` e `initial_units`, sin crear un producto nuevo. Validado con `product-variants.service.spec.ts`.]
 
 ---
 
@@ -704,6 +856,16 @@ Módulo Planilla
 * **Acción Realizada:** [Se hizo click en "Ver Planillas" - "Cobrar" (importe menor que la cuota) o "No Pagó".]
 * **Resultado Esperado:** [Al seleccionar el ícono del calendario, el mismo ocupa toda la pantalla.]
 * **Resultado Obtenido (Error):**[Debería desplegarse un calendario mas pequeño.]
+
+---
+
+**Módulo:** [Planilla]
+**ID de Prueba:** [PL-05]
+**Título / Descripción:** [Generar Planilla]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Generar Planilla" del día.]
+* **Resultado Esperado:** [Debería mostrar las cuotas de ese día.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El filtro `TODAY` ahora incluye cuotas que vencen hoy y visitas agendadas hoy, pero no arrastra mora vieja sin agenda. Validado con `tests/integration/planilla-inclusion-rules.test.js` sobre Postgres local (`9/9`).]
 
 ---
 
@@ -837,7 +999,7 @@ Módulo Caja
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Cierre de caja".]
 * **Resultado Esperado:** [Al pasar las 00:00 debería permitirme cerrar la caja del día anterior.]
-* **Resultado Obtenido (Error):** [Al hacer click en "Cierre de caja" al pasar las 00:00 no me permite cerrar la caja del día anterior.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El cierre con jornada anterior activa valida la jornada comercial y bloquea pre-cargas pendientes salvo `force`; cubierto por `cashRegister.service.test.js`.]
 
 ---
 
@@ -847,7 +1009,37 @@ Módulo Caja
 ### 1. Contexto de la Prueba
 * **Acción Realizada:** [Se hizo click en "Estado".]
 * **Resultado Esperado:** [Debería mostrarme todos los estados de los cierres de cajas.]
-* **Resultado Obtenido (Error):** [Al hacer click en "Estado" sale cortado las opciones de abajo.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El dropdown de estado usa `appendTo="body"` y no queda cortado en el historial de cierres.]
+
+---
+
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-04]
+**Título / Descripción:** [Enganche post-medianoche no aparece en la jornada activa]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [El Admin aprueba una operación con enganche pasada la medianoche (ej: 01:30 AM del día siguiente), cuando la jornada comercial activa sigue siendo el día anterior.]
+* **Resultado Esperado:** [El enganche debería figurar en el dashboard y el cierre de la jornada activa (el día anterior).]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El enganche se persiste con `register_date` de la jornada activa y las consultas de caja lo toman por esa fecha. Validado con `credits.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts`.]
+### 2. Causa Raíz Identificada
+* Resuelta: `credit_down_payments` cuenta con `register_date`; el alta usa `getActiveJornadaDate()` y las consultas de caja filtran por `register_date`.
+### 3. Evidencia de Validación
+* Backend: `credits.service.test.js` valida que el enganche use la jornada activa aunque el día calendario sea otro.
+* E2E: `cypress/e2e/49-ca04-ca05-register-date.cy.ts` valida el dashboard/cierre V4 con jornada anterior.
+
+---
+
+**Módulo:** [Caja]
+**ID de Prueba:** [CA-05]
+**Título / Descripción:** [Gasto post-medianoche no aparece en la jornada activa]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [El Admin registra un gasto pasada la medianoche (ej: 01:30 AM del día siguiente), cuando la jornada comercial activa sigue siendo el día anterior.]
+* **Resultado Esperado:** [El gasto debería descontarse del efectivo esperado en el cierre de la jornada activa (el día anterior).]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. El gasto se persiste con `register_date` de la jornada activa y el cierre V4 lo descuenta del snapshot esperado. Validado con `expenses.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts` (`10/10`).]
+### 2. Causa Raíz Identificada
+* Resuelta: `expenses` cuenta con `register_date`; el alta usa `getActiveJornadaDate()` y las consultas de caja filtran por `register_date`.
+### 3. Evidencia de Validación
+* Backend: `expenses.service.test.js` valida que el gasto use la jornada activa aunque `expense_date` sea otro día.
+* E2E: `cypress/e2e/49-ca04-ca05-register-date.cy.ts` valida el cierre V4 con gastos en el snapshot.
 
 ---
 
@@ -861,6 +1053,95 @@ Módulo Cobro
 * **Acción Realizada:** [Se hizo click en "Acciones" dentro de "Operaciones".]
 * **Resultado Esperado:** [Al cobrar una cuota en y hacer una reversión en la planilla de "Cobros" deberia volver al estado de pendiente.]
 * **Resultado Obtenido (Error):** [Al cobrar una cuota y hacerle una reversión figura "Aprobada".]
+
+---
+
+**Módulo:** [Cobro]
+**ID de Prueba:** [CO-02]
+**Título / Descripción:** [Cobro directo - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cobro directo", se ingresó el ID de cuota, monto completo y método de pago.]
+* **Resultado Esperado:** [Debería registrar y aprobar el cobro en el mismo paso. El banner del dialog dice "El cobro se registra y aprueba en el mismo paso."]
+* **Resultado Obtenido (Error):** [El cobro queda en estado `PENDING` con `admin_direct: false`. No se aprueba automáticamente. El admin debe aprobarlo manualmente desde el listado de cobros.]
+### 2. Evidencia Técnica
+**Payload Enviado (Request):**
+```json
+{
+    "installment_id": "2b138a9b-6caf-410f-bff9-1bf9cf2a937f",
+    "amount_received": 390000,
+    "payment_method": "CASH"
+}
+```
+**Respuesta obtenida:**
+```json
+{
+    "status": "PENDING",
+    "admin_direct": false,
+    "approved_at": null
+}
+```
+
+---
+
+**Módulo:** [Cobro]
+**ID de Prueba:** [CO-03]
+**Título / Descripción:** [Cobro directo parcial - Admin]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se intentó registrar un cobro con monto menor al de la cuota ($39.000 sobre $390.000).]
+* **Resultado Esperado:** [El form debería pedir "Fecha de próxima visita" para cobros parciales, ya que el backend la requiere.]
+* **Resultado Obtenido (Error):** [El campo `nextVisitDate` no existe en el dialog de cobro directo. El backend devuelve 422 "La fecha de próxima visita es obligatoria para cobros parciales." El cobro no puede registrarse.]
+
+---
+
+**Módulo:** [Cobro]
+**ID de Prueba:** [CO-04]
+**Título / Descripción:** [Registrar Cobro - Collector]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Cobrar" en la cuota de la planilla generada.]
+* **Resultado Esperado:** [Debería solo poner números en el campo.]
+* **Resultado Obtenido (Actual):** [Corregido. `@HostListener('keydown')` agregado a `CurrencyAmountInputDirective` bloquea `e`, `E` y `+` antes de que `p-inputNumber` los procese. Aplica a todos los inputs monetarios del sistema. Validado con semilla 08 + sesión manual como COLLECTOR.]
+
+---
+
+**Módulo:** [Cobro]
+**ID de Prueba:** [CO-05]
+**Título / Descripción:** [Cobros por aprobar]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Aprobar" en el dashboard.]
+* **Resultado Esperado:** [Debería salir un cartel que se aprobó un cobro.]
+* **Resultado Obtenido (Actual):** [Corregido / Validado. Al aprobar un precobro desde pendientes se muestra toast de éxito. Validado con `dashboard-pending.component.spec.ts`.]
+
+---
+
+Módulo Liquidaciones
+
+**Módulo:** [Liquidaciones]
+**ID de Prueba:** [LI-01]
+**Título / Descripción:** [Sueldo Fijo]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Sueldo Fijo".]
+* **Resultado Esperado:** [Al poner un importe en "Sueldo Fijo" de un empleado debería mostrarse el nuevo valor.]
+* **Resultado Obtenido (Actual):** [Corregido. `saveSalary()` en `commissions.facade.ts` ahora llama `loadSummary()` tras el PUT exitoso. `salaryRows` es un `computed()` derivado de `employees()` que se recalcula al volver la segunda llamada a `weekly-summary` con los datos actualizados.]
+
+---
+
+**Módulo:** [Liquidaciones]
+**ID de Prueba:** [LI-02]
+**Título / Descripción:** [Sueldo Fijo]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Sueldo Fijo".]
+* **Resultado Esperado:** [Al poner un importe en "Sueldo Fijo" de un empleado el editor de sueldo debería limpiarse.]
+* **Resultado Obtenido (Actual):** [Corregido. Tras el save exitoso, `selectedCollectorId`, `currentSalary` y `newWeeklyAmount` se resetean a `null`. El `p-inputNumber` desaparece y el dropdown vuelve a mostrar el placeholder "Seleccioná un cobrador".]
+
+---
+
+**Módulo:** [Liquidaciones]
+**ID de Prueba:** [LI-03]
+**Título / Descripción:** [Liquidar]
+### 1. Contexto de la Prueba
+* **Acción Realizada:** [Se hizo click en "Liquidar".]
+* **Resultado Esperado:** [Al hacer click en "Liquidar" debería mostrar cuáles fueron las ventas para corroborar la liquidación.]
+* **Resultado Obtenido (Actual):** [Corregido. `openLiquidateDialog()` carga las comisiones PENDING del empleado vía `getCommissions({ userId, status: 'PENDING' })` y las guarda en `employeeCommissions` signal. El dialog muestra una tabla "Ventas incluidas" con columnas Cliente / Venta / Comisión, y un estado vacío "Sin ventas pendientes." cuando no hay comisiones.]
 
 ---
 
@@ -980,5 +1261,39 @@ Módulo Cobro
 - `src/app/features/admin/users/user-create/user-create.component.spec.ts` → US-03: validators fullName y DNI
 - `src/app/features/seller/products/product-edit/product-edit.component.spec.ts` → PR-10: dirty check (actualizado)
 - `src/app/shared/clients/clients.component.spec.ts` → CL-11/12/13/14: validators y mapeo delinquency (actualizado)
+
+### Sesión 6 (CO-04 aislado)
+- **CO-04** → Corregido / validado — `@HostListener('keydown')` en `CurrencyAmountInputDirective` bloquea `e`, `E`, `+`; aplica globalmente a todos los inputs monetarios
+
+### Sesión 7 (LI-01, LI-02, LI-03)
+- **LI-01** → Corregido / validado — `saveSalary()` llama `loadSummary()` tras el PUT; tabla se actualiza sin refresh manual
+- **LI-02** → Corregido / validado — signals `selectedCollectorId`, `currentSalary`, `newWeeklyAmount` reseteados a `null` tras save; editor queda limpio
+- **LI-03** → Corregido / validado — `openLiquidateDialog()` carga comisiones PENDING vía `getCommissions`; dialog muestra tabla "Ventas incluidas" con Cliente / Venta / Comisión
+- Tests Cypress → `cypress/e2e/45-liquidaciones-regression.cy.ts` — 4 tests automatizados (LI-01, LI-02, LI-03 ×2)
+
+### Sesión 8 (CO-01)
+- **CO-01** → Corregido / validado — backend `restoreInstallmentFromReversal` actualiza `installment.status` a PENDING/OVERDUE/PARTIAL tras reversión; UI muestra "Revertido" en lista de cobros y "Pendiente" en planilla
+- Tests Cypress → `cypress/e2e/46-cobros-regression.cy.ts` — 4 tests automatizados (CO-01a: tag "Revertido", CO-01b: tag "Pendiente" en planilla)
+
+### Sesión 9 (CA-02 / CA-04 / CA-05)
+- **CA-02** → Corregido — implementado concepto de Jornada Comercial para corregir el cierre de caja pasada la medianoche
+  - Backend: `findUnclosedJornadaDate()` en cashRegister.queries.js busca la fecha más reciente con actividad sin cierre (hasta 14 días atrás)
+  - Backend: `getActiveJornadaDate()` en cashRegister.service.js determina la jornada activa; `getDashboard`, `getPreClose`, `close` usan esta fecha cuando no reciben fecha explícita
+  - Backend: `approve` y `adminDirect` en payments.service.js usan `getActiveJornadaDate()` para `_validateCajaOpen` y `registerDate` del movimiento de caja
+  - Backend: `reverse` simplificado — valida y registra contra `movement.register_date` (la jornada del cobro original)
+  - Frontend: getter `isPostMidnightJornada` y badge de advertencia `[data-cy="jornada-post-midnight-badge"]` en el panel de caja
+- Tests Cypress → `cypress/e2e/47-jornada-regression.cy.ts` — 8 tests automatizados (CA-02a: badge jornada, CA-02b: cierre post-medianoche, CA-02c: aprobación post-medianoche, CA-02d: reversión post-medianoche)
+- **CA-04** → Corregido / validado — enganches post-medianoche se imputan a `register_date` de la jornada activa; cubierto por `credits.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts`
+- **CA-05** → Corregido / validado — gastos post-medianoche se imputan a `register_date` de la jornada activa; cubierto por `expenses.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts`
+
+### Sesión 10 (QA bugs abiertos CR-24 a CR-31, PR-16, PL-05, CO-05)
+- **CR-24 / CR-25 / CR-26** → Corregido / validado — frecuencia mensual usa 30 días corridos en frontend, backend y reprogramación por adelanto
+- **CR-27** → Corregido / validado — resumen enriquecido de créditos del cliente en nueva operación
+- **CR-28** → Corregido / validado — dashboard refresca KPIs/listados tras aprobar cobros
+- **CR-29 / CR-30 / CR-31** → Corregido / validado — adelanto acotado, frecuencia real en resumen y préstamo sin anticipo
+- **PR-16** → Corregido / validado — alta de variante usa `/product-variants`, no crea producto dummy
+- **PL-05** → Corregido / validado — planilla `TODAY` muestra cuotas del día y visitas de hoy, no mora vieja sin agenda; integración Postgres local `planilla-inclusion-rules.test.js` pasó `9/9`
+- **CO-05** → Corregido / validado — toast de aprobación de precobro cubierto por `dashboard-pending.component.spec.ts`
+- Tests focalizados: frontend QA `85/85`, backend unit focalizados `13/13`, Cypress `49-ca04-ca05-register-date.cy.ts` `10/10`, integración `PL-05` `9/9`
 
 ---

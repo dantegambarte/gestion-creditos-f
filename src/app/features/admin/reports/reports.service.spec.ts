@@ -334,4 +334,137 @@ describe('ReportsService', () => {
       expect((params as Record<string, string>)['days']).toBeUndefined();
     });
   });
+
+  describe('getCashMovementsReport', () => {
+    const mockCashMovementsRaw = {
+      summary: {
+        total_movements: 1,
+        total_collections: 5000,
+        total_down_payments: 0,
+        total_expenses: 0,
+        total_drops: 0,
+      },
+      rows: [
+        {
+          id: 'mov-1',
+          type: 'COBRO',
+          occurred_at: '2026-06-10T10:00:00.000Z',
+          cash_session_id: 'cs-1',
+          business_date: '2026-06-10',
+          branch_name: 'Sucursal Centro',
+          shift_label: 'Mañana',
+          amount: 5000,
+          payment_method: 'MIXED',
+          description: 'Cobro cuota #1 · Juan Pérez',
+          performed_by_name: 'Admin',
+          transfer_reference: 'TR-1',
+          customer_id: 'cust-1',
+          customer_name: 'Juan Pérez',
+          customer_dni: '30111222',
+          credit_id: 'credit-1',
+          credit_type: 'SALE',
+          installment_id: 'inst-1',
+          installment_number: 1,
+          expense_category_id: null,
+          expense_category_name: null,
+          expense_source: null,
+          drop_destination: null,
+          drop_reason: null,
+          drop_status: null,
+          receipt_reference: null,
+          conversion_source_method: null,
+          conversion_target_method: null,
+          conversion_criteria: null,
+          product_summary: 'Moto 110 · U-001',
+        },
+      ],
+    };
+
+    it('mapea el detalle enriquecido de movimientos a camelCase', (done) => {
+      apiSpy.get.and.returnValue(of(mockCashMovementsRaw));
+
+      service.getCashMovementsReport('cs-1').subscribe((r) => {
+        expect(r.summary.totalMovements).toBe(1);
+        expect(r.rows[0].paymentMethod).toBe('MIXED');
+        expect(r.rows[0].customerName).toBe('Juan Pérez');
+        expect(r.rows[0].creditType).toBe('SALE');
+        expect(r.rows[0].installmentNumber).toBe(1);
+        expect(r.rows[0].transferReference).toBe('TR-1');
+        expect(r.rows[0].productSummary).toBe('Moto 110 · U-001');
+        done();
+      });
+    });
+  });
+
+  describe('getGeneralCashMovementsReport', () => {
+    const mockGeneralRaw = {
+      summary: { total_movements: 2, total_in: 1200, total_out: 500 },
+      rows: [
+        {
+          id: 'gm-1',
+          movement_type: 'MANUAL_INCOME',
+          direction: 'IN',
+          amount: 1200,
+          amount_cash: 1200,
+          amount_transfer: 0,
+          description: 'Aporte de capital',
+          beneficiary_name: null,
+          reference_type: null,
+          reference_id: null,
+          created_at: '2026-06-17T10:00:00.000Z',
+          performed_by_name: 'Admin',
+        },
+      ],
+    };
+
+    it('mapea summary y rows a camelCase', (done) => {
+      apiSpy.get.and.returnValue(of(mockGeneralRaw));
+
+      service
+        .getGeneralCashMovementsReport({
+          dateFrom: '2026-06-01',
+          dateTo: '2026-06-17',
+        })
+        .subscribe((r) => {
+          expect(r.summary).toEqual({
+            totalMovements: 2,
+            totalIn: 1200,
+            totalOut: 500,
+          });
+          expect(r.rows[0].movementType).toBe('MANUAL_INCOME');
+          expect(r.rows[0].direction).toBe('IN');
+          expect(r.rows[0].performedByName).toBe('Admin');
+          done();
+        });
+    });
+
+    it('envía date_from y date_to como params', () => {
+      apiSpy.get.and.returnValue(of(mockGeneralRaw));
+
+      service
+        .getGeneralCashMovementsReport({
+          dateFrom: '2026-06-01',
+          dateTo: '2026-06-17',
+        })
+        .subscribe(() => {});
+
+      const [path, params] = apiSpy.get.calls.mostRecent().args;
+      expect(path).toBe('reports/general-cash-movements');
+      expect(params).toEqual({
+        date_from: '2026-06-01',
+        date_to: '2026-06-17',
+      });
+    });
+
+    it('falla con 400 si falta dateFrom o dateTo', (done) => {
+      service
+        .getGeneralCashMovementsReport({ dateFrom: '', dateTo: '2026-06-17' })
+        .subscribe({
+          error: (err) => {
+            expect(err.status).toBe(400);
+            done();
+          },
+        });
+    });
+  });
 });

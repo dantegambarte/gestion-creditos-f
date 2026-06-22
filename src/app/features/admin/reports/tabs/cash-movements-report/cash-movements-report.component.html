@@ -1,0 +1,677 @@
+<div class="space-y-6">
+  <div>
+    <label class="mb-1 block text-xs text-[var(--ff-text-secondary)]"
+      >Ámbito</label
+    >
+    <div class="flex gap-2">
+      @for (opt of scopeOptions; track opt.value) {
+        <button
+          type="button"
+          class="h-10 rounded-lg px-4 text-sm font-semibold transition"
+          [class]="
+            scope === opt.value
+              ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
+              : 'border border-[var(--ff-border)] bg-[var(--ff-panel)] text-[var(--ff-text-secondary)] hover:bg-[var(--ff-panel-raised)]'
+          "
+          (click)="onScopeChange(opt.value)"
+        >
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="flex flex-wrap items-end gap-3">
+    <div>
+      <label class="mb-1 block text-xs text-[var(--ff-text-secondary)]"
+        >Desde</label
+      >
+      <p-calendar
+        [(ngModel)]="dateFrom"
+        dataType="string"
+        dateFormat="yy-mm-dd"
+        [showIcon]="true"
+        iconDisplay="input"
+        appendTo="body"
+        styleClass="w-44"
+        inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs text-[var(--ff-text-secondary)]"
+        >Hasta</label
+      >
+      <p-calendar
+        [(ngModel)]="dateTo"
+        dataType="string"
+        dateFormat="yy-mm-dd"
+        [showIcon]="true"
+        iconDisplay="input"
+        appendTo="body"
+        styleClass="w-44"
+        inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
+      />
+    </div>
+    <p-button
+      [label]="scope === 'GENERAL' ? 'Buscar movimientos' : 'Buscar jornadas'"
+      icon="pi pi-search"
+      [disabled]="!rangeValid"
+      [loading]="scope === 'GENERAL' ? loadingGeneralReport : loadingDays"
+      styleClass="h-10 px-4 rounded-lg"
+      (onClick)="consult()"
+    />
+  </div>
+
+  @if (dateError) {
+    <p class="flex items-center gap-1.5 text-sm text-red-400">
+      <i class="pi pi-exclamation-circle"></i> {{ dateError }}
+    </p>
+  }
+
+  @if (scope === "GENERAL") {
+    @if (loadingGeneralReport) {
+      <app-loading-state />
+    } @else if (generalReportError) {
+      <app-error-state [message]="generalReportError.message" />
+    } @else if (generalReport) {
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div
+          class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4"
+        >
+          <p class="text-xs text-[var(--ff-text-secondary)]">Movimientos</p>
+          <p class="mt-1 text-xl font-bold text-[var(--ff-text-primary)]">
+            {{ generalReport.summary.totalMovements }}
+          </p>
+        </div>
+        <div
+          class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4"
+        >
+          <p class="text-xs text-[var(--ff-text-secondary)]">Total ingresos</p>
+          <p class="mt-1 text-xl font-bold text-emerald-300">
+            {{ formatCurrency(generalReport.summary.totalIn) }}
+          </p>
+        </div>
+        <div
+          class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4"
+        >
+          <p class="text-xs text-[var(--ff-text-secondary)]">Total egresos</p>
+          <p class="mt-1 text-xl font-bold text-red-300">
+            {{ formatCurrency(generalReport.summary.totalOut) }}
+          </p>
+        </div>
+      </div>
+
+      @if (generalReport.rows.length === 0) {
+        <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+          No hay movimientos de Caja General en el período seleccionado.
+        </p>
+      } @else {
+        <div
+          class="overflow-x-auto rounded-xl border border-[var(--ff-border)]"
+        >
+          <table class="w-full text-sm">
+            <thead
+              class="bg-[var(--ff-panel)] text-xs uppercase text-[var(--ff-text-secondary)]"
+            >
+              <tr>
+                <th class="px-4 py-3 text-left">Fecha</th>
+                <th class="px-4 py-3 text-left">Tipo</th>
+                <th class="px-4 py-3 text-left">Dirección</th>
+                <th class="px-4 py-3 text-right">Monto</th>
+                <th class="px-4 py-3 text-left">Descripción</th>
+                <th class="px-4 py-3 text-left">Beneficiario</th>
+                <th class="px-4 py-3 text-left">Usuario</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[var(--ff-border)]">
+              @for (row of generalReport.rows; track row.id) {
+                <tr class="hover:bg-[var(--ff-panel-raised)]">
+                  <td class="whitespace-nowrap px-4 py-3">
+                    {{ formatDateTime(row.createdAt) }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="rounded-full px-2.5 py-1 text-xs font-semibold"
+                      [class]="
+                        'bg-[var(--ff-secondary)] text-[var(--ff-text-secondary)]'
+                      "
+                      >{{ generalTypeLabel(row.movementType) }}</span
+                    >
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="rounded-full px-2.5 py-1 text-xs font-semibold"
+                      [class]="directionBadgeClasses(row.direction)"
+                      >{{ row.direction === "IN" ? "Ingreso" : "Egreso" }}</span
+                    >
+                  </td>
+                  <td class="whitespace-nowrap px-4 py-3 text-right font-semibold">
+                    {{ formatCurrency(row.amount) }}
+                  </td>
+                  <td class="px-4 py-3">{{ row.description || "—" }}</td>
+                  <td class="px-4 py-3">{{ row.beneficiaryName || "—" }}</td>
+                  <td class="px-4 py-3">{{ row.performedByName || "—" }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  } @else if (loadingDays) {
+    <app-loading-state />
+  } @else if (daysError) {
+    <app-error-state [message]="daysError.message" />
+  } @else if (businessDays.length === 0) {
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+      No hay jornadas en el período seleccionado.
+    </p>
+  } @else {
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="w-72">
+        <label class="mb-1 block text-xs text-[var(--ff-text-secondary)]"
+          >Jornada</label
+        >
+        <p-dropdown
+          [options]="businessDayOptions"
+          [ngModel]="selectedBusinessDayId"
+          (ngModelChange)="onSelectBusinessDay($event)"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Seleccioná una jornada"
+          [filter]="businessDayOptions.length > 10"
+          filterBy="label"
+          styleClass="w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] text-[var(--ff-text-primary)]"
+          panelStyleClass="bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)]"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+    </div>
+
+    @if (selectedBusinessDayId && loadingSessions) {
+      <app-loading-state />
+    } @else if (sessionsError) {
+      <app-error-state [message]="sessionsError.message" />
+    } @else if (selectedBusinessDayId && sessions.length === 0) {
+      <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+        Esta jornada no tiene una caja registrada.
+      </p>
+    }
+  }
+
+  @if (selectedSessionId) {
+    @if (loadingReport) {
+      <app-loading-state />
+    } @else if (reportError) {
+      <app-error-state [message]="reportError.message" />
+    } @else if (report) {
+      <div class="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+          >
+            Movimientos
+          </p>
+          <p class="text-xl font-extrabold text-[var(--ff-text-primary)]">
+            {{ report.summary.totalMovements }}
+          </p>
+        </div>
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+          >
+            Cobros
+          </p>
+          <p class="text-xl font-extrabold text-emerald-300 font-mono">
+            {{ formatCurrency(report.summary.totalCollections) }}
+          </p>
+        </div>
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+          >
+            Enganches
+          </p>
+          <p class="text-xl font-extrabold text-emerald-300 font-mono">
+            {{ formatCurrency(report.summary.totalDownPayments) }}
+          </p>
+        </div>
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+          >
+            Gastos
+          </p>
+          <p class="text-xl font-extrabold text-red-300 font-mono">
+            {{ formatCurrency(report.summary.totalExpenses) }}
+          </p>
+        </div>
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+          >
+            Drops
+          </p>
+          <p
+            class="font-mono text-xl font-extrabold text-[var(--ff-text-primary)]"
+          >
+            {{ formatCurrency(report.summary.totalDrops) }}
+          </p>
+        </div>
+      </div>
+
+      @if (report.rows.length === 0) {
+        <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+          Esta caja no tiene movimientos registrados.
+        </p>
+      } @else {
+        <div
+          class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+        >
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-[var(--ff-border-subtle)]">
+                <th
+                  class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Fecha
+                </th>
+                <th
+                  class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Tipo
+                </th>
+                <th
+                  class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Método
+                </th>
+                <th
+                  class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Monto
+                </th>
+                <th
+                  class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Detalle
+                </th>
+                <th
+                  class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Usuario
+                </th>
+                <th
+                  class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Acción
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of report.rows; track row.id) {
+                <tr
+                  class="border-b border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
+                >
+                  <td
+                    class="px-5 py-3 font-mono text-[var(--ff-text-secondary)]"
+                  >
+                    {{ formatDateTime(row.occurredAt) }}
+                  </td>
+                  <td class="px-5 py-3">
+                    <span
+                      class="text-[10px] uppercase tracking-widest px-2 py-1 rounded-md font-semibold {{
+                        typeBadgeClasses(row.type)
+                      }}"
+                    >
+                      {{ typeLabel(row.type) }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                    {{ methodLabel(row.paymentMethod) }}
+                  </td>
+                  <td
+                    class="px-5 py-3 text-right font-mono font-semibold text-blue-400"
+                  >
+                    {{ formatCurrency(row.amount) }}
+                  </td>
+                  <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                    {{ row.description }}
+                  </td>
+                  <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                    {{ row.performedByName || "—" }}
+                  </td>
+                  <td class="px-5 py-3 text-right">
+                    <button
+                      type="button"
+                      class="inline-flex h-9 items-center justify-center rounded-lg border border-cyan-400/20 px-3 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-400/10 hover:text-cyan-200"
+                      (click)="openMovementDetail(row)"
+                    >
+                      Ver detalle
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  }
+</div>
+
+<p-dialog
+  [visible]="!!selectedMovement"
+  (visibleChange)="$event ? null : closeMovementDetail()"
+  [modal]="true"
+  [showHeader]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '720px', maxWidth: '95vw' }"
+  styleClass="!bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
+  contentStyleClass="!bg-[var(--ff-panel)] p-0 border-none"
+>
+  @if (selectedMovement; as movement) {
+    <section
+      class="overflow-hidden rounded-2xl bg-[var(--ff-panel)] text-[var(--ff-text-primary)]"
+    >
+      <header
+        class="flex items-start justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
+      >
+        <div>
+          <p
+            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300"
+          >
+            Movimiento de caja
+          </p>
+          <h2 class="mt-1 text-xl font-bold text-[var(--ff-text-primary)]">
+            {{ typeLabel(movement.type) }} ·
+            {{ formatCurrency(movement.amount) }}
+          </h2>
+          <p class="mt-1 text-sm text-[var(--ff-text-secondary)]">
+            {{ formatDateTime(movement.occurredAt) }} ·
+            {{ methodLabel(movement.paymentMethod) }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ff-secondary)] text-[var(--ff-text-secondary)] transition hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
+          (click)="closeMovementDetail()"
+        >
+          <i class="pi pi-times"></i>
+        </button>
+      </header>
+
+      <div class="space-y-4 px-6 py-5">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3"
+          >
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+            >
+              Tipo
+            </p>
+            <p class="mt-1 font-semibold text-[var(--ff-text-primary)]">
+              {{ typeLabel(movement.type) }}
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3"
+          >
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+            >
+              Método
+            </p>
+            <p class="mt-1 font-semibold text-[var(--ff-text-primary)]">
+              {{ methodLabel(movement.paymentMethod) }}
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3"
+          >
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+            >
+              Usuario
+            </p>
+            <p class="mt-1 font-semibold text-[var(--ff-text-primary)]">
+              {{ movement.performedByName || "—" }}
+            </p>
+          </div>
+        </div>
+
+        <div
+          class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+        >
+          <p
+            class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+          >
+            Detalle
+          </p>
+          <p class="mt-2 text-sm text-[var(--ff-text-primary)]">
+            {{ movement.description || "—" }}
+          </p>
+        </div>
+
+        @if (hasCommercialContext(movement)) {
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <h3 class="text-sm font-bold text-[var(--ff-text-primary)]">
+                Origen comercial
+              </h3>
+              @if (canOpenOperation(movement)) {
+                <button
+                  type="button"
+                  class="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-cyan-400 px-3 text-xs font-bold text-[#071018] transition hover:bg-cyan-300"
+                  (click)="openOperation(movement)"
+                >
+                  <i class="pi pi-arrow-up-right"></i>
+                  Ir a operación
+                </button>
+              }
+            </div>
+            <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Cliente
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ movement.customerName || "—" }}
+                  @if (movement.customerDni) {
+                    <span class="text-[var(--ff-text-muted)]"
+                      >· DNI {{ movement.customerDni }}</span
+                    >
+                  }
+                </p>
+              </div>
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Crédito
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ creditTypeLabel(movement.creditType) }}
+                  @if (movement.installmentNumber) {
+                    <span class="text-[var(--ff-text-muted)]"
+                      >· Cuota #{{ movement.installmentNumber }}</span
+                    >
+                  }
+                </p>
+              </div>
+              @if (movement.productSummary) {
+                <div class="md:col-span-2">
+                  <p
+                    class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                  >
+                    Producto / unidad
+                  </p>
+                  <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                    {{ movement.productSummary }}
+                  </p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (movement.type === "GASTO") {
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          >
+            <h3 class="text-sm font-bold text-[var(--ff-text-primary)]">
+              Datos del gasto
+            </h3>
+            <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Categoría
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ movement.expenseCategoryName || "Sin categoría" }}
+                </p>
+              </div>
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Origen
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ movement.expenseSource || "—" }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (movement.type === "DROP") {
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          >
+            <h3 class="text-sm font-bold text-[var(--ff-text-primary)]">
+              Datos del drop
+            </h3>
+            <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Destino
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ movement.dropDestination || "Caja General" }}
+                </p>
+              </div>
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Estado
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ movement.dropStatus || "—" }}
+                </p>
+              </div>
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Referencia
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ movement.receiptReference || "—" }}
+                </p>
+              </div>
+              <div class="md:col-span-3">
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Motivo
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ movement.dropReason || "—" }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (movement.type === "CONVERSION") {
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          >
+            <h3 class="text-sm font-bold text-[var(--ff-text-primary)]">
+              Datos de conversión
+            </h3>
+            <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Desde
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ methodLabel(movement.conversionSourceMethod || "") }}
+                </p>
+              </div>
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Hacia
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ methodLabel(movement.conversionTargetMethod || "") }}
+                </p>
+              </div>
+              <div>
+                <p
+                  class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+                >
+                  Criterio
+                </p>
+                <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+                  {{ movement.conversionCriteria || "—" }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (movement.transferReference) {
+          <div
+            class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          >
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-muted)]"
+            >
+              Referencia transferencia
+            </p>
+            <p class="mt-1 text-sm text-[var(--ff-text-primary)]">
+              {{ movement.transferReference }}
+            </p>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</p-dialog>

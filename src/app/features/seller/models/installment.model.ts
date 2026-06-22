@@ -34,7 +34,9 @@ export interface ApplyPenaltyPayload {
 }
 
 export interface EarlyPayPayload {
-  paymentMethod: 'CASH' | 'TRANSFER';
+  paymentMethod?: 'CASH' | 'TRANSFER' | 'MIXED';
+  amountCash?: number;
+  amountTransfer?: number;
   transferReference?: string;
 }
 

@@ -1,0 +1,310 @@
+<div
+  class="w-[480px] max-w-[95vw] flex-shrink-0 border-l overflow-y-auto"
+  style="
+    border-color: var(--ff-border);
+    background: var(--ff-panel-raised);
+    color: var(--ff-text-primary);
+  "
+>
+  <!-- Form registrar / editar gasto -->
+  <div class="p-5 pt-3 space-y-4">
+    <div class="flex items-center justify-between">
+      <h2 class="text-base font-semibold">
+        {{
+          showCats
+            ? "Categorías de gastos"
+            : isEditMode
+              ? "Editar gasto"
+              : "Registrar gasto"
+        }}
+      </h2>
+      <button
+        type="button"
+        class="w-8 h-8 rounded-lg border transition-colors flex items-center justify-center"
+        style="
+          border-color: var(--ff-border);
+          color: var(--ff-text-secondary);
+          background: var(--ff-secondary);
+        "
+        title="Cerrar"
+        (click)="close()"
+      >
+        <i class="pi pi-times text-sm"></i>
+      </button>
+    </div>
+
+    @if (showCats) {
+      <app-expense-category-manager
+        (categoriesChanged)="categoriesChanged.emit()"
+      />
+    } @else {
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Monto ($)</label>
+        <div class="block w-full max-w-[230px]">
+          <p-inputNumber
+            [(ngModel)]="createAmount"
+            mode="decimal"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="2"
+            [min]="0.01"
+            placeholder="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+          />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Descripción</label>
+        <input
+          pInputText
+          [(ngModel)]="createDescription"
+          maxlength="255"
+          class="w-full h-11 px-3"
+          placeholder="Descripción del gasto..."
+        />
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Fecha del gasto</label>
+        <p-calendar
+          [(ngModel)]="createExpenseDate"
+          dataType="string"
+          dateFormat="yy-mm-dd"
+          [showIcon]="true"
+          iconDisplay="input"
+          appendTo="body"
+          [minDate]="todayDate"
+          [maxDate]="todayDate"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 px-3"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="auth-label">Categoría</label>
+        <p-dropdown
+          [options]="createCategoryOptions"
+          [(ngModel)]="createCategoryId"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="w-full"
+          placeholder="Seleccionar categoría..."
+          [filter]="createCategoryOptions.length > 10"
+          filterBy="label"
+          [showClear]="true"
+          appendTo="body"
+        />
+      </div>
+
+      @if (!isEditMode) {
+        <div class="flex flex-col gap-2">
+          <label class="auth-label">Origen del gasto</label>
+          <div class="flex gap-4">
+            @for (opt of sourceOptions; track opt.value) {
+              <label
+                class="flex items-center gap-2 cursor-pointer text-sm ff-text-secondary"
+              >
+                <p-radioButton
+                  name="expenseSource"
+                  [value]="opt.value"
+                  [(ngModel)]="createSource"
+                  [inputId]="'src_' + opt.value"
+                  [disabled]="opt.value === 'DAILY' && !hasActiveSession"
+                />
+                <span>{{ opt.label }}</span>
+              </label>
+            }
+          </div>
+          <div
+            class="pl-1 text-xs opacity-60"
+            style="color: var(--ff-text-secondary)"
+          >
+            @if (createSource === "DAILY" && dailyAvailable !== null) {
+              <span
+                >Disponible en Caja del día:
+                {{ fmt.currency(dailyAvailable) }}</span
+              >
+            }
+            @if (createSource === "COMPANY" && generalAvailable !== null) {
+              <span
+                >Disponible en Caja General:
+                {{ fmt.currency(generalAvailable) }}</span
+              >
+            }
+          </div>
+        </div>
+      }
+
+      <div class="flex flex-col gap-2">
+        <label class="auth-label">Método de pago</label>
+        <div class="flex gap-4">
+          <label
+            class="flex items-center gap-2 cursor-pointer text-sm ff-text-secondary"
+          >
+            <p-radioButton
+              name="paymentMethod"
+              value="CASH"
+              [(ngModel)]="createPaymentMethod"
+              inputId="pm_cash"
+            />
+            <span>Efectivo</span>
+          </label>
+          <label
+            class="flex items-center gap-2 cursor-pointer text-sm ff-text-secondary"
+          >
+            <p-radioButton
+              name="paymentMethod"
+              value="TRANSFER"
+              [(ngModel)]="createPaymentMethod"
+              inputId="pm_transfer"
+            />
+            <span>Transferencia</span>
+          </label>
+        </div>
+      </div>
+
+      @if (createPaymentMethod === "TRANSFER") {
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Referencia</label>
+          <input
+            pInputText
+            [(ngModel)]="createTransferRef"
+            maxlength="100"
+            class="w-full h-11 px-3"
+            placeholder="Nro. de operación..."
+          />
+        </div>
+      }
+
+      @if (createError) {
+        <p
+          class="text-xs rounded-lg px-3 py-2"
+          style="background: rgba(248, 113, 113, 0.12); color: var(--ff-danger)"
+        >
+          {{ createError }}
+        </p>
+      }
+
+      <p-button
+        [label]="isEditMode ? 'Guardar cambios' : 'Registrar gasto'"
+        styleClass="w-full justify-center py-2.5 mt-3"
+        [loading]="saving"
+        [disabled]="
+          !createAmount ||
+          createAmount <= 0 ||
+          !createDescription.trim() ||
+          (createPaymentMethod === 'TRANSFER' && !createTransferRef.trim())
+        "
+        (onClick)="submitCreate()"
+      />
+
+      @if (isEditMode) {
+        <div class="grid grid-cols-2 gap-3">
+          <p-button
+            label="Cancelar edición"
+            severity="secondary"
+            [outlined]="true"
+            styleClass="w-full py-2 !bg-transparent !border !border-[var(--ff-border)] !text-[var(--ff-text-secondary)] hover:!bg-[var(--ff-surface-hover)] hover:!text-[var(--ff-text-primary)]"
+            (onClick)="resetForm()"
+          />
+          <p-button
+            label="Eliminar"
+            [outlined]="true"
+            styleClass="w-full py-2 !bg-transparent !border !border-[rgba(248,113,113,0.7)] !text-[var(--ff-danger)] hover:!bg-[rgba(248,113,113,0.1)]"
+            (onClick)="removeSelectedExpense()"
+          />
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Resumen del período -->
+  @if (showStats) {
+    <div class="px-5 pb-5">
+      <div
+        class="rounded-xl border p-4 space-y-3"
+        style="border-color: var(--ff-border); background: var(--ff-secondary)"
+      >
+        <h2
+          class="text-xs font-semibold uppercase tracking-wider"
+          style="color: var(--ff-text-secondary)"
+        >
+          Resumen del período
+        </h2>
+        <div class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+          <div>
+            <div class="text-xs ff-text-muted">Total gastos</div>
+            <div class="font-bold font-mono" style="color: var(--ff-danger)">
+              {{ fmt.currency(periodTotal) }}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs ff-text-muted">Cantidad</div>
+            <div class="font-bold">{{ totalCount }} registros</div>
+          </div>
+          <div>
+            <div class="text-xs ff-text-muted">Mayor gasto</div>
+            @if (periodMax) {
+              <div class="font-bold font-mono">
+                {{ fmt.currency(periodMax.amount) }}
+                <span class="font-normal ff-text-secondary text-xs ml-1">{{
+                  periodMax.categoryName ?? ""
+                }}</span>
+              </div>
+            }
+          </div>
+          <div>
+            <div class="text-xs ff-text-muted">Más frecuente</div>
+            <div class="font-bold">{{ periodMostFrequent }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Dialog: confirmar eliminación -->
+<p-dialog
+  [(visible)]="showConfirmDelete"
+  [modal]="true"
+  [style]="{ width: '380px' }"
+  header="Eliminar gasto"
+>
+  <div class="py-2 space-y-3">
+    <div
+      class="flex items-start gap-2 rounded-lg border p-3"
+      style="
+        border-color: rgba(248, 113, 113, 0.35);
+        background: rgba(248, 113, 113, 0.12);
+      "
+    >
+      <i
+        class="pi pi-exclamation-triangle mt-0.5"
+        style="color: var(--ff-danger)"
+      ></i>
+      <p class="text-sm font-semibold" style="color: var(--ff-danger)">
+        Esta acción no se puede deshacer.
+      </p>
+    </div>
+    <p class="text-sm ff-text-secondary">
+      ¿Confirmás la eliminación de este gasto?
+    </p>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="showConfirmDelete = false"
+      [disabled]="deleting"
+    />
+    <p-button
+      label="Eliminar"
+      severity="danger"
+      icon="pi pi-trash"
+      (onClick)="doDelete()"
+      [loading]="deleting"
+    />
+  </ng-template>
+</p-dialog>

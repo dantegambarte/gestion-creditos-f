@@ -3,25 +3,21 @@ import { FormsModule } from '@angular/forms';
 import { jsPDF } from 'jspdf';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
-import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
-import { SkeletonModule } from 'primeng/skeleton';
-import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { TooltipModule } from 'primeng/tooltip';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
+import { DateService } from '../../../core/services/date.service';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
-import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { CollectionsService } from '../../collector/collections.service';
 import {
   COLLECTION_FILTER_LABELS,
   CollectionFilter,
+  CollectionGenerateResult,
   CollectionSheet,
   CollectionSheetDetail,
 } from '../../collector/models/collection.model';
@@ -30,6 +26,8 @@ import {
   PlanillaEntry,
 } from '../models/interface/sheet';
 import { UsersService } from '../users/users.service';
+import { SheetHistoryComponent } from './sheet-history/sheet-history.component';
+import { SheetReviewDialogComponent } from './sheet-review-dialog/sheet-review-dialog.component';
 
 @Component({
   selector: 'app-sheet',
@@ -37,16 +35,12 @@ import { UsersService } from '../users/users.service';
   imports: [
     FormsModule,
     ButtonModule,
+    CalendarModule,
     CardModule,
-    DialogModule,
     DropdownModule,
-    SkeletonModule,
-    TableModule,
-    TagModule,
     ToastModule,
-    TooltipModule,
-    LoadingStateComponent,
-    ErrorStateComponent,
+    SheetHistoryComponent,
+    SheetReviewDialogComponent,
   ],
   providers: [MessageService],
   templateUrl: './sheet.component.html',
@@ -58,12 +52,13 @@ export class SheetComponent implements OnInit, OnDestroy {
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
   readonly format = inject(FormatService);
+  private readonly dateSvc = inject(DateService);
   private destroy$ = new Subject<void>();
 
   collectorOptions: { label: string; value: string }[] = [];
   selectedCollectorId: string | null = null;
 
-  selectedDate: string = new Date().toISOString().split('T')[0];
+  selectedDate: string = '';
   selectedFilter: CollectionFilter = 'OVERDUE';
   filterOptions: { label: string; value: CollectionFilter }[] = [
     { label: 'Solo vencidas', value: 'OVERDUE' },
@@ -80,10 +75,10 @@ export class SheetComponent implements OnInit, OnDestroy {
   loadingHistorial = true;
 
   showReviewDialog = false;
-  reviewSheetDetail: CollectionSheetDetail | null = null;
-  loadingReview = false;
+  selectedSheetId: string | null = null;
 
   ngOnInit(): void {
+    this.selectedDate = this.dateSvc.toLocalIso(new Date());
     this.header.set([{ label: 'Planilla' }]);
     this.usersService
       .listCollectors()
@@ -104,7 +99,7 @@ export class SheetComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga el historial de planillas generadas, mostrando un estado de carga mientras se realiza la petición y actualizando la lista de planillas al finalizar. En caso de error, simplemente oculta el estado de carga sin modificar el historial (se asume que el error se maneja a nivel global o con un interceptor).
+   * Carga el historial de planillas generadas.
    */
   loadHistorial(): void {
     this.loadingHistorial = true;
@@ -125,7 +120,7 @@ export class SheetComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Genera una planilla para el cobrador seleccionado evitando reentradas mientras ya hay una generación en curso.
+   * Genera una planilla para el cobrador seleccionado.
    */
   generatePlanilla(): void {
     if (!this.selectedCollectorId || this.generating || this.generatingAll)
@@ -145,7 +140,10 @@ export class SheetComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (result) => {
-          this.results = [this.mapDetailToResult(result.sheet), ...this.results];
+          this.results = [
+            this.mapDetailToResult((result as CollectionGenerateResult).sheet),
+            ...this.results,
+          ];
           this.loadHistorial();
         },
         error: (err: AppError) => {
@@ -170,7 +168,7 @@ export class SheetComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Genera planillas para todos los cobradores y evita ejecuciones concurrentes desde re-clicks.
+   * Genera planillas para todos los cobradores en paralelo.
    */
   generateForAll(): void {
     if (this.generatingAll || this.generating) return;
@@ -194,7 +192,7 @@ export class SheetComponent implements OnInit, OnDestroy {
               .pipe(
                 map((generated) => ({
                   success: true as const,
-                  result: this.mapDetailToResult(generated.sheet),
+                  result: this.mapDetailToResult((generated as CollectionGenerateResult).sheet),
                   collectorName: c.fullName,
                 })),
                 catchError((err: AppError) =>
@@ -246,7 +244,7 @@ export class SheetComponent implements OnInit, OnDestroy {
 
   /**
    * Descarga la planilla en formato PDF.
-   * @param result
+   * @param result datos de la planilla generada
    */
   downloadPdf(result: GeneratedPlanillaResult): void {
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -331,64 +329,76 @@ export class SheetComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Muestra los detalles de una planilla específica.
-   * @param sheetId
+   * Abre el dialog de revisión para la planilla indicada.
+   * @param sheetId ID de la planilla
    */
-  viewDetails(sheetId: string): void {
+  openReview(sheetId: string): void {
+    this.selectedSheetId = sheetId;
     this.showReviewDialog = true;
-    this.reviewSheetDetail = null;
-    this.loadingReview = true;
+  }
+
+  /**
+   * Descarga el PDF desde el evento emitido por el dialog de revisión.
+   * @param detail detalle de la planilla cargada en el dialog
+   */
+  onDownloadFromDialog(detail: CollectionSheetDetail): void {
+    this.downloadPdf(this.mapDetailToResult(detail));
+  }
+
+  /**
+   * Marca la planilla indicada como enviada al cobrador.
+   * @param sheetId ID de la planilla a enviar
+   */
+  confirmSend(sheetId: string): void {
     this.collectionsService
-      .getById(sheetId)
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => {
-          this.loadingReview = false;
-        }),
-      )
+      .send(sheetId)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (detail) => {
-          this.reviewSheetDetail = detail;
+        next: () => {
+          this.msg.add({
+            severity: 'success',
+            summary: 'Planilla enviada',
+            detail: 'La planilla fue marcada como enviada correctamente.',
+          });
+          this.loadHistorial();
         },
-        error: () => {
-          this.showReviewDialog = false;
+        error: (err: AppError) => {
+          this.msg.add({
+            severity: err.status === 409 ? 'warn' : 'error',
+            summary: err.status === 409 ? 'Aviso' : 'Error',
+            detail:
+              err.message ?? 'No se pudo marcar la planilla como enviada.',
+          });
         },
       });
   }
 
   /**
-   * Descarga el detalle de la planilla en formato PDF.
-   * @returns
+   * Obtiene la etiqueta legible del filtro de cuotas.
+   * @param filter clave del filtro
    */
-  downloadReviewPdf(): void {
-    if (!this.reviewSheetDetail) return;
-    this.downloadPdf(this.mapDetailToResult(this.reviewSheetDetail));
+  filterLabel(filter: CollectionFilter): string {
+    return COLLECTION_FILTER_LABELS[filter] ?? filter;
   }
 
   /**
-   * Confirma el envío de la planilla por un canal externo (por ejemplo, email o WhatsApp). Actualmente, esta función muestra un mensaje de advertencia indicando que la funcionalidad no está implementada, pero en el futuro se puede integrar con un endpoint del backend para realizar el envío real de la planilla a través del canal deseado.
+   * Formatea una fecha ISO al formato dd/mm/yyyy.
+   * @param iso fecha en formato ISO
    */
-  confirmSend(): void {
-    // TODO: integrar con endpoint de envío cuando esté disponible en el backend
-    this.msg.add({
-      severity: 'warn',
-      summary: 'No disponible',
-      detail: 'El envío por canal externo no está implementado aún.',
-      life: 5000,
-    });
+  formatDate(iso: string): string {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('T')[0].split('-');
+    return `${d}/${m}/${y}`;
   }
 
-  /**
-   * Mapea los detalles de una planilla a la estructura resultante.
-   * @param detail
-   * @returns
-   */
-  private mapDetailToResult(
-    detail: CollectionSheetDetail,
-  ): GeneratedPlanillaResult {
+  formatCurrency(value: number): string {
+    return this.format.currency(value);
+  }
+
+  mapDetailToResult(detail: CollectionSheetDetail): GeneratedPlanillaResult {
     const entries: PlanillaEntry[] = detail.items.map((item) => ({
       clientName: item.customerName,
-      clientDni: 'N/D', // TODO: customer_dni not included in collection items — consider adding to backend
+      clientDni: item.customerDni ?? 'N/D',
       clientPhone: item.customerPhone,
       clientAddress: item.customerAddress,
       creditId: item.creditId,
@@ -398,6 +408,7 @@ export class SheetComponent implements OnInit, OnDestroy {
       paidAmount: item.amountPaid,
       dueDate: item.dueDate,
       paymentStatus: this.mapInstallmentStatus(item.installmentStatus),
+      collectionReference: item.collectionReference,
     }));
     return {
       collectorId: detail.collectorId,
@@ -410,11 +421,6 @@ export class SheetComponent implements OnInit, OnDestroy {
     };
   }
 
-  /**
-   * Mapea el estado de pago de una cuota al formato esperado en la planilla. Dado que el backend devuelve estados como "PENDING", "OVERDUE", "PARTIAL" o "PAID", esta función los convierte a sus equivalentes en español ("PENDIENTE", "EN_MORA", "PARCIAL", "COBRADO") para que se muestren correctamente en la planilla generada.
-   * @param status
-   * @returns
-   */
   private mapInstallmentStatus(status: string): string {
     const map: Record<string, string> = {
       PENDING: 'PENDIENTE',
@@ -423,29 +429,5 @@ export class SheetComponent implements OnInit, OnDestroy {
       PAID: 'COBRADO',
     };
     return map[status] ?? status;
-  }
-
-  /**
-   * Obtiene la etiqueta para un filtro específico.
-   * @param filter
-   * @returns
-   */
-  filterLabel(filter: CollectionFilter): string {
-    return COLLECTION_FILTER_LABELS[filter] ?? filter;
-  }
-
-  /**
-   * Formatea una fecha en el formato dd/mm/yyyy.
-   * @param iso
-   * @returns
-   */
-  formatDate(iso: string): string {
-    if (!iso) return '—';
-    const [y, m, d] = iso.split('T')[0].split('-');
-    return `${d}/${m}/${y}`;
-  }
-
-  formatCurrency(value: number): string {
-    return this.format.currency(value);
   }
 }

@@ -9,6 +9,7 @@ const mockExpenseRaw = {
   description: 'Almuerzo equipo',
   payment_method: 'CASH',
   transfer_reference: null,
+  source: 'DAILY',
   created_at: '2026-04-28T12:00:00Z',
   created_by_name: 'Admin',
 };
@@ -22,7 +23,10 @@ describe('ExpensesService', () => {
   beforeEach(() => {
     apiSpy = jasmine.createSpyObj('ApiHttpService', ['get', 'post', 'delete']);
     TestBed.configureTestingModule({
-      providers: [ExpensesService, { provide: ApiHttpService, useValue: apiSpy }],
+      providers: [
+        ExpensesService,
+        { provide: ApiHttpService, useValue: apiSpy },
+      ],
     });
     service = TestBed.inject(ExpensesService);
   });
@@ -56,7 +60,9 @@ describe('ExpensesService', () => {
 
   it('create sends correct snake_case body', () => {
     apiSpy.post.and.returnValue(of(mockExpenseRaw));
-    service.create({ amount: 1500, description: 'Almuerzo', paymentMethod: 'CASH' }).subscribe(() => {});
+    service
+      .create({ amount: 1500, description: 'Almuerzo', paymentMethod: 'CASH' })
+      .subscribe(() => {});
     const [, body] = apiSpy.post.calls.mostRecent().args;
     const b = body as Record<string, unknown>;
     expect(b['amount']).toBe(1500);
@@ -66,11 +72,28 @@ describe('ExpensesService', () => {
   });
 
   it('create includes transfer_reference when provided', () => {
-    apiSpy.post.and.returnValue(of({ ...mockExpenseRaw, payment_method: 'TRANSFER', transfer_reference: 'REF123' }));
-    service.create({ amount: 500, description: 'Gastos banco', paymentMethod: 'TRANSFER', transferReference: 'REF123' }).subscribe(() => {});
+    apiSpy.post.and.returnValue(
+      of({
+        ...mockExpenseRaw,
+        payment_method: 'TRANSFER',
+        transfer_reference: 'REF123',
+      }),
+    );
+    service
+      .create({
+        amount: 500,
+        description: 'Gastos banco',
+        paymentMethod: 'TRANSFER',
+        transferReference: 'REF123',
+      })
+      .subscribe(() => {});
     const [, body] = apiSpy.post.calls.mostRecent().args;
-    expect((body as Record<string, unknown>)['transfer_reference']).toBe('REF123');
-    expect((body as Record<string, unknown>)['payment_method']).toBe('TRANSFER');
+    expect((body as Record<string, unknown>)['transfer_reference']).toBe(
+      'REF123',
+    );
+    expect((body as Record<string, unknown>)['payment_method']).toBe(
+      'TRANSFER',
+    );
   });
 
   it('remove calls DELETE and returns void', (done) => {

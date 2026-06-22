@@ -1,0 +1,179 @@
+<div class="space-y-6">
+  <div class="flex flex-wrap items-center gap-3">
+    <span class="text-sm text-[var(--ff-text-secondary)]">Desde</span>
+    <p-calendar
+      [(ngModel)]="dateFrom"
+      dataType="string"
+      dateFormat="yy-mm-dd"
+      [showIcon]="true"
+      iconDisplay="input"
+      appendTo="body"
+      styleClass="w-44"
+      inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
+    />
+    <span class="text-sm text-[var(--ff-text-secondary)]">hasta</span>
+    <p-calendar
+      [(ngModel)]="dateTo"
+      dataType="string"
+      dateFormat="yy-mm-dd"
+      [showIcon]="true"
+      iconDisplay="input"
+      appendTo="body"
+      styleClass="w-44"
+      inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
+    />
+    <p-button
+      label="Consultar"
+      icon="pi pi-search"
+      [disabled]="!rangeValid"
+      [loading]="loading"
+      styleClass="h-10 px-4 rounded-lg"
+      (onClick)="consult()"
+    />
+  </div>
+
+  @if (dateError) {
+    <p class="flex items-center gap-1.5 text-sm text-red-400">
+      <i class="pi pi-exclamation-circle"></i> {{ dateError }}
+    </p>
+  }
+
+  @if (loading) {
+    <app-loading-state />
+  } @else if (error) {
+    <app-error-state [message]="error.message" />
+  } @else if (report) {
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div
+        class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+      >
+        <p
+          class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
+          Conversiones
+        </p>
+        <p class="text-xl font-extrabold text-[var(--ff-text-primary)]">
+          {{ report.summary.totalConversions }}
+        </p>
+      </div>
+      <div
+        class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+      >
+        <p
+          class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
+          Monto total
+        </p>
+        <p
+          class="font-mono text-xl font-extrabold text-[var(--ff-text-primary)]"
+        >
+          {{ formatCurrency(report.summary.totalAmount) }}
+        </p>
+      </div>
+      <div
+        class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+      >
+        <p
+          class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
+          Efectivo → Transferencia
+        </p>
+        <p
+          class="font-mono text-xl font-extrabold text-[var(--ff-text-primary)]"
+        >
+          {{ formatCurrency(report.summary.cashToTransfer) }}
+        </p>
+      </div>
+      <div
+        class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+      >
+        <p
+          class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
+          Transferencia → Efectivo
+        </p>
+        <p
+          class="font-mono text-xl font-extrabold text-[var(--ff-text-primary)]"
+        >
+          {{ formatCurrency(report.summary.transferToCash) }}
+        </p>
+      </div>
+    </div>
+
+    @if (report.rows.length === 0) {
+      <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+        Sin conversiones en el período seleccionado.
+      </p>
+    } @else {
+      <div
+        class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+      >
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-[var(--ff-border-subtle)]">
+              <th
+                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Fecha
+              </th>
+              <th
+                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Criterio
+              </th>
+              <th
+                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Movimiento
+              </th>
+              <th
+                class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Monto
+              </th>
+              <th
+                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Usuario
+              </th>
+              <th
+                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
+              >
+                Observación
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of report.rows; track row.id) {
+              <tr
+                class="border-b border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
+              >
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                  {{ formatDate(row.registerDate) }}
+                </td>
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                  {{ criteriaLabel(row.criteria) }}
+                </td>
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                  {{ methodLabel(row.sourceMethod) }} →
+                  {{ methodLabel(row.targetMethod) }}
+                </td>
+                <td
+                  class="px-5 py-3 text-right font-mono font-semibold text-blue-400"
+                >
+                  {{ formatCurrency(row.amount) }}
+                </td>
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                  {{ row.createdByName }}
+                </td>
+                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                  {{ row.notes || "—" }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

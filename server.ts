@@ -20,10 +20,33 @@ export function app(): express.Express {
   // Example Express Rest API endpoints
   // server.get('/api/**', (req, res) => { });
   // Serve static files from /browser
-  server.get('**', express.static(browserDistFolder, {
-    maxAge: '1y',
-    index: 'index.html',
-  }));
+  server.get(
+    '**',
+    express.static(browserDistFolder, {
+      maxAge: '1y',
+      index: 'index.html',
+    }),
+  );
+
+  // Rutas protegidas (admin/seller/collector): dependen de APIs del navegador
+  // (localStorage, window, document) para auth y UI. Servimos el shell CSR
+  // puro (index.csr.html) y dejamos que Angular renderice todo client-side.
+  // OJO: NO usar index.html — con `prerender: true` ese archivo trae HTML
+  // pre-renderizado (ej. la pantalla de login), lo que provoca el "pestañeo"
+  // de login antes de que el router resuelva la ruta real en el cliente.
+  server.get(
+    [
+      '/admin',
+      '/admin/*',
+      '/seller',
+      '/seller/*',
+      '/collector',
+      '/collector/*',
+    ],
+    (req, res) => {
+      res.sendFile(join(browserDistFolder, 'index.csr.html'));
+    },
+  );
 
   // All regular routes use the Angular engine
   server.get('**', (req, res, next) => {

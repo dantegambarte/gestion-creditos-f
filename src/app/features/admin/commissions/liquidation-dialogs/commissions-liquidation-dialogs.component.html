@@ -1,0 +1,189 @@
+<p-dialog
+  [visible]="showLiquidateDialog"
+  (visibleChange)="showLiquidateDialogChange.emit($event)"
+  [modal]="true"
+  [style]="{ width: '480px' }"
+  header="Liquidar empleado"
+  [closable]="!liquidating"
+>
+  @if (selectedEmployee) {
+    <div class="space-y-4">
+      <div
+        class="space-y-2 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+      >
+        <div class="flex justify-between text-sm">
+          <span class="text-[var(--ff-text-muted)]">Empleado</span>
+          <span class="font-semibold">{{ selectedEmployee.fullName }}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-[var(--ff-text-muted)]">Comisiones acumuladas</span>
+          <span class="font-mono">{{
+            formatCurrency(selectedEmployee.commissionsTotal)
+          }}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-[var(--ff-text-muted)]">Sueldo fijo</span>
+          <span class="font-mono">{{
+            formatCurrency(selectedEmployee.salaryAmount)
+          }}</span>
+        </div>
+        <div
+          class="mt-2 flex justify-between border-t border-[var(--ff-border-subtle)] pt-2 text-sm"
+        >
+          <span class="font-semibold text-[var(--ff-text-secondary)]"
+            >Total a pagar</span
+          >
+          <span class="font-bold text-blue-600 font-mono text-base">{{
+            formatCurrency(selectedEmployee.totalNet)
+          }}</span>
+        </div>
+      </div>
+
+      <!-- LI-03: detalle de ventas pendientes a liquidar -->
+      <div class="flex flex-col gap-1.5">
+        <span
+          class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-muted)]"
+          >Ventas incluidas</span
+        >
+        @if (loadingCommissions) {
+          <p class="py-2 text-center text-xs text-[var(--ff-text-secondary)]">
+            Cargando ventas...
+          </p>
+        } @else if (employeeCommissions.length === 0) {
+          <p class="py-2 text-center text-xs text-[var(--ff-text-secondary)]">
+            Sin ventas pendientes.
+          </p>
+        } @else {
+          <div
+            class="max-h-48 overflow-y-auto rounded-lg border border-[var(--ff-border-subtle)]"
+          >
+            <table class="w-full text-xs">
+              <thead class="sticky top-0 bg-[var(--ff-surface)]">
+                <tr>
+                  <th
+                    class="px-3 py-2 text-left font-semibold text-[var(--ff-text-secondary)]"
+                  >
+                    Cliente
+                  </th>
+                  <th
+                    class="px-3 py-2 text-right font-semibold text-[var(--ff-text-secondary)]"
+                  >
+                    Venta
+                  </th>
+                  <th
+                    class="px-3 py-2 text-right font-semibold text-[var(--ff-text-secondary)]"
+                  >
+                    Comisión
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of employeeCommissions; track c.id) {
+                  <tr
+                    class="border-t border-[var(--ff-border-subtle)] hover:bg-[var(--ff-surface-hover)]"
+                  >
+                    <td class="px-3 py-2 text-[var(--ff-text-secondary)]">
+                      {{ c.customerName }}
+                    </td>
+                    <td
+                      class="px-3 py-2 text-right font-mono text-[var(--ff-text-secondary)]"
+                    >
+                      {{ formatCurrency(c.creditAmount) }}
+                    </td>
+                    <td
+                      class="px-3 py-2 text-right text-green-600 font-mono font-semibold"
+                    >
+                      {{ formatCurrency(c.amount) }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label
+          class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-muted)]"
+          >Método de pago</label
+        >
+        <p-dropdown
+          [options]="paymentMethodOptions"
+          [ngModel]="liquidatePaymentMethod"
+          (ngModelChange)="onPaymentMethodChange($event)"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="paymentMethodOptions.length > 10"
+          filterBy="label"
+          styleClass="w-full"
+          appendTo="body"
+        />
+      </div>
+
+      @if (liquidatePaymentMethod === "TRANSFER") {
+        <div class="flex flex-col gap-1.5">
+          <label
+            class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-muted)]"
+            >Referencia de transferencia</label
+          >
+          <input
+            type="text"
+            [ngModel]="liquidateTransferReference"
+            (ngModelChange)="onTransferReferenceChange($event)"
+            maxlength="100"
+            placeholder="N° comprobante o referencia"
+            class="w-full rounded-lg border border-[var(--ff-border)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      }
+    </div>
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [outlined]="true"
+      styleClass="h-11 px-5 rounded-xl"
+      [disabled]="liquidating"
+      (onClick)="closeLiquidateDialog()"
+    />
+    <p-button
+      label="Confirmar liquidación"
+      icon="pi pi-send"
+      styleClass="h-11 px-5 rounded-xl"
+      [loading]="liquidating"
+      (onClick)="requestOpenConfirm()"
+    />
+  </ng-template>
+</p-dialog>
+
+<p-dialog
+  [visible]="showConfirmDialog"
+  (visibleChange)="showConfirmDialogChange.emit($event)"
+  [modal]="true"
+  [style]="{ width: '380px' }"
+  header="¿Confirmar liquidación?"
+>
+  <p class="text-sm text-[var(--ff-text-secondary)]">
+    Esta acción marcará todas las comisiones pendientes como pagadas y no se
+    puede deshacer.
+  </p>
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [outlined]="true"
+      styleClass="h-11 px-5 rounded-xl"
+      (onClick)="closeConfirmDialog()"
+    />
+    <p-button
+      label="Sí, liquidar"
+      icon="pi pi-check"
+      severity="danger"
+      styleClass="h-11 px-5 rounded-xl"
+      (onClick)="requestConfirmLiquidate()"
+    />
+  </ng-template>
+</p-dialog>

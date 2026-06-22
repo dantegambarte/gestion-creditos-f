@@ -1,8 +1,7 @@
-<div class="max-w-lg mx-auto space-y-4">
-
+<div class="sim-shell">
   <!-- Cargando opciones iniciales -->
   @if (loadingOptions) {
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
+    <div class="sim-card sim-card--loading">
       <p-skeleton height="2.5rem" />
       <p-skeleton height="2.5rem" />
       <p-skeleton height="2.5rem" />
@@ -11,10 +10,13 @@
 
   <!-- Sin tasas configuradas -->
   @else if (optionsError || !hasOptions) {
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 flex flex-col items-center gap-3 text-center">
-      <i class="pi pi-exclamation-circle text-3xl text-gray-400"></i>
-      <p class="text-sm font-medium text-gray-500">
-        {{ optionsError || 'No hay tasas de interés configuradas. Contactá al administrador.' }}
+    <div class="sim-card sim-empty-state">
+      <i class="pi pi-exclamation-circle"></i>
+      <p>
+        {{
+          optionsError ||
+            "No hay tasas de interés configuradas. Contactá al administrador."
+        }}
       </p>
     </div>
   }
@@ -23,47 +25,50 @@
   <!-- Pantalla 1: Tipo de operación + datos de entrada      -->
   <!-- ══════════════════════════════════════════════════════ -->
   @else if (step === 1) {
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-      <div>
-        <h2 class="text-base font-semibold text-gray-800">Simular financiamiento</h2>
-        <p class="text-sm text-gray-500 mt-1">Seleccioná el tipo de operación y calculamos todas las opciones.</p>
+    <div class="sim-card sim-card--entry">
+      <div class="sim-card__header">
+        <div class="sim-card__eyebrow">
+          <span></span>
+          Herramienta comercial
+        </div>
+        <h2>Simular financiamiento</h2>
+        <p>
+          Seleccioná el tipo de operación y calculamos todas las opciones
+          disponibles.
+        </p>
       </div>
 
       <!-- Toggle tipo de operación -->
-      <div class="flex rounded-xl border border-gray-200 overflow-hidden">
+      <div class="sim-toggle">
         <button
           type="button"
           (click)="setOperationType('LOAN')"
-          class="flex-1 py-2.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-          [class.bg-blue-600]="operationType === 'LOAN'"
-          [class.text-white]="operationType === 'LOAN'"
-          [class.bg-white]="operationType !== 'LOAN'"
-          [class.text-gray-500]="operationType !== 'LOAN'"
+          class="sim-toggle__button"
+          [class.sim-toggle__button--active]="operationType === 'LOAN'"
         >
           <i class="pi pi-wallet text-sm"></i> Préstamo
         </button>
         <button
           type="button"
           (click)="setOperationType('SALE')"
-          class="flex-1 py-2.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2 border-l border-gray-200"
-          [class.bg-blue-600]="operationType === 'SALE'"
-          [class.text-white]="operationType === 'SALE'"
-          [class.bg-white]="operationType !== 'SALE'"
-          [class.text-gray-500]="operationType !== 'SALE'"
+          class="sim-toggle__button"
+          [class.sim-toggle__button--active]="operationType === 'SALE'"
         >
           <i class="pi pi-shopping-cart text-sm"></i> Venta
         </button>
       </div>
 
       <!-- LOAN: ingreso de monto -->
-      @if (operationType === 'LOAN') {
-        <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-medium text-gray-700">¿Cuánto necesitás?</label>
+      @if (operationType === "LOAN") {
+        <div class="sim-field">
+          <label>¿Cuánto necesitás?</label>
           <p-inputNumber
+            appCurrencyAmountInput
             [(ngModel)]="amount"
             mode="currency"
             currency="ARS"
             locale="es-AR"
+            [minFractionDigits]="0"
             [min]="1"
             [useGrouping]="true"
             placeholder="$ 0"
@@ -74,8 +79,8 @@
 
       <!-- SALE: autocomplete de producto + grilla de variantes -->
       @else {
-        <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-medium text-gray-700">Buscar producto</label>
+        <div class="sim-field">
+          <label>Buscar producto</label>
           <p-autoComplete
             [(ngModel)]="selectedProduct"
             [suggestions]="productSuggestions"
@@ -86,15 +91,22 @@
             emptyMessage="Sin resultados para esa búsqueda"
             styleClass="w-full"
             inputStyleClass="w-full"
+            appendTo="body"
             (completeMethod)="searchProducts($event)"
             (onSelect)="onProductSelect()"
             (onClear)="onProductClear()"
           >
             <ng-template pTemplate="item" let-product>
-              <div class="flex items-center justify-between gap-3 py-0.5 w-full">
-                <span class="text-sm font-medium truncate">{{ product.title }}</span>
+              <div
+                class="flex items-center justify-between gap-3 py-0.5 w-full"
+              >
+                <span class="text-sm font-medium truncate">{{
+                  product.title
+                }}</span>
                 <span class="text-xs opacity-50 flex-shrink-0 ml-2">
-                  {{ product.variants.length }} variante{{ product.variants.length !== 1 ? 's' : '' }}
+                  {{ product.variants.length }} variante{{
+                    product.variants.length !== 1 ? "s" : ""
+                  }}
                 </span>
               </div>
             </ng-template>
@@ -103,27 +115,20 @@
 
         <!-- Grilla de variantes -->
         @if (selectedProduct) {
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-medium text-gray-700">Seleccioná una variante</label>
+          <div class="sim-field">
+            <label>Seleccioná una variante</label>
             <div class="grid grid-cols-2 gap-2">
               @for (v of selectedProduct.variants; track v.id) {
                 <button
                   type="button"
                   (click)="selectVariant(v)"
-                  class="text-left rounded-xl border p-3 transition-all"
-                  [class.border-blue-400]="selectedVariant?.id === v.id"
-                  [class.bg-blue-50]="selectedVariant?.id === v.id"
-                  [class.ring-1]="selectedVariant?.id === v.id"
-                  [class.ring-blue-300]="selectedVariant?.id === v.id"
-                  [class.border-gray-200]="selectedVariant?.id !== v.id"
-                  [class.bg-gray-50]="selectedVariant?.id !== v.id"
+                  class="sim-variant"
+                  [class.sim-variant--active]="selectedVariant?.id === v.id"
                 >
-                  <p class="text-xs font-semibold text-gray-700 leading-tight line-clamp-2">{{ v.label }}</p>
-                  <p
-                    class="text-sm font-bold mt-1.5"
-                    [class.text-blue-600]="selectedVariant?.id === v.id"
-                    [class.text-gray-800]="selectedVariant?.id !== v.id"
-                  >{{ v.currentPrice | currencyArs }}</p>
+                  <p class="sim-variant__label">{{ v.label }}</p>
+                  <p class="sim-variant__price">
+                    {{ v.currentPrice | currencyArs }}
+                  </p>
                 </button>
               }
             </div>
@@ -131,19 +136,23 @@
         }
       }
 
-      <div class="pt-3">
+      <div>
         <p-button
           label="Ver opciones de financiamiento"
           icon="pi pi-arrow-right"
           iconPos="right"
-          styleClass="w-full"
+          styleClass="w-full h-11 rounded-xl justify-center"
           [disabled]="!canContinue"
           (onClick)="continue()"
         />
       </div>
 
-      <p class="text-xs text-gray-400 text-center leading-relaxed">
-        <i class="pi pi-info-circle mr-1"></i>Los valores son orientativos. No representan una oferta vinculante.
+      <p class="sim-note">
+        <i class="pi pi-info-circle"></i>
+        <span
+          >Los valores son orientativos. No representan una oferta
+          vinculante.</span
+        >
       </p>
     </div>
   }
@@ -152,25 +161,24 @@
   <!-- Pantalla 2: Opciones de cuotas                        -->
   <!-- ══════════════════════════════════════════════════════ -->
   @else if (step === 2) {
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-
+    <div class="sim-card sim-card--results">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-100 flex items-start justify-between gap-3">
+      <div class="sim-results-header">
         <div>
-          @if (operationType === 'LOAN') {
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Monto solicitado</p>
-            <p class="text-xl font-bold text-gray-800">{{ simulatedAmount | currencyArs }}</p>
+          @if (operationType === "LOAN") {
+            <p class="sim-kicker">Monto solicitado</p>
+            <p class="sim-title-value">{{ simulatedAmount | currencyArs }}</p>
           } @else {
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Producto</p>
-            <p class="text-base font-bold text-gray-800">{{ simulatedProductTitle }}</p>
-            <p class="text-sm text-gray-500">{{ simulatedVariantLabel }} · {{ simulatedAmount | currencyArs }}</p>
+            <p class="sim-kicker">Producto</p>
+            <p class="sim-title-value sim-title-value--product">
+              {{ simulatedProductTitle }}
+            </p>
+            <p class="sim-muted">
+              {{ simulatedVariantLabel }} · {{ simulatedAmount | currencyArs }}
+            </p>
           }
         </div>
-        <button
-          type="button"
-          (click)="restart()"
-          class="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors whitespace-nowrap flex-shrink-0"
-        >
+        <button type="button" (click)="restart()" class="sim-secondary-action">
           Cambiar
         </button>
       </div>
@@ -178,7 +186,7 @@
       <!-- Calculando -->
       @if (calculating) {
         <div class="p-6 space-y-3">
-          <p class="text-sm text-center text-gray-400">Calculando opciones...</p>
+          <p class="sim-muted text-center">Calculando opciones...</p>
           @for (_ of [1, 2, 3, 4]; track $index) {
             <p-skeleton height="4.5rem" borderRadius="12px" />
           }
@@ -188,13 +196,26 @@
       <!-- Sin resultados -->
       @else if (noResults) {
         <div class="p-8 flex flex-col items-center gap-3 text-center">
-          <i class="pi pi-exclamation-circle text-3xl text-gray-400"></i>
-          @if (operationType === 'LOAN') {
-            <p class="text-sm text-gray-500">El monto ingresado está fuera del rango configurado para préstamos. Probá con un monto diferente.</p>
+          <i
+            class="pi pi-exclamation-circle text-3xl"
+            style="color: var(--ff-text-muted)"
+          ></i>
+          @if (operationType === "LOAN") {
+            <p class="sim-muted">
+              El monto ingresado está fuera del rango configurado para
+              préstamos. Probá con un monto diferente.
+            </p>
           } @else {
-            <p class="text-sm text-gray-500">Este producto no tiene opciones de financiamiento configuradas en este momento.</p>
+            <p class="sim-muted">
+              Este producto no tiene opciones de financiamiento configuradas en
+              este momento.
+            </p>
           }
-          <p-button label="Cambiar selección" styleClass="mt-1" (onClick)="restart()" />
+          <p-button
+            label="Cambiar selección"
+            styleClass="mt-1"
+            (onClick)="restart()"
+          />
         </div>
       }
 
@@ -203,7 +224,7 @@
         <div class="p-4 space-y-5">
           @for (group of groups; track group.frequency) {
             <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2 px-1">
+              <p class="sim-kicker mb-2 px-1">
                 {{ group.label }}
               </p>
               <div class="space-y-2">
@@ -211,17 +232,22 @@
                   <button
                     type="button"
                     (click)="select(opt)"
-                    class="w-full text-left rounded-xl border border-gray-100 bg-gray-50 p-4 hover:border-blue-300 hover:bg-blue-50 transition-all group"
+                    class="sim-option group"
                   >
                     <div class="flex items-center justify-between">
                       <div class="flex items-baseline gap-2">
-                        <span class="text-sm font-medium text-gray-600">{{ opt.installments }} cuotas de</span>
-                        <span class="text-xl font-bold text-blue-600">{{ opt.result.installmentAmount | currencyArs }}</span>
+                        <span class="sim-muted"
+                          >{{ opt.installments }} cuotas de</span
+                        >
+                        <span class="sim-option__amount">{{
+                          opt.result.installmentAmount | currencyArs
+                        }}</span>
                       </div>
-                      <i class="pi pi-chevron-right text-gray-300 group-hover:text-blue-400 transition-colors"></i>
+                      <i class="pi pi-chevron-right sim-option__icon"></i>
                     </div>
-                    <p class="text-xs text-gray-400 mt-1">
-                      Total a devolver: {{ opt.result.totalToReturn | currencyArs }}
+                    <p class="sim-option__total">
+                      Total a devolver:
+                      {{ opt.result.totalToReturn | currencyArs }}
                     </p>
                   </button>
                 }
@@ -229,9 +255,10 @@
                   <button
                     type="button"
                     (click)="showMore(group.frequency)"
-                    class="w-full py-2.5 rounded-xl border border-dashed border-gray-200 text-sm font-medium text-gray-400 hover:text-blue-500 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                    class="sim-more-button"
                   >
-                    <i class="pi pi-plus-circle mr-1.5 text-xs"></i>Ver más opciones de financiación
+                    <i class="pi pi-plus-circle mr-1.5 text-xs"></i>Ver más
+                    opciones de financiación
                   </button>
                 }
               </div>
@@ -239,7 +266,6 @@
           }
         </div>
       }
-
     </div>
   }
 
@@ -247,33 +273,42 @@
   <!-- Pantalla 3: Resumen de la simulación                  -->
   <!-- ══════════════════════════════════════════════════════ -->
   @else if (step === 3 && selected) {
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-
+    <div class="sim-card sim-card--results">
       <!-- Header -->
-      <div class="px-6 py-4 border-b border-gray-100">
-        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">Resumen de simulación</p>
-        <p class="text-sm text-gray-500">{{ selected.frequencyLabel }} · {{ selected.installments }} cuotas</p>
+      <div class="sim-results-header">
+        <div>
+          <p class="sim-kicker">Resumen de simulación</p>
+          <p class="sim-muted">
+            {{ selected.frequencyLabel }} · {{ selected.installments }} cuotas
+          </p>
+        </div>
       </div>
 
       <div class="p-6 space-y-4">
-
         <!-- Cuota destacada -->
-        <div class="rounded-xl bg-blue-50 border border-blue-100 p-5 text-center">
-          <p class="text-xs font-medium text-blue-500 mb-2">Cuota estimada</p>
-          <p class="text-4xl font-bold text-blue-700">{{ selected.result.installmentAmount | currencyArs }}</p>
-          <p class="text-xs text-blue-400 mt-1.5">
-            {{ selected.installments }} cuotas {{ selected.frequencyLabel | lowercase }}s
-          </p>
+        <div class="sim-highlight">
+          <p>Cuota estimada</p>
+          <strong>{{ selected.result.installmentAmount | currencyArs }}</strong>
+          <span>
+            {{ selected.installments }} cuotas
+            {{ selected.frequencyLabel | lowercase }}s
+          </span>
         </div>
 
         <!-- Detalle del producto (solo SALE) -->
-        @if (selected.result.type === 'SALE' && selected.result.items?.length) {
-          <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
-            <p class="text-xs font-medium text-gray-500 mb-2">Producto financiado</p>
+        @if (selected.result.type === "SALE" && selected.result.items?.length) {
+          <div class="sim-detail-card">
+            <p class="sim-kicker mb-2">Producto financiado</p>
             @for (item of selected.result.items; track item.productId) {
               <div class="flex items-center justify-between">
-                <span class="text-sm font-semibold text-gray-800">{{ item.productName }}</span>
-                <span class="text-sm text-gray-600">{{ item.lineTotal | currencyArs }}</span>
+                <span
+                  class="text-sm font-semibold"
+                  style="color: var(--ff-text-primary)"
+                  >{{ item.productName }}</span
+                >
+                <span class="text-sm" style="color: var(--ff-text-secondary)">{{
+                  item.lineTotal | currencyArs
+                }}</span>
               </div>
             }
           </div>
@@ -281,55 +316,60 @@
 
         <!-- Montos -->
         <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
-            <p class="text-xs font-medium text-gray-500 mb-1">
-              {{ selected.result.type === 'SALE' ? 'Precio del producto' : 'Monto solicitado' }}
+          <div class="sim-detail-card">
+            <p class="sim-detail-card__label">
+              {{
+                selected.result.type === "SALE"
+                  ? "Precio del producto"
+                  : "Monto solicitado"
+              }}
             </p>
-            <p class="text-base font-semibold text-gray-800">{{ selected.result.totalAmount | currencyArs }}</p>
+            <p class="sim-detail-card__value">
+              {{ selected.result.totalAmount | currencyArs }}
+            </p>
           </div>
-          <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
-            <p class="text-xs font-medium text-gray-500 mb-1">Tasa de interés</p>
-            <p class="text-base font-semibold text-gray-800">
-              @if (selected.result.type === 'LOAN' && selected.result.rate != null) {
+          <div class="sim-detail-card">
+            <p class="sim-detail-card__label">Tasa de interés</p>
+            <p class="sim-detail-card__value">
+              @if (
+                selected.result.type === "LOAN" && selected.result.rate != null
+              ) {
                 {{ (selected.result.rate * 100).toFixed(2) }}%
               } @else {
                 Por producto
               }
             </p>
           </div>
-          <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
-            <p class="text-xs font-medium text-gray-500 mb-1">Monto financiado</p>
-            <p class="text-base font-semibold text-gray-800">{{ selected.result.financedAmount | currencyArs }}</p>
+          <div class="sim-detail-card">
+            <p class="sim-detail-card__label">Monto financiado</p>
+            <p class="sim-detail-card__value">
+              {{ selected.result.financedAmount | currencyArs }}
+            </p>
           </div>
-          <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
-            <p class="text-xs font-medium text-gray-500 mb-1">Total a devolver</p>
-            <p class="text-lg font-bold text-gray-800">{{ selected.result.totalToReturn | currencyArs }}</p>
+          <div class="sim-detail-card">
+            <p class="sim-detail-card__label">Total a devolver</p>
+            <p class="sim-detail-card__value sim-detail-card__value--strong">
+              {{ selected.result.totalToReturn | currencyArs }}
+            </p>
           </div>
         </div>
 
         @if (selected.result.note) {
-          <p class="text-xs text-gray-400 italic">{{ selected.result.note }}</p>
+          <p class="sim-note italic">{{ selected.result.note }}</p>
         }
-
       </div>
 
       <!-- Acciones -->
       <div class="px-6 pb-6 flex gap-3">
-        <button
-          type="button"
-          (click)="back()"
-          class="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-800 transition-colors"
-        >
+        <button type="button" (click)="back()" class="sim-back-button">
           <i class="pi pi-arrow-left mr-2 text-xs"></i>Volver
         </button>
         <p-button
           label="Finalizar simulación"
-          styleClass="flex-1"
+          styleClass="flex-1 h-11 rounded-xl justify-center"
           (onClick)="restart()"
         />
       </div>
-
     </div>
   }
-
 </div>

@@ -59,6 +59,7 @@ describe('ProductVariantsService', () => {
       const req = httpMock.expectOne(
         (r) => r.url === `${BASE}/product-variants` && r.params.get('product_id') === 'prod-1',
       );
+      expect(req.request.method).toBe('GET');
       req.flush({ ok: true, data: [mockVariantRaw], message: '' });
     });
 
@@ -83,6 +84,31 @@ describe('ProductVariantsService', () => {
       expect(req.request.body['product_id']).toBe('prod-1');
       expect(req.request.body['current_price']).toBe(200000);
       expect(req.request.body['color']).toBe('Blanco');
+      req.flush({ ok: true, data: mockVariantRaw, message: '' });
+    });
+
+    it('crea una variante sobre el producto existente con unidades iniciales — PR-16', () => {
+      service
+        .create({
+          productId: 'prod-1',
+          color: 'Rojo',
+          currentPrice: 210000,
+          initialUnits: 3,
+        })
+        .subscribe();
+
+      const req = httpMock.expectOne(`${BASE}/product-variants`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual(
+        jasmine.objectContaining({
+          product_id: 'prod-1',
+          color: 'Rojo',
+          current_price: 210000,
+          initial_units: 3,
+        }),
+      );
+      expect(req.request.body['title']).toBeUndefined();
+      expect(req.request.url).not.toContain('/products');
       req.flush({ ok: true, data: mockVariantRaw, message: '' });
     });
   });

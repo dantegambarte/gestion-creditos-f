@@ -1,0 +1,283 @@
+<p-card styleClass="shadow-sm">
+  @if (loadingLiquidations) {
+    <app-loading-state />
+  } @else if (historyRows.length === 0) {
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+      Sin liquidaciones registradas.
+    </p>
+  } @else {
+    <div class="mb-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p
+          class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
+          Total liquidado
+        </p>
+        <p class="text-xl font-semibold text-emerald-400">
+          {{ formatCurrency(historyStats.totalPaid) }}
+        </p>
+      </div>
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p
+          class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
+          En comisiones
+        </p>
+        <p class="text-xl font-semibold text-emerald-400">
+          {{ formatCurrency(historyStats.totalCommissions) }}
+        </p>
+      </div>
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p
+          class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
+          En sueldos fijos
+        </p>
+        <p class="text-xl font-semibold text-amber-400">
+          {{ formatCurrency(historyStats.totalSalary) }}
+        </p>
+      </div>
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p
+          class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
+          Liquidaciones
+        </p>
+        <p class="text-xl font-semibold text-white">{{ historyStats.count }}</p>
+      </div>
+    </div>
+
+    <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <p-dropdown
+          [options]="historyEmployeeOptions"
+          [ngModel]="historyEmployeeFilter"
+          (ngModelChange)="onHistoryEmployeeFilterChange($event)"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="historyEmployeeOptions.length > 10"
+          filterBy="label"
+
+
+          appendTo="body"
+          styleClass="w-64 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
+        />
+        <p-dropdown
+          [options]="historyMethodOptions"
+          [ngModel]="historyMethodFilter"
+          (ngModelChange)="onHistoryMethodFilterChange($event)"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="historyMethodOptions.length > 10"
+          filterBy="label"
+
+
+          appendTo="body"
+          styleClass="w-52 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
+        />
+      </div>
+      <p class="text-xs text-[var(--ff-text-secondary)]">
+        {{ historyRows.length }} registros
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-3">
+      <div [class]="selectedHistory ? 'xl:col-span-8' : 'xl:col-span-12'">
+        <p-table
+          [value]="historyRows"
+          styleClass="p-datatable-sm p-datatable-hoverable-rows"
+          responsiveLayout="scroll"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Empleado</th>
+              <th>Período</th>
+              <th>Rol</th>
+              <th class="text-right">Comisiones</th>
+              <th class="text-right">Sueldo</th>
+              <th class="text-right">Total</th>
+              <th>Método</th>
+              <th>Pagado por</th>
+              <th>Fecha</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-liq>
+            <tr
+              (click)="onSelectHistory(liq)"
+              class="cursor-pointer"
+              [class]="selectedHistory?.id === liq.id ? 'bg-indigo-500/10' : ''"
+            >
+              <td class="font-semibold text-white">{{ liq.userName }}</td>
+              <td class="text-xs text-indigo-200/85 tracking-wide">
+                {{ formatDate(liq.weekStart) }} — {{ formatDate(liq.weekEnd) }}
+              </td>
+              <td>
+                <p-tag
+                  [value]="roleByUserId(liq.userId)"
+                  [styleClass]="roleClassByUserId(liq.userId)"
+                />
+              </td>
+              <td class="text-right font-mono">
+                <span class="!text-emerald-400">{{
+                  formatCurrency(liq.commissionsTotal)
+                }}</span>
+              </td>
+              <td class="text-right font-mono">
+                <span class="!text-amber-400">{{
+                  formatCurrency(liq.salaryAmount)
+                }}</span>
+              </td>
+              <td class="text-right font-semibold font-mono">
+                <span class="!text-emerald-300">{{
+                  formatCurrency(liq.totalPaid)
+                }}</span>
+              </td>
+              <td class="text-sm">
+                <span
+                  class="inline-flex items-center gap-1.5 text-[var(--ff-text-primary)]"
+                >
+                  <i
+                    [class]="
+                      liq.paymentMethod === 'CASH'
+                        ? 'pi pi-wallet text-green-400 text-xs'
+                        : 'pi pi-credit-card text-cyan-300 text-xs'
+                    "
+                  ></i>
+                  {{
+                    liq.paymentMethod === "CASH" ? "Efectivo" : "Transferencia"
+                  }}
+                </span>
+              </td>
+              <td
+                class="text-sm"
+                [class]="
+                  liq.paidByName === 'Administrador del Sistema'
+                    ? 'text-[var(--ff-text-secondary)]'
+                    : 'text-indigo-300'
+                "
+              >
+                {{ liq.paidByName }}
+              </td>
+              <td class="text-xs text-indigo-300/70 tracking-wide">
+                {{ formatDate(liq.paidAt) }}
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="footer">
+            <tr>
+              <td colspan="3" class="text-indigo-300/60 text-xs">
+                Total visible
+              </td>
+              <td class="text-right font-semibold">
+                <span class="!text-emerald-400">{{
+                  formatCurrency(historyStats.totalCommissions)
+                }}</span>
+              </td>
+              <td class="text-right font-semibold">
+                <span class="!text-amber-400">{{
+                  formatCurrency(historyStats.totalSalary)
+                }}</span>
+              </td>
+              <td class="text-right font-semibold">
+                <span class="!text-emerald-300">{{
+                  formatCurrency(historyStats.totalPaid)
+                }}</span>
+              </td>
+              <td colspan="3"></td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      @if (selectedHistory) {
+        <div class="xl:col-span-4">
+          <div
+            class="space-y-3 rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <p class="font-semibold text-white">
+                  {{ selectedHistory.userName }}
+                </p>
+                <p class="text-xs text-[var(--ff-text-secondary)]">
+                  {{ formatDate(selectedHistory.weekStart) }} -
+                  {{ formatDate(selectedHistory.weekEnd) }} ·
+                  {{ formatDate(selectedHistory.paidAt) }}
+                </p>
+              </div>
+              <button
+                type="button"
+                class="h-7 w-7 rounded-md border border-[var(--ff-border)] text-[var(--ff-text-primary)] hover:bg-[var(--ff-surface-hover)]"
+                (click)="clearHistorySelection()"
+              >
+                <i class="pi pi-times text-xs"></i>
+              </button>
+            </div>
+
+            <div class="space-y-2 rounded-md bg-[var(--ff-surface)] p-3">
+              <p
+                class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
+              >
+                Desglose del pago
+              </p>
+              <div class="flex justify-between text-sm">
+                <span>Comisiones</span
+                ><span class="text-emerald-400 font-semibold">{{
+                  formatCurrency(selectedHistory.commissionsTotal)
+                }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span>Sueldo fijo</span
+                ><span class="text-amber-400 font-semibold">{{
+                  formatCurrency(selectedHistory.salaryAmount)
+                }}</span>
+              </div>
+              <div
+                class="flex justify-between border-t border-[var(--ff-border-subtle)] pt-1 text-base font-semibold"
+              >
+                <span>Total pagado</span
+                ><span class="text-emerald-400">{{
+                  formatCurrency(selectedHistory.totalPaid)
+                }}</span>
+              </div>
+            </div>
+
+            <div
+              class="space-y-2 rounded-md bg-[var(--ff-surface)] p-3 text-sm"
+            >
+              <div class="flex justify-between">
+                <span class="text-[var(--ff-text-secondary)]">Método</span
+                ><span>{{
+                  paymentMethodLabel(selectedHistory.paymentMethod)
+                }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[var(--ff-text-secondary)]">Pagado por</span
+                ><span>{{ selectedHistory.paidByName }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[var(--ff-text-secondary)]">Fecha</span
+                ><span>{{ formatDate(selectedHistory.paidAt) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[var(--ff-text-secondary)]">Período</span
+                ><span
+                  >{{ formatDate(selectedHistory.weekStart) }} —
+                  {{ formatDate(selectedHistory.weekEnd) }}</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</p-card>

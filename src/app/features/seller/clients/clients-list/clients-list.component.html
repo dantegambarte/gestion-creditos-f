@@ -11,7 +11,7 @@
             placeholder="Buscar por nombre, DNI o teléfono"
             [(ngModel)]="searchTerm"
             (ngModelChange)="onSearchChange($event)"
-            class="h-11 w-72"
+            class="h-11 w-72 pl-10"
           />
         </span>
         <p-dropdown
@@ -20,9 +20,13 @@
           [(ngModel)]="selectedStatus"
           (onChange)="applyFilters()"
           placeholder="Estado"
+          [filter]="statusOptions.length > 10"
+          filterBy="label"
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
+
+
         />
         @if (canFilterByCollector) {
           <p-dropdown

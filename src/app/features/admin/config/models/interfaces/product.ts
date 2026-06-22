@@ -3,6 +3,7 @@ export interface ProductBrand {
   name: string;
   active: boolean;
   createdAt: string;
+  productCount: number;
 }
 
 export interface ProductBrandRaw {
@@ -10,6 +11,7 @@ export interface ProductBrandRaw {
   name: string;
   active: boolean;
   created_at: string;
+  product_count?: number | string | null;
 }
 
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
@@ -72,6 +74,7 @@ export interface ProductCategory {
   name: string;
   active: boolean;
   createdAt: string;
+  productCount: number;
 }
 
 export interface ProductCategoryRaw {
@@ -79,4 +82,5 @@ export interface ProductCategoryRaw {
   name: string;
   active: boolean;
   created_at: string;
+  product_count?: number | string | null;
 }

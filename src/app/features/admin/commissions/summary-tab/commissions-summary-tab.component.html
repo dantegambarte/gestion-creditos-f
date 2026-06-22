@@ -1,0 +1,153 @@
+<p-card styleClass="shadow-sm">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h2 class="text-base font-semibold text-white">
+        Liquidaciones y comisiones
+      </h2>
+      <p class="text-xs text-[var(--ff-text-secondary)]">
+        Comisiones acumuladas pendientes de liquidación.
+      </p>
+    </div>
+    <p-button
+      icon="pi pi-refresh"
+      severity="secondary"
+      [outlined]="true"
+      [loading]="loadingSummary"
+      (onClick)="triggerReloadSummary()"
+    />
+  </div>
+
+  @if (loadingSummary) {
+    <app-loading-state />
+  } @else if (errorSummary) {
+    <app-error-state />
+  } @else if (employees.length === 0) {
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+      No hay empleados con comisiones pendientes.
+    </p>
+  } @else {
+    <p-table
+      [value]="employees"
+      styleClass="p-datatable-sm p-datatable-hoverable-rows"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Empleado</th>
+          <th>Rol</th>
+          <th class="text-right">Comisiones</th>
+          <th class="text-right">Sueldo fijo</th>
+          <th class="text-right">Total neto</th>
+          <th>Período</th>
+          <th class="text-center">Acción</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-emp>
+        <tr [class]="rowDisabled(emp) ? 'opacity-50' : ''">
+          <td class="font-medium">{{ emp.fullName }}</td>
+          <td>
+            <p-tag
+              [value]="roleLabel(emp.role)"
+              [styleClass]="roleTagClass(emp.role)"
+            />
+          </td>
+          <td class="text-right font-mono">
+            {{ formatCurrency(emp.commissionsTotal) }}
+          </td>
+          <td class="text-right font-mono">
+            {{ formatCurrency(emp.salaryAmount) }}
+          </td>
+          <td class="text-right font-semibold font-mono">
+            <span class="!text-emerald-400">{{
+              formatCurrency(emp.totalNet)
+            }}</span>
+          </td>
+          <td class="text-sm text-[var(--ff-text-muted)]">
+            @if (emp.earliestWeek) {
+              {{ formatDate(emp.earliestWeek) }} —
+              {{ formatDate(emp.latestWeek ?? "") }}
+            } @else {
+              —
+            }
+          </td>
+          <td class="text-center">
+            <p-button
+              label="Liquidar"
+              icon="pi pi-check-circle"
+              severity="success"
+              size="small"
+              styleClass="!h-9 !px-4 !rounded-lg !text-xs !font-semibold !shadow-sm"
+              [disabled]="rowDisabled(emp)"
+              [pTooltip]="rowDisabled(emp) ? 'No hay monto a liquidar' : ''"
+              tooltipPosition="left"
+              (onClick)="triggerLiquidate(emp)"
+            />
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</p-card>
+
+<div class="h-4"></div>
+
+<p-card styleClass="shadow-sm">
+  <div class="mb-4">
+    <h2 class="text-base font-semibold text-white">
+      Historial reciente de liquidaciones
+    </h2>
+  </div>
+
+  @if (loadingLiquidations) {
+    <app-loading-state />
+  } @else if (recentLiquidations.length === 0) {
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+      Sin liquidaciones registradas.
+    </p>
+  } @else {
+    <p-table
+      [value]="recentLiquidations"
+      styleClass="p-datatable-sm p-datatable-hoverable-rows"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Empleado</th>
+          <th>Período</th>
+          <th class="text-right">Comisiones</th>
+          <th class="text-right">Sueldo</th>
+          <th class="text-right">Total</th>
+          <th>Método</th>
+          <th>Pagado por</th>
+          <th>Fecha</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-liq>
+        <tr>
+          <td class="font-medium">{{ liq.userName }}</td>
+          <td class="text-sm text-[var(--ff-text-muted)]">
+            {{ formatDate(liq.weekStart) }} — {{ formatDate(liq.weekEnd) }}
+          </td>
+          <td class="text-right font-mono">
+            {{ formatCurrency(liq.commissionsTotal) }}
+          </td>
+          <td class="text-right font-mono">
+            {{ formatCurrency(liq.salaryAmount) }}
+          </td>
+          <td class="text-right font-semibold font-mono">
+            <span class="!text-emerald-400">{{
+              formatCurrency(liq.totalPaid)
+            }}</span>
+          </td>
+          <td>{{ paymentMethodLabel(liq.paymentMethod) }}</td>
+          <td class="text-sm text-[var(--ff-text-secondary)]">
+            {{ liq.paidByName }}
+          </td>
+          <td class="text-sm text-[var(--ff-text-muted)]">
+            {{ formatDate(liq.paidAt) }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</p-card>

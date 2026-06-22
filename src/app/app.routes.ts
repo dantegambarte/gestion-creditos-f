@@ -47,7 +47,7 @@ export const routes: Routes = [
   {
     path: AppRoutes.COLLECTOR,
     canActivate: [authGuard, tempPasswordGuard, roleGuard],
-    data: { roles: [Roles.COLLECTOR] },
+    data: { roles: [Roles.COLLECTOR, Roles.SELLER_COLLECTOR] },
     loadChildren: () =>
       import('./features/collector/collector.routes').then(
         (r) => r.COLLECTOR_ROUTES,

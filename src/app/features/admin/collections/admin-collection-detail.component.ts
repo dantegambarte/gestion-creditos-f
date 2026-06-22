@@ -16,6 +16,7 @@ import {
 } from '../../collector/models/collection.model';
 import { InstallmentStatus } from '../../seller/models/installment.model';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
+import { BackButtonComponent } from '../../../shared/components/back-button/back-button.component';
 
 @Component({
   selector: 'app-admin-collection-detail',
@@ -28,6 +29,7 @@ import { AppRoutes } from '../../../shared/models/enums/routes.enum';
     TooltipModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    BackButtonComponent,
   ],
   templateUrl: './admin-collection-detail.component.html',
 })

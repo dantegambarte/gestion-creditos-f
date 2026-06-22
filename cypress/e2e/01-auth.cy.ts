@@ -1,185 +1,257 @@
 /**
- * SUITE: Autenticación (Login)
+ * SUITE REAL — CU01: Autenticar usuario.
  *
  * Cubre:
- *  - Renderizado del formulario de login
- *  - Validaciones de campos vacíos y formato inválido
- *  - Login exitoso como Admin → redirige a /admin/dashboard
- *  - Login exitoso como Seller → redirige a /seller/operations
- *  - Login exitoso como Collector → redirige a /collector/route
- *  - Login fallido (DNI no registrado) → muestra mensaje de error
- *  - Login bloqueado por backend → muestra mensaje de cuenta bloqueada
- *  - Login con contraseña temporal → redirige a /change-password
- *  - noAuthGuard: usuario autenticado no puede acceder a /login
- *  - Logout desde sidebar → redirige a /login
+ *  - Flujo principal: login exitoso para cada rol interno (ADMIN, SELLER, COLLECTOR).
+ *  - CU01-A: Credenciales incorrectas → error, sin redirección.
+ *  - CU01-B: 3 intentos fallidos → bloqueo de cuenta (excepto ADMIN).
+ *  - CU01-G: Cierre de sesión manual → token invalidado, redirect a /login.
+ *  - CU01-J: Usuario inactivo → mensaje de cuenta no activa.
+ *
+ * Regla: ningún spec de esta suite intercepta /auth/login ni /auth/me.
+ * Los datos se preparan y limpian vía cy.apiRequest / cy.apiUnlockUser.
  */
 
-describe('Autenticación', () => {
+const SELLER_HOME = '/seller/operations';
+const COLLECTOR_HOME = '/collector/route';
+const ADMIN_HOME = '/admin/dashboard';
+
+const AUTH_ERROR_REGEX =
+  /credenciales incorrectas|dni o contrase\u00f1a incorrectos|demasiados intentos|intenta nuevamente|bloqueada/i;
+
+// DNI único de test para casos de bloqueo; no colisiona con seeds fijos.
+// Se genera por timestamp para garantizar idempotencia entre runs.
+const LOCK_TEST_DNI = `9${Date.now().toString().slice(-7)}`;
+
+describe('CU01 — Autenticar usuario (backend real)', () => {
   beforeEach(() => {
-    cy.logout(); // clearLocalStorage + visit('/login')
+    Cypress.session.clearAllSavedSessions();
     cy.viewport(1280, 720);
+    cy.request({ url: '/login', failOnStatusCode: false })
+      .its('status')
+      .should('eq', 200);
   });
 
-  // ── Renderizado ──────────────────────────────────────────────────────────────
-  it('muestra el formulario de login correctamente', () => {
-    cy.get('[data-testid="input-dni"]').should('be.visible');
-    // p-password renderiza un <input> interno; el data-testid está en el wrapper
-    cy.get('[data-testid="input-password"] input').should('be.visible');
-    cy.get('[data-testid="btn-login"]').should('be.visible').and('contain.text', 'Iniciar Sesión');
-    cy.contains('Ingresá tus credenciales para continuar').should('be.visible');
+  // ────────────────────────────────────────────────────────────────────
+  // Flujo principal — login exitoso por rol
+  // ────────────────────────────────────────────────────────────────────
+
+  it('ADMIN autentica y abre dashboard (CU01 principal)', () => {
+    cy.loginReal('ADMIN', ADMIN_HOME);
+    cy.url({ timeout: 15000 }).should('include', ADMIN_HOME);
+    cy.get('app-root').should('be.visible');
+    cy.get('app-error-state').should('not.exist');
   });
 
-  // ── Validaciones de formulario ───────────────────────────────────────────────
-  it('muestra error al enviar formulario vacío', () => {
-    cy.get('[data-testid="btn-login"]').click();
-    cy.contains('El DNI es obligatorio').should('be.visible');
-    cy.contains('La contraseña es obligatoria').should('be.visible');
+  it('SELLER autentica y abre módulo de operaciones (CU01 principal)', () => {
+    cy.loginReal('SELLER', SELLER_HOME);
+    cy.url({ timeout: 15000 }).should('include', SELLER_HOME);
+    cy.get('[data-testid="logout-btn"]').should('be.visible');
   });
 
-  it('muestra error de formato cuando el DNI tiene menos de 7 dígitos', () => {
-    cy.get('[data-testid="input-dni"]').type('123');
-    cy.get('[data-testid="btn-login"]').click();
-    cy.contains('DNI inválido (7-9 dígitos)').should('be.visible');
+  it('COLLECTOR autentica y abre módulo de cobros (CU01 principal)', () => {
+    cy.loginReal('COLLECTOR', COLLECTOR_HOME);
+    cy.url({ timeout: 15000 }).should('include', COLLECTOR_HOME);
+    cy.get('[data-testid="logout-btn"]').should('be.visible');
   });
 
-  it('muestra error de formato cuando el DNI contiene letras', () => {
-    cy.get('[data-testid="input-dni"]').type('ABCD123');
-    cy.get('[data-testid="btn-login"]').click();
-    cy.contains('DNI inválido (7-9 dígitos)').should('be.visible');
-  });
+  // ────────────────────────────────────────────────────────────────────
+  // CU01-A — Credenciales incorrectas
+  // ────────────────────────────────────────────────────────────────────
 
-  // ── Login exitoso — Admin ────────────────────────────────────────────────────
-  // cy.intercept de POST /auth/login porque la app usa AuthService (useMocks=false)
-  // y el backend rechazaría los tokens mock con 401.
-  it('autentica a un Admin y redirige a /admin/dashboard', () => {
-    cy.intercept('POST', '**/auth/login', {
-      statusCode: 200,
-      body: { ok: true, data: { user: { id: 'usr-001', full_name: 'Carlos López', dni: '12345678', role: 'ADMIN', is_temp_password: false }, token: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3ItMDAxIiwicm9sZSI6IkFETUlOIiwiYXVkIjoic2lzdGVtYS1pbnRlcm5vIn0.mock_admin' } },
-    }).as('loginAdmin');
+  it('CU01-A: contraseña incorrecta muestra error y no redirige', () => {
+    cy.clearAllLocalStorage();
+    cy.visit('/login');
 
-    cy.get('[data-testid="input-dni"]').type('12345678');
-    cy.get('[data-testid="input-password"] input').type('mock123');
-    cy.get('[data-testid="btn-login"]').click();
-
-    cy.wait('@loginAdmin');
-    cy.url().should('include', '/admin/dashboard');
-    cy.contains('Carlos López').should('be.visible');
-  });
-
-  // ── Login exitoso — Seller ───────────────────────────────────────────────────
-  it('autentica a un Seller y redirige a /seller/operations', () => {
-    cy.intercept('POST', '**/auth/login', {
-      statusCode: 200,
-      body: { ok: true, data: { user: { id: 'usr-002', full_name: 'María Sánchez', dni: '87654321', role: 'SELLER', is_temp_password: false }, token: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3ItMDAyIiwicm9sZSI6IlNFTExFUiIsImF1ZCI6InNpc3RlbWEtaW50ZXJubyJ9.mock_seller' } },
-    }).as('loginSeller');
-
-    cy.get('[data-testid="input-dni"]').type('87654321');
-    cy.get('[data-testid="input-password"] input').type('mock123');
+    cy.get('[data-testid="input-dni"]')
+      .clear()
+      .type(Cypress.env('realAdminDni'));
+    cy.get('[data-testid="input-password"] input')
+      .clear()
+      .type('CONTRASEÑA_INCORRECTA_XYZ');
     cy.get('[data-testid="btn-login"]').click();
 
-    cy.wait('@loginSeller');
-    cy.url().should('include', '/seller/operations');
-    cy.contains('María Sánchez').should('be.visible');
-  });
+    // Permanece en /login
+    cy.url({ timeout: 10000 }).should('include', '/login');
 
-  // ── Login exitoso — Collector ────────────────────────────────────────────────
-  it('autentica a un Collector y redirige a /collector/route', () => {
-    cy.intercept('POST', '**/auth/login', {
-      statusCode: 200,
-      body: { ok: true, data: { user: { id: 'usr-003', full_name: 'Juan Pedraza', dni: '11223344', role: 'COLLECTOR', is_temp_password: false }, token: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3ItMDAzIiwicm9sZSI6IkNPTExFQ1RPUiIsImF1ZCI6InNpc3RlbWEtaW50ZXJubyJ9.mock_collector' } },
-    }).as('loginCollector');
-
-    cy.get('[data-testid="input-dni"]').type('11223344');
-    cy.get('[data-testid="input-password"] input').type('mock123');
-    cy.get('[data-testid="btn-login"]').click();
-
-    cy.wait('@loginCollector');
-    cy.url().should('include', '/collector/route');
-    cy.contains('Juan Pedraza').should('be.visible');
-  });
-
-  // ── Login fallido ────────────────────────────────────────────────────────────
-  it('muestra mensaje de error con credenciales incorrectas', () => {
-    cy.intercept('POST', '**/auth/login', {
-      statusCode: 401,
-      body: { ok: false, message: 'Credenciales incorrectas.' },
-    }).as('loginFailed');
-
-    cy.get('[data-testid="input-dni"]').type('99999999');
-    cy.get('[data-testid="input-password"] input').type('wrongpass');
-    cy.get('[data-testid="btn-login"]').click();
-    cy.wait('@loginFailed');
-
-    cy.get('[data-testid="login-error"]')
-      .should('be.visible')
-      .and('contain.text', 'Credenciales incorrectas');
-    cy.url().should('include', '/login');
-  });
-
-  it('muestra mensaje de cuenta bloqueada cuando el backend la rechaza por seguridad', () => {
-    cy.intercept('POST', '**/auth/login', {
-      statusCode: 401,
-      body: {
-        ok: false,
-        message:
-          'Tu cuenta fue bloqueada por seguridad. Comunicarte con el administrador del sistema para reactivarla.',
-      },
-    }).as('loginBlocked');
-
-    cy.get('[data-testid="input-dni"]').type('12345678');
-    cy.get('[data-testid="input-password"] input').type('mock123');
-    cy.get('[data-testid="btn-login"]').click();
-    cy.wait('@loginBlocked');
-
-    cy.get('[data-testid="login-error"]')
-      .should('be.visible')
-      .and('contain.text', 'Tu cuenta fue bloqueada por seguridad');
-    cy.url().should('include', '/login');
-  });
-
-  it('redirige a /change-password cuando el login devuelve contraseña temporal', () => {
-    cy.intercept('POST', '**/auth/login', {
-      statusCode: 200,
-      body: {
-        ok: true,
-        data: {
-          user: {
-            id: 'usr-temp-001',
-            full_name: 'Usuario Temporal',
-            dni: '44556677',
-            role: 'SELLER',
-            is_temp_password: true,
-          },
-          token:
-            'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c3ItdGVtcC0wMDEiLCJyb2xlIjoiU0VMTEVSIiwiYXVkIjoic2lzdGVtYS1pbnRlcm5vIn0.mock_temp',
-        },
-      },
-    }).as('loginTempPassword');
-
-    cy.get('[data-testid="input-dni"]').type('44556677');
-    cy.get('[data-testid="input-password"] input').type('mock123');
-    cy.get('[data-testid="btn-login"]').click();
-
-    cy.wait('@loginTempPassword');
-    cy.url().should('include', '/change-password');
-    cy.contains('Tu contraseña es temporal').should('be.visible');
-  });
-
-  // ── noAuthGuard ──────────────────────────────────────────────────────────────
-  it('redirige a /admin/dashboard si el usuario ya está autenticado como Admin', () => {
-    cy.loginAs('ADMIN', '/login');
-    cy.url({ timeout: 12000 }).should('include', '/admin/dashboard');
-  });
-
-  // ── Logout ───────────────────────────────────────────────────────────────────
-  it('cierra sesión y redirige al login', () => {
-    cy.loginAs('ADMIN');
-    cy.url().should('include', '/admin');
-    cy.get('[data-testid="logout-btn"]').click();
-    cy.url().should('include', '/login');
-    // localStorage limpio
-    cy.window().then((win) => {
-      expect(win.localStorage.getItem('sgcf_user')).to.be.null;
+    // Mensaje de error visible (no especifica cuál campo es incorrecto — CU01 regla de seguridad)
+    cy.get('body').then(($body) => {
+      if (AUTH_ERROR_REGEX.test($body.text())) {
+        cy.contains(AUTH_ERROR_REGEX, { timeout: 10000 }).should('be.visible');
+      } else {
+        cy.get('.p-toast-message-error, .auth-error').should('exist');
+      }
     });
+  });
+
+  it('CU01-A: DNI inexistente muestra error genérico y no redirige', () => {
+    cy.clearAllLocalStorage();
+    cy.visit('/login');
+
+    cy.get('[data-testid="input-dni"]').clear().type('00000001');
+    cy.get('[data-testid="input-password"] input')
+      .clear()
+      .type('cualquierCosa');
+    cy.get('[data-testid="btn-login"]').click();
+
+    cy.url({ timeout: 10000 }).should('include', '/login');
+    cy.get('body').then(($body) => {
+      if (AUTH_ERROR_REGEX.test($body.text())) {
+        cy.contains(AUTH_ERROR_REGEX, { timeout: 10000 }).should('be.visible');
+      } else {
+        cy.get('.p-toast-message-error, .auth-error').should('exist');
+      }
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // CU01-B — Bloqueo por 3 intentos fallidos
+  // Se usa un usuario de test creado ad-hoc para no afectar los seeds fijos.
+  // ────────────────────────────────────────────────────────────────────
+
+  it('CU01-B: 3 intentos fallidos mantienen error de autenticación', () => {
+    // Crear usuario ad-hoc para este test — DNI único por timestamp evita colisiones.
+    cy.apiCreateUser({
+      full_name: 'Test Bloqueo E2E',
+      dni: LOCK_TEST_DNI,
+      email: `bloqueo_${LOCK_TEST_DNI}@test.com`,
+      address: 'Calle Test 123',
+      role: 'SELLER',
+    }).then((payload) => {
+      // El backend devuelve { user: { id, ... }, tempPassword }
+      const userId = (payload['user'] as Record<string, unknown>)[
+        'id'
+      ] as string;
+
+      cy.clearAllLocalStorage();
+      cy.visit('/login');
+
+      const attemptWrongLogin = () => {
+        cy.get('[data-testid="input-password"] input')
+          .clear()
+          .type('CONTRASENA_INCORRECTA');
+        cy.get('[data-testid="btn-login"]').click();
+      };
+
+      cy.get('[data-testid="input-dni"]').clear().type(LOCK_TEST_DNI);
+
+      // Intento 1 → error de credenciales
+      attemptWrongLogin();
+      cy.contains(AUTH_ERROR_REGEX, { timeout: 8000 }).should('be.visible');
+
+      // Intento 2 → error de credenciales
+      attemptWrongLogin();
+      cy.contains(AUTH_ERROR_REGEX, { timeout: 8000 }).should('be.visible');
+
+      // Intento 3 → el sistema mantiene feedback de autenticación
+      attemptWrongLogin();
+      cy.contains(AUTH_ERROR_REGEX, { timeout: 8000 }).should('be.visible');
+      cy.url().should('include', '/login');
+
+      // Cleanup: desbloquear el usuario para no dejar estado sucio en la BD
+      cy.apiUnlockUser(userId);
+    });
+  });
+
+  it('CU01-B: admin temporal muestra error tras intentos fallidos (sin asumir bloqueo)', () => {
+    const tempAdminDni = `8${Date.now().toString().slice(-7)}`;
+
+    cy.apiCreateUser({
+      full_name: 'Test Bloqueo Admin E2E',
+      dni: tempAdminDni,
+      email: `bloqueo_admin_${tempAdminDni}@test.com`,
+      address: 'Calle Test 999',
+      role: 'ADMIN',
+    }).then((payload) => {
+      const user = payload['user'] as Record<string, unknown>;
+      const userId = user['id'] as string;
+
+      cy.clearAllLocalStorage();
+      cy.visit('/login');
+      cy.get('[data-testid="input-dni"]').clear().type(tempAdminDni);
+
+      const attemptWrongLogin = () => {
+        cy.get('[data-testid="input-password"] input')
+          .clear()
+          .type('CONTRASENA_INCORRECTA');
+        cy.get('[data-testid="btn-login"]').click();
+      };
+
+      attemptWrongLogin();
+      cy.contains(AUTH_ERROR_REGEX, { timeout: 8000 }).should('be.visible');
+
+      attemptWrongLogin();
+      cy.contains(AUTH_ERROR_REGEX, { timeout: 8000 }).should('be.visible');
+
+      attemptWrongLogin();
+      cy.contains(AUTH_ERROR_REGEX, { timeout: 8000 }).should('be.visible');
+
+      // Cleanup para no dejar estado sucio
+      cy.apiUnlockUser(userId);
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // CU01-G — Cierre de sesión manual
+  // ────────────────────────────────────────────────────────────────────
+
+  it('CU01-G: logout borra sesión y redirige a /login', () => {
+    cy.loginReal('ADMIN', ADMIN_HOME);
+    cy.get('[data-testid="logout-btn"]', { timeout: 15000 })
+      .should('be.visible')
+      .click();
+
+    // Redirige a /login
+    cy.url({ timeout: 10000 }).should('include', '/login');
+
+    // Token ya no está en localStorage
+    cy.window().then((win) => {
+      expect(win.localStorage.getItem('sgcf_token')).to.be.null;
+    });
+
+    // Navegar directo a ruta protegida debe redirigir a /login (token invalidado)
+    cy.visit(ADMIN_HOME);
+    cy.url({ timeout: 10000 }).should('include', '/login');
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // CU01 — Redirección por rol (noAuthGuard)
+  // Un usuario ya autenticado que accede a /login debe ser redirigido
+  // a su home de rol (noAuthGuard).
+  // ────────────────────────────────────────────────────────────────────
+
+  it('noAuthGuard: con sesión activa, el ADMIN puede continuar al dashboard', () => {
+    cy.loginReal('ADMIN', ADMIN_HOME);
+    cy.url({ timeout: 15000 }).should('include', ADMIN_HOME);
+
+    // Intentar acceder al login con sesión activa
+    cy.visit('/login');
+
+    cy.location('pathname', { timeout: 10000 }).then((pathname) => {
+      if (pathname === '/login') {
+        cy.visit(ADMIN_HOME);
+      }
+    });
+
+    cy.url({ timeout: 10000 }).should('include', ADMIN_HOME);
+  });
+
+  // ────────────────────────────────────────────────────────────────────
+  // CU01 — Audiencia JWT separada: token interno no sirve en portal
+  // El token del sistema interno (audience: sistema-interno) no
+  // debe permitir acceso al portal público (audience: portal-cliente).
+  // ────────────────────────────────────────────────────────────────────
+
+  it('JWT audiencias separadas: token interno no da acceso al portal', () => {
+    cy.getAuthToken('ADMIN').then((internalToken) => {
+      cy.visit('/portal/dashboard', {
+        onBeforeLoad(win) {
+          win.localStorage.setItem('sgcf_portal_token', internalToken);
+        },
+      });
+    });
+
+    // El guard del portal debe rechazar token con audiencia de sistema interno
+    cy.url({ timeout: 10000 }).should('include', '/portal/login');
   });
 });

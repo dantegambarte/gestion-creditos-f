@@ -2,13 +2,13 @@
   <!-- Filtro inline -->
   <div class="flex flex-wrap items-center gap-4">
     <div class="flex items-center gap-2">
-      <span class="text-sm text-gray-400">Stock ≤</span>
+      <span class="text-sm text-[var(--ff-text-secondary)]">Stock ≤</span>
       <p-inputNumber
         [(ngModel)]="stockThreshold"
         [min]="0"
         [useGrouping]="false"
         styleClass="w-28"
-        inputStyleClass="bg-gray-800 border-gray-600 text-white text-sm h-9 rounded-lg px-3"
+        inputStyleClass="bg-[var(--ff-panel)] border-[var(--ff-border)] text-[var(--ff-text-primary)] text-sm h-9 rounded-lg px-3"
         placeholder="sin filtro"
       />
     </div>
@@ -16,11 +16,14 @@
       label="Filtrar"
       icon="pi pi-search"
       [loading]="loading"
+      styleClass="ff-filter-btn"
       (onClick)="consultProducts()"
     />
-    <div class="flex items-center gap-2 ml-2">
+    <div class="ml-2 flex items-center gap-2">
       <p-inputSwitch [(ngModel)]="onlyWithSales" />
-      <span class="text-sm text-gray-400">Solo con ventas</span>
+      <span class="text-sm text-[var(--ff-text-secondary)]"
+        >Solo con ventas</span
+      >
     </div>
   </div>
 
@@ -29,39 +32,43 @@
   } @else if (error) {
     <app-error-state />
   } @else if (filteredProductRows.length === 0) {
-    <p class="text-sm text-gray-500 text-center py-10">Sin productos.</p>
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+      Sin productos.
+    </p>
   } @else {
-    <div class="bg-gray-800 rounded-2xl overflow-hidden">
+    <div
+      class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+    >
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-gray-700">
+          <tr class="border-b border-[var(--ff-border-subtle)]">
             <th
-              class="text-left px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Producto
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Precio
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Stock
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Veces vendido
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Prom. venta
             </th>
             <th
-              class="text-right px-5 py-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium"
+              class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
             >
               Ingresos
             </th>
@@ -70,12 +77,14 @@
         <tbody>
           @for (row of filteredProductRows; track row.id) {
             <tr
-              class="border-t border-gray-700/50 hover:bg-gray-700/20 transition-colors"
+              class="border-t border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
             >
-              <td class="px-5 py-3 font-semibold text-white">
+              <td class="px-5 py-3 font-semibold text-[var(--ff-text-primary)]">
                 {{ row.title }}
               </td>
-              <td class="px-5 py-3 text-right font-mono text-gray-300">
+              <td
+                class="px-5 py-3 text-right font-mono text-[var(--ff-text-secondary)]"
+              >
                 @if (row.minPrice === row.maxPrice) {
                   {{ formatCurrency(row.minPrice) }}
                 } @else {
@@ -98,13 +107,17 @@
                     Stock bajo ({{ row.availableCount }})
                   </span>
                 } @else {
-                  <span class="text-gray-300">{{ row.availableCount }}</span>
+                  <span class="text-[var(--ff-text-secondary)]">{{
+                    row.availableCount
+                  }}</span>
                 }
               </td>
-              <td class="px-5 py-3 text-right text-gray-300">
+              <td class="px-5 py-3 text-right text-[var(--ff-text-secondary)]">
                 {{ row.timesSold }}
               </td>
-              <td class="px-5 py-3 text-right font-mono text-gray-400">
+              <td
+                class="px-5 py-3 text-right font-mono text-[var(--ff-text-secondary)]"
+              >
                 {{ formatCurrency(row.avgSellingPrice) }}
               </td>
               <td
