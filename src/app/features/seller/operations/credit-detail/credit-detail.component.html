@@ -211,24 +211,44 @@
             <div class="ud-value ff-mono">{{ credit.totalAmount | currencyArs: 0 }}</div>
           </div>
           <div>
-            <div class="ud-label">Frecuencia</div>
-            <div class="ud-value">{{ frequencyLabel(credit.paymentFrequency) }}</div>
+            <div class="ud-label">Monto financiado</div>
+            <div class="ud-value ff-mono">{{ credit.financedAmount | currencyArs: 0 }}</div>
           </div>
           <div>
             <div class="ud-label">Tasa de interés</div>
             <div class="ud-value">
-              @if (credit.interestRate != null) {
-                {{ (credit.interestRate * 100).toFixed(2) }}%
-              } @else if (credit.type === 'SALE') {
-                @if (credit.status === 'PENDING_APPROVAL') {
-                  Se definirá al aprobar
-                } @else {
-                  N/A (Venta)
-                }
+              @if (effectiveRate != null) {
+                {{ (effectiveRate * 100).toFixed(2) }}%
+              } @else if (credit.type === 'SALE' && credit.status === 'PENDING_APPROVAL') {
+                Se definirá al aprobar
               } @else {
                 <span style="color: var(--ff-text-muted)">—</span>
               }
             </div>
+          </div>
+          <div>
+            <div class="ud-label">Total de interés</div>
+            <div class="ud-value ff-mono">
+              @if (credit.installments.length > 0) {
+                {{ totalInterest | currencyArs: 0 }}
+              } @else {
+                <span style="color: var(--ff-text-muted)">—</span>
+              }
+            </div>
+          </div>
+          <div>
+            <div class="ud-label">Total a devolver</div>
+            <div class="ud-value ff-mono">
+              @if (credit.installments.length > 0) {
+                {{ totalToReturn | currencyArs: 0 }}
+              } @else {
+                <span style="color: var(--ff-text-muted)">—</span>
+              }
+            </div>
+          </div>
+          <div>
+            <div class="ud-label">Frecuencia</div>
+            <div class="ud-value">{{ frequencyLabel(credit.paymentFrequency) }}</div>
           </div>
           @if (
             credit.type === 'SALE' &&
