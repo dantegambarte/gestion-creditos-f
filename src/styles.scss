@@ -2694,6 +2694,11 @@ table.ff-table {
   color: var(--ff-text-secondary) !important;
 }
 
+.db-mobile-quick-panel,
+.db-pending-mobile {
+  display: none;
+}
+
 @media (max-width: 767.98px) {
   .db-main {
     width: 100%;
@@ -2733,6 +2738,16 @@ table.ff-table {
     gap: 16px;
   }
 
+  .db-pending-row--desktop,
+  .db-panel--desktop-quick {
+    display: none !important;
+  }
+
+  .db-mobile-quick-panel,
+  .db-pending-mobile {
+    display: block;
+  }
+
   .db-panel,
   .db-pending-col,
   .db-chart-panel {
@@ -2750,6 +2765,139 @@ table.ff-table {
     max-height: none;
     overflow: visible;
     padding: 12px;
+  }
+
+  .db-pending-mobile {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--ff-border-subtle);
+    border-radius: 16px;
+    background: linear-gradient(180deg, var(--ff-panel-raised), var(--ff-panel));
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.16);
+  }
+
+  .db-pending-mobile__tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid var(--ff-border-subtle);
+  }
+
+  .db-pending-mobile__tab {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--ff-text-secondary);
+    font-weight: 700;
+    padding: 10px 12px;
+  }
+
+  .db-pending-mobile__tab strong {
+    display: inline-flex;
+    min-width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(79, 110, 247, 0.22);
+    color: #ffffff;
+    font-size: 0.8125rem;
+  }
+
+  .db-pending-mobile__tab--active {
+    border-color: var(--ff-accent);
+    background: var(--ff-accent-soft);
+    color: var(--ff-text-primary);
+  }
+
+  .db-pending-mobile__panel {
+    display: flex;
+    max-height: min(430px, 64dvh);
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px;
+  }
+
+  .db-pending-mobile__group {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid rgba(46, 51, 71, 0.7);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .db-pending-mobile__group-header {
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    background: transparent;
+    color: var(--ff-text-primary);
+    padding: 12px;
+    text-align: left;
+  }
+
+  .db-pending-mobile__group-header > span:first-child {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .db-pending-mobile__group-header strong {
+    overflow-wrap: anywhere;
+  }
+
+  .db-pending-mobile__group-header small {
+    color: var(--ff-text-muted);
+    font-size: 0.75rem;
+  }
+
+  .db-pending-mobile__group-meta {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+    color: var(--ff-text-secondary);
+    font-family: "DM Mono", monospace;
+    font-size: 0.75rem;
+    text-align: right;
+  }
+
+  .db-pending-mobile__items {
+    display: flex;
+    max-height: 300px;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 10px 10px;
+  }
+
+  .db-pending-mobile__item {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 10px;
+    align-items: center;
+    border-radius: 12px;
+    background: rgba(18, 21, 32, 0.58);
+    padding: 10px;
+  }
+
+  .db-pending-mobile__item strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .db-pending-group {
@@ -2856,6 +3004,11 @@ table.ff-table {
 }
 
 @media (min-width: 768px) {
+  .db-mobile-quick-panel,
+  .db-pending-mobile {
+    display: none !important;
+  }
+
   .db-overdue-mobile {
     display: none !important;
   }
