@@ -123,6 +123,12 @@ export const NAV_CONFIG: NavItem[] = [
     route: `/${AppRoutes.ADMIN}/${AppRoutes.CONFIG}`,
     requiredRoles: ['ADMIN'],
   },
+  {
+    label: 'Ayuda',
+    icon: 'pi pi-question-circle',
+    route: `/${AppRoutes.ADMIN}/${AppRoutes.HELP}`,
+    requiredRoles: ['ADMIN'],
+  },
 
   {
     label: 'Mis comisiones',
