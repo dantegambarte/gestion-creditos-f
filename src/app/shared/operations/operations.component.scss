@@ -230,36 +230,6 @@
   color: var(--ff-accent);
 }
 
-:host ::ng-deep .operations-table .p-paginator {
-  padding: 10px 14px;
-  border: 0;
-  background: var(--ff-panel);
-  color: var(--ff-text-secondary);
-}
-
-:host ::ng-deep .operations-table .p-paginator .p-paginator-pages .p-paginator-page,
-:host ::ng-deep .operations-table .p-paginator .p-paginator-first,
-:host ::ng-deep .operations-table .p-paginator .p-paginator-prev,
-:host ::ng-deep .operations-table .p-paginator .p-paginator-next,
-:host ::ng-deep .operations-table .p-paginator .p-paginator-last {
-  min-width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  color: var(--ff-text-secondary);
-}
-
-:host ::ng-deep .operations-table .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
-  background: var(--ff-accent);
-  color: var(--primary-color-text);
-}
-
-:host ::ng-deep .operations-table .p-paginator .p-dropdown {
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid var(--ff-border);
-  background: var(--ff-secondary);
-}
-
 @media (max-width: 768px) {
   .operations-topbar {
     flex-direction: column;
