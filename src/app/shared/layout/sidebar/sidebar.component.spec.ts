@@ -151,13 +151,15 @@ describe('SidebarComponent', () => {
     expect(mockAuthService.logout).toHaveBeenCalled();
   });
 
-  // ── Memory leak: takeUntil ────────────────────────────────────────────────
-  it('debería desuscribirse de currentUser$ al destruir el componente', () => {
+  // ── Estado mobile con Signals ─────────────────────────────────────────────
+  it('debería abrir y cerrar el menú mobile con signals', () => {
     userSubject.next(makeUser(['ADMIN']));
     fixture.detectChanges();
 
-    const destroySpy = spyOn(component['destroy$'], 'next').and.callThrough();
-    fixture.destroy();
-    expect(destroySpy).toHaveBeenCalled();
+    component.toggleMobileMenu();
+    expect(component.mobileMenuOpen()).toBeTrue();
+
+    component.closeMobileMenu();
+    expect(component.mobileMenuOpen()).toBeFalse();
   });
 });

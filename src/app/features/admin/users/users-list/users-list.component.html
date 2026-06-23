@@ -16,8 +16,12 @@
   }
 </p-dialog>
 
-<div class="ff-panel" style="margin: 24px" data-cy="admin-users-page">
-  <div class="ff-list-header">
+<div
+  class="ff-panel admin-mobile-page"
+  style="margin: 24px"
+  data-cy="admin-users-page"
+>
+  <div class="ff-list-header admin-mobile-header">
     <div>
       <h1 class="ff-page-title">Gestión de Usuarios</h1>
       <p class="ff-page-subtitle">Administrá usuarios, roles y estados.</p>
@@ -32,9 +36,9 @@
     />
   </div>
 
-  <div class="ff-list-header ff-list-header--filters">
-    <div class="ff-list-header__actions">
-      <p-iconField iconPosition="left">
+  <div class="ff-list-header ff-list-header--filters admin-mobile-filters">
+    <div class="ff-list-header__actions admin-mobile-filter-actions">
+      <p-iconField iconPosition="left" styleClass="w-full md:w-auto">
         <p-inputIcon
           styleClass="pi pi-search z-10"
           style="color: var(--ff-text-muted)"
@@ -46,7 +50,7 @@
           placeholder="Buscar por nombre, DNI o email"
           [(ngModel)]="searchTerm"
           (ngModelChange)="onSearchChange($event)"
-          class="w-72 h-11 pl-10"
+          class="w-full md:w-72 h-11 pl-10 text-base md:text-sm"
         />
       </p-iconField>
       <p-dropdown
@@ -60,7 +64,7 @@
         [showClear]="true"
         optionLabel="label"
         optionValue="value"
-        styleClass="h-11"
+        styleClass="h-11 w-full md:w-auto"
         appendTo="body"
       />
       <p-dropdown
@@ -74,14 +78,40 @@
         [showClear]="true"
         optionLabel="label"
         optionValue="value"
-        styleClass="h-11"
+        styleClass="h-11 w-full md:w-auto"
         appendTo="body"
       />
     </div>
   </div>
 
   @if (loading) {
-    <app-loading-state />
+    <div class="admin-desktop-only">
+      <app-loading-state />
+    </div>
+    <div
+      class="admin-mobile-card-list admin-mobile-only"
+      data-cy="admin-users-mobile-skeleton-list"
+    >
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div
+          class="admin-mobile-card admin-mobile-card--skeleton"
+          data-cy="admin-users-mobile-skeleton-card"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex flex-col gap-2 flex-1">
+              <p-skeleton height="1.1rem" width="75%" borderRadius="0.5rem" />
+              <p-skeleton height="0.9rem" width="42%" borderRadius="0.5rem" />
+            </div>
+            <p-skeleton height="1.5rem" width="5rem" borderRadius="999px" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <p-skeleton height="2.25rem" borderRadius="0.625rem" />
+            <p-skeleton height="2.25rem" borderRadius="0.625rem" />
+          </div>
+          <p-skeleton height="2.5rem" borderRadius="0.75rem" />
+        </div>
+      }
+    </div>
   } @else if (error) {
     <app-error-state />
   } @else if (users.length === 0) {
@@ -89,82 +119,151 @@
       <app-empty-state />
     </div>
   } @else {
-    <p-table
-      data-cy="admin-users-table"
-      [value]="users"
-      [paginator]="true"
-      [rows]="15"
-      [rowsPerPageOptions]="[15, 30, 50]"
-      styleClass="p-datatable-sm"
+    <div class="admin-desktop-only">
+      <p-table
+        data-cy="admin-users-table"
+        [value]="users"
+        [paginator]="true"
+        [rows]="15"
+        [rowsPerPageOptions]="[15, 30, 50]"
+        styleClass="p-datatable-sm"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Nombre</th>
+            <th>DNI</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Último acceso</th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-user>
+          <tr>
+            <td>
+              <div class="flex items-center gap-2">
+                {{ user.fullName }}
+                @if (user.lockedAt) {
+                  <i
+                    class="pi pi-lock text-sm"
+                    style="color: var(--ff-danger)"
+                    pTooltip="Usuario bloqueado"
+                  ></i>
+                }
+              </div>
+            </td>
+            <td class="ff-mono">{{ user.dni }}</td>
+            <td>{{ user.email ?? "—" }}</td>
+            <td>
+              <span
+                class="ff-role-chip"
+                [class.ff-role--admin]="user.role === 'ADMIN'"
+                [class.ff-role--seller]="user.role === 'SELLER'"
+                [class.ff-role--collector]="user.role === 'COLLECTOR'"
+                [class.ff-role--seller-collector]="
+                  user.role === 'SELLER_COLLECTOR'
+                "
+                >{{ roleLabel(user.role) }}</span
+              >
+            </td>
+            <td>
+              <span
+                class="ff-badge"
+                [class.ff-badge--activo]="user.status === 'ACTIVE'"
+                [class.ff-badge--inactivo]="user.status !== 'ACTIVE'"
+                >{{ user.status === "ACTIVE" ? "Activo" : "Inactivo" }}</span
+              >
+            </td>
+            <td>
+              {{
+                user.lastLoginAt
+                  ? (user.lastLoginAt | date: "dd/MM/yyyy HH:mm")
+                  : "—"
+              }}
+            </td>
+            <td>
+              <p-button
+                data-cy="admin-users-view-detail-action"
+                label="Ver"
+                icon="pi pi-eye"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="navigateToDetail(user.id)"
+              />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <div
+      class="admin-mobile-card-list admin-mobile-only"
+      data-cy="admin-users-mobile-list"
     >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Nombre</th>
-          <th>DNI</th>
-          <th>Email</th>
-          <th>Rol</th>
-          <th>Estado</th>
-          <th>Último acceso</th>
-          <th></th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-user>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              {{ user.fullName }}
-              @if (user.lockedAt) {
-                <i
-                  class="pi pi-lock text-sm"
-                  style="color: var(--ff-danger)"
-                  pTooltip="Usuario bloqueado"
-                ></i>
-              }
+      @for (user of users; track user.id) {
+        <article class="admin-mobile-card" data-cy="admin-users-mobile-card">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h2 class="admin-mobile-card__title">
+                {{ user.fullName }}
+                @if (user.lockedAt) {
+                  <i
+                    class="pi pi-lock text-sm"
+                    style="color: var(--ff-danger)"
+                  ></i>
+                }
+              </h2>
+              <p class="admin-mobile-card__meta ff-mono">DNI {{ user.dni }}</p>
             </div>
-          </td>
-          <td class="ff-mono">{{ user.dni }}</td>
-          <td>{{ user.email ?? "—" }}</td>
-          <td>
+            <span
+              class="ff-badge shrink-0"
+              [class.ff-badge--activo]="user.status === 'ACTIVE'"
+              [class.ff-badge--inactivo]="user.status !== 'ACTIVE'"
+              >{{ user.status === "ACTIVE" ? "Activo" : "Inactivo" }}</span
+            >
+          </div>
+          <div class="flex flex-wrap gap-2">
             <span
               class="ff-role-chip"
               [class.ff-role--admin]="user.role === 'ADMIN'"
               [class.ff-role--seller]="user.role === 'SELLER'"
               [class.ff-role--collector]="user.role === 'COLLECTOR'"
-              [class.ff-role--cashier]="user.role === 'CASHIER'"
               [class.ff-role--seller-collector]="
                 user.role === 'SELLER_COLLECTOR'
               "
               >{{ roleLabel(user.role) }}</span
             >
-          </td>
-          <td>
-            <span
-              class="ff-badge"
-              [class.ff-badge--activo]="user.status === 'ACTIVE'"
-              [class.ff-badge--inactivo]="user.status !== 'ACTIVE'"
-              >{{ user.status === "ACTIVE" ? "Activo" : "Inactivo" }}</span
-            >
-          </td>
-          <td>
-            {{
-              user.lastLoginAt
-                ? (user.lastLoginAt | date: "dd/MM/yyyy HH:mm")
-                : "—"
-            }}
-          </td>
-          <td>
-            <p-button
-              data-cy="admin-users-view-detail-action"
-              label="Ver"
-              icon="pi pi-eye"
-              severity="secondary"
-              [outlined]="true"
-              size="small"
-              (onClick)="navigateToDetail(user.id)"
-            />
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+            @if (user.isTempPassword) {
+              <span class="ff-badge ff-badge--pendiente">TEMPORAL</span>
+            }
+          </div>
+          <div class="admin-mobile-kv-grid">
+            <div>
+              <span>Email</span>
+              <strong>{{ user.email ?? "—" }}</strong>
+            </div>
+            <div>
+              <span>Último acceso</span>
+              <strong>{{
+                user.lastLoginAt
+                  ? (user.lastLoginAt | date: "dd/MM/yy HH:mm")
+                  : "—"
+              }}</strong>
+            </div>
+          </div>
+          <p-button
+            data-cy="admin-users-mobile-view-detail-action"
+            label="Ver usuario"
+            icon="pi pi-eye"
+            severity="secondary"
+            [outlined]="true"
+            styleClass="w-full h-11 rounded-xl justify-center"
+            (onClick)="navigateToDetail(user.id)"
+          />
+        </article>
+      }
+    </div>
   }
 </div>

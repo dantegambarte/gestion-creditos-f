@@ -1,20 +1,20 @@
 <p-toast />
-<div class="ff-complex-page">
+<div class="ff-complex-page clients-page-mobile">
   <div class="ff-panel">
-    <div class="ff-list-header">
+    <div class="ff-list-header clients-mobile-header">
       <h1 class="ff-page-title">Gestión de Clientes</h1>
       <p-button
         label="Nuevo Cliente"
         icon="pi pi-plus"
         severity="primary"
-        styleClass="h-11 px-5 rounded-xl shadow-sm"
+        styleClass="h-11 px-5 rounded-xl shadow-sm clients-new-button"
         data-cy="btn-nuevo-cliente"
         (onClick)="showCreateModal = true"
       />
     </div>
 
-    <div class="ff-list-header ff-list-header--filters">
-      <div class="ff-list-header__actions">
+    <div class="ff-list-header ff-list-header--filters clients-mobile-filters">
+      <div class="ff-list-header__actions clients-mobile-filter-actions">
         <p-dropdown
           [options]="filterOptions"
           [(ngModel)]="selectedFilter"
@@ -23,11 +23,11 @@
           placeholder="Todos los riesgos"
           [filter]="filterOptions.length > 10"
           filterBy="label"
-          styleClass="h-11 w-48"
+          styleClass="h-11 w-full md:w-48"
           appendTo="body"
           data-cy="dropdown-filtro-clientes"
         />
-        <p-iconField iconPosition="left">
+        <p-iconField iconPosition="left" styleClass="w-full md:w-auto">
           <p-inputIcon styleClass="pi pi-search z-10 ff-muted-icon" />
           <input
             pInputText
@@ -41,67 +41,201 @@
       </div>
     </div>
 
-    <p-table
-      [value]="filteredClients"
-      styleClass="p-datatable-sm ff-data-table"
-      [tableStyle]="{ 'min-width': '50rem' }"
-      [paginator]="true"
-      [rows]="10"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      paginatorDropdownAppendTo="body"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="{first}–{last} de {totalRecords}"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>DNI</th>
-          <th>Nombre</th>
-          <th>Teléfono</th>
-          <th>Créditos</th>
-          <th>Riesgo</th>
-          <th>Acciones</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-client>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <span class="ff-mono text-sm">{{ client.dni }}</span>
+    @if (loading) {
+      <div class="hidden md:block" data-cy="clients-desktop-skeleton">
+        <div class="clients-table-skeleton">
+          @for (_ of [1, 2, 3, 4, 5]; track _) {
+            <div class="clients-table-skeleton__row">
+              <p-skeleton width="7rem" height="1rem" />
+              <p-skeleton width="11rem" height="1rem" />
+              <p-skeleton width="8rem" height="1rem" />
+              <p-skeleton width="4rem" height="1rem" />
+              <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+              <p-skeleton width="6rem" height="2rem" />
+            </div>
+          }
+        </div>
+      </div>
+
+      <div
+        class="clients-mobile-skeleton block md:hidden"
+        data-cy="clients-mobile-skeleton"
+      >
+        @for (_ of [1, 2, 3]; track _) {
+          <article class="clients-mobile-skeleton-card">
+            <div class="clients-mobile-skeleton-card__head">
+              <p-skeleton shape="circle" size="2.25rem" />
+              <div class="clients-mobile-skeleton-card__title">
+                <p-skeleton width="70%" height="0.95rem" />
+                <p-skeleton width="45%" height="0.75rem" />
+              </div>
+              <p-skeleton width="1rem" height="1rem" />
+            </div>
+            <div class="clients-mobile-skeleton-card__meta">
+              <p-skeleton height="3rem" borderRadius="0.5rem" />
+              <p-skeleton height="3rem" borderRadius="0.5rem" />
+              <p-skeleton height="3rem" borderRadius="0.5rem" />
+            </div>
+            <p-skeleton height="3rem" borderRadius="0.75rem" />
+          </article>
+        }
+      </div>
+    } @else if (filteredClients.length === 0) {
+      <div class="clients-empty-state" data-cy="clients-empty-state">
+        <div class="clients-empty-state__icon">
+          <i class="pi pi-users"></i>
+        </div>
+        <h2>No hay clientes para mostrar</h2>
+        <p>{{ emptyClientsMessage }}</p>
+      </div>
+    } @else {
+      <div class="hidden md:block">
+        <p-table
+          [value]="filteredClients"
+          styleClass="p-datatable-sm ff-data-table"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          [paginator]="true"
+          [rows]="10"
+          [rowsPerPageOptions]="[10, 25, 50]"
+          paginatorDropdownAppendTo="body"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="{first}–{last} de {totalRecords}"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>DNI</th>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Créditos</th>
+              <th>Riesgo</th>
+              <th>Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-client>
+            <tr>
+              <td>
+                <div class="flex items-center gap-2">
+                  <span class="ff-mono text-sm">{{ client.dni }}</span>
+                  <span
+                    class="inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold"
+                    [style.background-color]="client.avatarColor"
+                    >{{ client.initials }}</span
+                  >
+                </div>
+              </td>
+              <td class="font-medium">{{ client.name }}</td>
+              <td class="ff-text-secondary">{{ client.phone }}</td>
+              <td>{{ client.credits }}</td>
+              <td>
+                <span
+                  class="ff-badge"
+                  [class.ff-badge--activo]="
+                    getRiskSeverity(client.risk) === 'success'
+                  "
+                  [class.ff-badge--pendiente]="
+                    getRiskSeverity(client.risk) === 'warning'
+                  "
+                  [class.ff-badge--vencido]="
+                    getRiskSeverity(client.risk) === 'danger'
+                  "
+                  >{{ getRiskLabel(client.risk) }}</span
+                >
+              </td>
+              <td>
+                <div class="flex items-center gap-1.5">
+                  <p-button
+                    icon="pi pi-eye"
+                    severity="info"
+                    [rounded]="true"
+                    styleClass="client-action-button"
+                    pTooltip="Ver"
+                    tooltipPosition="top"
+                    [attr.data-cy]="'btn-ver-' + client.dni"
+                    (onClick)="openView(client)"
+                  />
+                  @if (canEditClients) {
+                    <p-button
+                      icon="pi pi-pencil"
+                      severity="warning"
+                      [rounded]="true"
+                      styleClass="client-action-button"
+                      pTooltip="Editar"
+                      tooltipPosition="top"
+                      [attr.data-cy]="'btn-editar-' + client.dni"
+                      (onClick)="openEdit(client)"
+                    />
+                  }
+                  @if (client.credits > 0) {
+                    <p-button
+                      icon="pi pi-credit-card"
+                      severity="help"
+                      [rounded]="true"
+                      styleClass="client-action-button"
+                      pTooltip="Créditos"
+                      tooltipPosition="top"
+                      [attr.data-cy]="'btn-creditos-' + client.dni"
+                      (onClick)="openCredits(client)"
+                    />
+                  }
+                  @if (client.phone) {
+                    <p-button
+                      icon="pi pi-whatsapp"
+                      styleClass="p-button-whatsapp client-action-button"
+                      [rounded]="true"
+                      pTooltip="WhatsApp"
+                      tooltipPosition="top"
+                      (onClick)="openWhatsApp(client.phone, client.name)"
+                    />
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <div class="clients-mobile-list block md:hidden">
+        @for (client of filteredClients; track client.id) {
+          <article class="clients-mobile-card">
+            <button
+              type="button"
+              class="clients-mobile-card__main"
+              [attr.data-cy]="'btn-ver-mobile-' + client.dni"
+              (click)="openView(client)"
+            >
               <span
-                class="inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-semibold"
+                class="clients-mobile-card__avatar"
                 [style.background-color]="client.avatarColor"
                 >{{ client.initials }}</span
               >
+              <span class="clients-mobile-card__identity">
+                <strong>{{ client.name }}</strong>
+                <span class="ff-mono">DNI {{ client.dni }}</span>
+              </span>
+              <i class="pi pi-chevron-right clients-mobile-card__chevron"></i>
+            </button>
+
+            <div class="clients-mobile-card__meta">
+              <div>
+                <span>Teléfono</span>
+                <strong>{{ client.phone || "—" }}</strong>
+              </div>
+              <div>
+                <span>Créditos</span>
+                <strong>{{ client.credits }}</strong>
+              </div>
+              <div>
+                <span>Riesgo</span>
+                <strong>{{ getRiskLabel(client.risk) }}</strong>
+              </div>
             </div>
-          </td>
-          <td class="font-medium">{{ client.name }}</td>
-          <td class="ff-text-secondary">{{ client.phone }}</td>
-          <td>{{ client.credits }}</td>
-          <td>
-            <span
-              class="ff-badge"
-              [class.ff-badge--activo]="
-                getRiskSeverity(client.risk) === 'success'
-              "
-              [class.ff-badge--pendiente]="
-                getRiskSeverity(client.risk) === 'warning'
-              "
-              [class.ff-badge--vencido]="
-                getRiskSeverity(client.risk) === 'danger'
-              "
-              >{{ getRiskLabel(client.risk) }}</span
-            >
-          </td>
-          <td>
-            <div class="flex items-center gap-1.5">
+
+            <div class="clients-mobile-card__actions">
               <p-button
+                label="Ver"
                 icon="pi pi-eye"
                 severity="info"
-                [rounded]="true"
-                styleClass="client-action-button"
-                pTooltip="Ver"
-                tooltipPosition="top"
-                [attr.data-cy]="'btn-ver-' + client.dni"
+                styleClass="h-12 px-4 rounded-xl justify-center"
                 (onClick)="openView(client)"
               />
               @if (canEditClients) {
@@ -109,10 +243,8 @@
                   icon="pi pi-pencil"
                   severity="warning"
                   [rounded]="true"
-                  styleClass="client-action-button"
-                  pTooltip="Editar"
-                  tooltipPosition="top"
-                  [attr.data-cy]="'btn-editar-' + client.dni"
+                  styleClass="client-action-button client-action-button--mobile"
+                  [attr.data-cy]="'btn-editar-mobile-' + client.dni"
                   (onClick)="openEdit(client)"
                 />
               }
@@ -121,28 +253,24 @@
                   icon="pi pi-credit-card"
                   severity="help"
                   [rounded]="true"
-                  styleClass="client-action-button"
-                  pTooltip="Créditos"
-                  tooltipPosition="top"
-                  [attr.data-cy]="'btn-creditos-' + client.dni"
+                  styleClass="client-action-button client-action-button--mobile"
+                  [attr.data-cy]="'btn-creditos-mobile-' + client.dni"
                   (onClick)="openCredits(client)"
                 />
               }
               @if (client.phone) {
                 <p-button
                   icon="pi pi-whatsapp"
-                  styleClass="p-button-whatsapp client-action-button"
+                  styleClass="p-button-whatsapp client-action-button client-action-button--mobile"
                   [rounded]="true"
-                  pTooltip="WhatsApp"
-                  tooltipPosition="top"
                   (onClick)="openWhatsApp(client.phone, client.name)"
                 />
               }
             </div>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+          </article>
+        }
+      </div>
+    }
   </div>
 </div>
 

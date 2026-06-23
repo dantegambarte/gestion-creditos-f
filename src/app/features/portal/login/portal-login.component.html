@@ -1,5 +1,5 @@
-<div class="auth-page">
-  <div class="auth-card">
+<div class="auth-page" data-cy="portal-login-page">
+  <div class="auth-card" data-cy="portal-login-card">
     <!-- Logo -->
     <div class="auth-logo" style="font-family: var(--ff-font-mono)">finFlow</div>
     <div style="text-align:center; margin-bottom: 24px">
@@ -27,7 +27,7 @@
             pInputText
             formControlName="dni"
             placeholder="28456789"
-            class="w-full pl-10"
+            class="w-full h-11 pl-10 text-base"
             aria-required="true"
             [attr.aria-invalid]="submitted && form.controls['dni'].invalid ? 'true' : null"
             [attr.aria-describedby]="submitted && form.controls['dni'].invalid ? 'dni-error' : null"
@@ -60,7 +60,7 @@
             [feedback]="false"
             [toggleMask]="true"
             styleClass="w-full"
-            inputStyleClass="w-full pl-10"
+            inputStyleClass="w-full h-11 pl-10 text-base"
             [class.ng-invalid]="submitted && form.controls['password'].invalid"
             [class.ng-dirty]="submitted && form.controls['password'].invalid"
           />
@@ -91,7 +91,7 @@
       <p-button
         type="submit"
         label="Iniciar sesión"
-        styleClass="w-full justify-center"
+        styleClass="w-full justify-center h-11"
         [loading]="loading"
         [disabled]="isBlocked"
       />

@@ -7,6 +7,12 @@ export interface AuthUser {
   /** Alias de full_name — mantenido para compatibilidad con templates existentes. */
   name: string;
   dni?: string;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  status?: string;
+  last_login_at?: string | null;
+  created_at?: string | null;
   /** Roles como array. Backend devuelve role singular; adapter lo envuelve en [role]. */
   roles: UserRole[];
   /** Iniciales calculadas del full_name — usado en avatar UI. */
@@ -15,6 +21,4 @@ export interface AuthUser {
   force_relogin_at: string | null;
   token: string;
   pending_approvals_count?: number;
-  /** Opcional: solo presente en mock para acceso rápido. */
-  email?: string;
 }

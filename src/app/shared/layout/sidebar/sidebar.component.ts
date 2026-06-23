@@ -1,11 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AvatarModule } from 'primeng/avatar';
 import { BadgeModule } from 'primeng/badge';
 import { RippleModule } from 'primeng/ripple';
-import { TooltipModule } from 'primeng/tooltip';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AuthUser } from '../../../core/models/interface/auth-user';
 import { NavItem, ResolvedNavItem } from '../../models/interface/nav-item';
@@ -20,27 +19,34 @@ import { NAV_CONFIG } from '../../utils/nav-config';
     BadgeModule,
     AvatarModule,
     RippleModule,
-    TooltipModule,
   ],
   templateUrl: './sidebar.component.html',
 })
-export class SidebarComponent implements OnInit, OnDestroy {
-  currentUser: AuthUser | null = null;
-  visibleItems: ResolvedNavItem[] = [];
-  private destroy$ = new Subject<void>();
+export class SidebarComponent {
+  private auth = inject(AuthServiceBase);
+  private router = inject(Router);
 
-  constructor(private auth: AuthServiceBase) {}
+  currentUser = toSignal(this.auth.currentUser$, { initialValue: null });
+  mobileMenuOpen = signal(false);
+  activeUrl = toSignal(
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      map((event) => (event as NavigationEnd).urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
 
-  ngOnInit(): void {
-    this.auth.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user) => {
-      this.currentUser = user;
-      this.visibleItems = this.filterByRole(user);
-    });
-  }
+  mobilePrimaryItems = computed(() =>
+    this.visibleItems
+      .filter((item) => !item.isGroupLabel && !!item.route)
+      .slice(0, 4),
+  );
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  /**
+   * Devuelve la navegación visible para el usuario actual usando el estado reactivo de autenticación.
+   */
+  get visibleItems(): ResolvedNavItem[] {
+    return this.filterByRole(this.currentUser());
   }
 
   /**
@@ -68,10 +74,36 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Indica si una ruta debe marcarse activa en la navegación mobile.
+   * @param route - Ruta resuelta del item de navegación.
+   */
+  isRouteActive(route?: string): boolean {
+    if (!route) return false;
+
+    const url = this.activeUrl();
+    return url === route || url.startsWith(`${route}/`);
+  }
+
+  /**
+   * Abre o cierra el menú mobile secundario sin afectar el sidebar desktop.
+   */
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((open) => !open);
+  }
+
+  /**
+   * Cierra el menú mobile luego de navegar para liberar el viewport.
+   */
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
+
+  /**
    * Cierra la sesión del usuario actual. Se llama al hacer clic en "Cerrar Sesión" en el sidebar.
    * Redirige a la página de login y limpia el estado de autenticación.
    */
   logout(): void {
+    this.closeMobileMenu();
     this.auth.logout();
   }
 }

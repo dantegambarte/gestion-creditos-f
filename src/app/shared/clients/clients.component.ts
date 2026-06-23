@@ -10,6 +10,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -51,7 +52,7 @@ function toClient(c: Customer): Client {
     name: c.fullName,
     phone: c.phone ?? '',
     credits: c.activeCredits ?? 0,
-    risk: c.delinquency ?? 'Al dia',
+    risk: c.delinquency ?? 'sin mora',
     email: c.email ?? undefined,
     address: c.address ?? undefined,
     collectorId: c.collectorId ?? undefined,
@@ -70,6 +71,7 @@ function toClient(c: Customer): Client {
     DropdownModule,
     IconFieldModule,
     InputIconModule,
+    SkeletonModule,
     TagModule,
     DialogModule,
     ToastModule,
@@ -95,9 +97,8 @@ export class ClientsComponent implements OnInit, OnDestroy {
 
   filterOptions = [
     { label: 'Todos los riesgos', value: null },
-    { label: 'Al día', value: 'Al dia' },
-    { label: 'Mora leve', value: 'Mora leve' },
-    { label: 'Mora alta', value: 'Mora alta' },
+    { label: 'Sin mora', value: 'sin mora' },
+    { label: 'Con mora', value: 'con mora' },
   ];
 
   selectedFilter: string | null = null;
@@ -124,6 +125,39 @@ export class ClientsComponent implements OnInit, OnDestroy {
         !this.selectedFilter || c.risk === this.selectedFilter;
       return matchesSearch && matchesFilter;
     });
+  }
+
+  /**
+   * Devuelve el texto visible del filtro seleccionado para mensajes vacíos.
+   */
+  get selectedFilterLabel(): string | null {
+    if (!this.selectedFilter) return null;
+    return (
+      this.filterOptions.find((option) => option.value === this.selectedFilter)
+        ?.label ?? this.selectedFilter
+    );
+  }
+
+  /**
+   * Explica por qué no hay clientes visibles según búsqueda y filtro actuales.
+   */
+  get emptyClientsMessage(): string {
+    const search = this.searchTerm.trim();
+    const filter = this.selectedFilterLabel;
+
+    if (search && filter) {
+      return `No existe ningún cliente con "${search}" dentro del filtro "${filter}".`;
+    }
+
+    if (filter) {
+      return `No existe ningún cliente con el filtro "${filter}".`;
+    }
+
+    if (search) {
+      return `No existe ningún cliente que coincida con "${search}".`;
+    }
+
+    return 'Todavía no hay clientes activos para mostrar.';
   }
 
   ngOnInit(): void {
@@ -181,11 +215,9 @@ export class ClientsComponent implements OnInit, OnDestroy {
     risk: string,
   ): 'success' | 'warning' | 'danger' | 'secondary' {
     switch (risk) {
-      case 'Al dia':
+      case 'sin mora':
         return 'success';
-      case 'Mora leve':
-        return 'warning';
-      case 'Mora alta':
+      case 'con mora':
         return 'danger';
       default:
         return 'secondary';
@@ -197,7 +229,14 @@ export class ClientsComponent implements OnInit, OnDestroy {
    * @param risk nivel de riesgo
    */
   getRiskLabel(risk: string): string {
-    return risk === 'Al dia' ? 'Al día' : risk;
+    switch (risk) {
+      case 'sin mora':
+        return 'Sin mora';
+      case 'con mora':
+        return 'Con mora';
+      default:
+        return risk;
+    }
   }
 
   /**
