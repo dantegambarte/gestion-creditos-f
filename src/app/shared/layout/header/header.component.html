@@ -34,10 +34,44 @@
     </div>
 
     <!-- Campana -->
-    <button class="app-header__bell">
+    <button
+      class="app-header__bell"
+      data-cy="header-bell-btn"
+      (click)="bellPanel.toggle($event); onBellOpen()"
+    >
       <i class="pi pi-bell text-lg"></i>
-      <span class="app-header__bell-dot"></span>
+      @if (notifSvc.unreadCount() > 0) {
+        <span class="app-header__bell-dot" data-cy="header-bell-badge">{{
+          notifSvc.unreadCount() > 9 ? '9+' : notifSvc.unreadCount()
+        }}</span>
+      }
     </button>
+
+    <p-overlayPanel #bellPanel styleClass="app-header__bell-panel" [style]="{ width: '320px' }">
+      <div class="flex flex-col gap-2" data-cy="header-bell-dropdown">
+        <h3 class="text-sm font-semibold ff-text-primary px-1">Notificaciones</h3>
+        @if (loadingNotifications) {
+          <p class="text-xs ff-text-muted px-1">Cargando…</p>
+        } @else if (recentNotifications.length === 0) {
+          <p class="text-xs ff-text-muted px-1">No tenés notificaciones.</p>
+        } @else {
+          <div class="flex flex-col gap-1 max-h-80 overflow-y-auto">
+            @for (item of recentNotifications; track item.id) {
+              <button
+                type="button"
+                class="text-left px-2 py-2 rounded-lg hover:bg-[var(--ff-secondary)] transition-colors"
+                data-cy="header-bell-item"
+                [class.font-semibold]="!item.read_at"
+                (click)="onNotificationClick(item)"
+              >
+                <p class="text-sm ff-text-primary">{{ item.title }}</p>
+                <p class="text-xs ff-text-muted">{{ item.message }}</p>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </p-overlayPanel>
 
     <!-- Usuario -->
     @if (auth.currentUser$ | async; as user) {

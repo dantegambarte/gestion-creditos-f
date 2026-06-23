@@ -13,6 +13,7 @@
     <div class="space-y-2">
       @for (setting of settings; track setting.id) {
         <div
+          [attr.data-cy]="'notif-setting-' + setting.id"
           [class]="
             'flex items-center justify-between px-4 py-3.5 rounded-2xl border transition-colors ' +
             (setting.enabled
@@ -56,14 +57,32 @@
               </p>
             </div>
           </div>
-          <p-inputSwitch [(ngModel)]="setting.enabled" />
+          <div class="flex items-center gap-4">
+            <div class="flex flex-col items-center gap-1">
+              <span class="text-[10px] ff-text-muted uppercase tracking-wide">Push</span>
+              <p-inputSwitch
+                [attr.data-cy]="'notif-toggle-push-' + setting.id"
+                [(ngModel)]="setting.enabled"
+              />
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <span class="text-[10px] ff-text-muted uppercase tracking-wide">Email</span>
+              <p-inputSwitch
+                [attr.data-cy]="'notif-toggle-email-' + setting.id"
+                [(ngModel)]="setting.emailEnabled"
+                [disabled]="!setting.enabled"
+              />
+            </div>
+          </div>
         </div>
       }
     </div>
 
     <p-button
       label="Guardar preferencias"
+      data-cy="notif-save-btn"
       styleClass="h-11 px-5 rounded-xl shadow-sm mt-2"
+      [loading]="saving"
       (onClick)="save()"
     />
   </div>
@@ -94,16 +113,13 @@
             <i class="pi pi-whatsapp ff-muted-icon text-xs"></i>
             <span class="text-sm ff-text-secondary">WhatsApp</span>
           </div>
-          <div class="flex flex-col items-end gap-0.5">
+          <div class="flex items-center gap-2">
             <span
-              class="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full whitespace-nowrap"
-              >No configurado</span
+              class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full whitespace-nowrap"
+              >Próximamente</span
             >
-            <button
-              class="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              Configurar →
-            </button>
+            <!-- WhatsApp fuera de alcance V1: toggle deshabilitado, sin binding a estado ni backend. -->
+            <p-inputSwitch data-cy="notif-toggle-whatsapp" [disabled]="true" [ngModel]="false" />
           </div>
         </div>
         <div class="flex items-center justify-between">
@@ -164,30 +180,17 @@
         Historial de alertas
       </h3>
       <div class="space-y-2">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-sm ff-text-secondary truncate"
-            >Alerta mora — Carlos R.</span
-          >
-          <span class="text-xs ff-text-muted whitespace-nowrap"
-            >hace 2 horas</span
-          >
-        </div>
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-sm ff-text-secondary truncate"
-            >Aprobación pendiente</span
-          >
-          <span class="text-xs ff-text-muted whitespace-nowrap"
-            >hace 4 horas</span
-          >
-        </div>
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-sm ff-text-secondary truncate"
-            >Vencimiento mañana — 8 cuotas</span
-          >
-          <span class="text-xs ff-text-muted whitespace-nowrap"
-            >ayer 08:00</span
-          >
-        </div>
+        @if (history.length === 0) {
+          <p class="text-xs ff-text-muted">Sin notificaciones recientes.</p>
+        }
+        @for (item of history; track item.id) {
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm ff-text-secondary truncate">{{ item.title }}</span>
+            <span class="text-xs ff-text-muted whitespace-nowrap">{{
+              item.created_at | date: 'short'
+            }}</span>
+          </div>
+        }
       </div>
     </div>
   </div>

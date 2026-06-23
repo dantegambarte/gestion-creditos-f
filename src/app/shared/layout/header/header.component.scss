@@ -115,13 +115,22 @@
 
 .app-header__bell-dot {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 7px;
-  height: 7px;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
   background: var(--ff-danger);
-  border-radius: 50%;
+  border-radius: 999px;
   border: 2px solid var(--ff-bg);
+  font-family: var(--ff-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 // ─── Sección usuario ──────────────────────────────────────────────────────────
