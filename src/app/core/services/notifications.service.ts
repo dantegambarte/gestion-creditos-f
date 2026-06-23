@@ -37,7 +37,7 @@ export interface NotificationPreference {
   updated_at: string;
 }
 
-const POLLING_INTERVAL_MS = 45_000;
+const POLLING_INTERVAL_MS = 90_000;
 const HISTORY_CACHE_TTL_MS = 60_000;
 
 @Injectable({ providedIn: 'root' })
@@ -52,13 +52,15 @@ export class NotificationsService {
   private historyRequest: Observable<NotificationHistoryPage> | null = null;
   private historyRequestKey: string | null = null;
   private preferencesCache: NotificationPreference[] | null = null;
-  private preferencesRequest: Observable<NotificationPreference[]> | null = null;
+  private preferencesRequest: Observable<NotificationPreference[]> | null =
+    null;
+  private visibilityHandler: (() => void) | null = null;
 
   /** Cantidad de notificaciones no leídas del usuario autenticado. */
   readonly unreadCount = signal(0);
 
   /**
-   * Inicia el polling de unread-count cada 45s. Se pausa automáticamente
+   * Inicia el polling de unread-count cada 90s. Se pausa automáticamente
    * cuando la pestaña está oculta (`document.hidden`) para no gastar
    * llamadas de red innecesarias en segundo plano.
    */
@@ -79,14 +81,26 @@ export class NotificationsService {
       )
       .subscribe();
 
-    // Primer fetch inmediato — no esperar los 45s iniciales.
+    // Primer fetch inmediato — no esperar los 90s iniciales.
     this.refreshUnreadCount();
+
+    if (typeof document !== 'undefined' && !this.visibilityHandler) {
+      this.visibilityHandler = () => {
+        if (!document.hidden) this.refreshUnreadCount();
+      };
+      document.addEventListener('visibilitychange', this.visibilityHandler);
+    }
   }
 
   /** Detiene el polling activo (uso típico: logout / destrucción del shell). */
   stopPolling(): void {
     this.pollingSub?.unsubscribe();
     this.pollingSub = null;
+
+    if (typeof document !== 'undefined' && this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = null;
+    }
   }
 
   /** Refresca el unread-count una sola vez, sin esperar al intervalo. */
@@ -116,7 +130,11 @@ export class NotificationsService {
     ) {
       return of(this.historyCache.page);
     }
-    if (!forceRefresh && this.historyRequest && this.historyRequestKey === key) {
+    if (
+      !forceRefresh &&
+      this.historyRequest &&
+      this.historyRequestKey === key
+    ) {
       return this.historyRequest;
     }
 
@@ -146,16 +164,16 @@ export class NotificationsService {
    * @param id - ID de la notificación.
    */
   markRead(id: string): Observable<void> {
-    return this.api.post<void>(`notifications/${id}/read`).pipe(
-      tap(() => this.refreshUnreadCount()),
-    );
+    return this.api
+      .post<void>(`notifications/${id}/read`)
+      .pipe(tap(() => this.refreshUnreadCount()));
   }
 
   /** Marca todas las notificaciones del usuario como leídas. */
   markAllRead(): Observable<void> {
-    return this.api.post<void>('notifications/read-all').pipe(
-      tap(() => this.unreadCount.set(0)),
-    );
+    return this.api
+      .post<void>('notifications/read-all')
+      .pipe(tap(() => this.unreadCount.set(0)));
   }
 
   /**
@@ -201,15 +219,17 @@ export class NotificationsService {
       return this.preferencesRequest;
     }
 
-    this.preferencesRequest = this.api.get<NotificationPreference[]>('notifications/preferences').pipe(
-      tap((preferences) => {
-        this.preferencesCache = preferences;
-      }),
-      finalize(() => {
-        this.preferencesRequest = null;
-      }),
-      shareReplay({ bufferSize: 1, refCount: true }),
-    );
+    this.preferencesRequest = this.api
+      .get<NotificationPreference[]>('notifications/preferences')
+      .pipe(
+        tap((preferences) => {
+          this.preferencesCache = preferences;
+        }),
+        finalize(() => {
+          this.preferencesRequest = null;
+        }),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
 
     return this.preferencesRequest;
   }
@@ -221,19 +241,29 @@ export class NotificationsService {
    */
   updatePreference(
     type: NotificationType,
-    data: Partial<Pick<NotificationPreference, 'enabled' | 'email_enabled' | 'frequency'>>,
+    data: Partial<
+      Pick<NotificationPreference, 'enabled' | 'email_enabled' | 'frequency'>
+    >,
   ): Observable<NotificationPreference> {
-    return this.api.put<NotificationPreference>(`notifications/preferences/${type}`, data).pipe(
-      tap((updatedPreference) => this.updatePreferencesCache(updatedPreference)),
-    );
+    return this.api
+      .put<NotificationPreference>(`notifications/preferences/${type}`, data)
+      .pipe(
+        tap((updatedPreference) =>
+          this.updatePreferencesCache(updatedPreference),
+        ),
+      );
   }
 
   /** Actualiza el cache local de preferencias después de guardar una preferencia. */
-  private updatePreferencesCache(updatedPreference: NotificationPreference): void {
+  private updatePreferencesCache(
+    updatedPreference: NotificationPreference,
+  ): void {
     if (!this.preferencesCache) return;
 
     this.preferencesCache = this.preferencesCache.map((preference) =>
-      preference.type === updatedPreference.type ? updatedPreference : preference,
+      preference.type === updatedPreference.type
+        ? updatedPreference
+        : preference,
     );
   }
 }
