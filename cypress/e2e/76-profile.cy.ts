@@ -24,6 +24,20 @@ describe('Mi Perfil', () => {
     cy.intercept('GET', '**/users/me', profileResponse).as('getProfile');
   });
 
+  it('permite acceder a Mi Perfil y Cerrar sesión desde el header', () => {
+    cy.viewport(1280, 720);
+    cy.loginAs('ADMIN', '/admin/dashboard');
+
+    cy.get('[data-cy="header-user-menu-trigger"]').click();
+    cy.get('[data-cy="header-user-menu"]').should('be.visible');
+    cy.get('[data-cy="header-logout"]').should('be.visible');
+    cy.get('[data-cy="header-mi-perfil"]').click();
+
+    cy.location('pathname').should('eq', '/profile');
+    cy.wait('@getProfile');
+    cy.get('[data-cy="profile-page"]').should('be.visible');
+  });
+
   it('carga y guarda datos personales en desktop', () => {
     cy.viewport(1280, 720);
     cy.intercept('PATCH', '**/users/me', (req) => {

@@ -201,6 +201,12 @@
   border-left: 1px solid var(--ff-border-subtle);
 }
 
+.app-header__user-trigger {
+  background: transparent;
+  border: 0;
+  color: inherit;
+}
+
 .app-header__user-name {
   font-family: var(--ff-font-ui);
   font-size: 12px;
@@ -227,6 +233,79 @@
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(95, 122, 246, 0.32);
+}
+
+:host ::ng-deep .app-header__user-panel {
+  width: 220px;
+
+  .p-overlaypanel-content {
+    padding: 10px;
+  }
+}
+
+.app-header__user-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.app-header__user-menu-head {
+  border-bottom: 1px solid var(--ff-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 4px;
+  padding: 4px 8px 10px;
+}
+
+.app-header__user-menu-name {
+  color: var(--ff-text-primary);
+  font-family: var(--ff-font-ui);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app-header__user-menu-role {
+  color: var(--ff-text-muted);
+  font-family: var(--ff-font-ui);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.app-header__user-menu-item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ff-text-secondary);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--ff-font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  gap: 10px;
+  padding: 10px 8px;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+
+  &:hover {
+    background: var(--ff-secondary);
+    color: var(--ff-text-primary);
+  }
+
+  i {
+    width: 16px;
+  }
+}
+
+.app-header__user-menu-item--danger {
+  color: var(--ff-danger);
+
+  &:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--ff-danger);
+  }
 }
 
 @media (max-width: 767.98px) {
@@ -297,6 +376,17 @@
   .app-header__user-section {
     border-left: 0;
     padding-left: 0 !important;
+  }
+
+  :host ::ng-deep .app-header__user-panel {
+    right: 16px !important;
+    top: calc(52px + var(--ff-safe-top)) !important;
+    width: min(220px, calc(100vw - 32px)) !important;
+
+    &::before,
+    &::after {
+      display: none;
+    }
   }
 
   .app-header__avatar {
