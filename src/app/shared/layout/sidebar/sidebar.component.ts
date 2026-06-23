@@ -4,7 +4,6 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/ro
 import { AvatarModule } from 'primeng/avatar';
 import { BadgeModule } from 'primeng/badge';
 import { RippleModule } from 'primeng/ripple';
-import { TooltipModule } from 'primeng/tooltip';
 import { filter, map } from 'rxjs/operators';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AuthUser } from '../../../core/models/interface/auth-user';
@@ -20,7 +19,6 @@ import { NAV_CONFIG } from '../../utils/nav-config';
     BadgeModule,
     AvatarModule,
     RippleModule,
-    TooltipModule,
   ],
   templateUrl: './sidebar.component.html',
 })
