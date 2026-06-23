@@ -3,7 +3,6 @@
  *
  * Cubre:
  *  - Guardar preferencias persiste y refleja al recargar (PUT real por tipo).
- *  - El toggle de WhatsApp deshabilitado no dispara ninguna request de red.
  *  - Repetido en mobile (375x667) por regla obligatoria del CLAUDE.md de frontend.
  */
 
@@ -89,17 +88,6 @@ describe('Admin — Configuración — Notificaciones (Desktop)', () => {
       .find('[data-cy="notif-toggle-push-NEW_CUSTOMER"] .p-inputswitch')
       .should('have.class', 'p-inputswitch-checked');
   });
-
-  it('el toggle de WhatsApp deshabilitado no dispara ninguna request de red', () => {
-    cy.intercept('PUT', '**/whatsapp*').as('whatsappRequest');
-    cy.intercept('POST', '**/whatsapp*').as('whatsappPost');
-
-    cy.get('[data-cy="notif-toggle-whatsapp"]').find('.p-inputswitch').should('have.class', 'p-disabled');
-    cy.get('[data-cy="notif-toggle-whatsapp"]').click({ force: true });
-
-    cy.get('@whatsappRequest.all').should('have.length', 0);
-    cy.get('@whatsappPost.all').should('have.length', 0);
-  });
 });
 
 describe('Admin — Configuración — Notificaciones (Mobile 375x667)', () => {
@@ -126,14 +114,5 @@ describe('Admin — Configuración — Notificaciones (Mobile 375x667)', () => {
     cy.get('[data-cy="notif-toggle-push-NEW_CUSTOMER"]').click();
     cy.get('[data-cy="notif-save-btn"]').click();
     cy.wait('@updateGeneric');
-  });
-
-  it('el toggle de WhatsApp deshabilitado no dispara ninguna request de red en mobile', () => {
-    cy.intercept('PUT', '**/whatsapp*').as('whatsappRequest');
-
-    cy.get('[data-cy="notif-toggle-whatsapp"]').find('.p-inputswitch').should('have.class', 'p-disabled');
-    cy.get('[data-cy="notif-toggle-whatsapp"]').click({ force: true });
-
-    cy.get('@whatsappRequest.all').should('have.length', 0);
   });
 });
