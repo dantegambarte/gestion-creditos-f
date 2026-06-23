@@ -144,29 +144,33 @@
     }
   </nav>
 
-  <a
-    pRipple
-    routerLink="/profile"
-    class="mobile-menu-sheet__item"
-    data-cy="nav-mi-perfil-mobile"
-    (click)="closeMobileMenu()"
-  >
-    <span class="mobile-menu-sheet__item-left">
-      <i class="pi pi-user"></i>
-      <span>Mi perfil</span>
-    </span>
-  </a>
+  <div class="mobile-menu-sheet__account">
+    <p class="mobile-menu-sheet__group">Cuenta</p>
 
-  <button
-    pRipple
-    type="button"
-    data-testid="logout-btn-mobile"
-    class="mobile-menu-sheet__logout"
-    (click)="logout()"
-  >
-    <i class="pi pi-sign-out"></i>
-    <span>Cerrar sesión</span>
-  </button>
+    <div class="mobile-menu-sheet__account-panel">
+      <a
+        pRipple
+        routerLink="/profile"
+        class="mobile-menu-sheet__account-row"
+        data-cy="nav-mi-perfil-mobile"
+        (click)="closeMobileMenu()"
+      >
+        <i class="pi pi-user"></i>
+        <span>Mi perfil</span>
+      </a>
+
+      <button
+        pRipple
+        type="button"
+        data-testid="logout-btn-mobile"
+        class="mobile-menu-sheet__account-row mobile-menu-sheet__account-row--logout"
+        (click)="logout()"
+      >
+        <i class="pi pi-sign-out"></i>
+        <span>Cerrar sesión</span>
+      </button>
+    </div>
+  </div>
 </section>
 
 <nav class="mobile-bottom-nav" aria-label="Navegación principal mobile">

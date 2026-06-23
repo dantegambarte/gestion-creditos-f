@@ -1323,14 +1323,64 @@ aside.sidebar {
     color: var(--ff-text-primary);
   }
 
-  .mobile-menu-sheet__logout {
-    justify-content: flex-start;
-    flex-shrink: 0;
-    margin-top: 12px;
-    border-color: rgba(248, 113, 113, 0.16);
-    color: var(--ff-danger);
-    cursor: pointer;
+  .mobile-menu-sheet__account {
+    margin-top: 8px;
+    padding: 8px 8px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 0 0 12px 12px;
+
+    .mobile-menu-sheet__group {
+      margin: 8px 4px 6px;
+    }
   }
+
+  .mobile-menu-sheet__account-panel {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    gap: 1px;
+  }
+
+  .mobile-menu-sheet__account-row {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 44px;
+    padding: 6px;
+    border: none;
+    background: rgba(95, 122, 246, 0.16);
+    color: var(--ff-text-primary);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+
+    i {
+      font-size: 16px;
+      color: inherit;
+    }
+
+    &:first-child {
+      border-radius: 10px 0 0 10px;
+    }
+
+    &:last-child {
+      border-radius: 0 10px 10px 0;
+    }
+  }
+
+  .mobile-menu-sheet__account-row--logout {
+    background: var(--ff-danger);
+    color: #fff;
+  }
+
 }
 
 // ─── Dashboard admin ─────────────────────────────────────────────────────────
@@ -1923,6 +1973,8 @@ table.ff-table {
   gap: 4px;
   border-bottom: 1px solid var(--ff-border);
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
 }
 
 .ff-tab {
@@ -1944,6 +1996,7 @@ table.ff-table {
     color 0.15s,
     border-color 0.15s,
     background-color 0.15s;
+  scroll-snap-align: start;
 }
 
 .ff-tab:hover {
@@ -1960,6 +2013,18 @@ table.ff-table {
   .ff-page-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .config-mobile-tabs,
+  .reports-mobile-tabs {
+    margin-inline: -1rem;
+    padding-inline: 1rem;
+    scrollbar-width: none;
+  }
+
+  .config-mobile-tabs::-webkit-scrollbar,
+  .reports-mobile-tabs::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -2694,6 +2759,32 @@ table.ff-table {
   color: var(--ff-text-secondary) !important;
 }
 
+@media (max-width: 767.98px) {
+  .collection-workspace {
+    min-height: 100dvh;
+  }
+
+  .collection-master-panel {
+    width: 100% !important;
+  }
+
+  .collection-toolbar,
+  .collection-filters {
+    align-items: stretch !important;
+    flex-direction: column;
+  }
+
+  .collection-switch-row {
+    width: 100%;
+    min-height: 2.75rem;
+    justify-content: space-between;
+    border: 1px solid var(--ff-border-subtle);
+    border-radius: 0.75rem;
+    background: var(--ff-panel);
+    padding: 0.625rem 0.75rem;
+  }
+}
+
 .portal-page-shell {
   width: 100%;
   max-width: 100%;
@@ -3057,15 +3148,18 @@ p-button .p-button.ff-reject-action {
 
   .db-pending-mobile__panel {
     display: flex;
+    min-height: 0;
     max-height: min(430px, 64dvh);
     flex-direction: column;
     gap: 10px;
     overflow-y: auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     padding: 12px;
   }
 
   .db-pending-mobile__group {
+    flex-shrink: 0;
     min-width: 0;
     overflow: hidden;
     border: 1px solid rgba(46, 51, 71, 0.7);
@@ -3115,11 +3209,8 @@ p-button .p-button.ff-reject-action {
 
   .db-pending-mobile__items {
     display: flex;
-    max-height: 300px;
     flex-direction: column;
     gap: 8px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
     padding: 0 10px 10px;
   }
 
