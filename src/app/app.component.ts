@@ -1,5 +1,5 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { AsyncPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { Component, PLATFORM_ID, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { PrimeNGConfig } from 'primeng/api';
@@ -28,11 +28,14 @@ export class AppComponent {
   auth = inject(AuthServiceBase);
   private router = inject(Router);
   private primengConfig = inject(PrimeNGConfig);
+  private document = inject(DOCUMENT);
+  private platformId = inject(PLATFORM_ID);
 
   private noLayoutRoutes = ['/portal', '/change-password'];
 
   constructor() {
     this.configurePrimeNgLocale();
+    this.resetScrollOnNavigation();
   }
 
   /**
@@ -84,6 +87,28 @@ export class AppComponent {
       dateFormat: 'yy-mm-dd',
       weekHeader: 'Sem',
     });
+  }
+
+  /**
+   * Reinicia el scroll global al cambiar de pantalla para evitar heredar la posición anterior.
+   */
+  private resetScrollOnNavigation(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        requestAnimationFrame(() => {
+          const shellMain = this.document.querySelector('.ff-shell__main');
+          if (shellMain instanceof HTMLElement) {
+            shellMain.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          }
+
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        });
+      });
   }
 
   private matchesNoLayout(url: string): boolean {

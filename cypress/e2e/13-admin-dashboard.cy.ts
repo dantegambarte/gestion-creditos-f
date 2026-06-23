@@ -75,6 +75,31 @@ describe('Admin — Dashboard', () => {
       },
     }).as('payments');
 
+    cy.intercept('GET', '**/api/customers*', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: [
+          {
+            id: 'cust-scroll-001',
+            full_name: 'Cliente Scroll Reset',
+            dni: '30111222',
+            address: 'Calle Scroll 123',
+            phone: '1122334455',
+            email: 'scroll.reset@finflow.test',
+            status: 'ACTIVE',
+            portal_enabled: true,
+            created_at: '2026-06-01T10:00:00.000Z',
+            collector_id: null,
+            collector_name: null,
+            active_credits: 1,
+            delinquency: null,
+            payment_capacity: null,
+          },
+        ],
+      },
+    }).as('customers');
+
     cy.intercept('PATCH', '**/api/payments/pay-001/approve', {
       statusCode: 200,
       body: {
@@ -153,6 +178,26 @@ describe('Admin — Dashboard', () => {
       expect(doc.documentElement.scrollWidth).to.be.at.most(
         doc.documentElement.clientWidth + 1,
       );
+    });
+  });
+
+  it('resetea el scroll del shell al navegar entre pantallas', () => {
+    cy.get('[data-cy="admin-dashboard"]', { timeout: 15000 }).should(
+      'be.visible',
+    );
+    cy.get('.ff-shell__main').scrollTo('bottom');
+    cy.get('.ff-shell__main').should(($main) => {
+      expect($main[0].scrollTop).to.be.greaterThan(0);
+    });
+
+    cy.contains('a.nav-item', 'Clientes').click();
+
+    cy.location('pathname').should('eq', '/admin/clients');
+    cy.get('[data-cy="input-buscar-cliente"]', { timeout: 15000 }).should(
+      'be.visible',
+    );
+    cy.get('.ff-shell__main').should(($main) => {
+      expect($main[0].scrollTop).to.eq(0);
     });
   });
 
