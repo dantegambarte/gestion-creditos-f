@@ -1,7 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable } from 'rxjs';
-import { interval, Subscription } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
+import { interval, Observable, of, Subscription } from 'rxjs';
+import { finalize, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { ApiHttpService } from '../http/api-http.service';
 
 export type NotificationType =
@@ -39,11 +38,19 @@ export interface NotificationPreference {
 }
 
 const POLLING_INTERVAL_MS = 45_000;
+const HISTORY_CACHE_TTL_MS = 60_000;
 
 @Injectable({ providedIn: 'root' })
 export class NotificationsService {
   private readonly api = inject(ApiHttpService);
   private pollingSub: Subscription | null = null;
+  private historyCache: {
+    key: string;
+    expiresAt: number;
+    page: NotificationHistoryPage;
+  } | null = null;
+  private historyRequest: Observable<NotificationHistoryPage> | null = null;
+  private historyRequestKey: string | null = null;
 
   /** Cantidad de notificaciones no leídas del usuario autenticado. */
   readonly unreadCount = signal(0);
@@ -65,7 +72,7 @@ export class NotificationsService {
           return this.api.get<{ count: number }>('notifications/unread-count');
         }),
         tap((res) => {
-          if (res) this.unreadCount.set(res.count);
+          if (res) this.setUnreadCount(res.count);
         }),
       )
       .subscribe();
@@ -84,16 +91,52 @@ export class NotificationsService {
   refreshUnreadCount(): void {
     this.api
       .get<{ count: number }>('notifications/unread-count')
-      .subscribe((res) => this.unreadCount.set(res.count));
+      .subscribe((res) => this.setUnreadCount(res.count));
   }
 
   /**
    * Historial paginado de notificaciones del usuario autenticado.
    * @param page - 1-indexed.
    * @param limit - Tamaño de página (default backend: 20).
+   * @param forceRefresh - Ignora el cache local cuando se necesita dato fresco.
    */
-  list(page = 1, limit = 20): Observable<NotificationHistoryPage> {
-    return this.api.get<NotificationHistoryPage>('notifications', { page, limit });
+  list(
+    page = 1,
+    limit = 20,
+    forceRefresh = false,
+  ): Observable<NotificationHistoryPage> {
+    const key = `${page}:${limit}`;
+    const now = Date.now();
+    if (
+      !forceRefresh &&
+      this.historyCache?.key === key &&
+      this.historyCache.expiresAt > now
+    ) {
+      return of(this.historyCache.page);
+    }
+    if (!forceRefresh && this.historyRequest && this.historyRequestKey === key) {
+      return this.historyRequest;
+    }
+
+    this.historyRequestKey = key;
+    this.historyRequest = this.api
+      .get<NotificationHistoryPage>('notifications', { page, limit })
+      .pipe(
+        tap((pageResult) => {
+          this.historyCache = {
+            key,
+            expiresAt: Date.now() + HISTORY_CACHE_TTL_MS,
+            page: pageResult,
+          };
+        }),
+        finalize(() => {
+          this.historyRequest = null;
+          this.historyRequestKey = null;
+        }),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
+
+    return this.historyRequest;
   }
 
   /**
@@ -111,6 +154,40 @@ export class NotificationsService {
     return this.api.post<void>('notifications/read-all').pipe(
       tap(() => this.unreadCount.set(0)),
     );
+  }
+
+  /**
+   * Borra una notificación del historial y refresca el contador local.
+   * @param id - ID de la notificación.
+   */
+  delete(id: string): Observable<void> {
+    return this.api.delete<void>(`notifications/${id}`).pipe(
+      tap(() => this.invalidateHistoryCache()),
+      tap(() => this.refreshUnreadCount()),
+    );
+  }
+
+  /** Borra todas las notificaciones del usuario autenticado. */
+  deleteAll(): Observable<void> {
+    return this.api.delete<void>('notifications').pipe(
+      tap(() => {
+        this.invalidateHistoryCache();
+        this.unreadCount.set(0);
+      }),
+    );
+  }
+
+  /** Limpia el cache de historial para forzar la próxima lectura desde API. */
+  invalidateHistoryCache(): void {
+    this.historyCache = null;
+  }
+
+  /** Actualiza el contador y descarta historial cacheado si entraron cambios externos. */
+  private setUnreadCount(count: number): void {
+    if (count !== this.unreadCount()) {
+      this.invalidateHistoryCache();
+    }
+    this.unreadCount.set(count);
   }
 
   /** Lee las 6 preferencias de notificación (config global, solo ADMIN). */

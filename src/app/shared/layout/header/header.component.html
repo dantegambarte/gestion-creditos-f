@@ -47,26 +47,52 @@
       }
     </button>
 
-    <p-overlayPanel #bellPanel styleClass="app-header__bell-panel" [style]="{ width: '320px' }">
+    <p-overlayPanel #bellPanel styleClass="app-header__bell-panel">
       <div class="flex flex-col gap-2" data-cy="header-bell-dropdown">
-        <h3 class="text-sm font-semibold ff-text-primary px-1">Notificaciones</h3>
+        <div class="flex items-center justify-between gap-3 px-1">
+          <h3 class="text-sm font-semibold ff-text-primary">Notificaciones</h3>
+          @if (recentNotifications.length > 0) {
+            <button
+              type="button"
+              class="app-header__notification-clear"
+              data-cy="header-bell-clear-all"
+              (click)="onDeleteAllNotifications()"
+            >
+              Borrar todas
+            </button>
+          }
+        </div>
         @if (loadingNotifications) {
           <p class="text-xs ff-text-muted px-1">Cargando…</p>
         } @else if (recentNotifications.length === 0) {
           <p class="text-xs ff-text-muted px-1">No tenés notificaciones.</p>
         } @else {
-          <div class="flex flex-col gap-1 max-h-80 overflow-y-auto">
+          <div class="app-header__notification-list flex flex-col gap-1 overflow-y-auto">
             @for (item of recentNotifications; track item.id) {
-              <button
-                type="button"
-                class="text-left px-2 py-2 rounded-lg hover:bg-[var(--ff-secondary)] transition-colors"
-                data-cy="header-bell-item"
+              <div
+                class="app-header__notification-row rounded-lg hover:bg-[var(--ff-secondary)] transition-colors"
                 [class.font-semibold]="!item.read_at"
-                (click)="onNotificationClick(item)"
               >
-                <p class="text-sm ff-text-primary">{{ item.title }}</p>
-                <p class="text-xs ff-text-muted">{{ item.message }}</p>
-              </button>
+                <button
+                  type="button"
+                  class="app-header__notification-main text-left"
+                  data-cy="header-bell-item"
+                  (click)="onNotificationClick(item); bellPanel.hide()"
+                >
+                  <p class="text-sm ff-text-primary">{{ item.title }}</p>
+                  <p class="text-xs ff-text-muted">{{ item.message }}</p>
+                </button>
+                <button
+                  type="button"
+                  class="app-header__notification-delete"
+                  data-cy="header-bell-delete-item"
+                  title="Borrar notificación"
+                  aria-label="Borrar notificación"
+                  (click)="onDeleteNotification($event, item)"
+                >
+                  <i class="pi pi-times text-xs"></i>
+                </button>
+              </div>
             }
           </div>
         }

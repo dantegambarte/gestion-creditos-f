@@ -133,6 +133,69 @@
   justify-content: center;
 }
 
+:host ::ng-deep .app-header__bell-panel {
+  width: min(320px, calc(100vw - 32px));
+
+  .p-overlaypanel-content {
+    padding: 20px;
+  }
+}
+
+.app-header__notification-list {
+  max-height: 320px;
+  overscroll-behavior: contain;
+}
+
+.app-header__notification-clear {
+  border: 0;
+  background: transparent;
+  color: var(--ff-accent);
+  cursor: pointer;
+  font-family: var(--ff-font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 0;
+
+  &:hover {
+    color: var(--ff-text-primary);
+  }
+}
+
+.app-header__notification-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+}
+
+.app-header__notification-main {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+
+.app-header__notification-delete {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: var(--ff-text-muted);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+
+  &:hover {
+    background: rgba(248, 113, 113, 0.14);
+    color: var(--ff-danger);
+  }
+}
+
 // ─── Sección usuario ──────────────────────────────────────────────────────────
 .app-header__user-section {
   border-left: 1px solid var(--ff-border-subtle);
@@ -196,6 +259,39 @@
 
   .app-header__bell {
     padding: 5px;
+  }
+
+  :host ::ng-deep .app-header__bell-panel {
+    left: 16px !important;
+    right: 16px !important;
+    top: calc(52px + var(--ff-safe-top)) !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 343px;
+    border-radius: 12px;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+
+    .p-overlaypanel-content {
+      padding: 18px 16px;
+    }
+  }
+
+  .app-header__notification-list {
+    max-height: min(368px, calc(100dvh - 188px - var(--ff-safe-top)));
+    padding-right: 2px;
+  }
+
+  .app-header__notification-row {
+    gap: 10px;
+    padding: 10px 8px;
+  }
+
+  .app-header__notification-delete {
+    height: 32px;
+    width: 32px;
   }
 
   .app-header__user-section {
