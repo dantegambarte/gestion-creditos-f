@@ -1,4 +1,7 @@
-export type CollectionAttemptType = 'NO_PAYMENT' | 'NOT_FOUND';
+export type CollectionAttemptType =
+  | 'NO_PAYMENT'
+  | 'NOT_FOUND'
+  | 'SCHEDULED_VISIT';
 
 export interface CollectionAttemptCreatePayload {
   installmentId: string;
@@ -37,4 +40,5 @@ export interface CollectionAttemptRaw {
 export const ATTEMPT_TYPE_LABELS: Record<CollectionAttemptType, string> = {
   NO_PAYMENT: 'No pagó',
   NOT_FOUND: 'No encontrado',
+  SCHEDULED_VISIT: 'Visita programada',
 };

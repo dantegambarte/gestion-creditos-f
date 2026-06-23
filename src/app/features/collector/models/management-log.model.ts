@@ -3,8 +3,13 @@
  *  - PAYMENT     → un cobro (parcial o total)
  *  - NO_PAYMENT  → intento NO_PAYMENT (cliente presente, no pagó)
  *  - NOT_FOUND   → intento NOT_FOUND (cliente no encontrado)
+ *  - SCHEDULED_VISIT → visita programada por el admin (cliente avisó antes)
  */
-export type ManagementEventType = 'PAYMENT' | 'NO_PAYMENT' | 'NOT_FOUND';
+export type ManagementEventType =
+  | 'PAYMENT'
+  | 'NO_PAYMENT'
+  | 'NOT_FOUND'
+  | 'SCHEDULED_VISIT';
 
 export type PaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -48,4 +53,5 @@ export const MANAGEMENT_EVENT_LABELS: Record<ManagementEventType, string> = {
   PAYMENT: 'Cobro',
   NO_PAYMENT: 'No pagó',
   NOT_FOUND: 'No encontrado',
+  SCHEDULED_VISIT: 'Visita programada',
 };

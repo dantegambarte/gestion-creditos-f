@@ -263,6 +263,21 @@
                         "
                       />
                     }
+                    @if (canScheduleVisit(inst)) {
+                      <p-button
+                        data-cy="installment-schedule-visit"
+                        icon="pi pi-calendar-plus"
+                        severity="secondary"
+                        [text]="true"
+                        size="small"
+                        pTooltip="Programar visita"
+                        tooltipStyleClass="ff-action-tooltip"
+                        tooltipPosition="top"
+                        (onClick)="
+                          $event.stopPropagation(); openScheduleVisitDialog(inst)
+                        "
+                      />
+                    }
                   </div>
                 </td>
               }
@@ -380,6 +395,17 @@
                   />
                 }
               }
+              @if (canScheduleVisit(selectedInstallment)) {
+                <p-button
+                  label="Programar visita"
+                  icon="pi pi-calendar-plus"
+                  severity="info"
+                  [outlined]="true"
+                  styleClass="w-full"
+                  size="small"
+                  (onClick)="openScheduleVisitDialog(selectedInstallment)"
+                />
+              }
             </div>
           }
         </div>
@@ -404,4 +430,9 @@
   [(visible)]="showDirectDialog"
   [installment]="directInstallment"
   (paid)="onDirectPaid()"
+/>
+
+<app-schedule-visit-dialog
+  [(visible)]="showScheduleVisitDialog"
+  [installment]="scheduleVisitInstallment"
 />
