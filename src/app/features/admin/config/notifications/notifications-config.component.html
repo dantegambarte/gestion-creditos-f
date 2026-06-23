@@ -11,7 +11,33 @@
     </div>
 
     <div class="space-y-2">
-      @for (setting of settings; track setting.id) {
+      @if (loading) {
+        @for (_ of [1, 2, 3, 4, 5, 6]; track $index) {
+          <div
+            class="flex items-center justify-between px-4 py-3.5 rounded-2xl border bg-[var(--ff-secondary)] border-[var(--ff-border)]"
+            data-cy="notif-setting-skeleton"
+          >
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <p-skeleton shape="circle" size="2.25rem" />
+              <div class="flex-1 min-w-0 space-y-2">
+                <p-skeleton height="0.95rem" width="35%" borderRadius="0.5rem" />
+                <p-skeleton height="0.75rem" width="55%" borderRadius="0.5rem" />
+              </div>
+            </div>
+            <div class="flex items-center gap-4 pl-4">
+              <div class="flex flex-col items-center gap-1">
+                <p-skeleton height="0.65rem" width="2rem" borderRadius="0.5rem" />
+                <p-skeleton height="1.75rem" width="3rem" borderRadius="999px" />
+              </div>
+              <div class="flex flex-col items-center gap-1">
+                <p-skeleton height="0.65rem" width="2rem" borderRadius="0.5rem" />
+                <p-skeleton height="1.75rem" width="3rem" borderRadius="999px" />
+              </div>
+            </div>
+          </div>
+        }
+      } @else {
+        @for (setting of settings; track setting.id) {
         <div
           [attr.data-cy]="'notif-setting-' + setting.id"
           [class]="
@@ -75,16 +101,20 @@
             </div>
           </div>
         </div>
+        }
       }
     </div>
 
-    <p-button
-      label="Guardar preferencias"
-      data-cy="notif-save-btn"
-      styleClass="h-11 px-5 rounded-xl shadow-sm mt-2"
-      [loading]="saving"
-      (onClick)="save()"
-    />
+    <div class="flex justify-end">
+      <p-button
+        label="Guardar preferencias"
+        data-cy="notif-save-btn"
+        styleClass="h-11 px-5 rounded-xl shadow-sm mt-2"
+        [loading]="saving"
+        [disabled]="loading || saving"
+        (onClick)="save()"
+      />
+    </div>
   </div>
 
   <!-- Derecha: paneles informativos -->
@@ -130,27 +160,27 @@
         Frecuencia de envío
       </h3>
       <div class="space-y-2">
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-sm ff-text-secondary shrink-0"
+        <div class="flex items-start justify-between gap-2">
+          <span class="text-sm ff-text-secondary min-w-0"
             >Alertas de mora</span
           >
-          <span class="text-xs ff-text-primary whitespace-nowrap"
+          <span class="text-xs ff-text-primary text-right"
             >Inmediata</span
           >
         </div>
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-sm ff-text-secondary shrink-0"
+        <div class="flex items-start justify-between gap-2">
+          <span class="text-sm ff-text-secondary min-w-0"
             >Vencimiento de cuotas</span
           >
-          <span class="text-xs text-blue-400 whitespace-nowrap"
+          <span class="text-xs text-blue-400 text-right"
             >Diaria (3 días antes)</span
           >
         </div>
-        <div class="flex items-center justify-between gap-2">
-          <span class="text-sm ff-text-secondary shrink-0"
+        <div class="flex items-start justify-between gap-2">
+          <span class="text-sm ff-text-secondary min-w-0"
             >Resumen semanal</span
           >
-          <span class="text-xs ff-text-primary whitespace-nowrap"
+          <span class="text-xs ff-text-primary text-right"
             >Lunes 08:00 hs</span
           >
         </div>

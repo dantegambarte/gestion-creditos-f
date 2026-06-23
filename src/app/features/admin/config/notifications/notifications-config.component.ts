@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { SkeletonModule } from 'primeng/skeleton';
 import {
   NotificationHistoryPage,
   NotificationPreference,
@@ -62,7 +63,7 @@ const SETTING_META: Record<NotificationType, Omit<NotifSetting, 'enabled' | 'ema
 @Component({
   selector: 'app-notifications-config',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, InputSwitchModule],
+  imports: [CommonModule, FormsModule, ButtonModule, InputSwitchModule, SkeletonModule],
   templateUrl: './notifications-config.component.html',
 })
 export class NotificationsConfigComponent implements OnInit {
@@ -106,6 +107,8 @@ export class NotificationsConfigComponent implements OnInit {
 
   /** Persiste las preferencias modificadas — una llamada PUT por tipo. */
   save(): void {
+    if (this.loading || this.settings.length === 0) return;
+
     this.saving = true;
     const updates = this.settings.map((s) =>
       this.notificationsSvc.updatePreference(s.id, {

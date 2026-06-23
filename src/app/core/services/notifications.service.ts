@@ -51,6 +51,8 @@ export class NotificationsService {
   } | null = null;
   private historyRequest: Observable<NotificationHistoryPage> | null = null;
   private historyRequestKey: string | null = null;
+  private preferencesCache: NotificationPreference[] | null = null;
+  private preferencesRequest: Observable<NotificationPreference[]> | null = null;
 
   /** Cantidad de notificaciones no leídas del usuario autenticado. */
   readonly unreadCount = signal(0);
@@ -190,9 +192,26 @@ export class NotificationsService {
     this.unreadCount.set(count);
   }
 
-  /** Lee las 6 preferencias de notificación (config global, solo ADMIN). */
-  getPreferences(): Observable<NotificationPreference[]> {
-    return this.api.get<NotificationPreference[]>('notifications/preferences');
+  /** Lee las 6 preferencias de notificación (config global, solo ADMIN) usando cache de sesión. */
+  getPreferences(forceRefresh = false): Observable<NotificationPreference[]> {
+    if (!forceRefresh && this.preferencesCache) {
+      return of(this.preferencesCache);
+    }
+    if (!forceRefresh && this.preferencesRequest) {
+      return this.preferencesRequest;
+    }
+
+    this.preferencesRequest = this.api.get<NotificationPreference[]>('notifications/preferences').pipe(
+      tap((preferences) => {
+        this.preferencesCache = preferences;
+      }),
+      finalize(() => {
+        this.preferencesRequest = null;
+      }),
+      shareReplay({ bufferSize: 1, refCount: true }),
+    );
+
+    return this.preferencesRequest;
   }
 
   /**
@@ -204,6 +223,17 @@ export class NotificationsService {
     type: NotificationType,
     data: Partial<Pick<NotificationPreference, 'enabled' | 'email_enabled' | 'frequency'>>,
   ): Observable<NotificationPreference> {
-    return this.api.put<NotificationPreference>(`notifications/preferences/${type}`, data);
+    return this.api.put<NotificationPreference>(`notifications/preferences/${type}`, data).pipe(
+      tap((updatedPreference) => this.updatePreferencesCache(updatedPreference)),
+    );
+  }
+
+  /** Actualiza el cache local de preferencias después de guardar una preferencia. */
+  private updatePreferencesCache(updatedPreference: NotificationPreference): void {
+    if (!this.preferencesCache) return;
+
+    this.preferencesCache = this.preferencesCache.map((preference) =>
+      preference.type === updatedPreference.type ? updatedPreference : preference,
+    );
   }
 }
