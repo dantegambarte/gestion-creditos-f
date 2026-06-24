@@ -99,9 +99,6 @@ export class HeaderComponent implements OnInit {
     if (item.entity_type === 'business_day') {
       return ['/admin/cash-register'];
     }
-    if (item.type === 'WEEKLY_REPORT') {
-      return ['/admin/reports'];
-    }
     return null;
   }
 }
