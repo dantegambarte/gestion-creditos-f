@@ -2,9 +2,9 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { Liquidation, PaymentMethod } from '../../models/commission.model';
 
 @Component({
@@ -14,9 +14,9 @@ import { Liquidation, PaymentMethod } from '../../models/commission.model';
     FormsModule,
     CardModule,
     DropdownModule,
+    SkeletonModule,
     TableModule,
     TagModule,
-    LoadingStateComponent,
   ],
   templateUrl: './commissions-history-tab.component.html',
 })

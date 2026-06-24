@@ -14,7 +14,6 @@ import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { CommissionsService } from '../../admin/commissions/commissions.service';
 import {
   Commission,
@@ -34,7 +33,6 @@ import {
     TableModule,
     TagModule,
     ToastModule,
-    LoadingStateComponent,
     ErrorStateComponent,
   ],
   providers: [MessageService],
