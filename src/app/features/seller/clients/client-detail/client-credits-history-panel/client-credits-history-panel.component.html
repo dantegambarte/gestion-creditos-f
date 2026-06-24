@@ -10,7 +10,22 @@
   </div>
 
   @if (loadingCredits) {
-    <app-loading-state message="Cargando historial..." />
+    <div class="flex flex-col gap-3" data-cy="client-credits-history-skeleton">
+      @for (_ of [1, 2, 3]; track _) {
+        <div
+          class="flex items-center justify-between gap-3 border-b py-3"
+          style="border-color: var(--ff-border)"
+        >
+          <p-skeleton width="4rem" height="1rem" />
+          <p-skeleton width="5rem" height="1rem" />
+          <p-skeleton width="2.5rem" height="1rem" />
+          <p-skeleton width="4.5rem" height="1rem" />
+          <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+          <p-skeleton width="5rem" height="1rem" />
+          <p-skeleton width="2rem" height="2rem" shape="circle" />
+        </div>
+      }
+    </div>
   } @else if (credits.length === 0) {
     <p class="text-sm" style="color: var(--ff-text-muted)">
       Este cliente no tiene créditos registrados.

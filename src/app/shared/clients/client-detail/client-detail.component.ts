@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { SkeletonModule } from 'primeng/skeleton';
 import { finalize } from 'rxjs/operators';
 import { HeaderService } from '../../../core/services/header.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
@@ -98,6 +99,7 @@ function toUiCredit(c: ApiCredit): Credit | null {
   imports: [
     CommonModule,
     ButtonModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     ClientCreditsComponent,

@@ -9,6 +9,7 @@ import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
+import { SkeletonModule } from 'primeng/skeleton';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { HeaderService } from '../../../../core/services/header.service';
 import { CustomersService } from '../customers.service';
@@ -35,6 +36,7 @@ import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
     ButtonModule,
     DropdownModule,
     InputTextModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     EmptyStateComponent,

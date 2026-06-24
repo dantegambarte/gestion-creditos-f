@@ -8,7 +8,43 @@
   />
 
   @if (loading) {
-    <app-loading-state />
+    <div class="space-y-8" data-cy="seller-client-detail-skeleton">
+      <div
+        class="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start"
+      >
+        <div
+          class="ff-panel rounded-lg p-6 space-y-6"
+          style="background: var(--ff-panel); border: 1px solid var(--ff-border);"
+        >
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div class="flex items-center gap-3">
+              <p-skeleton width="12rem" height="1.5rem" />
+              <p-skeleton width="4.5rem" height="1.5rem" borderRadius="999px" />
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              <p-skeleton width="6rem" height="2.75rem" borderRadius="0.75rem" />
+              <p-skeleton width="6rem" height="2.75rem" borderRadius="0.75rem" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            @for (_ of [1, 2, 3, 4, 5]; track _) {
+              <div class="flex flex-col gap-1.5">
+                <p-skeleton width="40%" height="0.75rem" />
+                <p-skeleton width="65%" height="1rem" />
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="ff-panel rounded-lg p-6 space-y-4">
+        <p-skeleton width="10rem" height="1.25rem" />
+        @for (_ of [1, 2, 3]; track _) {
+          <p-skeleton height="3.5rem" borderRadius="0.5rem" />
+        }
+      </div>
+    </div>
   } @else if (error) {
     <app-error-state />
   } @else if (customer) {

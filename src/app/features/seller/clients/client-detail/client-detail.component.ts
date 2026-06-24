@@ -13,6 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { SkeletonModule } from 'primeng/skeleton';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { AppError } from '../../../../core/models/app-error';
 import { UserRoleEnum } from '../../../../core/models/types/user-role';
@@ -38,6 +39,7 @@ import { ClientPortalPanelComponent } from './client-portal-panel/client-portal-
     TagModule,
     ToastModule,
     ConfirmDialogModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     ClientEditFormComponent,
