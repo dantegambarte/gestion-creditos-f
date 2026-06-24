@@ -13,10 +13,10 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { SkeletonModule } from 'primeng/skeleton';
 import { finalize } from 'rxjs/operators';
 import { FormatService } from '../../../../core/services/format.service';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import {
   CashSession,
   CashSessionSnapshot,
@@ -54,7 +54,7 @@ interface DeclaredRow {
     InputNumberModule,
     InputTextareaModule,
     CurrencyAmountInputDirective,
-    LoadingStateComponent,
+    SkeletonModule,
   ],
   templateUrl: './cash-session-close-dialog.component.html',
 })

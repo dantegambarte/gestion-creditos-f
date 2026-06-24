@@ -36,7 +36,27 @@
 
     <div class="px-6 py-5">
       @if (loading) {
-        <app-loading-state message="Cargando snapshot..."></app-loading-state>
+        <div
+          class="overflow-hidden rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)]"
+          data-cy="cash-snapshot-skeleton"
+        >
+          <div
+            class="flex items-center gap-4 border-b border-[var(--ff-border)] bg-[var(--ff-panel-raised)] px-4 py-3"
+          >
+            <p-skeleton width="6rem" height="0.7rem" />
+            <p-skeleton width="5rem" height="0.7rem" styleClass="ml-auto" />
+            <p-skeleton width="6rem" height="0.7rem" />
+          </div>
+          @for (_ of [1, 2, 3, 4, 5, 6, 7]; track _) {
+            <div
+              class="flex items-center gap-4 border-b border-[var(--ff-border)] px-4 py-3 last:border-0"
+            >
+              <p-skeleton width="9rem" height="0.9rem" />
+              <p-skeleton width="5rem" height="0.9rem" styleClass="ml-auto" />
+              <p-skeleton width="5rem" height="0.9rem" />
+            </div>
+          }
+        </div>
       } @else if (snapshot) {
         <div
           class="overflow-hidden rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)]"

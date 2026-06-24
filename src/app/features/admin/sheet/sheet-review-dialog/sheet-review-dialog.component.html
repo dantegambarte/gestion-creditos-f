@@ -6,7 +6,40 @@
   header="Detalle de planilla"
 >
   @if (loadingReview) {
-    <app-loading-state />
+    <div class="space-y-4" data-cy="sheet-review-skeleton">
+      <div
+        class="grid grid-cols-2 gap-3 text-sm rounded-lg p-4"
+        style="
+          background: var(--ff-secondary);
+          border: 1px solid var(--ff-border);
+        "
+      >
+        <div class="flex flex-col gap-1.5">
+          <p-skeleton width="5rem" height="0.75rem" />
+          <p-skeleton width="7rem" height="1rem" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <p-skeleton width="4rem" height="0.75rem" />
+          <p-skeleton width="6rem" height="1rem" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <p-skeleton width="6rem" height="0.75rem" />
+          <p-skeleton width="3rem" height="1rem" />
+        </div>
+      </div>
+      <div class="admin-table-skeleton">
+        @for (_ of [1, 2, 3, 4]; track _) {
+          <div class="admin-table-skeleton__row">
+            <p-skeleton width="1.5rem" height="1rem" />
+            <p-skeleton width="9rem" height="1rem" />
+            <p-skeleton width="5rem" height="1rem" />
+            <p-skeleton width="4rem" height="1rem" />
+            <p-skeleton width="5rem" height="1rem" />
+            <p-skeleton width="5rem" height="1rem" />
+          </div>
+        }
+      </div>
+    </div>
   } @else if (reviewSheetDetail) {
     <div class="space-y-4">
       <div

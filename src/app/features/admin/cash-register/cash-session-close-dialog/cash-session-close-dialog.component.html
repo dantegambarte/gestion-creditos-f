@@ -37,7 +37,31 @@
 
     <div class="px-6 py-5">
       @if (loadingSnapshot) {
-        <app-loading-state message="Cargando snapshot..."></app-loading-state>
+        <div class="flex flex-col gap-4" data-cy="cash-close-skeleton">
+          <p-skeleton width="80%" height="0.9rem" />
+          <div
+            class="overflow-hidden rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)]"
+          >
+            <div
+              class="flex items-center gap-4 border-b border-[var(--ff-border)] bg-[var(--ff-panel-raised)] px-3 py-3"
+            >
+              <p-skeleton width="4rem" height="0.7rem" />
+              <p-skeleton width="4rem" height="0.7rem" styleClass="ml-auto" />
+              <p-skeleton width="4rem" height="0.7rem" />
+              <p-skeleton width="4rem" height="0.7rem" />
+            </div>
+            @for (_ of [1, 2, 3, 4, 5]; track _) {
+              <div
+                class="flex items-center gap-4 border-b border-[var(--ff-border)] px-3 py-3 last:border-0"
+              >
+                <p-skeleton width="6rem" height="0.9rem" />
+                <p-skeleton width="5rem" height="0.9rem" styleClass="ml-auto" />
+                <p-skeleton width="5rem" height="2.5rem" borderRadius="0.5rem" />
+                <p-skeleton width="4rem" height="0.9rem" />
+              </div>
+            }
+          </div>
+        </div>
       } @else if (snapshot) {
         <div class="flex flex-col gap-4">
           <p class="text-sm leading-relaxed text-[var(--ff-text-secondary)]">
