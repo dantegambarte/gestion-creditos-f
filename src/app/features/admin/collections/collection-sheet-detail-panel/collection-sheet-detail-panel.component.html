@@ -1,6 +1,44 @@
 <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
   @if (loadingDetail) {
-    <app-loading-state />
+    <div class="flex flex-col flex-1 min-h-0" data-cy="sheet-detail-skeleton">
+      <div
+        class="flex items-center gap-2 px-4 py-4 shrink-0"
+        style="border-bottom: 1px solid var(--ff-border)"
+      >
+        <p-skeleton shape="circle" size="1.75rem" />
+        <p-skeleton shape="circle" size="1.75rem" />
+        <div class="flex-1 min-w-0">
+          <p-skeleton width="14rem" height="1rem" />
+        </div>
+        <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+        <p-skeleton shape="circle" size="2.25rem" />
+        <p-skeleton shape="circle" size="2.25rem" />
+      </div>
+      <div
+        class="flex gap-3 px-5 pt-3 pb-2 shrink-0"
+        style="border-bottom: 1px solid var(--ff-border)"
+      >
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <p-skeleton width="4.5rem" height="0.85rem" />
+        }
+      </div>
+      <div class="flex-1 min-h-0 overflow-auto admin-table-skeleton p-3">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="admin-table-skeleton__row">
+            <p-skeleton width="1.2rem" height="0.9rem" />
+            <div class="admin-table-skeleton__stack">
+              <p-skeleton width="9rem" height="1rem" />
+              <p-skeleton width="6rem" height="0.8rem" />
+            </div>
+            <p-skeleton width="7rem" height="0.9rem" />
+            <p-skeleton width="5rem" height="0.9rem" />
+            <p-skeleton width="5rem" height="1rem" styleClass="ml-auto" />
+            <p-skeleton width="3rem" height="1rem" />
+            <p-skeleton width="4.5rem" height="1.4rem" borderRadius="999px" />
+          </div>
+        }
+      </div>
+    </div>
   } @else if (selectedSheet) {
     <!-- Header detalle -->
     <div

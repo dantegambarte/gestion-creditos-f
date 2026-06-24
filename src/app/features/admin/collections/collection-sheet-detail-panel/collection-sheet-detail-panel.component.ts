@@ -12,6 +12,7 @@ import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
@@ -19,7 +20,6 @@ import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { FormatService } from '../../../../core/services/format.service';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { CollectionsService } from '../../../collector/collections.service';
 import {
   COLLECTION_FILTER_LABELS,
@@ -48,10 +48,10 @@ export type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
     CurrencyArsPipe,
     ButtonModule,
     ProgressSpinnerModule,
+    SkeletonModule,
     TableModule,
     TagModule,
     TooltipModule,
-    LoadingStateComponent,
   ],
   templateUrl: './collection-sheet-detail-panel.component.html',
   styleUrl: './collection-sheet-detail-panel.component.scss',

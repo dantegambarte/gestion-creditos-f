@@ -12,7 +12,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../core/models/app-error';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { Payment, PaymentStatus } from '../models/payment.model';
 import { PaymentsService } from '../payments.service';
 
@@ -30,7 +29,6 @@ import { PaymentsService } from '../payments.service';
     DropdownModule,
     SkeletonModule,
     TooltipModule,
-    LoadingStateComponent,
     ErrorStateComponent,
   ],
   templateUrl: './collector-payments.component.html',

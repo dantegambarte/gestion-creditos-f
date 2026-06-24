@@ -18,7 +18,23 @@
   </div>
 
   @if (loading) {
-    <app-loading-state />
+    <p-card styleClass="shadow-sm">
+      <div class="admin-table-skeleton" data-cy="collector-payments-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="admin-table-skeleton__row">
+            <div class="admin-table-skeleton__stack">
+              <p-skeleton width="9rem" height="1rem" />
+              <p-skeleton width="5rem" height="0.8rem" />
+            </div>
+            <p-skeleton width="5rem" height="1rem" />
+            <p-skeleton width="5rem" height="1rem" styleClass="ml-auto" />
+            <p-skeleton width="6rem" height="1rem" />
+            <p-skeleton width="5rem" height="1.4rem" borderRadius="999px" />
+            <p-skeleton width="7rem" height="0.9rem" />
+          </div>
+        }
+      </div>
+    </p-card>
   } @else if (error) {
     <app-error-state />
   } @else {
