@@ -56,31 +56,37 @@
     <app-error-state />
   } @else {
     <div class="ff-panel">
-      <div class="ff-list-header ff-list-header--filters !gap-x-4 !gap-y-3">
-        <p-dropdown
-          [options]="STATUS_OPTIONS"
-          [(ngModel)]="filterStatus"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Todos los estados"
-          [filter]="STATUS_OPTIONS.length > 10"
-          filterBy="label"
-          [showClear]="!!filterStatus"
-          styleClass="w-56 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
-          appendTo="body"
-        />
-        <p-dropdown
-          [options]="collectorOptions"
-          [(ngModel)]="filterCollectorId"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Todos los cobradores"
-          [filter]="collectorOptions.length > 10"
-          filterBy="label"
-          [showClear]="!!filterCollectorId"
-          styleClass="w-64 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
-          appendTo="body"
-        />
+      <div class="ff-list-header ff-list-header--filters !gap-x-4 !gap-y-3 flex-col items-stretch md:flex-row md:items-center">
+        <div class="flex flex-col gap-1 w-full md:w-auto" data-cy="admin-payments-filter-status">
+          <label class="text-xs text-gray-400 font-semibold mb-1 block">Estado</label>
+          <p-dropdown
+            [options]="STATUS_OPTIONS"
+            [(ngModel)]="filterStatus"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Todos los estados"
+            [filter]="STATUS_OPTIONS.length > 10"
+            filterBy="label"
+            [showClear]="!!filterStatus"
+            styleClass="w-full md:w-56 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
+            appendTo="body"
+          />
+        </div>
+        <div class="flex flex-col gap-1 w-full md:w-auto" data-cy="admin-payments-filter-collector">
+          <label class="text-xs text-gray-400 font-semibold mb-1 block">Cobrador</label>
+          <p-dropdown
+            [options]="collectorOptions"
+            [(ngModel)]="filterCollectorId"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Todos los cobradores"
+            [filter]="collectorOptions.length > 10"
+            filterBy="label"
+            [showClear]="!!filterCollectorId"
+            styleClass="w-full md:w-64 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
+            appendTo="body"
+          />
+        </div>
       </div>
 
       @if (filteredPayments.length === 0) {
@@ -92,7 +98,8 @@
           [value]="filteredPayments"
           [paginator]="true"
           [rows]="15"
-          styleClass="p-datatable-sm p-datatable-hoverable-rows"
+          styleClass="hidden md:block p-datatable-sm p-datatable-hoverable-rows"
+          data-cy="admin-payments-table"
           responsiveLayout="scroll"
         >
           <ng-template pTemplate="header">
@@ -224,6 +231,62 @@
             </tr>
           </ng-template>
         </p-table>
+
+        <div class="flex flex-col gap-3 md:hidden" data-cy="admin-payments-mobile-list">
+          @for (p of filteredPayments; track p.id) {
+            <article
+              class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+              data-cy="admin-payments-mobile-card"
+              (click)="openDetail(p)"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-semibold text-[var(--ff-text-primary)]">
+                    {{ p.customerName }}
+                  </p>
+                  <p class="mt-0.5 truncate text-xs text-[var(--ff-text-muted)]">
+                    {{ p.customerDni }} · Cuota {{ p.installmentNumber }}
+                  </p>
+                </div>
+                <p-tag
+                  [value]="statusLabel(p.status)"
+                  [severity]="statusSeverity(p.status)"
+                />
+              </div>
+
+              <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Cobrador</dt>
+                  <dd class="mt-1 font-semibold">{{ p.collectorName ?? "—" }}</dd>
+                </div>
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Método</dt>
+                  <dd class="mt-1 font-semibold">{{ paymentMethodLabel(p.paymentMethod) }}</dd>
+                </div>
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3 col-span-2">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Monto cobrado</dt>
+                  <dd class="mt-1 font-mono text-lg font-bold text-emerald-300">
+                    {{ p.amountReceived | currencyArs: 2 }}
+                  </dd>
+                </div>
+              </dl>
+
+              <p class="mt-3 text-xs text-[var(--ff-text-muted)]">
+                Registrado {{ p.createdAt | date: "dd/MM/yyyy HH:mm" }}
+              </p>
+
+              <button
+                type="button"
+                class="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-semibold text-blue-200"
+                data-cy="admin-payments-mobile-view-action"
+                (click)="$event.stopPropagation(); openDetail(p)"
+              >
+                Ver detalle
+                <i class="pi pi-chevron-right text-xs"></i>
+              </button>
+            </article>
+          }
+        </div>
       }
     </div>
   }

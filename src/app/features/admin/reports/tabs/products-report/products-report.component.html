@@ -50,7 +50,7 @@
     <div
       class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
     >
-      <table class="w-full text-sm">
+      <table class="hidden w-full text-sm md:table" data-cy="products-report-table">
         <thead>
           <tr class="border-b border-[var(--ff-border-subtle)]">
             <th
@@ -140,6 +140,55 @@
           }
         </tbody>
       </table>
+
+      <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="products-report-mobile-list">
+        @for (row of filteredProductRows; track row.id) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+            data-cy="products-report-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <p class="min-w-0 truncate text-sm font-semibold text-[var(--ff-text-primary)]">
+                {{ row.title }}
+              </p>
+              @if (row.availableCount === 0) {
+                <span class="shrink-0 px-2 py-0.5 rounded text-xs font-bold bg-red-900/60 text-red-400 uppercase tracking-wide">Sin stock</span>
+              } @else if (stockThreshold != null && row.availableCount <= stockThreshold) {
+                <span class="shrink-0 px-2 py-0.5 rounded text-xs font-bold bg-orange-900/60 text-orange-400 uppercase tracking-wide">
+                  Stock bajo ({{ row.availableCount }})
+                </span>
+              } @else {
+                <span class="shrink-0 text-xs text-[var(--ff-text-secondary)]">Stock {{ row.availableCount }}</span>
+              }
+            </div>
+
+            <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Precio</dt>
+                <dd class="mt-1 font-mono font-semibold text-[var(--ff-text-secondary)]">
+                  @if (row.minPrice === row.maxPrice) {
+                    {{ formatCurrency(row.minPrice) }}
+                  } @else {
+                    {{ formatCurrency(row.minPrice) }}—{{ formatCurrency(row.maxPrice) }}
+                  }
+                </dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Veces vendido</dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-secondary)]">{{ row.timesSold }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Prom. venta</dt>
+                <dd class="mt-1 font-mono font-semibold text-[var(--ff-text-secondary)]">{{ formatCurrency(row.avgSellingPrice) }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Ingresos</dt>
+                <dd class="mt-1 font-mono font-semibold text-green-400">{{ formatCurrency(row.totalRevenue) }}</dd>
+              </div>
+            </dl>
+          </article>
+        }
+      </div>
     </div>
   }
 </div>

@@ -73,7 +73,7 @@
             Sin vencimientos en el período.
           </p>
         } @else {
-          <table class="w-full text-sm">
+          <table class="hidden w-full text-sm md:table" data-cy="upcoming-report-byday-table">
             <thead>
               <tr class="border-b border-[var(--ff-border-subtle)]">
                 <th
@@ -126,6 +126,22 @@
               }
             </tbody>
           </table>
+
+          <div class="flex flex-col gap-2 p-3 md:hidden" data-cy="upcoming-report-byday-mobile-list">
+            @for (row of upcomingReport.byDay; track row.dueDate) {
+              <article
+                class="flex items-center justify-between gap-3 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3"
+                [class.opacity-50]="isWeekend(row.dueDate)"
+                data-cy="upcoming-report-byday-mobile-card"
+              >
+                <div>
+                  <p class="text-sm font-semibold text-white">{{ formatDate(row.dueDate) }}</p>
+                  <p class="text-xs text-[var(--ff-text-muted)]">{{ getDayName(row.dueDate) }} · {{ row.count }} cuotas</p>
+                </div>
+                <p class="font-mono text-sm font-semibold text-blue-400">{{ formatCurrency(row.expectedAmount) }}</p>
+              </article>
+            }
+          </div>
         }
       </div>
 
@@ -145,7 +161,7 @@
             Sin clientes con vencimientos en el período.
           </p>
         } @else {
-          <table class="w-full text-sm">
+          <table class="hidden w-full text-sm md:table" data-cy="upcoming-report-bycustomer-table">
             <thead>
               <tr class="border-b border-[var(--ff-border-subtle)]">
                 <th
@@ -211,6 +227,40 @@
               }
             </tbody>
           </table>
+
+          <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="upcoming-report-bycustomer-mobile-list">
+            @for (row of upcomingReport.byCustomer; track row.customerId) {
+              <article
+                class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+                data-cy="upcoming-report-bycustomer-mobile-card"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-white">{{ row.customerName }}</p>
+                    <p class="mt-0.5 truncate text-xs text-[var(--ff-text-secondary)]">{{ row.phone ?? "—" }}</p>
+                  </div>
+                  <p class="shrink-0 text-right text-blue-400 font-semibold text-xs">
+                    {{ formatDate(row.nextDueDate) }}
+                  </p>
+                </div>
+
+                <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Cobrador</dt>
+                    <dd class="mt-1 truncate font-semibold">{{ row.assignedCollector ?? "—" }}</dd>
+                  </div>
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Cuotas</dt>
+                    <dd class="mt-1 font-semibold">{{ row.installmentsCount }}</dd>
+                  </div>
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3 col-span-2">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Monto esperado</dt>
+                    <dd class="mt-1 font-mono font-semibold text-blue-400">{{ formatCurrency(row.expectedAmount) }}</dd>
+                  </div>
+                </dl>
+              </article>
+            }
+          </div>
         }
       </div>
     </div>

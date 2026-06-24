@@ -63,7 +63,8 @@
           [value]="filteredPayments"
           [paginator]="true"
           [rows]="15"
-          styleClass="p-datatable-sm"
+          styleClass="hidden md:block p-datatable-sm"
+          data-cy="collector-payments-table"
           responsiveLayout="scroll"
         >
           <ng-template pTemplate="header">
@@ -119,6 +120,53 @@
             </tr>
           </ng-template>
         </p-table>
+
+        <div class="flex flex-col gap-3 md:hidden" data-cy="collector-payments-mobile-list">
+          @for (p of filteredPayments; track p.id) {
+            <article
+              class="rounded-xl border p-3"
+              style="border-color: var(--ff-border)"
+              data-cy="collector-payments-mobile-card"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="truncate font-medium">{{ p.customerName }}</p>
+                  <p class="text-xs text-[var(--ff-text-muted)]">{{ p.customerDni }}</p>
+                </div>
+                @if (p.status === "REJECTED" && p.rejectionReason) {
+                  <p-tag
+                    class="shrink-0"
+                    [value]="statusLabel(p.status)"
+                    [severity]="statusSeverity(p.status)"
+                    [pTooltip]="p.rejectionReason"
+                    tooltipPosition="top"
+                    styleClass="cursor-help"
+                  />
+                } @else {
+                  <p-tag
+                    class="shrink-0"
+                    [value]="statusLabel(p.status)"
+                    [severity]="statusSeverity(p.status)"
+                  />
+                }
+              </div>
+              <div class="mt-2 flex items-center justify-between text-sm">
+                <span class="text-[var(--ff-text-secondary)]">Cuota {{ p.installmentNumber }}</span>
+                <span class="font-semibold text-blue-600">{{ p.amountReceived | currencyArs: 2 }}</span>
+              </div>
+              <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
+                {{
+                  p.paymentMethod === "CASH"
+                    ? "Efectivo"
+                    : p.paymentMethod === "TRANSFER"
+                      ? "Transferencia"
+                      : "Mixto"
+                }}
+                · {{ p.createdAt | date: "dd/MM/yyyy HH:mm" }}
+              </p>
+            </article>
+          }
+        </div>
       }
     </p-card>
   }

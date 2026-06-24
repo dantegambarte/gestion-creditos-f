@@ -62,7 +62,8 @@
         [value]="commissions"
         [paginator]="true"
         [rows]="20"
-        styleClass="p-datatable-sm p-datatable-hoverable-rows"
+        styleClass="hidden md:block p-datatable-sm p-datatable-hoverable-rows"
+        data-cy="collector-commissions-table"
         responsiveLayout="scroll"
       >
         <ng-template pTemplate="header">
@@ -100,6 +101,36 @@
           </tr>
         </ng-template>
       </p-table>
+
+      <div class="flex flex-col gap-3 md:hidden" data-cy="collector-commissions-mobile-list">
+        @for (c of commissions; track c.id) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] p-4"
+            data-cy="collector-commissions-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <p class="font-medium">{{ c.customerName }}</p>
+              <p-tag
+                class="shrink-0"
+                [value]="statusLabel(c.status)"
+                [severity]="statusSeverity(c.status)"
+              />
+            </div>
+            <p class="mt-0.5 text-xs text-[var(--ff-text-muted)]">
+              {{ formatDate(c.weekStart) }} — {{ formatDate(c.weekEnd) }}
+            </p>
+            <div class="mt-3 flex items-center justify-between text-sm">
+              <span class="text-[var(--ff-text-muted)]">
+                {{ creditTypeLabel(c.creditType) }} ·
+                {{ formatCurrency(c.creditAmount) }}
+              </span>
+              <span class="font-semibold text-blue-600 font-mono">
+                {{ formatCurrency(c.amount) }}
+              </span>
+            </div>
+          </article>
+        }
+      </div>
     }
   </p-card>
 
@@ -135,7 +166,8 @@
         [value]="liquidations"
         [paginator]="true"
         [rows]="10"
-        styleClass="p-datatable-sm"
+        styleClass="hidden md:block p-datatable-sm"
+        data-cy="collector-liquidations-table"
         responsiveLayout="scroll"
       >
         <ng-template pTemplate="header">
@@ -174,6 +206,40 @@
           </tr>
         </ng-template>
       </p-table>
+
+      <div class="flex flex-col gap-3 md:hidden" data-cy="collector-liquidations-mobile-list">
+        @for (liq of liquidations; track liq.id) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] p-4"
+            data-cy="collector-liquidations-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <p class="text-sm text-[var(--ff-text-muted)]">
+                {{ formatDate(liq.weekStart) }} — {{ formatDate(liq.weekEnd) }}
+              </p>
+              <p-tag
+                class="shrink-0"
+                [value]="paymentMethodLabel(liq.paymentMethod)"
+                severity="secondary"
+              />
+            </div>
+            <p class="mt-2 text-lg font-semibold text-green-600 font-mono">
+              {{ formatCurrency(liq.totalPaid) }}
+            </p>
+            <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
+              <span class="text-[var(--ff-text-muted)]">
+                Comisiones: {{ formatCurrency(liq.commissionsTotal) }}
+              </span>
+              <span class="text-[var(--ff-text-muted)]">
+                Sueldo: {{ formatCurrency(liq.salaryAmount) }}
+              </span>
+            </div>
+            <p class="mt-2 text-xs text-[var(--ff-text-muted)]">
+              {{ formatDate(liq.paidAt) }}
+            </p>
+          </article>
+        }
+      </div>
     }
   </p-card>
 </div>

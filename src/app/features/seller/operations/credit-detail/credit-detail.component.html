@@ -227,12 +227,12 @@
   </div>
 
   <!-- Two-column layout -->
-  <div class="flex" style="min-height: 0">
+  <div class="flex flex-col lg:flex-row" style="min-height: 0">
 
     <!-- Left: financial details + units -->
     <div
-      class="flex flex-col gap-4 p-4"
-      style="width: 420px; min-width: 420px; border-right: 1px solid var(--ff-border)"
+      class="flex flex-col gap-4 p-4 w-full border-b lg:w-[420px] lg:min-w-[420px] lg:border-b-0 lg:border-r"
+      style="border-color: var(--ff-border)"
     >
 
       <!-- Detalles financieros -->
@@ -335,7 +335,7 @@
           <div class="ff-list-header">
             <span class="ff-list-header__title">Unidades incluidas</span>
           </div>
-          <p-table [value]="credit.units" styleClass="p-datatable-sm">
+          <p-table [value]="credit.units" styleClass="hidden md:block p-datatable-sm" data-cy="credit-detail-units-table">
             <ng-template pTemplate="header">
               <tr>
                 <th>Producto</th>
@@ -361,6 +361,36 @@
               </tr>
             </ng-template>
           </p-table>
+
+          <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="credit-detail-units-mobile-list">
+            @for (u of credit.units; track u.id) {
+              <article
+                class="rounded-2xl border p-4"
+                style="border-color: var(--ff-border-subtle)"
+                data-cy="credit-detail-units-mobile-card"
+              >
+                <p class="font-medium" style="color: var(--ff-text-primary)">{{ u.productName }}</p>
+                <p class="mt-0.5 text-sm" style="color: var(--ff-text-secondary)">{{ variantLabel(u) }}</p>
+                <p class="mt-1 ff-mono font-semibold text-xs" style="color: var(--ff-text-muted)">
+                  Código: {{ u.unitCode }}
+                </p>
+                <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div class="rounded-xl border p-2" style="border-color: var(--ff-border-subtle)">
+                    <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Precio hist.</p>
+                    <p class="font-bold ff-mono">{{ u.historicalPrice | currencyArs: 0 }}</p>
+                  </div>
+                  <div class="rounded-xl border p-2" style="border-color: var(--ff-border-subtle)">
+                    <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Tasa</p>
+                    @if (u.historicalRate !== null) {
+                      <p class="font-bold ff-mono">{{ (u.historicalRate * 100).toFixed(0) }}%</p>
+                    } @else {
+                      <p class="font-bold" style="color: var(--ff-text-muted)">—</p>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
         </div>
       }
 

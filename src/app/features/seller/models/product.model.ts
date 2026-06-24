@@ -7,6 +7,9 @@ export interface ProductVariantSummary {
   capacity: string | null;
   currentPrice: number;
   status: string;
+  availableCount: number;
+  reservedCount: number;
+  soldCount: number;
 }
 
 export interface Product {
@@ -60,6 +63,9 @@ export interface ProductVariantSummaryRaw {
   capacity: string | null;
   current_price: number;
   status: string;
+  available_count: number;
+  reserved_count: number;
+  sold_count: number;
 }
 
 export interface ProductRaw {

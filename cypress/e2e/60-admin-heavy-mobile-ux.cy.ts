@@ -45,6 +45,65 @@ const collectionSheetsResponse = {
   ],
 };
 
+const collectionSheetDetailResponse = {
+  ok: true,
+  data: {
+    id: 'sheet-mobile-heavy-1',
+    sheet_date: '2026-06-23',
+    filter_used: 'TODAY_AND_OVERDUE',
+    status: 'ACTIVE',
+    created_at: '2026-06-23T10:00:00.000Z',
+    closed_at: null,
+    closed_by: null,
+    snapshot_version: 1,
+    sent_at: null,
+    sent_by: null,
+    collector_id: 'collector-mobile-1',
+    collector_name: 'Cobrador Mobile Heavy',
+    generated_by_name: 'QA Admin',
+    items: [
+      {
+        order_number: 1,
+        installment_id: 'installment-mobile-heavy-1',
+        installment_number: 1,
+        due_date: '2026-06-26',
+        amount_due: 47000,
+        amount_paid: 0,
+        penalty_amount: 0,
+        installment_status: 'PENDING',
+        credit_id: 'credit-mobile-heavy-1',
+        credit_type: 'LOAN',
+        customer_name: 'Cliente Estado Mobile',
+        customer_phone: '113700001',
+        customer_address: 'Calle Estado 1 123, Lanus',
+        customer_dni: '84444441',
+        next_visit_date: null,
+        has_pending_payment: false,
+        collection_reference: 'Cuota 1 de 1 · préstamo de $190,000',
+        planned_amount: 47000,
+        remaining_amount: 47000,
+        inclusion_criteria: 'DUE_DATE',
+        inclusion_reason: 'DUE_TODAY',
+        op_priority: 4,
+        antecedent_id: null,
+        antecedent_type: null,
+        antecedent_date: null,
+        antecedent_notes: null,
+        management_status: 'PENDING',
+        live: {
+          installment_status: 'PENDING',
+          amount_due: 47000,
+          amount_paid: 0,
+          penalty_amount: 0,
+          has_pending_payment: false,
+          today_attempt_id: null,
+          today_attempt_type: null,
+        },
+      },
+    ],
+  },
+};
+
 const systemConfigResponse = {
   ok: true,
   data: [
@@ -235,6 +294,10 @@ describe('Admin Backoffice — Heavy Mobile UX', () => {
         return { statusCode: 200, body: collectionSheetsResponse };
       });
     }).as('collectionsDelayedHeavy');
+    cy.intercept('GET', '**/api/collections/*', {
+      statusCode: 200,
+      body: collectionSheetDetailResponse,
+    }).as('collectionDetailHeavy');
 
     cy.loginAs('ADMIN', '/admin/collections');
 
@@ -255,9 +318,6 @@ describe('Admin Backoffice — Heavy Mobile UX', () => {
       const cards = $body.find('[data-cy="admin-collections-mobile-card"]');
       const empty = $body.find('[data-cy="admin-collections-mobile-empty-state"]');
       expect(cards.length + empty.length, 'cards o empty state mobile').to.be.greaterThan(0);
-      if (cards.length > 0) {
-        expect(cards.first().text()).to.contain('Cobrador Mobile Heavy');
-      }
     });
     cy.get('body').then(($body) => {
       const actions = $body.find('[data-cy="admin-collections-mobile-view-action"]');
@@ -265,6 +325,22 @@ describe('Admin Backoffice — Heavy Mobile UX', () => {
         cy.wrap(actions.first()).should('be.visible');
       }
     });
+
+    cy.get('[data-cy="admin-collections-mobile-view-action"]').first().click();
+    cy.wait('@collectionDetailHeavy');
+    cy.get('[data-cy="admin-collections-mobile-list"]').should('not.be.visible');
+    cy.get('[data-cy="admin-collections-detail-panel"]').should('be.visible');
+    cy.get('[data-cy="sheet-detail-collector-name"]')
+      .should('be.visible')
+      .and('contain', 'Cobrador Mobile Heavy');
+    cy.get('[data-cy="sheet-detail-mobile-list"]').should('be.visible');
+    cy.get('[data-cy="sheet-detail-mobile-card"]')
+      .should('have.length', 1)
+      .first()
+      .contains('Cliente Estado Mobile');
+    cy.get('[data-cy="sheet-detail-table"]').should('not.be.visible');
+    cy.get('[data-cy="sheet-detail-back-action"]').should('be.visible').click();
+    cy.get('[data-cy="admin-collections-mobile-list"]').should('be.visible');
   });
 
   it('Configuración Mobile — tabs scrolleables y edición de parámetro visible en viewport', () => {

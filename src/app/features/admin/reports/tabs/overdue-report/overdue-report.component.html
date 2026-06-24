@@ -92,7 +92,7 @@
             Mora por cliente
           </h2>
         </div>
-        <table class="w-full text-sm">
+        <table class="hidden w-full text-sm md:table" data-cy="overdue-report-table">
           <thead>
             <tr class="border-b border-[var(--ff-border-subtle)]">
               <th
@@ -157,6 +157,39 @@
             }
           </tbody>
         </table>
+
+        <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="overdue-report-mobile-list">
+          @for (row of overdueReport.byCustomer; track row.customerId) {
+            <article
+              class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+              data-cy="overdue-report-mobile-card"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-semibold text-white">{{ row.customerName }}</p>
+                  <p class="mt-0.5 truncate text-xs text-[var(--ff-text-secondary)]">{{ row.phone ?? "—" }}</p>
+                </div>
+                <span
+                  class="shrink-0 font-bold"
+                  [class]="row.maxDaysOverdue > 30 ? 'text-red-400' : 'text-orange-400'"
+                >
+                  {{ row.maxDaysOverdue }}d
+                </span>
+              </div>
+
+              <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Cuotas en mora</dt>
+                  <dd class="mt-1 font-bold text-red-400">{{ row.overdueCount }}</dd>
+                </div>
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Monto total</dt>
+                  <dd class="mt-1 font-mono font-semibold text-orange-400">{{ formatCurrency(row.totalOverdue) }}</dd>
+                </div>
+              </dl>
+            </article>
+          }
+        </div>
       </div>
     }
   }

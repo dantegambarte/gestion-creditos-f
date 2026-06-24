@@ -126,7 +126,7 @@
       <div
         class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
       >
-        <table class="w-full text-sm">
+        <table class="hidden w-full text-sm md:table" data-cy="cash-conversions-report-table">
           <thead>
             <tr class="border-b border-[var(--ff-border-subtle)]">
               <th
@@ -191,6 +191,40 @@
             }
           </tbody>
         </table>
+
+        <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="cash-conversions-report-mobile-list">
+          @for (row of report.rows; track row.id) {
+            <article
+              class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+              data-cy="cash-conversions-report-mobile-card"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-sm font-semibold text-[var(--ff-text-secondary)]">{{ formatDate(row.registerDate) }}</p>
+                <p class="font-mono text-sm font-semibold text-blue-400">{{ formatCurrency(row.amount) }}</p>
+              </div>
+              <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
+                {{ methodLabel(row.sourceMethod) }} → {{ methodLabel(row.targetMethod) }}
+              </p>
+
+              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Criterio</dt>
+                  <dd class="mt-1 truncate font-semibold">{{ criteriaLabel(row.criteria) }}</dd>
+                </div>
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Usuario</dt>
+                  <dd class="mt-1 truncate font-semibold">{{ row.createdByName }}</dd>
+                </div>
+                @if (row.notes) {
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3 col-span-2">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Observación</dt>
+                    <dd class="mt-1">{{ row.notes }}</dd>
+                  </div>
+                }
+              </dl>
+            </article>
+          }
+        </div>
       </div>
     }
   }

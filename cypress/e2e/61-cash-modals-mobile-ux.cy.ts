@@ -178,6 +178,22 @@ describe('Caja Central — Modales Mobile iPhone SE', () => {
     );
   });
 
+  it('Snapshot X report usa cards mobile y oculta tabla en iPhone SE', () => {
+    cy.contains('Control de caja')
+      .parents('aside')
+      .find('button')
+      .first()
+      .click();
+    cy.wait('@cashModalSnapshot');
+
+    cy.get('[data-cy="cash-snapshot-dialog"]').should('be.visible');
+    cy.get('[data-cy="cash-snapshot-table"]').should('not.be.visible');
+    cy.get('[data-cy="cash-snapshot-mobile-list"]')
+      .contains('Cobros · pagos aprobados');
+    cy.get('[data-cy="cash-snapshot-dialog-body"]').scrollTo('bottom');
+    cy.get('[data-cy="cash-snapshot-mobile-list"]').contains('Esperado en caja');
+  });
+
   it('Registrar Gasto mantiene referencia y acción principal accesibles al usar transferencia', () => {
     cy.contains('button', 'Registrar Gasto').scrollIntoView().click();
 

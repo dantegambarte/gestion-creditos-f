@@ -42,20 +42,23 @@
   } @else if (selectedSheet) {
     <!-- Header detalle -->
     <div
-      class="flex items-center gap-2 px-4 py-4 shrink-0"
+      class="sheet-detail-header flex items-center gap-2 px-4 py-4 shrink-0"
       style="border-bottom: 1px solid var(--ff-border)"
     >
       <button
-        class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+        class="sheet-detail-back-action shrink-0 flex items-center justify-center gap-2 rounded-lg transition-colors"
         style="border: 1px solid var(--ff-border); color: var(--ff-text-muted)"
         pTooltip="Cerrar detalle"
         tooltipPosition="right"
+        data-cy="sheet-detail-back-action"
         (click)="closed.emit()"
       >
-        <i class="pi pi-times text-xs"></i>
+        <i class="pi pi-arrow-left text-xs md:hidden"></i>
+        <i class="pi pi-times hidden text-xs md:inline-block"></i>
+        <span class="md:hidden">Volver</span>
       </button>
       <button
-        class="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+        class="hidden shrink-0 items-center justify-center w-7 h-7 rounded-lg transition-colors md:flex"
         style="border: 1px solid var(--ff-border); color: var(--ff-text-muted)"
         [pTooltip]="collapsed ? 'Mostrar lista' : 'Ocultar lista'"
         tooltipPosition="right"
@@ -67,17 +70,17 @@
           [class.pi-chevron-left]="!collapsed"
         ></i>
       </button>
-      <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold truncate" style="color: var(--ff-text-primary)">
+      <div class="sheet-detail-title flex-1 min-w-0">
+        <p class="text-sm font-semibold" style="color: var(--ff-text-primary)" data-cy="sheet-detail-collector-name">
           {{ selectedSheet.collectorName }}
-          <span class="font-normal" style="color: var(--ff-text-muted)">
+        </p>
+        <p class="sheet-detail-subtitle font-normal" style="color: var(--ff-text-muted)">
             · {{ formatDate(selectedSheet.sheetDate) }} ·
             {{ filterLabel(selectedSheet.filterUsed) }} · Generada por:
             {{ selectedSheet.generatedByName }}
-          </span>
         </p>
       </div>
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="sheet-detail-actions flex items-center gap-2 shrink-0">
         @if (isReadonly) {
           <span
             class="text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wide"
@@ -168,7 +171,8 @@
       } @else {
         <p-table
           [value]="filteredItems"
-          styleClass="p-datatable-sm p-datatable-hoverable-rows admin-detail-table"
+          styleClass="hidden md:block p-datatable-sm p-datatable-hoverable-rows admin-detail-table"
+          data-cy="sheet-detail-table"
           responsiveLayout="scroll"
         >
         <ng-template pTemplate="header">
@@ -359,6 +363,113 @@
           }
         </ng-template>
         </p-table>
+
+        <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="sheet-detail-mobile-list">
+          @for (item of filteredItems; track item.installmentId) {
+            <article
+              class="rounded-2xl border p-4"
+              style="border-color: var(--ff-border-subtle); background: var(--ff-panel)"
+              data-cy="sheet-detail-mobile-card"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="row-client-main truncate">{{ item.customerName }}</p>
+                  <p class="row-client-sub mt-0.5 truncate">
+                    @if (item.customerPhone) {
+                      <span><i class="pi pi-phone mr-1"></i>{{ item.customerPhone }}</span>
+                    }
+                  </p>
+                </div>
+                <span
+                  class="detail-status shrink-0"
+                  [class.detail-status--overdue]="item.installmentStatus === 'OVERDUE'"
+                  [class.detail-status--pending]="item.installmentStatus === 'PENDING'"
+                  [class.detail-status--partial]="item.installmentStatus === 'PARTIAL'"
+                  [class.detail-status--paid]="item.installmentStatus === 'PAID'"
+                >
+                  {{ installmentLabel(item.installmentStatus) }}
+                </span>
+              </div>
+
+              <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div class="rounded-xl border p-3" style="border-color: var(--ff-border-subtle); background: var(--ff-bg)">
+                  <dt class="text-xs" style="color: var(--ff-text-muted)">Vencimiento</dt>
+                  <dd class="mt-1 font-semibold">{{ item.dueDate | date: "dd/MM/yyyy" }}</dd>
+                </div>
+                <div class="rounded-xl border p-3" style="border-color: var(--ff-border-subtle); background: var(--ff-bg)">
+                  <dt class="text-xs" style="color: var(--ff-text-muted)">Monto</dt>
+                  <dd class="mt-1 font-mono font-semibold" style="color: var(--ff-accent)">
+                    {{ item.amountDue | currencyArs: 2 }}
+                  </dd>
+                </div>
+                @if (item.penaltyAmount > 0) {
+                  <div class="rounded-xl border p-3 col-span-2" style="border-color: var(--ff-border-subtle); background: var(--ff-bg)">
+                    <dt class="text-xs" style="color: var(--ff-text-muted)">Mora</dt>
+                    <dd class="mt-1 font-mono font-semibold" style="color: var(--ff-danger)">
+                      {{ item.penaltyAmount | currencyArs: 2 }}
+                    </dd>
+                  </div>
+                }
+              </dl>
+
+              <div class="mt-4 flex flex-col gap-2">
+                <button
+                  type="button"
+                  class="sheet-action-link sheet-action-link--history h-11 justify-center rounded-xl border"
+                  style="border-color: var(--ff-border-subtle)"
+                  data-cy="sheet-detail-mobile-history-action"
+                  (click)="toggleLog(item.installmentId)"
+                >
+                  <i
+                    class="pi"
+                    [class.pi-chevron-up]="isLogExpanded(item.installmentId)"
+                    [class.pi-history]="!isLogExpanded(item.installmentId)"
+                  ></i>
+                  {{ isLogExpanded(item.installmentId) ? 'Ocultar historial' : 'Ver historial' }}
+                </button>
+                <button
+                  type="button"
+                  class="sheet-action-link sheet-action-link--credit h-11 justify-center rounded-xl border"
+                  style="border-color: var(--ff-border-subtle)"
+                  [disabled]="!item.creditId"
+                  (click)="goToCredit(item.creditId)"
+                >
+                  <i class="pi pi-external-link"></i>
+                  Ver crédito
+                </button>
+              </div>
+
+              @if (isLogExpanded(item.installmentId)) {
+                <div class="sheet-log-wrap mt-3 px-3 py-3" data-cy="sheet-detail-mobile-log">
+                  <p class="text-xs font-semibold mb-2" style="color: var(--ff-text-muted)">
+                    Historial de gestiones (más reciente primero)
+                  </p>
+                  @if (loadingLogItemId === item.installmentId && !managementLogs[item.installmentId]) {
+                    <div class="flex items-center gap-2 text-xs" style="color: var(--ff-text-muted)">
+                      <p-progressSpinner [style]="{ width: '16px', height: '16px' }" strokeWidth="4" />
+                      <span>Cargando...</span>
+                    </div>
+                  } @else if (managementLogs[item.installmentId] && managementLogs[item.installmentId].length === 0) {
+                    <p class="text-xs" style="color: var(--ff-text-muted)">Sin gestiones registradas para esta cuota.</p>
+                  } @else if (managementLogs[item.installmentId]) {
+                    <ul class="flex flex-col gap-2">
+                      @for (entry of managementLogs[item.installmentId]; track entry.eventId) {
+                        <li class="flex items-start gap-2 text-xs" [class.opacity-50]="!!entry.voidedAt">
+                          <p-tag
+                            [value]="eventTypeLabel(entry.eventType)"
+                            [severity]="entry.voidedAt ? 'secondary' : eventSeverity(entry.eventType)"
+                            styleClass="!text-[10px] !py-0.5"
+                          />
+                          <span style="color: var(--ff-text-secondary)">{{ entry.createdAt | date: "dd/MM/yyyy HH:mm" }}</span>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+            </article>
+          }
+        </div>
       }
     </div>
   }

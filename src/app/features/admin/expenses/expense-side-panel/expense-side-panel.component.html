@@ -7,33 +7,39 @@
     color: var(--ff-text-primary);
   "
 >
-  <!-- Form registrar / editar gasto -->
-  <div class="flex-1 overflow-y-auto p-5 pt-3 space-y-4" data-cy="expense-side-panel-body">
-    <div class="flex items-center justify-between">
-      <h2 class="text-base font-semibold">
-        {{
-          showCats
-            ? "Categorías de gastos"
-            : isEditMode
-              ? "Editar gasto"
-              : "Registrar gasto"
-        }}
-      </h2>
-      <button
-        type="button"
-        class="w-8 h-8 rounded-lg border transition-colors flex items-center justify-center"
-        style="
-          border-color: var(--ff-border);
-          color: var(--ff-text-secondary);
-          background: var(--ff-secondary);
-        "
-        title="Cerrar"
-        (click)="close()"
-      >
-        <i class="pi pi-times text-sm"></i>
-      </button>
-    </div>
+  <!-- Header fijo: nunca se va con el scroll -->
+  <div
+    class="flex items-center justify-between shrink-0 border-b px-5 py-4"
+    style="border-color: var(--ff-border)"
+    data-cy="expense-side-panel-header"
+  >
+    <h2 class="text-base font-semibold">
+      {{
+        showCats
+          ? "Categorías de gastos"
+          : isEditMode
+            ? "Editar gasto"
+            : "Registrar gasto"
+      }}
+    </h2>
+    <button
+      type="button"
+      class="w-11 h-11 rounded-lg border transition-colors flex items-center justify-center"
+      style="
+        border-color: var(--ff-border);
+        color: var(--ff-text-secondary);
+        background: var(--ff-secondary);
+      "
+      title="Cerrar"
+      data-cy="expense-side-panel-close"
+      (click)="close()"
+    >
+      <i class="pi pi-times text-sm"></i>
+    </button>
+  </div>
 
+  <!-- Form registrar / editar gasto -->
+  <div class="flex-1 overflow-y-auto p-5 space-y-4" data-cy="expense-side-panel-body">
     @if (showCats) {
       <app-expense-category-manager
         (categoriesChanged)="categoriesChanged.emit()"
@@ -161,6 +167,7 @@
               value="TRANSFER"
               [(ngModel)]="createPaymentMethod"
               inputId="pm_transfer"
+              (onClick)="onTransferSelected()"
             />
             <span>Transferencia</span>
           </label>
@@ -168,7 +175,7 @@
       </div>
 
       @if (createPaymentMethod === "TRANSFER") {
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1" #transferRefField>
           <label class="auth-label">Referencia</label>
           <input
             pInputText

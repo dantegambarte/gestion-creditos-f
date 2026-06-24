@@ -2,7 +2,7 @@
   [(visible)]="visible"
   header="Vista previa de duplicación anual"
   [modal]="true"
-  [style]="{ width: '68rem' }"
+  [style]="{ width: '68rem', maxWidth: '95vw' }"
   [closable]="!duplicating"
   (onHide)="close()"
 >
@@ -68,6 +68,7 @@
           >
             Se crearán
           </div>
+          <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="border-b border-[var(--ff-border-subtle)]">
               <tr>
@@ -114,6 +115,7 @@
               }
             </tbody>
           </table>
+          </div>
         </div>
 
         <div
@@ -124,6 +126,7 @@
           >
             Se omitirán
           </div>
+          <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="border-b border-[var(--ff-border-subtle)]">
               <tr>
@@ -170,6 +173,7 @@
               }
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>

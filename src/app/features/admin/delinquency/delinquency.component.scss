@@ -42,3 +42,12 @@
 :host ::ng-deep .dq-action-btn.p-button:not(:disabled):hover {
   filter: brightness(1.07);
 }
+
+// El .ff-panel global recorta con overflow:hidden para los bordes redondeados,
+// pero eso clipea el card-list mobile cuando los filtros stackeados empujan
+// el contenido más abajo del alto visible. En mobile lo dejamos crecer libre.
+@media (max-width: 767.98px) {
+  .ff-panel {
+    overflow: visible;
+  }
+}

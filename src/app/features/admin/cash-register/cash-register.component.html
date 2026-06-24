@@ -12,27 +12,48 @@
         <div
           class="flex flex-col gap-5 border-b border-[var(--ff-border-subtle)] px-5 py-6 lg:px-6"
         >
-          <div class="flex items-start gap-4">
-            <p-skeleton shape="circle" size="3rem" />
-            <div class="flex-1 space-y-3">
-              <div class="flex flex-wrap items-center gap-2">
-                <p-skeleton width="8rem" height="1.5rem" borderRadius="999px" />
-                <p-skeleton width="9rem" height="1.5rem" borderRadius="999px" />
+          <div class="space-y-4">
+            <div class="flex items-start gap-4">
+              <p-skeleton shape="circle" size="3rem" styleClass="mt-1" />
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <p-skeleton width="8rem" height="1.5rem" borderRadius="999px" />
+                  <p-skeleton width="9rem" height="1.5rem" borderRadius="999px" />
+                  <p-skeleton
+                    width="11rem"
+                    height="1.5rem"
+                    borderRadius="999px"
+                  />
+                </div>
                 <p-skeleton
-                  width="11rem"
+                  width="10rem"
                   height="1.5rem"
                   borderRadius="999px"
+                  styleClass="mt-2"
                 />
               </div>
-              <p-skeleton width="16rem" height="2rem" />
             </div>
+
+            <p-skeleton
+              width="16rem"
+              height="2rem"
+              styleClass="mx-auto md:ml-16 md:mr-0"
+            />
           </div>
 
           <div
-            class="flex flex-wrap justify-end gap-3 border-t border-[var(--ff-border-subtle)] pt-4"
+            class="flex flex-col gap-3 border-t border-[var(--ff-border-subtle)] pt-4 md:flex-row md:flex-wrap md:justify-end"
           >
-            <p-skeleton width="10rem" height="2.75rem" borderRadius="0.75rem" />
-            <p-skeleton width="8rem" height="2.75rem" borderRadius="0.75rem" />
+            <p-skeleton
+              height="2.75rem"
+              borderRadius="0.75rem"
+              styleClass="w-full md:w-40"
+            />
+            <p-skeleton
+              height="2.75rem"
+              borderRadius="0.75rem"
+              styleClass="w-full md:w-32"
+            />
           </div>
         </div>
 
@@ -236,60 +257,62 @@
           <div
             class="flex flex-col gap-5 border-b border-[var(--ff-border-subtle)] px-5 py-6 lg:px-6"
           >
-            <div class="flex items-start gap-4">
-              <div
-                class="mt-1 flex h-12 w-12 items-center justify-center rounded-2xl border"
-                [class]="
-                  activeBusinessDay()
-                    ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
-                    : 'border-red-400/30 bg-red-500/10 text-red-300'
-                "
-              >
-                <i
-                  class="pi text-lg"
-                  [class]="activeBusinessDay() ? 'pi-shield' : 'pi-lock'"
-                ></i>
-              </div>
+            <div class="space-y-4">
+              <div class="flex items-start gap-4">
+                <div
+                  class="mt-1 flex h-12 w-12 items-center justify-center rounded-2xl border"
+                  [class]="
+                    activeBusinessDay()
+                      ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+                      : 'border-red-400/30 bg-red-500/10 text-red-300'
+                  "
+                >
+                  <i
+                    class="pi text-lg"
+                    [class]="activeBusinessDay() ? 'pi-shield' : 'pi-lock'"
+                  ></i>
+                </div>
 
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <span
-                    class="rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-200"
-                    >Jornada del Día</span
-                  >
-                  @if (activeBusinessDay(); as jornada) {
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
                     <span
-                      class="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300"
-                      >Caja Fuerte Abierta</span
+                      class="rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-200"
+                      >Jornada del Día</span
                     >
+                    @if (activeBusinessDay(); as jornada) {
+                      <span
+                        class="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300"
+                        >Caja Fuerte Abierta</span
+                      >
+                      <span
+                        class="rounded-full border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] px-3 py-1 text-xs font-semibold text-[var(--ff-text-secondary)]"
+                        >{{ businessDayStatusLabel(jornada.status) }} ·
+                        {{ formatDate(jornada.business_date) }}</span
+                      >
+                    } @else {
+                      <span
+                        class="rounded-full border border-red-400/30 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300"
+                        >Caja Fuerte Cerrada</span
+                      >
+                    }
+                  </div>
+
+                  @if (isPostMidnightJornada()) {
                     <span
-                      class="rounded-full border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] px-3 py-1 text-xs font-semibold text-[var(--ff-text-secondary)]"
-                      >{{ businessDayStatusLabel(jornada.status) }} ·
-                      {{ formatDate(jornada.business_date) }}</span
-                    >
-                  } @else {
-                    <span
-                      class="rounded-full border border-red-400/30 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300"
-                      >Caja Fuerte Cerrada</span
+                      class="mt-2 inline-flex w-fit rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300"
+                      data-cy="jornada-post-midnight-badge"
+                      >Jornada: {{ formatDate(dashboard()!.date) }}</span
                     >
                   }
                 </div>
-
-                @if (isPostMidnightJornada()) {
-                  <span
-                    class="mt-2 inline-flex w-fit rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300"
-                    data-cy="jornada-post-midnight-badge"
-                    >Jornada: {{ formatDate(dashboard()!.date) }}</span
-                  >
-                }
-
-                <h1
-                  class="mt-4 text-2xl font-bold tracking-tight text-[var(--ff-text-primary)] md:text-3xl"
-                  data-cy="admin-cash-register-title"
-                >
-                  Caja Fuerte - Central
-                </h1>
               </div>
+
+              <h1
+                class="text-center text-2xl font-bold tracking-tight text-[var(--ff-text-primary)] md:ml-16 md:text-left md:text-3xl"
+                data-cy="admin-cash-register-title"
+              >
+                Caja Fuerte - Central
+              </h1>
             </div>
 
             <div
@@ -418,7 +441,7 @@
                 </div>
                 <button
                   type="button"
-                  class="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-400/30 bg-blue-500/10 text-blue-300 transition hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="flex h-11 w-11 items-center justify-center rounded-xl border border-blue-400/30 bg-blue-500/10 text-blue-300 transition hover:bg-blue-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                   [disabled]="!activeSession()"
                   (click)="openSnapshotDialog()"
                 >
@@ -1081,7 +1104,7 @@
       </div>
       <button
         type="button"
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
         (click)="showMovementsDialog.set(false)"
       >
         <i class="pi pi-times text-base"></i>
@@ -1366,7 +1389,7 @@
       </div>
       <button
         type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:opacity-50"
+        class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400 disabled:opacity-50"
         [disabled]="manualIncomeSubmitting()"
         (click)="showManualIncomeDialog.set(false)"
       >
@@ -1620,7 +1643,7 @@
       </div>
       <button
         type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:opacity-50"
+        class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 disabled:opacity-50"
         [disabled]="conversionSubmitting()"
         (click)="showConversionDialog.set(false)"
       >

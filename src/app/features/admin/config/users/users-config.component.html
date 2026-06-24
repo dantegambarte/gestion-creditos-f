@@ -1,7 +1,7 @@
 <div class="space-y-4">
   <!-- Toolbar -->
-  <div class="flex items-center gap-3">
-    <div class="relative">
+  <div class="flex flex-col gap-3 md:flex-row md:items-center">
+    <div class="relative w-full md:w-80">
       <i
         class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 ff-muted-icon text-sm z-10"
       ></i>
@@ -11,7 +11,7 @@
         placeholder="Buscar por nombre, email o DNI..."
         [value]="searchQuery()"
         (input)="onSearch($any($event.target).value)"
-        class="w-80 h-9 rounded-md pl-9 pr-3 text-sm"
+        class="w-full h-11 rounded-md pl-9 pr-3 text-base md:h-9 md:text-sm"
       />
     </div>
 
@@ -25,15 +25,15 @@
 
       [ngModel]="selectedRole()"
       (ngModelChange)="onRoleChange($event)"
-      styleClass="w-48 h-9 rounded-md text-sm [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
+      styleClass="w-full h-11 rounded-md text-sm md:w-48 md:h-9 [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
       appendTo="body"
     />
 
-    <div class="ml-auto">
+    <div class="md:ml-auto">
       <p-button
         label="+ Nuevo Usuario"
         severity="primary"
-        styleClass="h-11 px-5 rounded-xl shadow-sm"
+        styleClass="w-full h-11 px-5 rounded-xl shadow-sm md:w-auto"
         (onClick)="openNew()"
       />
     </div>
@@ -41,7 +41,7 @@
 
   <!-- Table -->
   <div class="ff-panel border overflow-hidden">
-    <table class="w-full text-sm">
+    <table class="hidden w-full text-sm md:table" data-cy="admin-config-users-table">
       <thead>
         <tr class="border-b" style="border-color: var(--ff-border)">
           <th
@@ -137,6 +137,67 @@
         }
       </tbody>
     </table>
+
+    <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="admin-config-users-mobile-list">
+      @for (user of filteredUsers(); track user.id) {
+        <article
+          class="rounded-2xl border p-4"
+          style="border-color: var(--ff-border-subtle)"
+          data-cy="admin-config-users-mobile-card"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
+              <div
+                [class]="
+                  'w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 ' +
+                  avatarColor(user.name)
+                "
+              >
+                {{ initials(user.name) }}
+              </div>
+              <div class="min-w-0">
+                <p class="truncate font-medium ff-text-primary">{{ user.name }}</p>
+                <p class="truncate text-xs ff-text-secondary">{{ user.email }}</p>
+              </div>
+            </div>
+            <p-tag
+              class="shrink-0"
+              [value]="user.active ? 'Activo' : 'Inactivo'"
+              [severity]="user.active ? 'success' : 'secondary'"
+              styleClass="text-xs"
+            />
+          </div>
+
+          <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+            <div class="rounded-xl border p-3" style="border-color: var(--ff-border-subtle)">
+              <p class="text-xs ff-text-muted">DNI</p>
+              <p class="font-semibold ff-text-primary">{{ user.dni }}</p>
+            </div>
+            <div class="rounded-xl border p-3" style="border-color: var(--ff-border-subtle)">
+              <p class="text-xs ff-text-muted">Rol</p>
+              <p-tag
+                [value]="roleLabel(user.role)"
+                [severity]="roleSeverity(user.role)"
+                styleClass="text-xs"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="mt-3 inline-flex h-11 w-full items-center justify-center rounded-xl border text-sm font-semibold text-blue-400"
+            style="border-color: var(--ff-border-subtle)"
+            (click)="openEdit(user)"
+          >
+            Editar
+          </button>
+        </article>
+      } @empty {
+        <p class="py-10 text-center text-sm ff-text-muted">
+          No se encontraron usuarios.
+        </p>
+      }
+    </div>
   </div>
 </div>
 

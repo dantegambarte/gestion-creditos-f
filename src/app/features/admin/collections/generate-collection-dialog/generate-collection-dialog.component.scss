@@ -86,3 +86,79 @@
   border-color: #f0a62d;
   color: #1f2937;
 }
+
+@media (max-width: 640px) {
+  .generate-body {
+    gap: 1rem;
+  }
+
+  .generate-form-grid {
+    gap: 0.75rem;
+  }
+
+  .generate-state-block {
+    padding: 1rem !important;
+  }
+
+  .generate-state-grid {
+    gap: 0.75rem;
+  }
+
+  .generate-state-summary-card {
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.75rem !important;
+  }
+
+  .generate-state-count {
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 2rem;
+    font-size: 0.9rem;
+  }
+
+  .generate-state-copy {
+    min-width: 0;
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+
+  .generate-state-copy .font-semibold {
+    font-size: 0.78rem;
+  }
+
+  .generate-mini-list {
+    display: none;
+  }
+
+  .generate-impact-lists {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .generate-impact-card {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .generate-impact-title {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+  }
+
+  .generate-impact-names {
+    max-height: 4.75rem;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :host ::ng-deep .generate-sheet-dialog .p-dropdown,
+  :host ::ng-deep .generate-sheet-dialog .p-calendar .p-inputtext {
+    min-height: 2.75rem;
+    font-size: 1rem !important;
+  }
+}
