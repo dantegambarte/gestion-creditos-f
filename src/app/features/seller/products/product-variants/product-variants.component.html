@@ -55,7 +55,21 @@
   </div>
 
   @if (loading) {
-    <app-loading-state />
+    <div class="ff-panel overflow-hidden p-5" data-cy="product-variants-skeleton">
+      <div class="product-variants-table-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="product-variants-table-skeleton__row">
+            <p-skeleton width="70%" height="1rem" />
+            <p-skeleton width="4rem" height="1rem" />
+            <p-skeleton width="2.5rem" height="1rem" />
+            <p-skeleton width="2.5rem" height="1rem" />
+            <p-skeleton width="2.5rem" height="1rem" />
+            <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="4.5rem" height="1rem" />
+          </div>
+        }
+      </div>
+    </div>
   } @else if (error) {
     <app-error-state />
   } @else {

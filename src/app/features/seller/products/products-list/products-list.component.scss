@@ -1,0 +1,16 @@
+.products-table-skeleton {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.products-table-skeleton__row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) minmax(8rem, 1fr) 6rem 3rem 3rem 3rem 5rem 4rem;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid var(--ff-border);
+  border-radius: 0.75rem;
+  background: var(--ff-panel);
+  padding: 0.875rem 1rem;
+}

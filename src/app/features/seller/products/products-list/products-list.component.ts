@@ -7,6 +7,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
@@ -19,7 +20,6 @@ import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { HeaderService } from '../../../../core/services/header.service';
 import { EmptyStateComponent } from '../../../../shared/states/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { ProductCategory } from '../../../admin/config/models/interfaces/product';
 import { ProductCategoriesService } from '../../../admin/config/services/product-categories.service';
 import {
@@ -42,13 +42,14 @@ import { ProductsService } from '../products.service';
     DropdownModule,
     InputTextModule,
     TooltipModule,
-    LoadingStateComponent,
     ErrorStateComponent,
     EmptyStateComponent,
     InputIconModule,
     IconFieldModule,
+    SkeletonModule,
   ],
   templateUrl: './products-list.component.html',
+  styleUrl: './products-list.component.scss',
 })
 export class ProductsListComponent implements OnInit, OnDestroy {
   private readonly productsService = inject(ProductsService);

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -12,7 +13,6 @@ import { AppError } from '../../../../core/models/app-error';
 import { UserRoleEnum } from '../../../../core/models/types/user-role';
 import { HeaderService } from '../../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import {
   ProductUnit,
   ProductUnitStatus,
@@ -34,12 +34,13 @@ import { UnitSingleFormComponent } from './unit-single-form/unit-single-form.com
     TagModule,
     ToastModule,
     ConfirmDialogModule,
-    LoadingStateComponent,
     ErrorStateComponent,
+    SkeletonModule,
     UnitSingleFormComponent,
     UnitBulkFormComponent,
   ],
   templateUrl: './product-units.component.html',
+  styleUrl: './product-units.component.scss',
 })
 export class ProductUnitsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

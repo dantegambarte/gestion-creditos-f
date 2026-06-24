@@ -65,7 +65,20 @@
     </div>
 
     @if (loading) {
-      <app-loading-state />
+      <div class="products-table-skeleton" data-cy="products-list-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="products-table-skeleton__row">
+            <p-skeleton width="80%" height="1rem" />
+            <p-skeleton width="70%" height="1rem" />
+            <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="2rem" height="1rem" />
+            <p-skeleton width="2rem" height="1rem" />
+            <p-skeleton width="2rem" height="1rem" />
+            <p-skeleton width="4.5rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="3.5rem" height="1.5rem" />
+          </div>
+        }
+      </div>
     } @else if (error) {
       <app-error-state />
     } @else if (products.length === 0) {
