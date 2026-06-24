@@ -2835,6 +2835,28 @@ table.ff-table {
   background: var(--ff-panel-raised);
 }
 
+.admin-table-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-table-skeleton__row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border: 1px solid var(--ff-border);
+  border-radius: 0.75rem;
+  background: var(--ff-panel);
+  padding: 0.875rem 1rem;
+}
+
+.admin-table-skeleton__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 .admin-mobile-card__title {
   color: var(--ff-text-primary);
   font-size: 1rem;
