@@ -12,7 +12,40 @@
 }
 
 @if (loading) {
-  <app-loading-state />
+  <div class="credit-detail-skeleton" data-cy="credit-detail-skeleton">
+    <div class="credit-detail-skeleton__header">
+      <p-skeleton width="6rem" height="1.5rem" />
+      <div class="credit-detail-skeleton__tags">
+        <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+        <p-skeleton width="7rem" height="1.5rem" borderRadius="999px" />
+      </div>
+      <div class="credit-detail-skeleton__amounts">
+        <p-skeleton width="6rem" height="1rem" />
+        <p-skeleton width="5rem" height="1rem" />
+        <p-skeleton width="5rem" height="1rem" />
+      </div>
+      <p-skeleton width="14rem" height="1rem" />
+    </div>
+
+    <div class="credit-detail-skeleton__body">
+      <div class="credit-detail-skeleton__panel">
+        <p-skeleton width="10rem" height="1.1rem" />
+        <div class="credit-detail-skeleton__grid">
+          @for (_ of [1, 2, 3, 4, 5, 6]; track _) {
+            <div class="credit-detail-skeleton__field">
+              <p-skeleton width="6rem" height="0.75rem" />
+              <p-skeleton width="5rem" height="1rem" />
+            </div>
+          }
+        </div>
+      </div>
+      <div class="credit-detail-skeleton__schedule">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <p-skeleton height="2.75rem" borderRadius="0.5rem" />
+        }
+      </div>
+    </div>
+  </div>
 } @else if (error) {
   <app-error-state />
 } @else if (credit) {

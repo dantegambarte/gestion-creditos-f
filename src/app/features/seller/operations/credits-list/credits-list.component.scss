@@ -1,0 +1,21 @@
+.credits-table-skeleton {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.credits-table-skeleton__row {
+  display: grid;
+  grid-template-columns: 4rem minmax(9rem, 1fr) 7rem 6rem 6rem 5rem 4rem;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid var(--ff-border);
+  border-radius: 0.75rem;
+  background: var(--ff-panel);
+  padding: 0.875rem 1rem;
+}
+
+.credits-table-skeleton__client {
+  display: grid;
+  gap: 0.35rem;
+}

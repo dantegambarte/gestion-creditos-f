@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
@@ -36,11 +37,13 @@ import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
     ButtonModule,
     DropdownModule,
     InputTextModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     EmptyStateComponent,
   ],
   templateUrl: './credits-list.component.html',
+  styleUrl: './credits-list.component.scss',
 })
 export class CreditsListComponent implements OnInit {
   private readonly creditsService = inject(CreditsService);

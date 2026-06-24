@@ -52,7 +52,22 @@
     </div>
 
     @if (loading) {
-      <app-loading-state />
+      <div class="credits-table-skeleton" data-cy="credits-list-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="credits-table-skeleton__row">
+            <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+            <div class="credits-table-skeleton__client">
+              <p-skeleton width="9rem" height="1rem" />
+              <p-skeleton width="6rem" height="0.8rem" />
+            </div>
+            <p-skeleton width="7rem" height="1rem" />
+            <p-skeleton width="6rem" height="1rem" />
+            <p-skeleton width="6rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="5rem" height="1rem" />
+            <p-skeleton width="4rem" height="2rem" />
+          </div>
+        }
+      </div>
     } @else if (error) {
       <app-error-state />
     } @else if (filteredCredits.length === 0) {
