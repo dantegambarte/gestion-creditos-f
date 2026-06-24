@@ -7,6 +7,7 @@ import { MessageService } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
@@ -14,7 +15,6 @@ import { AppError } from '../../../core/models/app-error';
 import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { InstallmentStatus } from '../../seller/models/installment.model';
 import { InstallmentsService } from '../../seller/operations/installments.service';
 import { CollectionsService } from '../collections.service';
@@ -52,7 +52,7 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
     ToastModule,
     ProgressSpinnerModule,
     TooltipModule,
-    LoadingStateComponent,
+    SkeletonModule,
     ErrorStateComponent,
     PaymentDialogComponent,
     AttemptDialogComponent,

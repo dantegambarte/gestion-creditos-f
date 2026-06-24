@@ -24,12 +24,30 @@
     </div>
   </div>
 
-  <p-table
-    [value]="filteredProducts"
-    styleClass="p-datatable-sm"
-    [tableStyle]="{ 'min-width': '50rem' }"
-  >
-    <ng-template pTemplate="header">
+  @if (loading) {
+    <div class="products-table-skeleton" data-cy="products-skeleton">
+      @for (_ of [1, 2, 3, 4, 5]; track _) {
+        <div class="products-table-skeleton__row">
+          <p-skeleton width="4rem" height="1rem" />
+          <div class="products-table-skeleton__product">
+            <p-skeleton shape="circle" size="2.25rem" />
+            <p-skeleton width="9rem" height="1rem" />
+          </div>
+          <p-skeleton width="5rem" height="1rem" />
+          <p-skeleton width="4rem" height="1rem" />
+          <p-skeleton width="6rem" height="1rem" />
+          <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+          <p-skeleton width="5rem" height="2.25rem" borderRadius="0.75rem" />
+        </div>
+      }
+    </div>
+  } @else {
+    <p-table
+      [value]="filteredProducts"
+      styleClass="p-datatable-sm"
+      [tableStyle]="{ 'min-width': '50rem' }"
+    >
+      <ng-template pTemplate="header">
       <tr>
         <th class="text-xs font-semibold ff-text-muted uppercase">Código</th>
         <th class="text-xs font-semibold ff-text-muted uppercase">Producto</th>
@@ -128,7 +146,8 @@
         </td>
       </tr>
     </ng-template>
-  </p-table>
+    </p-table>
+  }
 </div>
 
 <p-dialog

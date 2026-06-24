@@ -10,6 +10,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 
 import {
@@ -34,6 +35,7 @@ import { CreditsService } from '../../features/seller/operations/credits.service
     IconFieldModule,
     InputIconModule,
     DialogModule,
+    SkeletonModule,
   ],
   templateUrl: './operations.component.html',
   styleUrl: './operations.component.scss',

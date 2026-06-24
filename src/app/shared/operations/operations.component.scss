@@ -102,6 +102,23 @@
   font-size: 14px;
 }
 
+.operations-table-skeleton {
+  padding: 12px 16px;
+  border-top: 1px solid var(--ff-border);
+}
+
+.operations-table-skeleton__row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ff-border);
+}
+
+.operations-table-skeleton__row:last-child {
+  border-bottom: none;
+}
+
 :host ::ng-deep .operations-table {
   border-top: 1px solid var(--ff-border);
 }

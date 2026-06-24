@@ -66,7 +66,21 @@
     </div>
 
     @if (loading) {
-      <div class="operations-empty">Cargando operaciones...</div>
+      <div class="operations-table-skeleton" data-cy="operations-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="operations-table-skeleton__row">
+            <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="9rem" height="1rem" />
+            <p-skeleton width="6rem" height="1rem" />
+            <p-skeleton width="5rem" height="1rem" />
+            <p-skeleton width="3rem" height="1rem" />
+            <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="6rem" height="1rem" />
+            <p-skeleton width="4rem" height="1rem" />
+            <p-skeleton width="2rem" height="2rem" borderRadius="0.5rem" />
+          </div>
+        }
+      </div>
     } @else if (filteredOperations.length === 0) {
       <div class="operations-empty">No hay operaciones para mostrar.</div>
     } @else {
