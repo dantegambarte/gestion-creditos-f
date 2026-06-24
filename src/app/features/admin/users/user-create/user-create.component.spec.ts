@@ -81,8 +81,13 @@ describe('UserCreateComponent — US-03 validaciones de formulario', () => {
       expect(component.form.get('dni')!.invalid).toBeTrue();
     });
 
-    it('rechaza DNI de 9 dígitos', () => {
+    it('acepta DNI de 9 dígitos', () => {
       component.form.get('dni')!.setValue('123456789');
+      expect(component.form.get('dni')!.valid).toBeTrue();
+    });
+
+    it('rechaza DNI de 10 dígitos', () => {
+      component.form.get('dni')!.setValue('1234567890');
       expect(component.form.get('dni')!.invalid).toBeTrue();
     });
 

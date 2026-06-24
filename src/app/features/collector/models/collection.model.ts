@@ -279,3 +279,35 @@ export interface CollectionGeneratePayload {
   /** Si true y ya existe planilla ACTIVE, el backend la omite y devuelve {skipped}. */
   skipIfExists?: boolean;
 }
+
+export interface CollectionGenerateBatchPayload {
+  collectorIds: string[];
+  date: string;
+  filter: CollectionFilter;
+  /** Si true y ya existe planilla ACTIVE, el backend la omite y devuelve {skipped}. */
+  skipIfExists?: boolean;
+}
+
+/** Resultado por cobrador del endpoint batch, ya tipado para el front. */
+export type CollectionBatchOutcome =
+  | { collectorId: string; kind: 'generated'; result: CollectionGenerateResult }
+  | { collectorId: string; kind: 'skipped'; result: CollectionGenerateSkippedResult }
+  | { collectorId: string; kind: 'error'; error: { status: number; message: string } };
+
+export interface CollectionBatchOutcomeRaw {
+  collector_id: string;
+  sheet?: CollectionSheetDetailRaw;
+  alerts?: CollectionAlertsRaw;
+  skipped?: true;
+  existing_sheet?: {
+    id: string;
+    sheet_date: string;
+    created_at: string;
+    generated_by_name: string;
+  };
+  error?: { status: number; message: string };
+}
+
+export interface CollectionGenerateBatchResponseRaw {
+  results: CollectionBatchOutcomeRaw[];
+}
