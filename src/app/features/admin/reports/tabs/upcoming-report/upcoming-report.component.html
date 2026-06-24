@@ -35,7 +35,23 @@
   </div>
 
   @if (loading) {
-    <app-loading-state />
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start" data-cy="upcoming-report-skeleton">
+      @for (_ of [1, 2]; track _) {
+        <div class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]">
+          <div class="border-b border-[var(--ff-border-subtle)] px-5 py-4">
+            <p-skeleton width="30%" height="0.7rem" />
+          </div>
+          @for (_ of [1, 2, 3, 4]; track _) {
+            <div class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0">
+              <p-skeleton width="5rem" height="0.9rem" />
+              <p-skeleton width="4rem" height="0.9rem" />
+              <p-skeleton width="3rem" height="0.9rem" styleClass="ml-auto" />
+              <p-skeleton width="5rem" height="0.9rem" />
+            </div>
+          }
+        </div>
+      }
+    </div>
   } @else if (error) {
     <app-error-state />
   } @else if (upcomingReport) {

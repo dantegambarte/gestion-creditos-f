@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { SkeletonModule } from 'primeng/skeleton';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
@@ -22,6 +23,7 @@ import { ReportsService } from '../../reports.service';
     InputSwitchModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    SkeletonModule,
   ],
   templateUrl: './products-report.component.html',
 })

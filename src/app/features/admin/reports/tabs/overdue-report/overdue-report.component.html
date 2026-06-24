@@ -1,6 +1,24 @@
 <div class="space-y-6">
   @if (loading) {
-    <app-loading-state />
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" data-cy="overdue-report-skeleton">
+      @for (_ of [1, 2, 3, 4]; track _) {
+        <div class="space-y-1 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5">
+          <p-skeleton width="65%" height="0.7rem" />
+          <p-skeleton width="45%" height="2rem" />
+        </div>
+      }
+    </div>
+    <div class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]">
+      @for (_ of [1, 2, 3, 4, 5]; track _) {
+        <div class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0">
+          <p-skeleton width="8rem" height="0.9rem" />
+          <p-skeleton width="5rem" height="0.9rem" />
+          <p-skeleton width="2rem" height="0.9rem" styleClass="ml-auto" />
+          <p-skeleton width="5rem" height="0.9rem" />
+          <p-skeleton width="3rem" height="0.9rem" />
+        </div>
+      }
+    </div>
   } @else if (error) {
     <app-error-state />
   } @else if (overdueReport) {

@@ -40,7 +40,18 @@
   }
 
   @if (loading) {
-    <app-loading-state />
+    <div class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]" data-cy="collectors-report-skeleton">
+      @for (_ of [1, 2, 3, 4, 5]; track _) {
+        <div class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0">
+          <p-skeleton shape="circle" size="2rem" />
+          <p-skeleton width="7rem" height="0.9rem" />
+          <p-skeleton width="3rem" height="0.9rem" styleClass="ml-auto" />
+          <p-skeleton width="3rem" height="0.9rem" />
+          <p-skeleton width="3rem" height="0.9rem" />
+          <p-skeleton width="5rem" height="0.9rem" />
+        </div>
+      }
+    </div>
   } @else if (error) {
     <app-error-state [message]="error.message" />
   } @else if (collectorsRows.length > 0) {

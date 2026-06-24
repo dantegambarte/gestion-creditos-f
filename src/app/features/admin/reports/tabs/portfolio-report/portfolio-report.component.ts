@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
 import { FormatService } from '../../../../../core/services/format.service';
+import { SkeletonModule } from 'primeng/skeleton';
 import { ErrorStateComponent } from '../../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
 import { PortfolioByStatusType, PortfolioReport } from '../../report.models';
@@ -12,7 +13,7 @@ import { ReportsService } from '../../reports.service';
 @Component({
   selector: 'app-portfolio-report',
   standalone: true,
-  imports: [DecimalPipe, LoadingStateComponent, ErrorStateComponent],
+  imports: [DecimalPipe, LoadingStateComponent, ErrorStateComponent, SkeletonModule],
   templateUrl: './portfolio-report.component.html',
 })
 export class PortfolioReportComponent implements OnInit, OnDestroy {

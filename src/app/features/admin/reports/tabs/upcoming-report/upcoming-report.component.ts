@@ -3,6 +3,7 @@ import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
 import { FormatService } from '../../../../../core/services/format.service';
+import { SkeletonModule } from 'primeng/skeleton';
 import { ErrorStateComponent } from '../../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
 import { UpcomingReport } from '../../report.models';
@@ -11,7 +12,7 @@ import { ReportsService } from '../../reports.service';
 @Component({
   selector: 'app-upcoming-report',
   standalone: true,
-  imports: [LoadingStateComponent, ErrorStateComponent],
+  imports: [LoadingStateComponent, ErrorStateComponent, SkeletonModule],
   templateUrl: './upcoming-report.component.html',
 })
 export class UpcomingReportComponent implements OnInit, OnDestroy {
