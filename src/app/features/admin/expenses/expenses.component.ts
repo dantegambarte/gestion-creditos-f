@@ -14,7 +14,6 @@ import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { ExpenseCategory } from '../models/interface/expenses';
 import { CategoryColorService } from './category-color.service';
 import { ExpenseCategoriesService } from './expense-categories.service';
@@ -35,7 +34,6 @@ import { ExpensesService } from './expenses.service';
     TableModule,
     TagModule,
     ToastModule,
-    LoadingStateComponent,
     MessageModule,
     ExpenseSidePanelComponent,
   ],

@@ -17,7 +17,6 @@ import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import {
   Payment,
   PaymentMethod,
@@ -43,7 +42,6 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-de
     SkeletonModule,
     ToastModule,
     TooltipModule,
-    LoadingStateComponent,
     ErrorStateComponent,
     MessageModule,
     PaymentDetailDialogComponent,
