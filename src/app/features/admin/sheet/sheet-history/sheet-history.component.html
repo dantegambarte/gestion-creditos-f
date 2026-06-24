@@ -16,7 +16,17 @@
   </div>
 
   @if (loading) {
-    <app-loading-state />
+    <div class="admin-table-skeleton" data-cy="sheet-history-skeleton">
+      @for (_ of [1, 2, 3, 4, 5]; track _) {
+        <div class="admin-table-skeleton__row">
+          <p-skeleton width="6rem" height="1rem" />
+          <p-skeleton width="9rem" height="1rem" />
+          <p-skeleton width="3rem" height="1rem" />
+          <p-skeleton width="7rem" height="1rem" />
+          <p-skeleton width="8rem" height="2rem" />
+        </div>
+      }
+    </div>
   } @else if (historial.length === 0) {
     <div class="ff-empty-state">
       <i class="pi pi-inbox"></i>

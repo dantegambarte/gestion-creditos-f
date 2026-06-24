@@ -16,6 +16,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { RadioButtonModule } from 'primeng/radiobutton';
+import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { Subject, interval, of } from 'rxjs';
 import { catchError, finalize, switchMap, takeUntil } from 'rxjs/operators';
@@ -57,6 +58,7 @@ type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
     InputTextareaModule,
     RadioButtonModule,
     ToastModule,
+    SkeletonModule,
     CurrencyAmountInputDirective,
     LoadingStateComponent,
     ErrorStateComponent,

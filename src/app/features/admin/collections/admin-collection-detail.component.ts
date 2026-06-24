@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../core/models/app-error';
@@ -27,6 +28,7 @@ import { BackButtonComponent } from '../../../shared/components/back-button/back
     ButtonModule,
     TagModule,
     TooltipModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     BackButtonComponent,

@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import {
@@ -11,7 +12,7 @@ import {
 @Component({
   selector: 'app-sheet-history',
   standalone: true,
-  imports: [TableModule, ButtonModule, LoadingStateComponent],
+  imports: [TableModule, ButtonModule, SkeletonModule, LoadingStateComponent],
   templateUrl: './sheet-history.component.html',
 })
 export class SheetHistoryComponent {

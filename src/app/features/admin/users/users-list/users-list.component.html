@@ -85,8 +85,20 @@
   </div>
 
   @if (loading) {
-    <div class="admin-desktop-only">
-      <app-loading-state />
+    <div class="admin-desktop-only" data-cy="admin-users-desktop-skeleton">
+      <div class="admin-table-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="admin-table-skeleton__row">
+            <p-skeleton width="9rem" height="1rem" />
+            <p-skeleton width="5rem" height="1rem" />
+            <p-skeleton width="10rem" height="1rem" />
+            <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="4.5rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="7rem" height="1rem" />
+            <p-skeleton width="4rem" height="2rem" />
+          </div>
+        }
+      </div>
     </div>
     <div
       class="admin-mobile-card-list admin-mobile-only"
