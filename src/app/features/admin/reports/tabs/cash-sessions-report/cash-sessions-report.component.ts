@@ -3,13 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
+import { SkeletonModule } from 'primeng/skeleton';
 import { forkJoin, Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
 import { DateService } from '../../../../../core/services/date.service';
 import { FormatService } from '../../../../../core/services/format.service';
 import { ErrorStateComponent } from '../../../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
 import { CashRegisterService } from '../../../cash-register/cash-register.service';
 import {
   BusinessDayDetail,
@@ -36,8 +36,8 @@ import {
     ButtonModule,
     CalendarModule,
     DialogModule,
-    LoadingStateComponent,
     ErrorStateComponent,
+    SkeletonModule,
   ],
   templateUrl: './cash-sessions-report.component.html',
 })

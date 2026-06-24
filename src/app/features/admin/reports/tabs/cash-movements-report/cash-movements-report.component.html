@@ -70,7 +70,27 @@
 
   @if (scope === "GENERAL") {
     @if (loadingGeneralReport) {
-      <app-loading-state />
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-3" data-cy="cash-movements-general-skeleton">
+        @for (_ of [1, 2, 3]; track _) {
+          <div class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4">
+            <p-skeleton width="60%" height="0.7rem" />
+            <p-skeleton width="40%" height="1.4rem" styleClass="mt-1" />
+          </div>
+        }
+      </div>
+      <div class="overflow-hidden rounded-xl border border-[var(--ff-border)]">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="flex items-center gap-4 border-b border-[var(--ff-border)] px-4 py-3 last:border-0">
+            <p-skeleton width="6rem" height="0.9rem" />
+            <p-skeleton width="4rem" height="1.4rem" borderRadius="999px" />
+            <p-skeleton width="4rem" height="1.4rem" borderRadius="999px" />
+            <p-skeleton width="4rem" height="0.9rem" styleClass="ml-auto" />
+            <p-skeleton width="7rem" height="0.9rem" />
+            <p-skeleton width="5rem" height="0.9rem" />
+            <p-skeleton width="4rem" height="0.9rem" />
+          </div>
+        }
+      </div>
     } @else if (generalReportError) {
       <app-error-state [message]="generalReportError.message" />
     } @else if (generalReport) {
@@ -159,7 +179,10 @@
       }
     }
   } @else if (loadingDays) {
-    <app-loading-state />
+    <div class="w-72" data-cy="business-days-skeleton">
+      <p-skeleton width="4rem" height="0.75rem" styleClass="mb-1" />
+      <p-skeleton width="100%" height="2.5rem" borderRadius="0.5rem" />
+    </div>
   } @else if (daysError) {
     <app-error-state [message]="daysError.message" />
   } @else if (businessDays.length === 0) {
@@ -201,7 +224,27 @@
 
   @if (selectedSessionId) {
     @if (loadingReport) {
-      <app-loading-state />
+      <div class="grid grid-cols-2 gap-3 lg:grid-cols-5" data-cy="cash-movements-session-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4">
+            <p-skeleton width="70%" height="0.7rem" />
+            <p-skeleton width="55%" height="1.4rem" />
+          </div>
+        }
+      </div>
+      <div class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0">
+            <p-skeleton width="6rem" height="0.9rem" />
+            <p-skeleton width="4rem" height="1.4rem" borderRadius="999px" />
+            <p-skeleton width="4rem" height="0.9rem" />
+            <p-skeleton width="4rem" height="0.9rem" styleClass="ml-auto" />
+            <p-skeleton width="7rem" height="0.9rem" />
+            <p-skeleton width="5rem" height="0.9rem" />
+            <p-skeleton width="4rem" height="0.9rem" />
+          </div>
+        }
+      </div>
     } @else if (reportError) {
       <app-error-state [message]="reportError.message" />
     } @else if (report) {
