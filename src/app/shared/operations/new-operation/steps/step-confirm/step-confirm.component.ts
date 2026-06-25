@@ -220,16 +220,27 @@ export class StepConfirmComponent {
    * fallback al calculo local — sin day-shift, pero al menos no rompe.
    * @returns {{ label: string; dueDate: string; amount: number }[]} Primeras filas visibles del plan.
    */
-  get schedulePreview(): { label: string; dueDate: string; amount: number }[] {
+  get schedulePreview(): { label: string; dueDate: string; amount: number; isAdvanced: boolean }[] {
     const limit = StepConfirmComponent.SCHEDULE_PREVIEW_LIMIT;
+    const adv = Number(this.form?.controls['advancedInstallmentsCount']?.value ?? 0);
+    const isAdvanceMode = this.initialPaymentType === 'ADVANCED_INSTALLMENTS';
 
     const backendSchedule = this.simulationResult?.schedule ?? [];
     if (backendSchedule.length > 0) {
-      return backendSchedule.slice(0, limit).map((row) => ({
-        label: `Cuota ${row.installmentNumber}`,
-        dueDate: this.formatDate(this.parseLocalDate(row.dueDate)),
-        amount: row.amount,
-      }));
+      return backendSchedule.slice(0, limit).map((row, index) => {
+        const isAdvanced = isAdvanceMode && row.installmentNumber <= adv;
+        const fallbackDate = backendSchedule[Math.max(0, index - adv)]?.dueDate;
+        const dueDate = isAdvanced
+          ? row.dueDate
+          : fallbackDate ?? row.dueDate;
+
+        return {
+          label: `Cuota ${row.installmentNumber}`,
+          dueDate: this.formatDate(this.parseLocalDate(dueDate)),
+          amount: row.amount,
+          isAdvanced,
+        };
+      });
     }
 
     const firstPaymentDate = this.form?.controls['firstPaymentDate']
@@ -239,13 +250,19 @@ export class StepConfirmComponent {
       return [];
 
     const rows = Math.min(installments, limit);
-    return Array.from({ length: rows }).map((_, index) => ({
-      label: `Cuota ${index + 1}`,
-      dueDate: this.formatDate(
-        this.addFrequencyToDate(firstPaymentDate, index),
-      ),
-      amount: this.valorCuota,
-    }));
+    return Array.from({ length: rows }).map((_, index) => {
+      const installmentNumber = index + 1;
+      const isAdvanced = isAdvanceMode && installmentNumber <= adv;
+      const effectiveIndex = isAdvanced ? index : Math.max(0, index - adv);
+      return {
+        label: `Cuota ${installmentNumber}`,
+        dueDate: this.formatDate(
+          this.addFrequencyToDate(firstPaymentDate, effectiveIndex),
+        ),
+        amount: this.valorCuota,
+        isAdvanced,
+      };
+    });
   }
 
   /**

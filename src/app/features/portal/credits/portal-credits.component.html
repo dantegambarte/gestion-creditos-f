@@ -185,14 +185,8 @@
                   {{ creditDisplayName(credit) }}
                 </p>
 
-                <!-- Datos: Capital | Cuota | Cuotas pagadas | Deuda restante -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3 mb-4">
-                  <div>
-                    <p class="text-xs uppercase tracking-wider mb-0.5" style="color: var(--ff-text-muted)">Capital</p>
-                    <p class="text-sm font-bold font-mono" style="color: var(--ff-text-primary)">
-                      {{ credit.totalAmount | currency:'ARS':'symbol':'1.0-0' }}
-                    </p>
-                  </div>
+                <!-- Datos: Cuota | Cuotas pagadas | Deuda restante -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3 mb-4">
                   <div>
                     <p class="text-xs uppercase tracking-wider mb-0.5" style="color: var(--ff-text-muted)">Cuota</p>
                     @if (credit.installmentAmount) {
@@ -306,13 +300,7 @@
                 <p class="font-medium text-sm mb-3 line-clamp-1" style="color: var(--ff-text-secondary)">
                   {{ creditDisplayName(credit) }}
                 </p>
-                <div class="grid grid-cols-3 gap-x-4 gap-y-2 text-xs">
-                  <div>
-                    <p class="uppercase tracking-wider mb-0.5" style="color: var(--ff-text-muted)">Capital</p>
-                    <p class="font-semibold font-mono" style="color: var(--ff-text-secondary)">
-                      {{ credit.totalAmount | currency:'ARS':'symbol':'1.0-0' }}
-                    </p>
-                  </div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                   <div>
                     <p class="uppercase tracking-wider mb-0.5" style="color: var(--ff-text-muted)">Cuotas</p>
                     <p class="font-semibold" style="color: var(--ff-text-secondary)">{{ credit.totalInstallments }}</p>

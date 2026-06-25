@@ -1,5 +1,5 @@
 export const environment = {
-  production: false,
+  production: true,
   useMocks: false,
   apiBaseUrl: 'http://localhost:3000/api',
   tokenKey: 'sgcf_token',

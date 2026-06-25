@@ -1684,11 +1684,14 @@ export class OperationFormService {
     if (type === 'LOAN') {
       const installments =
         this.operationForm.controls.installmentsCount.value ?? 0;
+      const frequency =
+        this.operationForm.controls.paymentFrequency.value ?? undefined;
       this.dynamicRate.set(
         findLoanInterestRate(
           this.interestRates(),
           installments,
           this.prestamoTotal,
+          frequency,
         ),
       );
       return;
