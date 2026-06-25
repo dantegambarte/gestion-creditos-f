@@ -158,7 +158,7 @@
               <span style="color: var(--ff-text-muted)">Frecuencia</span>
               <span class="font-medium" style="color: var(--ff-text-primary)">{{ frequencyLabel }}</span>
             </div>
-            @if (credit?.type !== 'SALE') {
+            @if (credit.type !== 'SALE') {
               <div class="flex justify-between">
                 <span style="color: var(--ff-text-muted)">Tasa de interés</span>
                 <span class="font-medium" style="color: var(--ff-text-primary)">{{ interestRateLabel }}</span>
