@@ -158,10 +158,12 @@
               <span style="color: var(--ff-text-muted)">Frecuencia</span>
               <span class="font-medium" style="color: var(--ff-text-primary)">{{ frequencyLabel }}</span>
             </div>
-            <div class="flex justify-between">
-              <span style="color: var(--ff-text-muted)">Tasa de interés</span>
-              <span class="font-medium" style="color: var(--ff-text-primary)">{{ interestRateLabel }}</span>
-            </div>
+            @if (credit?.type !== 'SALE') {
+              <div class="flex justify-between">
+                <span style="color: var(--ff-text-muted)">Tasa de interés</span>
+                <span class="font-medium" style="color: var(--ff-text-primary)">{{ interestRateLabel }}</span>
+              </div>
+            }
             @if (credit.downPayment > 0) {
               <div class="flex justify-between">
                 <span style="color: var(--ff-text-muted)">Pago inicial</span>
@@ -216,19 +218,6 @@
                 {{ totalPaid | currency:'ARS':'symbol':'1.0-0' }}
               </span>
             </div>
-            @if (totalPenalty > 0) {
-              <div class="flex justify-between">
-                <span style="color: var(--ff-text-muted)">Mora acumulada</span>
-                <span class="font-medium font-mono" style="color: #f87171">
-                  {{ totalPenalty | currency:'ARS':'symbol':'1.0-0' }}
-                </span>
-              </div>
-            } @else {
-              <div class="flex justify-between">
-                <span style="color: var(--ff-text-muted)">Mora acumulada</span>
-                <span class="text-xs font-semibold" style="color: #34d399">Sin mora</span>
-              </div>
-            }
           </div>
         </div>
       </div>
@@ -251,7 +240,6 @@
                 </th>
                 <th class="text-right">Monto</th>
                 <th class="text-right hidden sm:table-cell">Pagado</th>
-                <th class="text-right hidden sm:table-cell">Mora</th>
                 <th class="text-center">Estado</th>
               </tr>
             </thead>
@@ -269,21 +257,9 @@
                         Pagado: {{ inst.amountPaid | currency:'ARS':'symbol':'1.0-0' }}
                       </span>
                     }
-                    @if (inst.penaltyAmount > 0) {
-                      <span class="sm:hidden block text-xs font-semibold" style="color: #f87171">
-                        +{{ inst.penaltyAmount | currency:'ARS':'symbol':'1.0-0' }} mora
-                      </span>
-                    }
                   </td>
                   <td class="text-right ff-mono hidden sm:table-cell" style="color: var(--ff-text-secondary)">
                     {{ inst.amountPaid > 0 ? (inst.amountPaid | currency:'ARS':'symbol':'1.0-0') : '—' }}
-                  </td>
-                  <td class="text-right ff-mono hidden sm:table-cell">
-                    @if (inst.penaltyAmount > 0) {
-                      <span style="color: #f87171">{{ inst.penaltyAmount | currency:'ARS':'symbol':'1.0-0' }}</span>
-                    } @else {
-                      <span style="color: var(--ff-text-muted)">—</span>
-                    }
                   </td>
                   <td class="text-center">
                     <span class="inline-flex items-center gap-1 text-xs font-semibold"
