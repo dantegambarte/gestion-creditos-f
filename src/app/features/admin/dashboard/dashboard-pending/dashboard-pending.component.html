@@ -1,4 +1,4 @@
-<div class="db-pending-row">
+<div class="db-pending-row db-pending-row--desktop">
   <!-- Pending Credits -->
   <div class="db-pending-col">
     <div class="db-panel__header">
@@ -46,7 +46,9 @@
                     [class.db-pending-btn--disabled]="isCashClosed"
                     (click)="reviewCredit(credit.id)"
                     [title]="
-                      isCashClosed ? 'No hay una caja abierta' : 'Revisar crédito'
+                      isCashClosed
+                        ? 'No hay una caja abierta'
+                        : 'Revisar crédito'
                     "
                   >
                     Revisar
@@ -127,6 +129,167 @@
     </div>
   </div>
 </div>
+
+<section class="db-pending-mobile" data-cy="dashboard-mobile-pending">
+  <div class="db-pending-mobile__tabs" role="tablist" aria-label="Pendientes">
+    <button
+      type="button"
+      class="db-pending-mobile__tab"
+      [class.db-pending-mobile__tab--active]="activeMobileTab === 'credits'"
+      (click)="setMobileTab('credits')"
+      data-cy="dashboard-pending-tab-credits"
+    >
+      <span>Créditos</span>
+      <strong>{{ getTotalCredits() }}</strong>
+    </button>
+    <button
+      type="button"
+      class="db-pending-mobile__tab"
+      [class.db-pending-mobile__tab--active]="activeMobileTab === 'payments'"
+      (click)="setMobileTab('payments')"
+      data-cy="dashboard-pending-tab-payments"
+    >
+      <span>Cobros</span>
+      <strong>{{ getTotalPayments() }}</strong>
+    </button>
+  </div>
+
+  <div
+    class="db-pending-mobile__panel"
+    data-cy="dashboard-pending-mobile-panel"
+  >
+    @if (loadingPending) {
+      @for (i of [1, 2, 3]; track i) {
+        <div class="db-pending-mobile__group">
+          <p-skeleton width="80%" height="1rem" styleClass="mb-2" />
+          <p-skeleton width="60%" height="0.75rem" />
+        </div>
+      }
+    } @else if (activeMobileTab === "credits") {
+      @if (pendingCredits.length === 0) {
+        <span class="db-placeholder">Sin créditos pendientes</span>
+      } @else {
+        @for (group of pendingCredits; track group.sellerName) {
+          <article class="db-pending-mobile__group">
+            <button
+              type="button"
+              class="db-pending-mobile__group-header"
+              (click)="toggleCreditGroup(group.sellerName)"
+            >
+              <span>
+                <strong>{{ group.sellerName }}</strong>
+                <small>{{ timeAgo(group.oldestDate) }}</small>
+              </span>
+              <span class="db-pending-mobile__group-meta">
+                {{ group.count }} · {{ group.totalAmount | currencyArs }}
+                <i
+                  class="pi"
+                  [class.pi-chevron-up]="
+                    isCreditGroupExpanded(group.sellerName)
+                  "
+                  [class.pi-chevron-down]="
+                    !isCreditGroupExpanded(group.sellerName)
+                  "
+                ></i>
+              </span>
+            </button>
+
+            @if (isCreditGroupExpanded(group.sellerName)) {
+              <div class="db-pending-mobile__items">
+                @for (credit of group.credits; track credit.id) {
+                  <div class="db-pending-mobile__item">
+                    <span class="db-pending-type">{{
+                      credit.type === "SALE" ? "VENTA" : "PRÉSTAMO"
+                    }}</span>
+                    <strong>{{ credit.customerName }}</strong>
+                    <span class="db-pending-amount">{{
+                      credit.totalAmount | currencyArs
+                    }}</span>
+                    <span class="db-pending-installments"
+                      >{{ credit.installmentsCount }} cuotas</span
+                    >
+                    <button
+                      class="db-pending-btn"
+                      [disabled]="isCashClosed"
+                      [class.db-pending-btn--disabled]="isCashClosed"
+                      (click)="reviewCredit(credit.id)"
+                    >
+                      Revisar
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </article>
+        }
+      }
+    } @else {
+      @if (pendingPayments.length === 0) {
+        <span class="db-placeholder">Sin cobros pendientes</span>
+      } @else {
+        @for (group of pendingPayments; track group.collectorName) {
+          <article class="db-pending-mobile__group">
+            <button
+              type="button"
+              class="db-pending-mobile__group-header"
+              (click)="togglePaymentGroup(group.collectorName)"
+            >
+              <span>
+                <strong>{{ group.collectorName }}</strong>
+                <small>{{ timeAgo(group.oldestDate) }}</small>
+              </span>
+              <span class="db-pending-mobile__group-meta">
+                {{ group.count }} · {{ group.totalAmount | currencyArs }}
+                <i
+                  class="pi"
+                  [class.pi-chevron-up]="
+                    isPaymentGroupExpanded(group.collectorName)
+                  "
+                  [class.pi-chevron-down]="
+                    !isPaymentGroupExpanded(group.collectorName)
+                  "
+                ></i>
+              </span>
+            </button>
+
+            @if (isPaymentGroupExpanded(group.collectorName)) {
+              <div class="db-pending-mobile__items">
+                @for (payment of group.payments; track payment.id) {
+                  <div class="db-pending-mobile__item">
+                    <span class="db-pending-type">{{
+                      payment.paymentMethod === "CASH"
+                        ? "EFECTIVO"
+                        : payment.paymentMethod === "TRANSFER"
+                          ? "TRANSF."
+                          : "MIXTO"
+                    }}</span>
+                    <strong>{{ payment.customerName }}</strong>
+                    <span class="db-pending-amount">{{
+                      payment.amountReceived | currencyArs
+                    }}</span>
+                    <span class="db-pending-installments"
+                      >Cuota {{ payment.installmentNumber }}</span
+                    >
+                    <button
+                      class="db-pending-btn"
+                      [disabled]="
+                        isCashClosed || approvingPaymentId === payment.id
+                      "
+                      [class.db-pending-btn--disabled]="isCashClosed"
+                      (click)="openApprovePaymentDialog(payment)"
+                    >
+                      Aprobar
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </article>
+        }
+      }
+    }
+  </div>
+</section>
 
 <app-dashboard-approve-payment-dialog
   [visible]="approveDialogVisible"

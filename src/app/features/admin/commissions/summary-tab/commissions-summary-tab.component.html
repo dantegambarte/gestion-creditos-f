@@ -4,7 +4,7 @@
       <h2 class="text-base font-semibold text-white">
         Liquidaciones y comisiones
       </h2>
-      <p class="text-xs text-gray-400">
+      <p class="text-xs text-[var(--ff-text-secondary)]">
         Comisiones acumuladas pendientes de liquidación.
       </p>
     </div>
@@ -22,7 +22,7 @@
   } @else if (errorSummary) {
     <app-error-state />
   } @else if (employees.length === 0) {
-    <p class="text-sm text-gray-400 text-center py-10">
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
       No hay empleados con comisiones pendientes.
     </p>
   } @else {
@@ -62,7 +62,7 @@
               formatCurrency(emp.totalNet)
             }}</span>
           </td>
-          <td class="text-sm text-gray-500">
+          <td class="text-sm text-[var(--ff-text-muted)]">
             @if (emp.earliestWeek) {
               {{ formatDate(emp.earliestWeek) }} —
               {{ formatDate(emp.latestWeek ?? "") }}
@@ -73,10 +73,10 @@
           <td class="text-center">
             <p-button
               label="Liquidar"
+              icon="pi pi-check-circle"
               severity="success"
-              [outlined]="true"
               size="small"
-              styleClass="!h-7 !px-3 !rounded-md !text-xs !font-semibold"
+              styleClass="!h-9 !px-4 !rounded-lg !text-xs !font-semibold !shadow-sm"
               [disabled]="rowDisabled(emp)"
               [pTooltip]="rowDisabled(emp) ? 'No hay monto a liquidar' : ''"
               tooltipPosition="left"
@@ -89,7 +89,7 @@
   }
 </p-card>
 
-<div class="h-2"></div>
+<div class="h-4"></div>
 
 <p-card styleClass="shadow-sm">
   <div class="mb-4">
@@ -101,7 +101,7 @@
   @if (loadingLiquidations) {
     <app-loading-state />
   } @else if (recentLiquidations.length === 0) {
-    <p class="text-sm text-gray-400 text-center py-10">
+    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
       Sin liquidaciones registradas.
     </p>
   } @else {
@@ -125,7 +125,7 @@
       <ng-template pTemplate="body" let-liq>
         <tr>
           <td class="font-medium">{{ liq.userName }}</td>
-          <td class="text-sm text-gray-500">
+          <td class="text-sm text-[var(--ff-text-muted)]">
             {{ formatDate(liq.weekStart) }} — {{ formatDate(liq.weekEnd) }}
           </td>
           <td class="text-right font-mono">
@@ -140,8 +140,12 @@
             }}</span>
           </td>
           <td>{{ paymentMethodLabel(liq.paymentMethod) }}</td>
-          <td class="text-sm text-gray-600">{{ liq.paidByName }}</td>
-          <td class="text-sm text-gray-500">{{ formatDate(liq.paidAt) }}</td>
+          <td class="text-sm text-[var(--ff-text-secondary)]">
+            {{ liq.paidByName }}
+          </td>
+          <td class="text-sm text-[var(--ff-text-muted)]">
+            {{ formatDate(liq.paidAt) }}
+          </td>
         </tr>
       </ng-template>
     </p-table>

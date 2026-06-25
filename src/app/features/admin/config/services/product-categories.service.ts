@@ -11,12 +11,18 @@ function parseActive(value: unknown): boolean {
   return value === true || value === 'true' || value === 1 || value === '1';
 }
 
+function parseCount(value: ProductCategoryRaw['product_count']): number {
+  const count = Number(value ?? 0);
+  return Number.isFinite(count) ? count : 0;
+}
+
 function toCategory(r: ProductCategoryRaw): ProductCategory {
   return {
     id: r.id,
     name: r.name,
     active: parseActive(r.active),
     createdAt: r.created_at,
+    productCount: parseCount(r.product_count),
   };
 }
 

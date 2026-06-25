@@ -16,7 +16,9 @@
       <div class="auth-field">
         <label class="auth-label">DNI</label>
         <p-iconField iconPosition="left">
-          <p-inputIcon styleClass="pi pi-user text-gray-400 z-10" />
+          <p-inputIcon
+            styleClass="pi pi-user z-10 text-[var(--ff-text-secondary)]"
+          />
           <input
             pInputText
             formControlName="dni"
@@ -59,7 +61,9 @@
       <div class="auth-field">
         <label class="auth-label">Contraseña</label>
         <p-iconField iconPosition="left">
-          <p-inputIcon styleClass="pi pi-lock text-gray-400 z-10" />
+          <p-inputIcon
+            styleClass="pi pi-lock z-10 text-[var(--ff-text-secondary)]"
+          />
           <p-password
             #passwordField
             formControlName="password"

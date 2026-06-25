@@ -4,11 +4,13 @@
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
-  [style]="{ width: '480px' }"
+  [style]="{ width: '480px', maxWidth: 'calc(100vw - 32px)' }"
+  [breakpoints]="{ '640px': 'calc(100vw - 32px)' }"
+  styleClass="client-create-dialog"
   header="Crear Cliente"
 >
   <form [formGroup]="form" class="flex flex-col gap-4 py-2">
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div class="flex flex-col gap-1">
         <label class="auth-label">Nombres</label>
         <input
@@ -56,7 +58,7 @@
       }
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div class="flex flex-col gap-1">
         <label class="auth-label">Teléfono Principal</label>
         <input
@@ -128,6 +130,8 @@
         [options]="collectorOptions"
         optionLabel="label"
         optionValue="value"
+        [filter]="collectorOptions.length > 10"
+        filterBy="label"
         [placeholder]="
           collectorsLoading
             ? 'Cargando cobradores…'
@@ -143,30 +147,35 @@
   </form>
 
   <ng-template pTemplate="footer">
-    <div class="flex justify-end gap-3 pt-2">
+    <div
+      class="client-create-footer flex flex-col gap-3 pt-2 md:flex-row md:justify-end"
+    >
       <p-button
+        class="w-full md:w-auto"
         type="button"
         label="Cancelar"
         severity="secondary"
         [outlined]="true"
-        styleClass="h-11 px-5 rounded-xl justify-center"
+        styleClass="h-11 w-full px-5 rounded-xl justify-center md:w-auto"
         (onClick)="cancelCreate()"
       />
       <p-button
+        class="w-full md:w-auto"
         type="button"
         label="Borrar"
         icon="pi pi-trash"
         severity="danger"
         [outlined]="true"
-        styleClass="h-11 px-5 rounded-xl justify-center"
+        styleClass="h-11 w-full px-5 rounded-xl justify-center md:w-auto"
         (onClick)="form.reset()"
         [disabled]="creatingClient"
       />
       <p-button
+        class="w-full md:w-auto"
         label="Crear Cliente"
         icon="pi pi-user"
         severity="primary"
-        styleClass="h-11 px-5 rounded-xl"
+        styleClass="h-11 w-full px-5 rounded-xl justify-center md:w-auto"
         [loading]="creatingClient"
         [disabled]="form.invalid || creatingClient"
         (onClick)="createClient()"

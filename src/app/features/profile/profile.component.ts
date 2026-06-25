@@ -1,46 +1,65 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
+  AbstractControl,
   FormBuilder,
   FormGroup,
-  FormsModule,
   ReactiveFormsModule,
+  ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, finalize, takeUntil } from 'rxjs';
 
 import { MessageService } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
-import { DropdownModule } from 'primeng/dropdown';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { InputSwitchModule } from 'primeng/inputswitch';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 
 import { AuthServiceBase } from '../../core/auth/auth-service.base';
+import { ApiHttpService } from '../../core/http/api-http.service';
+import { AppError } from '../../core/models/app-error';
 import { AuthUser } from '../../core/models/interface/auth-user';
+import { DateService } from '../../core/services/date.service';
+
+interface UserProfile {
+  id: string;
+  full_name: string;
+  dni: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  role: string;
+  status: string;
+  is_temp_password: boolean;
+  failed_attempts: number;
+  locked_at: string | null;
+  last_login_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+function passwordMatchValidator(
+  control: AbstractControl,
+): ValidationErrors | null {
+  const parent = control.parent;
+  if (!parent) return null;
+  return control.value === parent.get('newPassword')?.value
+    ? null
+    : { mismatch: true };
+}
 
 @Component({
   selector: 'app-profile',
   standalone: true,
   imports: [
-    FormsModule,
     ReactiveFormsModule,
-    RouterLink,
     AvatarModule,
     ButtonModule,
-    IconFieldModule,
-    InputIconModule,
     InputTextModule,
     PasswordModule,
-    DropdownModule,
     TagModule,
-    InputSwitchModule,
     ToastModule,
   ],
   providers: [MessageService],
@@ -48,45 +67,56 @@ import { AuthUser } from '../../core/models/interface/auth-user';
 })
 export class ProfileComponent implements OnInit, OnDestroy {
   currentUser: AuthUser | null = null;
-  private destroy$ = new Subject<void>();
+  profile: UserProfile | null = null;
 
-  personalForm!: FormGroup;
-  passwordForm!: FormGroup;
+  personalForm: FormGroup;
+  passwordForm: FormGroup;
 
-  emailNotifications = true;
-  darkMode = false;
-  selectedLanguage = 'es';
-
-  languages = [
-    { label: 'Español', value: 'es' },
-    { label: 'English', value: 'en' },
-  ];
-
+  loadingProfile = false;
   loadingPersonal = false;
   loadingPassword = false;
-  loadingPrefs = false;
+  submittedPersonal = false;
+  submittedPassword = false;
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private auth: AuthServiceBase,
+    private api: ApiHttpService,
     private fb: FormBuilder,
+    private dateService: DateService,
     private messageService: MessageService,
-  ) {}
-
-  ngOnInit(): void {
-    this.auth.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user) => {
-      this.currentUser = user;
-      this.personalForm = this.fb.group({
-        nombre: [user?.full_name ?? '', Validators.required],
-        email: [{ value: user?.email ?? '', disabled: true }],
-        telefono: ['+54 9 3885 123456'],
-      });
+  ) {
+    this.personalForm = this.fb.group({
+      full_name: ['', [Validators.required, Validators.minLength(3)]],
+      email: ['', [Validators.email]],
+      phone: [
+        '',
+        [Validators.pattern(/^[0-9+()\s-]{6,30}$/)],
+      ],
+      address: ['', [Validators.maxLength(255)]],
     });
 
     this.passwordForm = this.fb.group({
       currentPassword: ['', Validators.required],
-      newPassword: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', [Validators.required, passwordMatchValidator]],
     });
+  }
+
+  ngOnInit(): void {
+    this.auth.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user) => {
+      this.currentUser = user;
+    });
+
+    this.passwordForm
+      .get('newPassword')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.passwordForm.get('confirmPassword')?.updateValueAndValidity();
+      });
+
+    this.loadProfile();
   }
 
   ngOnDestroy(): void {
@@ -95,10 +125,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Devuelve una etiqueta legible para el rol del usuario actual, mapeando los roles técnicos a nombres más amigables. Si el usuario no tiene roles o el rol no está mapeado, devuelve el primer rol o una cadena vacía.
+   * Devuelve una etiqueta legible para el rol del usuario actual.
    */
   get roleLabel(): string {
-    if (!this.currentUser) return '';
+    const role = this.profile?.role ?? this.currentUser?.roles[0] ?? '';
     const map: Record<string, string> = {
       ADMIN: 'Administrador',
       SELLER: 'Vendedor',
@@ -106,72 +136,164 @@ export class ProfileComponent implements OnInit, OnDestroy {
       SELLER_COLLECTOR: 'Vendedor/Cobrador',
       CASHIER: 'Cajero',
     };
-    return map[this.currentUser.roles[0]] ?? this.currentUser.roles[0];
+    return map[role] ?? role;
   }
 
   /**
-   * Guarda los datos personales del usuario.
-   * @returns
+   * Devuelve una etiqueta legible para el estado del usuario.
+   */
+  get statusLabel(): string {
+    return this.profile?.status === 'ACTIVE' ? 'Activo' : 'Inactivo';
+  }
+
+  /**
+   * Obtiene los datos reales del perfil propio desde la API.
+   */
+  loadProfile(): void {
+    this.loadingProfile = true;
+    this.api
+      .get<UserProfile>('users/me')
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.loadingProfile = false)),
+      )
+      .subscribe({
+        next: (profile) => {
+          this.profile = profile;
+          this.personalForm.reset({
+            full_name: profile.full_name,
+            email: profile.email ?? '',
+            phone: profile.phone ?? '',
+            address: profile.address ?? '',
+          });
+          this.patchAuthUser(profile);
+        },
+        error: (err: AppError) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'No se pudo cargar el perfil',
+            detail: err.message,
+          });
+        },
+      });
+  }
+
+  /**
+   * Guarda los datos personales editables del usuario logueado.
    */
   savePersonal(): void {
+    this.submittedPersonal = true;
     if (this.personalForm.invalid) return;
+
     this.loadingPersonal = true;
-    setTimeout(() => {
-      this.loadingPersonal = false;
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Datos actualizados',
-        detail: 'Los datos personales fueron guardados.',
+    this.api
+      .patch<UserProfile>('users/me', this.personalForm.value)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.loadingPersonal = false)),
+      )
+      .subscribe({
+        next: (profile) => {
+          this.profile = profile;
+          this.personalForm.markAsPristine();
+          this.patchAuthUser(profile);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Perfil actualizado',
+            detail: 'Tus datos personales fueron guardados.',
+          });
+        },
+        error: (err: AppError) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'No se pudo guardar',
+            detail: err.message,
+          });
+        },
       });
-    }, 800);
   }
 
   /**
-   * Cambia la contraseña del usuario.
-   * @returns
+   * Cambia la contraseña sin salir de la pantalla de perfil.
    */
   changePassword(): void {
+    this.submittedPassword = true;
     if (this.passwordForm.invalid) return;
-    const { newPassword, confirmPassword } = this.passwordForm.value;
-    if (newPassword !== confirmPassword) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Las contraseñas no coinciden.',
-      });
-      return;
-    }
+
+    const { currentPassword, newPassword } = this.passwordForm.value;
     this.loadingPassword = true;
-    setTimeout(() => {
-      this.loadingPassword = false;
-      this.passwordForm.reset();
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Contraseña cambiada',
-        detail: 'Tu contraseña fue actualizada correctamente.',
+
+    this.api
+      .patch<void>('users/me/change-password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      })
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => (this.loadingPassword = false)),
+      )
+      .subscribe({
+        next: () => {
+          this.passwordForm.reset();
+          this.submittedPassword = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Contraseña actualizada',
+            detail: 'Tu contraseña fue cambiada correctamente.',
+          });
+        },
+        error: (err: AppError) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'No se pudo cambiar la contraseña',
+            detail: err.message,
+          });
+        },
       });
-    }, 800);
   }
 
   /**
-   * Guarda las preferencias del usuario, como notificaciones por email, modo oscuro e idioma. Simula una operación de guardado con un delay y muestra un mensaje de éxito al finalizar.
-   */
-  savePreferences(): void {
-    this.loadingPrefs = true;
-    setTimeout(() => {
-      this.loadingPrefs = false;
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Preferencias guardadas',
-        detail: 'Tus preferencias fueron actualizadas.',
-      });
-    }, 800);
-  }
-
-  /**
-   * Cierra la sesión del usuario actual utilizando el servicio de autenticación y redirige al login. Esta función se ejecuta cuando el usuario hace clic en el botón de cerrar sesión, asegurando que se borre la sesión actual y se regrese a la pantalla de inicio de sesión.
+   * Cierra la sesión del usuario actual.
    */
   logout(): void {
     this.auth.logout();
+  }
+
+  /**
+   * Formatea una fecha ISO para mostrarla en la ficha del perfil.
+   */
+  displayDate(value?: string | null): string {
+    if (!value) return 'Sin registro';
+    return this.dateService.display(new Date(value), "d 'de' MMMM, yyyy HH:mm");
+  }
+
+  /**
+   * Sincroniza los datos básicos editados con el usuario de sesión local.
+   */
+  private patchAuthUser(profile: UserProfile): void {
+    this.auth.patchCurrentUser({
+      full_name: profile.full_name,
+      name: profile.full_name,
+      avatar: this.initials(profile.full_name),
+      dni: profile.dni ?? undefined,
+      email: profile.email,
+      phone: profile.phone,
+      address: profile.address,
+      status: profile.status,
+      last_login_at: profile.last_login_at,
+      created_at: profile.created_at,
+    });
+  }
+
+  /**
+   * Genera las iniciales visibles en el avatar del perfil.
+   */
+  private initials(fullName: string): string {
+    return fullName
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((word) => word.charAt(0).toUpperCase())
+      .join('');
   }
 }

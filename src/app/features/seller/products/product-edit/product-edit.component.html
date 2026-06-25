@@ -6,123 +6,135 @@
     <app-error-state />
   } @else if (product && form) {
     <div class="ff-panel rounded-xl p-6">
-    <h2 class="text-xl font-semibold mb-6" style="color: var(--ff-text-primary)">Editar producto</h2>
+      <h2
+        class="text-xl font-semibold mb-6"
+        style="color: var(--ff-text-primary)"
+      >
+        Editar producto
+      </h2>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
-      <div class="flex flex-col gap-1">
-        <label for="title" class="text-sm font-medium"
-          >Título (nombre corto) *</label
-        >
-        <input
-          id="title"
-          pInputText
-          formControlName="title"
-          placeholder="Título del producto"
-          class="w-full h-11"
-          [class.ng-invalid]="isInvalid('title')"
-          [class.ng-dirty]="isInvalid('title')"
-        />
-        @if (isInvalid("title")) {
-          <small class="text-red-500">{{ getError("title") }}</small>
-        }
-      </div>
-
-      <div class="flex flex-col gap-1">
-        <label for="description" class="text-sm font-medium"
-          >Descripción comercial</label
-        >
-        <textarea
-          pInputTextarea
-          id="description"
-          formControlName="description"
-          rows="3"
-          placeholder="Nombre comercial o descripción del producto"
-          [class.ng-invalid]="isInvalid('description')"
-          [class.ng-dirty]="isInvalid('description')"
-          class="w-full"
-        ></textarea>
-        @if (isInvalid("description")) {
-          <small class="text-red-500">{{ getError("description") }}</small>
-        }
-      </div>
-
-      <div class="flex flex-col gap-1">
-        <label for="model" class="text-sm font-medium">Modelo</label>
-        <input
-          id="model"
-          pInputText
-          formControlName="model"
-          placeholder="Modelo técnico (opcional)"
-          class="w-full h-11"
-          [class.ng-invalid]="isInvalid('model')"
-          [class.ng-dirty]="isInvalid('model')"
-        />
-        @if (isInvalid("model")) {
-          <small class="text-red-500">{{ getError("model") }}</small>
-        }
-      </div>
-
-      <div class="flex flex-col gap-1">
-        <label for="stock" class="text-sm font-medium">Stock disponible</label>
-        <input
-          id="stock"
-          pInputText
-          formControlName="stock"
-          class="w-full h-11"
-          readonly
-        />
-        <small class="text-gray-500"
-          >El stock se gestiona desde unidades/variantes, no desde edición del producto.</small
-        >
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
         <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Marca</label>
-          <p-dropdown
-            formControlName="brandId"
-            [options]="brandOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Seleccionar marca"
-            [showClear]="true"
-            styleClass="w-full"
+          <label for="title" class="text-sm font-medium"
+            >Título (nombre corto) *</label
+          >
+          <input
+            id="title"
+            pInputText
+            formControlName="title"
+            placeholder="Título del producto"
+            class="w-full h-11"
+            [class.ng-invalid]="isInvalid('title')"
+            [class.ng-dirty]="isInvalid('title')"
+          />
+          @if (isInvalid("title")) {
+            <small class="text-red-500">{{ getError("title") }}</small>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="description" class="text-sm font-medium"
+            >Descripción comercial</label
+          >
+          <textarea
+            pInputTextarea
+            id="description"
+            formControlName="description"
+            rows="3"
+            placeholder="Nombre comercial o descripción del producto"
+            [class.ng-invalid]="isInvalid('description')"
+            [class.ng-dirty]="isInvalid('description')"
+            class="w-full"
+          ></textarea>
+          @if (isInvalid("description")) {
+            <small class="text-red-500">{{ getError("description") }}</small>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="model" class="text-sm font-medium">Modelo</label>
+          <input
+            id="model"
+            pInputText
+            formControlName="model"
+            placeholder="Modelo técnico (opcional)"
+            class="w-full h-11"
+            [class.ng-invalid]="isInvalid('model')"
+            [class.ng-dirty]="isInvalid('model')"
+          />
+          @if (isInvalid("model")) {
+            <small class="text-red-500">{{ getError("model") }}</small>
+          }
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label for="stock" class="text-sm font-medium"
+            >Stock disponible</label
+          >
+          <input
+            id="stock"
+            pInputText
+            formControlName="stock"
+            class="w-full h-11"
+            readonly
+          />
+          <small class="text-[var(--ff-text-muted)]"
+            >El stock se gestiona desde unidades/variantes, no desde edición del
+            producto.</small
+          >
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Marca</label>
+            <p-dropdown
+              formControlName="brandId"
+              [options]="brandOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccionar marca"
+              [filter]="brandOptions.length > 10"
+              filterBy="label"
+              [showClear]="true"
+              styleClass="w-full"
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="text-sm font-medium">Categoría</label>
+            <p-dropdown
+              formControlName="categoryId"
+              [options]="categoryOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccionar categoría"
+              [filter]="categoryOptions.length > 10"
+              filterBy="label"
+              [showClear]="true"
+              styleClass="w-full"
+            />
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <p-button
+            type="button"
+            label="Cancelar"
+            severity="secondary"
+            [outlined]="true"
+            styleClass="h-11 px-5 rounded-xl"
+            (onClick)="cancel()"
+          />
+          <p-button
+            type="submit"
+            label="Guardar Cambios"
+            icon="pi pi-check"
+            severity="primary"
+            styleClass="h-11 px-5 rounded-xl"
+            [loading]="submitting"
+            [disabled]="form.invalid || !form.dirty || submitting"
           />
         </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium">Categoría</label>
-          <p-dropdown
-            formControlName="categoryId"
-            [options]="categoryOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Seleccionar categoría"
-            [showClear]="true"
-            styleClass="w-full"
-          />
-        </div>
-      </div>
-
-      <div class="flex gap-3 pt-2">
-        <p-button
-          type="button"
-          label="Cancelar"
-          severity="secondary"
-          [outlined]="true"
-          styleClass="h-11 px-5 rounded-xl"
-          (onClick)="cancel()"
-        />
-        <p-button
-          type="submit"
-          label="Guardar Cambios"
-          icon="pi pi-check"
-          severity="primary"
-          styleClass="h-11 px-5 rounded-xl"
-          [loading]="submitting"
-          [disabled]="form.invalid || !form.dirty || submitting"
-        />
-      </div>
-    </form>
+      </form>
     </div>
   }
 </div>

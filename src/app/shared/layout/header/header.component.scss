@@ -11,6 +11,18 @@
   padding: 0 20px;
 }
 
+.app-header__mobile-brand {
+  display: none;
+}
+
+.app-header__mobile-logo {
+  font-family: var(--ff-font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ff-text-primary);
+  letter-spacing: -0.04em;
+}
+
 // ─── Título / breadcrumbs ─────────────────────────────────────────────────────
 .app-header__title {
   font-family: var(--ff-font-ui);
@@ -21,7 +33,7 @@
 
 .app-header__crumb {
   font-family: var(--ff-font-ui);
-  font-size: 13px;
+  font-size: 14px;
 
   &--link {
     color: var(--ff-text-secondary);
@@ -41,7 +53,7 @@
 
 .app-header__crumb-separator {
   font-family: var(--ff-font-ui);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ff-text-muted);
   padding: 0 2px;
 }
@@ -49,7 +61,7 @@
 // ─── Fecha ───────────────────────────────────────────────────────────────────
 .app-header__date {
   font-family: var(--ff-font-ui);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ff-text-secondary);
 }
 
@@ -77,7 +89,7 @@
 
 .app-header__live-text {
   font-family: var(--ff-font-ui);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--ff-success);
 }
@@ -103,13 +115,85 @@
 
 .app-header__bell-dot {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 7px;
-  height: 7px;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
   background: var(--ff-danger);
-  border-radius: 50%;
+  border-radius: 999px;
   border: 2px solid var(--ff-bg);
+  font-family: var(--ff-font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:host ::ng-deep .app-header__bell-panel {
+  width: min(320px, calc(100vw - 32px));
+
+  .p-overlaypanel-content {
+    padding: 20px;
+  }
+}
+
+.app-header__notification-list {
+  max-height: 320px;
+  overscroll-behavior: contain;
+}
+
+.app-header__notification-clear {
+  border: 0;
+  background: transparent;
+  color: var(--ff-accent);
+  cursor: pointer;
+  font-family: var(--ff-font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 0;
+
+  &:hover {
+    color: var(--ff-text-primary);
+  }
+}
+
+.app-header__notification-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+}
+
+.app-header__notification-main {
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+
+.app-header__notification-delete {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: var(--ff-text-muted);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  height: 24px;
+  justify-content: center;
+  width: 24px;
+
+  &:hover {
+    background: rgba(248, 113, 113, 0.14);
+    color: var(--ff-danger);
+  }
 }
 
 // ─── Sección usuario ──────────────────────────────────────────────────────────
@@ -117,9 +201,15 @@
   border-left: 1px solid var(--ff-border-subtle);
 }
 
+.app-header__user-trigger {
+  background: transparent;
+  border: 0;
+  color: inherit;
+}
+
 .app-header__user-name {
   font-family: var(--ff-font-ui);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ff-text-primary);
 }
@@ -137,10 +227,171 @@
   background: rgba(95, 122, 246, 0.18);
   color: var(--ff-accent);
   font-family: var(--ff-font-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(95, 122, 246, 0.32);
+}
+
+:host ::ng-deep .app-header__user-panel {
+  width: 220px;
+
+  .p-overlaypanel-content {
+    padding: 10px;
+  }
+}
+
+.app-header__user-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.app-header__user-menu-head {
+  border-bottom: 1px solid var(--ff-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 4px;
+  padding: 4px 8px 10px;
+}
+
+.app-header__user-menu-name {
+  color: var(--ff-text-primary);
+  font-family: var(--ff-font-ui);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app-header__user-menu-role {
+  color: var(--ff-text-muted);
+  font-family: var(--ff-font-ui);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.app-header__user-menu-item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ff-text-secondary);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--ff-font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  gap: 10px;
+  padding: 10px 8px;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+
+  &:hover {
+    background: var(--ff-secondary);
+    color: var(--ff-text-primary);
+  }
+
+  i {
+    width: 16px;
+  }
+}
+
+.app-header__user-menu-item--danger {
+  color: var(--ff-danger);
+
+  &:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: var(--ff-danger);
+  }
+}
+
+@media (max-width: 767.98px) {
+  .app-header {
+    height: calc(48px + var(--ff-safe-top));
+    padding: var(--ff-safe-top) 16px 0;
+    border-bottom-color: var(--ff-border);
+    background: var(--ff-sidebar);
+    backdrop-filter: none;
+  }
+
+  .app-header__mobile-brand {
+    display: flex;
+    align-items: center;
+  }
+
+  .app-header__mobile-logo {
+    font-size: 15px;
+  }
+
+  .app-header__actions {
+    max-width: 48vw;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .app-header__live-text {
+    display: none;
+  }
+
+  .app-header__bell {
+    padding: 5px;
+  }
+
+  :host ::ng-deep .app-header__bell-panel {
+    left: 16px !important;
+    right: 16px !important;
+    top: calc(52px + var(--ff-safe-top)) !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 343px;
+    border-radius: 12px;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+
+    .p-overlaypanel-content {
+      padding: 18px 16px;
+    }
+  }
+
+  .app-header__notification-list {
+    max-height: min(368px, calc(100dvh - 188px - var(--ff-safe-top)));
+    padding-right: 2px;
+  }
+
+  .app-header__notification-row {
+    gap: 10px;
+    padding: 10px 8px;
+  }
+
+  .app-header__notification-delete {
+    height: 32px;
+    width: 32px;
+  }
+
+  .app-header__user-section {
+    border-left: 0;
+    padding-left: 0 !important;
+  }
+
+  :host ::ng-deep .app-header__user-panel {
+    right: 16px !important;
+    top: calc(52px + var(--ff-safe-top)) !important;
+    width: min(220px, calc(100vw - 32px)) !important;
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+
+  .app-header__avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
 }

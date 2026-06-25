@@ -7,14 +7,18 @@
     <!-- Fila 1: 4 KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <!-- Recaudado hoy -->
-      <div class="bg-gray-800 rounded-2xl p-5 space-y-2">
-        <p class="text-xs text-gray-400 uppercase tracking-widest">
+      <div
+        class="space-y-2 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5"
+      >
+        <p
+          class="text-xs uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
           Recaudado hoy
         </p>
         <p class="text-3xl font-extrabold text-white font-mono">
           {{ formatCurrency(summaryReport.todayCollected) }}
         </p>
-        <p class="text-xs text-gray-400">
+        <p class="text-xs text-[var(--ff-text-secondary)]">
           Efectivo {{ formatCurrency(summaryReport.todayCash) }} &nbsp;·&nbsp;
           Transf. {{ formatCurrency(summaryReport.todayTransfer) }}
         </p>
@@ -34,7 +38,9 @@
               "
             ></div>
           </div>
-          <div class="flex justify-between text-[10px] text-gray-500">
+          <div
+            class="flex justify-between text-[10px] text-[var(--ff-text-muted)]"
+          >
             <span
               >Efectivo
               {{
@@ -59,40 +65,56 @@
       </div>
 
       <!-- Enganches del día -->
-      <div class="bg-gray-800 rounded-2xl p-5 space-y-2">
-        <p class="text-xs text-gray-400 uppercase tracking-widest">
+      <div
+        class="space-y-2 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5"
+      >
+        <p
+          class="text-xs uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
           Enganches del día
         </p>
         <p class="text-3xl font-extrabold text-white font-mono">
           {{ formatCurrency(summaryReport.todayDownPayments) }}
         </p>
-        <p class="text-xs text-gray-500">
+        <p class="text-xs text-[var(--ff-text-muted)]">
           {{ summaryReport.todayDownPaymentsCount }} operaciones
         </p>
-        <p class="text-xs text-gray-600 italic">No incluido en recaudación</p>
+        <p class="text-xs italic text-[var(--ff-text-muted)]">
+          No incluido en recaudación
+        </p>
       </div>
 
       <!-- Ingreso total -->
-      <div class="bg-gray-800 rounded-2xl p-5 space-y-2">
-        <p class="text-xs text-gray-400 uppercase tracking-widest">
+      <div
+        class="space-y-2 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5"
+      >
+        <p
+          class="text-xs uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
           Ingreso total
         </p>
         <p class="text-3xl font-extrabold text-white font-mono">
           {{ formatCurrency(summaryReport.todayTotal) }}
         </p>
-        <p class="text-xs text-gray-500">Cobros + enganches del día</p>
+        <p class="text-xs text-[var(--ff-text-muted)]">
+          Cobros + enganches del día
+        </p>
       </div>
 
       <!-- Cobros pendientes -->
-      <div class="bg-gray-800 rounded-2xl p-5 space-y-2">
-        <p class="text-xs text-gray-400 uppercase tracking-widest">
+      <div
+        class="space-y-2 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5"
+      >
+        <p
+          class="text-xs uppercase tracking-widest text-[var(--ff-text-secondary)]"
+        >
           Cobros pendientes
         </p>
         <p class="text-4xl font-extrabold text-yellow-400">
           {{ summaryReport.pendingPaymentsCount }}
         </p>
         @if (summaryReport.pendingCreditsCount > 0) {
-          <p class="text-xs text-gray-400">
+          <p class="text-xs text-[var(--ff-text-secondary)]">
             {{ summaryReport.pendingCreditsCount }} crédito(s) por aprobar
           </p>
         }
@@ -102,35 +124,45 @@
     <!-- Fila 2: 3 paneles -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- Estado del portafolio -->
-      <div class="bg-gray-800 rounded-2xl p-5 space-y-4">
+      <div
+        class="space-y-4 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5"
+      >
         <p class="text-sm font-semibold text-white">Estado del portafolio</p>
         <div class="grid grid-cols-2 gap-3">
-          <div class="bg-gray-700/60 rounded-xl p-3 space-y-1">
-            <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          <div class="space-y-1 rounded-xl bg-[var(--ff-surface)] p-3">
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+            >
               Cartera activa
             </p>
             <p class="text-lg font-extrabold text-white font-mono">
               {{ formatCurrency(summaryReport.activePortfolioBalance) }}
             </p>
           </div>
-          <div class="bg-gray-700/60 rounded-xl p-3 space-y-1">
-            <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          <div class="space-y-1 rounded-xl bg-[var(--ff-surface)] p-3">
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+            >
               Cobros hoy
             </p>
             <p class="text-lg font-extrabold text-white">
               {{ summaryReport.todayPaymentsCount }}
             </p>
           </div>
-          <div class="bg-gray-700/60 rounded-xl p-3 space-y-1">
-            <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          <div class="space-y-1 rounded-xl bg-[var(--ff-surface)] p-3">
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+            >
               En mora
             </p>
             <p class="text-lg font-extrabold text-red-400">
               {{ summaryReport.overdueCount }} cuotas
             </p>
           </div>
-          <div class="bg-gray-700/60 rounded-xl p-3 space-y-1">
-            <p class="text-[10px] text-gray-400 uppercase tracking-widest">
+          <div class="space-y-1 rounded-xl bg-[var(--ff-surface)] p-3">
+            <p
+              class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
+            >
               Próximos 7D
             </p>
             <p class="text-lg font-extrabold text-orange-400">
@@ -141,25 +173,29 @@
       </div>
 
       <!-- Créditos pendientes de aprobación -->
-      <div class="bg-gray-800 rounded-2xl p-5 space-y-3">
+      <div
+        class="space-y-3 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5"
+      >
         <p class="text-sm font-semibold text-white">Créditos pendientes</p>
         <div class="flex items-baseline gap-3">
           <p class="text-5xl font-extrabold text-yellow-400">
             {{ summaryReport.pendingCreditsCount }}
           </p>
-          <p class="text-xs text-gray-400 leading-tight">
+          <p class="text-xs leading-tight text-[var(--ff-text-secondary)]">
             crédito(s)<br />por aprobar
           </p>
         </div>
         @if (summaryReport.pendingCreditsCount === 0) {
-          <p class="text-xs text-gray-500 italic">
+          <p class="text-xs italic text-[var(--ff-text-muted)]">
             Sin créditos pendientes de aprobación.
           </p>
         }
       </div>
 
       <!-- Próximos vencimientos -->
-      <div class="bg-gray-800 rounded-2xl p-5 space-y-3">
+      <div
+        class="space-y-3 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5"
+      >
         <p class="text-sm font-semibold text-white">
           Próximos vencimientos (7 días)
         </p>
@@ -167,9 +203,9 @@
           <p class="text-3xl font-extrabold text-white">
             {{ summaryReport.upcoming7dCount }}
           </p>
-          <p class="text-xs text-gray-400">cuotas</p>
+          <p class="text-xs text-[var(--ff-text-secondary)]">cuotas</p>
         </div>
-        <p class="text-xs text-gray-400 font-mono">
+        <p class="font-mono text-xs text-[var(--ff-text-secondary)]">
           {{ formatCurrency(summaryReport.upcoming7dAmount) }} esperado
         </p>
         <div class="pt-2">

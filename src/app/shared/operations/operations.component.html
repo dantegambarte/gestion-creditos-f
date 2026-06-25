@@ -21,13 +21,15 @@
         type="text"
         placeholder="Buscar por cliente o DNI"
         [(ngModel)]="searchTerm"
-        class="operations-search h-9 px-3 rounded-md text-sm"
+        class="operations-search h-11 px-3 rounded-xl text-sm"
       />
 
       <p-dropdown
         [options]="statusOptions"
         [(ngModel)]="selectedStatus"
-        placeholder="Todos"
+        placeholder="Estado"
+        [filter]="statusOptions.length > 10"
+        filterBy="label"
         optionLabel="label"
         optionValue="value"
         styleClass="operations-filter-dropdown"
@@ -37,7 +39,9 @@
       <p-dropdown
         [options]="typeOptions"
         [(ngModel)]="selectedType"
-        placeholder="Todos"
+        placeholder="Tipo"
+        [filter]="typeOptions.length > 10"
+        filterBy="label"
         optionLabel="label"
         optionValue="value"
         styleClass="operations-filter-dropdown"
@@ -47,7 +51,9 @@
       <p-dropdown
         [options]="sellerOptions"
         [(ngModel)]="selectedSeller"
-        placeholder="Todos"
+        placeholder="Vendedor"
+        [filter]="sellerOptions.length > 10"
+        filterBy="label"
         optionLabel="label"
         optionValue="value"
         styleClass="operations-filter-dropdown"
@@ -72,7 +78,7 @@
         [rows]="10"
         [rowsPerPageOptions]="[10, 25, 50]"
         [showCurrentPageReport]="true"
-        currentPageReportTemplate="Mostrando {first}-{last} de {totalRecords}"
+        currentPageReportTemplate="{first}–{last} de {totalRecords}"
       >
         <ng-template pTemplate="header">
           <tr>

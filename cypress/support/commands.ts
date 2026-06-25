@@ -554,7 +554,10 @@ Cypress.Commands.add(
       () => {
         cy.clearAllLocalStorage();
 
-        const visitWithToken = (token: string, user: Record<string, unknown> | null) => {
+        const visitWithToken = (
+          token: string,
+          user: Record<string, unknown> | null,
+        ) => {
           cy.visit('/login', {
             onBeforeLoad(win) {
               seedRealInternalSession(win, token, user);
@@ -599,44 +602,45 @@ Cypress.Commands.add(
 
     const targetPath = normalizedDestination ?? roleHome;
 
-    fetchFreshInternalSession(role, { dni, password }).then(({ token, user }) => {
-      cy.request({
-        method: 'GET',
-        url: `${String(Cypress.env('apiBaseUrl'))}/auth/me`,
-        headers: { Authorization: `Bearer ${token}` },
-        failOnStatusCode: false,
-      }).then((res) => {
-        expect(res.status, '[cypress][loginReal] auth/me backend').to.eq(200);
-        cy.intercept('GET', '**/auth/me', {
-          statusCode: 200,
-          body: res.body,
-        }).as('authMeReal');
-      });
+    fetchFreshInternalSession(role, { dni, password }).then(
+      ({ token, user }) => {
+        cy.request({
+          method: 'GET',
+          url: `${String(Cypress.env('apiBaseUrl'))}/auth/me`,
+          headers: { Authorization: `Bearer ${token}` },
+          failOnStatusCode: false,
+        }).then((res) => {
+          expect(res.status, '[cypress][loginReal] auth/me backend').to.eq(200);
+          cy.intercept('GET', '**/auth/me', {
+            statusCode: 200,
+            body: res.body,
+          }).as('authMeReal');
+        });
 
-      cy.visit(targetPath, {
-        onBeforeLoad(win) {
-          seedRealInternalSession(win, token, user);
-        },
-      });
-    });
-
-    cy.url({ timeout: 15000 }).should(
-      'include',
-      targetPath,
+        cy.visit(targetPath, {
+          onBeforeLoad(win) {
+            seedRealInternalSession(win, token, user);
+          },
+        });
+      },
     );
+
+    cy.url({ timeout: 15000 }).should('include', targetPath);
 
     cy.location('pathname', { timeout: 15000 }).then((pathname) => {
       if (normalizePath(pathname) !== '/login') {
         return;
       }
 
-      fetchFreshInternalSession(role, { dni, password }).then(({ token, user }) => {
-        cy.visit(targetPath, {
-          onBeforeLoad(win) {
-            seedRealInternalSession(win, token, user);
-          },
-        });
-      });
+      fetchFreshInternalSession(role, { dni, password }).then(
+        ({ token, user }) => {
+          cy.visit(targetPath, {
+            onBeforeLoad(win) {
+              seedRealInternalSession(win, token, user);
+            },
+          });
+        },
+      );
     });
 
     if (!normalizedDestination) {
@@ -869,8 +873,12 @@ type ApiRole = InternalRole;
 Cypress.Commands.add(
   'getAuthToken',
   (role: ApiRole): Cypress.Chainable<string> => {
-    const dniKey = `real${role.charAt(0) + role.slice(1).toLowerCase()}Dni`;
-    const passKey = `real${role.charAt(0) + role.slice(1).toLowerCase()}Password`;
+    const pascalRole = role
+      .split('_')
+      .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+      .join('');
+    const dniKey = `real${pascalRole}Dni`;
+    const passKey = `real${pascalRole}Password`;
 
     const dni = String(Cypress.env(dniKey) ?? '').trim();
     const password = String(Cypress.env(passKey) ?? '').trim();
@@ -992,6 +1000,86 @@ Cypress.Commands.add(
   },
 );
 
+/**
+ * Fuerza el due_date de una cuota vía la ruta test-only del backend
+ * (PATCH /api/test/installments/:id/force-due-date, requiere
+ * ENABLE_TEST_ROUTES=true). Resetea last_penalty_applied_at para que el
+ * cron de mora la trate como vencida desde la nueva fecha.
+ */
+Cypress.Commands.add(
+  'apiForceInstallmentDueDate',
+  (
+    installmentId: string,
+    dueDate: string,
+  ): Cypress.Chainable<Record<string, unknown>> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest(
+          'PATCH',
+          `/test/installments/${installmentId}/force-due-date`,
+          { due_date: dueDate },
+          token,
+        )
+        .then((res) => {
+          expect(res.status, 'forzar due_date de cuota (test route)').to.eq(
+            200,
+          );
+          return res.body.data as Record<string, unknown>;
+        }),
+    );
+  },
+);
+
+/**
+ * Fuerza el created_at de un crédito vía la ruta test-only del backend
+ * (PATCH /api/test/credits/:id/force-created-at, requiere
+ * ENABLE_TEST_ROUTES=true). Para E2E del cron creditExpiry.
+ */
+Cypress.Commands.add(
+  'apiForceCreditCreatedAt',
+  (
+    creditId: string,
+    createdAt: string,
+  ): Cypress.Chainable<Record<string, unknown>> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest(
+          'PATCH',
+          `/test/credits/${creditId}/force-created-at`,
+          { created_at: createdAt },
+          token,
+        )
+        .then((res) => {
+          expect(res.status, 'forzar created_at de crédito (test route)').to.eq(
+            200,
+          );
+          return res.body.data as Record<string, unknown>;
+        }),
+    );
+  },
+);
+
+/**
+ * Fuerza a vencidos los tokens (blacklist + refresh) de un usuario vía la
+ * ruta test-only del backend (PATCH /api/test/tokens/:userId/force-expire,
+ * requiere ENABLE_TEST_ROUTES=true). Para E2E del cron tokenCleanup.
+ */
+Cypress.Commands.add(
+  'apiForceTokensExpired',
+  (userId: string): Cypress.Chainable<Record<string, unknown>> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest('PATCH', `/test/tokens/${userId}/force-expire`, null, token)
+        .then((res) => {
+          expect(res.status, 'forzar vencimiento de tokens (test route)').to.eq(
+            200,
+          );
+          return res.body.data as Record<string, unknown>;
+        }),
+    );
+  },
+);
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -1028,6 +1116,15 @@ declare global {
       }): Chainable<Record<string, unknown>>;
       apiUnlockUser(userId: string): Chainable<void>;
       apiApproveCredit(creditId: string): Chainable<Record<string, unknown>>;
+      apiForceInstallmentDueDate(
+        installmentId: string,
+        dueDate: string,
+      ): Chainable<Record<string, unknown>>;
+      apiForceCreditCreatedAt(
+        creditId: string,
+        createdAt: string,
+      ): Chainable<Record<string, unknown>>;
+      apiForceTokensExpired(userId: string): Chainable<Record<string, unknown>>;
     }
   }
 }

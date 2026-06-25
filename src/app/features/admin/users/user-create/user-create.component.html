@@ -85,6 +85,8 @@
         optionLabel="label"
         optionValue="value"
         placeholder="Seleccionar rol"
+        [filter]="roleOptions.length > 10"
+        filterBy="label"
         styleClass="w-full"
         appendTo="body"
         [class.ng-invalid]="isInvalid('role')"

@@ -130,6 +130,82 @@ describe('CashRegisterService', () => {
     );
   });
 
+  it('createManualIncomeCompany resuelve la Caja General y posta el movimiento MANUAL_INCOME', () => {
+    apiSpy.get.and.returnValue(
+      of([
+        {
+          id: 'acc-general',
+          name: 'Caja General',
+          type: 'GENERAL_CASH',
+          is_active: true,
+          current_balance: 5000,
+          created_at: '2026-06-15T00:00:00Z',
+        },
+      ]),
+    );
+    apiSpy.post.and.returnValue(of({}));
+
+    service
+      .createManualIncomeCompany({
+        amount: 1200,
+        description: 'Aporte de capital',
+        receiptReference: 'REF-001',
+      })
+      .subscribe(() => {});
+
+    const [path, body] = apiSpy.post.calls.mostRecent().args;
+    expect(path).toBe('cash-accounts/acc-general/movements');
+    expect((body as Record<string, unknown>)['movement_type']).toBe(
+      'MANUAL_INCOME',
+    );
+    expect((body as Record<string, unknown>)['amount']).toBe(1200);
+    expect((body as Record<string, unknown>)['description']).toBe(
+      'Aporte de capital (Ref: REF-001)',
+    );
+  });
+
+  it('createManualIncomeCompany envía el split efectivo/transferencia cuando se provee', () => {
+    apiSpy.get.and.returnValue(
+      of([
+        {
+          id: 'acc-general',
+          name: 'Caja General',
+          type: 'GENERAL_CASH',
+          is_active: true,
+          current_balance: 5000,
+          created_at: '2026-06-15T00:00:00Z',
+        },
+      ]),
+    );
+    apiSpy.post.and.returnValue(of({}));
+
+    service
+      .createManualIncomeCompany({
+        amount: 500,
+        amountCash: 300,
+        amountTransfer: 200,
+        description: 'Ingreso mixto',
+      })
+      .subscribe(() => {});
+
+    const [, body] = apiSpy.post.calls.mostRecent().args;
+    expect((body as Record<string, unknown>)['amount_cash']).toBe(300);
+    expect((body as Record<string, unknown>)['amount_transfer']).toBe(200);
+  });
+
+  it('createManualIncomeCompany falla si no existe Caja General activa', (done) => {
+    apiSpy.get.and.returnValue(of([]));
+
+    service
+      .createManualIncomeCompany({ amount: 100, description: 'x' })
+      .subscribe({
+        error: (err) => {
+          expect(err.status).toBe(409);
+          done();
+        },
+      });
+  });
+
   it('getAll maps list items to camelCase with EXACT status', (done) => {
     apiSpy.get.and.returnValue(of([mockRegisterRaw]));
     service.getAll().subscribe((items) => {

@@ -11,28 +11,28 @@
   </div>
 }
 
-<div class="p-6">
+<div class="p-6 admin-mobile-page" data-cy="admin-approvals-page">
   <div
     class="ff-list-header mb-6"
     style="border-radius: 12px; border-bottom: none"
   >
     <div>
-      <h1 class="ff-page-title">
-        Aprobación de Operaciones
-      </h1>
-      <p class="ff-page-subtitle">
-        Revisa y valida las solicitudes entrantes.
-      </p>
+      <h1 class="ff-page-title">Aprobación de Operaciones</h1>
+      <p class="ff-page-subtitle">Revisa y valida las solicitudes entrantes.</p>
     </div>
     @if (approvals.length > 0 && !loading) {
-      <p-badge [value]="approvals.length" severity="warning" badgeSize="large" />
+      <p-badge
+        [value]="approvals.length"
+        severity="warning"
+        badgeSize="large"
+      />
     }
   </div>
 
   <div class="ff-panel">
     <div class="ff-list-header">
       <div class="ff-list-header__actions" style="flex: 1; flex-wrap: wrap">
-        <p-iconField iconPosition="left">
+        <p-iconField iconPosition="left" styleClass="w-full md:w-auto">
           <p-inputIcon
             styleClass="pi pi-search z-10"
             style="color: var(--ff-text-muted)"
@@ -42,16 +42,20 @@
             type="text"
             [(ngModel)]="searchTerm"
             placeholder="Buscar por cliente o vendedor..."
-            class="h-11 pl-10 w-full md:w-72"
+            class="h-11 pl-10 w-full md:w-72 text-base md:text-sm"
+            data-cy="admin-approvals-search-input"
           />
         </p-iconField>
 
         <p-dropdown
+          data-cy="admin-approvals-type-filter"
           [options]="TYPE_OPTIONS"
           [(ngModel)]="filterType"
           optionLabel="label"
           optionValue="value"
           placeholder="Todos"
+          [filter]="TYPE_OPTIONS.length > 10"
+          filterBy="label"
           [showClear]="!!filterType"
           styleClass="h-11 w-full md:w-52"
           appendTo="body"
@@ -71,126 +75,248 @@
     </div>
 
     @if (loading) {
-      <p-table
-        [value]="[1, 2, 3, 4, 5]"
-        styleClass="p-datatable-gridlines p-datatable-sm"
-        responsiveLayout="scroll"
+      <div class="admin-desktop-only">
+        <p-table
+          [value]="[1, 2, 3, 4, 5]"
+          styleClass="p-datatable-gridlines p-datatable-sm"
+          responsiveLayout="scroll"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Operación</th>
+              <th class="text-right">Monto</th>
+              <th>Vendedor</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body">
+            <tr>
+              <td><p-skeleton width="80%" /></td>
+              <td><p-skeleton width="90%" /></td>
+              <td><p-skeleton width="60%" /></td>
+              <td class="text-right flex justify-end">
+                <p-skeleton width="50%" />
+              </td>
+              <td><p-skeleton width="70%" /></td>
+              <td class="text-center flex justify-center">
+                <p-skeleton
+                  width="6rem"
+                  height="1.5rem"
+                  styleClass="rounded-full"
+                />
+              </td>
+              <td>
+                <div class="flex justify-center gap-2">
+                  <p-skeleton shape="circle" size="2rem" />
+                  <p-skeleton shape="circle" size="2rem" />
+                  <p-skeleton shape="circle" size="2rem" />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+      <div
+        class="admin-mobile-card-list admin-mobile-only"
+        data-cy="admin-approvals-mobile-skeleton-list"
       >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Fecha</th>
-            <th>Cliente</th>
-            <th>Operación</th>
-            <th class="text-right">Monto</th>
-            <th>Vendedor</th>
-            <th class="text-center">Estado</th>
-            <th class="text-center">Acciones</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body">
-          <tr>
-            <td><p-skeleton width="80%" /></td>
-            <td><p-skeleton width="90%" /></td>
-            <td><p-skeleton width="60%" /></td>
-            <td class="text-right flex justify-end">
-              <p-skeleton width="50%" />
-            </td>
-            <td><p-skeleton width="70%" /></td>
-            <td class="text-center flex justify-center">
-              <p-skeleton
-                width="6rem"
-                height="1.5rem"
-                styleClass="rounded-full"
-              />
-            </td>
-            <td>
-              <div class="flex justify-center gap-2">
-                <p-skeleton shape="circle" size="2rem" />
-                <p-skeleton shape="circle" size="2rem" />
-                <p-skeleton shape="circle" size="2rem" />
+        @for (i of [1, 2, 3]; track i) {
+          <div
+            class="admin-mobile-card admin-mobile-card--skeleton"
+            data-cy="admin-approvals-mobile-skeleton-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex flex-col gap-2 flex-1">
+                <p-skeleton height="1rem" width="70%" borderRadius="0.5rem" />
+                <p-skeleton
+                  height="0.875rem"
+                  width="45%"
+                  borderRadius="0.5rem"
+                />
               </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+              <p-skeleton height="1.5rem" width="6rem" borderRadius="999px" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <p-skeleton height="2.5rem" borderRadius="0.625rem" />
+              <p-skeleton height="2.5rem" borderRadius="0.625rem" />
+            </div>
+            <p-skeleton height="2.5rem" borderRadius="0.75rem" />
+          </div>
+        }
+      </div>
     } @else {
-      <p-table
-        [value]="filteredApprovals"
-        [paginator]="true"
-        [rows]="10"
-        styleClass="p-datatable-gridlines p-datatable-sm"
-        responsiveLayout="scroll"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Fecha</th>
-            <th>Cliente / DNI</th>
-            <th>Operación</th>
-            <th class="text-right">Monto</th>
-            <th>Vendedor</th>
-            <th class="text-center">Estado</th>
-            <th class="text-center">Acciones</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-app>
-          <tr>
-            <td>{{ app.createdAt | date: 'dd/MM/yy' }}</td>
-            <td class="font-medium">
-              {{ app.customerName }}
-              <span
-                class="ff-mono text-xs ml-1"
-                style="color: var(--ff-text-muted)"
-                >{{ app.customerDni }}</span
+      <div class="admin-desktop-only">
+        <p-table
+          [value]="filteredApprovals"
+          [paginator]="true"
+          [rows]="10"
+          styleClass="p-datatable-gridlines p-datatable-sm"
+          responsiveLayout="scroll"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Fecha</th>
+              <th>Cliente / DNI</th>
+              <th>Operación</th>
+              <th class="text-right">Monto</th>
+              <th>Vendedor</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-app>
+            <tr>
+              <td>{{ app.createdAt | date: "dd/MM/yy" }}</td>
+              <td class="font-medium">
+                {{ app.customerName }}
+                <span
+                  class="ff-mono text-xs ml-1"
+                  style="color: var(--ff-text-muted)"
+                  >{{ app.customerDni }}</span
+                >
+              </td>
+              <td>{{ app.type === "SALE" ? "Venta" : "Préstamo" }}</td>
+              <td
+                class="text-right ff-mono font-bold"
+                style="color: var(--ff-accent)"
               >
-            </td>
-            <td>{{ app.type === "SALE" ? "Venta" : "Préstamo" }}</td>
-            <td
-              class="text-right ff-mono font-bold"
-              style="color: var(--ff-accent)"
-            >
-              {{ app.totalAmount | currencyArs: 2 }}
-            </td>
-            <td style="color: var(--ff-text-secondary)">
-              {{ app.createdByName ?? "—" }}
-            </td>
-            <td class="text-center">
-              <span class="ff-badge ff-badge--pendiente">PENDIENTE</span>
-            </td>
-            <td class="text-center">
-              <div class="flex justify-center gap-2">
-                <p-button
-                  icon="pi pi-eye"
-                  severity="secondary"
-                  [rounded]="true"
-                  [outlined]="true"
-                  styleClass="approval-action-button"
-                  (onClick)="viewDetail(app.id)"
-                  pTooltip="Ver detalle"
-                  tooltipPosition="top"
-                />
-                <p-button
-                  icon="pi pi-check"
-                  severity="success"
-                  [rounded]="true"
-                  styleClass="approval-action-button"
-                  (onClick)="onApprove(app)"
-                  pTooltip="Aprobar"
-                  tooltipPosition="top"
-                />
-                <p-button
-                  icon="pi pi-times"
-                  severity="danger"
-                  [rounded]="true"
-                  styleClass="approval-action-button"
-                  (onClick)="onReject(app)"
-                  pTooltip="Rechazar"
-                  tooltipPosition="top"
-                />
+                {{ app.totalAmount | currencyArs: 2 }}
+              </td>
+              <td style="color: var(--ff-text-secondary)">
+                {{ app.createdByName ?? "—" }}
+              </td>
+              <td class="text-center">
+                <span class="ff-badge ff-badge--pendiente">PENDIENTE</span>
+              </td>
+              <td class="text-center">
+                <div class="flex justify-center gap-2">
+                  <p-button
+                    icon="pi pi-eye"
+                    severity="secondary"
+                    [rounded]="true"
+                    [outlined]="true"
+                    styleClass="approval-action-button"
+                    (onClick)="viewDetail(app.id)"
+                    pTooltip="Ver detalle"
+                    tooltipPosition="top"
+                  />
+                  <p-button
+                    icon="pi pi-check"
+                    severity="success"
+                    [rounded]="true"
+                    styleClass="approval-action-button"
+                    (onClick)="onApprove(app)"
+                    pTooltip="Aprobar"
+                    tooltipPosition="top"
+                  />
+                  <p-button
+                    icon="pi pi-times"
+                    severity="danger"
+                    [rounded]="true"
+                    styleClass="approval-action-button ff-reject-action"
+                    (onClick)="onReject(app)"
+                    pTooltip="Rechazar"
+                    tooltipPosition="top"
+                  />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <div
+        class="admin-mobile-card-list admin-mobile-only"
+        data-cy="admin-approvals-mobile-list"
+      >
+        @for (app of filteredApprovals; track app.id) {
+          <article
+            class="admin-mobile-card"
+            data-cy="admin-approvals-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <h2 class="admin-mobile-card__title">{{ app.customerName }}</h2>
+                <p class="admin-mobile-card__meta ff-mono">
+                  DNI {{ app.customerDni }}
+                </p>
               </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+              <span class="ff-badge ff-badge--pendiente shrink-0"
+                >PENDIENTE</span
+              >
+            </div>
+            <div class="admin-mobile-kv-grid">
+              <div>
+                <span>Operación</span>
+                <strong>{{
+                  app.type === "SALE" ? "Venta" : "Préstamo"
+                }}</strong>
+              </div>
+              <div>
+                <span>Monto</span>
+                <strong class="ff-mono" style="color: var(--ff-accent)">{{
+                  app.totalAmount | currencyArs: 2
+                }}</strong>
+              </div>
+              <div>
+                <span>Vendedor</span>
+                <strong>{{ app.createdByName ?? "—" }}</strong>
+              </div>
+              <div>
+                <span>Fecha</span>
+                <strong>{{ app.createdAt | date: "dd/MM/yy" }}</strong>
+              </div>
+            </div>
+            <div class="admin-mobile-approval-actions">
+              <p-button
+                icon="pi pi-eye"
+                label="Ver"
+                severity="secondary"
+                [outlined]="true"
+                styleClass="w-full h-11 rounded-xl justify-center"
+                (onClick)="viewDetail(app.id)"
+              />
+              <p-button
+                data-cy="admin-approvals-mobile-approve-action"
+                icon="pi pi-check"
+                label="Aprobar"
+                severity="success"
+                styleClass="w-full h-11 rounded-xl justify-center"
+                (onClick)="onApprove(app)"
+              />
+              <p-button
+                icon="pi pi-times"
+                label="Rechazar"
+                severity="danger"
+                styleClass="ff-reject-action w-full h-11 rounded-xl justify-center"
+                (onClick)="onReject(app)"
+              />
+            </div>
+          </article>
+        } @empty {
+          <div
+            class="py-10 text-center text-sm"
+            style="color: var(--ff-text-muted)"
+            data-cy="admin-approvals-mobile-empty-state"
+          >
+            No hay operaciones pendientes para aprobar.
+          </div>
+        }
+        @if (filteredApprovals.length > 5 && showBackTop) {
+          <button
+            type="button"
+            class="admin-mobile-back-top-fab"
+            data-cy="admin-approvals-back-top-action"
+            aria-label="Volver arriba"
+            (click)="scrollToTop()"
+          >
+            <i class="pi pi-arrow-up"></i>
+          </button>
+        }
+      </div>
     }
   </div>
 </div>
@@ -200,7 +326,7 @@
   [(visible)]="showApproveDialog"
   header="Aprobar Operación"
   [modal]="true"
-  [style]="{ width: '460px' }"
+  [style]="{ width: 'min(460px, calc(100vw - 2rem))' }"
   [draggable]="false"
   [resizable]="false"
 >
@@ -220,27 +346,33 @@
         Monto: {{ approvingRow?.totalAmount | currencyArs: 2 }}
       </p>
       @if (approvingRowDownPayment > 0) {
-        <p class="text-sm mt-2 p-2 rounded" style="
-          background: rgba(108, 231, 183, 0.1);
-          border: 1px solid var(--ff-success);
-          color: var(--ff-success);
-        ">
+        <p
+          class="text-sm mt-2 p-2 rounded"
+          style="
+            background: rgba(108, 231, 183, 0.1);
+            border: 1px solid var(--ff-success);
+            color: var(--ff-success);
+          "
+        >
           💰 Enganche incluido: {{ approvingRowDownPayment | currencyArs: 2 }}
           <br />
-          <span style="font-size: 0.75rem; opacity: 0.8;">
+          <span style="font-size: 0.75rem; opacity: 0.8">
             Se aprobará junto con el crédito (operación atómica)
           </span>
         </p>
       }
       @if (approvingRowPrepaidInstallments > 0) {
-        <p class="text-sm mt-2 p-2 rounded" style="
-          background: rgba(59, 130, 246, 0.10);
-          border: 1px solid rgba(59, 130, 246, 0.45);
-          color: #93C5FD;
-        ">
+        <p
+          class="text-sm mt-2 p-2 rounded"
+          style="
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.45);
+            color: #93c5fd;
+          "
+        >
           ⏩ Cuotas adelantadas: {{ approvingRowPrepaidInstallments }} cuota(s)
           <br />
-          <span style="font-size: 0.75rem; opacity: 0.85;">
+          <span style="font-size: 0.75rem; opacity: 0.85">
             Método: {{ paymentMethodLabel(approvingRowPaymentMethod) }}
           </span>
         </p>
@@ -261,7 +393,8 @@
           {{ approvingRow?.installmentsCount }} cuota(s)
         </div>
         <p class="text-xs" style="color: var(--ff-text-muted)">
-          Se aprobará la operación con las cuotas ya definidas en la pre-operación.
+          Se aprobará la operación con las cuotas ya definidas en la
+          pre-operación.
         </p>
       </div>
     } @else {
@@ -342,7 +475,7 @@
   [(visible)]="showRejectDialog"
   header="Rechazar Operación"
   [modal]="true"
-  [style]="{ width: '460px' }"
+  [style]="{ width: 'min(460px, calc(100vw - 2rem))' }"
   [draggable]="false"
   [resizable]="false"
 >
@@ -406,7 +539,7 @@
         label="Cancelar"
         severity="secondary"
         [outlined]="true"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        styleClass="ff-reject-action w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="showRejectDialog = false"
       />
       <p-button

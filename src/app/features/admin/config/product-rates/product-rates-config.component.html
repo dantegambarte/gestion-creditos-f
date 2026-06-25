@@ -9,6 +9,8 @@
       optionLabel="label"
       optionValue="value"
       placeholder="Todos los productos"
+      [filter]="productFilterOptions.length > 10"
+      filterBy="label"
       styleClass="h-10 text-sm rounded-xl"
     />
     <p-button
@@ -30,33 +32,33 @@
       </div>
     } @else {
       <div
-        class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden"
+        class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
       >
         <table class="w-full text-sm">
           <thead>
-            <tr class="border-b border-slate-800">
+            <tr class="border-b border-[var(--ff-border-subtle)]">
               <th
-                class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+                class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
               >
                 Frecuencia
               </th>
               <th
-                class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+                class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
               >
                 Cuotas
               </th>
               <th
-                class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+                class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
               >
                 Tasa
               </th>
               <th
-                class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+                class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
               >
                 Estado
               </th>
               <th
-                class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+                class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-muted)]"
               >
                 Acciones
               </th>
@@ -65,7 +67,10 @@
           <tbody>
             @if (groups.length === 0) {
               <tr>
-                <td colspan="5" class="px-5 py-10 text-center text-slate-500">
+                <td
+                  colspan="5"
+                  class="px-5 py-10 text-center text-[var(--ff-text-muted)]"
+                >
                   Sin tasas para los filtros seleccionados.
                 </td>
               </tr>
@@ -79,18 +84,20 @@
                       class="text-xs font-bold text-blue-400 uppercase tracking-widest whitespace-nowrap"
                       >{{ group.productName }}</span
                     >
-                    <div class="flex-1 h-px bg-slate-800"></div>
+                    <div class="h-px flex-1 bg-[var(--ff-border-subtle)]"></div>
                   </div>
                 </td>
               </tr>
               @for (rate of group.rates; track rate.id) {
                 <tr
-                  class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors"
+                  class="border-b border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
                 >
-                  <td class="px-5 py-3 text-slate-400">
+                  <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
                     {{ freqLabel(rate.paymentFrequency) }}
                   </td>
-                  <td class="px-5 py-3 font-medium text-slate-200">
+                  <td
+                    class="px-5 py-3 font-medium text-[var(--ff-text-primary)]"
+                  >
                     {{ rate.installmentsCount }}
                   </td>
                   <td class="px-5 py-3 font-bold text-emerald-400">
@@ -155,7 +162,7 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccionar producto..."
-            [filter]="true"
+            [filter]="activeProductOptions.length > 10"
             filterBy="label"
             styleClass="w-full h-11 rounded-xl"
             appendTo="body"
@@ -170,6 +177,8 @@
             optionLabel="label"
             optionValue="value"
             placeholder="Seleccionar..."
+            [filter]="freqOptions.length > 10"
+            filterBy="label"
             styleClass="w-full h-11 rounded-xl"
           />
         </div>
@@ -192,7 +201,7 @@
           <p-inputNumber
             [(ngModel)]="createForm.ratePercent"
             [min]="0"
-            [max]="100"
+            [max]="10000"
             [minFractionDigits]="2"
             [maxFractionDigits]="4"
             styleClass="w-full"
@@ -243,27 +252,27 @@
 >
   @if (editingRate) {
     <div class="space-y-3 py-1">
-      <p class="text-sm text-slate-400">
+      <p class="text-sm text-[var(--ff-text-secondary)]">
         {{ editingRate.productName }} ·
         {{ freqLabel(editingRate.paymentFrequency) }} ·
         {{ editingRate.installmentsCount }} cuotas
       </p>
       <div class="flex flex-col gap-1.5">
         <label
-          class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+          class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
           >Nueva tasa (%)</label
         >
         <p-inputNumber
           [(ngModel)]="editRatePercent"
           [min]="0"
-          [max]="100"
+          [max]="10000"
           [minFractionDigits]="2"
           [maxFractionDigits]="4"
           styleClass="w-full"
           inputStyleClass="w-full"
           placeholder="Ej: 8"
         />
-        <span class="text-xs text-slate-500"
+        <span class="text-xs text-[var(--ff-text-muted)]"
           >Ingresá el valor como porcentaje (ej: 8 = 8%)</span
         >
       </div>

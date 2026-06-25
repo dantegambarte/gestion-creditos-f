@@ -8,7 +8,9 @@
 >
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
     <div class="flex flex-col gap-1.5">
-      <label class="text-xs font-medium text-slate-400 uppercase tracking-wide">
+      <label
+        class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
+      >
         Fecha{{ isEditMode ? " (no editable)" : "" }}
       </label>
       <p-calendar
@@ -23,18 +25,23 @@
         [autoZIndex]="true"
         appendTo="body"
         styleClass="w-full op-calendar"
-        inputStyleClass="w-full bg-[#121520] border border-[#1A1D27] text-white px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
+        inputStyleClass="w-full bg-[var(--ff-panel)] border border-[var(--ff-border-subtle)] text-[var(--ff-text-primary)] px-4 py-3 rounded-xl focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]/50 outline-none transition-all appearance-none"
       />
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+      <label
+        class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
         >Tipo</label
       >
       <p-dropdown
         [options]="holidayTypeOptions"
         optionLabel="label"
         optionValue="value"
+        [filter]="holidayTypeOptions.length > 10"
+        filterBy="label"
+
+
         [(ngModel)]="form.type"
         (onChange)="onTypeChanged()"
         styleClass="w-full h-11 rounded-xl"
@@ -43,7 +50,8 @@
     </div>
 
     <div class="md:col-span-2 flex flex-col gap-1.5">
-      <label class="text-xs font-medium text-slate-400 uppercase tracking-wide"
+      <label
+        class="text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
         >Nombre</label
       >
       <input
@@ -59,12 +67,14 @@
     </div>
 
     <div
-      class="md:col-span-2 space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3"
+      class="md:col-span-2 space-y-3 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
     >
       <div class="flex items-center justify-between gap-4">
         <div>
-          <p class="text-sm text-slate-200">Afecta vencimientos</p>
-          <p class="text-xs text-slate-500">
+          <p class="text-sm text-[var(--ff-text-primary)]">
+            Afecta vencimientos
+          </p>
+          <p class="text-xs text-[var(--ff-text-muted)]">
             {{
               isEditMode
                 ? "Controla si este feriado debe intervenir en fechas de cuota."
@@ -77,8 +87,8 @@
 
       <div class="flex items-center justify-between gap-4">
         <div>
-          <p class="text-sm text-slate-200">Anual repetible</p>
-          <p class="text-xs text-slate-500">
+          <p class="text-sm text-[var(--ff-text-primary)]">Anual repetible</p>
+          <p class="text-xs text-[var(--ff-text-muted)]">
             {{
               isEditMode
                 ? "Solo se duplica automáticamente si este flag está activo."
@@ -107,8 +117,8 @@
 
       <div class="flex items-center justify-between gap-4">
         <div>
-          <p class="text-sm text-slate-200">Activo</p>
-          <p class="text-xs text-slate-500">
+          <p class="text-sm text-[var(--ff-text-primary)]">Activo</p>
+          <p class="text-xs text-[var(--ff-text-muted)]">
             {{
               isEditMode
                 ? "Podés desactivarlo sin borrar histórico."

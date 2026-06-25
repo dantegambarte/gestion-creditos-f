@@ -18,18 +18,26 @@
           [(ngModel)]="selectedStatus"
           (onChange)="applyFilters()"
           placeholder="Estado"
+          [filter]="statusOptions.length > 10"
+          filterBy="label"
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
+
+
         />
         <p-dropdown
           [options]="typeOptions"
           [(ngModel)]="selectedType"
           (onChange)="applyFilters()"
           placeholder="Tipo"
+          [filter]="typeOptions.length > 10"
+          filterBy="label"
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
+
+
         />
       </div>
       @if (canCreate) {

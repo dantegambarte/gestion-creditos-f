@@ -45,8 +45,7 @@
                     label="Editar"
                     icon="pi pi-pencil"
                     severity="warning"
-                    size="small"
-                    styleClass="px-4 rounded-xl"
+                    styleClass="h-11 px-5 rounded-xl shadow-sm"
                     (onClick)="enterEditMode()"
                   />
                   @if (customer.status === "ACTIVE") {
@@ -55,8 +54,7 @@
                       label="Desactivar"
                       icon="pi pi-ban"
                       severity="danger"
-                      size="small"
-                      styleClass="px-4 rounded-xl"
+                      styleClass="h-11 px-5 rounded-xl shadow-sm"
                       (onClick)="confirmDeactivate()"
                     />
                   } @else {
@@ -65,8 +63,7 @@
                       label="Activar"
                       icon="pi pi-check-circle"
                       severity="success"
-                      size="small"
-                      styleClass="px-4 rounded-xl"
+                      styleClass="h-11 px-5 rounded-xl shadow-sm"
                       (onClick)="confirmActivate()"
                     />
                   }

@@ -25,6 +25,10 @@
       [(ngModel)]="selectedEvento"
       optionLabel="label"
       optionValue="value"
+      [filter]="eventoOptions.length > 10"
+      filterBy="label"
+
+
       appendTo="body"
       [baseZIndex]="1100"
       styleClass="hist-evento-select"

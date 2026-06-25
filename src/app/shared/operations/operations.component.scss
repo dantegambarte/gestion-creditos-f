@@ -35,7 +35,7 @@
 .operations-filters {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 0 16px 14px;
   flex-wrap: wrap;
 }
@@ -51,7 +51,7 @@
   position: absolute;
   left: 14px;
   z-index: 1;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--ff-text-muted);
   pointer-events: none;
 }
@@ -60,7 +60,7 @@
   border: 0;
   background: transparent;
   color: var(--ff-text-secondary);
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   padding: 0 4px;
 }
@@ -70,12 +70,9 @@
 }
 
 :host ::ng-deep .operations-filter-dropdown {
-  min-width: 110px;
-}
-
-:host ::ng-deep .operations-filter-dropdown .p-dropdown {
-  height: 36px;
-  border-radius: 6px;
+  width: 180px;
+  height: 44px;
+  border-radius: 12px;
   border: 1px solid var(--ff-border);
   background: var(--ff-secondary);
 }
@@ -83,8 +80,16 @@
 :host ::ng-deep .operations-filter-dropdown .p-dropdown-label {
   display: flex;
   align-items: center;
+  padding: 0 0.875rem;
   color: var(--ff-text-primary);
-  font-size: 13px;
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .operations-search,
+  :host ::ng-deep .operations-filter-dropdown {
+    width: 100%;
+  }
 }
 
 :host ::ng-deep .operations-filter-dropdown .p-dropdown-trigger {
@@ -110,7 +115,7 @@
   border: 0;
   background: var(--ff-panel);
   color: var(--ff-text-muted);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -141,19 +146,19 @@
 .operations-client__name {
   font-weight: 700;
   color: var(--ff-text-primary);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .operations-client__dni,
 .operations-muted {
   color: var(--ff-text-muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .operations-money {
   font-weight: 700;
   color: var(--ff-text-primary);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .operations-type-badge {
@@ -183,7 +188,7 @@
   min-height: 22px;
   padding: 0 9px;
   border-radius: 5px;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
 }
 
@@ -223,36 +228,6 @@
 .operations-action:hover {
   background: var(--ff-surface-hover);
   color: var(--ff-accent);
-}
-
-:host ::ng-deep .operations-table .p-paginator {
-  padding: 10px 14px;
-  border: 0;
-  background: var(--ff-panel);
-  color: var(--ff-text-secondary);
-}
-
-:host ::ng-deep .operations-table .p-paginator .p-paginator-pages .p-paginator-page,
-:host ::ng-deep .operations-table .p-paginator .p-paginator-first,
-:host ::ng-deep .operations-table .p-paginator .p-paginator-prev,
-:host ::ng-deep .operations-table .p-paginator .p-paginator-next,
-:host ::ng-deep .operations-table .p-paginator .p-paginator-last {
-  min-width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  color: var(--ff-text-secondary);
-}
-
-:host ::ng-deep .operations-table .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
-  background: var(--ff-accent);
-  color: var(--primary-color-text);
-}
-
-:host ::ng-deep .operations-table .p-paginator .p-dropdown {
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid var(--ff-border);
-  background: var(--ff-secondary);
 }
 
 @media (max-width: 768px) {

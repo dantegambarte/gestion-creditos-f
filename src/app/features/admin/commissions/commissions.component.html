@@ -36,6 +36,7 @@
   <!-- TAB: Resumen semanal -->
   @if (vm.activeTab() === "resumen") {
     <app-commissions-summary-tab
+      class="block mt-4"
       [loadingSummary]="vm.loadingSummary()"
       [errorSummary]="vm.errorSummary()"
       [employees]="vm.employees()"

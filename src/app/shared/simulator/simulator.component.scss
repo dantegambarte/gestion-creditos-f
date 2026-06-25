@@ -59,7 +59,7 @@
 .sim-card__eyebrow,
 .sim-kicker {
   color: var(--ff-text-muted);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -94,7 +94,7 @@
   border: 1px solid transparent;
   border-radius: 10px;
   color: var(--ff-text-secondary);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -123,14 +123,14 @@
 
 .sim-field label {
   color: var(--ff-text-primary);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .sim-note,
 .sim-muted {
   color: var(--ff-text-secondary);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -170,7 +170,7 @@
 
 .sim-variant__label {
   color: var(--ff-text-secondary);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.25;
 }
@@ -211,7 +211,7 @@
   border: 1px solid var(--ff-border);
   color: var(--ff-text-secondary);
   background: transparent;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   transition: all 0.18s ease;
 }
@@ -260,7 +260,7 @@
 .sim-option__total {
   margin-top: 4px;
   color: var(--ff-text-muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .sim-more-button {
@@ -282,7 +282,7 @@
 .sim-highlight span {
   margin: 0;
   color: var(--ff-text-secondary);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .sim-highlight strong {
@@ -301,7 +301,7 @@
 .sim-detail-card__label {
   margin: 0 0 5px;
   color: var(--ff-text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -341,7 +341,7 @@
 .sim-empty-state p {
   margin: 0;
   color: var(--ff-text-secondary);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 

@@ -1,8 +1,13 @@
-<div class="p-4" data-cy="seller-clients-page">
+<div class="p-0 md:p-4" data-cy="seller-clients-page">
   <div class="ff-panel">
-    <div class="ff-list-header">
-      <div class="ff-list-header__actions" style="flex: 1; flex-wrap: wrap">
-        <span class="p-input-icon-left">
+    <div
+      class="ff-list-header flex-col items-stretch gap-3 md:flex-row md:items-center"
+    >
+      <div
+        class="ff-list-header__actions flex-col items-stretch gap-3 md:flex-row md:items-center"
+        style="flex: 1; flex-wrap: wrap"
+      >
+        <span class="p-input-icon-left w-full md:w-auto">
           <i class="pi pi-search" style="color: var(--ff-text-muted)"></i>
           <input
             data-cy="seller-clients-search-input"
@@ -11,7 +16,7 @@
             placeholder="Buscar por nombre, DNI o teléfono"
             [(ngModel)]="searchTerm"
             (ngModelChange)="onSearchChange($event)"
-            class="h-11 w-72 pl-10"
+            class="h-11 w-full pl-10 md:w-72"
           />
         </span>
         <p-dropdown
@@ -20,9 +25,12 @@
           [(ngModel)]="selectedStatus"
           (onChange)="applyFilters()"
           placeholder="Estado"
+          [filter]="statusOptions.length > 10"
+          filterBy="label"
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
+          styleClass="w-full md:w-auto"
         />
         @if (canFilterByCollector) {
           <p-dropdown
@@ -33,6 +41,7 @@
             optionLabel="label"
             optionValue="value"
             [disabled]="true"
+            styleClass="w-full md:w-auto"
           />
         }
       </div>
@@ -42,7 +51,7 @@
           label="Nuevo cliente"
           icon="pi pi-plus"
           severity="primary"
-          styleClass="h-11 px-5 rounded-xl shadow-sm"
+          styleClass="h-11 w-full justify-center px-5 rounded-xl shadow-sm md:w-auto"
           (onClick)="navigateToCreate()"
         />
       }
@@ -57,65 +66,140 @@
         <app-empty-state />
       </div>
     } @else {
-      <p-table
-        data-cy="seller-clients-table"
-        [value]="customers"
-        [paginator]="true"
-        [rows]="10"
-        [rowsPerPageOptions]="[10, 25, 50]"
-        paginatorDropdownAppendTo="body"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="{first}–{last} de {totalRecords}"
-        styleClass="p-datatable-sm"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Nombre</th>
-            <th>DNI</th>
-            <th>Teléfono</th>
-            <th>Estado</th>
-            <th>Cobrador</th>
-            <th>Alta</th>
-            <th></th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-customer>
-          <tr>
-            <td class="font-medium">{{ customer.fullName }}</td>
-            <td class="ff-mono">{{ customer.dni }}</td>
-            <td style="color: var(--ff-text-secondary)">
-              {{ customer.phone ?? "—" }}
-            </td>
-            <td>
-              <span
-                class="ff-badge"
-                [class.ff-badge--activo]="customer.status === 'ACTIVE'"
-                [class.ff-badge--inactivo]="customer.status !== 'ACTIVE'"
-                >{{
-                  customer.status === "ACTIVE" ? "Activo" : "Inactivo"
-                }}</span
-              >
-            </td>
-            <td style="color: var(--ff-text-secondary)">
-              {{ customer.collectorName ?? "—" }}
-            </td>
-            <td style="color: var(--ff-text-secondary)">
-              {{ customer.createdAt | date: "dd/MM/yyyy" }}
-            </td>
-            <td>
-              <p-button
-                data-cy="seller-clients-view-detail-action"
-                label="Ver"
-                icon="pi pi-eye"
-                severity="secondary"
-                [outlined]="true"
-                size="small"
-                (onClick)="navigateToDetail(customer.id)"
-              />
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+      <div class="hidden md:block">
+        <p-table
+          data-cy="seller-clients-table"
+          [value]="customers"
+          [paginator]="true"
+          [rows]="10"
+          [rowsPerPageOptions]="[10, 25, 50]"
+          paginatorDropdownAppendTo="body"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="{first}–{last} de {totalRecords}"
+          styleClass="p-datatable-sm"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Nombre</th>
+              <th>DNI</th>
+              <th>Teléfono</th>
+              <th>Estado</th>
+              <th>Cobrador</th>
+              <th>Alta</th>
+              <th></th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-customer>
+            <tr>
+              <td class="font-medium">{{ customer.fullName }}</td>
+              <td class="ff-mono">{{ customer.dni }}</td>
+              <td style="color: var(--ff-text-secondary)">
+                {{ customer.phone ?? "—" }}
+              </td>
+              <td>
+                <span
+                  class="ff-badge"
+                  [class.ff-badge--activo]="customer.status === 'ACTIVE'"
+                  [class.ff-badge--inactivo]="customer.status !== 'ACTIVE'"
+                  >{{
+                    customer.status === "ACTIVE" ? "Activo" : "Inactivo"
+                  }}</span
+                >
+              </td>
+              <td style="color: var(--ff-text-secondary)">
+                {{ customer.collectorName ?? "—" }}
+              </td>
+              <td style="color: var(--ff-text-secondary)">
+                {{ customer.createdAt | date: "dd/MM/yyyy" }}
+              </td>
+              <td>
+                <p-button
+                  data-cy="seller-clients-view-detail-action"
+                  label="Ver"
+                  icon="pi pi-eye"
+                  severity="secondary"
+                  [outlined]="true"
+                  size="small"
+                  (onClick)="navigateToDetail(customer.id)"
+                />
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+
+      <div class="block md:hidden">
+        <div class="flex flex-col gap-3">
+          @for (customer of customers; track customer.id) {
+            <article
+              class="rounded-[10px] border border-[var(--ff-border)] bg-[var(--ff-panel)] p-3.5"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <h2
+                    class="truncate text-sm font-bold leading-5 text-[var(--ff-text-primary)]"
+                  >
+                    {{ customer.fullName }}
+                  </h2>
+                  <p class="ff-mono mt-0.5 text-xs text-[var(--ff-text-muted)]">
+                    DNI {{ customer.dni }}
+                  </p>
+                </div>
+                <span
+                  class="ff-badge shrink-0"
+                  [class.ff-badge--activo]="customer.status === 'ACTIVE'"
+                  [class.ff-badge--inactivo]="customer.status !== 'ACTIVE'"
+                  >{{
+                    customer.status === "ACTIVE" ? "Activo" : "Inactivo"
+                  }}</span
+                >
+              </div>
+
+              <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div class="rounded-lg bg-[var(--ff-secondary)] p-2">
+                  <div
+                    class="text-[10px] uppercase tracking-[0.08em] text-[var(--ff-text-muted)]"
+                  >
+                    Teléfono
+                  </div>
+                  <div
+                    class="mt-1 truncate font-medium text-[var(--ff-text-secondary)]"
+                  >
+                    {{ customer.phone ?? "—" }}
+                  </div>
+                </div>
+                <div class="rounded-lg bg-[var(--ff-secondary)] p-2">
+                  <div
+                    class="text-[10px] uppercase tracking-[0.08em] text-[var(--ff-text-muted)]"
+                  >
+                    Cobrador
+                  </div>
+                  <div
+                    class="mt-1 truncate font-medium text-[var(--ff-text-secondary)]"
+                  >
+                    {{ customer.collectorName ?? "—" }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-3 flex items-center justify-between gap-3">
+                <span class="text-xs text-[var(--ff-text-muted)]">
+                  Alta {{ customer.createdAt | date: "dd/MM/yyyy" }}
+                </span>
+                <p-button
+                  data-cy="seller-clients-view-detail-action-mobile"
+                  label="Ver cliente"
+                  icon="pi pi-eye"
+                  severity="secondary"
+                  [outlined]="true"
+                  styleClass="h-12 px-4 rounded-xl"
+                  (onClick)="navigateToDetail(customer.id)"
+                />
+              </div>
+            </article>
+          }
+        </div>
+      </div>
     }
   </div>
 </div>

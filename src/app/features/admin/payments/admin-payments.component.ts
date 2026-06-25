@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -13,14 +14,18 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
+import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
-import { Payment, PaymentStatus } from '../../collector/models/payment.model';
+import {
+  Payment,
+  PaymentMethod,
+  PaymentStatus,
+} from '../../collector/models/payment.model';
 import { PaymentsService } from '../../collector/payments.service';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
-import { DirectPaymentDialogComponent } from './direct-payment-dialog/direct-payment-dialog.component';
 import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-detail-dialog.component';
 
 @Component({
@@ -42,7 +47,6 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-de
     ErrorStateComponent,
     MessageModule,
     PaymentDetailDialogComponent,
-    DirectPaymentDialogComponent,
   ],
   providers: [MessageService],
   templateUrl: './admin-payments.component.html',
@@ -50,8 +54,10 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-de
 export class AdminPaymentsComponent implements OnInit {
   private readonly paymentsService = inject(PaymentsService);
   private readonly usersService = inject(UsersService);
+  private readonly dateSvc = inject(DateService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
+  private readonly router = inject(Router);
 
   payments: Payment[] = [];
   collectors: User[] = [];
@@ -63,8 +69,6 @@ export class AdminPaymentsComponent implements OnInit {
 
   showDetailDialog = false;
   selectedPaymentId: string | null = null;
-
-  showDirectDialog = false;
 
   readonly STATUS_OPTIONS = [
     { label: 'Pendiente', value: 'PENDING' as PaymentStatus },
@@ -144,6 +148,49 @@ export class AdminPaymentsComponent implements OnInit {
     return null;
   }
 
+  /**
+   * Devuelve la etiqueta legible del tipo de crédito asociado al cobro.
+   * @param creditType tipo de crédito recibido desde la API
+   */
+  creditTypeLabel(creditType: Payment['creditType']): string {
+    return { SALE: 'Venta', LOAN: 'Préstamo' }[creditType];
+  }
+
+  /**
+   * Devuelve la etiqueta legible del método de pago.
+   * @param method método de pago registrado en el cobro
+   */
+  paymentMethodLabel(method: PaymentMethod): string {
+    return {
+      CASH: 'Efectivo',
+      TRANSFER: 'Transferencia',
+      MIXED: 'Mixto',
+    }[method];
+  }
+
+  /**
+   * Devuelve la severidad visual del método de pago para distinguirlo rápido.
+   * @param method método de pago registrado en el cobro
+   */
+  paymentMethodSeverity(
+    method: PaymentMethod,
+  ): 'info' | 'secondary' | 'warning' {
+    return {
+      CASH: 'warning',
+      TRANSFER: 'info',
+      MIXED: 'secondary',
+    }[method] as 'info' | 'secondary' | 'warning';
+  }
+
+  /**
+   * Indica si la cuota del cobro ya venció y todavía requiere atención.
+   * @param payment cobro de la lista
+   */
+  isOverdue(payment: Payment): boolean {
+    if (payment.status !== 'PENDING') return false;
+    return this.dateSvc.isOverdue(payment.dueDate);
+  }
+
   ngOnInit(): void {
     this.header.set([{ label: 'Cobros' }]);
     this.usersService.listCollectors().subscribe((c) => (this.collectors = c));
@@ -152,6 +199,14 @@ export class AdminPaymentsComponent implements OnInit {
 
   refresh(): void {
     this.load();
+  }
+
+  /**
+   * Lleva al admin al listado de operaciones para buscar el crédito y
+   * registrar el cobro directo desde el cronograma de cuotas.
+   */
+  goToDirectPayment(): void {
+    this.router.navigate(['/admin/operations']);
   }
 
   /**

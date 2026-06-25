@@ -419,6 +419,7 @@ export class CollectionSheetDetailComponent implements OnInit {
       PAYMENT: 'success',
       NO_PAYMENT: 'warning',
       NOT_FOUND: 'secondary',
+      SCHEDULED_VISIT: 'secondary',
     };
     return map[type];
   }

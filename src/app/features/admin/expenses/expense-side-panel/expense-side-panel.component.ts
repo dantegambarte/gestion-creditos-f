@@ -23,6 +23,10 @@ import { AppError } from '../../../../core/models/app-error';
 import { DateService } from '../../../../core/services/date.service';
 import { FormatService } from '../../../../core/services/format.service';
 import { CashRegisterService } from '../../cash-register/cash-register.service';
+import {
+  CashSession,
+  CashSessionSnapshot,
+} from '../../models/cash-session.model';
 import { ExpenseCategory } from '../../models/interface/expenses';
 import { ExpenseCategoryManagerComponent } from '../expense-category-manager/expense-category-manager.component';
 import { Expense, ExpenseCreatePayload } from '../expense.model';
@@ -59,6 +63,18 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
   /** Categorías activas disponibles para el formulario y el filtro. */
   @Input() categories: ExpenseCategory[] = [];
 
+  /**
+   * Estado de caja ya cargado por el padre (ej. cash-register.component, que
+   * lo mantiene en signals propios). Si se provee (incluso `null`), el panel
+   * lo usa directamente y se salta su propio fetch de getActiveSession /
+   * getSessionSnapshot / getCashAccounts — evita pedir lo mismo dos veces en
+   * la misma carga de página. `undefined` (default) = no provisto, el panel
+   * lo pide por su cuenta (caso de uso standalone en /admin/expenses).
+   */
+  @Input() activeSessionOverride?: CashSession | null;
+  @Input() sessionSnapshotOverride?: CashSessionSnapshot | null;
+  @Input() generalCashBalanceOverride?: number | null;
+
   /** Stats del período para el resumen en el footer del panel. */
   @Input() periodTotal = 0;
   @Input() totalCount = 0;
@@ -86,6 +102,14 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
   createError = '';
   /** Efectivo disponible en la caja activa de la jornada (null = no cargó aún). */
   dailyAvailable: number | null = null;
+  /**
+   * True si hay una caja operativa OPEN. Si es false, "Caja del día" no es una
+   * opción válida. Default optimista en true: hasta que loadAvailableAmounts()
+   * resuelva, asumimos que puede existir sesión (evita forzar COMPANY de
+   * arranque si el diálogo abre antes de que la llamada a getActiveSession
+   * complete).
+   */
+  hasActiveSession = true;
   /** Saldo actual de Caja General (cuenta GENERAL_CASH). */
   generalAvailable: number | null = null;
   editingExpenseId: string | null = null;
@@ -123,7 +147,16 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadAvailableAmounts();
+    if (this.activeSessionOverride !== undefined) {
+      this.applySessionOverride();
+    } else {
+      this.loadActiveSessionInfo();
+    }
+    if (this.generalCashBalanceOverride !== undefined) {
+      this.generalAvailable = this.generalCashBalanceOverride;
+    } else {
+      this.loadGeneralAvailable();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -133,6 +166,31 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
       } else {
         this.resetForm();
       }
+    }
+    if (
+      changes['activeSessionOverride'] ||
+      changes['sessionSnapshotOverride']
+    ) {
+      this.applySessionOverride();
+    }
+    if (changes['generalCashBalanceOverride']) {
+      this.generalAvailable = this.generalCashBalanceOverride ?? null;
+    }
+  }
+
+  /**
+   * Aplica el estado de caja provisto por el padre (ver activeSessionOverride).
+   * Resincroniza createSource en cada actualización (no solo cuando pasa a
+   * sin-sesión) porque el override puede llegar en `null` en el primer change
+   * detection (antes de que resuelva el fetch real del padre) y corregirse
+   * recién después — si solo forzáramos COMPANY al quedar sin sesión, nunca
+   * volveríamos a DAILY cuando la sesión real aparece.
+   */
+  private applySessionOverride(): void {
+    this.hasActiveSession = !!this.activeSessionOverride;
+    this.dailyAvailable = this.sessionSnapshotOverride?.expected.cash ?? null;
+    if (!this.isEditMode) {
+      this.createSource = this.hasActiveSession ? 'DAILY' : 'COMPANY';
     }
   }
 
@@ -155,7 +213,7 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
     this.createTransferRef = '';
     this.createCategoryId = null;
     this.createExpenseDate = this.todayIso();
-    this.createSource = 'DAILY';
+    this.createSource = this.hasActiveSession ? 'DAILY' : 'COMPANY';
     this.createError = '';
   }
 
@@ -272,7 +330,15 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
       .subscribe({
         next: () => {
           this.resetForm();
-          this.loadAvailableAmounts();
+          // Si el padre provee el estado de caja (override), su propio
+          // refresh tras el evento "saved" actualiza estos @Input y dispara
+          // ngOnChanges → applySessionOverride(). Si no, lo pedimos acá.
+          if (this.activeSessionOverride === undefined) {
+            this.loadActiveSessionInfo();
+          }
+          if (this.generalCashBalanceOverride === undefined) {
+            this.loadGeneralAvailable();
+          }
           this.msg.add({
             severity: 'success',
             summary: 'Gasto registrado',
@@ -347,23 +413,33 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
   /**
    * Carga el efectivo disponible en la caja activa y el saldo de Caja General,
    * para mostrarlos como referencia bajo el selector de "Origen del gasto".
+   * Si no hay caja activa, fuerza el origen a Caja General (única opción viable).
    */
-  private loadAvailableAmounts(): void {
+  /**
+   * Pide la sesión activa y su snapshot directamente (caso standalone, sin
+   * activeSessionOverride provisto por el padre).
+   */
+  private loadActiveSessionInfo(): void {
     this.cashRegisterSvc
       .getActiveSession()
       .pipe(
-        switchMap((session) =>
-          session
+        switchMap((session) => {
+          this.hasActiveSession = !!session;
+          if (!session) this.createSource = 'COMPANY';
+          return session
             ? this.cashRegisterSvc.getSessionSnapshot(session.id)
-            : of(null),
-        ),
+            : of(null);
+        }),
         catchError(() => of(null)),
         takeUntil(this.destroy$),
       )
       .subscribe((snapshot) => {
         this.dailyAvailable = snapshot?.expected.cash ?? null;
       });
+  }
 
+  /** Pide el saldo de Caja General directamente (caso standalone). */
+  private loadGeneralAvailable(): void {
     this.cashRegisterSvc
       .getCashAccounts()
       .pipe(

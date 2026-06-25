@@ -4,7 +4,9 @@
   <div class="ff-page-header mb-0">
     <div>
       <h1 class="ff-page-title">Mora y Cancelaciones</h1>
-      <p class="ff-page-subtitle">Seguimiento de cuotas en mora y acciones de cobranza.</p>
+      <p class="ff-page-subtitle">
+        Seguimiento de cuotas en mora y acciones de cobranza.
+      </p>
     </div>
   </div>
 
@@ -110,6 +112,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Estado"
+          [filter]="estadoOptions.length > 10"
+          filterBy="label"
           styleClass="w-40 h-11"
           (onChange)="applyFilters()"
         />
@@ -119,6 +123,8 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Días en Mora"
+          [filter]="diasOptions.length > 10"
+          filterBy="label"
           styleClass="w-44 h-11"
           (onChange)="applyFilters()"
         />
@@ -283,7 +289,7 @@
                   label="Avisar"
                   severity="info"
                   size="small"
-                  [outlined]="true"
+                  styleClass="dq-action-btn dq-action-btn--notify"
                   icon="pi pi-bell"
                   (onClick)="onNotify(row)"
                   [loading]="processingId === row.id + '_notify'"
@@ -292,11 +298,13 @@
                   [label]="
                     row.status === 'EN_MORA' ? 'Condonar' : 'Aplicar mora'
                   "
-                  [severity]="
-                    row.status === 'EN_MORA' ? 'secondary' : 'warning'
-                  "
+                  [severity]="row.status === 'EN_MORA' ? 'danger' : 'warning'"
                   size="small"
-                  [outlined]="true"
+                  [styleClass]="
+                    row.status === 'EN_MORA'
+                      ? 'dq-action-btn dq-action-btn--condone'
+                      : 'dq-action-btn dq-action-btn--apply'
+                  "
                   [icon]="
                     row.status === 'EN_MORA' ? 'pi pi-heart' : 'pi pi-bolt'
                   "

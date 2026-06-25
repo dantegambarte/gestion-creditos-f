@@ -22,6 +22,7 @@ import { Installment } from '../../../models/installment.model';
 import { DirectPaymentDialogComponent } from '../direct-payment-dialog/direct-payment-dialog.component';
 import { PenaltyDialogComponent } from '../penalty-dialog/penalty-dialog.component';
 import { WaiveDialogComponent } from '../waive-dialog/waive-dialog.component';
+import { ScheduleVisitDialogComponent } from '../schedule-visit-dialog/schedule-visit-dialog.component';
 
 @Component({
   selector: 'app-credit-schedule-panel',
@@ -35,6 +36,7 @@ import { WaiveDialogComponent } from '../waive-dialog/waive-dialog.component';
     PenaltyDialogComponent,
     WaiveDialogComponent,
     DirectPaymentDialogComponent,
+    ScheduleVisitDialogComponent,
   ],
   templateUrl: './credit-schedule-panel.component.html',
 })
@@ -63,6 +65,16 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
   waiveInstallment: CreditDetail['installments'][number] | null = null;
   showDirectDialog = false;
   directInstallment: CreditDetail['installments'][number] | null = null;
+  showScheduleVisitDialog = false;
+  scheduleVisitInstallment: CreditDetail['installments'][number] | null = null;
+
+  /** Estados de cuota sobre los que el admin puede programar una visita. */
+  private readonly SCHEDULABLE_STATUSES = ['PENDING', 'PARTIAL', 'OVERDUE'];
+
+  /** True si la cuota admite programar una visita (no pagada / no terminal). */
+  canScheduleVisit(inst: CreditDetail['installments'][number]): boolean {
+    return this.SCHEDULABLE_STATUSES.includes(inst.status);
+  }
 
   get paidCount(): number {
     return (
@@ -146,6 +158,11 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
   openDirectDialog(inst: CreditDetail['installments'][number]): void {
     this.directInstallment = inst;
     this.showDirectDialog = true;
+  }
+
+  openScheduleVisitDialog(inst: CreditDetail['installments'][number]): void {
+    this.scheduleVisitInstallment = inst;
+    this.showScheduleVisitDialog = true;
   }
 
   /**

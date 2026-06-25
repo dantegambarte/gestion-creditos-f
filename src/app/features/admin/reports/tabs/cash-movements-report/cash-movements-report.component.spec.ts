@@ -1,10 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { CashRegisterService } from '../../../cash-register/cash-register.service';
 import { BusinessDayListItem } from '../../../models/business-day.model';
 import { CashSessionListItem } from '../../../models/cash-session.model';
-import { CashMovementReport } from '../../report.models';
+import {
+  CashMovementReport,
+  GeneralCashMovementReport,
+} from '../../report.models';
 import { ReportsService } from '../../reports.service';
 import { CashMovementsReportComponent } from './cash-movements-report.component';
 
@@ -72,12 +75,49 @@ const mockReport: CashMovementReport = {
   ],
 };
 
+const mockGeneralReport: GeneralCashMovementReport = {
+  summary: { totalMovements: 2, totalIn: 1200, totalOut: 500 },
+  rows: [
+    {
+      id: 'gm-1',
+      movementType: 'MANUAL_INCOME',
+      direction: 'IN',
+      amount: 1200,
+      amountCash: 1200,
+      amountTransfer: 0,
+      description: 'Aporte de capital',
+      beneficiaryName: null,
+      referenceType: null,
+      referenceId: null,
+      createdAt: '2026-06-17T10:00:00.000Z',
+      performedByName: 'Admin',
+    },
+    {
+      id: 'gm-2',
+      movementType: 'EXPENSE',
+      direction: 'OUT',
+      amount: 500,
+      amountCash: 500,
+      amountTransfer: 0,
+      description: 'Gasto a Caja General',
+      beneficiaryName: null,
+      referenceType: 'EXPENSE',
+      referenceId: 'exp-1',
+      createdAt: '2026-06-17T11:00:00.000Z',
+      performedByName: 'Admin',
+    },
+  ],
+};
+
 describe('CashMovementsReportComponent', () => {
   let component: CashMovementsReportComponent;
   let fixture: ComponentFixture<CashMovementsReportComponent>;
   let cashRegisterSpy: jasmine.SpyObj<CashRegisterService>;
   let reportsSpy: jasmine.SpyObj<ReportsService>;
   let routerSpy: jasmine.SpyObj<Router>;
+  let routeStub: {
+    snapshot: { queryParamMap: ReturnType<typeof convertToParamMap> };
+  };
 
   beforeEach(async () => {
     cashRegisterSpy = jasmine.createSpyObj('CashRegisterService', [
@@ -86,14 +126,19 @@ describe('CashMovementsReportComponent', () => {
     ]);
     reportsSpy = jasmine.createSpyObj('ReportsService', [
       'getCashMovementsReport',
+      'getGeneralCashMovementsReport',
     ]);
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    routeStub = { snapshot: { queryParamMap: convertToParamMap({}) } };
 
     cashRegisterSpy.listBusinessDays.and.returnValue(of([mockBusinessDay]));
     cashRegisterSpy.listSessionsByBusinessDay.and.returnValue(
       of([mockSession]),
     );
     reportsSpy.getCashMovementsReport.and.returnValue(of(mockReport));
+    reportsSpy.getGeneralCashMovementsReport.and.returnValue(
+      of(mockGeneralReport),
+    );
 
     await TestBed.configureTestingModule({
       imports: [CashMovementsReportComponent],
@@ -101,6 +146,7 @@ describe('CashMovementsReportComponent', () => {
         { provide: CashRegisterService, useValue: cashRegisterSpy },
         { provide: ReportsService, useValue: reportsSpy },
         { provide: Router, useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: routeStub },
       ],
     }).compileComponents();
 
@@ -259,7 +305,9 @@ describe('CashMovementsReportComponent', () => {
       expect(component.typeBadgeClasses('ENGANCHE')).toContain('emerald');
       expect(component.typeBadgeClasses('GASTO')).toContain('red');
       expect(component.typeBadgeClasses('DROP')).toContain('amber');
-      expect(component.typeBadgeClasses('CONVERSION')).toContain('gray');
+      expect(component.typeBadgeClasses('CONVERSION')).toContain(
+        '--ff-secondary',
+      );
     });
   });
 
@@ -302,16 +350,29 @@ describe('CashMovementsReportComponent', () => {
     it('permite ir a la operación cuando el movimiento tiene crédito', () => {
       const row = mockReport.rows[0];
       component.selectedMovement = row;
+      component.dateFrom = '2026-06-01';
+      component.dateTo = '2026-06-10';
+      component.selectedBusinessDayId = 'bd-1';
+      component.selectedSessionId = 'cs-1';
 
       expect(component.canOpenOperation(row)).toBeTrue();
 
       component.openOperation(row);
 
       expect(component.selectedMovement).toBeNull();
-      expect(routerSpy.navigate).toHaveBeenCalledWith([
-        '/admin/operations',
-        'credit-1',
-      ]);
+      expect(routerSpy.navigate).toHaveBeenCalledWith(
+        ['/admin/operations', 'credit-1'],
+        {
+          queryParams: {
+            returnTo: 'admin-reports',
+            tab: 'cashMovements',
+            dateFrom: '2026-06-01',
+            dateTo: '2026-06-10',
+            businessDayId: 'bd-1',
+            cashSessionId: 'cs-1',
+          },
+        },
+      );
     });
 
     it('no navega a operación si el movimiento no tiene crédito', () => {
@@ -329,6 +390,102 @@ describe('CashMovementsReportComponent', () => {
     it('dispara consult() al inicializar el componente', () => {
       fixture.detectChanges();
       expect(cashRegisterSpy.listBusinessDays).toHaveBeenCalled();
+    });
+
+    it('restaura rango, jornada y caja desde query params', () => {
+      routeStub.snapshot.queryParamMap = convertToParamMap({
+        dateFrom: '2026-06-01',
+        dateTo: '2026-06-10',
+        businessDayId: 'bd-1',
+        cashSessionId: 'cs-1',
+      });
+
+      fixture.detectChanges();
+
+      expect(cashRegisterSpy.listBusinessDays).toHaveBeenCalledWith({
+        dateFrom: '2026-06-01',
+        dateTo: '2026-06-10',
+      });
+      expect(component.selectedBusinessDayId).toBe('bd-1');
+      expect(component.selectedSessionId).toBe('cs-1');
+      expect(reportsSpy.getCashMovementsReport).toHaveBeenCalledWith('cs-1');
+    });
+  });
+
+  describe('ámbito Caja General', () => {
+    beforeEach(() => {
+      component.dateFrom = '2026-06-01';
+      component.dateTo = '2026-06-17';
+    });
+
+    it('onScopeChange a GENERAL limpia el estado de jornada y consulta el reporte general', () => {
+      component.businessDays = [mockBusinessDay];
+      component.selectedBusinessDayId = 'bd-1';
+      component.report = mockReport;
+
+      component.onScopeChange('GENERAL');
+
+      expect(component.scope).toBe('GENERAL');
+      expect(component.businessDays).toEqual([]);
+      expect(component.selectedBusinessDayId).toBeNull();
+      expect(component.report).toBeNull();
+      expect(reportsSpy.getGeneralCashMovementsReport).toHaveBeenCalledWith({
+        dateFrom: '2026-06-01',
+        dateTo: '2026-06-17',
+      });
+      expect(component.generalReport).toEqual(mockGeneralReport);
+    });
+
+    it('onScopeChange a JORNADA limpia el estado general y vuelve a buscar jornadas', () => {
+      component.onScopeChange('GENERAL');
+      cashRegisterSpy.listBusinessDays.calls.reset();
+
+      component.onScopeChange('JORNADA');
+
+      expect(component.scope).toBe('JORNADA');
+      expect(component.generalReport).toBeNull();
+      expect(cashRegisterSpy.listBusinessDays).toHaveBeenCalled();
+    });
+
+    it('consult() respeta el scope activo al disparar la búsqueda', () => {
+      component.scope = 'GENERAL';
+      cashRegisterSpy.listBusinessDays.calls.reset();
+
+      component.consult();
+
+      expect(cashRegisterSpy.listBusinessDays).not.toHaveBeenCalled();
+      expect(reportsSpy.getGeneralCashMovementsReport).toHaveBeenCalled();
+    });
+
+    it('expone el error cuando falla la consulta del reporte general', () => {
+      const err = { status: 500, message: 'boom' } as any;
+      reportsSpy.getGeneralCashMovementsReport.and.returnValue(
+        throwError(() => err),
+      );
+
+      component.onScopeChange('GENERAL');
+
+      expect(component.generalReportError).toBe(err);
+    });
+
+    it('generalTypeLabel traduce los tipos conocidos de Caja General', () => {
+      expect(component.generalTypeLabel('MANUAL_INCOME')).toBe(
+        'Ingreso manual',
+      );
+      expect(component.generalTypeLabel('EXPENSE')).toBe('Gasto');
+      expect(component.generalTypeLabel('ADJUSTMENT')).toBe('Ajuste');
+      expect(component.generalTypeLabel('DROP_IN')).toBe('Drop');
+      expect(component.generalTypeLabel('SUPPLIER_PAYMENT')).toBe(
+        'Pago a proveedor',
+      );
+      expect(component.generalTypeLabel('SALARY_PAYMENT')).toBe(
+        'Pago de sueldo',
+      );
+    });
+
+    it('directionBadgeClasses distingue IN (verde) de OUT (rojo)', () => {
+      expect(component.directionBadgeClasses('IN')).toContain('emerald');
+      expect(component.directionBadgeClasses('OUT')).toContain('red');
     });
   });
 });

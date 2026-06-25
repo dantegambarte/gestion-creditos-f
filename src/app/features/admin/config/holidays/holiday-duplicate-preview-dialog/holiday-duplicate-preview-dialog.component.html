@@ -10,45 +10,49 @@
     <div class="space-y-4 py-2">
       <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
         <div
-          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+          class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-3 py-2"
         >
-          <p class="text-slate-500">Origen</p>
-          <p class="text-slate-200 font-semibold">{{ preview.sourceYear }}</p>
+          <p class="text-[var(--ff-text-muted)]">Origen</p>
+          <p class="font-semibold text-[var(--ff-text-primary)]">
+            {{ preview.sourceYear }}
+          </p>
         </div>
         <div
-          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+          class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-3 py-2"
         >
-          <p class="text-slate-500">Destino</p>
-          <p class="text-slate-200 font-semibold">{{ preview.targetYear }}</p>
+          <p class="text-[var(--ff-text-muted)]">Destino</p>
+          <p class="font-semibold text-[var(--ff-text-primary)]">
+            {{ preview.targetYear }}
+          </p>
         </div>
         <div
-          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+          class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-3 py-2"
         >
-          <p class="text-slate-500">Activos evaluados</p>
-          <p class="text-slate-200 font-semibold">
+          <p class="text-[var(--ff-text-muted)]">Activos evaluados</p>
+          <p class="font-semibold text-[var(--ff-text-primary)]">
             {{ preview.eligibleCount }}
           </p>
         </div>
         <div
-          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+          class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-3 py-2"
         >
-          <p class="text-slate-500">Se crearán</p>
+          <p class="text-[var(--ff-text-muted)]">Se crearán</p>
           <p class="text-emerald-300 font-semibold">
             {{ preview.toCreateCount }}
           </p>
         </div>
         <div
-          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+          class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-3 py-2"
         >
-          <p class="text-slate-500">No anuales</p>
+          <p class="text-[var(--ff-text-muted)]">No anuales</p>
           <p class="text-amber-300 font-semibold">
             {{ preview.nonRecurringCount }}
           </p>
         </div>
         <div
-          class="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2"
+          class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-3 py-2"
         >
-          <p class="text-slate-500">Conflictos</p>
+          <p class="text-[var(--ff-text-muted)]">Conflictos</p>
           <p class="text-rose-300 font-semibold">
             {{ preview.conflictsCount }}
           </p>
@@ -57,28 +61,28 @@
 
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <div
-          class="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden"
+          class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
         >
           <div
-            class="px-4 py-3 border-b border-slate-800 text-sm text-slate-200 font-medium"
+            class="border-b border-[var(--ff-border-subtle)] px-4 py-3 text-sm font-medium text-[var(--ff-text-primary)]"
           >
             Se crearán
           </div>
           <table class="w-full text-sm">
-            <thead class="border-b border-slate-800">
+            <thead class="border-b border-[var(--ff-border-subtle)]">
               <tr>
                 <th
-                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
                 >
                   Origen
                 </th>
                 <th
-                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
                 >
                   Destino
                 </th>
                 <th
-                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
                 >
                   Nombre
                 </th>
@@ -87,7 +91,7 @@
             <tbody>
               @if (preview.toCreate.length === 0) {
                 <tr>
-                  <td colspan="3" class="px-4 py-4 text-slate-500">
+                  <td colspan="3" class="px-4 py-4 text-[var(--ff-text-muted)]">
                     No hay feriados para crear.
                   </td>
                 </tr>
@@ -96,14 +100,16 @@
                 item of preview.toCreate;
                 track item.sourceDate + item.type
               ) {
-                <tr class="border-b border-slate-800/50">
-                  <td class="px-4 py-2 text-slate-200">
+                <tr class="border-b border-[var(--ff-border-subtle)]">
+                  <td class="px-4 py-2 text-[var(--ff-text-primary)]">
                     {{ item.sourceDate | date: "dd/MM/yyyy" }}
                   </td>
-                  <td class="px-4 py-2 text-slate-300">
+                  <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
                     {{ item.targetDate | date: "dd/MM/yyyy" }}
                   </td>
-                  <td class="px-4 py-2 text-slate-300">{{ item.name }}</td>
+                  <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
+                    {{ item.name }}
+                  </td>
                 </tr>
               }
             </tbody>
@@ -111,28 +117,28 @@
         </div>
 
         <div
-          class="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden"
+          class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
         >
           <div
-            class="px-4 py-3 border-b border-slate-800 text-sm text-slate-200 font-medium"
+            class="border-b border-[var(--ff-border-subtle)] px-4 py-3 text-sm font-medium text-[var(--ff-text-primary)]"
           >
             Se omitirán
           </div>
           <table class="w-full text-sm">
-            <thead class="border-b border-slate-800">
+            <thead class="border-b border-[var(--ff-border-subtle)]">
               <tr>
                 <th
-                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
                 >
                   Fecha
                 </th>
                 <th
-                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
                 >
                   Nombre
                 </th>
                 <th
-                  class="px-4 py-2 text-left text-xs text-slate-500 uppercase"
+                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
                 >
                   Motivo
                 </th>
@@ -141,7 +147,7 @@
             <tbody>
               @if (preview.skipped.length === 0) {
                 <tr>
-                  <td colspan="3" class="px-4 py-4 text-slate-500">
+                  <td colspan="3" class="px-4 py-4 text-[var(--ff-text-muted)]">
                     Sin omisiones.
                   </td>
                 </tr>
@@ -150,14 +156,14 @@
                 item of preview.skipped;
                 track item.sourceDate + item.type + item.reason
               ) {
-                <tr class="border-b border-slate-800/50">
-                  <td class="px-4 py-2 text-slate-200">
+                <tr class="border-b border-[var(--ff-border-subtle)]">
+                  <td class="px-4 py-2 text-[var(--ff-text-primary)]">
                     {{ item.sourceDate | date: "dd/MM/yyyy" }}
                   </td>
-                  <td class="px-4 py-2 text-slate-300">
+                  <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
                     {{ item.name || "-" }}
                   </td>
-                  <td class="px-4 py-2 text-slate-400">
+                  <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
                     {{ skippedReasonLabel(item.reason) }}
                   </td>
                 </tr>

@@ -58,3 +58,35 @@
     box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.2);
   }
 }
+
+:host ::ng-deep .p-button.cr-history-cta {
+  background: rgba(59, 130, 246, 0.14) !important;
+  border-color: rgba(96, 165, 250, 0.48) !important;
+  color: #bfdbfe !important;
+
+  &:enabled:hover {
+    background: rgba(59, 130, 246, 0.24) !important;
+    border-color: rgba(147, 197, 253, 0.68) !important;
+    color: #dbeafe !important;
+  }
+
+  .p-button-icon {
+    color: #93c5fd !important;
+  }
+}
+
+:host ::ng-deep .p-button.cr-refresh-cta {
+  background: rgba(20, 184, 166, 0.14) !important;
+  border-color: rgba(45, 212, 191, 0.48) !important;
+  color: #99f6e4 !important;
+
+  &:enabled:hover {
+    background: rgba(20, 184, 166, 0.24) !important;
+    border-color: rgba(94, 234, 212, 0.68) !important;
+    color: #ccfbf1 !important;
+  }
+
+  .p-button-icon {
+    color: #5eead4 !important;
+  }
+}

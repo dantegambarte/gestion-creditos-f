@@ -1,0 +1,129 @@
+<div class="p-6">
+  <div class="ff-page-header">
+    <div>
+      <h1 class="ff-page-title">Ayuda</h1>
+      <p class="ff-page-subtitle">
+        Manual de usuario del sistema finFlow.
+      </p>
+    </div>
+  </div>
+
+  <div class="help-layout">
+    <!-- Índice navegable -->
+    <aside class="help-index ff-panel p-4">
+      <div class="ud-label mb-2">Índice</div>
+      <ul>
+        @for (s of sections; track s.id) {
+          <li class="help-index__item" [class.is-open]="expandedId === s.id">
+            <button
+              type="button"
+              class="help-index__main"
+              [class.is-active]="activeId === s.id"
+              (click)="scrollTo(s.id)"
+            >
+              <span>{{ s.title }}</span>
+              @if (subsOf(s).length) {
+                <i
+                  class="pi pi-angle-right help-index__caret"
+                  (click)="toggleExpand(s.id, $event)"
+                ></i>
+              }
+            </button>
+
+            @if (subsOf(s).length) {
+              <ul class="help-index__flyout">
+                @for (sub of subsOf(s); track sub.id) {
+                  <li>
+                    <button
+                      type="button"
+                      [class.is-active]="activeId === sub.id"
+                      (click)="scrollTo(sub.id)"
+                    >
+                      {{ sub.title }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </li>
+        }
+      </ul>
+      <p class="help-version">{{ version }}</p>
+    </aside>
+
+    <!-- Contenido del manual -->
+    <div class="help-content">
+      @for (s of sections; track s.id) {
+        <section [id]="'help-' + s.id" class="ff-panel p-5 help-section">
+          <h2 class="help-section__title">{{ s.title }}</h2>
+          @for (b of s.blocks; track $index) {
+            <ng-container
+              [ngTemplateOutlet]="blockTpl"
+              [ngTemplateOutletContext]="{ $implicit: b }"
+            />
+          }
+        </section>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Plantilla recursiva de bloque de contenido -->
+<ng-template #blockTpl let-b>
+  @switch (b.kind) {
+    @case ('p') {
+      <p class="help-p">{{ b.text }}</p>
+    }
+    @case ('h') {
+      <h4 class="help-h">{{ b.text }}</h4>
+    }
+    @case ('note') {
+      <div class="help-note">
+        <i class="pi pi-info-circle"></i><span>{{ b.text }}</span>
+      </div>
+    }
+    @case ('list') {
+      @if (b.intro) {
+        <p class="help-p help-list-intro">{{ b.intro }}</p>
+      }
+      <ul class="help-list">
+        @for (it of b.items; track $index) {
+          <li>{{ it }}</li>
+        }
+      </ul>
+    }
+    @case ('table') {
+      <div class="help-table-wrap">
+        <table class="help-table">
+          <thead>
+            <tr>
+              @for (h of b.table.headers; track $index) {
+                <th>{{ h }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of b.table.rows; track $index) {
+              <tr>
+                @for (cell of row; track $index) {
+                  <td>{{ cell }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @case ('sub') {
+      <div class="help-sub" [id]="'help-' + b.id">
+        <h3 class="help-sub__title">{{ b.title }}</h3>
+        @for (sb of b.blocks; track $index) {
+          <ng-container
+            [ngTemplateOutlet]="blockTpl"
+            [ngTemplateOutletContext]="{ $implicit: sb }"
+          />
+        }
+      </div>
+    }
+  }
+</ng-template>

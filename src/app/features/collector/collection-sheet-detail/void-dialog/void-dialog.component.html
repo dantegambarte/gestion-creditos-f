@@ -8,20 +8,22 @@
   [resizable]="false"
 >
   <div class="flex flex-col gap-3 py-2">
-    @if (item && item.antecedentType) {
-      <div class="rounded-lg bg-gray-50 border border-gray-200 p-3">
-        <p class="text-sm font-semibold text-gray-800">
+    @if (item && item.live?.todayAttemptType) {
+      <div
+        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+      >
+        <p class="text-sm font-semibold text-[var(--ff-text-primary)]">
           {{ item.customerName }}
         </p>
-        <p class="text-xs text-gray-600 mt-0.5">
+        <p class="mt-0.5 text-xs text-[var(--ff-text-secondary)]">
           {{ item.collectionReference }}
         </p>
-        <p class="text-sm text-gray-500 mt-1">
+        <p class="mt-1 text-sm text-[var(--ff-text-muted)]">
           Gestión a anular:
-          <strong>{{ antecedentLabel(item.antecedentType) }}</strong>
+          <strong>{{ antecedentLabel(item.live!.todayAttemptType!) }}</strong>
         </p>
       </div>
-      <p class="text-sm text-gray-700">
+      <p class="text-sm text-[var(--ff-text-secondary)]">
         Se va a anular la gestión registrada hoy. El evento queda en el
         historial marcado como
         <strong>ANULADO</strong> (no se borra) y vas a poder volver a registrar

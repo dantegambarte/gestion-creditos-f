@@ -1,4 +1,6 @@
 ﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { MockAuthService } from '../../../core/auth/mock-auth.service';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
@@ -13,6 +15,8 @@ describe('HeaderComponent', () => {
       imports: [HeaderComponent],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         MockAuthService,
         { provide: AuthServiceBase, useExisting: MockAuthService },
       ],

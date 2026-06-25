@@ -12,6 +12,10 @@
       [options]="operationTypeOptions"
       optionLabel="label"
       optionValue="value"
+      [filter]="operationTypeOptions.length > 10"
+      filterBy="label"
+
+
       [showClear]="true"
       formControlName="operationType"
       styleClass="w-full"

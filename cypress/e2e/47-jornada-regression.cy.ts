@@ -24,7 +24,7 @@ function dateOffset(days: number): string {
   return d.toISOString().split('T')[0];
 }
 
-const TODAY     = dateOffset(0);
+const TODAY = dateOffset(0);
 const YESTERDAY = dateOffset(-1);
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
@@ -33,18 +33,18 @@ const YESTERDAY = dateOffset(-1);
 const MOCK_DASHBOARD_JORNADA_YESTERDAY = {
   ok: true,
   data: {
-    date:                  YESTERDAY,
-    is_closed:             false,
-    cash_amount:           50000,
-    transfer_amount:       20000,
-    total_collected:       70000,
-    total_outflows:        5000,
-    net_balance:           65000,
-    approved_count:        3,
-    pending_count:         1,
-    pending_amount:        15000,
-    down_payments_total:   0,
-    down_payments_count:   0,
+    date: YESTERDAY,
+    is_closed: false,
+    cash_amount: 50000,
+    transfer_amount: 20000,
+    total_collected: 70000,
+    total_outflows: 5000,
+    net_balance: 65000,
+    approved_count: 3,
+    pending_count: 1,
+    pending_amount: 15000,
+    down_payments_total: 0,
+    down_payments_count: 0,
   },
 };
 
@@ -52,18 +52,18 @@ const MOCK_DASHBOARD_JORNADA_YESTERDAY = {
 const MOCK_DASHBOARD_TODAY_CLOSED = {
   ok: true,
   data: {
-    date:                  TODAY,
-    is_closed:             true,
-    cash_amount:           50000,
-    transfer_amount:       20000,
-    total_collected:       70000,
-    total_outflows:        5000,
-    net_balance:           65000,
-    approved_count:        3,
-    pending_count:         0,
-    pending_amount:        0,
-    down_payments_total:   0,
-    down_payments_count:   0,
+    date: TODAY,
+    is_closed: true,
+    cash_amount: 50000,
+    transfer_amount: 20000,
+    total_collected: 70000,
+    total_outflows: 5000,
+    net_balance: 65000,
+    approved_count: 3,
+    pending_count: 0,
+    pending_amount: 0,
+    down_payments_total: 0,
+    down_payments_count: 0,
   },
 };
 
@@ -72,40 +72,40 @@ const MOCK_PRE_CLOSE_YESTERDAY = {
   data: {
     date: YESTERDAY,
     ingresos: {
-      cobros_efectivo:         50000,
-      cobros_transferencia:    20000,
-      enganches_efectivo:      0,
+      cobros_efectivo: 50000,
+      cobros_transferencia: 20000,
+      enganches_efectivo: 0,
       enganches_transferencia: 0,
-      total_bruto:             70000,
+      total_bruto: 70000,
     },
     egresos: {
-      gastos_efectivo:         5000,
-      gastos_transferencia:    0,
-      comisiones_efectivo:     0,
+      gastos_efectivo: 5000,
+      gastos_transferencia: 0,
+      comisiones_efectivo: 0,
       comisiones_transferencia: 0,
-      total:                   5000,
+      total: 5000,
     },
-    efectivo:       { esperado: 45000 },
+    efectivo: { esperado: 45000 },
     transferencias: { esperado: 20000 },
-    pendientes:     { count: 0, amount: 0 },
+    pendientes: { count: 0, amount: 0 },
   },
 };
 
 const MOCK_CLOSE_RESULT = {
   ok: true,
   data: {
-    id:                'cr-001',
-    register_date:     YESTERDAY,
-    total_collected:   70000,
-    cash_amount:       45000,
-    transfer_amount:   20000,
-    total_outflows:    5000,
-    declared_cash:     45000,
-    difference:        0,
+    id: 'cr-001',
+    register_date: YESTERDAY,
+    total_collected: 70000,
+    cash_amount: 45000,
+    transfer_amount: 20000,
+    total_outflows: 5000,
+    declared_cash: 45000,
+    difference: 0,
     difference_status: 'EXACT',
-    observations:      null,
-    created_at:        `${YESTERDAY}T03:10:00Z`,
-    closed_by_name:    'Admin Sistema',
+    observations: null,
+    created_at: `${YESTERDAY}T03:10:00Z`,
+    closed_by_name: 'Admin Sistema',
   },
 };
 
@@ -113,7 +113,12 @@ const MOCK_DETAIL = {
   ok: true,
   data: {
     ...MOCK_CLOSE_RESULT.data,
-    breakdown: { payments: [], down_payments: [], liquidations: [], expenses: [] },
+    breakdown: {
+      payments: [],
+      down_payments: [],
+      liquidations: [],
+      expenses: [],
+    },
   },
 };
 
@@ -227,7 +232,10 @@ describe('CA-02a — Dashboard muestra badge de jornada cuando la fecha activa e
     // formatDate convierte YYYY-MM-DD → dd/mm/yyyy
     const [y, m, d] = YESTERDAY.split('-');
     const formatted = `${d}/${m}/${y}`;
-    cy.get('[data-cy="jornada-post-midnight-badge"]').should('contain', formatted);
+    cy.get('[data-cy="jornada-post-midnight-badge"]').should(
+      'contain',
+      formatted,
+    );
   });
 
   it('CA-02a — NO muestra el badge cuando dashboard.date == hoy', () => {
@@ -236,7 +244,11 @@ describe('CA-02a — Dashboard muestra badge de jornada cuando la fecha activa e
       statusCode: 200,
       body: {
         ok: true,
-        data: { ...MOCK_DASHBOARD_JORNADA_YESTERDAY.data, date: TODAY, is_closed: false },
+        data: {
+          ...MOCK_DASHBOARD_JORNADA_YESTERDAY.data,
+          date: TODAY,
+          is_closed: false,
+        },
       },
     }).as('getDashboardToday');
 
@@ -247,7 +259,62 @@ describe('CA-02a — Dashboard muestra badge de jornada cuando la fecha activa e
   });
 });
 
+// Mock snapshot V4 para el diálogo de cierre de caja operativa
+const MOCK_SESSION_SNAPSHOT = {
+  session_id: 'sess-active',
+  status: 'OPEN',
+  owner_user_id: 'usr-001',
+  opened_at: `${YESTERDAY}T08:00:00Z`,
+  opening: { cash: 0, transfer: 0 },
+  collections: {
+    payments: { cash: 50000, transfer: 20000 },
+    down_payments: { cash: 0, transfer: 0 },
+    manual_incomes: { cash: 0, transfer: 0 },
+  },
+  outflows: {
+    expenses: { cash: 5000, transfer: 0 },
+    commissions: { cash: 0, transfer: 0 },
+  },
+  conversions: { cash_delta: 0, transfer_delta: 0 },
+  drops: { cash: 0, transfer: 0, items: [] },
+  expected: { cash: 45000, transfer: 20000 },
+};
+
 // ── CA-02b: Cerrar caja post-medianoche ────────────────────────────────────────
+
+/** Jornada activa (ayer) — evita depender del estado real de caja/jornada compartido entre specs. */
+const MOCK_ACTIVE_BUSINESS_DAY_CA02B = {
+  ok: true,
+  data: {
+    id: 'business-day-ca02b',
+    business_date: YESTERDAY,
+    branch_id: 'branch-hq',
+    status: 'OPEN',
+    opened_at: `${YESTERDAY}T08:00:00.000Z`,
+    session_counts: {
+      open_count: 1,
+      pending_count: 0,
+      closed_count: 0,
+      total_count: 1,
+    },
+  },
+};
+
+/** Caja operativa activa de la jornada — mismo session_id que MOCK_SESSION_SNAPSHOT. */
+const MOCK_ACTIVE_SESSION_CA02B = {
+  ok: true,
+  data: {
+    id: 'sess-active',
+    business_day_id: 'business-day-ca02b',
+    owner_user_id: 'usr-001',
+    opened_at: `${YESTERDAY}T08:00:00.000Z`,
+    opened_by: 'usr-001',
+    opening_amount: 0,
+    status: 'OPEN',
+    cash_counted: null,
+    closure_total_difference: null,
+  },
+};
 
 describe('CA-02b — Cerrar caja post-medianoche cierra la jornada del día anterior', () => {
   beforeEach(() => {
@@ -256,58 +323,88 @@ describe('CA-02b — Cerrar caja post-medianoche cierra la jornada del día ante
       body: MOCK_DASHBOARD_JORNADA_YESTERDAY,
     }).as('getDashboard');
 
-    cy.intercept('GET', '**/api/cash-register/pre-close', {
+    cy.intercept('GET', '**/api/business-days/active', {
       statusCode: 200,
-      body: MOCK_PRE_CLOSE_YESTERDAY,
-    }).as('getPreClose');
+      body: MOCK_ACTIVE_BUSINESS_DAY_CA02B,
+    }).as('getActiveBusinessDay');
+
+    cy.intercept('GET', '**/api/cash-sessions/active', {
+      statusCode: 200,
+      body: MOCK_ACTIVE_SESSION_CA02B,
+    }).as('getActiveSession');
+
+    cy.intercept('GET', '**/api/cash-register/sessions/*/movements', {
+      statusCode: 200,
+      body: { ok: true, data: [] },
+    }).as('getSessionMovements');
+
+    cy.intercept('GET', '**/api/cash-sessions/*/snapshot', {
+      statusCode: 200,
+      body: { ok: true, data: MOCK_SESSION_SNAPSHOT, message: '' },
+    }).as('getSnapshot');
+
+    cy.intercept('POST', '**/api/cash-sessions/*/close', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: { id: 'sess-active', status: 'CLOSED' },
+        message: '',
+      },
+    }).as('postClose');
 
     cy.intercept('GET', '**/api/cash-register', {
       statusCode: 200,
       body: MOCK_CASH_HISTORY,
     }).as('getCashHistory');
 
-    cy.intercept('GET', '**/api/cash-register/cr-001', {
-      statusCode: 200,
-      body: MOCK_DETAIL,
-    }).as('getCashDetail');
-
-    cy.intercept('POST', '**/api/cash-register/close', {
-      statusCode: 200,
-      body: MOCK_CLOSE_RESULT,
-    }).as('postClose');
-
     cy.viewport(1280, 720);
     cy.loginAs('ADMIN', '/admin/cash-register');
+    cy.wait('@getActiveBusinessDay');
+    cy.wait('@getActiveSession');
     cy.wait('@getDashboard');
   });
 
   it('CA-02b — el botón de cerrar caja existe cuando la jornada no está cerrada', () => {
-    cy.get('[data-cy="admin-cash-register-close-day-cta"]').should('be.visible');
+    cy.get('[data-cy="admin-cash-register-close-day-cta"]')
+      .scrollIntoView()
+      .should('be.visible');
   });
 
-  it('CA-02b — al confirmar el cierre, el panel se abre y muestra datos de la jornada anterior', () => {
-    cy.get('[data-cy="admin-cash-register-close-day-cta"]').click();
-    cy.wait('@getPreClose');
+  it('CA-02b — al confirmar el cierre, el diálogo se abre con el snapshot de la caja activa', () => {
+    cy.get('[data-cy="admin-cash-register-close-day-cta"]')
+      .scrollIntoView()
+      .click();
+    cy.wait('@getSnapshot');
 
-    // El panel lateral debe mostrar la fecha de la jornada (ayer)
-    const [y, m, d] = YESTERDAY.split('-');
-    const formatted = `${d}/${m}/${y}`;
-    cy.contains(formatted).should('exist');
+    // El diálogo debe mostrar "Cerrar caja operativa" y los montos del snapshot
+    cy.contains('Cerrar caja operativa').should('be.visible');
+    cy.get('.p-dialog:visible').contains('Esperado').should('be.visible');
   });
 
   it('CA-02b — el POST de cierre se llama SIN register_date (backend auto-detecta la jornada)', () => {
-    cy.get('[data-cy="admin-cash-register-close-day-cta"]').click();
-    cy.wait('@getPreClose');
+    cy.get('[data-cy="admin-cash-register-close-day-cta"]')
+      .scrollIntoView()
+      .click();
+    cy.wait('@getSnapshot');
 
-    // Ingresar efectivo declarado
+    // Ingresar efectivo declarado en la primera fila (CASH)
     cy.get('p-inputNumber input').first().clear().type('45000');
 
-    // Confirmar cierre usando el data-cy del botón inline
-    cy.get('[data-cy="admin-cash-register-close-confirm-action-inline"]').click();
+    // Confirmar cierre con el botón "Cerrar caja"
+    cy.contains('button', 'Cerrar caja').click();
     cy.wait('@postClose').then((interception) => {
       // El frontend NO debe enviar register_date — el backend lo auto-detecta
       expect(interception.request.body).not.to.have.property('register_date');
-      expect(interception.request.body).to.have.property('declared_cash', 45000);
+      // El body tiene el array declared con al menos el método CASH
+      expect(interception.request.body).to.have.property('declared');
+      expect(interception.request.body.declared[0]).to.have.property(
+        'payment_method',
+        'CASH',
+      );
+      expect(interception.request.body.declared[0]).to.have.property(
+        'declared_amount',
+        45000,
+      );
     });
   });
 });
@@ -400,9 +497,18 @@ describe('CA-02d — Revertir cobro de jornada activa post-medianoche funciona s
       paymentCallCount++;
       req.reply({
         statusCode: 200,
-        body: paymentCallCount === 1
-          ? approvedList
-          : { ok: true, data: [{ ...MOCK_PAYMENT_APPROVED.data, reversal_payment_id: 'pay-002' }] },
+        body:
+          paymentCallCount === 1
+            ? approvedList
+            : {
+                ok: true,
+                data: [
+                  {
+                    ...MOCK_PAYMENT_APPROVED.data,
+                    reversal_payment_id: 'pay-002',
+                  },
+                ],
+              },
       });
     }).as('getPayments');
 
@@ -429,9 +535,13 @@ describe('CA-02d — Revertir cobro de jornada activa post-medianoche funciona s
     cy.wait('@getPaymentDetail');
 
     cy.contains('button', 'Revertir cobro').should('be.visible').click();
-    cy.get('textarea').should('be.visible').type('Cobro registrado en jornada nocturna por error');
+    cy.get('textarea')
+      .should('be.visible')
+      .type('Cobro registrado en jornada nocturna por error');
 
-    cy.contains('button', /^Revertir cobro$/).last().click();
+    cy.contains('button', /^Revertir cobro$/)
+      .last()
+      .click();
     cy.wait('@postReverse').its('response.statusCode').should('eq', 200);
     cy.wait('@getPayments');
 

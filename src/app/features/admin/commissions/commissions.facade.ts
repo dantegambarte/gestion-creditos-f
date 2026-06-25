@@ -540,7 +540,7 @@ export class CommissionsFacade {
     const map: Record<string, string> = {
       SELLER: 'VENDEDOR',
       COLLECTOR: 'COBRADOR',
-      SELLER_COLLECTOR: 'VENDEDOR-COBRADOR',
+      SELLER_COLLECTOR: 'VEND./COBR.',
     };
     return map[role] ?? role;
   }
@@ -552,13 +552,13 @@ export class CommissionsFacade {
   roleTagClass(role: string): string {
     const map: Record<string, string> = {
       SELLER:
-        '!bg-emerald-500/15 !text-emerald-400 !border !border-emerald-500/20 text-[11px] font-semibold',
+        '!bg-emerald-500/15 !text-emerald-400 !border !border-emerald-500/20 text-[11px] font-semibold whitespace-nowrap',
       COLLECTOR:
-        '!bg-amber-500/15 !text-amber-400 !border !border-amber-500/20 text-[11px] font-semibold',
+        '!bg-amber-500/15 !text-amber-400 !border !border-amber-500/20 text-[11px] font-semibold whitespace-nowrap',
       SELLER_COLLECTOR:
-        '!bg-violet-500/15 !text-violet-300 !border !border-violet-500/20 text-[11px] font-semibold',
+        '!bg-violet-500/15 !text-violet-300 !border !border-violet-500/20 text-[11px] font-semibold whitespace-nowrap',
     };
-    return map[role] ?? 'text-[11px] font-semibold';
+    return map[role] ?? 'text-[11px] font-semibold whitespace-nowrap';
   }
 
   /**
