@@ -17,7 +17,7 @@
         </div>
 
         <div class="space-y-5 px-5 py-5">
-          @if (operationType === "SALE" && cartLines.length) {
+          @if (operationType === "SALE" && cartLines.length > 1) {
             <div>
               <p
                 class="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ff-text-muted)]"
@@ -384,12 +384,6 @@
                 }}</span>
               </div>
               <div class="flex items-center justify-between gap-3">
-                <span class="text-[var(--ff-text-secondary)]">Tasa prom.</span>
-                <span class="font-semibold text-[var(--ff-text-primary)]">{{
-                  averageRateLabel
-                }}</span>
-              </div>
-              <div class="flex items-center justify-between gap-3">
                 <span class="text-[var(--ff-text-secondary)]"
                   >Primera cuota</span
                 >
@@ -423,51 +417,18 @@
               Montos
             </p>
             <div class="space-y-1.5">
-              @if (operationType === "SALE") {
-                <div class="flex items-center justify-between gap-3">
-                  <span class="text-[var(--ff-text-secondary)]">Subtotal</span>
-                  <span class="font-semibold text-[var(--ff-text-primary)]">{{
-                    subtotalProductos | currencyArs
-                  }}</span>
-                </div>
-                @if (initialPaymentAmount > 0) {
-                  <div class="flex items-center justify-between gap-3">
-                    <span class="text-[var(--ff-text-secondary)]">{{
-                      initialPaymentLabel
-                    }}</span>
-                    <span class="font-semibold text-[#FFB347]"
-                      >- {{ initialPaymentAmount | currencyArs }}</span
-                    >
-                  </div>
-                }
-              }
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-[var(--ff-text-secondary)]">Financiado</span>
-                <span class="font-semibold text-[var(--ff-text-primary)]">{{
-                  capitalAFinanciar | currencyArs
-                }}</span>
-              </div>
               <div class="flex items-center justify-between gap-3">
                 <span class="text-[var(--ff-text-secondary)]"
-                  >Total devol.</span
+                  >Total a devolver</span
                 >
-                <span class="font-semibold text-[var(--ff-text-primary)]">{{
+                <span class="text-lg font-bold text-[#37F0A4]">{{
                   totalADevolver | currencyArs
                 }}</span>
               </div>
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-[var(--ff-text-secondary)]"
-                  >Cuota
-                  {{
-                    paymentFrequencyLabel === "-"
-                      ? "estim."
-                      : paymentFrequencyLabel.toLowerCase().slice(0, 4) + "."
-                  }}</span
-                >
-                <span class="text-lg font-bold text-[#37F0A4]">{{
-                  valorCuota | currencyArs
-                }}</span>
-              </div>
+              <p class="text-xs text-[var(--ff-text-muted)]">
+                en {{ summaryInstallmentsCount }} cuotas de
+                {{ valorCuota | currencyArs }}
+              </p>
             </div>
           </div>
 

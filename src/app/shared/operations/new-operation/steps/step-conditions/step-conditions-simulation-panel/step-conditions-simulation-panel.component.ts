@@ -37,23 +37,6 @@ export class StepConditionsSimulationPanelComponent {
   }
 
   /**
-   * Estado breve de la simulación para el badge de estado.
-   */
-  getSimulationStatusLabel(): string {
-    if (
-      this.selectedInstallmentsCount <= 0 ||
-      this.valorCuota <= 0 ||
-      this.totalADevolver <= 0
-    ) {
-      return 'Completá los datos para simular';
-    }
-    if (this.simulationLoading) return 'Calculando simulación';
-    if (this.simulationError) return 'Simulación no disponible';
-    if (this.simulationResult) return 'Simulación actualizada';
-    return 'Lista para simular';
-  }
-
-  /**
    * Genera las filas del cronograma. Usa datos reales del backend si existen,
    * o una estimación local si no.
    */
