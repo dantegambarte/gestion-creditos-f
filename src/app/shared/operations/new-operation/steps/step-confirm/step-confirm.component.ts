@@ -173,7 +173,7 @@ export class StepConfirmComponent {
    */
   get initialPaymentLabel(): string {
     if (this.operationType !== 'SALE') return 'Detalle';
-    if (this.initialPaymentType === 'DOWN_PAYMENT') return 'Enganche';
+    if (this.initialPaymentType === 'DOWN_PAYMENT') return 'Anticipo';
     if (this.initialPaymentType === 'ADVANCED_INSTALLMENTS')
       return 'Cuotas adelantadas';
     return 'Sin pago inicial';
@@ -210,16 +210,6 @@ export class StepConfirmComponent {
       0,
       ...this.cartLines.map((line) => Number(line.selectedInstallments ?? 0)),
     );
-  }
-
-  /**
-   * Calcula una tasa promedio simple a partir del total y el capital financiado.
-   * @returns {string} Porcentaje con coma decimal para mostrar en el resumen.
-   */
-  get averageRateLabel(): string {
-    if (this.capitalAFinanciar <= 0 || this.intereses <= 0) return '0%';
-    const percent = (this.intereses / this.capitalAFinanciar) * 100;
-    return `${percent.toFixed(1).replace('.', ',')}%`;
   }
 
   /**
