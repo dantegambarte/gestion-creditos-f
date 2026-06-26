@@ -131,17 +131,17 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Calcula el monto estimado asociado al adelanto de cuotas.
-   * @returns {number} Importe equivalente al adelanto cuando existe.
+   * Monto real adelantado: suma del amount_due de las cuotas adelantadas (las
+   * primeras N), no un promedio de capital. Refleja exactamente lo que se cobró
+   * al aprobar. No depende del enganche (que usa credit.downPayment aparte).
+   * @returns {number} Importe total de las cuotas adelantadas.
    */
   get prepaidInstallmentsAmount(): number {
     if (!this.credit || this.credit.prepaidInstallments <= 0) return 0;
-    const installmentsCount = this.credit.installmentsCount || 0;
-    if (installmentsCount <= 0) return 0;
-    return Math.round(
-      (this.credit.financedAmount / installmentsCount) *
-        this.credit.prepaidInstallments,
-    );
+    const n = this.credit.prepaidInstallments;
+    return this.credit.installments
+      .filter((i) => i.installmentNumber <= n)
+      .reduce((sum, i) => sum + (i.amountDue ?? 0), 0);
   }
 
   /**
