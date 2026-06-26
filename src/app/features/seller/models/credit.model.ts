@@ -55,6 +55,12 @@ export interface CreditInstallment {
   amountPaid: number;
   penaltyAmount: number;
   status: InstallmentStatus;
+  /** Fecha de cobro derivada del último pago aprobado (no es columna propia). */
+  paidAt: string | null;
+  /** Contexto de generación del pago que la canceló (ej. APPROVAL_PREPAYMENT). */
+  generationType: string | null;
+  /** Forma de pago del cobro (CASH / TRANSFER / MIXED). */
+  paidMethod: string | null;
 }
 
 export interface CreditProduct {
@@ -242,6 +248,9 @@ export interface CreditInstallmentRaw {
   amount_paid: number;
   penalty_amount: number;
   status: InstallmentStatus;
+  paid_at?: string | null;
+  generation_type?: string | null;
+  paid_method?: string | null;
 }
 
 export interface CreditProductRaw {

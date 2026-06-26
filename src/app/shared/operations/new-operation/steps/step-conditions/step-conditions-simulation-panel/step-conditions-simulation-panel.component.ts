@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { TooltipModule } from 'primeng/tooltip';
 import { CurrencyArsPipe } from '../../../../../../core/pipes/currency-ars.pipe';
 import { SimulateResult } from '../../../../../../features/seller/models/credit.model';
 
 @Component({
   selector: 'app-step-conditions-simulation-panel',
   standalone: true,
-  imports: [CurrencyArsPipe],
+  imports: [CurrencyArsPipe, TooltipModule],
   templateUrl: './step-conditions-simulation-panel.component.html',
 })
 export class StepConditionsSimulationPanelComponent {

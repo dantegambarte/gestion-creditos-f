@@ -697,6 +697,12 @@
           [totalInterestAmount]="totalInterestAmount"
           [canContinueWithPlan]="canContinueWithPlan"
           [selectedInstallmentsCount]="getSelectedInstallmentsCount()"
+          [advancedInstallmentsCount]="
+            form.controls['initialPaymentType'].value ===
+            'ADVANCED_INSTALLMENTS'
+              ? form.controls['advancedInstallmentsCount'].value ?? 0
+              : 0
+          "
           (continueRequested)="continueFromSimulationRequested.emit()"
         />
       }

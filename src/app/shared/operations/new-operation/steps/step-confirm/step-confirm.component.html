@@ -168,16 +168,29 @@
                   @for (item of schedulePreview; track item.label) {
                     <div
                       class="grid grid-cols-[72px_1fr_auto] items-center gap-3 text-sm"
+                      [class.opacity-70]="item.isAdvanced"
                     >
                       <span class="text-[var(--ff-text-muted)]">{{
                         item.label
                       }}</span>
                       <span
-                        class="font-semibold text-[var(--ff-text-primary)]"
-                        >{{ item.dueDate }}</span
+                        class="flex items-center gap-2 font-semibold text-[var(--ff-text-primary)]"
+                        [class.line-through]="item.isAdvanced"
+                        >{{ item.dueDate }}
+                        @if (item.isAdvanced) {
+                          <span
+                            class="inline-flex cursor-help items-center gap-1 rounded-full border border-[#37F0A4]/30 bg-[#37F0A4]/10 px-2 py-0.5 text-[10px] font-semibold text-[#37F0A4] no-underline"
+                            pTooltip="Esta cuota se cancela al aprobar la venta."
+                            tooltipPosition="top"
+                          >
+                            <i class="pi pi-info-circle text-[10px]"></i>
+                            Adelantada
+                          </span>
+                        }</span
                       >
                       <span
                         class="font-semibold text-[var(--ff-text-primary)]"
+                        [class.line-through]="item.isAdvanced"
                         >{{ item.amount | currencyArs }}</span
                       >
                     </div>
