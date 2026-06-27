@@ -324,61 +324,13 @@
 <!-- Dialog: Aprobar -->
 <p-dialog
   [(visible)]="showApproveDialog"
-  header="Aprobar Operación"
+  header="Aprobar Crédito"
   [modal]="true"
   [style]="{ width: 'min(460px, calc(100vw - 2rem))' }"
   [draggable]="false"
   [resizable]="false"
 >
   <div class="flex flex-col gap-4 py-2">
-    <div
-      class="rounded-lg p-3"
-      style="
-        background: var(--ff-secondary);
-        border: 1px solid var(--ff-border);
-      "
-    >
-      <p class="text-sm font-medium" style="color: var(--ff-text-primary)">
-        {{ approvingRow?.customerName }} · {{ approvingRow?.customerDni }} ·
-        {{ approvingRow?.type === "SALE" ? "Venta" : "Préstamo" }}
-      </p>
-      <p class="text-base font-bold mt-1" style="color: var(--ff-success)">
-        Monto: {{ approvingRow?.totalAmount | currencyArs: 2 }}
-      </p>
-      @if (approvingRowDownPayment > 0) {
-        <p
-          class="text-sm mt-2 p-2 rounded"
-          style="
-            background: rgba(108, 231, 183, 0.1);
-            border: 1px solid var(--ff-success);
-            color: var(--ff-success);
-          "
-        >
-          💰 Enganche incluido: {{ approvingRowDownPayment | currencyArs: 2 }}
-          <br />
-          <span style="font-size: 0.75rem; opacity: 0.8">
-            Se aprobará junto con el crédito (operación atómica)
-          </span>
-        </p>
-      }
-      @if (approvingRowPrepaidInstallments > 0) {
-        <p
-          class="text-sm mt-2 p-2 rounded"
-          style="
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.45);
-            color: #93c5fd;
-          "
-        >
-          ⏩ Cuotas adelantadas: {{ approvingRowPrepaidInstallments }} cuota(s)
-          <br />
-          <span style="font-size: 0.75rem; opacity: 0.85">
-            Método: {{ paymentMethodLabel(approvingRowPaymentMethod) }}
-          </span>
-        </p>
-      }
-    </div>
-
     <!-- Vendedor asignado + cambio antes de aprobar -->
     <div
       class="rounded-lg p-3"
@@ -486,37 +438,6 @@
       </div>
     }
 
-    <div class="flex flex-col gap-3">
-      <div class="flex items-center gap-2">
-        <p-checkbox
-          [(ngModel)]="approveCheckDoc"
-          [binary]="true"
-          inputId="checkDoc"
-        />
-        <label
-          for="checkDoc"
-          class="text-sm cursor-pointer"
-          style="color: var(--ff-text-primary)"
-        >
-          Revisar documentación adjunta
-        </label>
-      </div>
-      <div class="flex items-center gap-2">
-        <p-checkbox
-          [(ngModel)]="approveCheckClient"
-          [binary]="true"
-          inputId="checkClient"
-        />
-        <label
-          for="checkClient"
-          class="text-sm cursor-pointer"
-          style="color: var(--ff-text-primary)"
-        >
-          Validar cliente (sin reportes negativos)
-        </label>
-      </div>
-    </div>
-
     <p
       class="text-xs px-1"
       style="color: var(--ff-text-muted); line-height: 1.4"
@@ -536,7 +457,7 @@
         (onClick)="showApproveDialog = false"
       />
       <p-button
-        label="Confirmar Aprobación"
+        label="Confirmar"
         severity="primary"
         styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmApprove()"
