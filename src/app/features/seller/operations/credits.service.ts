@@ -432,6 +432,18 @@ export class CreditsService {
   }
 
   /**
+   * Reasigna el vendedor de un crédito ANTES de aprobarlo (admin-only). Solo
+   * válido mientras el crédito esté PENDING_APPROVAL.
+   * @param id - ID del crédito.
+   * @param sellerId - Nuevo vendedor (rol SELLER o SELLER_COLLECTOR).
+   */
+  changeSeller(id: string, sellerId: string): Observable<CreditDetail> {
+    return this.api
+      .patch<CreditDetailRaw>(`credits/${id}/seller`, { seller_id: sellerId })
+      .pipe(map(toCreditDetail));
+  }
+
+  /**
    * Inicia una refinanciación del crédito activo indicado.
    * Crea un nuevo crédito LOAN en PENDING_APPROVAL con el saldo trasladado.
    * @param id - ID del crédito a refinanciar.
