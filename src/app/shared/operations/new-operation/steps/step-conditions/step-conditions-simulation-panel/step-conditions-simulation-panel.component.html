@@ -62,16 +62,34 @@
           @for (item of getSimulationScheduleRows(); track item.installment) {
             <div
               class="grid grid-cols-12 items-center gap-2 px-4 py-2.5 text-xs sm:text-sm"
+              [class.opacity-70]="item.isAdvanced"
             >
               <p class="col-span-2 font-medium text-[var(--ff-text-primary)]">
                 {{ item.installment }}
               </p>
-              <p class="col-span-6 text-[var(--ff-text-secondary)]">
+              <p
+                class="col-span-6 text-[var(--ff-text-secondary)]"
+                [class.line-through]="item.isAdvanced"
+              >
                 {{ getFormattedDate(item.dueDate) }}
               </p>
-              <p class="col-span-4 text-right font-semibold text-emerald-300">
-                {{ item.amount | currencyArs }}
-              </p>
+              <div class="col-span-4 flex items-center justify-end gap-2">
+                @if (item.isAdvanced) {
+                  <span
+                    class="inline-flex cursor-help items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300"
+                    pTooltip="Esta cuota fue cancelada al momento de aprobar la venta."
+                    tooltipPosition="top"
+                  >
+                    <i class="pi pi-info-circle text-[10px]"></i> Adelantada
+                  </span>
+                }
+                <span
+                  class="font-semibold text-emerald-300"
+                  [class.line-through]="item.isAdvanced"
+                >
+                  {{ item.amount | currencyArs }}
+                </span>
+              </div>
             </div>
           }
         </div>

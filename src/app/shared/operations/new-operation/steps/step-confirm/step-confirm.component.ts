@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
+import { TooltipModule } from 'primeng/tooltip';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { SimulateResult } from '../../../../../features/seller/models/credit.model';
 import { ClientOperation } from '../../../../models/interface/client';
@@ -14,6 +15,7 @@ import { CartLine } from '../../operation-form.service';
     ReactiveFormsModule,
     CheckboxModule,
     MessageModule,
+    TooltipModule,
     CurrencyArsPipe,
   ],
   templateUrl: './step-confirm.component.html',

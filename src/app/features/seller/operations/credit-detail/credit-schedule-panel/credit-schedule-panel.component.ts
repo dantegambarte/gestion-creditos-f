@@ -222,9 +222,31 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
    * Etiqueta del método de pago.
    * @param method Método de pago
    */
-  paymentMethodLabel(method: 'CASH' | 'TRANSFER' | 'MIXED'): string {
+  paymentMethodLabel(method: string | null): string {
     if (method === 'CASH') return 'Efectivo';
     if (method === 'TRANSFER') return 'Transferencia';
-    return 'Mixto';
+    if (method === 'MIXED') return 'Mixto';
+    return '—';
+  }
+
+  /**
+   * True si la cuota fue cancelada como adelanto al aprobar la venta.
+   * @param inst Cuota a evaluar
+   */
+  isPrepaidOnApproval(inst: CreditDetail['installments'][number]): boolean {
+    return inst.generationType === 'APPROVAL_PREPAYMENT';
+  }
+
+  /**
+   * Etiqueta de ORIGEN del cobro derivada de generation_type. Devuelve null para
+   * un cobro normal (no agrega ruido en el caso común).
+   * @param inst Cuota a evaluar
+   */
+  installmentOriginLabel(
+    inst: CreditDetail['installments'][number],
+  ): string | null {
+    if (inst.generationType === 'APPROVAL_PREPAYMENT') return 'Cuota adelantada';
+    if (inst.generationType === 'ADVANCE_DISTRIBUTION') return 'Pago adelantado';
+    return null;
   }
 }
