@@ -157,6 +157,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   paymentMethodLabel(method: string | null | undefined): string {
     if (method === 'TRANSFER') return 'Transferencia';
     if (method === 'CASH') return 'Efectivo';
+    if (method === 'MIXED') return 'Efectivo + Transferencia';
     return 'Sin especificar';
   }
 
