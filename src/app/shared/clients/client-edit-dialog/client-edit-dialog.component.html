@@ -19,6 +19,18 @@
       </div>
     </div>
     <div class="flex flex-col gap-1">
+  <label class="auth-label">DNI</label>
+  <input
+    pInputText
+    formControlName="dni"
+    placeholder="Ej: 12345678"
+    class="w-full h-11 px-4"
+  />
+  @if (isEditInvalid("dni")) {
+    <span class="auth-error">DNI inválido</span>
+  }
+</div>
+    <div class="flex flex-col gap-1">
       <label class="auth-label">Teléfono</label>
       <input pInputText formControlName="phone" class="w-full h-11 px-4" />
     </div>

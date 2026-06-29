@@ -55,6 +55,11 @@ export class ClientEditDialogComponent implements OnChanges {
     this.editForm = this.buildEditForm(null);
   }
 
+  ngOnInit(): void {
+    // Se ejecuta una sola vez al crear el componente
+    this.editForm = this.buildEditForm(this.client);
+  }
+  
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true) {
       this.editError = '';
@@ -87,15 +92,17 @@ export class ClientEditDialogComponent implements OnChanges {
   saveEdit(): void {
     if (this.editForm.invalid || !this.client) return;
     this.editError = '';
-    const { nombre, apellido, phone, email, direccion, assignedCollectorId } =
+    const { dni, nombre, apellido, phone, email, direccion, assignedCollectorId } =
       this.editForm.value;
     const payload = {
-      fullName: `${nombre} ${apellido}`.trim(),
-      phone: (phone as string) || undefined,
-      email: (email as string) || undefined,
-      address: (direccion as string) || undefined,
-      assignedCollectorId: (assignedCollectorId as string) || undefined,
-    };
+  dni: dni || undefined,
+  full_name: `${nombre} ${apellido}`.trim(), // 👈 snake_case
+  phone: phone || undefined,
+  email: email || undefined,
+  address: direccion || undefined,
+  assigned_collector_id: assignedCollectorId || undefined, // 👈 snake_case
+};
+
 
     this.customersService.update(this.client.id, payload).subscribe({
       next: () => {
@@ -136,32 +143,41 @@ export class ClientEditDialogComponent implements OnChanges {
   }
 
   private buildEditForm(client: Client | null): FormGroup {
-    const parts = client?.name.split(' ') ?? ['', ''];
-    const nombre = parts[0] ?? '';
-    const apellido = parts.slice(1).join(' ') || '';
-    const form = this.fb.group({
-      nombre: [
-        nombre,
-        [
-          Validators.required,
-          Validators.minLength(2),
-          Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
-        ],
-      ],
-      apellido: [
-        apellido,
-        [
-          Validators.required,
-          Validators.minLength(2),
-          Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
-        ],
-      ],
-      phone: [client?.phone ?? '', [Validators.pattern(/^[\d\s\+\-]*$/)]],
-      email: [client?.email ?? '', [Validators.email]],
-      direccion: [client?.address ?? '', [Validators.maxLength(255)]],
-      assignedCollectorId: [{ value: client?.collectorId ?? '', disabled: this.collectorsLoading }],
-    });
+  const parts = client?.name.split(' ') ?? ['', ''];
+  const nombre = parts[0] ?? '';
+  const apellido = parts.slice(1).join(' ') || '';
 
-    return form;
-  }
+  const form = this.fb.group({
+    dni: [
+      client?.dni ?? '', 
+      [
+        Validators.required,
+        Validators.pattern(/^\d{7,10}$/) // ejemplo: solo números de 7 a 10 dígitos
+      ]
+    ],
+    nombre: [
+      nombre,
+      [
+        Validators.required,
+        Validators.minLength(2),
+        Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
+      ],
+    ],
+    apellido: [
+      apellido,
+      [
+        Validators.required,
+        Validators.minLength(2),
+        Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
+      ],
+    ],
+    phone: [client?.phone ?? '', [Validators.pattern(/^[\d\s\+\-]*$/)]],
+    email: [client?.email ?? '', [Validators.email]],
+    direccion: [client?.address ?? '', [Validators.maxLength(255)]],
+    assignedCollectorId: [{ value: client?.collectorId ?? '', disabled: this.collectorsLoading }],
+  });
+
+  return form;
+}
+
 }
