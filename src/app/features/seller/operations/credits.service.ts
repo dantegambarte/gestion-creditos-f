@@ -158,6 +158,8 @@ function toCreditDetail(raw: CreditDetailRaw): CreditDetail {
     downPaymentTransferReference: raw.down_payment_transfer_reference,
     prepaidInstallments: raw.prepaid_installments ?? 0,
     prepaidInstallmentsMethod: raw.prepaid_installments_method,
+    prepaidInstallmentsCash: raw.prepaid_installments_cash ?? 0,
+    prepaidInstallmentsTransfer: raw.prepaid_installments_transfer ?? 0,
     prepaidInstallmentsTransferReference:
       raw.prepaid_installments_transfer_reference,
     settledAt: raw.settled_at,

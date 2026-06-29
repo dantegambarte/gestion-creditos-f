@@ -222,6 +222,32 @@
                 {{ paymentMethodLabel(credit.prepaidInstallmentsMethod) }}
               </div>
             </div>
+            @if (credit.prepaidInstallmentsMethod === 'MIXED') {
+              <div>
+                <div class="ud-label">Efectivo</div>
+                <div class="ud-value ff-mono">
+                  {{ credit.prepaidInstallmentsCash | currencyArs: 0 }}
+                </div>
+              </div>
+              <div>
+                <div class="ud-label">Transferencia</div>
+                <div class="ud-value ff-mono">
+                  {{ credit.prepaidInstallmentsTransfer | currencyArs: 0 }}
+                </div>
+              </div>
+            }
+            @if (
+              (credit.prepaidInstallmentsMethod === 'TRANSFER' ||
+                credit.prepaidInstallmentsMethod === 'MIXED') &&
+              credit.prepaidInstallmentsTransferReference
+            ) {
+              <div class="col-span-2">
+                <div class="ud-label">Referencia transferencia</div>
+                <div class="ud-value">
+                  {{ credit.prepaidInstallmentsTransferReference }}
+                </div>
+              </div>
+            }
           } @else {
             <div>
               <div class="ud-label">Monto financiado</div>

@@ -121,6 +121,8 @@ export interface CreditDetail extends Credit {
   downPaymentTransferReference: string | null;
   prepaidInstallments: number;
   prepaidInstallmentsMethod: string | null;
+  prepaidInstallmentsCash: number;
+  prepaidInstallmentsTransfer: number;
   prepaidInstallmentsTransferReference: string | null;
   settledAt: string | null;
   settlementAmount: number | null;
@@ -304,6 +306,8 @@ export interface CreditDetailRaw extends CreditRaw {
   down_payment_transfer_reference: string | null;
   prepaid_installments: number;
   prepaid_installments_method: string | null;
+  prepaid_installments_cash?: number;
+  prepaid_installments_transfer?: number;
   prepaid_installments_transfer_reference: string | null;
   settled_at: string | null;
   settlement_amount: number | null;
