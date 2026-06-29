@@ -43,6 +43,7 @@ function toCredit(raw: CreditRaw): Credit {
   return {
     id: raw.id,
     type: raw.type,
+    paymentCondition: raw.payment_condition,
     totalAmount: raw.total_amount,
     installmentsCount: raw.installments_count,
     paymentFrequency: raw.payment_frequency,
@@ -301,6 +302,22 @@ function toCreateBody(p: CreditCreatePayload): Record<string, unknown> {
   if (p.notes) body['notes'] = p.notes;
   if (p.type === 'SALE') {
     body['unit_ids'] = p.units.map((u) => u.unitId);
+
+    // Venta de contado: el pago del total viaja como split (efectivo/
+    // transferencia) o como monto+método. No usa cuotas, enganche ni adelantos.
+    if (p.paymentCondition === 'CASH') {
+      body['payment_condition'] = 'CASH';
+      if (p.paymentMethod === 'MIXED') {
+        body['payment_cash'] = p.paymentCash ?? 0;
+        body['payment_transfer'] = p.paymentTransfer ?? 0;
+      } else {
+        body['payment_amount'] = p.paymentAmount ?? 0;
+        if (p.paymentMethod) body['payment_method'] = p.paymentMethod;
+      }
+      if (p.transferReference) body['transfer_reference'] = p.transferReference;
+      return body;
+    }
+
     const hasDownPayment = p.downPayment !== undefined && p.downPayment > 0;
     const hasAdvancedInstallments =
       p.advancedInstallmentsCount !== undefined &&

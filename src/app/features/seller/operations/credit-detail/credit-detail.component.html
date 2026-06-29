@@ -70,6 +70,9 @@
           [value]="credit.type === 'SALE' ? 'Venta' : 'Préstamo'"
           [severity]="credit.type === 'SALE' ? 'info' : 'secondary'"
         />
+        @if (credit.paymentCondition === 'CASH') {
+          <p-tag value="Contado" severity="success" />
+        }
         <p-tag [value]="statusLabel(credit.status)" [severity]="statusSeverity(credit.status)" />
       </div>
 
