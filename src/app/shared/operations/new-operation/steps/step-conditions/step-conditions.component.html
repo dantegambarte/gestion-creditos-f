@@ -2,6 +2,154 @@
   class="mx-auto mt-4 flex w-full max-w-6xl flex-col gap-6 text-[var(--ff-text-primary)]"
   [formGroup]="form"
 >
+  @if (isSale) {
+    <div
+      class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+    >
+      <label class="mb-3 block text-sm font-medium">Condición de pago</label>
+      <div class="grid w-full gap-1 rounded-xl bg-[var(--ff-bg)] p-1 sm:grid-cols-2">
+        <button
+          type="button"
+          class="rounded-lg py-2.5 text-sm font-medium transition-colors"
+          [class]="
+            !isCashSale
+              ? 'rounded-lg bg-[#3B82F6]/10 py-2.5 text-sm font-medium text-[#3B82F6] shadow-sm'
+              : 'rounded-lg py-2.5 text-sm font-medium text-[var(--ff-text-secondary)] hover:text-[var(--ff-text-primary)]'
+          "
+          data-cy="payment-condition-financed"
+          (click)="selectPaymentCondition('FINANCED')"
+        >
+          Financiado
+        </button>
+        <button
+          type="button"
+          class="rounded-lg py-2.5 text-sm font-medium transition-colors"
+          [class]="
+            isCashSale
+              ? 'rounded-lg bg-[#22C55E]/10 py-2.5 text-sm font-medium text-[#22C55E] shadow-sm'
+              : 'rounded-lg py-2.5 text-sm font-medium text-[var(--ff-text-secondary)] hover:text-[var(--ff-text-primary)]'
+          "
+          data-cy="payment-condition-cash"
+          (click)="selectPaymentCondition('CASH')"
+        >
+          Contado
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (isCashSale) {
+    <div
+      class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5"
+    >
+      <h3 class="mb-4 text-base font-semibold">Pago de contado</h3>
+      <div
+        class="mb-4 flex items-center justify-between rounded-xl bg-[var(--ff-bg)] px-4 py-3"
+      >
+        <span class="text-sm text-[var(--ff-text-secondary)]"
+          >Total a cobrar</span
+        >
+        <span class="text-lg font-semibold" data-cy="cash-sale-total">{{
+          cashSaleTotal | currencyArs: 2
+        }}</span>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-sm font-medium">Método de pago *</label>
+          <p-dropdown
+            formControlName="cashSaleMethod"
+            [options]="cashPaymentMethodOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            data-cy="cash-sale-method"
+          />
+        </div>
+        @if (cashSaleMethod === "TRANSFER") {
+          <div>
+            <label class="mb-1 block text-sm font-medium"
+              >Referencia transferencia</label
+            >
+            <input
+              pInputText
+              formControlName="cashSaleTransferReference"
+              maxlength="100"
+              class="h-11 w-full"
+              data-cy="cash-sale-transfer-reference"
+              placeholder="Nro. operación..."
+            />
+          </div>
+        }
+      </div>
+
+      @if (cashSaleMethod === "MIXED") {
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1 block text-sm font-medium">Efectivo ($)</label>
+            <p-inputNumber
+              appCurrencyAmountInput
+              formControlName="cashSaleCash"
+              [min]="0"
+              mode="currency"
+              currency="ARS"
+              locale="es-AR"
+              [minFractionDigits]="0"
+              styleClass="w-full"
+              data-cy="cash-sale-cash"
+            />
+          </div>
+          <div>
+            <label class="mb-1 block text-sm font-medium"
+              >Transferencia ($)</label
+            >
+            <p-inputNumber
+              appCurrencyAmountInput
+              formControlName="cashSaleTransfer"
+              [min]="0"
+              mode="currency"
+              currency="ARS"
+              locale="es-AR"
+              [minFractionDigits]="0"
+              styleClass="w-full"
+              data-cy="cash-sale-transfer"
+            />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="mb-1 block text-sm font-medium"
+              >Referencia transferencia</label
+            >
+            <input
+              pInputText
+              formControlName="cashSaleTransferReference"
+              maxlength="100"
+              class="h-11 w-full"
+              placeholder="Nro. operación..."
+            />
+          </div>
+          @if (
+            !isSplitMatchingTotal(
+              form.controls["cashSaleCash"].value,
+              form.controls["cashSaleTransfer"].value,
+              cashSaleTotal
+            )
+          ) {
+            <p-message
+              styleClass="sm:col-span-2"
+              severity="warn"
+              text="El efectivo y la transferencia deben sumar el total de la venta."
+            />
+          }
+        </div>
+      }
+
+      <p class="mt-4 text-xs text-[var(--ff-text-secondary)]">
+        La venta se cobra completa al aprobarse. No genera cuotas.
+      </p>
+    </div>
+  }
+
+  @if (!isCashSale) {
   <div
     class="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
   >
@@ -708,4 +856,5 @@
       }
     </div>
   </div>
+  }
 </section>

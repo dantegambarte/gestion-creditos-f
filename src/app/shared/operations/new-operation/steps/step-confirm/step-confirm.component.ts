@@ -51,6 +51,27 @@ export class StepConfirmComponent {
       : 'LOAN';
   }
 
+  /** Indica si la operación es una venta de contado (sin financiación). */
+  get isCashSale(): boolean {
+    return (
+      this.operationType === 'SALE' &&
+      this.form?.controls['paymentCondition']?.value === 'CASH'
+    );
+  }
+
+  /** Total cobrado en una venta de contado (suma del carrito). */
+  get cashSaleTotal(): number {
+    return this.subtotalProductos;
+  }
+
+  /** Etiqueta del método de pago elegido para la venta de contado. */
+  get cashSaleMethodLabel(): string {
+    const method = this.form?.controls['cashSaleMethod']?.value;
+    if (method === 'TRANSFER') return 'Transferencia';
+    if (method === 'MIXED') return 'Efectivo + Transferencia';
+    return 'Efectivo';
+  }
+
   /**
    * Obtiene la inicial del cliente para mostrarla en el avatar de resumen.
    * @returns {string} Inicial en mayúscula o "?" si no hay cliente.
