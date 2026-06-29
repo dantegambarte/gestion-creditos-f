@@ -96,6 +96,11 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     return this.credit?.installments[0]?.amountDue ?? null;
   }
 
+  /** Venta de contado: oculta la información de financiación en el detalle. */
+  get isCashSale(): boolean {
+    return this.credit?.paymentCondition === 'CASH';
+  }
+
   /**
    * Resume cómo debe mostrarse el pago inicial cuando el backend no distingue su origen.
    * @returns {string} Etiqueta visible para el bloque financiero.

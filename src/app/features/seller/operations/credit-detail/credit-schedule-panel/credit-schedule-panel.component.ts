@@ -245,7 +245,12 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
   installmentOriginLabel(
     inst: CreditDetail['installments'][number],
   ): string | null {
-    if (inst.generationType === 'APPROVAL_PREPAYMENT') return 'Cuota adelantada';
+    if (inst.generationType === 'APPROVAL_PREPAYMENT') {
+      // En contado la única cuota representa el pago total al aprobar, no un adelanto.
+      return this.credit?.paymentCondition === 'CASH'
+        ? 'Pago de contado'
+        : 'Cuota adelantada';
+    }
     if (inst.generationType === 'ADVANCE_DISTRIBUTION') return 'Pago adelantado';
     return null;
   }
