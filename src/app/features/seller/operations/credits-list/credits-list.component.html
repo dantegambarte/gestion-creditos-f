@@ -87,6 +87,9 @@
                 [class.ff-badge--pagado]="credit.type !== 'SALE'"
                 >{{ credit.type === "SALE" ? "Venta" : "Préstamo" }}</span
               >
+              @if (credit.paymentCondition === "CASH") {
+                <span class="ff-badge ff-badge--liquidado ml-1">Contado</span>
+              }
             </td>
             <td>
               <div class="font-medium">{{ credit.customerName }}</div>
@@ -98,8 +101,12 @@
               {{ credit.totalAmount | currencyArs: 2 }}
             </td>
             <td style="color: var(--ff-text-secondary)">
-              {{ credit.installmentsCount }} cuotas
-              {{ frequencyLabel(credit.paymentFrequency) }}s
+              @if (credit.paymentCondition === "CASH") {
+                Pago único
+              } @else {
+                {{ credit.installmentsCount }} cuotas
+                {{ frequencyLabel(credit.paymentFrequency) }}s
+              }
             </td>
             <td>
               <span
