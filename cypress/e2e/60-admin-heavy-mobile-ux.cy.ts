@@ -1,3 +1,14 @@
+/**
+ * Devuelve la fecha local en formato ISO para fixtures filtrados por "hoy".
+ */
+const localIsoDate = (date = new Date()): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
 const collectorResponse = {
   ok: true,
   data: [
@@ -22,7 +33,7 @@ const collectionSheetsResponse = {
   data: [
     {
       id: 'sheet-mobile-heavy-1',
-      sheet_date: '2026-06-23',
+      sheet_date: localIsoDate(),
       filter_used: 'TODAY_AND_OVERDUE',
       status: 'ACTIVE',
       created_at: '2026-06-23T10:00:00.000Z',
@@ -49,7 +60,7 @@ const collectionSheetDetailResponse = {
   ok: true,
   data: {
     id: 'sheet-mobile-heavy-1',
-    sheet_date: '2026-06-23',
+    sheet_date: localIsoDate(),
     filter_used: 'TODAY_AND_OVERDUE',
     status: 'ACTIVE',
     created_at: '2026-06-23T10:00:00.000Z',
@@ -286,15 +297,21 @@ describe('Admin Backoffice — Heavy Mobile UX', () => {
     const collectionsGate = new Promise<void>((resolve) => {
       releaseCollections = resolve;
     });
+    let shouldDelayCollections = true;
 
     cy.intercept('GET', '**/api/users*', collectorResponse).as('collectorsHeavy');
-    cy.intercept({ method: 'GET', url: '**/api/collections*', times: 1 }, (req) => {
-      req.reply(async () => {
-        await collectionsGate;
-        return { statusCode: 200, body: collectionSheetsResponse };
-      });
+    cy.intercept({ method: 'GET', url: /\/api\/collections(\?.*)?$/ }, (req) => {
+      if (shouldDelayCollections) {
+        shouldDelayCollections = false;
+        collectionsGate.then(() => {
+          req.reply({ statusCode: 200, body: collectionSheetsResponse });
+        });
+        return;
+      }
+
+      req.reply({ statusCode: 200, body: collectionSheetsResponse });
     }).as('collectionsDelayedHeavy');
-    cy.intercept('GET', '**/api/collections/*', {
+    cy.intercept('GET', /\/api\/collections\/[^/?]+$/, {
       statusCode: 200,
       body: collectionSheetDetailResponse,
     }).as('collectionDetailHeavy');
