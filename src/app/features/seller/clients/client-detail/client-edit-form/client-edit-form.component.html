@@ -10,22 +10,31 @@
     (ngSubmit)="onSubmit()"
     class="space-y-4"
   >
-    <!-- DNI visible but disabled with tooltip -->
+    <!-- DNI editable (pantalla solo Admin) -->
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-[var(--ff-text-muted)]">
-        DNI
-        <span
-          class="ml-1 pi pi-info-circle text-xs cursor-help"
-          pTooltip="El DNI no puede modificarse"
-          tooltipPosition="right"
-        ></span>
-      </label>
+      <label for="editDni" class="text-sm font-medium">DNI *</label>
       <input
+        data-cy="seller-client-detail-edit-dni-input"
+        id="editDni"
         pInputText
-        [value]="customer.dni"
-        [disabled]="true"
-        class="opacity-60 cursor-not-allowed"
+        formControlName="dni"
+        maxlength="9"
+        inputmode="numeric"
+        [class.ng-invalid]="isInvalid('dni')"
+        [class.ng-dirty]="isInvalid('dni')"
       />
+      @if (isInvalid("dni")) {
+        <small class="text-red-500">{{ getError("dni") }}</small>
+      }
+      @if (showPortalDniWarning) {
+        <small class="text-amber-500 flex items-start gap-1">
+          <i class="pi pi-exclamation-triangle mt-0.5"></i>
+          <span
+            >Este cliente tiene el portal habilitado. Si cambiás el DNI, deberá
+            ingresar al portal con el nuevo DNI (la contraseña no cambia).</span
+          >
+        </small>
+      }
     </div>
 
     <div class="flex flex-col gap-1">
