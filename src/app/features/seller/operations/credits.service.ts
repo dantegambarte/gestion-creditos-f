@@ -48,6 +48,7 @@ function toCredit(raw: CreditRaw): Credit {
     installmentsCount: raw.installments_count,
     paymentFrequency: raw.payment_frequency,
     interestRate: raw.interest_rate,
+    effectiveRate: raw.effective_rate ?? raw.interest_rate ?? null,
     status: raw.status,
     createdAt: raw.created_at,
     approvedAt: raw.approved_at,

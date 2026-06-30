@@ -16,6 +16,7 @@ import {
   Credit,
   CreditStatus,
   CreditType,
+  PaymentCondition,
 } from '../../features/seller/models/credit.model';
 import { CreditsService } from '../../features/seller/operations/credits.service';
 
@@ -66,10 +67,28 @@ export class OperationsComponent implements OnInit {
     { label: 'Préstamo', value: 'LOAN' as CreditType },
   ];
 
+  // Sub-filtro que se habilita solo cuando el Tipo es Venta.
+  paymentConditionOptions = [
+    { label: 'Contado / Financiada', value: null },
+    { label: 'Contado', value: 'CASH' as PaymentCondition },
+    { label: 'Financiada', value: 'FINANCED' as PaymentCondition },
+  ];
+
   selectedStatus: CreditStatus | null = null;
   selectedType: CreditType | null = null;
+  selectedPaymentCondition: PaymentCondition | null = null;
   selectedSeller: string | null = null;
   searchTerm = '';
+
+  /**
+   * Al cambiar el Tipo, resetea el sub-filtro de condición de pago (solo aplica
+   * a ventas). Lo invoca el dropdown de Tipo vía ngModelChange.
+   */
+  onTypeChange(): void {
+    if (this.selectedType !== 'SALE') {
+      this.selectedPaymentCondition = null;
+    }
+  }
 
   showNewOperationModal = false;
 
@@ -181,12 +200,22 @@ export class OperationsComponent implements OnInit {
         !this.selectedStatus || operation.status === this.selectedStatus;
       const matchesType =
         !this.selectedType || operation.type === this.selectedType;
+      // Condición de pago: solo aplica a ventas (en préstamos se ignora).
+      const matchesPaymentCondition =
+        this.selectedType !== 'SALE' ||
+        !this.selectedPaymentCondition ||
+        operation.paymentCondition === this.selectedPaymentCondition;
       const matchesSeller =
         !this.selectedSeller ||
         (operation.createdByName ?? 'Sin asignar') === this.selectedSeller;
 
       if (!term) {
-        return matchesStatus && matchesType && matchesSeller;
+        return (
+          matchesStatus &&
+          matchesType &&
+          matchesPaymentCondition &&
+          matchesSeller
+        );
       }
 
       const normalizedClient = this.normalizeText(operation.customerName);
@@ -195,6 +224,7 @@ export class OperationsComponent implements OnInit {
       return (
         matchesStatus &&
         matchesType &&
+        matchesPaymentCondition &&
         matchesSeller &&
         (normalizedClient.includes(term) || normalizedDni.includes(term))
       );
@@ -235,6 +265,7 @@ export class OperationsComponent implements OnInit {
     this.searchTerm = '';
     this.selectedStatus = null;
     this.selectedType = null;
+    this.selectedPaymentCondition = null;
     this.selectedSeller = null;
   }
 

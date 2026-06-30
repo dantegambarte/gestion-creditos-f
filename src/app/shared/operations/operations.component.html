@@ -39,6 +39,7 @@
       <p-dropdown
         [options]="typeOptions"
         [(ngModel)]="selectedType"
+        (ngModelChange)="onTypeChange()"
         placeholder="Tipo"
         [filter]="typeOptions.length > 10"
         filterBy="label"
@@ -47,6 +48,19 @@
         styleClass="operations-filter-dropdown"
         appendTo="body"
       />
+
+      @if (selectedType === "SALE") {
+        <p-dropdown
+          [options]="paymentConditionOptions"
+          [(ngModel)]="selectedPaymentCondition"
+          placeholder="Contado / Financiada"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="operations-filter-dropdown"
+          appendTo="body"
+          data-cy="operations-filter-payment-condition"
+        />
+      }
 
       <p-dropdown
         [options]="sellerOptions"
@@ -89,7 +103,8 @@
             <th>Tasa</th>
             <th>Estado</th>
             <th>Vendedor</th>
-            <th>Fecha</th>
+            <th>Creación</th>
+            <th>Aprobación</th>
             <th>Acciones</th>
           </tr>
         </ng-template>
@@ -125,7 +140,7 @@
             <td class="operations-muted">{{ getInstallmentsSummary(op) }}</td>
 
             <td class="operations-muted">
-              {{ getInterestRateLabel(op.interestRate) }}
+              {{ getInterestRateLabel(op.effectiveRate) }}
             </td>
 
             <td>
@@ -153,6 +168,10 @@
 
             <td class="operations-muted">
               {{ op.createdAt | date: "dd/MM/yy" }}
+            </td>
+
+            <td class="operations-muted">
+              {{ op.approvedAt ? (op.approvedAt | date: "dd/MM/yy") : "—" }}
             </td>
 
             <td>

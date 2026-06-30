@@ -37,6 +37,11 @@ export interface Credit {
   installmentsCount: number;
   paymentFrequency: PaymentFrequency;
   interestRate: number | null;
+  /**
+   * Tasa efectiva para listados: interestRate (LOAN) o la tasa congelada por
+   * producto (SALE financiada). null en contado y operaciones sin aprobar.
+   */
+  effectiveRate: number | null;
   status: CreditStatus;
   createdAt: string;
   approvedAt: string | null;
@@ -245,6 +250,7 @@ export interface CreditRaw {
   installments_count: number;
   payment_frequency: PaymentFrequency;
   interest_rate: number | null;
+  effective_rate: number | null;
   status: CreditStatus;
   created_at: string;
   approved_at: string | null;

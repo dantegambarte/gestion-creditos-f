@@ -19,6 +19,7 @@ const mockCreditRaw: CreditRaw = {
   installments_count: 12,
   payment_frequency: 'MONTHLY',
   interest_rate: 5,
+  effective_rate: 5,
   status: 'ACTIVE',
   created_at: '2026-01-01T00:00:00Z',
   approved_at: null,
