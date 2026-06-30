@@ -47,7 +47,7 @@
 // pero eso clipea el card-list mobile cuando los filtros stackeados empujan
 // el contenido más abajo del alto visible. En mobile lo dejamos crecer libre.
 @media (max-width: 767.98px) {
-  .ff-panel {
-    overflow: visible;
+  .delinquency-panel {
+    overflow: visible !important;
   }
 }

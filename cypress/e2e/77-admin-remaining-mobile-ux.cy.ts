@@ -103,6 +103,32 @@ const expensesResponse = {
   },
 };
 
+const productBrandsResponse = {
+  ok: true,
+  data: [
+    {
+      id: 'brand-mobile-1',
+      name: 'Marca Mobile QA',
+      active: true,
+      created_at: '2026-06-23T09:00:00.000Z',
+      product_count: 3,
+    },
+  ],
+};
+
+const productCategoriesResponse = {
+  ok: true,
+  data: [
+    {
+      id: 'category-mobile-1',
+      name: 'Categoría Mobile QA',
+      active: true,
+      created_at: '2026-06-23T09:00:00.000Z',
+      product_count: 5,
+    },
+  ],
+};
+
 // ── Fixtures con texto largo — P0 #2: ningún card debe romper el layout
 // con nombres/descripciones largas (overflow horizontal o boxes rotas).
 const LONG_NAME = 'Cliente Con Nombre Extremadamente Largo Para Probar Truncado En Mobile';
@@ -289,6 +315,78 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
     cy.get('[data-cy="expense-category-create-dialog-body"] input')
       .should('be.visible')
       .type('Categoría Mobile QA');
+  });
+
+  it('Productos Config Mobile — nav scrolleable y Marcas usa cards + modal fullscreen', () => {
+    cy.intercept('GET', '**/api/product-brands*', productBrandsResponse).as('productBrands');
+
+    cy.loginAs('ADMIN', '/admin/products/config/brands');
+    cy.wait('@productBrands');
+
+    cy.get('[data-cy="products-nav"]')
+      .should('be.visible')
+      .then(($nav) => {
+        const el = $nav[0];
+        expect(el.scrollWidth).to.be.greaterThan(el.clientWidth);
+      });
+    cy.get('[data-cy="product-brands-table"]').should('not.be.visible');
+    cy.get('[data-cy="product-brands-mobile-list"]').should('be.visible');
+    cy.get('[data-cy="product-brands-mobile-card"]')
+      .should('have.length', 1)
+      .first()
+      .contains('Marca Mobile QA');
+
+    cy.get('[data-cy="product-brands-create-trigger"]').scrollIntoView().click();
+    cy.get('[data-cy="product-brands-create-dialog"]').should('be.visible');
+    cy.get('[data-cy="product-brands-create-dialog-body"]')
+      .should('be.visible')
+      .and('have.css', 'overflow-y', 'auto');
+    cy.get('[data-cy="product-brands-create-submit"]')
+      .should('be.visible')
+      .then(($btn) => {
+        const rect = $btn[0].getBoundingClientRect();
+        expect(rect.left).to.be.at.least(0);
+        expect(rect.right).to.be.at.most(375);
+        expect(rect.bottom).to.be.at.most(667);
+      });
+
+    cy.window().then((win) => {
+      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+    });
+  });
+
+  it('Productos Config Mobile — Categorías usa cards + modal fullscreen', () => {
+    cy.intercept('GET', '**/api/product-categories*', productCategoriesResponse).as(
+      'productCategories',
+    );
+
+    cy.loginAs('ADMIN', '/admin/products/config/categories');
+    cy.wait('@productCategories');
+
+    cy.get('[data-cy="product-categories-table"]').should('not.be.visible');
+    cy.get('[data-cy="product-categories-mobile-list"]').should('be.visible');
+    cy.get('[data-cy="product-categories-mobile-card"]')
+      .should('have.length', 1)
+      .first()
+      .contains('Categoría Mobile QA');
+
+    cy.get('[data-cy="product-categories-create-trigger"]').scrollIntoView().click();
+    cy.get('[data-cy="product-categories-create-dialog"]').should('be.visible');
+    cy.get('[data-cy="product-categories-create-dialog-body"]')
+      .should('be.visible')
+      .and('have.css', 'overflow-y', 'auto');
+    cy.get('[data-cy="product-categories-create-submit"]')
+      .should('be.visible')
+      .then(($btn) => {
+        const rect = $btn[0].getBoundingClientRect();
+        expect(rect.left).to.be.at.least(0);
+        expect(rect.right).to.be.at.most(375);
+        expect(rect.bottom).to.be.at.most(667);
+      });
+
+    cy.window().then((win) => {
+      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+    });
   });
 
   it('Generar Planillas Mobile — el modal entra en pantalla y el botón final es clickeable', () => {
