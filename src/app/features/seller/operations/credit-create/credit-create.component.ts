@@ -17,11 +17,13 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { ToastModule } from 'primeng/toast';
 import { AppError } from '../../../../core/models/app-error';
 import { HeaderService } from '../../../../core/services/header.service';
+import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
 import { CustomersService } from '../../clients/customers.service';
 import {
   CartUnit,
   CreditCreatePayload,
+  IntakePaymentMethod,
   SaleCreditPayload,
   PaymentFrequency,
   SimulateResult,
@@ -50,6 +52,7 @@ import { BackButtonComponent } from '../../../../shared/components/back-button/b
     CreditCartComponent,
     CreditSimulationComponent,
     BackButtonComponent,
+    CurrencyArsPipe,
   ],
   templateUrl: './credit-create.component.html',
 })
@@ -85,12 +88,32 @@ export class CreditCreateComponent implements OnInit {
     { label: 'Transferencia', value: 'TRANSFER' },
   ];
 
+  readonly cashPaymentMethodOptions = [
+    { label: 'Efectivo', value: 'CASH' },
+    { label: 'Transferencia', value: 'TRANSFER' },
+    { label: 'Mixto', value: 'MIXED' },
+  ];
+
   get creditType(): string {
     return this.form.get('type')?.value ?? 'SALE';
   }
 
   get isSale(): boolean {
     return this.creditType === 'SALE';
+  }
+
+  /** Venta de contado: SALE con condición de pago CASH (sin financiación). */
+  get isCashSale(): boolean {
+    return this.isSale && this.form.get('paymentCondition')?.value === 'CASH';
+  }
+
+  get cashSaleMethod(): string {
+    return this.form.get('cashSaleMethod')?.value ?? 'CASH';
+  }
+
+  /** Suma de precios del carrito = total a cobrar en una venta de contado. */
+  get cartTotal(): number {
+    return this.cart.reduce((sum, u) => sum + u.price, 0);
   }
 
   get customerOptions(): { label: string; value: string }[] {
@@ -138,11 +161,15 @@ export class CreditCreateComponent implements OnInit {
     this.submitError = null;
     this.unitsError = null;
     this.showExtraSection = false;
+    // La condición de pago solo aplica a ventas: al cambiar de tipo se vuelve a
+    // FINANCED y se restauran las validaciones de cuotas/frecuencia.
     this.form.patchValue({
+      paymentCondition: 'FINANCED',
       downPayment: 0,
       downPaymentMethod: 'CASH',
       downPaymentTransferReference: '',
     });
+    this.setFinancingControlsRequired(true);
     const totalAmount = this.form.get('totalAmount');
     if (newType === 'LOAN') {
       totalAmount?.setValidators([Validators.required, Validators.min(1)]);
@@ -151,6 +178,55 @@ export class CreditCreateComponent implements OnInit {
       totalAmount?.setValue(null);
     }
     totalAmount?.updateValueAndValidity();
+  }
+
+  /**
+   * Alterna entre venta financiada y contado. En contado no hay cuotas ni
+   * frecuencia: se relajan sus validaciones y se fijan valores sentinela (el
+   * backend los ignora) para no bloquear el envío del formulario.
+   * @param condition condición de pago seleccionada
+   */
+  onPaymentConditionChange(condition: string): void {
+    this.simulateResult = null;
+    this.simulateError = null;
+    this.submitError = null;
+    this.unitsError = null;
+    this.showExtraSection = false;
+    if (condition === 'CASH') {
+      this.form.patchValue({
+        paymentFrequency: 'WEEKLY',
+        installmentsCount: 1,
+        downPayment: 0,
+        downPaymentMethod: 'CASH',
+        downPaymentTransferReference: '',
+      });
+      this.setFinancingControlsRequired(false);
+    } else {
+      this.setFinancingControlsRequired(true);
+    }
+  }
+
+  /**
+   * Activa o desactiva las validaciones de frecuencia y cantidad de cuotas
+   * (no aplican a la venta de contado).
+   * @param required true para exigirlas (financiado), false para relajarlas
+   */
+  private setFinancingControlsRequired(required: boolean): void {
+    const freq = this.form.get('paymentFrequency');
+    const count = this.form.get('installmentsCount');
+    if (required) {
+      freq?.setValidators([Validators.required]);
+      count?.setValidators([
+        Validators.required,
+        Validators.min(1),
+        Validators.max(120),
+      ]);
+    } else {
+      freq?.clearValidators();
+      count?.clearValidators();
+    }
+    freq?.updateValueAndValidity();
+    count?.updateValueAndValidity();
   }
 
   /**
@@ -167,6 +243,7 @@ export class CreditCreateComponent implements OnInit {
    * Simula el crédito basado en los valores del formulario.
    */
   simulate(): void {
+    if (this.isCashSale) return; // contado no se simula (sin cuotas ni interés)
     const v = this.form.getRawValue();
     if (!v.installmentsCount || !v.paymentFrequency) return;
     if (v.type === 'SALE' && this.cart.length === 0) return;
@@ -233,7 +310,42 @@ export class CreditCreateComponent implements OnInit {
     const v = this.form.getRawValue();
     let payload: CreditCreatePayload;
 
-    if (v.type === 'SALE') {
+    if (v.type === 'SALE' && v.paymentCondition === 'CASH') {
+      // ── Venta de CONTADO ───────────────────────────────────────
+      const total = this.cartTotal;
+      const method = v.cashSaleMethod as IntakePaymentMethod;
+      const cashPayload: SaleCreditPayload = {
+        customerId: v.customerId,
+        type: 'SALE',
+        paymentCondition: 'CASH',
+        // Sentinelas: el backend fuerza 1 cuota y frecuencia inerte en contado.
+        installmentsCount: 1,
+        paymentFrequency: 'WEEKLY',
+        units: this.cart.map((u) => ({ unitId: u.unitId })),
+        notes: v.notes || undefined,
+        paymentMethod: method,
+      };
+      if (method === 'MIXED') {
+        const cash = Number(v.cashSaleCash) || 0;
+        const transfer = Number(v.cashSaleTransfer) || 0;
+        if (Math.round((cash + transfer) * 100) !== Math.round(total * 100)) {
+          this.unitsError =
+            'El efectivo y la transferencia deben sumar el total de la venta.';
+          return;
+        }
+        cashPayload.paymentCash = cash;
+        cashPayload.paymentTransfer = transfer;
+        if (transfer > 0 && v.cashSaleTransferReference) {
+          cashPayload.transferReference = v.cashSaleTransferReference;
+        }
+      } else {
+        cashPayload.paymentAmount = total;
+        if (method === 'TRANSFER' && v.cashSaleTransferReference) {
+          cashPayload.transferReference = v.cashSaleTransferReference;
+        }
+      }
+      payload = cashPayload;
+    } else if (v.type === 'SALE') {
       const salePayload: SaleCreditPayload = {
         customerId: v.customerId,
         type: 'SALE',
@@ -326,6 +438,7 @@ export class CreditCreateComponent implements OnInit {
   private buildForm(): void {
     this.form = this.fb.group({
       type: ['SALE'],
+      paymentCondition: ['FINANCED'],
       customerId: ['', Validators.required],
       paymentFrequency: ['', Validators.required],
       installmentsCount: [
@@ -337,6 +450,11 @@ export class CreditCreateComponent implements OnInit {
       downPayment: [0, [Validators.min(0)]],
       downPaymentMethod: ['CASH'],
       downPaymentTransferReference: ['', Validators.maxLength(100)],
+      // Venta de contado
+      cashSaleMethod: ['CASH'],
+      cashSaleCash: [0, [Validators.min(0)]],
+      cashSaleTransfer: [0, [Validators.min(0)]],
+      cashSaleTransferReference: ['', Validators.maxLength(100)],
     });
   }
 

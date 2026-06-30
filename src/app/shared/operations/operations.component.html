@@ -106,6 +106,9 @@
               >
                 {{ getTypeLabel(op.type) }}
               </span>
+              @if (op.paymentCondition === "CASH") {
+                <span class="ff-badge ff-badge--liquidado ml-1">Contado</span>
+              }
             </td>
 
             <td>

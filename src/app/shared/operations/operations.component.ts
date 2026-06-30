@@ -153,6 +153,8 @@ export class OperationsComponent implements OnInit {
    * @returns {string} Texto combinado para la tabla principal.
    */
   getInstallmentsSummary(credit: Credit): string {
+    // La venta de contado no tiene cuotas ni frecuencia: se cobra de una vez.
+    if (credit.paymentCondition === 'CASH') return 'Pago único';
     return `${credit.installmentsCount} × ${this.getFrequencyShortLabel(credit.paymentFrequency)}`;
   }
 
