@@ -2,7 +2,9 @@
   [visible]="visible"
   (visibleChange)="visibleChange.emit($event)"
   [modal]="true"
-  [style]="{ width: '720px' }"
+  [style]="{ width: '720px', maxWidth: '95vw' }"
+  styleClass="sheet-review-dialog"
+  contentStyleClass="sheet-review-dialog-content"
   header="Detalle de planilla"
 >
   @if (loadingReview) {
@@ -106,25 +108,30 @@
     </div>
   }
   <ng-template pTemplate="footer">
-    <p-button
-      label="Cerrar"
-      severity="secondary"
-      [outlined]="true"
-      (onClick)="visibleChange.emit(false)"
-    />
-    @if (reviewSheetDetail) {
+    <div class="flex w-full flex-col gap-3 sm:flex-row sm:justify-end">
       <p-button
-        label="Enviar"
-        icon="pi pi-send"
+        label="Cerrar"
         severity="secondary"
         [outlined]="true"
-        (onClick)="sendRequested.emit(reviewSheetDetail.id)"
+        styleClass="h-11 w-full justify-center rounded-xl px-5 sm:w-auto"
+        (onClick)="visibleChange.emit(false)"
       />
-      <p-button
-        label="Descargar PDF"
-        icon="pi pi-download"
-        (onClick)="downloadRequested.emit(reviewSheetDetail)"
-      />
-    }
+      @if (reviewSheetDetail) {
+        <p-button
+          label="Enviar"
+          icon="pi pi-send"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="h-11 w-full justify-center rounded-xl px-5 sm:w-auto"
+          (onClick)="sendRequested.emit(reviewSheetDetail.id)"
+        />
+        <p-button
+          label="Descargar PDF"
+          icon="pi pi-download"
+          styleClass="h-11 w-full justify-center rounded-xl px-5 sm:w-auto"
+          (onClick)="downloadRequested.emit(reviewSheetDetail)"
+        />
+      }
+    </div>
   </ng-template>
 </p-dialog>

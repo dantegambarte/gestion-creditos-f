@@ -2866,6 +2866,41 @@ table.ff-table {
     padding: 0.9rem 1rem max(env(safe-area-inset-bottom), 0.9rem);
   }
 
+  .sheet-review-dialog.p-dialog {
+    display: flex;
+    flex-direction: column;
+    position: fixed !important;
+    inset: 0 !important;
+    transform: none !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+  }
+
+  .sheet-review-dialog.p-dialog .p-dialog-header {
+    flex-shrink: 0;
+    padding: 0.9rem 1rem;
+  }
+
+  .sheet-review-dialog.p-dialog .p-dialog-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto;
+    padding: 1rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sheet-review-dialog.p-dialog .p-dialog-footer {
+    flex-shrink: 0;
+    padding: 0.9rem 1rem max(env(safe-area-inset-bottom), 0.9rem);
+  }
+
   .expense-side-panel-shell {
     position: fixed !important;
     inset: 0 !important;

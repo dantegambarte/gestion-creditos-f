@@ -143,6 +143,28 @@ describe('Productos y Credit Detail — Mobile UX', () => {
       expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
     });
   });
+
+  it('Credit Detail Mobile — Write-Off Dialog no excede el viewport en iPhone SE', () => {
+    cy.intercept('GET', '**/api/credits/credit-mobile-1', creditDetailResponse).as(
+      'creditDetail',
+    );
+
+    cy.loginAs('ADMIN', '/admin/operations/credit-mobile-1');
+    cy.wait('@creditDetail');
+
+    cy.contains('button', /^Castigar crédito$/).scrollIntoView().click();
+
+    cy.get('.p-dialog:visible')
+      .should('contain', 'Castigar crédito')
+      .then(($dialog) => {
+        cy.window().then((win) => {
+          expect($dialog[0].getBoundingClientRect().width).to.be.lte(win.innerWidth);
+          expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+        });
+      });
+
+    cy.contains('.p-dialog:visible button', /^Cancelar$/).should('be.visible').and('be.enabled');
+  });
 });
 
 // P3 — landscape: el viewport entero pasa a medir ~375px de alto. El
