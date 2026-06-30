@@ -86,7 +86,8 @@
     } @else {
       <p-table
         [value]="filteredOperations"
-        styleClass="operations-table"
+        styleClass="operations-table hidden md:block"
+        data-cy="operations-table"
         [responsiveLayout]="'scroll'"
         [paginator]="true"
         [rows]="10"
@@ -179,6 +180,72 @@
           </tr>
         </ng-template>
       </p-table>
+
+      <div class="flex flex-col gap-3 border-t border-[var(--ff-border)] p-4 md:hidden" data-cy="operations-mobile-list">
+        @for (op of filteredOperations; track op.id) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.18)]"
+            data-cy="operations-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="operations-type-badge"
+                    [class.operations-type-badge--sale]="op.type === 'SALE'"
+                    [class.operations-type-badge--loan]="op.type === 'LOAN'"
+                  >
+                    {{ getTypeLabel(op.type) }}
+                  </span>
+                  <span
+                    class="ff-badge"
+                    [class.ff-badge--activo]="getStatusSeverity(op.status) === 'success'"
+                    [class.ff-badge--pendiente]="getStatusSeverity(op.status) === 'warning'"
+                    [class.ff-badge--vencido]="getStatusSeverity(op.status) === 'danger'"
+                    [class.ff-badge--pagado]="getStatusSeverity(op.status) === 'secondary'"
+                  >{{ getStatusLabel(op.status) }}</span>
+                </div>
+                <p class="mt-3 truncate text-sm font-semibold text-[var(--ff-text-primary)]">
+                  {{ op.customerName }}
+                </p>
+                <p class="mt-0.5 text-xs text-[var(--ff-text-muted)]">DNI {{ op.customerDni }}</p>
+              </div>
+              <p class="shrink-0 text-right font-mono text-base font-bold text-[var(--ff-text-primary)]">
+                {{ op.totalAmount | currencyArs }}
+              </p>
+            </div>
+
+            <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Cuotas</dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">{{ getInstallmentsSummary(op) }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Fecha</dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">{{ op.createdAt | date: "dd/MM/yy" }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Tasa</dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">{{ getInterestRateLabel(op.interestRate) }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Vendedor</dt>
+                <dd class="mt-1 truncate font-semibold text-[var(--ff-text-primary)]">{{ op.createdByName || "Sin asignar" }}</dd>
+              </div>
+            </dl>
+
+            <button
+              type="button"
+              class="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-semibold text-blue-200"
+              data-cy="operations-mobile-detail-action"
+              (click)="navigateToDetail(op.id)"
+            >
+              Ver detalle
+              <i class="pi pi-arrow-right text-xs"></i>
+            </button>
+          </article>
+        }
+      </div>
     }
   </div>
 </div>

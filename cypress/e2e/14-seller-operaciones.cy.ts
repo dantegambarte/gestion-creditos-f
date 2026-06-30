@@ -174,4 +174,19 @@ describe('Admin — Lista de Operaciones (misma vista vía /admin)', () => {
     cy.get('p-table tbody tr').should('have.length', 1);
     cy.get('p-table tbody tr').first().should('contain.text', 'Juan Perez Garcia');
   });
+
+  it('Mobile — oculta tabla y renderiza operaciones como cards', () => {
+    cy.viewport('iphone-se2');
+
+    cy.get('[data-cy="operations-table"] table').should('not.be.visible');
+    cy.get('[data-cy="operations-mobile-card"]')
+      .should('have.length', 2)
+      .first()
+      .should('contain.text', 'Juan Perez Garcia')
+      .and('contain.text', 'ACTIVO');
+
+    cy.window().then((win) => {
+      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+    });
+  });
 });

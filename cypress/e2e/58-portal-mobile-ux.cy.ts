@@ -90,6 +90,55 @@ const portalCreditsResponse = {
   ],
 };
 
+const portalCreditDetailResponse = {
+  ok: true,
+  data: {
+    id: 'credit-mobile-1',
+    type: 'SALE',
+    credit_name: 'Moto 110cc',
+    total_amount: 288000,
+    total_to_return: 288000,
+    installments_count: 2,
+    installment_amount: 144000,
+    payment_frequency: 'MONTHLY',
+    status: 'ACTIVE',
+    created_at: '2026-01-01T00:00:00.000Z',
+    approved_at: '2026-01-02T00:00:00.000Z',
+    settled_at: null,
+    total_installments: 2,
+    paid_installments: 1,
+    next_due_date: '2099-08-10',
+    next_due_amount: 144000,
+    pending_penalty: 0,
+    has_overdue: false,
+    overdue_installments: 0,
+    down_payment: 0,
+    down_payment_method: null,
+    prepaid_installments: 0,
+    interest_rate: null,
+    installments: [
+      {
+        id: 'portal-inst-paid',
+        installment_number: 1,
+        due_date: '2099-07-10',
+        amount_due: 144000,
+        amount_paid: 144000,
+        penalty_amount: 0,
+        status: 'PAID',
+      },
+      {
+        id: 'portal-inst-pending',
+        installment_number: 2,
+        due_date: '2099-08-10',
+        amount_due: 144000,
+        amount_paid: 0,
+        penalty_amount: 0,
+        status: 'PENDING',
+      },
+    ],
+  },
+};
+
 function toBase64Url(value: object): string {
   return btoa(JSON.stringify(value))
     .replace(/=/g, '')
@@ -222,6 +271,26 @@ describe('Portal Cliente — Mobile UX', () => {
       expect(win.document.documentElement.scrollWidth).to.be.lte(
         win.innerWidth,
       );
+    });
+  });
+
+  it('Detalle de crédito — cronograma usa cards móviles sin tabla visible', () => {
+    cy.intercept('GET', '**/api/portal/credits/credit-mobile-1', portalCreditDetailResponse).as(
+      'portalCreditDetail',
+    );
+
+    visitPortalWithSession('/portal/credits/credit-mobile-1');
+    cy.wait('@portalCreditDetail');
+
+    cy.get('[data-cy="portal-credit-detail-installments-table"]').should('not.be.visible');
+    cy.get('[data-cy="portal-credit-detail-installment-mobile-card"]')
+      .should('have.length', 2)
+      .first()
+      .should('contain.text', 'Cuota N° 1')
+      .and('contain.text', 'PAGADO');
+
+    cy.window().then((win) => {
+      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
     });
   });
 });
