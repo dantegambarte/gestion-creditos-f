@@ -119,7 +119,8 @@
       <div [class]="selectedHistory ? 'xl:col-span-8' : 'xl:col-span-12'">
         <p-table
           [value]="historyRows"
-          styleClass="p-datatable-sm p-datatable-hoverable-rows"
+          styleClass="hidden md:block p-datatable-sm p-datatable-hoverable-rows"
+          data-cy="admin-commissions-history-table"
           responsiveLayout="scroll"
         >
           <ng-template pTemplate="header">
@@ -221,6 +222,59 @@
             </tr>
           </ng-template>
         </p-table>
+
+        <div class="flex flex-col gap-3 md:hidden" data-cy="admin-commissions-history-mobile-list">
+          @for (liq of historyRows; track liq.id) {
+            <article
+              class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.18)]"
+              data-cy="admin-commissions-history-mobile-card"
+              [class.ring-2]="selectedHistory?.id === liq.id"
+              [class.ring-indigo-400]="selectedHistory?.id === liq.id"
+              (click)="onSelectHistory(liq)"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-semibold text-white">{{ liq.userName }}</p>
+                  <p class="mt-1 text-xs text-indigo-200/85">
+                    {{ formatDate(liq.weekStart) }} — {{ formatDate(liq.weekEnd) }}
+                  </p>
+                </div>
+                <p-tag [value]="roleByUserId(liq.userId)" [styleClass]="roleClassByUserId(liq.userId)" />
+              </div>
+
+              <dl class="mt-4 grid grid-cols-1 gap-3 text-sm">
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Total liquidado</dt>
+                  <dd class="mt-1 font-mono text-lg font-bold text-emerald-300">{{ formatCurrency(liq.totalPaid) }}</dd>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Comisiones</dt>
+                    <dd class="mt-1 font-mono font-semibold text-emerald-400">{{ formatCurrency(liq.commissionsTotal) }}</dd>
+                  </div>
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Sueldo</dt>
+                    <dd class="mt-1 font-mono font-semibold text-amber-400">{{ formatCurrency(liq.salaryAmount) }}</dd>
+                  </div>
+                </div>
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Método y fecha</dt>
+                  <dd class="mt-1 flex items-center gap-2 text-sm font-semibold text-[var(--ff-text-primary)]">
+                    <i
+                      [class]="
+                        liq.paymentMethod === 'CASH'
+                          ? 'pi pi-wallet text-green-400 text-xs'
+                          : 'pi pi-credit-card text-cyan-300 text-xs'
+                      "
+                    ></i>
+                    {{ paymentMethodLabel(liq.paymentMethod) }} · {{ formatDate(liq.paidAt) }}
+                  </dd>
+                  <dd class="mt-1 text-xs text-[var(--ff-text-muted)]">Pagado por {{ liq.paidByName }}</dd>
+                </div>
+              </dl>
+            </article>
+          }
+        </div>
       </div>
 
       @if (selectedHistory) {

@@ -2,7 +2,8 @@
   [visible]="showLiquidateDialog"
   (visibleChange)="showLiquidateDialogChange.emit($event)"
   [modal]="true"
-  [style]="{ width: '480px' }"
+  [style]="{ width: '480px', maxWidth: '95vw' }"
+  contentStyleClass="max-h-[70dvh] overflow-y-auto"
   header="Liquidar empleado"
   [closable]="!liquidating"
 >
@@ -55,7 +56,8 @@
           </p>
         } @else {
           <div
-            class="max-h-48 overflow-y-auto rounded-lg border border-[var(--ff-border-subtle)]"
+            class="hidden max-h-48 overflow-y-auto rounded-lg border border-[var(--ff-border-subtle)] md:block"
+            data-cy="admin-commissions-liquidation-sales-table"
           >
             <table class="w-full text-xs">
               <thead class="sticky top-0 bg-[var(--ff-surface)]">
@@ -100,6 +102,32 @@
               </tbody>
             </table>
           </div>
+          <div class="flex max-h-60 flex-col gap-3 overflow-y-auto md:hidden" data-cy="admin-commissions-liquidation-sales-mobile-list">
+            @for (c of employeeCommissions; track c.id) {
+              <article
+                class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3"
+                data-cy="admin-commissions-liquidation-sales-mobile-card"
+              >
+                <p class="truncate text-sm font-semibold text-[var(--ff-text-primary)]">
+                  {{ c.customerName }}
+                </p>
+                <dl class="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-2">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Venta</dt>
+                    <dd class="mt-1 font-mono font-semibold text-[var(--ff-text-primary)]">
+                      {{ formatCurrency(c.creditAmount) }}
+                    </dd>
+                  </div>
+                  <div class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-2">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Comisión</dt>
+                    <dd class="mt-1 font-mono font-bold text-green-600">
+                      {{ formatCurrency(c.amount) }}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            }
+          </div>
         }
       </div>
 
@@ -141,21 +169,23 @@
   }
 
   <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [outlined]="true"
-      styleClass="h-11 px-5 rounded-xl"
-      [disabled]="liquidating"
-      (onClick)="closeLiquidateDialog()"
-    />
-    <p-button
-      label="Confirmar liquidación"
-      icon="pi pi-send"
-      styleClass="h-11 px-5 rounded-xl"
-      [loading]="liquidating"
-      (onClick)="requestOpenConfirm()"
-    />
+    <div class="grid w-full grid-cols-2 gap-3">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 w-full justify-center rounded-xl px-5"
+        [disabled]="liquidating"
+        (onClick)="closeLiquidateDialog()"
+      />
+      <p-button
+        label="Confirmar liquidación"
+        icon="pi pi-send"
+        styleClass="h-11 w-full justify-center rounded-xl px-5"
+        [loading]="liquidating"
+        (onClick)="requestOpenConfirm()"
+      />
+    </div>
   </ng-template>
 </p-dialog>
 
@@ -163,7 +193,8 @@
   [visible]="showConfirmDialog"
   (visibleChange)="showConfirmDialogChange.emit($event)"
   [modal]="true"
-  [style]="{ width: '380px' }"
+  [style]="{ width: '380px', maxWidth: '95vw' }"
+  contentStyleClass="max-h-[70dvh] overflow-y-auto"
   header="¿Confirmar liquidación?"
 >
   <p class="text-sm text-[var(--ff-text-secondary)]">
@@ -171,19 +202,21 @@
     puede deshacer.
   </p>
   <ng-template pTemplate="footer">
-    <p-button
-      label="Cancelar"
-      severity="secondary"
-      [outlined]="true"
-      styleClass="h-11 px-5 rounded-xl"
-      (onClick)="closeConfirmDialog()"
-    />
-    <p-button
-      label="Sí, liquidar"
-      icon="pi pi-check"
-      severity="danger"
-      styleClass="h-11 px-5 rounded-xl"
-      (onClick)="requestConfirmLiquidate()"
-    />
+    <div class="grid w-full grid-cols-2 gap-3">
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 w-full justify-center rounded-xl px-5"
+        (onClick)="closeConfirmDialog()"
+      />
+      <p-button
+        label="Sí, liquidar"
+        icon="pi pi-check"
+        severity="danger"
+        styleClass="h-11 w-full justify-center rounded-xl px-5"
+        (onClick)="requestConfirmLiquidate()"
+      />
+    </div>
   </ng-template>
 </p-dialog>
