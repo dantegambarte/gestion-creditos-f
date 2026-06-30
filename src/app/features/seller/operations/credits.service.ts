@@ -48,6 +48,8 @@ function toCredit(raw: CreditRaw): Credit {
     installmentsCount: raw.installments_count,
     paymentFrequency: raw.payment_frequency,
     interestRate: raw.interest_rate,
+    effectiveRate: raw.effective_rate ?? raw.interest_rate ?? null,
+    totalToReturn: raw.total_to_return ?? null,
     status: raw.status,
     createdAt: raw.created_at,
     approvedAt: raw.approved_at,
@@ -56,6 +58,7 @@ function toCredit(raw: CreditRaw): Credit {
     customerDni: raw.customer_dni,
     createdById: raw.created_by_id,
     createdByName: raw.created_by_name,
+    collectorName: raw.collector_name ?? null,
   };
 }
 
