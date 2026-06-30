@@ -56,6 +56,7 @@ function toClient(c: Customer): Client {
     email: c.email ?? undefined,
     address: c.address ?? undefined,
     collectorId: c.collectorId ?? undefined,
+    portalEnabled: c.portalEnabled,
   };
 }
 

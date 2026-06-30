@@ -19,17 +19,29 @@
       </div>
     </div>
     <div class="flex flex-col gap-1">
-  <label class="auth-label">DNI</label>
-  <input
-    pInputText
-    formControlName="dni"
-    placeholder="Ej: 12345678"
-    class="w-full h-11 px-4"
-  />
-  @if (isEditInvalid("dni")) {
-    <span class="auth-error">DNI inválido</span>
-  }
-</div>
+      <label class="auth-label">DNI</label>
+      <input
+        pInputText
+        formControlName="dni"
+        maxlength="9"
+        inputmode="numeric"
+        class="w-full h-11 px-4"
+        [class.ng-invalid]="isEditInvalid('dni')"
+        [class.ng-dirty]="isEditInvalid('dni')"
+      />
+      @if (isEditInvalid("dni")) {
+        <span class="auth-error">{{ getEditError("dni") }}</span>
+      }
+      @if (showPortalDniWarning) {
+        <span class="text-sm text-amber-500 flex items-start gap-1">
+          <i class="pi pi-exclamation-triangle mt-0.5"></i>
+          <span
+            >Este cliente tiene el portal habilitado. Si cambiás el DNI, deberá
+            ingresar al portal con el nuevo DNI (la contraseña no cambia).</span
+          >
+        </span>
+      }
+    </div>
     <div class="flex flex-col gap-1">
       <label class="auth-label">Teléfono</label>
       <input pInputText formControlName="phone" class="w-full h-11 px-4" />
