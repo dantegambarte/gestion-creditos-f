@@ -1,6 +1,7 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 import { throwError, switchMap, filter, take, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
@@ -13,6 +14,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const auth          = inject(AuthServiceBase);
   const tokenRefresh  = inject(TokenRefreshService);
   const refreshState  = inject(TokenRefreshStateService);
+  const messageService = inject(MessageService);
 
   return next(req).pipe(
     catchError((err) => {
@@ -52,6 +54,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             catchError((refreshErr) => {
               refreshState.isRefreshing = false;
               refreshState.tokenSubject.next(null);
+              _showGlobalHttpError(messageService, refreshErr);
               _redirectToLogin(router, auth, isPortal);
               return throwError(() => refreshErr);
             }),
@@ -69,7 +72,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       if (err?.status === 401) {
+        _showGlobalHttpError(messageService, err);
         _redirectToLogin(router, auth, isPortal);
+      }
+
+      if (err?.status !== 401) {
+        _showGlobalHttpError(messageService, err);
       }
 
       if (_shouldRedirectToChangePassword(err)) {
@@ -94,6 +102,40 @@ export function _shouldRedirectToChangePassword(err: unknown): boolean {
     typeof message === 'string' &&
     message.includes('Debés cambiar tu contraseña antes de continuar.')
   );
+}
+
+/**
+ * Publica un toast global para errores HTTP transversales de infraestructura.
+ * @param messageService - Canal global de mensajes PrimeNG.
+ * @param err - Error HTTP capturado por el interceptor.
+ */
+function _showGlobalHttpError(
+  messageService: MessageService,
+  err: unknown,
+): void {
+  const status = err instanceof HttpErrorResponse ? err.status : undefined;
+  const summary = _httpErrorSummary(status);
+
+  if (!summary) {
+    return;
+  }
+
+  messageService.add({
+    severity: status === 0 || (status ?? 0) >= 500 ? 'error' : 'warn',
+    summary,
+  });
+}
+
+/**
+ * Traduce códigos HTTP globales a mensajes estandarizados de usuario.
+ * @param status - Código HTTP devuelto por Angular HttpClient.
+ */
+export function _httpErrorSummary(status: number | undefined): string | null {
+  if (status === 0) return 'Error de red o servidor inalcanzable';
+  if (status === 401) return 'Sesión expirada';
+  if (status === 403) return 'No tienes permisos para esta acción';
+  if (status && status >= 500) return 'Error interno del servidor';
+  return null;
 }
 
 function _redirectToLogin(router: Router, auth: AuthServiceBase, isPortal: boolean): void {
