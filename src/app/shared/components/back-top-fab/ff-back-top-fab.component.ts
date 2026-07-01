@@ -28,6 +28,9 @@ export class FfBackTopFabComponent implements AfterViewInit, OnDestroy {
   /** Selector para tests e2e. */
   @Input() dataCy = 'back-top-action';
 
+  /** Selector CSS del contenedor de scroll. Por defecto usa .ff-shell__main. */
+  @Input() scrollContainerSelector = '.ff-shell__main';
+
   private readonly cdr = inject(ChangeDetectorRef);
   private scrolledPast = false;
   private readonly scrollThreshold = 520;
@@ -38,8 +41,8 @@ export class FfBackTopFabComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    const shellMain = document.querySelector('.ff-shell__main');
-    this.scrollContainer = shellMain instanceof HTMLElement ? shellMain : window;
+    const el = document.querySelector(this.scrollContainerSelector);
+    this.scrollContainer = el instanceof HTMLElement ? el : window;
     this.scrollContainer.addEventListener('scroll', this.handleScroll, { passive: true });
     this.handleScroll();
   }

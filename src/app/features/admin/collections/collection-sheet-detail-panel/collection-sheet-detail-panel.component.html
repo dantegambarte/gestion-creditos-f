@@ -160,7 +160,7 @@
     </div>
 
     <!-- Tabla de items -->
-    <div class="flex-1 min-h-0 overflow-auto">
+    <div class="flex-1 min-h-0 overflow-auto" data-cy="sheet-detail-scroll-container">
       @if (filteredItems.length === 0) {
         <div
           class="flex items-center justify-center h-32"
@@ -471,7 +471,7 @@
           }
         </div>
       }
-      <ff-back-top-fab [itemCount]="filteredItems.length" dataCy="sheet-detail-back-top-action" />
+      <ff-back-top-fab [itemCount]="filteredItems.length" dataCy="sheet-detail-back-top-action" scrollContainerSelector="[data-cy='sheet-detail-scroll-container']" />
     </div>
   }
 </div>
