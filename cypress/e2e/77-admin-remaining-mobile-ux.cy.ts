@@ -669,6 +669,78 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
     });
   });
 
+  it('Reportes Mora — búsqueda y filtros funcionan en desktop y mobile iPhone SE', () => {
+    cy.intercept('GET', '**/api/reports/overdue', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          summary: {
+            overdue_installments: 12,
+            total_overdue_amount: 2150000,
+            total_penalties: 52000,
+            avg_days_overdue: 88.4,
+          },
+          by_customer: [
+            {
+              customer_id: 'cust-overdue-norte',
+              customer_name: 'Ana Norte Filtrable',
+              phone: '11-5555-1000',
+              overdue_count: 5,
+              total_overdue: 1250000,
+              max_days_overdue: 130,
+            },
+            {
+              customer_id: 'cust-overdue-sur',
+              customer_name: 'Bruno Sur Visible',
+              phone: '11-5555-2000',
+              overdue_count: 2,
+              total_overdue: 280000,
+              max_days_overdue: 45,
+            },
+          ],
+        },
+      },
+    }).as('overdueReportFilters');
+
+    cy.viewport(1280, 720);
+    cy.loginAs('ADMIN', '/admin/reports');
+    cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Mora').click();
+    cy.wait('@overdueReportFilters');
+
+    cy.get('[data-cy="overdue-report-table"]').should('be.visible');
+    cy.get('[data-cy="overdue-report-search"]').type('norte');
+    cy.get('[data-cy="overdue-report-table"]').contains('Ana Norte Filtrable');
+    cy.get('[data-cy="overdue-report-table"]').should(
+      'not.contain',
+      'Bruno Sur Visible',
+    );
+
+    cy.get('[data-cy="overdue-report-clear-filters"]').click();
+    cy.get('[data-cy="overdue-report-days-filter"]').select('+120 días');
+    cy.get('[data-cy="overdue-report-amount-filter"]').select('+$1.000.000');
+    cy.get('[data-cy="overdue-report-table"]').contains('Ana Norte Filtrable');
+    cy.get('[data-cy="overdue-report-table"]').should(
+      'not.contain',
+      'Bruno Sur Visible',
+    );
+
+    cy.viewport(375, 667);
+    cy.get('[data-cy="overdue-report-table"]').should('not.be.visible');
+    cy.get('[data-cy="overdue-report-clear-filters"]').click();
+    cy.get('[data-cy="overdue-report-search"]').clear().type('2000');
+    cy.get('[data-cy="overdue-report-mobile-card"]')
+      .should('have.length', 1)
+      .first()
+      .contains('Bruno Sur Visible');
+
+    cy.window().then((win) => {
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
+    });
+  });
+
   // P1 #5 — tabs de Reportes que quedaban con <table> legacy: Movimientos de
   // caja (Caja General), Conversiones de caja y Próximos vencimientos.
   it('Reportes Mobile — Movimientos, Conversiones y Próximos vencimientos muestran cards en vez de tabla', () => {

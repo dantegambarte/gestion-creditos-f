@@ -1,25 +1,37 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { SkeletonModule } from 'primeng/skeleton';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
 import { FormatService } from '../../../../../core/services/format.service';
-import { SkeletonModule } from 'primeng/skeleton';
+import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { ErrorStateComponent } from '../../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
-import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { OverdueByCustomer, OverdueReport } from '../../report.models';
 import { ReportsService } from '../../reports.service';
 
 type OverdueDaysFilter = 'all' | '31' | '61' | '91' | '121';
 type OverdueAmountFilter = 'all' | '500000' | '1000000';
-type OverdueSortKey = 'customerName' | 'overdueCount' | 'totalOverdue' | 'maxDaysOverdue';
+type OverdueSortKey =
+  | 'customerName'
+  | 'overdueCount'
+  | 'totalOverdue'
+  | 'maxDaysOverdue';
 type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-overdue-report',
   standalone: true,
-  imports: [FormsModule, LoadingStateComponent, ErrorStateComponent, SkeletonModule, FfBackTopFabComponent],
+  imports: [
+    FormsModule,
+    ButtonModule,
+    LoadingStateComponent,
+    ErrorStateComponent,
+    SkeletonModule,
+    FfBackTopFabComponent,
+  ],
   templateUrl: './overdue-report.component.html',
 })
 export class OverdueReportComponent implements OnInit, OnDestroy {
@@ -76,15 +88,19 @@ export class OverdueReportComponent implements OnInit, OnDestroy {
     const rows = this.overdueReport?.byCustomer ?? [];
     const query = this.normalize(this.searchTerm);
     const minDays = this.daysFilter === 'all' ? null : Number(this.daysFilter);
-    const minAmount = this.amountFilter === 'all' ? null : Number(this.amountFilter);
+    const minAmount =
+      this.amountFilter === 'all' ? null : Number(this.amountFilter);
 
     return rows
       .filter((row) => {
         const matchesSearch =
           query.length === 0 ||
-          this.normalize(`${row.customerName} ${row.phone ?? ''}`).includes(query);
+          this.normalize(`${row.customerName} ${row.phone ?? ''}`).includes(
+            query,
+          );
         const matchesDays = minDays == null || row.maxDaysOverdue >= minDays;
-        const matchesAmount = minAmount == null || row.totalOverdue >= minAmount;
+        const matchesAmount =
+          minAmount == null || row.totalOverdue >= minAmount;
 
         return matchesSearch && matchesDays && matchesAmount;
       })
