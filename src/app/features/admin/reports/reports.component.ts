@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HeaderService } from '../../../core/services/header.service';
+import { ActiveTabScrollerDirective } from '../../../shared/directives/active-tab-scroller.directive';
 import { ReportTab } from './report.models';
 import { CashConversionsReportComponent } from './tabs/cash-conversions-report/cash-conversions-report.component';
 import { CashMovementsReportComponent } from './tabs/cash-movements-report/cash-movements-report.component';
@@ -27,6 +28,7 @@ import { UpcomingReportComponent } from './tabs/upcoming-report/upcoming-report.
     UpcomingReportComponent,
     CashConversionsReportComponent,
     CashMovementsReportComponent,
+    ActiveTabScrollerDirective,
   ],
   templateUrl: './reports.component.html',
 })

@@ -35,6 +35,7 @@ import {
 } from '../models/management-log.model';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { BackButtonComponent } from '../../../shared/components/back-button/back-button.component';
+import { ActiveTabScrollerDirective } from '../../../shared/directives/active-tab-scroller.directive';
 import { AttemptDialogComponent } from './attempt-dialog/attempt-dialog.component';
 import { PaymentDialogComponent } from './payment-dialog/payment-dialog.component';
 import { CollectionDialogSuccess } from './sheet-dialog.model';
@@ -60,6 +61,7 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
     AttemptDialogComponent,
     VoidDialogComponent,
     BackButtonComponent,
+    ActiveTabScrollerDirective,
   ],
   providers: [MessageService],
   templateUrl: './collection-sheet-detail.component.html',

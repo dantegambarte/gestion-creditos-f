@@ -22,7 +22,11 @@
     </div>
   }
 
-  <div class="ff-tab-nav reports-mobile-tabs mb-6 md:mb-8" data-cy="admin-reports-tabs">
+  <div
+    class="ff-tab-nav reports-mobile-tabs mb-6 md:mb-8"
+    appActiveTabScroller
+    data-cy="admin-reports-tabs"
+  >
     @for (tab of TABS; track tab.id) {
       <button
         (click)="setTab(tab.id)"

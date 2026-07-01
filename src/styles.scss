@@ -2016,6 +2016,8 @@ table.ff-table {
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
+  scroll-padding-inline: 1rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ff-tab {
@@ -2033,11 +2035,12 @@ table.ff-table {
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
+  flex: 0 0 auto;
   transition:
     color 0.15s,
     border-color 0.15s,
     background-color 0.15s;
-  scroll-snap-align: start;
+  scroll-snap-align: center;
 }
 
 .ff-tab:hover {
@@ -2057,6 +2060,7 @@ table.ff-table {
   }
 
   .config-mobile-tabs,
+  .commissions-mobile-tabs,
   .reports-mobile-tabs {
     margin-inline: -1rem;
     padding-inline: 1rem;
@@ -2064,8 +2068,15 @@ table.ff-table {
   }
 
   .config-mobile-tabs::-webkit-scrollbar,
+  .commissions-mobile-tabs::-webkit-scrollbar,
   .reports-mobile-tabs::-webkit-scrollbar {
     display: none;
+  }
+
+  .ff-tab-nav .ff-tab--active {
+    border-color: var(--ff-accent) !important;
+    border-radius: 2px 2px 0 0;
+    background: rgba(96, 165, 250, 0.06);
   }
 }
 

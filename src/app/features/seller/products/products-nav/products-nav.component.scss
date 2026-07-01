@@ -9,6 +9,7 @@
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: x proximity;
+  scroll-padding-inline: 24px;
   -webkit-overflow-scrolling: touch;
 
   &__section {
@@ -19,7 +20,7 @@
     padding-right: 16px;
     white-space: nowrap;
     flex-shrink: 0;
-    scroll-snap-align: start;
+    scroll-snap-align: center;
   }
 
   &__divider {
@@ -46,7 +47,7 @@
     white-space: nowrap;
     cursor: pointer;
     flex: 0 0 auto;
-    scroll-snap-align: start;
+    scroll-snap-align: center;
 
     &:hover {
       color: var(--ff-text-primary);

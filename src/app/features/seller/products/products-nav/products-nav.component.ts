@@ -8,6 +8,7 @@ import {
   takeUntil,
 } from 'rxjs/operators';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
+import { ActiveTabScrollerDirective } from '../../../../shared/directives/active-tab-scroller.directive';
 import { ProductVariantsService } from '../product-variants.service';
 
 type ProductTab =
@@ -23,7 +24,7 @@ type ProductTab =
 @Component({
   selector: 'app-products-nav',
   standalone: true,
-  imports: [RouterModule],
+  imports: [RouterModule, ActiveTabScrollerDirective],
   templateUrl: './products-nav.component.html',
   styleUrl: './products-nav.component.scss',
 })
