@@ -2812,6 +2812,57 @@ table.ff-table {
 }
 
 @media (max-width: 767.98px) {
+  .ff-fullscreen-form-dialog.p-dialog {
+    display: flex;
+    flex-direction: column;
+    position: fixed !important;
+    inset: 0 !important;
+    transform: none !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+  }
+
+  .ff-fullscreen-form-dialog.p-dialog .p-dialog-header {
+    flex-shrink: 0;
+    padding: 1rem 1.5rem;
+  }
+
+  .ff-fullscreen-form-dialog.p-dialog .p-dialog-header-icon,
+  .ff-fullscreen-form-dialog .ff-dialog-close-button {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    border-radius: 0.9rem !important;
+    background: var(--ff-accent) !important;
+    color: #ffffff !important;
+    box-shadow: 0 12px 28px rgba(95, 122, 246, 0.28) !important;
+  }
+
+  .ff-fullscreen-form-dialog.p-dialog .p-dialog-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto;
+    padding: 1rem 1.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ff-fullscreen-form-dialog.p-dialog .p-dialog-footer {
+    flex-shrink: 0;
+    padding: 1rem 1.5rem max(env(safe-area-inset-bottom), 1rem) !important;
+  }
+
+  .ff-fullscreen-form-dialog .ff-mobile-dialog-actions,
+  .ff-fullscreen-form-dialog .ff-mobile-dialog-actions .p-button,
+  .ff-fullscreen-form-dialog .ff-mobile-dialog-actions p-button {
+    width: 100%;
+  }
+
   .cash-mobile-dialog.p-dialog {
     position: fixed !important;
     inset: 0 !important;

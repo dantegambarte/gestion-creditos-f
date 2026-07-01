@@ -5,6 +5,7 @@
   [draggable]="false"
   [resizable]="false"
   [style]="{ width: '520px', maxWidth: '95vw' }"
+  styleClass="ff-fullscreen-form-dialog"
   [closable]="false"
 >
   <!-- Header -->
@@ -34,7 +35,7 @@
       }
       <button
         (click)="close()"
-        class="w-7 h-7 flex items-center justify-center rounded-lg ff-text-secondary transition-colors"
+        class="ff-dialog-close-button w-7 h-7 flex items-center justify-center rounded-lg ff-text-secondary transition-colors"
         style="background: var(--ff-secondary)"
       >
         <i class="pi pi-times text-sm"></i>
@@ -210,39 +211,43 @@
   <!-- Footer -->
   <ng-template pTemplate="footer">
     @if (isEdit) {
-      <div class="flex items-center justify-between pt-2">
+      <div class="ff-mobile-dialog-actions flex flex-col gap-3 pt-2 md:flex-row md:items-center md:justify-between">
         <p-button
+          class="w-full md:w-auto"
           label="Guardar cambios"
           icon="pi pi-check"
-          styleClass="h-11 px-5 rounded-xl"
+          styleClass="h-11 w-full px-5 rounded-xl justify-center md:w-auto"
           (onClick)="guardar()"
         />
         <p-button
+          class="w-full md:w-auto"
           label="Cancelar"
           severity="secondary"
-          [text]="true"
-          styleClass="h-11 px-4 rounded-xl"
+          [outlined]="true"
+          styleClass="h-11 w-full px-5 rounded-xl justify-center md:w-auto"
           (onClick)="close()"
         />
         <button
-          class="h-11 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-sm font-medium transition-colors"
+          class="h-11 w-full px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-sm font-medium transition-colors md:w-auto"
         >
           Resetear contraseña
         </button>
       </div>
     } @else {
-      <div class="flex gap-3 justify-end pt-2">
+      <div class="ff-mobile-dialog-actions flex flex-col gap-3 justify-end pt-2 md:flex-row">
         <p-button
+          class="w-full md:w-auto"
           label="Cancelar"
           severity="secondary"
           [outlined]="true"
-          styleClass="h-11 px-5 rounded-xl"
+          styleClass="h-11 w-full px-5 rounded-xl justify-center md:w-auto"
           (onClick)="close()"
         />
         <p-button
+          class="w-full md:w-auto"
           label="Crear Usuario"
           icon="pi pi-save"
-          styleClass="h-11 px-5 rounded-xl"
+          styleClass="h-11 w-full px-5 rounded-xl justify-center md:w-auto"
           (onClick)="guardar()"
         />
       </div>

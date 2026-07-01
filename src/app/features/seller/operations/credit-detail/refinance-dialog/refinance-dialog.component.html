@@ -10,6 +10,7 @@
   [style]="{ width: '560px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
+  styleClass="ff-fullscreen-form-dialog"
 >
   <!-- ── Paso 1: parámetros ─────────────────────────────────── -->
   @if (refinanceStep === 1) {
@@ -290,8 +291,9 @@
 
   <ng-template pTemplate="footer">
     @if (refinanceStep === 1) {
-      <div class="grid grid-cols-2 gap-3 w-full">
+      <div class="ff-mobile-dialog-actions flex w-full flex-col gap-3 md:grid md:grid-cols-2">
         <p-button
+          class="w-full"
           type="button"
           label="Cancelar"
           severity="secondary"
@@ -300,6 +302,7 @@
           (onClick)="close()"
         />
         <p-button
+          class="w-full"
           label="Simular nuevo crédito"
           icon="pi pi-arrow-right"
           severity="warning"
@@ -311,8 +314,9 @@
       </div>
     }
     @if (refinanceStep === 2) {
-      <div class="grid grid-cols-3 gap-3 w-full">
+      <div class="ff-mobile-dialog-actions flex w-full flex-col gap-3 md:grid md:grid-cols-3">
         <p-button
+          class="w-full"
           type="button"
           label="Volver"
           severity="secondary"
@@ -321,6 +325,7 @@
           (onClick)="refinanceStep = 1"
         />
         <p-button
+          class="w-full"
           type="button"
           label="Cancelar"
           severity="secondary"
@@ -329,6 +334,7 @@
           (onClick)="close()"
         />
         <p-button
+          class="w-full"
           label="Confirmar refinanciación"
           icon="pi pi-check"
           severity="warning"
