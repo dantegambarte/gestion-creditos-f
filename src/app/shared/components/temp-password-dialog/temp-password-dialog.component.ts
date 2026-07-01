@@ -12,10 +12,37 @@ import { DialogModule } from 'primeng/dialog';
 export class TempPasswordDialogComponent {
   @Input() visible = false;
   @Input() password = '';
+  @Input() customerName = '';
+  @Input() customerDni = '';
+  @Input() customerPhone: string | null = null;
   @Output() closed = new EventEmitter<void>();
 
   copySuccess = false;
   private closingFromAction = false;
+
+  /**
+   * Abre WhatsApp con un mensaje pre-armado que incluye el nombre del cliente,
+   * el link al portal, el usuario (DNI) y la contraseña temporal.
+   * Si hay teléfono disponible, lo pre-rellena como destinatario.
+   */
+  sendWhatsApp(): void {
+    const portalUrl = `${window.location.origin}/portal`;
+    const message =
+      `Hola ${this.customerName}! Te compartimos tu acceso al portal de gestión.\n\n` +
+      `🔗 Link de acceso: ${portalUrl}\n` +
+      `👤 Usuario: ${this.customerDni} (tu DNI)\n` +
+      `🔑 Contraseña temporal: ${this.password}\n\n` +
+      `Al ingresar por primera vez, el sistema te va a pedir que establezcas una contraseña nueva. ` +
+      `Ante cualquier consulta, no dudes en contactarnos. ¡Saludos!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const phone = this.customerPhone ? this.customerPhone.replace(/\D/g, '') : '';
+    const url = phone
+      ? `https://wa.me/${phone}?text=${encodedMessage}`
+      : `https://wa.me/?text=${encodedMessage}`;
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
 
   /**
    * Copia la contraseña temporal al portapapeles y muestra un mensaje de éxito. Utiliza la API de portapapeles del navegador para realizar la copia. Si la copia es exitosa, se establece el estado `copySuccess` en `true` para mostrar un mensaje de confirmación al usuario.
