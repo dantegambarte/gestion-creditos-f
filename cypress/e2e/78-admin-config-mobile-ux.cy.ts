@@ -56,7 +56,9 @@ describe('Admin Config — Remaining Mobile UX (Feriados, Usuarios, Tasas)', () 
 
   // P1 #4 — Feriados sin Card-List, toolbar (input + 2 botones) sin wrap.
   it('Feriados Mobile — cards en vez de tabla, toolbar apilado y modal de edición acotado', () => {
-    cy.intercept('GET', '**/api/holidays*', holidaysResponse).as('holidaysList');
+    cy.intercept('GET', '**/api/holidays*', holidaysResponse).as(
+      'holidaysList',
+    );
 
     cy.loginAs('ADMIN', '/admin/config/holidays');
     cy.wait('@holidaysList');
@@ -76,14 +78,80 @@ describe('Admin Config — Remaining Mobile UX (Feriados, Usuarios, Tasas)', () 
 
     cy.get('[data-cy="holidays-mobile-edit-action"]').first().click();
     cy.window().then((win) => {
-      cy.get('.p-dialog').should('be.visible').then(($dialog) => {
-        const rect = $dialog[0].getBoundingClientRect();
-        expect(rect.width).to.be.lte(win.innerWidth);
-      });
+      cy.get('.p-dialog')
+        .should('be.visible')
+        .then(($dialog) => {
+          const rect = $dialog[0].getBoundingClientRect();
+          expect(rect.width).to.be.lte(win.innerWidth);
+        });
     });
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
+    });
+  });
+
+  it('Feriados Mobile — preview de duplicación usa cards internas sin tablas visibles', () => {
+    cy.intercept('GET', '**/api/holidays*', holidaysResponse).as(
+      'holidaysList',
+    );
+    cy.intercept('POST', '**/api/holidays/duplicate-year/preview', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          sourceYear: 2026,
+          targetYear: 2027,
+          eligibleCount: 2,
+          toCreateCount: 1,
+          skippedCount: 1,
+          conflictsCount: 0,
+          invalidDatesCount: 0,
+          nonRecurringCount: 1,
+          toCreate: [
+            {
+              sourceDate: '2026-05-01',
+              targetDate: '2027-05-01',
+              type: 'NATIONAL',
+              name: 'Día del trabajador',
+            },
+          ],
+          skipped: [
+            {
+              sourceDate: '2026-06-15',
+              targetDate: null,
+              type: 'EXTRAORDINARY',
+              name: 'Puente local',
+              reason: 'not_recurring_annual',
+            },
+          ],
+        },
+      },
+    }).as('previewDuplicate');
+
+    cy.loginAs('ADMIN', '/admin/config/holidays');
+    cy.wait('@holidaysList');
+
+    cy.get('[data-cy="holidays-duplicate-source-year"]').clear().type('2026');
+    cy.get('[data-cy="holidays-preview-duplicate-btn"]').click();
+    cy.wait('@previewDuplicate');
+
+    cy.get('.p-dialog:visible').within(() => {
+      cy.get('table:visible').should('have.length', 0);
+      cy.get('[data-cy="holiday-duplicate-create-mobile-card"]')
+        .should('have.length', 1)
+        .and('contain', 'Día del trabajador');
+      cy.get('[data-cy="holiday-duplicate-skipped-mobile-card"]')
+        .should('have.length', 1)
+        .and('contain', 'Puente local');
+    });
+
+    cy.window().then((win) => {
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 
@@ -92,18 +160,25 @@ describe('Admin Config — Remaining Mobile UX (Feriados, Usuarios, Tasas)', () 
     cy.loginAs('ADMIN', '/admin/config/users');
 
     cy.get('[data-cy="admin-config-users-table"]').should('not.be.visible');
-    cy.get('[data-cy="admin-config-users-mobile-card"]').should('have.length.at.least', 1);
+    cy.get('[data-cy="admin-config-users-mobile-card"]').should(
+      'have.length.at.least',
+      1,
+    );
 
     cy.contains('button', '+ Nuevo Usuario').click();
     cy.window().then((win) => {
-      cy.get('.p-dialog').should('be.visible').then(($dialog) => {
-        const rect = $dialog[0].getBoundingClientRect();
-        expect(rect.width).to.be.lte(win.innerWidth);
-      });
+      cy.get('.p-dialog')
+        .should('be.visible')
+        .then(($dialog) => {
+          const rect = $dialog[0].getBoundingClientRect();
+          expect(rect.width).to.be.lte(win.innerWidth);
+        });
     });
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 
@@ -129,7 +204,9 @@ describe('Admin Config — Remaining Mobile UX (Feriados, Usuarios, Tasas)', () 
     });
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 
@@ -146,7 +223,10 @@ describe('Admin Config — Remaining Mobile UX (Feriados, Usuarios, Tasas)', () 
     cy.wait('@productRates');
 
     cy.get('[data-cy="product-rates-table"]').should('not.be.visible');
-    cy.get('[data-cy="product-rates-mobile-list"]').should('contain', 'Moto 110cc');
+    cy.get('[data-cy="product-rates-mobile-list"]').should(
+      'contain',
+      'Moto 110cc',
+    );
     cy.get('[data-cy="product-rates-mobile-card"]')
       .should('have.length', 1)
       .first()
@@ -161,7 +241,9 @@ describe('Admin Config — Remaining Mobile UX (Feriados, Usuarios, Tasas)', () 
     });
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 });

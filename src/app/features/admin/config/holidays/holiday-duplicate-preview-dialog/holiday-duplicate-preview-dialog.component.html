@@ -68,53 +68,83 @@
           >
             Se crearán
           </div>
-          <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="border-b border-[var(--ff-border-subtle)]">
-              <tr>
-                <th
-                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
-                >
-                  Origen
-                </th>
-                <th
-                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
-                >
-                  Destino
-                </th>
-                <th
-                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
-                >
-                  Nombre
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              @if (preview.toCreate.length === 0) {
+          <div class="hidden overflow-x-auto md:block">
+            <table class="w-full text-sm">
+              <thead class="border-b border-[var(--ff-border-subtle)]">
                 <tr>
-                  <td colspan="3" class="px-4 py-4 text-[var(--ff-text-muted)]">
-                    No hay feriados para crear.
-                  </td>
+                  <th
+                    class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
+                  >
+                    Origen
+                  </th>
+                  <th
+                    class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
+                  >
+                    Destino
+                  </th>
+                  <th
+                    class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
+                  >
+                    Nombre
+                  </th>
                 </tr>
-              }
-              @for (
-                item of preview.toCreate;
-                track item.sourceDate + item.type
-              ) {
-                <tr class="border-b border-[var(--ff-border-subtle)]">
-                  <td class="px-4 py-2 text-[var(--ff-text-primary)]">
-                    {{ item.sourceDate | date: "dd/MM/yyyy" }}
-                  </td>
-                  <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
-                    {{ item.targetDate | date: "dd/MM/yyyy" }}
-                  </td>
-                  <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
-                    {{ item.name }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                @if (preview.toCreate.length === 0) {
+                  <tr>
+                    <td
+                      colspan="3"
+                      class="px-4 py-4 text-[var(--ff-text-muted)]"
+                    >
+                      No hay feriados para crear.
+                    </td>
+                  </tr>
+                }
+                @for (
+                  item of preview.toCreate;
+                  track item.sourceDate + item.type
+                ) {
+                  <tr class="border-b border-[var(--ff-border-subtle)]">
+                    <td class="px-4 py-2 text-[var(--ff-text-primary)]">
+                      {{ item.sourceDate | date: "dd/MM/yyyy" }}
+                    </td>
+                    <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
+                      {{ item.targetDate | date: "dd/MM/yyyy" }}
+                    </td>
+                    <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
+                      {{ item.name }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div
+            class="flex flex-col gap-3 p-3 md:hidden"
+            data-cy="holiday-duplicate-create-mobile-list"
+          >
+            @if (preview.toCreate.length === 0) {
+              <p class="text-sm text-[var(--ff-text-muted)]">
+                No hay feriados para crear.
+              </p>
+            }
+            @for (item of preview.toCreate; track item.sourceDate + item.type) {
+              <article
+                class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3"
+                data-cy="holiday-duplicate-create-mobile-card"
+              >
+                <p
+                  class="truncate text-sm font-semibold text-[var(--ff-text-primary)]"
+                >
+                  {{ item.name }}
+                </p>
+                <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
+                  {{ item.sourceDate | date: "dd/MM/yyyy" }} →
+                  {{ item.targetDate | date: "dd/MM/yyyy" }}
+                </p>
+              </article>
+            }
           </div>
         </div>
 
@@ -126,53 +156,84 @@
           >
             Se omitirán
           </div>
-          <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="border-b border-[var(--ff-border-subtle)]">
-              <tr>
-                <th
-                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
-                >
-                  Fecha
-                </th>
-                <th
-                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
-                >
-                  Nombre
-                </th>
-                <th
-                  class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
-                >
-                  Motivo
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              @if (preview.skipped.length === 0) {
+          <div class="hidden overflow-x-auto md:block">
+            <table class="w-full text-sm">
+              <thead class="border-b border-[var(--ff-border-subtle)]">
                 <tr>
-                  <td colspan="3" class="px-4 py-4 text-[var(--ff-text-muted)]">
-                    Sin omisiones.
-                  </td>
+                  <th
+                    class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
+                  >
+                    Fecha
+                  </th>
+                  <th
+                    class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
+                  >
+                    Nombre
+                  </th>
+                  <th
+                    class="px-4 py-2 text-left text-xs uppercase text-[var(--ff-text-muted)]"
+                  >
+                    Motivo
+                  </th>
                 </tr>
-              }
-              @for (
-                item of preview.skipped;
-                track item.sourceDate + item.type + item.reason
-              ) {
-                <tr class="border-b border-[var(--ff-border-subtle)]">
-                  <td class="px-4 py-2 text-[var(--ff-text-primary)]">
-                    {{ item.sourceDate | date: "dd/MM/yyyy" }}
-                  </td>
-                  <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
-                    {{ item.name || "-" }}
-                  </td>
-                  <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
-                    {{ skippedReasonLabel(item.reason) }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                @if (preview.skipped.length === 0) {
+                  <tr>
+                    <td
+                      colspan="3"
+                      class="px-4 py-4 text-[var(--ff-text-muted)]"
+                    >
+                      Sin omisiones.
+                    </td>
+                  </tr>
+                }
+                @for (
+                  item of preview.skipped;
+                  track item.sourceDate + item.type + item.reason
+                ) {
+                  <tr class="border-b border-[var(--ff-border-subtle)]">
+                    <td class="px-4 py-2 text-[var(--ff-text-primary)]">
+                      {{ item.sourceDate | date: "dd/MM/yyyy" }}
+                    </td>
+                    <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
+                      {{ item.name || "-" }}
+                    </td>
+                    <td class="px-4 py-2 text-[var(--ff-text-secondary)]">
+                      {{ skippedReasonLabel(item.reason) }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div
+            class="flex flex-col gap-3 p-3 md:hidden"
+            data-cy="holiday-duplicate-skipped-mobile-list"
+          >
+            @if (preview.skipped.length === 0) {
+              <p class="text-sm text-[var(--ff-text-muted)]">Sin omisiones.</p>
+            }
+            @for (
+              item of preview.skipped;
+              track item.sourceDate + item.type + item.reason
+            ) {
+              <article
+                class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3"
+                data-cy="holiday-duplicate-skipped-mobile-card"
+              >
+                <p
+                  class="truncate text-sm font-semibold text-[var(--ff-text-primary)]"
+                >
+                  {{ item.name || "-" }}
+                </p>
+                <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
+                  {{ item.sourceDate | date: "dd/MM/yyyy" }} ·
+                  {{ skippedReasonLabel(item.reason) }}
+                </p>
+              </article>
+            }
           </div>
         </div>
       </div>

@@ -75,11 +75,26 @@ function openHistorialTabIfPresent() {
 describe('CR-10 — Calendario primer pago: panel adjunto a body', () => {
   beforeEach(() => {
     cy.viewport(1280, 800);
-    cy.intercept('GET', '**/api/credits*', { statusCode: 200, body: { ok: true, data: [] } });
-    cy.intercept('GET', '**/api/interest-rates*', { statusCode: 200, body: { ok: true, data: [] } });
-    cy.intercept('GET', '**/api/products*', { statusCode: 200, body: { ok: true, data: [] } });
-    cy.intercept('GET', '**/api/product-units*', { statusCode: 200, body: { ok: true, data: [] } });
-    cy.intercept('GET', '**/api/customers*', { statusCode: 200, body: CUSTOMERS_STUB }).as('customers');
+    cy.intercept('GET', '**/api/credits*', {
+      statusCode: 200,
+      body: { ok: true, data: [] },
+    });
+    cy.intercept('GET', '**/api/interest-rates*', {
+      statusCode: 200,
+      body: { ok: true, data: [] },
+    });
+    cy.intercept('GET', '**/api/products*', {
+      statusCode: 200,
+      body: { ok: true, data: [] },
+    });
+    cy.intercept('GET', '**/api/product-units*', {
+      statusCode: 200,
+      body: { ok: true, data: [] },
+    });
+    cy.intercept('GET', '**/api/customers*', {
+      statusCode: 200,
+      body: CUSTOMERS_STUB,
+    }).as('customers');
     cy.loginAs('SELLER', '/seller/operations/new');
   });
 
@@ -163,14 +178,43 @@ describe('CL-05 — Calendarios de período en historial de cliente (Admin)', ()
     openHistorialTabIfPresent();
 
     cy.get('body').then(($body) => {
-      const hasEventFilter = $body.find('.hist-filter-bar p-dropdown, .hist-filter-bar p-select').length > 0;
+      const hasEventFilter =
+        $body.find('.hist-filter-bar p-dropdown, .hist-filter-bar p-select')
+          .length > 0;
       if (!hasEventFilter) {
         cy.url().should('include', '/admin/clients/11223344');
         return;
       }
 
-      cy.get('.hist-filter-bar p-dropdown, .hist-filter-bar p-select').first().click();
-      cy.get('body > .p-overlay .p-dropdown-panel, body > .p-overlay .p-select-overlay').should('be.visible');
+      cy.get('.hist-filter-bar p-dropdown, .hist-filter-bar p-select')
+        .first()
+        .click();
+      cy.get(
+        'body > .p-overlay .p-dropdown-panel, body > .p-overlay .p-select-overlay',
+      ).should('be.visible');
+    });
+  });
+
+  it('historial mobile usa cards en vez de tabla', () => {
+    cy.viewport(375, 667);
+    openHistorialTabIfPresent();
+
+    cy.get('body').then(($body) => {
+      if ($body.find('.hist-table').length === 0) {
+        cy.url().should('include', '/admin/clients/11223344');
+        return;
+      }
+
+      cy.get('.hist-table').should('not.be.visible');
+      cy.get('[data-cy="client-historial-mobile-card"]').should(
+        'have.length.at.least',
+        1,
+      );
+      cy.window().then((win) => {
+        expect(win.document.documentElement.scrollWidth).to.be.lte(
+          win.innerWidth,
+        );
+      });
     });
   });
 });
