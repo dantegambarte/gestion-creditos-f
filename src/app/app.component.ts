@@ -6,6 +6,8 @@ import { Message, MessageService, PrimeNGConfig } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { filter, map } from 'rxjs/operators';
 import { AuthServiceBase } from './core/auth/auth-service.base';
+import { NetworkAwareService } from './core/services/network-aware.service';
+import { PwaUpdateService } from './core/services/pwa-update.service';
 import { HeaderComponent } from './shared/layout/header/header.component';
 import { SidebarComponent } from './shared/layout/sidebar/sidebar.component';
 
@@ -32,6 +34,8 @@ export class AppComponent {
   private document = inject(DOCUMENT);
   private platformId = inject(PLATFORM_ID);
   private destroyRef = inject(DestroyRef);
+  private networkAwareService = inject(NetworkAwareService);
+  private pwaUpdateService = inject(PwaUpdateService);
 
   private noLayoutRoutes = ['/portal', '/change-password'];
   liveAnnouncement = '';
@@ -40,6 +44,20 @@ export class AppComponent {
     this.configurePrimeNgLocale();
     this.resetScrollOnNavigation();
     this.announceGlobalToasts();
+    this.startPwaRuntimeServices();
+  }
+
+  /** Activa listeners globales de red y actualizaciones PWA desde el arranque. */
+  private startPwaRuntimeServices(): void {
+    this.networkAwareService.start();
+    this.pwaUpdateService.start();
+  }
+
+  /** Ejecuta acciones declaradas por toasts globales, como aplicar una actualización PWA. */
+  runToastAction(message: Message): void {
+    const action = (message.data as { action?: () => void } | undefined)
+      ?.action;
+    action?.();
   }
 
   /**
