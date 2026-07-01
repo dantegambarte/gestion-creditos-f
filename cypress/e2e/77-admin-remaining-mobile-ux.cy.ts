@@ -131,7 +131,8 @@ const productCategoriesResponse = {
 
 // ── Fixtures con texto largo — P0 #2: ningún card debe romper el layout
 // con nombres/descripciones largas (overflow horizontal o boxes rotas).
-const LONG_NAME = 'Cliente Con Nombre Extremadamente Largo Para Probar Truncado En Mobile';
+const LONG_NAME =
+  'Cliente Con Nombre Extremadamente Largo Para Probar Truncado En Mobile';
 const LONG_DESCRIPTION =
   'Pago de combustible y mantenimiento de la flota completa de motos repartidoras del mes';
 
@@ -178,11 +179,17 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
   });
 
   it('Cobros Mobile — renderiza cards en vez de tabla y el modal de detalle tiene scroll con acciones visibles', () => {
-    cy.intercept('GET', '**/api/payments*', paymentsResponse).as('paymentsList');
-    cy.intercept('GET', '**/api/users*', collectorsResponse).as('collectorsList');
-    cy.intercept('GET', '**/api/payments/pay-mobile-1', paymentDetailResponse).as(
-      'paymentDetail',
+    cy.intercept('GET', '**/api/payments*', paymentsResponse).as(
+      'paymentsList',
     );
+    cy.intercept('GET', '**/api/users*', collectorsResponse).as(
+      'collectorsList',
+    );
+    cy.intercept(
+      'GET',
+      '**/api/payments/pay-mobile-1',
+      paymentDetailResponse,
+    ).as('paymentDetail');
 
     cy.loginAs('ADMIN', '/admin/payments');
     cy.wait(['@paymentsList', '@collectorsList']);
@@ -195,7 +202,9 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       .contains('Cliente Mobile Remaining');
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
 
     cy.get('[data-cy="admin-payments-mobile-view-action"]').first().click();
@@ -251,7 +260,9 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
         const rect = $input[0].getBoundingClientRect();
         expect(rect.left).to.be.at.least(0);
         expect(rect.right).to.be.at.most(375);
-        expect(parseFloat(getComputedStyle($input[0]).fontSize)).to.be.at.least(16);
+        expect(parseFloat(getComputedStyle($input[0]).fontSize)).to.be.at.least(
+          16,
+        );
       })
       .type('500');
 
@@ -264,7 +275,9 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
   });
 
   it('Gastos Mobile — listado principal en cards y botón de registrar gasto accesible', () => {
-    cy.intercept('GET', '**/api/expenses*', expensesResponse).as('expensesList');
+    cy.intercept('GET', '**/api/expenses*', expensesResponse).as(
+      'expensesList',
+    );
     cy.intercept('GET', '**/api/expense-categories*', {
       statusCode: 200,
       body: { ok: true, data: [] },
@@ -289,7 +302,9 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       });
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
 
     // Modal "Registrar Gasto" — el footer con el submit nunca debe quedar cortado.
@@ -308,9 +323,7 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
 
     // Modal "Nueva Categoría" — abierto desde dentro de "Gestionar categorías".
     cy.get('[data-cy="expenses-manage-categories-action"]').click();
-    cy.contains('button', 'Nueva categoría')
-      .scrollIntoView()
-      .click();
+    cy.contains('button', 'Nueva categoría').scrollIntoView().click();
     cy.get('[data-cy="expense-category-create-dialog"]').should('be.visible');
     cy.get('[data-cy="expense-category-create-dialog-body"] input')
       .should('be.visible')
@@ -318,7 +331,9 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
   });
 
   it('Productos Config Mobile — nav scrolleable y Marcas usa cards + modal fullscreen', () => {
-    cy.intercept('GET', '**/api/product-brands*', productBrandsResponse).as('productBrands');
+    cy.intercept('GET', '**/api/product-brands*', productBrandsResponse).as(
+      'productBrands',
+    );
 
     cy.loginAs('ADMIN', '/admin/products/config/brands');
     cy.wait('@productBrands');
@@ -336,8 +351,17 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       .first()
       .contains('Marca Mobile QA');
 
-    cy.get('[data-cy="product-brands-create-trigger"]').scrollIntoView().click();
+    cy.get('[data-cy="product-brands-create-trigger"]')
+      .scrollIntoView()
+      .click();
     cy.get('[data-cy="product-brands-create-dialog"]').should('be.visible');
+    cy.get('[data-cy="product-brands-create-dialog"]')
+      .parents('.p-dialog')
+      .should('have.attr', 'role', 'dialog');
+    cy.get(
+      '[data-cy="product-brands-create-dialog"] button[aria-label="Cerrar diálogo de nueva marca"]',
+    ).should('be.visible');
+    cy.get('#product-brand-name').should('have.attr', 'autofocus');
     cy.get('[data-cy="product-brands-create-dialog-body"]')
       .should('be.visible')
       .and('have.css', 'overflow-y', 'auto');
@@ -351,14 +375,18 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       });
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 
   it('Productos Config Mobile — Categorías usa cards + modal fullscreen', () => {
-    cy.intercept('GET', '**/api/product-categories*', productCategoriesResponse).as(
-      'productCategories',
-    );
+    cy.intercept(
+      'GET',
+      '**/api/product-categories*',
+      productCategoriesResponse,
+    ).as('productCategories');
 
     cy.loginAs('ADMIN', '/admin/products/config/categories');
     cy.wait('@productCategories');
@@ -370,8 +398,17 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       .first()
       .contains('Categoría Mobile QA');
 
-    cy.get('[data-cy="product-categories-create-trigger"]').scrollIntoView().click();
+    cy.get('[data-cy="product-categories-create-trigger"]')
+      .scrollIntoView()
+      .click();
     cy.get('[data-cy="product-categories-create-dialog"]').should('be.visible');
+    cy.get('[data-cy="product-categories-create-dialog"]')
+      .parents('.p-dialog')
+      .should('have.attr', 'role', 'dialog');
+    cy.get(
+      '[data-cy="product-categories-create-dialog"] button[aria-label="Cerrar diálogo de nueva categoría"]',
+    ).should('be.visible');
+    cy.get('#product-category-name').should('have.attr', 'autofocus');
     cy.get('[data-cy="product-categories-create-dialog-body"]')
       .should('be.visible')
       .and('have.css', 'overflow-y', 'auto');
@@ -385,12 +422,16 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       });
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 
   it('Generar Planillas Mobile — el modal entra en pantalla y el botón final es clickeable', () => {
-    cy.intercept('GET', '**/api/users*', collectorsResponse).as('collectorsForGenerate');
+    cy.intercept('GET', '**/api/users*', collectorsResponse).as(
+      'collectorsForGenerate',
+    );
     cy.intercept('GET', '**/api/collections*', {
       statusCode: 200,
       body: { ok: true, data: [] },
@@ -456,10 +497,14 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
         expect(rect.right).to.be.at.most(375);
         expect(rect.height).to.be.at.most(128);
       });
-    cy.get('[data-cy="generate-collection-dialog-footer"]').should('be.visible');
+    cy.get('[data-cy="generate-collection-dialog-footer"]').should(
+      'be.visible',
+    );
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 
@@ -569,10 +614,15 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
     cy.loginAs('ADMIN', '/admin/reports');
     cy.get('[data-cy="admin-reports-page"]').should('be.visible');
 
-    cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Cartera').click();
+    cy.get('[data-cy="admin-reports-tabs"]')
+      .contains('button', 'Cartera')
+      .click();
     cy.wait('@portfolioReport');
     cy.get('[data-cy="portfolio-report-table"]').should('not.be.visible');
-    cy.get('[data-cy="portfolio-report-mobile-card"]').should('have.length.at.least', 1);
+    cy.get('[data-cy="portfolio-report-mobile-card"]').should(
+      'have.length.at.least',
+      1,
+    );
 
     cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Mora').click();
     cy.wait('@overdueReport');
@@ -582,7 +632,9 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       .first()
       .contains('Cliente Reporte Mora');
 
-    cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Cobradores').click();
+    cy.get('[data-cy="admin-reports-tabs"]')
+      .contains('button', 'Cobradores')
+      .click();
     cy.wait('@collectorsReport');
     cy.get('[data-cy="collectors-report-table"]').should('not.be.visible');
     cy.get('[data-cy="collectors-report-mobile-card"]')
@@ -590,7 +642,9 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       .first()
       .contains('Cobrador Reporte');
 
-    cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Productos').click();
+    cy.get('[data-cy="admin-reports-tabs"]')
+      .contains('button', 'Productos')
+      .click();
     cy.wait('@productsReport');
     cy.get('[data-cy="products-report-table"]').should('not.be.visible');
     cy.get('[data-cy="products-report-mobile-card"]')
@@ -598,13 +652,20 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       .first()
       .contains('Producto Reporte');
 
-    cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Recaudación').click();
+    cy.get('[data-cy="admin-reports-tabs"]')
+      .contains('button', 'Recaudación')
+      .click();
     cy.wait('@collectionReport');
     cy.get('[data-cy="collection-report-table"]').should('not.be.visible');
-    cy.get('[data-cy="collection-report-mobile-card"]').should('have.length.at.least', 1);
+    cy.get('[data-cy="collection-report-mobile-card"]').should(
+      'have.length.at.least',
+      1,
+    );
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 
@@ -672,7 +733,9 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
         data: {
           days: 7,
           summary: { installments_count: 1, expected_amount: 15000 },
-          by_day: [{ due_date: '2026-06-25', count: 1, expected_amount: 15000 }],
+          by_day: [
+            { due_date: '2026-06-25', count: 1, expected_amount: 15000 },
+          ],
           by_customer: [
             {
               customer_id: 'cust-up-1',
@@ -693,7 +756,9 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
 
     // Movimientos de caja → switch a "Caja General" para evitar el flujo de
     // selección de jornada/caja puntual (fuera de alcance de este check).
-    cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Movimientos de caja').click();
+    cy.get('[data-cy="admin-reports-tabs"]')
+      .contains('button', 'Movimientos de caja')
+      .click();
     cy.contains('button', 'Caja General').click();
     cy.contains('button', 'Buscar movimientos').click();
     cy.wait('@generalCashMovements');
@@ -703,30 +768,48 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       .first()
       .contains('Pago proveedor combustible');
 
-    cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Conversiones de caja').click();
+    cy.get('[data-cy="admin-reports-tabs"]')
+      .contains('button', 'Conversiones de caja')
+      .click();
     cy.contains('button', 'Consultar').click();
     cy.wait('@cashConversions');
-    cy.get('[data-cy="cash-conversions-report-table"]').should('not.be.visible');
-    cy.get('[data-cy="cash-conversions-report-mobile-card"]').should('have.length', 1);
+    cy.get('[data-cy="cash-conversions-report-table"]').should(
+      'not.be.visible',
+    );
+    cy.get('[data-cy="cash-conversions-report-mobile-card"]').should(
+      'have.length',
+      1,
+    );
 
-    cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Próximos vencimientos').click();
+    cy.get('[data-cy="admin-reports-tabs"]')
+      .contains('button', 'Próximos vencimientos')
+      .click();
     cy.wait('@upcomingReport');
     cy.get('[data-cy="upcoming-report-byday-table"]').should('not.be.visible');
-    cy.get('[data-cy="upcoming-report-byday-mobile-card"]').should('have.length', 1);
-    cy.get('[data-cy="upcoming-report-bycustomer-table"]').should('not.be.visible');
+    cy.get('[data-cy="upcoming-report-byday-mobile-card"]').should(
+      'have.length',
+      1,
+    );
+    cy.get('[data-cy="upcoming-report-bycustomer-table"]').should(
+      'not.be.visible',
+    );
     cy.get('[data-cy="upcoming-report-bycustomer-mobile-card"]')
       .should('have.length', 1)
       .first()
       .contains('Cliente Próximo Vencimiento');
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 
   // P0 #1 — el auto-scroll a "Referencia" al elegir Transferencia no tenía cobertura.
   it('Registrar Gasto Mobile — al elegir Transferencia, el campo Referencia entra solo al viewport', () => {
-    cy.intercept('GET', '**/api/expenses*', expensesResponse).as('expensesList');
+    cy.intercept('GET', '**/api/expenses*', expensesResponse).as(
+      'expensesList',
+    );
     cy.intercept('GET', '**/api/expense-categories*', {
       statusCode: 200,
       body: { ok: true, data: [] },
@@ -766,8 +849,12 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
   // P0 #2 — nombres/descripciones largas no deben romper el layout (overflow
   // horizontal, cards que se ensanchan, texto que tapa botones/badges).
   it('Textos largos — Cobros, Mora y Gastos truncan sin overflow horizontal', () => {
-    cy.intercept('GET', '**/api/payments*', longPaymentsResponse).as('paymentsListLong');
-    cy.intercept('GET', '**/api/users*', collectorsResponse).as('collectorsListLong');
+    cy.intercept('GET', '**/api/payments*', longPaymentsResponse).as(
+      'paymentsListLong',
+    );
+    cy.intercept('GET', '**/api/users*', collectorsResponse).as(
+      'collectorsListLong',
+    );
 
     cy.loginAs('ADMIN', '/admin/payments');
     cy.wait(['@paymentsListLong', '@collectorsListLong']);
@@ -781,12 +868,16 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
         });
       });
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
 
-    cy.intercept('GET', '**/api/installments*', longOverdueInstallmentsResponse).as(
-      'overdueListLong',
-    );
+    cy.intercept(
+      'GET',
+      '**/api/installments*',
+      longOverdueInstallmentsResponse,
+    ).as('overdueListLong');
     cy.intercept('GET', '**/api/cash-register/dashboard*', {
       statusCode: 200,
       body: { ok: true, data: { isClosed: false } },
@@ -804,10 +895,14 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
         });
       });
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
 
-    cy.intercept('GET', '**/api/expenses*', longExpensesResponse).as('expensesListLong');
+    cy.intercept('GET', '**/api/expenses*', longExpensesResponse).as(
+      'expensesListLong',
+    );
     cy.intercept('GET', '**/api/expense-categories*', {
       statusCode: 200,
       body: { ok: true, data: [] },
@@ -825,7 +920,9 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
         });
       });
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 });
@@ -840,11 +937,17 @@ describe('Admin Backoffice — Android chico (360×640)', () => {
   });
 
   it('Cobros — cards y modal de detalle entran en 360×640', () => {
-    cy.intercept('GET', '**/api/payments*', paymentsResponse).as('paymentsList');
-    cy.intercept('GET', '**/api/users*', collectorsResponse).as('collectorsList');
-    cy.intercept('GET', '**/api/payments/pay-mobile-1', paymentDetailResponse).as(
-      'paymentDetail',
+    cy.intercept('GET', '**/api/payments*', paymentsResponse).as(
+      'paymentsList',
     );
+    cy.intercept('GET', '**/api/users*', collectorsResponse).as(
+      'collectorsList',
+    );
+    cy.intercept(
+      'GET',
+      '**/api/payments/pay-mobile-1',
+      paymentDetailResponse,
+    ).as('paymentDetail');
 
     cy.loginAs('ADMIN', '/admin/payments');
     cy.wait(['@paymentsList', '@collectorsList']);
@@ -852,7 +955,9 @@ describe('Admin Backoffice — Android chico (360×640)', () => {
     cy.get('[data-cy="admin-payments-table"]').should('not.be.visible');
     cy.get('[data-cy="admin-payments-mobile-card"]').should('have.length', 1);
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
 
     cy.get('[data-cy="admin-payments-mobile-view-action"]').first().click();
@@ -883,9 +988,14 @@ describe('Admin Backoffice — Android chico (360×640)', () => {
       const rect = $el[0].getBoundingClientRect();
       expect(rect.right).to.be.at.most(360);
     });
-    cy.get('[data-cy="delinquency-mobile-list"]').scrollIntoView().should('be.visible');
+    cy.get('[data-cy="delinquency-mobile-list"]')
+      .scrollIntoView()
+      .should('be.visible');
 
-    cy.get('[data-cy="delinquency-mobile-apply-action"]').first().scrollIntoView().click();
+    cy.get('[data-cy="delinquency-mobile-apply-action"]')
+      .first()
+      .scrollIntoView()
+      .click();
     cy.get('[data-cy="delinquency-apply-dialog-body"] input[type="number"]')
       .should('be.visible')
       .then(($input) => {
@@ -901,7 +1011,9 @@ describe('Admin Backoffice — Android chico (360×640)', () => {
   });
 
   it('Gastos — cards, panel "Registrar gasto" fullscreen y submit visibles en 360×640', () => {
-    cy.intercept('GET', '**/api/expenses*', expensesResponse).as('expensesList');
+    cy.intercept('GET', '**/api/expenses*', expensesResponse).as(
+      'expensesList',
+    );
     cy.intercept('GET', '**/api/expense-categories*', {
       statusCode: 200,
       body: { ok: true, data: [] },
@@ -938,7 +1050,9 @@ describe('Admin Backoffice — Android chico (360×640)', () => {
   });
 
   it('Generar Planillas — el modal y el botón final entran en 360×640', () => {
-    cy.intercept('GET', '**/api/users*', collectorsResponse).as('collectorsForGenerate');
+    cy.intercept('GET', '**/api/users*', collectorsResponse).as(
+      'collectorsForGenerate',
+    );
     cy.intercept('GET', '**/api/collections*', {
       statusCode: 200,
       body: { ok: true, data: [] },
@@ -947,7 +1061,9 @@ describe('Admin Backoffice — Android chico (360×640)', () => {
     cy.loginAs('ADMIN', '/admin/collections');
     cy.wait(['@collectorsForGenerate', '@collectionsForGenerate']);
 
-    cy.get('[data-cy="admin-collections-generate-action"]').scrollIntoView().click();
+    cy.get('[data-cy="admin-collections-generate-action"]')
+      .scrollIntoView()
+      .click();
 
     cy.get('[data-cy="generate-collection-dialog-body"]').should('be.visible');
     cy.get('[data-cy="generate-collection-dialog-footer"]')
@@ -966,7 +1082,9 @@ describe('Admin Backoffice — Android chico (360×640)', () => {
       });
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 
@@ -1007,18 +1125,27 @@ describe('Admin Backoffice — Android chico (360×640)', () => {
     cy.loginAs('ADMIN', '/admin/reports');
     cy.get('[data-cy="admin-reports-page"]').should('be.visible');
 
-    cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Cartera').click();
+    cy.get('[data-cy="admin-reports-tabs"]')
+      .contains('button', 'Cartera')
+      .click();
     cy.wait('@portfolioReport');
     cy.get('[data-cy="portfolio-report-table"]').should('not.be.visible');
-    cy.get('[data-cy="portfolio-report-mobile-card"]').should('have.length.at.least', 1);
+    cy.get('[data-cy="portfolio-report-mobile-card"]').should(
+      'have.length.at.least',
+      1,
+    );
 
-    cy.get('[data-cy="admin-reports-tabs"]').contains('button', 'Productos').click();
+    cy.get('[data-cy="admin-reports-tabs"]')
+      .contains('button', 'Productos')
+      .click();
     cy.wait('@productsReport');
     cy.get('[data-cy="products-report-table"]').should('not.be.visible');
     cy.get('[data-cy="products-report-mobile-card"]').should('have.length', 1);
 
     cy.window().then((win) => {
-      expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
     });
   });
 });

@@ -96,9 +96,13 @@
 ></div>
 
 <section
+  id="mobile-navigation-menu"
   class="mobile-menu-sheet"
   [class.mobile-menu-sheet--open]="mobileMenuOpen()"
   aria-label="Menú de navegación mobile"
+  role="dialog"
+  [attr.aria-modal]="mobileMenuOpen()"
+  [attr.aria-hidden]="!mobileMenuOpen()"
 >
   <div class="mobile-menu-sheet__handle"></div>
 
@@ -198,6 +202,8 @@
     class="mobile-bottom-nav__item mobile-bottom-nav__item--menu"
     [class.mobile-bottom-nav__item--active]="mobileMenuOpen()"
     aria-label="Abrir menú"
+    aria-controls="mobile-navigation-menu"
+    [attr.aria-expanded]="mobileMenuOpen()"
     (click)="toggleMobileMenu()"
   >
     <i class="pi pi-bars"></i>

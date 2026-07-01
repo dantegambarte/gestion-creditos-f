@@ -28,6 +28,8 @@ export class HeaderComponent implements OnInit {
   today: string;
   recentNotifications: NotificationItem[] = [];
   loadingNotifications = false;
+  bellOpen = false;
+  userMenuOpen = false;
 
   constructor(
     public auth: AuthServiceBase,

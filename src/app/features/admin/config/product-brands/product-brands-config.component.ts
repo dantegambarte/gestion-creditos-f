@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -38,6 +38,7 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
   private readonly svc = inject(ProductBrandsService);
   private readonly msg = inject(MessageService);
   private readonly confirm = inject(ConfirmationService);
+  private readonly document = inject(DOCUMENT);
   private destroy$ = new Subject<void>();
 
   rows: ProductBrand[] = [];
@@ -109,6 +110,7 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
     this.newName = '';
     this.dialogError = '';
     this.showDialog = false;
+    this.restoreCreateTriggerFocus();
   }
 
   /** Envía el nuevo nombre al backend y recarga la lista al confirmar. */
@@ -125,6 +127,7 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.showDialog = false;
+          this.restoreCreateTriggerFocus();
           this.msg.add({
             severity: 'success',
             summary: 'Marca creada',
@@ -224,6 +227,21 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
           summary: 'Error',
           detail: err.message ?? 'No se pudo cambiar el estado.',
         }),
+    });
+  }
+
+  /**
+   * Devuelve el foco al botón que abrió el modal cuando el diálogo se cierra.
+   */
+  private restoreCreateTriggerFocus(): void {
+    setTimeout(() => {
+      const trigger = this.document.querySelector(
+        '[data-cy="product-brands-create-trigger"] button, [data-cy="product-brands-create-trigger"]',
+      );
+
+      if (trigger instanceof HTMLElement) {
+        trigger.focus();
+      }
     });
   }
 }

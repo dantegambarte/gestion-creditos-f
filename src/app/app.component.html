@@ -1,4 +1,12 @@
 <p-toast />
+<div
+  class="sr-only"
+  aria-live="polite"
+  aria-atomic="true"
+  data-cy="global-live-region"
+>
+  {{ liveAnnouncement }}
+</div>
 @if (!isPortalRoute() && (auth.currentUser$ | async)) {
   <div class="ff-shell">
     <sidebar />
