@@ -30,6 +30,7 @@
     "@angular/platform-browser-dynamic": "^18.2.0",
     "@angular/platform-server": "^18.2.0",
     "@angular/router": "^18.2.0",
+    "@angular/service-worker": "^18.2.0",
     "@angular/ssr": "^18.2.21",
     "chart.js": "^4.5.1",
     "date-fns": "^3.6.0",
