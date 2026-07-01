@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -23,6 +24,7 @@ import { ProductsService } from '../products.service';
   standalone: true,
   providers: [MessageService, ConfirmationService],
   imports: [
+    FfBackTopFabComponent,
     CurrencyArsPipe,
     CommonModule,
     ButtonModule,

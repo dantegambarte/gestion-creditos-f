@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -17,6 +18,7 @@ import {
   selector: 'app-commissions-summary-tab',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     ButtonModule,
     CardModule,
     SkeletonModule,

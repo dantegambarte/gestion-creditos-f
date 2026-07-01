@@ -6,6 +6,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { Liquidation, PaymentMethod } from '../../models/commission.model';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-commissions-history-tab',
@@ -17,6 +18,7 @@ import { Liquidation, PaymentMethod } from '../../models/commission.model';
     SkeletonModule,
     TableModule,
     TagModule,
+    FfBackTopFabComponent,
   ],
   templateUrl: './commissions-history-tab.component.html',
 })

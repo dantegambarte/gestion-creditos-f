@@ -24,6 +24,7 @@ import {
   GeneralCashMovementType,
 } from '../../report.models';
 import { ReportsService } from '../../reports.service';
+import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 const TYPE_LABELS: Record<CashMovementType, string> = {
   COBRO: 'Cobro',
@@ -72,6 +73,7 @@ const METHOD_LABELS: Record<string, string> = {
     LoadingStateComponent,
     ErrorStateComponent,
     SkeletonModule,
+    FfBackTopFabComponent,
   ],
   templateUrl: './cash-movements-report.component.html',
 })

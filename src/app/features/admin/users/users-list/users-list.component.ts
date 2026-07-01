@@ -24,6 +24,7 @@ import { LoadingStateComponent } from '../../../../shared/states/loading-state/l
 import { UserCreateComponent } from '../user-create/user-create.component';
 import { User, UserListFilters, UserStatus } from '../user.model';
 import { UsersService } from '../users.service';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'Administrador',
@@ -59,6 +60,7 @@ const ROLE_SEVERITY: Record<string, string> = {
     ErrorStateComponent,
     EmptyStateComponent,
     UserCreateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './users-list.component.html',
 })

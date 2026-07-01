@@ -242,6 +242,7 @@
         }
       </div>
     </div>
+    <ff-back-top-fab [itemCount]="collectorsRows.length" dataCy="collectors-back-top-action" />
   } @else if (!loading && !error) {
     <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
       Sin datos para el período seleccionado.

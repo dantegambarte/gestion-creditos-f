@@ -1,4 +1,5 @@
 import { CommonModule, DatePipe, Location } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -40,6 +41,7 @@ import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog
   selector: 'app-credit-detail',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     CurrencyArsPipe,
     DatePipe,
     CommonModule,

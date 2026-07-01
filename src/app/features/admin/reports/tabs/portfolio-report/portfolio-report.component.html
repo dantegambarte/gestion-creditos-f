@@ -161,6 +161,7 @@
         }
       </div>
     </div>
+    <ff-back-top-fab [itemCount]="portfolioGrouped.length" dataCy="portfolio-back-top-action" />
 
     <!-- Barra Venta vs Préstamo (activos) -->
     @if (activeVentaAmount + activeLoanAmount > 0) {

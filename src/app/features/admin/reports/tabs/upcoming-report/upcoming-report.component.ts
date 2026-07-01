@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { FfBackTopFabComponent } from './../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
@@ -12,7 +13,7 @@ import { ReportsService } from '../../reports.service';
 @Component({
   selector: 'app-upcoming-report',
   standalone: true,
-  imports: [LoadingStateComponent, ErrorStateComponent, SkeletonModule],
+  imports: [FfBackTopFabComponent,LoadingStateComponent, ErrorStateComponent, SkeletonModule],
   templateUrl: './upcoming-report.component.html',
 })
 export class UpcomingReportComponent implements OnInit, OnDestroy {

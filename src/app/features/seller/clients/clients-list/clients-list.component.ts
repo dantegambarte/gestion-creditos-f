@@ -24,6 +24,7 @@ import { EmptyStateComponent } from '../../../../shared/states/empty-state/empty
 import { AppError } from '../../../../core/models/app-error';
 import { UserRoleEnum } from '../../../../core/models/types/user-role';
 import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-clients-list',
@@ -40,6 +41,7 @@ import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
     LoadingStateComponent,
     ErrorStateComponent,
     EmptyStateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './clients-list.component.html',
 })

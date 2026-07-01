@@ -1,4 +1,5 @@
 import { CommonModule, Location } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -24,6 +25,7 @@ import { VariantFormPanelComponent } from './variant-form-panel/variant-form-pan
   standalone: true,
   providers: [MessageService, ConfirmationService],
   imports: [
+    FfBackTopFabComponent,
     CommonModule,
     ButtonModule,
     TableModule,

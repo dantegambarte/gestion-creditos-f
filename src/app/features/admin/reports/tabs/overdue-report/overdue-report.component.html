@@ -99,136 +99,188 @@
       <div
         class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
       >
-        <div class="border-b border-[var(--ff-border-subtle)] px-5 py-4">
-          <h2 class="text-sm font-semibold text-[var(--ff-text-secondary)]">
-            Mora por cliente
-          </h2>
-        </div>
-        <table
-          class="hidden w-full text-sm md:table"
-          data-cy="overdue-report-table"
-        >
-          <thead>
-            <tr class="border-b border-[var(--ff-border-subtle)]">
-              <th
-                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
-              >
-                Cliente
-              </th>
-              <th
-                class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
-              >
-                Teléfono
-              </th>
-              <th
-                class="px-5 py-3 text-center text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
-              >
-                Cuotas en mora
-              </th>
-              <th
-                class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
-              >
-                Monto total
-              </th>
-              <th
-                class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]"
-              >
-                Máx. días atraso
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of overdueReport.byCustomer; track row.customerId) {
-              <tr
-                class="border-t border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
-              >
-                <td class="px-5 py-3 font-semibold text-white">
-                  {{ row.customerName }}
-                </td>
-                <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
-                  {{ row.phone ?? "—" }}
-                </td>
-                <td class="px-5 py-3 text-center font-bold text-red-400">
-                  {{ row.overdueCount }}
-                </td>
-                <td
-                  class="px-5 py-3 text-right font-mono font-semibold text-orange-400"
+        <div class="border-b border-[var(--ff-border-subtle)] px-4 py-4 sm:px-5">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h2 class="text-sm font-semibold text-[var(--ff-text-secondary)]">
+                Mora por cliente
+              </h2>
+              <p class="mt-1 text-xs text-[var(--ff-text-muted)]">
+                {{ filteredRows.length }} de {{ overdueReport.byCustomer.length }} clientes visibles
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(220px,320px)_160px_170px_auto]">
+              <label class="min-w-0">
+                <span class="mb-1 block text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]">
+                  Buscar
+                </span>
+                <input
+                  [(ngModel)]="searchTerm"
+                  class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-base text-[var(--ff-text-primary)] outline-none transition-colors placeholder:text-[var(--ff-text-muted)] focus:border-[var(--ff-primary)] sm:text-sm"
+                  data-cy="overdue-report-search"
+                  placeholder="Cliente o teléfono"
+                  type="search"
+                />
+              </label>
+
+              <label>
+                <span class="mb-1 block text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]">
+                  Atraso
+                </span>
+                <select
+                  [(ngModel)]="daysFilter"
+                  class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-base text-[var(--ff-text-primary)] outline-none transition-colors focus:border-[var(--ff-primary)] sm:text-sm"
+                  data-cy="overdue-report-days-filter"
                 >
-                  {{ formatCurrency(row.totalOverdue) }}
-                </td>
-                <td class="px-5 py-3 text-right">
-                  <span
-                    class="font-bold"
-                    [class]="
-                      row.maxDaysOverdue > 30
-                        ? 'text-red-400'
-                        : 'text-orange-400'
-                    "
-                  >
+                  <option value="all">Todos</option>
+                  <option value="31">+30 días</option>
+                  <option value="61">+60 días</option>
+                  <option value="91">+90 días</option>
+                  <option value="121">+120 días</option>
+                </select>
+              </label>
+
+              <label>
+                <span class="mb-1 block text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]">
+                  Monto
+                </span>
+                <select
+                  [(ngModel)]="amountFilter"
+                  class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] px-3 text-base text-[var(--ff-text-primary)] outline-none transition-colors focus:border-[var(--ff-primary)] sm:text-sm"
+                  data-cy="overdue-report-amount-filter"
+                >
+                  <option value="all">Todos</option>
+                  <option value="500000">+$500.000</option>
+                  <option value="1000000">+$1.000.000</option>
+                </select>
+              </label>
+
+              <button
+                class="h-11 rounded-xl border border-[var(--ff-border)] px-4 text-sm font-semibold text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)] disabled:cursor-not-allowed disabled:opacity-40 lg:self-end"
+                data-cy="overdue-report-clear-filters"
+                type="button"
+                [disabled]="!hasActiveFilters"
+                (click)="clearFilters()"
+              >
+                Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+        @if (filteredRows.length === 0) {
+          <p class="px-5 py-10 text-center text-sm text-[var(--ff-text-muted)]" data-cy="overdue-report-empty-filtered">
+            No hay clientes que coincidan con la búsqueda o los filtros.
+          </p>
+        } @else {
+          <table
+            class="hidden w-full text-sm md:table"
+            data-cy="overdue-report-table"
+          >
+            <thead>
+              <tr class="border-b border-[var(--ff-border-subtle)]">
+                <th class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]">
+                  <button class="uppercase tracking-widest" type="button" (click)="setSort('customerName')">
+                    Cliente
+                  </button>
+                </th>
+                <th class="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]">
+                  Teléfono
+                </th>
+                <th class="px-5 py-3 text-center text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]">
+                  <button class="uppercase tracking-widest" type="button" (click)="setSort('overdueCount')">
+                    Cuotas en mora
+                  </button>
+                </th>
+                <th class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]">
+                  <button class="uppercase tracking-widest" type="button" (click)="setSort('totalOverdue')">
+                    Monto total
+                  </button>
+                </th>
+                <th class="px-5 py-3 text-right text-[10px] font-medium uppercase tracking-widest text-[var(--ff-text-muted)]">
+                  <button class="uppercase tracking-widest" type="button" (click)="setSort('maxDaysOverdue')">
+                    Máx. días atraso
+                  </button>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of filteredRows; track row.customerId) {
+                <tr class="border-t border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]">
+                  <td class="px-5 py-3 font-semibold text-white">
+                    {{ row.customerName }}
+                  </td>
+                  <td class="px-5 py-3 text-[var(--ff-text-secondary)]">
+                    {{ row.phone ?? "—" }}
+                  </td>
+                  <td class="px-5 py-3 text-center font-bold text-red-400">
+                    {{ row.overdueCount }}
+                  </td>
+                  <td class="px-5 py-3 text-right font-mono font-semibold text-orange-400">
+                    {{ formatCurrency(row.totalOverdue) }}
+                  </td>
+                  <td class="px-5 py-3 text-right">
+                    <span class="font-bold" [class]="row.maxDaysOverdue > 30 ? 'text-red-400' : 'text-orange-400'">
+                      {{ row.maxDaysOverdue }}d
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="overdue-report-mobile-list">
+            <div class="flex gap-2 overflow-x-auto pb-1">
+              <button class="shrink-0 rounded-full border border-[var(--ff-border)] px-3 py-2 text-xs font-semibold text-[var(--ff-text-secondary)]" type="button" (click)="setSort('maxDaysOverdue')">
+                Orden: días
+              </button>
+              <button class="shrink-0 rounded-full border border-[var(--ff-border)] px-3 py-2 text-xs font-semibold text-[var(--ff-text-secondary)]" type="button" (click)="setSort('totalOverdue')">
+                Orden: monto
+              </button>
+              <button class="shrink-0 rounded-full border border-[var(--ff-border)] px-3 py-2 text-xs font-semibold text-[var(--ff-text-secondary)]" type="button" (click)="setSort('customerName')">
+                Orden: cliente
+              </button>
+            </div>
+
+            @for (row of filteredRows; track row.customerId) {
+              <article class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4" data-cy="overdue-report-mobile-card">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-white">
+                      {{ row.customerName }}
+                    </p>
+                    <p class="mt-0.5 truncate text-xs text-[var(--ff-text-secondary)]">
+                      {{ row.phone ?? "—" }}
+                    </p>
+                  </div>
+                  <span class="shrink-0 font-bold" [class]="row.maxDaysOverdue > 30 ? 'text-red-400' : 'text-orange-400'">
                     {{ row.maxDaysOverdue }}d
                   </span>
-                </td>
-              </tr>
+                </div>
+
+                <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Cuotas en mora</dt>
+                    <dd class="mt-1 font-bold text-red-400">
+                      {{ row.overdueCount }}
+                    </dd>
+                  </div>
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Monto total</dt>
+                    <dd class="mt-1 font-mono font-semibold text-orange-400">
+                      {{ formatCurrency(row.totalOverdue) }}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
             }
-          </tbody>
-        </table>
-
-        <div
-          class="flex flex-col gap-3 p-3 md:hidden"
-          data-cy="overdue-report-mobile-list"
-        >
-          @for (row of overdueReport.byCustomer; track row.customerId) {
-            <article
-              class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
-              data-cy="overdue-report-mobile-card"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <p class="truncate text-sm font-semibold text-white">
-                    {{ row.customerName }}
-                  </p>
-                  <p
-                    class="mt-0.5 truncate text-xs text-[var(--ff-text-secondary)]"
-                  >
-                    {{ row.phone ?? "—" }}
-                  </p>
-                </div>
-                <span
-                  class="shrink-0 font-bold"
-                  [class]="
-                    row.maxDaysOverdue > 30 ? 'text-red-400' : 'text-orange-400'
-                  "
-                >
-                  {{ row.maxDaysOverdue }}d
-                </span>
-              </div>
-
-              <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div
-                  class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
-                >
-                  <dt class="text-xs text-[var(--ff-text-muted)]">
-                    Cuotas en mora
-                  </dt>
-                  <dd class="mt-1 font-bold text-red-400">
-                    {{ row.overdueCount }}
-                  </dd>
-                </div>
-                <div
-                  class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
-                >
-                  <dt class="text-xs text-[var(--ff-text-muted)]">
-                    Monto total
-                  </dt>
-                  <dd class="mt-1 font-mono font-semibold text-orange-400">
-                    {{ formatCurrency(row.totalOverdue) }}
-                  </dd>
-                </div>
-              </dl>
-            </article>
-          }
-        </div>
+          </div>
+        }
       </div>
     }
+    <ff-back-top-fab
+      [itemCount]="filteredRows.length"
+      dataCy="overdue-report-back-top-action"
+    />
   }
 </div>

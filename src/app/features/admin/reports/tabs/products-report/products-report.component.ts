@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { FfBackTopFabComponent } from './../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -17,6 +18,7 @@ import { ReportsService } from '../../reports.service';
   selector: 'app-products-report',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     FormsModule,
     ButtonModule,
     InputNumberModule,

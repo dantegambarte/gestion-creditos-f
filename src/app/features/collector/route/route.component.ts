@@ -20,6 +20,7 @@ import {
 } from '../models/collection.model';
 import { Payment } from '../models/payment.model';
 import { PaymentsService } from '../payments.service';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-route',
@@ -34,6 +35,7 @@ import { PaymentsService } from '../payments.service';
     SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './route.component.html',
   styleUrl: './route.component.scss',

@@ -6,6 +6,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
 import { Credit, CreditStatus } from '../../../models/credit.model';
+import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-client-credits-history-panel',
@@ -17,6 +18,7 @@ import { Credit, CreditStatus } from '../../../models/credit.model';
     TooltipModule,
     SkeletonModule,
     LoadingStateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './client-credits-history-panel.component.html',
 })

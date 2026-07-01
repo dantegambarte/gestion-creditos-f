@@ -15,6 +15,7 @@ import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { CommissionsService } from '../../admin/commissions/commissions.service';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import {
   Commission,
   CommissionStatus,
@@ -34,6 +35,7 @@ import {
     TagModule,
     ToastModule,
     ErrorStateComponent,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './seller-commissions.component.html',

@@ -1,4 +1,5 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -20,6 +21,7 @@ import { ProductCategoriesService } from '../services/product-categories.service
   selector: 'app-product-categories-config',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     CommonModule,
     FormsModule,
     ButtonModule,

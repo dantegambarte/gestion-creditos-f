@@ -37,6 +37,7 @@ import {
 import { InstallmentsService } from '../../../seller/operations/installments.service';
 import { CollectionPdfService } from '../collection-pdf.service';
 import { CollectionSheet } from '../../../collector/models/collection.model';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 export type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
 
@@ -52,6 +53,7 @@ export type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
     TableModule,
     TagModule,
     TooltipModule,
+    FfBackTopFabComponent,
   ],
   templateUrl: './collection-sheet-detail-panel.component.html',
   styleUrl: './collection-sheet-detail-panel.component.scss',

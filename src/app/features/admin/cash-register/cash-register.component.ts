@@ -41,6 +41,7 @@ import { CashRegisterService } from './cash-register.service';
 import { CashSessionCloseDialogComponent } from './cash-session-close-dialog/cash-session-close-dialog.component';
 import { CashSessionOpenDialogComponent } from './cash-session-open-dialog/cash-session-open-dialog.component';
 import { CashSessionSnapshotDialogComponent } from './cash-session-snapshot-dialog/cash-session-snapshot-dialog.component';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 type MovementTypeFilter = 'TODOS' | CashRegisterMovementType;
 type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
@@ -66,6 +67,7 @@ type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
     CashSessionCloseDialogComponent,
     CashSessionSnapshotDialogComponent,
     ExpenseSidePanelComponent,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './cash-register.component.html',

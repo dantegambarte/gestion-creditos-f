@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +28,7 @@ import { DateService } from '../../../core/services/date.service';
 import { Credit, CreditType } from '../../seller/models/credit.model';
 import { CreditsService } from '../../seller/operations/credits.service';
 import { CashRegisterService } from '../cash-register/cash-register.service';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'approvals',
@@ -51,12 +52,13 @@ import { CashRegisterService } from '../cash-register/cash-register.service';
     InputTextModule,
     CheckboxModule,
     MessageModule,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './approvals.component.html',
   styleUrl: './approvals.component.scss',
 })
-export class ApprovalsComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ApprovalsComponent implements OnInit, OnDestroy {
   private readonly credits = inject(CreditsService);
   private readonly msg = inject(MessageService);
   private readonly cashRegisterSvc = inject(CashRegisterService);
@@ -85,7 +87,6 @@ export class ApprovalsComponent implements OnInit, AfterViewInit, OnDestroy {
 
   searchTerm = '';
   filterType: CreditType | null = null;
-  showBackTop = false;
 
   readonly TYPE_OPTIONS = [
     { label: 'Venta', value: 'SALE' as CreditType },
@@ -153,36 +154,16 @@ export class ApprovalsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private destroy$ = new Subject<void>();
-  private scrollContainer: HTMLElement | Window | null = null;
-  private readonly backTopThreshold = 520;
 
   ngOnInit(): void {
     this.checkCashRegisterStatus();
     this.loadApprovals();
   }
 
-  ngAfterViewInit(): void {
-    const shellMain = document.querySelector('.ff-shell__main');
-    this.scrollContainer = shellMain instanceof HTMLElement ? shellMain : window;
-    this.scrollContainer.addEventListener('scroll', this.handleScroll, { passive: true });
-    this.handleScroll();
-  }
-
   ngOnDestroy(): void {
-    this.scrollContainer?.removeEventListener('scroll', this.handleScroll);
     this.destroy$.next();
     this.destroy$.complete();
   }
-
-  /**
-   * Muestra el acceso flotante para volver arriba luego de un scroll operativo.
-   */
-  private readonly handleScroll = (): void => {
-    const top = this.scrollContainer instanceof Window
-      ? window.scrollY
-      : (this.scrollContainer?.scrollTop ?? 0);
-    this.showBackTop = top > this.backTopThreshold;
-  };
 
   /**
    * Verifica el estado de cierre de caja del día actual.
@@ -387,18 +368,4 @@ export class ApprovalsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.router.navigate(['/admin/operations', id]);
   }
 
-  /**
-   * Vuelve al inicio del contenedor principal desde listas móviles largas.
-   */
-  scrollToTop(): void {
-    const shellMain = document.querySelector('.ff-shell__main');
-    if (shellMain instanceof HTMLElement) {
-      shellMain.scrollTo({ top: 0, behavior: 'smooth' });
-      this.showBackTop = false;
-      return;
-    }
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    this.showBackTop = false;
-  }
 }

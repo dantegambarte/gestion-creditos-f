@@ -1,4 +1,5 @@
 import { DecimalPipe } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -13,7 +14,7 @@ import { ReportsService } from '../../reports.service';
 @Component({
   selector: 'app-portfolio-report',
   standalone: true,
-  imports: [DecimalPipe, LoadingStateComponent, ErrorStateComponent, SkeletonModule],
+  imports: [FfBackTopFabComponent,DecimalPipe, LoadingStateComponent, ErrorStateComponent, SkeletonModule],
   templateUrl: './portfolio-report.component.html',
 })
 export class PortfolioReportComponent implements OnInit, OnDestroy {

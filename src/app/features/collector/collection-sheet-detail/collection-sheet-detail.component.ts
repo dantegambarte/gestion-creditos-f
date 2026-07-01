@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
@@ -43,6 +44,7 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
   selector: 'app-collection-sheet-detail',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     CurrencyArsPipe,
     DatePipe,
     FormsModule,

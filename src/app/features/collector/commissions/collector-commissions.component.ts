@@ -20,6 +20,7 @@ import {
   Liquidation,
 } from '../../admin/models/commission.model';
 import { CommissionsService } from '../../admin/commissions/commissions.service';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-collector-commissions',
@@ -34,6 +35,7 @@ import { CommissionsService } from '../../admin/commissions/commissions.service'
     TagModule,
     ToastModule,
     ErrorStateComponent,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './collector-commissions.component.html',

@@ -1,4 +1,5 @@
 import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser, Location } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -20,7 +21,7 @@ import { PortalService } from '../../portal.service';
 @Component({
   selector: 'app-portal-credit-detail',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, SkeletonModule],
+  imports: [FfBackTopFabComponent,CommonModule, CurrencyPipe, DatePipe, SkeletonModule],
   templateUrl: './portal-credit-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

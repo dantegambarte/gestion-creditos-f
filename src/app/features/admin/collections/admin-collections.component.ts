@@ -37,6 +37,7 @@ import {
   DetailTab,
 } from './collection-sheet-detail-panel/collection-sheet-detail-panel.component';
 import { GenerateCollectionDialogComponent } from './generate-collection-dialog/generate-collection-dialog.component';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-admin-collections',
@@ -58,6 +59,7 @@ import { GenerateCollectionDialogComponent } from './generate-collection-dialog/
     GenerateCollectionDialogComponent,
     CollectionSheetDetailPanelComponent,
     CollectionAlertsDialogComponent,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './admin-collections.component.html',

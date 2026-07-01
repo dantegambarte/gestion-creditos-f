@@ -305,17 +305,10 @@
             No hay operaciones pendientes para aprobar.
           </div>
         }
-        @if (filteredApprovals.length > 5 && showBackTop) {
-          <button
-            type="button"
-            class="admin-mobile-back-top-fab"
-            data-cy="admin-approvals-back-top-action"
-            aria-label="Volver arriba"
-            (click)="scrollToTop()"
-          >
-            <i class="pi pi-arrow-up"></i>
-          </button>
-        }
+        <ff-back-top-fab
+          [itemCount]="filteredApprovals.length"
+          dataCy="admin-approvals-back-top-action"
+        />
       </div>
     }
   </div>

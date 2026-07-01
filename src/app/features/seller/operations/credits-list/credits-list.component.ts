@@ -24,6 +24,7 @@ import {
 } from '../../models/credit.model';
 import { CreditsService } from '../credits.service';
 import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-credits-list',
@@ -41,6 +42,7 @@ import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
     LoadingStateComponent,
     ErrorStateComponent,
     EmptyStateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './credits-list.component.html',
   styleUrl: './credits-list.component.scss',

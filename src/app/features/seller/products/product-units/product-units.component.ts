@@ -1,4 +1,5 @@
 import { CommonModule, Location } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -28,6 +29,7 @@ import { UnitSingleFormComponent } from './unit-single-form/unit-single-form.com
   standalone: true,
   providers: [MessageService, ConfirmationService],
   imports: [
+    FfBackTopFabComponent,
     CommonModule,
     ButtonModule,
     TableModule,

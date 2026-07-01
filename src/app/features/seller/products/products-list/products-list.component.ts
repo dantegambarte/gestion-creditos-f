@@ -28,6 +28,7 @@ import {
   ProductStatus,
 } from '../../models/product.model';
 import { ProductsService } from '../products.service';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-products-list',
@@ -47,6 +48,7 @@ import { ProductsService } from '../products.service';
     InputIconModule,
     IconFieldModule,
     SkeletonModule,
+    FfBackTopFabComponent,
   ],
   templateUrl: './products-list.component.html',
   styleUrl: './products-list.component.scss',

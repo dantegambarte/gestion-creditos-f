@@ -26,6 +26,7 @@ import { PaymentsService } from '../../collector/payments.service';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
 import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-detail-dialog.component';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-admin-payments',
@@ -45,6 +46,7 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-de
     ErrorStateComponent,
     MessageModule,
     PaymentDetailDialogComponent,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './admin-payments.component.html',

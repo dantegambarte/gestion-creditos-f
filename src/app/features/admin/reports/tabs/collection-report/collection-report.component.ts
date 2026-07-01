@@ -10,6 +10,7 @@ import { DateService } from '../../../../../core/services/date.service';
 import { FormatService } from '../../../../../core/services/format.service';
 import { ErrorStateComponent } from '../../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
+import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { CollectionReport } from '../../report.models';
 import { ReportsService } from '../../reports.service';
 
@@ -23,6 +24,7 @@ import { ReportsService } from '../../reports.service';
     LoadingStateComponent,
     ErrorStateComponent,
     SkeletonModule,
+    FfBackTopFabComponent,
   ],
   templateUrl: './collection-report.component.html',
 })

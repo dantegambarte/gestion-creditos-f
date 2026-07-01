@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { FfBackTopFabComponent } from './../components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
@@ -24,6 +25,7 @@ import { CreditsService } from '../../features/seller/operations/credits.service
   selector: 'operations',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     CurrencyArsPipe,
     CommonModule,
     FormsModule,

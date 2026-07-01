@@ -3056,7 +3056,7 @@ table.ff-table {
   overflow-wrap: anywhere;
 }
 
-.admin-mobile-back-top-fab {
+.ff-back-top-fab {
   align-items: center;
   background: rgba(95, 122, 246, 0.95);
   border: 1px solid rgba(95, 122, 246, 0.38);
@@ -3145,7 +3145,7 @@ table.ff-table {
     font-size: 0.875rem;
   }
 
-  .admin-mobile-back-top-fab {
+  .ff-back-top-fab {
     bottom: calc(var(--ff-mobile-bottom-nav-height) + max(env(safe-area-inset-bottom), 0px) + 1rem);
     position: fixed;
     right: 1rem;

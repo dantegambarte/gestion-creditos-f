@@ -14,6 +14,7 @@ import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { Payment, PaymentStatus } from '../models/payment.model';
 import { PaymentsService } from '../payments.service';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-collector-payments',
@@ -30,6 +31,7 @@ import { PaymentsService } from '../payments.service';
     SkeletonModule,
     TooltipModule,
     ErrorStateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './collector-payments.component.html',
 })

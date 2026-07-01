@@ -1,4 +1,5 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { FfBackTopFabComponent } from './../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
@@ -32,6 +33,7 @@ import {
   selector: 'app-cash-sessions-report',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     FormsModule,
     ButtonModule,
     CalendarModule,
