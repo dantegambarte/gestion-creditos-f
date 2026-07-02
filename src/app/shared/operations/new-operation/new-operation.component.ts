@@ -1,7 +1,16 @@
-import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MenuItem, MessageService } from 'primeng/api';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  OnInit,
+  Output,
+  ViewChild,
+  inject,
+} from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { OperationFormService } from './operation-form.service';
 import { OperationCatalogService } from './operation-catalog.service';
@@ -11,31 +20,41 @@ import { StepConfirmComponent } from './steps/step-confirm/step-confirm.componen
 import { StepProductsComponent } from './steps/step-products/step-products.component';
 import { StepTypeComponent } from './steps/step-type/step-type.component';
 import { CustomerCreatePayload } from '../../../features/seller/models/customer.model';
+import { FfBackTopFabComponent } from '../../components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-new-operation',
   standalone: true,
   imports: [
-    RouterLink,
     ButtonModule,
+    ConfirmDialogModule,
     ToastModule,
     StepTypeComponent,
     StepClientComponent,
     StepProductsComponent,
     StepConditionsComponent,
     StepConfirmComponent,
+    FfBackTopFabComponent,
   ],
-  providers: [OperationFormService, OperationCatalogService, MessageService],
+  providers: [
+    OperationFormService,
+    OperationCatalogService,
+    MessageService,
+    ConfirmationService,
+  ],
   templateUrl: './new-operation.component.html',
   styleUrl: './new-operation.component.scss',
 })
 export class NewOperationComponent implements OnInit {
   @Output() onComplete = new EventEmitter<void>();
+  @ViewChild('wizardMain') private wizardMain?: ElementRef<HTMLElement>;
+  @ViewChild('stepper') private stepper?: ElementRef<HTMLElement>;
 
   protected readonly state = inject(OperationFormService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   activeIndex = 0;
   readonly steps: MenuItem[] = [
@@ -54,7 +73,7 @@ export class NewOperationComponent implements OnInit {
       this.route.snapshot.queryParamMap.get('clientDni') ?? undefined;
     this.state.initialize(clientDni).subscribe({
       next: (preselected) => {
-        if (preselected) this.activeIndex = 1;
+        if (preselected) this.setActiveStep(1);
       },
       // CR-08: sin error handler, un fallo en loadClients dejaba clients=[] sin feedback
       error: () => {
@@ -72,14 +91,47 @@ export class NewOperationComponent implements OnInit {
    * Avanza al siguiente paso visible del wizard.
    */
   nextStep(): void {
-    if (this.activeIndex < 4) this.activeIndex++;
+    if (this.activeIndex < 4) this.setActiveStep(this.activeIndex + 1);
   }
 
   /**
    * Retrocede al paso anterior visible del wizard.
    */
   prevStep(): void {
-    if (this.activeIndex > 0) this.activeIndex--;
+    if (this.activeIndex > 0) this.setActiveStep(this.activeIndex - 1);
+  }
+
+  /**
+   * Hace que la flecha superior acompañe el wizard: vuelve un paso si puede,
+   * y solo sale de la pantalla cuando todavía está en el primer paso.
+   */
+  handleBackAction(): void {
+    if (this.activeIndex > 0) {
+      this.prevStep();
+      return;
+    }
+    this.router.navigate(['../'], { relativeTo: this.route });
+  }
+
+  /**
+   * Pide confirmación antes de abandonar el wizard para no perder la operación en curso.
+   */
+  confirmCancelOperation(): void {
+    this.confirmationService.confirm({
+      key: 'cancel-new-operation',
+      header: 'Cancelar operación',
+      message:
+        '¿Estás seguro de cancelar la operación? Se perderán los datos cargados.',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Continuar editando',
+      rejectLabel: 'Sí, cancelar',
+      acceptButtonStyleClass: 'h-11 px-4 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-danger p-button-outlined h-11 px-4 rounded-xl',
+      reject: () => {
+        this.router.navigate(['../'], { relativeTo: this.route });
+      },
+    });
   }
 
   /**
@@ -194,5 +246,23 @@ export class NewOperationComponent implements OnInit {
         }
       },
     });
+  }
+
+  /**
+   * Centraliza el cambio de paso para resetear scroll y centrar el stepper activo.
+   * @param {number} index - Índice visual del paso destino.
+   */
+  private setActiveStep(index: number): void {
+    this.activeIndex = index;
+    setTimeout(() => {
+      this.wizardMain?.nativeElement.scrollTo({ top: 0, behavior: 'auto' });
+      this.stepper?.nativeElement
+        .querySelector<HTMLElement>(`[data-step-index="${index}"]`)
+        ?.scrollIntoView({
+          behavior: 'smooth',
+          inline: 'center',
+          block: 'nearest',
+        });
+    }, 0);
   }
 }

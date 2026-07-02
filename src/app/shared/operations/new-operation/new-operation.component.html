@@ -1,34 +1,50 @@
 <p-toast position="top-right" />
+<p-confirmDialog
+  key="cancel-new-operation"
+  [style]="{ width: '22rem', maxWidth: '95vw' }"
+  styleClass="new-operation-cancel-dialog"
+/>
 <div
-  class="flex h-full min-h-0 overflow-hidden bg-[var(--ff-bg)] font-sans text-[var(--ff-text-primary)]"
+  class="flex h-full min-h-0 min-w-0 overflow-hidden bg-[var(--ff-bg)] font-sans text-[var(--ff-text-primary)]"
 >
-  <div class="flex-1 min-h-0 flex flex-col">
+  <div class="flex-1 min-h-0 min-w-0 flex flex-col">
     <header
-      class="flex h-[72px] shrink-0 items-center justify-between border-b border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-8"
+      class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-4 py-3 md:h-[72px] md:flex-nowrap md:px-8 md:py-0"
     >
-      <div class="flex items-center gap-3">
+      <div class="flex min-w-0 items-center gap-3">
         <button
-          class="-ml-2 rounded-lg p-2 text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
-          routerLink="../"
+          class="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
+          type="button"
+          (click)="handleBackAction()"
+          aria-label="Volver"
         >
           <i class="pi pi-arrow-left"></i>
         </button>
-        <h1 class="text-[15px] font-semibold text-[var(--ff-text-primary)]">
+        <h1
+          class="text-[15px] font-semibold leading-tight text-[var(--ff-text-primary)]"
+        >
           Nueva Operación
         </h1>
       </div>
 
-      <div class="flex items-center gap-6">
+      <div
+        #stepper
+        class="order-last flex w-full min-w-0 items-center gap-3 overflow-x-auto overscroll-x-contain pb-1 md:order-none md:w-auto md:gap-6 md:overflow-visible md:pb-0"
+        data-cy="new-operation-stepper"
+      >
         @for (step of steps; track step.label; let i = $index) {
           @if (i > 0) {
-            <div class="h-[1px] w-8 bg-[var(--ff-border-subtle)]"></div>
+            <div
+              class="h-[1px] w-8 shrink-0 bg-[var(--ff-border-subtle)]"
+            ></div>
           }
           <div
-            class="flex items-center gap-2"
+            class="flex shrink-0 items-center gap-2"
             [class.opacity-50]="activeIndex !== i"
+            [attr.data-step-index]="i"
           >
             <div
-              class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold"
+              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
               [class.bg-[var(--ff-accent)]]="activeIndex === i"
               [class.text-white]="activeIndex === i"
               [class.border]="activeIndex !== i"
@@ -38,7 +54,7 @@
               {{ i + 1 }}
             </div>
             <span
-              class="text-sm font-medium"
+              class="text-sm font-medium whitespace-nowrap"
               [class.text-white]="activeIndex === i"
               [class.text-[var(--ff-text-muted)]]="activeIndex !== i"
             >
@@ -58,25 +74,36 @@
         }
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="hidden items-center gap-2 md:flex">
         <button
-          class="rounded-lg p-2 text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
-          routerLink="../"
+          class="flex h-11 w-11 items-center justify-center rounded-lg text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
+          (click)="confirmCancelOperation()"
+          aria-label="Cerrar nueva operación"
         >
           <i class="pi pi-times"></i>
         </button>
       </div>
+
+      <button
+        type="button"
+        class="flex h-11 w-11 items-center justify-center rounded-lg text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)] md:hidden"
+        aria-label="Cancelar operación"
+        data-cy="new-operation-mobile-cancel-action"
+        (click)="confirmCancelOperation()"
+      >
+        <i class="pi pi-times"></i>
+      </button>
     </header>
 
     <main
-      class="relative flex-1 min-h-0 p-8"
-      [class.overflow-hidden]="activeIndex === 2"
-      [class.overflow-y-auto]="activeIndex !== 2"
+      #wizardMain
+      class="new-operation-main relative flex-1 min-h-0 min-w-0 overflow-y-auto p-4 md:p-8"
+      data-cy="new-operation-main"
     >
       <div
         [class.pb-24]="activeIndex !== 2"
-        [class.h-full]="activeIndex === 2"
-        [class.min-h-0]="activeIndex === 2"
+        [class.md:h-full]="activeIndex === 2"
+        [class.md:min-h-0]="activeIndex === 2"
       >
         @switch (activeIndex) {
           @case (0) {
@@ -101,7 +128,7 @@
             />
           }
           @case (2) {
-            <div class="h-full min-h-0 overflow-hidden">
+            <div class="md:h-full md:min-h-0 md:overflow-hidden">
               <app-step-products
                 [form]="state.operationForm"
                 [operationTypeOptions]="state.operationTypeOptions"
@@ -185,25 +212,42 @@
           }
         }
       </div>
+
     </main>
 
+    <ff-back-top-fab
+      [itemCount]="steps.length"
+      [minItems]="4"
+      scrollContainerSelector=".new-operation-main"
+      dataCy="new-operation-back-to-top"
+    />
+
     <div
-      class="shrink-0 border-t border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-8 py-4"
+      class="shrink-0 border-t border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-4 py-3 md:px-8 md:py-4"
+      [class.hidden]="activeIndex === 0"
+      [class.md:block]="activeIndex === 0"
+      data-cy="new-operation-footer"
     >
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-[var(--ff-text-muted)]">
+      <div
+        class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+      >
+        <span
+          class="text-xs text-[#8EA5FF] md:text-sm md:text-[var(--ff-text-muted)]"
+        >
           Paso {{ activeIndex + 1 }} de {{ steps.length }} ·
           {{ steps[activeIndex].label }}
         </span>
 
-        <div class="flex items-center gap-3">
+        <div
+          class="grid w-full grid-cols-2 items-center gap-3 md:flex md:w-auto"
+        >
           @if (activeIndex === 0) {
             <p-button
               label="Cancelar"
               severity="secondary"
               [outlined]="true"
-              routerLink="../"
-              styleClass="h-11 px-5 rounded-xl"
+              (onClick)="confirmCancelOperation()"
+              styleClass="h-11 w-full justify-center px-5 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] md:w-auto"
               data-cy="btn-cancelar"
             />
           } @else {
@@ -213,7 +257,7 @@
               severity="secondary"
               [outlined]="true"
               (onClick)="prevStep()"
-              styleClass="h-11 px-5 rounded-xl"
+              styleClass="h-11 w-full justify-center px-5 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] md:w-auto"
               data-cy="btn-anterior"
             />
           }
@@ -226,7 +270,7 @@
               severity="primary"
               [disabled]="!canGoNext()"
               (onClick)="nextStep()"
-              styleClass="h-11 px-6 rounded-xl"
+              styleClass="h-11 w-full justify-center px-6 rounded-xl md:w-auto"
               data-cy="btn-siguiente"
             />
           } @else if (activeIndex === 4) {
@@ -238,7 +282,7 @@
               [disabled]="!state.canSubmitOperation"
               [loading]="state.submitting()"
               (onClick)="submitOperation()"
-              styleClass="h-11 px-6 rounded-xl"
+              styleClass="h-11 w-full justify-center px-6 rounded-xl md:w-auto"
             />
           }
         </div>
