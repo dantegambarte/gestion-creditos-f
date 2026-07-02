@@ -39,7 +39,7 @@ export class PwaUpdateService {
       key: PWA_UPDATE_TOAST_KEY,
       severity: 'info',
       summary: 'Actualización disponible',
-      detail: 'Nueva versión de FinFlow disponible.',
+      detail: 'Nueva versión de Productcred s.a.s. disponible.',
       sticky: true,
       data: {
         actionLabel: 'Actualizar ahora',
