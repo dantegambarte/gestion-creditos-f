@@ -573,7 +573,7 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
           {
             id: 'product-rep-1',
             title: 'Producto Reporte',
-            description: '',
+            description: 'Producto visible por buscador',
             status: 'ACTIVE',
             min_price: 5000,
             max_price: 7000,
@@ -581,6 +581,18 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
             times_sold: 8,
             total_revenue: 56000,
             avg_selling_price: 6000,
+          },
+          {
+            id: 'product-rep-2',
+            title: 'Producto Oculto',
+            description: 'Sin coincidencia de búsqueda',
+            status: 'ACTIVE',
+            min_price: 9000,
+            max_price: 9000,
+            available_count: 0,
+            times_sold: 0,
+            total_revenue: 0,
+            avg_selling_price: 0,
           },
         ],
       },
@@ -647,15 +659,28 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       .click();
     cy.wait('@productsReport');
     cy.get('[data-cy="products-report-table"]').should('not.be.visible');
+    cy.get('[data-cy="products-report-search"]')
+      .should('be.visible')
+      .type('visible');
     cy.get('[data-cy="products-report-mobile-card"]')
       .should('have.length', 1)
       .first()
       .contains('Producto Reporte');
+    cy.contains(
+      '[data-cy="products-report-mobile-card"]',
+      'Producto Oculto',
+    ).should('not.exist');
 
     cy.get('[data-cy="admin-reports-tabs"]')
       .contains('button', 'Recaudación')
       .click();
     cy.wait('@collectionReport');
+    cy.get('[data-cy="collection-report-mobile-summary"]')
+      .should('be.visible')
+      .and('contain.text', 'Total recaudado')
+      .and('contain.text', 'Efectivo')
+      .and('contain.text', 'Transferencia')
+      .and('contain.text', 'Cobros');
     cy.get('[data-cy="collection-report-table"]').should('not.be.visible');
     cy.get('[data-cy="collection-report-mobile-card"]').should(
       'have.length.at.least',
@@ -785,12 +810,12 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
             {
               id: 'conv-1',
               register_date: '2026-06-23',
-              criteria: 'MANUAL',
+              criteria: 'COMPANY',
               source_method: 'CASH',
               target_method: 'TRANSFER',
               amount: 10000,
               notes: 'Conversión de prueba',
-              created_by_name: 'QA Admin',
+              created_by_name: 'Administrador del Sistema Reportes Mobile',
               created_at: '2026-06-23T13:00:00.000Z',
             },
           ],
@@ -852,6 +877,17 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
       'have.length',
       1,
     );
+    cy.get('[data-cy="cash-conversions-report-mobile-card"]')
+      .first()
+      .should('contain.text', 'Caja de la empresa')
+      .and('contain.text', 'Administrador del Sistema Reportes Mobile')
+      .within(() => {
+        cy.contains('dt', 'Criterio')
+          .parent()
+          .then(($block) => {
+            expect($block[0].scrollWidth).to.be.lte($block[0].clientWidth);
+          });
+      });
 
     cy.get('[data-cy="admin-reports-tabs"]')
       .contains('button', 'Próximos vencimientos')

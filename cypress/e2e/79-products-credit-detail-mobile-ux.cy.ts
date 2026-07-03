@@ -137,7 +137,7 @@ describe('Productos y Credit Detail — Mobile UX', () => {
     // Tocar una cuota vencida abre el panel lateral, que ahora debe apilar
     // debajo de las cards (no comprimirlas a un costado).
     cy.get('[data-cy="credit-schedule-mobile-card"]').eq(1).click();
-    cy.contains('Cuota 2 de 6').should('be.visible');
+    cy.contains('Cuota 2 de 6').scrollIntoView().should('be.visible');
 
     cy.window().then((win) => {
       expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);

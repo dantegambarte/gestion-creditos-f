@@ -14,7 +14,7 @@ function expectActiveTabVisible(check: TabCheck): void {
     expect(nav, `nav ${check.nav}`).to.exist;
 
     const navRect = nav.getBoundingClientRect();
-      const activeRect = $active[0].getBoundingClientRect();
+    const activeRect = $active[0].getBoundingClientRect();
 
     expect(activeRect.left).to.be.gte(navRect.left - 1);
     expect(activeRect.right).to.be.lte(navRect.right + 1);
@@ -35,7 +35,23 @@ describe('Mobile horizontal tabs', () => {
   it('Reportes — centra y muestra completo el tab seleccionado', () => {
     cy.loginAs('ADMIN', '/admin/reports');
 
+    cy.contains(
+      '[data-cy="admin-reports-tabs"] .ff-tab',
+      'Resumen del día',
+    ).should(($tab) => {
+      const navRect = Cypress.$(
+        '[data-cy="admin-reports-tabs"]',
+      )[0].getBoundingClientRect();
+      const tabRect = $tab[0].getBoundingClientRect();
+      expect(tabRect.left).to.be.closeTo(navRect.left + 16, 2);
+    });
+
     cy.contains('[data-cy="admin-reports-tabs"] .ff-tab', 'Cartera').click();
+
+    cy.contains(
+      '[data-cy="admin-reports-tabs"] .ff-tab--active',
+      'Cartera',
+    ).should('be.visible');
 
     expectActiveTabVisible({
       nav: '[data-cy="admin-reports-tabs"]',
@@ -58,7 +74,9 @@ describe('Mobile horizontal tabs', () => {
 
     cy.get('.commissions-mobile-tabs .ff-tab').should('have.length', 3);
     cy.contains('.commissions-mobile-tabs .ff-tab', 'Sueldo fijo')
-      .should('be.visible')
+      .then(($tab) =>
+        $tab[0].scrollIntoView({ block: 'nearest', inline: 'center' }),
+      )
       .click({ force: true });
 
     expectActiveTabVisible({

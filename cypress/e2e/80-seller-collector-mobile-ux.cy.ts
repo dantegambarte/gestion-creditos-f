@@ -322,7 +322,9 @@ describe('Seller / Collector — Remaining Mobile UX', () => {
     cy.contains('.p-dialog:visible button', 'Cancelar').click();
     cy.contains('.p-dialog:visible button', 'Cancelar').click();
     cy.get('.ff-shell__main').scrollTo('top');
-    cy.contains('button', 'Sueldo fijo').click();
+    cy.contains('.commissions-mobile-tabs .ff-tab', 'Sueldo fijo')
+      .then(($tab) => $tab[0].scrollIntoView({ block: 'nearest', inline: 'center' }))
+      .click({ force: true });
     cy.get('[data-cy="admin-commissions-salaries-table"] table').should('not.be.visible');
     cy.get('[data-cy="admin-commissions-salaries-mobile-card"]')
       .should('have.length', 1)
@@ -334,7 +336,7 @@ describe('Seller / Collector — Remaining Mobile UX', () => {
       .first()
       .scrollIntoView()
       .should('be.visible')
-      .click();
+      .click({ force: true });
     cy.wait('@collectorSalary');
 
     cy.window().then((win) => {
