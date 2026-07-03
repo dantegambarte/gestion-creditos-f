@@ -10,6 +10,7 @@ import { InterestRatesService } from '../../../features/admin/config/services/in
 import { ProductRatesService } from '../../../features/admin/config/services/product-rates.service';
 import { OperationFormService } from './operation-form.service';
 import { MessageService } from 'primeng/api';
+import { provideAuthTesting } from '../../../core/auth/testing/auth-testing';
 
 describe('NewOperationComponent', () => {
   let component: NewOperationComponent;
@@ -27,6 +28,7 @@ describe('NewOperationComponent', () => {
       imports: [NewOperationComponent],
       providers: [
         provideRouter([]),
+        ...provideAuthTesting(),
         { provide: CreditsService, useValue: creditsServiceSpy },
         {
           provide: CustomersService,
