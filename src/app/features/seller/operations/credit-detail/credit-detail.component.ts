@@ -215,6 +215,15 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     return this.auth.hasRole('ADMIN');
   }
 
+  /**
+   * Indica si el usuario puede ver información financiera sensible (tasa, monto
+   * financiado, interés, precios históricos). Se oculta a los roles de venta
+   * (SELLER / SELLER_COLLECTOR); el resto la ve normalmente.
+   */
+  get canViewFinancialData(): boolean {
+    return !this.auth.hasAnyRole(['SELLER', 'SELLER_COLLECTOR']);
+  }
+
   /** Un crédito REFINANCED o SETTLED no acepta más acciones sobre sus cuotas. */
   get canActOnInstallments(): boolean {
     return (

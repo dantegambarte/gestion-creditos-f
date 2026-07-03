@@ -5,8 +5,10 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  inject,
 } from '@angular/core';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AuthServiceBase } from '../../../../../core/auth/auth-service.base';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -43,8 +45,18 @@ import { StepConditionsSimulationPanelComponent } from './step-conditions-simula
   templateUrl: './step-conditions.component.html',
 })
 export class StepConditionsComponent implements OnChanges {
+  private readonly auth = inject(AuthServiceBase);
+
   simulationVisible = false;
   private hadResolvedSimulation = false;
+
+  /**
+   * Indica si el usuario puede ver información financiera sensible (tasa por
+   * producto). Se oculta a los roles de venta (SELLER / SELLER_COLLECTOR).
+   */
+  get canViewFinancialData(): boolean {
+    return !this.auth.hasAnyRole(['SELLER', 'SELLER_COLLECTOR']);
+  }
 
   readonly allPaymentFrequencies: {
     label: string;

@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
+import { AuthServiceBase } from '../../../../../core/auth/auth-service.base';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { SimulateResult } from '../../../../../features/seller/models/credit.model';
 import { ClientOperation } from '../../../../models/interface/client';
@@ -21,6 +22,8 @@ import { CartLine } from '../../operation-form.service';
   templateUrl: './step-confirm.component.html',
 })
 export class StepConfirmComponent {
+  private readonly auth = inject(AuthServiceBase);
+
   @Input() form!: FormGroup;
   @Input() selectedClient: ClientOperation | null = null;
   @Input() cartLines: CartLine[] = [];
@@ -49,6 +52,14 @@ export class StepConfirmComponent {
     return this.form?.controls['operationType']?.value === 'SALE'
       ? 'SALE'
       : 'LOAN';
+  }
+
+  /**
+   * Indica si el usuario puede ver información financiera sensible (precio y
+   * tasa por producto). Se oculta a los roles de venta (SELLER / SELLER_COLLECTOR).
+   */
+  get canViewFinancialData(): boolean {
+    return !this.auth.hasAnyRole(['SELLER', 'SELLER_COLLECTOR']);
   }
 
   /** Indica si la operación es una venta de contado (sin financiación). */
