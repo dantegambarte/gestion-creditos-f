@@ -33,6 +33,34 @@
       </div>
     </div>
 
+    @if (isSale) {
+      <div class="mb-6 p-4 bg-white border rounded">
+        <label class="block text-sm font-medium mb-3">Condición de pago</label>
+        <div class="flex gap-6">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <p-radioButton
+              formControlName="paymentCondition"
+              value="FINANCED"
+              inputId="payment-condition-financed"
+              data-cy="payment-condition-financed"
+              (onClick)="onPaymentConditionChange('FINANCED')"
+            />
+            <span>Financiado</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <p-radioButton
+              formControlName="paymentCondition"
+              value="CASH"
+              inputId="payment-condition-cash"
+              data-cy="payment-condition-cash"
+              (onClick)="onPaymentConditionChange('CASH')"
+            />
+            <span>Contado</span>
+          </label>
+        </div>
+      </div>
+    }
+
     <div class="mb-6 p-4 bg-white border rounded">
       <h3 class="font-semibold mb-4">Datos comunes</h3>
 
@@ -57,46 +85,48 @@
         }
       </div>
 
-      <div class="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="block text-sm font-medium mb-1"
-            >Frecuencia de pago *</label
-          >
-          <p-dropdown
-            formControlName="paymentFrequency"
-            [options]="frequencyOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Seleccionar"
-            [filter]="frequencyOptions.length > 10"
-            filterBy="label"
-            styleClass="w-full"
-            inputId="credit-frequency"
-            data-cy="credit-frequency"
-            [class.ng-invalid]="isInvalid('paymentFrequency')"
-          />
-          @if (isInvalid("paymentFrequency")) {
-            <small class="text-red-500">Frecuencia requerida.</small>
-          }
+      @if (!isCashSale) {
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium mb-1"
+              >Frecuencia de pago *</label
+            >
+            <p-dropdown
+              formControlName="paymentFrequency"
+              [options]="frequencyOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Seleccionar"
+              [filter]="frequencyOptions.length > 10"
+              filterBy="label"
+              styleClass="w-full"
+              inputId="credit-frequency"
+              data-cy="credit-frequency"
+              [class.ng-invalid]="isInvalid('paymentFrequency')"
+            />
+            @if (isInvalid("paymentFrequency")) {
+              <small class="text-red-500">Frecuencia requerida.</small>
+            }
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1"
+              >Cantidad de cuotas *</label
+            >
+            <p-inputNumber
+              formControlName="installmentsCount"
+              [min]="1"
+              [max]="120"
+              [useGrouping]="false"
+              styleClass="w-full"
+              inputId="credit-installments-count"
+              data-cy="credit-installments-count"
+            />
+            @if (isInvalid("installmentsCount")) {
+              <small class="text-red-500">Entre 1 y 120 cuotas.</small>
+            }
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium mb-1"
-            >Cantidad de cuotas *</label
-          >
-          <p-inputNumber
-            formControlName="installmentsCount"
-            [min]="1"
-            [max]="120"
-            [useGrouping]="false"
-            styleClass="w-full"
-            inputId="credit-installments-count"
-            data-cy="credit-installments-count"
-          />
-          @if (isInvalid("installmentsCount")) {
-            <small class="text-red-500">Entre 1 y 120 cuotas.</small>
-          }
-        </div>
-      </div>
+      }
 
       <div class="mb-4">
         <label class="block text-sm font-medium mb-1">Notas</label>
@@ -148,7 +178,103 @@
       />
     }
 
-    @if (isSale) {
+    @if (isCashSale) {
+      <div class="mb-6 p-4 bg-white border rounded">
+        <h3 class="font-semibold mb-4">Pago de contado</h3>
+        <div
+          class="mb-4 flex items-center justify-between rounded bg-[var(--ff-panel)] px-3 py-2"
+        >
+          <span class="text-sm text-[var(--ff-text-secondary)]"
+            >Total a cobrar</span
+          >
+          <span class="font-semibold" data-cy="cash-sale-total">{{
+            cartTotal | currencyArs: 2
+          }}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium mb-1">Método de pago *</label>
+            <p-dropdown
+              formControlName="cashSaleMethod"
+              [options]="cashPaymentMethodOptions"
+              optionLabel="label"
+              optionValue="value"
+              styleClass="w-full"
+              inputId="cash-sale-method"
+              data-cy="cash-sale-method"
+            />
+          </div>
+          @if (cashSaleMethod === "TRANSFER") {
+            <div>
+              <label class="block text-sm font-medium mb-1"
+                >Referencia transferencia</label
+              >
+              <input
+                pInputText
+                formControlName="cashSaleTransferReference"
+                maxlength="100"
+                class="w-full h-11"
+                data-cy="cash-sale-transfer-reference"
+                placeholder="Nro. operación..."
+              />
+            </div>
+          }
+        </div>
+
+        @if (cashSaleMethod === "MIXED") {
+          <div class="grid grid-cols-2 gap-3 mt-3">
+            <div>
+              <label class="block text-sm font-medium mb-1">Efectivo ($)</label>
+              <p-inputNumber
+                appCurrencyAmountInput
+                formControlName="cashSaleCash"
+                [min]="0"
+                mode="currency"
+                currency="ARS"
+                locale="es-AR"
+                [minFractionDigits]="0"
+                styleClass="w-full"
+                data-cy="cash-sale-cash"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1"
+                >Transferencia ($)</label
+              >
+              <p-inputNumber
+                appCurrencyAmountInput
+                formControlName="cashSaleTransfer"
+                [min]="0"
+                mode="currency"
+                currency="ARS"
+                locale="es-AR"
+                [minFractionDigits]="0"
+                styleClass="w-full"
+                data-cy="cash-sale-transfer"
+              />
+            </div>
+            <div class="col-span-2">
+              <label class="block text-sm font-medium mb-1"
+                >Referencia transferencia</label
+              >
+              <input
+                pInputText
+                formControlName="cashSaleTransferReference"
+                maxlength="100"
+                class="w-full h-11"
+                placeholder="Nro. operación..."
+              />
+            </div>
+          </div>
+        }
+
+        <p class="mt-3 text-xs text-[var(--ff-text-secondary)]">
+          La venta se cobra completa al aprobarse. No genera cuotas.
+        </p>
+      </div>
+    }
+
+    @if (isSale && !isCashSale) {
       <div class="mb-6 p-4 bg-white border rounded">
         <button
           type="button"
@@ -226,12 +352,14 @@
       </div>
     }
 
-    <app-credit-simulation
-      [result]="simulateResult"
-      [error]="simulateError"
-      [simulating]="simulating"
-      (simulate)="simulate()"
-    />
+    @if (!isCashSale) {
+      <app-credit-simulation
+        [result]="simulateResult"
+        [error]="simulateError"
+        [simulating]="simulating"
+        (simulate)="simulate()"
+      />
+    }
 
     @if (submitError) {
       <div

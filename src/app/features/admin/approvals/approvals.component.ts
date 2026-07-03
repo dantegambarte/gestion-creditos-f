@@ -29,6 +29,7 @@ import { Credit, CreditType } from '../../seller/models/credit.model';
 import { CreditsService } from '../../seller/operations/credits.service';
 import { CashRegisterService } from '../cash-register/cash-register.service';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { UsersService } from '../users/users.service';
 
 @Component({
   selector: 'approvals',
@@ -60,6 +61,7 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
 })
 export class ApprovalsComponent implements OnInit, OnDestroy {
   private readonly credits = inject(CreditsService);
+  private readonly usersSvc = inject(UsersService);
   private readonly msg = inject(MessageService);
   private readonly cashRegisterSvc = inject(CashRegisterService);
   private readonly auth = inject(AuthServiceBase);
@@ -79,6 +81,13 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   approveNote = '';
   approveInstallmentsCount: number | null = null;
   processingApprove = false;
+
+  // Cambio de vendedor antes de aprobar (solo dentro del diálogo de aprobación).
+  showChangeSeller = false;
+  sellerOptions: { label: string; value: string }[] = [];
+  loadingSellers = false;
+  selectedSellerId: string | null = null;
+  processingSeller = false;
 
   showRejectDialog = false;
   rejectingRow: Credit | null = null;
@@ -225,6 +234,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
     this.approveCheckClient = false;
     this.approveNote = '';
     this.approveInstallmentsCount = row.installmentsCount;
+    this.showChangeSeller = false;
+    this.selectedSellerId = null;
     this.showApproveDialog = true;
     this.credits.getById(row.id).pipe(takeUntil(this.destroy$)).subscribe({
       next: (detail) => {
@@ -288,6 +299,97 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
             severity: is409 ? 'warn' : 'error',
             summary: is409 ? 'Advertencia' : 'Error',
             detail: err?.message ?? 'No se pudo aprobar. Intentá nuevamente.',
+          });
+        },
+      });
+  }
+
+  /** Nombre del vendedor actual de la operación en aprobación. */
+  get currentSellerName(): string {
+    return (
+      this.approvingDetail?.createdByName ??
+      this.approvingRow?.createdByName ??
+      '—'
+    );
+  }
+
+  /** ID del vendedor actual (para preseleccionar y detectar "mismo vendedor"). */
+  get currentSellerId(): string | null {
+    return (
+      this.approvingDetail?.createdById ?? this.approvingRow?.createdById ?? null
+    );
+  }
+
+  /**
+   * Abre el formulario inline para cambiar el vendedor y carga la lista (1 sola vez).
+   */
+  openChangeSeller(): void {
+    this.selectedSellerId = this.currentSellerId;
+    this.showChangeSeller = true;
+    if (this.sellerOptions.length === 0) {
+      this.loadingSellers = true;
+      this.usersSvc
+        .list({ roles: 'SELLER,SELLER_COLLECTOR', status: 'ACTIVE' })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (users) => {
+            this.sellerOptions = users.map((u) => ({
+              label: u.fullName,
+              value: u.id,
+            }));
+            this.loadingSellers = false;
+          },
+          error: () => {
+            this.loadingSellers = false;
+          },
+        });
+    }
+  }
+
+  /** Cierra el formulario de cambio de vendedor sin guardar. */
+  cancelChangeSeller(): void {
+    this.showChangeSeller = false;
+  }
+
+  /**
+   * Guarda el nuevo vendedor (PATCH /credits/:id/seller) y refresca la pantalla.
+   */
+  saveSeller(): void {
+    if (!this.approvingRow || !this.selectedSellerId) return;
+    if (this.selectedSellerId === this.currentSellerId) {
+      this.showChangeSeller = false;
+      return;
+    }
+    this.processingSeller = true;
+    const row = this.approvingRow;
+    this.credits
+      .changeSeller(row.id, this.selectedSellerId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updated) => {
+          // Refresca el vendedor en el detalle, la fila abierta y la lista.
+          if (this.approvingDetail) {
+            this.approvingDetail.createdById = updated.createdById;
+            this.approvingDetail.createdByName = updated.createdByName;
+          }
+          row.createdById = updated.createdById;
+          row.createdByName = updated.createdByName;
+          this.processingSeller = false;
+          this.showChangeSeller = false;
+          this.msg.add({
+            severity: 'success',
+            summary: 'Vendedor actualizado',
+            detail: `Ahora la operación es de ${updated.createdByName ?? '—'}.`,
+            life: 3500,
+          });
+        },
+        error: (err: { status?: number; message?: string }) => {
+          this.processingSeller = false;
+          const is409 = err?.status === 409;
+          this.msg.add({
+            severity: is409 ? 'warn' : 'error',
+            summary: is409 ? 'Advertencia' : 'Error',
+            detail: err?.message ?? 'No se pudo cambiar el vendedor.',
           });
         },
       });

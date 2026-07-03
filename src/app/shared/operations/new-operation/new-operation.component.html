@@ -219,6 +219,7 @@
               "
               (simulationRequested)="state.requestFinancialSimulation()"
               (continueFromSimulationRequested)="canGoNext() && nextStep()"
+              (paymentConditionChanged)="state.setPaymentCondition($event)"
             />
           }
           @case (4) {

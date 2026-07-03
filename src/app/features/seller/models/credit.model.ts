@@ -7,6 +7,8 @@ export type CreditStatus =
   | 'REFINANCED'
   | 'WRITTEN_OFF';
 export type CreditType = 'SALE' | 'LOAN';
+/** Condición de pago de una venta: financiada (cuotas) o contado (pago único). */
+export type PaymentCondition = 'FINANCED' | 'CASH';
 export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
 export type IntakePaymentMethod = 'CASH' | 'TRANSFER' | 'MIXED';
 export type InstallmentStatus =
@@ -29,10 +31,22 @@ export interface WriteOffResult {
 export interface Credit {
   id: string;
   type: CreditType;
+  /** 'CASH' = venta de contado; 'FINANCED' = venta financiada o préstamo. */
+  paymentCondition?: PaymentCondition;
   totalAmount: number;
   installmentsCount: number;
   paymentFrequency: PaymentFrequency;
   interestRate: number | null;
+  /**
+   * Tasa efectiva para listados: interestRate (LOAN) o la tasa congelada por
+   * producto (SALE financiada). null en contado y operaciones sin aprobar.
+   */
+  effectiveRate: number | null;
+  /**
+   * Total a devolver = plan contractual (suma de cuotas, sin punitorios).
+   * null en operaciones sin cuotas todavía (pendientes de aprobación).
+   */
+  totalToReturn: number | null;
   status: CreditStatus;
   createdAt: string;
   approvedAt: string | null;
@@ -41,6 +55,8 @@ export interface Credit {
   customerDni: string;
   createdById: string | null;
   createdByName: string | null;
+  /** Cobrador asignado al cliente. null si el cliente no tiene cobrador. */
+  collectorName: string | null;
   downPayment?: number;
   prepaidInstallments?: number;
   downPaymentMethod?: string | null;
@@ -55,6 +71,12 @@ export interface CreditInstallment {
   amountPaid: number;
   penaltyAmount: number;
   status: InstallmentStatus;
+  /** Fecha de cobro derivada del último pago aprobado (no es columna propia). */
+  paidAt: string | null;
+  /** Contexto de generación del pago que la canceló (ej. APPROVAL_PREPAYMENT). */
+  generationType: string | null;
+  /** Forma de pago del cobro (CASH / TRANSFER / MIXED). */
+  paidMethod: string | null;
 }
 
 export interface CreditProduct {
@@ -111,6 +133,8 @@ export interface CreditDetail extends Credit {
   downPaymentTransferReference: string | null;
   prepaidInstallments: number;
   prepaidInstallmentsMethod: string | null;
+  prepaidInstallmentsCash: number;
+  prepaidInstallmentsTransfer: number;
   prepaidInstallmentsTransferReference: string | null;
   settledAt: string | null;
   settlementAmount: number | null;
@@ -192,6 +216,14 @@ export interface SaleCreditPayload {
   firstPaymentDate?: string;
   units: Array<{ unitId: string }>;
   notes?: string;
+  /** Condición de pago. Si es 'CASH' se ignoran cuotas/frecuencia/enganche. */
+  paymentCondition?: PaymentCondition;
+  /** Venta de contado: monto pagado de una vez (efectivo y/o transferencia). */
+  paymentAmount?: number;
+  paymentMethod?: IntakePaymentMethod;
+  paymentCash?: number;
+  paymentTransfer?: number;
+  transferReference?: string;
   downPayment?: number;
   downPaymentMethod?: IntakePaymentMethod;
   downPaymentCash?: number;
@@ -220,10 +252,13 @@ export type CreditCreatePayload = SaleCreditPayload | LoanCreditPayload;
 export interface CreditRaw {
   id: string;
   type: CreditType;
+  payment_condition?: PaymentCondition;
   total_amount: number;
   installments_count: number;
   payment_frequency: PaymentFrequency;
   interest_rate: number | null;
+  effective_rate: number | null;
+  total_to_return: number | null;
   status: CreditStatus;
   created_at: string;
   approved_at: string | null;
@@ -232,6 +267,8 @@ export interface CreditRaw {
   customer_dni: string;
   created_by_id: string | null;
   created_by_name: string | null;
+  collector_id?: string | null;
+  collector_name: string | null;
 }
 
 export interface CreditInstallmentRaw {
@@ -242,6 +279,9 @@ export interface CreditInstallmentRaw {
   amount_paid: number;
   penalty_amount: number;
   status: InstallmentStatus;
+  paid_at?: string | null;
+  generation_type?: string | null;
+  paid_method?: string | null;
 }
 
 export interface CreditProductRaw {
@@ -282,6 +322,8 @@ export interface CreditDetailRaw extends CreditRaw {
   down_payment_transfer_reference: string | null;
   prepaid_installments: number;
   prepaid_installments_method: string | null;
+  prepaid_installments_cash?: number;
+  prepaid_installments_transfer?: number;
   prepaid_installments_transfer_reference: string | null;
   settled_at: string | null;
   settlement_amount: number | null;

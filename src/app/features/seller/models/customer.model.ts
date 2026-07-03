@@ -62,6 +62,8 @@ export interface CustomerCreatePayload {
 
 export interface CustomerUpdatePayload {
   fullName?: string;
+  /** Editable solo por Admin. Si cambia, es el nuevo usuario de acceso al portal. */
+  dni?: string;
   address?: string;
   phone?: string;
   email?: string;

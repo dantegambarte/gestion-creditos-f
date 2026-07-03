@@ -54,6 +54,8 @@ export interface Client {
   email?: string;
   address?: string;
   collectorId?: string;
+  /** Portal habilitado: si se edita el DNI, cambia el usuario de acceso. */
+  portalEnabled?: boolean;
 }
 
 export interface ClientOperation {

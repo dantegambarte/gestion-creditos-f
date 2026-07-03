@@ -23,6 +23,7 @@ import { DirectPaymentDialogComponent } from '../direct-payment-dialog/direct-pa
 import { PenaltyDialogComponent } from '../penalty-dialog/penalty-dialog.component';
 import { WaiveDialogComponent } from '../waive-dialog/waive-dialog.component';
 import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { ScheduleVisitDialogComponent } from '../schedule-visit-dialog/schedule-visit-dialog.component';
 
 @Component({
   selector: 'app-credit-schedule-panel',
@@ -37,6 +38,7 @@ import { FfBackTopFabComponent } from '../../../../../shared/components/back-top
     WaiveDialogComponent,
     DirectPaymentDialogComponent,
     FfBackTopFabComponent,
+    ScheduleVisitDialogComponent,
   ],
   templateUrl: './credit-schedule-panel.component.html',
 })
@@ -65,6 +67,16 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
   waiveInstallment: CreditDetail['installments'][number] | null = null;
   showDirectDialog = false;
   directInstallment: CreditDetail['installments'][number] | null = null;
+  showScheduleVisitDialog = false;
+  scheduleVisitInstallment: CreditDetail['installments'][number] | null = null;
+
+  /** Estados de cuota sobre los que el admin puede programar una visita. */
+  private readonly SCHEDULABLE_STATUSES = ['PENDING', 'PARTIAL', 'OVERDUE'];
+
+  /** True si la cuota admite programar una visita (no pagada / no terminal). */
+  canScheduleVisit(inst: CreditDetail['installments'][number]): boolean {
+    return this.SCHEDULABLE_STATUSES.includes(inst.status);
+  }
 
   get paidCount(): number {
     return (
@@ -150,6 +162,11 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
     this.showDirectDialog = true;
   }
 
+  openScheduleVisitDialog(inst: CreditDetail['installments'][number]): void {
+    this.scheduleVisitInstallment = inst;
+    this.showScheduleVisitDialog = true;
+  }
+
   /**
    * Propaga el patch de cuota al padre para actualizar el crédito local.
    * @param updated Cuota actualizada parcialmente
@@ -207,9 +224,36 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
    * Etiqueta del método de pago.
    * @param method Método de pago
    */
-  paymentMethodLabel(method: 'CASH' | 'TRANSFER' | 'MIXED'): string {
+  paymentMethodLabel(method: string | null): string {
     if (method === 'CASH') return 'Efectivo';
     if (method === 'TRANSFER') return 'Transferencia';
-    return 'Mixto';
+    if (method === 'MIXED') return 'Mixto';
+    return '—';
+  }
+
+  /**
+   * True si la cuota fue cancelada como adelanto al aprobar la venta.
+   * @param inst Cuota a evaluar
+   */
+  isPrepaidOnApproval(inst: CreditDetail['installments'][number]): boolean {
+    return inst.generationType === 'APPROVAL_PREPAYMENT';
+  }
+
+  /**
+   * Etiqueta de ORIGEN del cobro derivada de generation_type. Devuelve null para
+   * un cobro normal (no agrega ruido en el caso común).
+   * @param inst Cuota a evaluar
+   */
+  installmentOriginLabel(
+    inst: CreditDetail['installments'][number],
+  ): string | null {
+    if (inst.generationType === 'APPROVAL_PREPAYMENT') {
+      // En contado la única cuota representa el pago total al aprobar, no un adelanto.
+      return this.credit?.paymentCondition === 'CASH'
+        ? 'Pago de contado'
+        : 'Cuota adelantada';
+    }
+    if (inst.generationType === 'ADVANCE_DISTRIBUTION') return 'Pago adelantado';
+    return null;
   }
 }

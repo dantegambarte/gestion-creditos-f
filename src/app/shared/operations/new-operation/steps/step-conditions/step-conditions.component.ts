@@ -86,6 +86,45 @@ export class StepConditionsComponent implements OnChanges {
   }>();
   @Output() continueFromSimulationRequested = new EventEmitter<void>();
   @Output() simulationRequested = new EventEmitter<void>();
+  @Output() paymentConditionChanged = new EventEmitter<'FINANCED' | 'CASH'>();
+
+  readonly cashPaymentMethodOptions = [
+    { label: 'Efectivo', value: 'CASH' },
+    { label: 'Transferencia', value: 'TRANSFER' },
+    { label: 'Mixto', value: 'MIXED' },
+  ];
+
+  /** Indica si la operación actual es una venta de contado. */
+  get isSale(): boolean {
+    return this.form?.controls['operationType']?.value === 'SALE';
+  }
+
+  get isCashSale(): boolean {
+    return (
+      this.isSale && this.form?.controls['paymentCondition']?.value === 'CASH'
+    );
+  }
+
+  get cashSaleMethod(): string {
+    return this.form?.controls['cashSaleMethod']?.value ?? 'CASH';
+  }
+
+  /** Total a cobrar en una venta de contado (suma del carrito). */
+  get cashSaleTotal(): number {
+    return this.cartLines.reduce(
+      (acc, line) => acc + line.precio * line.cantidad,
+      0,
+    );
+  }
+
+  /**
+   * Cambia la condición de pago (financiado/contado) y notifica al contenedor.
+   * @param {'FINANCED' | 'CASH'} condition - Condición elegida por el usuario.
+   */
+  selectPaymentCondition(condition: 'FINANCED' | 'CASH'): void {
+    if (this.form?.controls['paymentCondition']?.value === condition) return;
+    this.paymentConditionChanged.emit(condition);
+  }
 
   /**
    * Cierra la vista de simulación cuando cambian datos base y el resultado previo ya fue invalidado.

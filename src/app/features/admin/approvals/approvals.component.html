@@ -317,13 +317,14 @@
 <!-- Dialog: Aprobar -->
 <p-dialog
   [(visible)]="showApproveDialog"
-  header="Aprobar Operación"
+  header="Aprobar Crédito"
   [modal]="true"
   [style]="{ width: 'min(460px, calc(100vw - 2rem))' }"
   [draggable]="false"
   [resizable]="false"
 >
   <div class="flex flex-col gap-4 py-2">
+    <!-- Vendedor asignado + cambio antes de aprobar -->
     <div
       class="rounded-lg p-3"
       style="
@@ -331,44 +332,66 @@
         border: 1px solid var(--ff-border);
       "
     >
-      <p class="text-sm font-medium" style="color: var(--ff-text-primary)">
-        {{ approvingRow?.customerName }} · {{ approvingRow?.customerDni }} ·
-        {{ approvingRow?.type === "SALE" ? "Venta" : "Préstamo" }}
-      </p>
-      <p class="text-base font-bold mt-1" style="color: var(--ff-success)">
-        Monto: {{ approvingRow?.totalAmount | currencyArs: 2 }}
-      </p>
-      @if (approvingRowDownPayment > 0) {
-        <p
-          class="text-sm mt-2 p-2 rounded"
-          style="
-            background: rgba(108, 231, 183, 0.1);
-            border: 1px solid var(--ff-success);
-            color: var(--ff-success);
-          "
-        >
-          💰 Enganche incluido: {{ approvingRowDownPayment | currencyArs: 2 }}
-          <br />
-          <span style="font-size: 0.75rem; opacity: 0.8">
-            Se aprobará junto con el crédito (operación atómica)
-          </span>
-        </p>
-      }
-      @if (approvingRowPrepaidInstallments > 0) {
-        <p
-          class="text-sm mt-2 p-2 rounded"
-          style="
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.45);
-            color: #93c5fd;
-          "
-        >
-          ⏩ Cuotas adelantadas: {{ approvingRowPrepaidInstallments }} cuota(s)
-          <br />
-          <span style="font-size: 0.75rem; opacity: 0.85">
-            Método: {{ paymentMethodLabel(approvingRowPaymentMethod) }}
-          </span>
-        </p>
+      @if (!showChangeSeller) {
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-xs" style="color: var(--ff-text-muted)">
+              Vendedor asignado
+            </p>
+            <p
+              class="text-sm font-medium mt-0.5"
+              style="color: var(--ff-text-primary)"
+            >
+              👤 {{ currentSellerName }}
+            </p>
+          </div>
+          <p-button
+            label="Cambiar vendedor"
+            icon="pi pi-user-edit"
+            size="small"
+            [text]="true"
+            severity="secondary"
+            (onClick)="openChangeSeller()"
+          />
+        </div>
+      } @else {
+        <div class="flex flex-col gap-2">
+          <label class="auth-label">Seleccione nuevo vendedor</label>
+          <p-dropdown
+            [options]="sellerOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedSellerId"
+            [filter]="true"
+            filterBy="label"
+            [loading]="loadingSellers"
+            placeholder="Elegir vendedor"
+            appendTo="body"
+            styleClass="w-full"
+          />
+          <p class="text-xs" style="color: #f5a524">
+            ⚠ Una vez aprobado el crédito, el vendedor ya no podrá modificarse.
+          </p>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <p-button
+              label="Cancelar"
+              size="small"
+              severity="secondary"
+              [outlined]="true"
+              styleClass="w-full"
+              (onClick)="cancelChangeSeller()"
+              [disabled]="processingSeller"
+            />
+            <p-button
+              label="Guardar"
+              size="small"
+              styleClass="w-full"
+              (onClick)="saveSeller()"
+              [loading]="processingSeller"
+              [disabled]="!selectedSellerId || processingSeller"
+            />
+          </div>
+        </div>
       }
     </div>
 
@@ -408,36 +431,13 @@
       </div>
     }
 
-    <div class="flex flex-col gap-3">
-      <div class="flex items-center gap-2">
-        <p-checkbox
-          [(ngModel)]="approveCheckDoc"
-          [binary]="true"
-          inputId="checkDoc"
-        />
-        <label
-          for="checkDoc"
-          class="text-sm cursor-pointer"
-          style="color: var(--ff-text-primary)"
-        >
-          Revisar documentación adjunta
-        </label>
-      </div>
-      <div class="flex items-center gap-2">
-        <p-checkbox
-          [(ngModel)]="approveCheckClient"
-          [binary]="true"
-          inputId="checkClient"
-        />
-        <label
-          for="checkClient"
-          class="text-sm cursor-pointer"
-          style="color: var(--ff-text-primary)"
-        >
-          Validar cliente (sin reportes negativos)
-        </label>
-      </div>
-    </div>
+    <p
+      class="text-xs px-1"
+      style="color: var(--ff-text-muted); line-height: 1.4"
+    >
+      ⚠ Al aprobar quedan definitivos el <strong>vendedor</strong>, el cliente,
+      el importe, el enganche y las cuotas. No podrán modificarse después.
+    </p>
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
@@ -450,12 +450,12 @@
         (onClick)="showApproveDialog = false"
       />
       <p-button
-        label="Confirmar Aprobación"
+        label="Confirmar"
         severity="primary"
         styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmApprove()"
         [loading]="processingApprove"
-        [disabled]="isCashClosed || processingApprove"
+        [disabled]="isCashClosed || processingApprove || showChangeSeller"
         [pTooltip]="isCashClosed ? 'La caja está cerrada' : ''"
         tooltipPosition="top"
       />

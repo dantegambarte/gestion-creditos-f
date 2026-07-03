@@ -3,6 +3,49 @@
     class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.95fr)]"
   >
     <div class="space-y-6">
+      @if (isCashSale) {
+        <article
+          class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] shadow-[0_12px_36px_rgba(0,0,0,0.22)]"
+        >
+          <div class="border-b border-[var(--ff-border-subtle)] px-5 py-4">
+            <h3 class="text-lg font-semibold text-[var(--ff-text-primary)]">
+              Venta de contado
+            </h3>
+            <p class="mt-1 text-sm text-[var(--ff-text-muted)]">
+              Se cobra el total al aprobarse. No genera cuotas.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 gap-3 px-5 py-5 md:grid-cols-2">
+            <div
+              class="rounded-xl border border-[#314A43] bg-[#232A3F] px-4 py-3"
+            >
+              <p
+                class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
+              >
+                Total a cobrar
+              </p>
+              <p class="mt-2 text-[32px] font-semibold leading-none text-[#37F0A4]">
+                {{ cashSaleTotal | currencyArs }}
+              </p>
+            </div>
+            <div
+              class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-4 py-3"
+            >
+              <p
+                class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
+              >
+                Método de pago
+              </p>
+              <p
+                class="mt-2 text-[22px] font-semibold leading-none text-[var(--ff-text-primary)]"
+              >
+                {{ cashSaleMethodLabel }}
+              </p>
+            </div>
+          </div>
+        </article>
+      }
+      @if (!isCashSale) {
       <article
         class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] shadow-[0_12px_36px_rgba(0,0,0,0.22)]"
       >
@@ -17,7 +60,7 @@
         </div>
 
         <div class="space-y-5 px-5 py-5">
-          @if (operationType === "SALE" && cartLines.length) {
+          @if (operationType === "SALE" && cartLines.length > 1) {
             <div>
               <p
                 class="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ff-text-muted)]"
@@ -203,16 +246,29 @@
                   @for (item of schedulePreview; track item.label) {
                     <div
                       class="grid grid-cols-[72px_1fr_auto] items-center gap-3 text-sm"
+                      [class.opacity-70]="item.isAdvanced"
                     >
                       <span class="text-[var(--ff-text-muted)]">{{
                         item.label
                       }}</span>
                       <span
-                        class="font-semibold text-[var(--ff-text-primary)]"
-                        >{{ item.dueDate }}</span
+                        class="flex items-center gap-2 font-semibold text-[var(--ff-text-primary)]"
+                        [class.line-through]="item.isAdvanced"
+                        >{{ item.dueDate }}
+                        @if (item.isAdvanced) {
+                          <span
+                            class="inline-flex cursor-help items-center gap-1 rounded-full border border-[#37F0A4]/30 bg-[#37F0A4]/10 px-2 py-0.5 text-[10px] font-semibold text-[#37F0A4] no-underline"
+                            pTooltip="Esta cuota se cancela al aprobar la venta."
+                            tooltipPosition="top"
+                          >
+                            <i class="pi pi-info-circle text-[10px]"></i>
+                            Adelantada
+                          </span>
+                        }</span
                       >
                       <span
                         class="font-semibold text-[var(--ff-text-primary)]"
+                        [class.line-through]="item.isAdvanced"
                         >{{ item.amount | currencyArs }}</span
                       >
                     </div>
@@ -237,6 +293,7 @@
           </div>
         </div>
       </article>
+      }
 
       <article
         class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-6 shadow-[0_12px_36px_rgba(0,0,0,0.2)]"
@@ -399,57 +456,73 @@
             </div>
           }
 
-          <div class="border-b border-dashed border-[var(--ff-border)] pb-4">
-            <p
-              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
-            >
-              Financiación
-            </p>
-            <div class="space-y-1.5">
+          @if (isCashSale) {
+            <div class="border-b border-dashed border-[var(--ff-border)] pb-4">
+              <p
+                class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
+              >
+                Condición de pago
+              </p>
               <div class="flex items-center justify-between gap-3">
-                <span class="text-[var(--ff-text-secondary)]">Frecuencia</span>
-                <span class="font-semibold text-[var(--ff-text-primary)]">{{
-                  paymentFrequencyLabel
-                }}</span>
+                <span class="text-[var(--ff-text-secondary)]">Modalidad</span>
+                <span class="font-semibold text-[#37F0A4]">Contado</span>
               </div>
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-[var(--ff-text-secondary)]">Cuotas</span>
+              <div class="mt-1 flex items-center justify-between gap-3">
+                <span class="text-[var(--ff-text-secondary)]">Método</span>
                 <span class="font-semibold text-[var(--ff-text-primary)]">{{
-                  summaryInstallmentsCount
-                }}</span>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-[var(--ff-text-secondary)]">Tasa prom.</span>
-                <span class="font-semibold text-[var(--ff-text-primary)]">{{
-                  averageRateLabel
-                }}</span>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-[var(--ff-text-secondary)]"
-                  >Primera cuota</span
-                >
-                <span class="font-semibold text-[var(--ff-text-primary)]">{{
-                  firstPaymentDateLabel
+                  cashSaleMethodLabel
                 }}</span>
               </div>
             </div>
-          </div>
+          } @else {
+            <div class="border-b border-dashed border-[var(--ff-border)] pb-4">
+              <p
+                class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
+              >
+                Financiación
+              </p>
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[var(--ff-text-secondary)]">Frecuencia</span>
+                  <span class="font-semibold text-[var(--ff-text-primary)]">{{
+                    paymentFrequencyLabel
+                  }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[var(--ff-text-secondary)]">Cuotas</span>
+                  <span class="font-semibold text-[var(--ff-text-primary)]">{{
+                    summaryInstallmentsCount
+                  }}</span>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[var(--ff-text-secondary)]"
+                    >Primera cuota</span
+                  >
+                  <span class="font-semibold text-[var(--ff-text-primary)]">{{
+                    firstPaymentDateLabel
+                  }}</span>
+                </div>
+              </div>
+            </div>
+          }
 
-          <div class="border-b border-dashed border-[var(--ff-border)] pb-4">
-            <p
-              class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
-            >
-              Pago inicial
-            </p>
-            <div class="flex items-center justify-between gap-3">
-              <span class="text-[var(--ff-text-secondary)]">{{
-                initialPaymentLabel
-              }}</span>
-              <span class="font-semibold text-[#37F0A4]">{{
-                initialPaymentSummary
-              }}</span>
+          @if (!isCashSale) {
+            <div class="border-b border-dashed border-[var(--ff-border)] pb-4">
+              <p
+                class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
+              >
+                Pago inicial
+              </p>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-[var(--ff-text-secondary)]">{{
+                  initialPaymentLabel
+                }}</span>
+                <span class="font-semibold text-[#37F0A4]">{{
+                  initialPaymentSummary
+                }}</span>
+              </div>
             </div>
-          </div>
+          }
 
           <div class="border-b border-dashed border-[var(--ff-border)] pb-4">
             <p
@@ -457,53 +530,31 @@
             >
               Montos
             </p>
-            <div class="space-y-1.5">
-              @if (operationType === "SALE") {
-                <div class="flex items-center justify-between gap-3">
-                  <span class="text-[var(--ff-text-secondary)]">Subtotal</span>
-                  <span class="font-semibold text-[var(--ff-text-primary)]">{{
-                    subtotalProductos | currencyArs
-                  }}</span>
-                </div>
-                @if (initialPaymentAmount > 0) {
-                  <div class="flex items-center justify-between gap-3">
-                    <span class="text-[var(--ff-text-secondary)]">{{
-                      initialPaymentLabel
-                    }}</span>
-                    <span class="font-semibold text-[#FFB347]"
-                      >- {{ initialPaymentAmount | currencyArs }}</span
-                    >
-                  </div>
-                }
-              }
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-[var(--ff-text-secondary)]">Financiado</span>
-                <span class="font-semibold text-[var(--ff-text-primary)]">{{
-                  capitalAFinanciar | currencyArs
-                }}</span>
-              </div>
+            @if (isCashSale) {
               <div class="flex items-center justify-between gap-3">
                 <span class="text-[var(--ff-text-secondary)]"
-                  >Total devol.</span
-                >
-                <span class="font-semibold text-[var(--ff-text-primary)]">{{
-                  totalADevolver | currencyArs
-                }}</span>
-              </div>
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-[var(--ff-text-secondary)]"
-                  >Cuota
-                  {{
-                    paymentFrequencyLabel === "-"
-                      ? "estim."
-                      : paymentFrequencyLabel.toLowerCase().slice(0, 4) + "."
-                  }}</span
+                  >Total de la venta</span
                 >
                 <span class="text-lg font-bold text-[#37F0A4]">{{
-                  valorCuota | currencyArs
+                  cashSaleTotal | currencyArs
                 }}</span>
               </div>
-            </div>
+            } @else {
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[var(--ff-text-secondary)]"
+                    >Total a devolver</span
+                  >
+                  <span class="text-lg font-bold text-[#37F0A4]">{{
+                    totalADevolver | currencyArs
+                  }}</span>
+                </div>
+                <p class="text-xs text-[var(--ff-text-muted)]">
+                  en {{ summaryInstallmentsCount }} cuotas de
+                  {{ valorCuota | currencyArs }}
+                </p>
+              </div>
+            }
           </div>
 
           <div>

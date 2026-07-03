@@ -14,7 +14,11 @@ export type InclusionReason =
   | 'DUE_TODAY'
   | 'SCHEDULED_VISIT'
   | 'ALL_PENDING';
-export type AntecedentType = 'PARTIAL_PAYMENT' | 'NO_PAYMENT' | 'NOT_FOUND';
+export type AntecedentType =
+  | 'PARTIAL_PAYMENT'
+  | 'NO_PAYMENT'
+  | 'NOT_FOUND'
+  | 'SCHEDULED_VISIT';
 
 /** Estado de gestión por fila de planilla (lo que hizo el cobrador hoy). */
 export type ManagementStatus =
@@ -42,8 +46,12 @@ export interface CollectionSheetItemLive {
   hasPendingPayment: boolean;
   /** Id del último intento (no anulado) del día — habilita "Deshacer". */
   todayAttemptId: string | null;
-  /** Tipo del último intento del día (solo NO_PAYMENT/NOT_FOUND son anulables). */
-  todayAttemptType: Exclude<AntecedentType, 'PARTIAL_PAYMENT'> | null;
+  /** Tipo del último intento del día (solo NO_PAYMENT/NOT_FOUND son anulables).
+   * SCHEDULED_VISIT (agenda admin) queda excluido: el backend no lo emite acá. */
+  todayAttemptType: Exclude<
+    AntecedentType,
+    'PARTIAL_PAYMENT' | 'SCHEDULED_VISIT'
+  > | null;
 }
 
 /** Etiquetas amigables para mostrar en UI admin (no se muestra al cobrador). */
@@ -217,7 +225,10 @@ export interface CollectionSheetItemLiveRaw {
   penalty_amount: number | null;
   has_pending_payment: boolean;
   today_attempt_id: string | null;
-  today_attempt_type: Exclude<AntecedentType, 'PARTIAL_PAYMENT'> | null;
+  today_attempt_type: Exclude<
+    AntecedentType,
+    'PARTIAL_PAYMENT' | 'SCHEDULED_VISIT'
+  > | null;
 }
 
 export interface CollectionSheetDetailRaw extends CollectionSheetRaw {
@@ -265,6 +276,7 @@ export const ANTECEDENT_TYPE_LABELS: Record<AntecedentType, string> = {
   PARTIAL_PAYMENT: 'Cobro parcial',
   NO_PAYMENT: 'No pagó',
   NOT_FOUND: 'No encontrado',
+  SCHEDULED_VISIT: 'Visita programada',
 };
 
 export const SHEET_STATUS_LABELS: Record<CollectionSheetStatus, string> = {

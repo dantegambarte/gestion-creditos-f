@@ -306,6 +306,53 @@ describe('findLoanInterestRate', () => {
     expect(result).toBe(0.18);
   });
 
+  it('debe elegir la tasa de la frecuencia indicada cuando hay misma cuota y monto en varias frecuencias', () => {
+    // Arrange: mismas 12 cuotas y mismo rango de monto, distinta frecuencia.
+    const rates: InterestRate[] = [
+      buildInterestRate({
+        paymentFrequency: 'WEEKLY',
+        installmentsCount: 12,
+        minAmount: 0,
+        maxAmount: 200000,
+        rate: 0.25,
+      }),
+      buildInterestRate({
+        paymentFrequency: 'MONTHLY',
+        installmentsCount: 12,
+        minAmount: 0,
+        maxAmount: 200000,
+        rate: 0.1,
+      }),
+    ];
+
+    // Act
+    const weekly = findLoanInterestRate(rates, 12, 100000, 'WEEKLY');
+    const monthly = findLoanInterestRate(rates, 12, 100000, 'MONTHLY');
+
+    // Assert: cada frecuencia toma su propia tasa, no la primera del array.
+    expect(weekly).toBe(0.25);
+    expect(monthly).toBe(0.1);
+  });
+
+  it('debe devolver 0 cuando no hay tasa para la frecuencia indicada aunque coincidan cuota y monto', () => {
+    // Arrange
+    const rates: InterestRate[] = [
+      buildInterestRate({
+        paymentFrequency: 'MONTHLY',
+        installmentsCount: 12,
+        minAmount: 0,
+        maxAmount: 200000,
+        rate: 0.1,
+      }),
+    ];
+
+    // Act
+    const result = findLoanInterestRate(rates, 12, 100000, 'WEEKLY');
+
+    // Assert
+    expect(result).toBe(0);
+  });
+
   it('debe devolver 0 cuando no existe ninguna tasa para esas cuotas (edge case)', () => {
     // Arrange
     const rates: InterestRate[] = [

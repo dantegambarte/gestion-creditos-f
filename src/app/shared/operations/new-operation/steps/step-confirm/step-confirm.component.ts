@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
+import { TooltipModule } from 'primeng/tooltip';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { SimulateResult } from '../../../../../features/seller/models/credit.model';
 import { ClientOperation } from '../../../../models/interface/client';
@@ -14,6 +15,7 @@ import { CartLine } from '../../operation-form.service';
     ReactiveFormsModule,
     CheckboxModule,
     MessageModule,
+    TooltipModule,
     CurrencyArsPipe,
   ],
   templateUrl: './step-confirm.component.html',
@@ -47,6 +49,27 @@ export class StepConfirmComponent {
     return this.form?.controls['operationType']?.value === 'SALE'
       ? 'SALE'
       : 'LOAN';
+  }
+
+  /** Indica si la operación es una venta de contado (sin financiación). */
+  get isCashSale(): boolean {
+    return (
+      this.operationType === 'SALE' &&
+      this.form?.controls['paymentCondition']?.value === 'CASH'
+    );
+  }
+
+  /** Total cobrado en una venta de contado (suma del carrito). */
+  get cashSaleTotal(): number {
+    return this.subtotalProductos;
+  }
+
+  /** Etiqueta del método de pago elegido para la venta de contado. */
+  get cashSaleMethodLabel(): string {
+    const method = this.form?.controls['cashSaleMethod']?.value;
+    if (method === 'TRANSFER') return 'Transferencia';
+    if (method === 'MIXED') return 'Efectivo + Transferencia';
+    return 'Efectivo';
   }
 
   /**
@@ -173,7 +196,7 @@ export class StepConfirmComponent {
    */
   get initialPaymentLabel(): string {
     if (this.operationType !== 'SALE') return 'Detalle';
-    if (this.initialPaymentType === 'DOWN_PAYMENT') return 'Enganche';
+    if (this.initialPaymentType === 'DOWN_PAYMENT') return 'Anticipo';
     if (this.initialPaymentType === 'ADVANCED_INSTALLMENTS')
       return 'Cuotas adelantadas';
     return 'Sin pago inicial';
@@ -213,16 +236,6 @@ export class StepConfirmComponent {
   }
 
   /**
-   * Calcula una tasa promedio simple a partir del total y el capital financiado.
-   * @returns {string} Porcentaje con coma decimal para mostrar en el resumen.
-   */
-  get averageRateLabel(): string {
-    if (this.capitalAFinanciar <= 0 || this.intereses <= 0) return '0%';
-    const percent = (this.intereses / this.capitalAFinanciar) * 100;
-    return `${percent.toFixed(1).replace('.', ',')}%`;
-  }
-
-  /**
    * Construye un preview corto del cronograma. Si el backend ya devolvio
    * la simulacion del paso 4, la usamos: las fechas ya tienen aplicada
    * la regla de dia habil (fines de semana + feriados) y son las mismas
@@ -230,16 +243,27 @@ export class StepConfirmComponent {
    * fallback al calculo local — sin day-shift, pero al menos no rompe.
    * @returns {{ label: string; dueDate: string; amount: number }[]} Primeras filas visibles del plan.
    */
-  get schedulePreview(): { label: string; dueDate: string; amount: number }[] {
+  get schedulePreview(): { label: string; dueDate: string; amount: number; isAdvanced: boolean }[] {
     const limit = StepConfirmComponent.SCHEDULE_PREVIEW_LIMIT;
+    const adv = Number(this.form?.controls['advancedInstallmentsCount']?.value ?? 0);
+    const isAdvanceMode = this.initialPaymentType === 'ADVANCED_INSTALLMENTS';
 
     const backendSchedule = this.simulationResult?.schedule ?? [];
     if (backendSchedule.length > 0) {
-      return backendSchedule.slice(0, limit).map((row) => ({
-        label: `Cuota ${row.installmentNumber}`,
-        dueDate: this.formatDate(this.parseLocalDate(row.dueDate)),
-        amount: row.amount,
-      }));
+      return backendSchedule.slice(0, limit).map((row, index) => {
+        const isAdvanced = isAdvanceMode && row.installmentNumber <= adv;
+        const fallbackDate = backendSchedule[Math.max(0, index - adv)]?.dueDate;
+        const dueDate = isAdvanced
+          ? row.dueDate
+          : fallbackDate ?? row.dueDate;
+
+        return {
+          label: `Cuota ${row.installmentNumber}`,
+          dueDate: this.formatDate(this.parseLocalDate(dueDate)),
+          amount: row.amount,
+          isAdvanced,
+        };
+      });
     }
 
     const firstPaymentDate = this.form?.controls['firstPaymentDate']
@@ -249,13 +273,19 @@ export class StepConfirmComponent {
       return [];
 
     const rows = Math.min(installments, limit);
-    return Array.from({ length: rows }).map((_, index) => ({
-      label: `Cuota ${index + 1}`,
-      dueDate: this.formatDate(
-        this.addFrequencyToDate(firstPaymentDate, index),
-      ),
-      amount: this.valorCuota,
-    }));
+    return Array.from({ length: rows }).map((_, index) => {
+      const installmentNumber = index + 1;
+      const isAdvanced = isAdvanceMode && installmentNumber <= adv;
+      const effectiveIndex = isAdvanced ? index : Math.max(0, index - adv);
+      return {
+        label: `Cuota ${installmentNumber}`,
+        dueDate: this.formatDate(
+          this.addFrequencyToDate(firstPaymentDate, effectiveIndex),
+        ),
+        amount: this.valorCuota,
+        isAdvanced,
+      };
+    });
   }
 
   /**

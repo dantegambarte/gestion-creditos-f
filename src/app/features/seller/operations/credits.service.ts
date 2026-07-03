@@ -43,10 +43,13 @@ function toCredit(raw: CreditRaw): Credit {
   return {
     id: raw.id,
     type: raw.type,
+    paymentCondition: raw.payment_condition,
     totalAmount: raw.total_amount,
     installmentsCount: raw.installments_count,
     paymentFrequency: raw.payment_frequency,
     interestRate: raw.interest_rate,
+    effectiveRate: raw.effective_rate ?? raw.interest_rate ?? null,
+    totalToReturn: raw.total_to_return ?? null,
     status: raw.status,
     createdAt: raw.created_at,
     approvedAt: raw.approved_at,
@@ -55,6 +58,7 @@ function toCredit(raw: CreditRaw): Credit {
     customerDni: raw.customer_dni,
     createdById: raw.created_by_id,
     createdByName: raw.created_by_name,
+    collectorName: raw.collector_name ?? null,
   };
 }
 
@@ -72,6 +76,9 @@ function toInstallment(raw: CreditInstallmentRaw): CreditInstallment {
     amountPaid: raw.amount_paid,
     penaltyAmount: raw.penalty_amount,
     status: raw.status,
+    paidAt: raw.paid_at ?? null,
+    generationType: raw.generation_type ?? null,
+    paidMethod: raw.paid_method ?? null,
   };
 }
 
@@ -154,6 +161,8 @@ function toCreditDetail(raw: CreditDetailRaw): CreditDetail {
     downPaymentTransferReference: raw.down_payment_transfer_reference,
     prepaidInstallments: raw.prepaid_installments ?? 0,
     prepaidInstallmentsMethod: raw.prepaid_installments_method,
+    prepaidInstallmentsCash: raw.prepaid_installments_cash ?? 0,
+    prepaidInstallmentsTransfer: raw.prepaid_installments_transfer ?? 0,
     prepaidInstallmentsTransferReference:
       raw.prepaid_installments_transfer_reference,
     settledAt: raw.settled_at,
@@ -298,6 +307,22 @@ function toCreateBody(p: CreditCreatePayload): Record<string, unknown> {
   if (p.notes) body['notes'] = p.notes;
   if (p.type === 'SALE') {
     body['unit_ids'] = p.units.map((u) => u.unitId);
+
+    // Venta de contado: el pago del total viaja como split (efectivo/
+    // transferencia) o como monto+método. No usa cuotas, enganche ni adelantos.
+    if (p.paymentCondition === 'CASH') {
+      body['payment_condition'] = 'CASH';
+      if (p.paymentMethod === 'MIXED') {
+        body['payment_cash'] = p.paymentCash ?? 0;
+        body['payment_transfer'] = p.paymentTransfer ?? 0;
+      } else {
+        body['payment_amount'] = p.paymentAmount ?? 0;
+        if (p.paymentMethod) body['payment_method'] = p.paymentMethod;
+      }
+      if (p.transferReference) body['transfer_reference'] = p.transferReference;
+      return body;
+    }
+
     const hasDownPayment = p.downPayment !== undefined && p.downPayment > 0;
     const hasAdvancedInstallments =
       p.advancedInstallmentsCount !== undefined &&
@@ -426,6 +451,18 @@ export class CreditsService {
     return this.api.patch<void>(`credits/${id}/reject`, {
       rejection_reason: payload.rejectionReason,
     });
+  }
+
+  /**
+   * Reasigna el vendedor de un crédito ANTES de aprobarlo (admin-only). Solo
+   * válido mientras el crédito esté PENDING_APPROVAL.
+   * @param id - ID del crédito.
+   * @param sellerId - Nuevo vendedor (rol SELLER o SELLER_COLLECTOR).
+   */
+  changeSeller(id: string, sellerId: string): Observable<CreditDetail> {
+    return this.api
+      .patch<CreditDetailRaw>(`credits/${id}/seller`, { seller_id: sellerId })
+      .pipe(map(toCreditDetail));
   }
 
   /**

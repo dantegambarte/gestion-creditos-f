@@ -1,5 +1,5 @@
 export const environment = {
-  production: false,
+  production: true,
   useMocks: false,
   // apiBaseUrl: 'http://localhost:3000/api',
   apiBaseUrl: 'https://cxsfb55j-3000.brs.devtunnels.ms/api',
