@@ -28,7 +28,7 @@
                 class="overflow-hidden rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)]"
               >
                 <div
-                  class="grid grid-cols-12 gap-3 border-b border-[var(--ff-border)] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
+                  class="hidden grid-cols-12 gap-3 border-b border-[var(--ff-border)] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)] md:grid"
                 >
                   <span class="col-span-4">Producto</span>
                   <span class="col-span-3">Variante</span>
@@ -42,7 +42,7 @@
                   track line.productoId + "-" + line.variantId
                 ) {
                   <div
-                    class="grid grid-cols-12 gap-3 border-b border-[var(--ff-border)] px-4 py-3 text-sm last:border-b-0"
+                    class="hidden grid-cols-12 gap-3 border-b border-[var(--ff-border)] px-4 py-3 text-sm last:border-b-0 md:grid"
                   >
                     <span
                       class="col-span-4 font-semibold text-[var(--ff-text-primary)]"
@@ -63,6 +63,41 @@
                       >{{ getCuotaPorLinea(line) | currencyArs }}</span
                     >
                   </div>
+                  <article
+                    class="border-b border-[var(--ff-border)] px-4 py-4 text-sm last:border-b-0 md:hidden"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <p class="font-semibold text-[var(--ff-text-primary)]">
+                          {{ line.nombre }}
+                        </p>
+                        <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
+                          {{ getVariantLabel(line) }}
+                        </p>
+                      </div>
+                      <span
+                        class="shrink-0 text-right font-semibold text-[#37F0A4]"
+                      >
+                        {{ getCuotaPorLinea(line) | currencyArs }}
+                      </span>
+                    </div>
+                    <dl class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                      <div class="rounded-lg bg-[var(--ff-bg)] p-2">
+                        <dt class="text-[var(--ff-text-muted)]">Precio</dt>
+                        <dd
+                          class="mt-1 font-semibold text-[var(--ff-text-primary)]"
+                        >
+                          {{ line.subtotal | currencyArs }}
+                        </dd>
+                      </div>
+                      <div class="rounded-lg bg-[var(--ff-bg)] p-2">
+                        <dt class="text-[var(--ff-text-muted)]">Tasa</dt>
+                        <dd class="mt-1 font-semibold text-[#93C5FD]">
+                          {{ getLineRatePercent(line) }}%
+                        </dd>
+                      </div>
+                    </dl>
+                  </article>
                 }
               </div>
             </div>

@@ -9,7 +9,7 @@
 >
   <div class="flex-1 min-h-0 min-w-0 flex flex-col">
     <header
-      class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-4 py-3 md:h-[72px] md:flex-nowrap md:px-8 md:py-0"
+      class="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-4 py-3 md:flex md:h-[72px] md:flex-nowrap md:justify-between md:px-8 md:py-0"
     >
       <div class="flex min-w-0 items-center gap-3">
         <button
@@ -21,15 +21,51 @@
           <i class="pi pi-arrow-left"></i>
         </button>
         <h1
-          class="text-[15px] font-semibold leading-tight text-[var(--ff-text-primary)]"
+          class="min-w-0 truncate text-[15px] font-semibold leading-tight text-[var(--ff-text-primary)]"
         >
           Nueva Operación
         </h1>
       </div>
 
+      <div class="flex shrink-0 items-center justify-end gap-1 md:hidden">
+        @if (activeIndex > 0 && activeIndex < 4) {
+          <p-button
+            label="Siguiente"
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            severity="primary"
+            [disabled]="!canGoNext()"
+            (onClick)="nextStep()"
+            styleClass="h-10 justify-center rounded-xl px-3 text-xs font-semibold shadow-[0_10px_24px_rgba(79,107,255,0.28)]"
+            data-cy="btn-siguiente-mobile"
+          />
+        } @else if (activeIndex === 4) {
+          <p-button
+            label="Enviar"
+            icon="pi pi-check"
+            severity="success"
+            [disabled]="!state.canSubmitOperation"
+            [loading]="state.submitting()"
+            (onClick)="submitOperation()"
+            styleClass="h-10 justify-center rounded-xl px-3 text-xs font-semibold shadow-[0_10px_24px_rgba(0,208,132,0.22)]"
+            data-cy="btn-enviar-aprobacion-mobile"
+          />
+        }
+
+        <button
+          type="button"
+          class="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
+          aria-label="Cancelar operación"
+          data-cy="new-operation-mobile-cancel-action"
+          (click)="confirmCancelOperation()"
+        >
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
       <div
         #stepper
-        class="order-last flex w-full min-w-0 items-center gap-3 overflow-x-auto overscroll-x-contain pb-1 md:order-none md:w-auto md:gap-6 md:overflow-visible md:pb-0"
+        class="col-span-2 order-last flex w-full min-w-0 items-center gap-3 overflow-x-auto overscroll-x-contain pb-1 md:order-none md:w-auto md:gap-6 md:overflow-visible md:pb-0"
         data-cy="new-operation-stepper"
       >
         @for (step of steps; track step.label; let i = $index) {
@@ -83,16 +119,6 @@
           <i class="pi pi-times"></i>
         </button>
       </div>
-
-      <button
-        type="button"
-        class="flex h-11 w-11 items-center justify-center rounded-lg text-[var(--ff-text-secondary)] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)] md:hidden"
-        aria-label="Cancelar operación"
-        data-cy="new-operation-mobile-cancel-action"
-        (click)="confirmCancelOperation()"
-      >
-        <i class="pi pi-times"></i>
-      </button>
     </header>
 
     <main
@@ -212,7 +238,6 @@
           }
         }
       </div>
-
     </main>
 
     <ff-back-top-fab
@@ -223,9 +248,7 @@
     />
 
     <div
-      class="shrink-0 border-t border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-4 py-3 md:px-8 md:py-4"
-      [class.hidden]="activeIndex === 0"
-      [class.md:block]="activeIndex === 0"
+      class="hidden shrink-0 border-t border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-4 py-3 md:block md:px-8 md:py-4"
       data-cy="new-operation-footer"
     >
       <div
