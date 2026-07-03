@@ -40,17 +40,26 @@
   }
 
   @if (loading) {
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-5" data-cy="collection-report-skeleton">
+    <div
+      class="grid grid-cols-2 gap-3 lg:grid-cols-5"
+      data-cy="collection-report-skeleton"
+    >
       @for (_ of [1, 2, 3, 4, 5]; track _) {
-        <div class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4">
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
           <p-skeleton width="70%" height="0.7rem" />
           <p-skeleton width="55%" height="1.4rem" />
         </div>
       }
     </div>
-    <div class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]">
+    <div
+      class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+    >
       @for (_ of [1, 2, 3, 4, 5]; track _) {
-        <div class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0">
+        <div
+          class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0"
+        >
           <p-skeleton width="5rem" height="0.9rem" />
           <p-skeleton width="6rem" height="0.9rem" styleClass="ml-auto" />
           <p-skeleton width="6rem" height="0.9rem" />
@@ -62,8 +71,58 @@
   } @else if (error) {
     <app-error-state [message]="error.message" />
   } @else if (collectionReport) {
+    <div
+      class="rounded-2xl border border-[#2F4D84] bg-gradient-to-br from-[#111827] to-[#172033] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.28)] md:hidden"
+      data-cy="collection-report-mobile-summary"
+    >
+      <p
+        class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8EA5FF]"
+      >
+        Total recaudado
+      </p>
+      <p class="mt-2 font-mono text-3xl font-extrabold text-white">
+        {{ formatCurrency(collectionReport.summary.grandTotal) }}
+      </p>
+      <div class="mt-4 grid gap-3 text-sm">
+        <div
+          class="flex items-center justify-between rounded-xl border border-[var(--ff-border-subtle)] bg-[rgba(255,255,255,0.03)] px-3 py-3"
+        >
+          <span class="text-[var(--ff-text-secondary)]">Efectivo</span>
+          <strong class="font-mono text-[var(--ff-text-primary)]">{{
+            formatCurrency(collectionReport.summary.totalCash)
+          }}</strong>
+        </div>
+        <div
+          class="flex items-center justify-between rounded-xl border border-[var(--ff-border-subtle)] bg-[rgba(255,255,255,0.03)] px-3 py-3"
+        >
+          <span class="text-[var(--ff-text-secondary)]">Transferencia</span>
+          <strong class="font-mono text-[var(--ff-text-primary)]">{{
+            formatCurrency(collectionReport.summary.totalTransfer)
+          }}</strong>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div
+            class="rounded-xl border border-[var(--ff-border-subtle)] bg-[rgba(255,255,255,0.03)] p-3"
+          >
+            <p class="text-xs text-[var(--ff-text-muted)]">Cobros</p>
+            <p class="mt-1 text-lg font-bold text-white">
+              {{ collectionReport.summary.paymentsCount }}
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-[var(--ff-border-subtle)] bg-[rgba(255,255,255,0.03)] p-3"
+          >
+            <p class="text-xs text-[var(--ff-text-muted)]">Promedio</p>
+            <p class="mt-1 font-mono text-lg font-bold text-white">
+              {{ formatCurrency(collectionReport.summary.avgPayment) }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 5 KPI cards -->
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-5">
+    <div class="hidden grid-cols-2 gap-3 md:grid lg:grid-cols-5">
       <div
         class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4 lg:col-span-1"
       >
@@ -143,7 +202,10 @@
       <div
         class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
       >
-        <table class="hidden w-full text-sm md:table" data-cy="collection-report-table">
+        <table
+          class="hidden w-full text-sm md:table"
+          data-cy="collection-report-table"
+        >
           <thead>
             <tr class="border-b border-[var(--ff-border-subtle)]">
               <th
@@ -222,37 +284,70 @@
           </tbody>
         </table>
 
-        <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="collection-report-mobile-list">
+        <div
+          class="flex flex-col gap-3 p-3 md:hidden"
+          data-cy="collection-report-mobile-list"
+        >
           @for (row of collectionReport.daily; track row.day) {
             <article
               class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
               data-cy="collection-report-mobile-card"
             >
               <div class="flex items-center justify-between gap-3">
-                <p class="text-sm font-semibold text-[var(--ff-text-secondary)]">{{ formatDate(row.day) }}</p>
-                <p class="font-mono text-sm font-semibold text-blue-400">{{ formatCurrency(row.total) }}</p>
+                <p
+                  class="text-sm font-semibold text-[var(--ff-text-secondary)]"
+                >
+                  {{ formatDate(row.day) }}
+                </p>
+                <p class="font-mono text-sm font-semibold text-blue-400">
+                  {{ formatCurrency(row.total) }}
+                </p>
               </div>
 
               <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
-                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                <div
+                  class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+                >
                   <dt class="text-xs text-[var(--ff-text-muted)]">Efectivo</dt>
-                  <dd class="mt-1 font-mono font-semibold text-[var(--ff-text-secondary)]">{{ formatCurrency(row.totalCash) }}</dd>
+                  <dd
+                    class="mt-1 font-mono font-semibold text-[var(--ff-text-secondary)]"
+                  >
+                    {{ formatCurrency(row.totalCash) }}
+                  </dd>
                 </div>
-                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
-                  <dt class="text-xs text-[var(--ff-text-muted)]">Transferencia</dt>
-                  <dd class="mt-1 font-mono font-semibold text-[var(--ff-text-secondary)]">{{ formatCurrency(row.totalTransfer) }}</dd>
+                <div
+                  class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+                >
+                  <dt class="text-xs text-[var(--ff-text-muted)]">
+                    Transferencia
+                  </dt>
+                  <dd
+                    class="mt-1 font-mono font-semibold text-[var(--ff-text-secondary)]"
+                  >
+                    {{ formatCurrency(row.totalTransfer) }}
+                  </dd>
                 </div>
-                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3 col-span-2">
+                <div
+                  class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3 col-span-2"
+                >
                   <dt class="text-xs text-[var(--ff-text-muted)]">Cobros</dt>
-                  <dd class="mt-1 font-semibold text-[var(--ff-text-secondary)]">{{ row.paymentsCount }}</dd>
+                  <dd
+                    class="mt-1 font-semibold text-[var(--ff-text-secondary)]"
+                  >
+                    {{ row.paymentsCount }}
+                  </dd>
                 </div>
               </dl>
 
               @if (collectionReport.summary.grandTotal > 0) {
-                <div class="mt-3 h-1 overflow-hidden rounded-full bg-[var(--ff-secondary)]">
+                <div
+                  class="mt-3 h-1 overflow-hidden rounded-full bg-[var(--ff-secondary)]"
+                >
                   <div
                     class="h-full bg-blue-500 rounded-full"
-                    [style.width.%]="(row.total / collectionReport.summary.grandTotal) * 100"
+                    [style.width.%]="
+                      (row.total / collectionReport.summary.grandTotal) * 100
+                    "
                   ></div>
                 </div>
               }

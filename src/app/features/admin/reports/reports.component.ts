@@ -31,6 +31,7 @@ import { UpcomingReportComponent } from './tabs/upcoming-report/upcoming-report.
     ActiveTabScrollerDirective,
   ],
   templateUrl: './reports.component.html',
+  styleUrl: './reports.component.scss',
 })
 export class ReportsComponent implements OnInit, OnDestroy {
   private readonly header = inject(HeaderService);

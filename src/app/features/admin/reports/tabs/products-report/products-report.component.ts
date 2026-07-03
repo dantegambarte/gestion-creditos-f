@@ -2,8 +2,10 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FfBackTopFabComponent } from './../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -21,8 +23,10 @@ import { ReportsService } from '../../reports.service';
     FfBackTopFabComponent,
     FormsModule,
     ButtonModule,
+    DropdownModule,
     InputNumberModule,
     InputSwitchModule,
+    InputTextModule,
     LoadingStateComponent,
     ErrorStateComponent,
     SkeletonModule,
@@ -39,6 +43,14 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
   error: AppError | null = null;
   stockThreshold: number | null = null;
   onlyWithSales = false;
+  searchText = '';
+  stockMode: 'ALL' | 'LOW' | 'OUT' | 'AVAILABLE' = 'ALL';
+  readonly stockModeOptions = [
+    { label: 'Todos los stocks', value: 'ALL' as const },
+    { label: 'Con stock', value: 'AVAILABLE' as const },
+    { label: 'Stock bajo', value: 'LOW' as const },
+    { label: 'Sin stock', value: 'OUT' as const },
+  ];
 
   ngOnInit(): void {
     this.fetchProducts();
@@ -53,9 +65,23 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
    * Devuelve las filas filtradas según el toggle "Solo con ventas".
    */
   get filteredProductRows(): ProductReportRow[] {
-    return this.onlyWithSales
-      ? this.productRows.filter((r) => r.timesSold > 0)
-      : this.productRows;
+    const term = this.searchText.trim().toLowerCase();
+    return this.productRows.filter((row) => {
+      if (this.onlyWithSales && row.timesSold <= 0) return false;
+      if (
+        term &&
+        !`${row.title} ${row.description}`.toLowerCase().includes(term)
+      ) {
+        return false;
+      }
+      if (this.stockMode === 'OUT') return row.availableCount === 0;
+      if (this.stockMode === 'AVAILABLE') return row.availableCount > 0;
+      if (this.stockMode === 'LOW') {
+        const threshold = this.stockThreshold ?? 5;
+        return row.availableCount > 0 && row.availableCount <= threshold;
+      }
+      return true;
+    });
   }
 
   /**

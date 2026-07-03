@@ -29,9 +29,11 @@
   >
     @for (tab of TABS; track tab.id) {
       <button
+        type="button"
         (click)="setTab(tab.id)"
         class="ff-tab"
         [class.ff-tab--active]="activeTab === tab.id"
+        [attr.aria-selected]="activeTab === tab.id"
       >
         <i [class]="tab.icon + ' text-xs'"></i>
         {{ tab.label }}

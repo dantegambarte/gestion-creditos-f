@@ -2067,6 +2067,16 @@ table.ff-table {
     scrollbar-width: none;
   }
 
+  .config-mobile-tabs::before,
+  .config-mobile-tabs::after,
+  .commissions-mobile-tabs::before,
+  .commissions-mobile-tabs::after,
+  .reports-mobile-tabs::before,
+  .reports-mobile-tabs::after {
+    content: "";
+    flex: 0 0 max(1rem, calc(50vw - 4rem));
+  }
+
   .config-mobile-tabs::-webkit-scrollbar,
   .commissions-mobile-tabs::-webkit-scrollbar,
   .reports-mobile-tabs::-webkit-scrollbar {

@@ -1,0 +1,20 @@
+@media (max-width: 768px) {
+  :host ::ng-deep .reports-mobile-tabs {
+    margin-inline: -1rem;
+    padding-inline: 0;
+    scroll-padding-inline: 0.75rem;
+  }
+
+  :host ::ng-deep .reports-mobile-tabs::before,
+  :host ::ng-deep .reports-mobile-tabs::after {
+    content: none;
+  }
+
+  :host ::ng-deep .reports-mobile-tabs .ff-tab:first-child {
+    margin-left: 1rem;
+  }
+
+  :host ::ng-deep .reports-mobile-tabs .ff-tab:last-child {
+    margin-right: 1rem;
+  }
+}

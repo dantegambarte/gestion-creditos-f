@@ -39,17 +39,26 @@
   }
 
   @if (loading) {
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4" data-cy="cash-conversions-report-skeleton">
+    <div
+      class="grid grid-cols-2 gap-3 lg:grid-cols-4"
+      data-cy="cash-conversions-report-skeleton"
+    >
       @for (_ of [1, 2, 3, 4]; track _) {
-        <div class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4">
+        <div
+          class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        >
           <p-skeleton width="70%" height="0.7rem" />
           <p-skeleton width="55%" height="1.4rem" />
         </div>
       }
     </div>
-    <div class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]">
+    <div
+      class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+    >
       @for (_ of [1, 2, 3, 4, 5]; track _) {
-        <div class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0">
+        <div
+          class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0"
+        >
           <p-skeleton width="5rem" height="0.9rem" />
           <p-skeleton width="6rem" height="0.9rem" />
           <p-skeleton width="7rem" height="0.9rem" />
@@ -61,16 +70,21 @@
   } @else if (error) {
     <app-error-state [message]="error.message" />
   } @else if (report) {
-    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div
+      class="grid gap-3 md:grid-cols-2 lg:grid-cols-4"
+      data-cy="cash-conversions-summary"
+    >
       <div
-        class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+        class="space-y-1 rounded-xl border border-[#2F4D84] bg-gradient-to-br from-[#111827] to-[#172033] p-4 md:border-[var(--ff-border-subtle)] md:bg-[var(--ff-panel)]"
       >
         <p
           class="text-[10px] uppercase tracking-widest text-[var(--ff-text-secondary)]"
         >
           Conversiones
         </p>
-        <p class="text-xl font-extrabold text-[var(--ff-text-primary)]">
+        <p
+          class="text-3xl font-extrabold text-[var(--ff-text-primary)] md:text-xl"
+        >
           {{ report.summary.totalConversions }}
         </p>
       </div>
@@ -83,7 +97,7 @@
           Monto total
         </p>
         <p
-          class="font-mono text-xl font-extrabold text-[var(--ff-text-primary)]"
+          class="font-mono text-2xl font-extrabold text-[var(--ff-text-primary)] md:text-xl"
         >
           {{ formatCurrency(report.summary.totalAmount) }}
         </p>
@@ -126,7 +140,10 @@
       <div
         class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
       >
-        <table class="hidden w-full text-sm md:table" data-cy="cash-conversions-report-table">
+        <table
+          class="hidden w-full text-sm md:table"
+          data-cy="cash-conversions-report-table"
+        >
           <thead>
             <tr class="border-b border-[var(--ff-border-subtle)]">
               <th
@@ -192,32 +209,56 @@
           </tbody>
         </table>
 
-        <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="cash-conversions-report-mobile-list">
+        <div
+          class="flex flex-col gap-3 p-3 md:hidden"
+          data-cy="cash-conversions-report-mobile-list"
+        >
           @for (row of report.rows; track row.id) {
             <article
               class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
               data-cy="cash-conversions-report-mobile-card"
             >
               <div class="flex items-center justify-between gap-3">
-                <p class="text-sm font-semibold text-[var(--ff-text-secondary)]">{{ formatDate(row.registerDate) }}</p>
-                <p class="font-mono text-sm font-semibold text-blue-400">{{ formatCurrency(row.amount) }}</p>
+                <p
+                  class="text-sm font-semibold text-[var(--ff-text-secondary)]"
+                >
+                  {{ formatDate(row.registerDate) }}
+                </p>
+                <p class="font-mono text-sm font-semibold text-blue-400">
+                  {{ formatCurrency(row.amount) }}
+                </p>
               </div>
               <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
-                {{ methodLabel(row.sourceMethod) }} → {{ methodLabel(row.targetMethod) }}
+                {{ methodLabel(row.sourceMethod) }} →
+                {{ methodLabel(row.targetMethod) }}
               </p>
 
-              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
-                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+              <dl class="mt-3 grid grid-cols-1 gap-3 text-sm">
+                <div
+                  class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+                >
                   <dt class="text-xs text-[var(--ff-text-muted)]">Criterio</dt>
-                  <dd class="mt-1 truncate font-semibold">{{ criteriaLabel(row.criteria) }}</dd>
+                  <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">
+                    {{ criteriaLabel(row.criteria) }}
+                  </dd>
                 </div>
-                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                <div
+                  class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+                >
                   <dt class="text-xs text-[var(--ff-text-muted)]">Usuario</dt>
-                  <dd class="mt-1 truncate font-semibold">{{ row.createdByName }}</dd>
+                  <dd
+                    class="mt-1 break-words font-semibold text-[var(--ff-text-primary)]"
+                  >
+                    {{ row.createdByName }}
+                  </dd>
                 </div>
                 @if (row.notes) {
-                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3 col-span-2">
-                    <dt class="text-xs text-[var(--ff-text-muted)]">Observación</dt>
+                  <div
+                    class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+                  >
+                    <dt class="text-xs text-[var(--ff-text-muted)]">
+                      Observación
+                    </dt>
                     <dd class="mt-1">{{ row.notes }}</dd>
                   </div>
                 }
@@ -225,7 +266,10 @@
             </article>
           }
         </div>
-        <ff-back-top-fab [itemCount]="report.rows.length" dataCy="cash-conversions-back-top-action" />
+        <ff-back-top-fab
+          [itemCount]="report.rows.length"
+          dataCy="cash-conversions-back-top-action"
+        />
       </div>
     }
   }
