@@ -71,10 +71,11 @@
           <tr>
             <th>Tipo</th>
             <th>Cliente</th>
-            <th>Monto total</th>
-            <th>Cuotas</th>
+            <th>Total a devolver</th>
             <th>Estado</th>
-            <th>Fecha de alta</th>
+            <th>Vendedor</th>
+            <th>Creación</th>
+            <th>Aprobación</th>
             <th></th>
           </tr>
         </ng-template>
@@ -98,15 +99,24 @@
               </div>
             </td>
             <td class="ff-mono font-semibold" style="color: var(--ff-accent)">
-              {{ credit.totalAmount | currencyArs: 2 }}
-            </td>
-            <td style="color: var(--ff-text-secondary)">
-              @if (credit.paymentCondition === "CASH") {
-                Pago único
-              } @else {
-                {{ credit.installmentsCount }} cuotas
-                {{ frequencyLabel(credit.paymentFrequency) }}s
-              }
+              <div>
+                {{
+                  credit.totalToReturn != null
+                    ? (credit.totalToReturn | currencyArs: 2)
+                    : "—"
+                }}
+              </div>
+              <div
+                class="text-[11px] font-normal"
+                style="color: var(--ff-text-muted)"
+              >
+                @if (credit.paymentCondition === "CASH") {
+                  Pago único
+                } @else {
+                  {{ credit.installmentsCount }} cuotas
+                  {{ frequencyLabel(credit.paymentFrequency) }}s
+                }
+              </div>
             </td>
             <td>
               <span
@@ -127,7 +137,22 @@
               >
             </td>
             <td style="color: var(--ff-text-secondary)">
+              <div>{{ credit.createdByName || "Sin asignar" }}</div>
+              @if (credit.collectorName) {
+                <div class="text-[11px]" style="color: var(--ff-text-muted)">
+                  Cobrador: {{ credit.collectorName }}
+                </div>
+              } @else {
+                <div class="mt-0.5 flex items-center gap-1 text-[11px] text-amber-500">
+                  <i class="pi pi-exclamation-triangle"></i> Sin cobrador
+                </div>
+              }
+            </td>
+            <td style="color: var(--ff-text-secondary)">
               {{ credit.createdAt | date: "dd/MM/yyyy" }}
+            </td>
+            <td style="color: var(--ff-text-secondary)">
+              {{ credit.approvedAt ? (credit.approvedAt | date: "dd/MM/yyyy") : "—" }}
             </td>
             <td>
               <p-button

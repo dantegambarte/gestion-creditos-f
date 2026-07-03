@@ -78,9 +78,13 @@
 
       <div class="flex flex-wrap items-center gap-5 xl:gap-6 text-sm">
         <div>
-          <div class="ud-label text-xs">Monto total</div>
+          <div class="ud-label text-xs">Monto total a devolver</div>
           <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
-            {{ credit.totalAmount | currencyArs: 0 }}
+            {{
+              credit.installments.length > 0
+                ? (totalToReturn | currencyArs: 0)
+                : "—"
+            }}
           </div>
         </div>
         @if (!isCashSale) {
@@ -211,10 +215,6 @@
       <div class="ff-panel p-4">
         <h3 class="font-semibold mb-4" style="color: var(--ff-text-primary)">Detalles financieros</h3>
         <div class="grid grid-cols-2 gap-4">
-          <div>
-            <div class="ud-label">Monto total</div>
-            <div class="ud-value ff-mono">{{ credit.totalAmount | currencyArs: 0 }}</div>
-          </div>
           @if (isCashSale) {
             <div>
               <div class="ud-label">Forma de pago</div>
