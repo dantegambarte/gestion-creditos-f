@@ -219,6 +219,20 @@
               }
             </div>
 
+            <div>
+              <label
+                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-secondary)]"
+              >
+                Dirección
+              </label>
+              <input
+                pInputText
+                [(ngModel)]="quickRegisterDraft.address"
+                class="mt-2 h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)]"
+                placeholder="Ej: Av. Corrientes 1234"
+              />
+            </div>
+
             <div class="grid gap-4 md:grid-cols-2">
               <div>
                 <label
