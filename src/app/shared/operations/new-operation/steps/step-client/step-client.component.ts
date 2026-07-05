@@ -46,6 +46,7 @@ export class StepClientComponent implements OnChanges {
   quickRegisterDraft = {
     fullName: '',
     dni: '',
+    address: '',
     phone: '',
     email: '',
   };
@@ -146,7 +147,7 @@ export class StepClientComponent implements OnChanges {
    */
   get quickRegisterDniIsValid(): boolean {
     const dni = this.getNormalizedDni(this.quickRegisterDraft.dni);
-    return dni.length >= 7 && dni.length <= 8;
+    return dni.length >= 7 && dni.length <= 9;
   }
 
   /**
@@ -228,6 +229,7 @@ export class StepClientComponent implements OnChanges {
     this.quickRegisterSubmitted.emit({
       fullName: this.quickRegisterDraft.fullName.trim(),
       dni: this.getNormalizedDni(this.quickRegisterDraft.dni),
+      address: this.quickRegisterDraft.address.trim() || undefined,
       phone: this.quickRegisterDraft.phone.trim() || undefined,
       email: this.quickRegisterDraft.email.trim() || undefined,
     });
@@ -250,7 +252,7 @@ export class StepClientComponent implements OnChanges {
    */
   getQuickRegisterError(field: 'fullName' | 'dni' | 'email'): string {
     if (field === 'fullName') return 'Ingresá nombre y apellido.';
-    if (field === 'dni') return 'Ingresá un DNI válido de 7 u 8 dígitos.';
+    if (field === 'dni') return 'Ingresá un DNI válido de 7 a 9 dígitos.';
     return 'Ingresá un email válido o dejalo vacío.';
   }
 
@@ -275,6 +277,7 @@ export class StepClientComponent implements OnChanges {
     this.quickRegisterDraft = {
       fullName: '',
       dni: '',
+      address: '',
       phone: '',
       email: '',
     };
