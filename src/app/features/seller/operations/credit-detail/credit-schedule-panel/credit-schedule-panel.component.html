@@ -91,6 +91,7 @@
               <th class="text-right">Monto</th>
               <th>Método</th>
               <th>Tipo</th>
+              <th>Cobrado por</th>
               <th>Aprobado por</th>
               <th>Fecha</th>
             </tr>
@@ -118,6 +119,9 @@
                 } @else {
                   <span class="ff-badge ff-badge--pagado">Normal</span>
                 }
+              </td>
+              <td class="text-sm text-[var(--ff-text-secondary)]">
+                {{ p.collectorName ?? "—" }}
               </td>
               <td class="text-sm text-[var(--ff-text-secondary)]">
                 {{ p.approverName ?? "—" }}
@@ -404,6 +408,14 @@
                     style="color: var(--ff-text-primary)"
                   >
                     {{ selectedInstallment.paidAt | date: "dd/MM/yyyy" }}
+                  </span>
+                </div>
+              }
+              @if (selectedInstallment.paidByName) {
+                <div class="flex items-center justify-between">
+                  <span class="ud-label text-xs">Cobrado por</span>
+                  <span class="text-sm" style="color: var(--ff-text-primary)">
+                    {{ selectedInstallment.paidByName }}
                   </span>
                 </div>
               }

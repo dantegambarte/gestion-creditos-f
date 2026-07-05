@@ -79,6 +79,7 @@ function toInstallment(raw: CreditInstallmentRaw): CreditInstallment {
     paidAt: raw.paid_at ?? null,
     generationType: raw.generation_type ?? null,
     paidMethod: raw.paid_method ?? null,
+    paidByName: raw.paid_by_name ?? null,
   };
 }
 

@@ -78,9 +78,13 @@
 
       <div class="flex flex-wrap items-center gap-5 xl:gap-6 text-sm">
         <div>
-          <div class="ud-label text-xs">Monto total</div>
+          <div class="ud-label text-xs">Monto total a devolver</div>
           <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
-            {{ credit.totalAmount | currencyArs: 0 }}
+            {{
+              credit.installments.length > 0
+                ? (totalToReturn | currencyArs: 0)
+                : "—"
+            }}
           </div>
         </div>
         @if (!isCashSale) {
@@ -211,10 +215,6 @@
       <div class="ff-panel p-4">
         <h3 class="font-semibold mb-4" style="color: var(--ff-text-primary)">Detalles financieros</h3>
         <div class="grid grid-cols-2 gap-4">
-          <div>
-            <div class="ud-label">Monto total</div>
-            <div class="ud-value ff-mono">{{ credit.totalAmount | currencyArs: 0 }}</div>
-          </div>
           @if (isCashSale) {
             <div>
               <div class="ud-label">Forma de pago</div>
@@ -249,32 +249,34 @@
               </div>
             }
           } @else {
-            <div>
-              <div class="ud-label">Monto financiado</div>
-              <div class="ud-value ff-mono">{{ credit.financedAmount | currencyArs: 0 }}</div>
-            </div>
-            <div>
-              <div class="ud-label">Tasa de interés</div>
-              <div class="ud-value">
-                @if (effectiveRate != null) {
-                  {{ (effectiveRate * 100).toFixed(2) }}%
-                } @else if (credit.type === 'SALE' && credit.status === 'PENDING_APPROVAL') {
-                  Se definirá al aprobar
-                } @else {
-                  <span style="color: var(--ff-text-muted)">—</span>
-                }
+            @if (canViewFinancialData) {
+              <div>
+                <div class="ud-label">Monto financiado</div>
+                <div class="ud-value ff-mono">{{ credit.financedAmount | currencyArs: 0 }}</div>
               </div>
-            </div>
-            <div>
-              <div class="ud-label">Total de interés</div>
-              <div class="ud-value ff-mono">
-                @if (credit.installments.length > 0) {
-                  {{ totalInterest | currencyArs: 0 }}
-                } @else {
-                  <span style="color: var(--ff-text-muted)">—</span>
-                }
+              <div>
+                <div class="ud-label">Tasa de interés</div>
+                <div class="ud-value">
+                  @if (effectiveRate != null) {
+                    {{ (effectiveRate * 100).toFixed(2) }}%
+                  } @else if (credit.type === 'SALE' && credit.status === 'PENDING_APPROVAL') {
+                    Se definirá al aprobar
+                  } @else {
+                    <span style="color: var(--ff-text-muted)">—</span>
+                  }
+                </div>
               </div>
-            </div>
+              <div>
+                <div class="ud-label">Total de interés</div>
+                <div class="ud-value ff-mono">
+                  @if (credit.installments.length > 0) {
+                    {{ totalInterest | currencyArs: 0 }}
+                  } @else {
+                    <span style="color: var(--ff-text-muted)">—</span>
+                  }
+                </div>
+              </div>
+            }
             <div>
               <div class="ud-label">Total a devolver</div>
               <div class="ud-value ff-mono">
@@ -348,8 +350,10 @@
                 <th>Producto</th>
                 <th>Variante</th>
                 <th>Código</th>
-                <th class="text-right">Precio hist.</th>
-                <th class="text-right">Tasa</th>
+                @if (canViewFinancialData) {
+                  <th class="text-right">Precio hist.</th>
+                  <th class="text-right">Tasa</th>
+                }
               </tr>
             </ng-template>
             <ng-template pTemplate="body" let-u>
@@ -357,14 +361,16 @@
                 <td>{{ u.productName }}</td>
                 <td style="color: var(--ff-text-secondary)">{{ variantLabel(u) }}</td>
                 <td class="ff-mono font-semibold">{{ u.unitCode }}</td>
-                <td class="text-right ff-mono">{{ u.historicalPrice | currencyArs: 0 }}</td>
-                <td class="text-right ff-mono">
-                  @if (u.historicalRate !== null) {
-                    {{ (u.historicalRate * 100).toFixed(0) }}%
-                  } @else {
-                    <span style="color: var(--ff-text-muted)">—</span>
-                  }
-                </td>
+                @if (canViewFinancialData) {
+                  <td class="text-right ff-mono">{{ u.historicalPrice | currencyArs: 0 }}</td>
+                  <td class="text-right ff-mono">
+                    @if (u.historicalRate !== null) {
+                      {{ (u.historicalRate * 100).toFixed(0) }}%
+                    } @else {
+                      <span style="color: var(--ff-text-muted)">—</span>
+                    }
+                  </td>
+                }
               </tr>
             </ng-template>
           </p-table>
