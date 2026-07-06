@@ -85,10 +85,10 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   filterUsed: CollectionFilter | null = null;
 
   readonly filterUsedOptions: { label: string; value: CollectionFilter }[] = [
-    { label: 'Solo vencidas', value: 'OVERDUE' },
-    { label: 'Del día', value: 'TODAY' },
-    { label: 'Vencidas + hoy', value: 'TODAY_AND_OVERDUE' },
-    { label: 'Todas pendientes', value: 'ALL_PENDING' },
+    { label: 'Trabajo Diario', value: 'TODAY_AND_OVERDUE' },
+    { label: 'Solo hoy', value: 'TODAY' },
+    { label: 'Vencidas sin agenda', value: 'OVERDUE' },
+    { label: 'Todas las pendientes', value: 'ALL_PENDING' },
   ];
 
   get visibleSheets(): CollectionSheet[] {
