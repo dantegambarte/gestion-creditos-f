@@ -168,7 +168,24 @@
               (click)="selectInstallment(inst)"
             >
               <td class="ff-mono">{{ inst.installmentNumber }}</td>
-              <td class="ff-mono">{{ inst.dueDate | date: "dd/MM/yyyy" }}</td>
+              <td class="ff-mono">
+                <div>{{ inst.dueDate | date: "dd/MM/yyyy" }}</div>
+                @if (inst.nextVisitDate) {
+                  <div
+                    class="mt-0.5 flex items-center gap-1 text-[11px] leading-tight"
+                    style="color: var(--ff-text-secondary)"
+                    [pTooltip]="
+                      inst.nextVisitScheduledByName
+                        ? 'Programada por: ' + inst.nextVisitScheduledByName
+                        : ''
+                    "
+                    tooltipPosition="top"
+                  >
+                    <i class="pi pi-calendar-plus text-[10px]"></i>
+                    Próx. visita: {{ formatIsoDate(inst.nextVisitDate) }}
+                  </div>
+                }
+              </td>
               <td class="text-right ff-mono">
                 {{ inst.amountDue | currencyArs: 0 }}
               </td>
@@ -450,6 +467,29 @@
             </div>
           }
 
+          @if (selectedInstallment.nextVisitDate) {
+            <div
+              class="space-y-0.5 border-b px-4 py-3"
+              style="border-color: var(--ff-border)"
+            >
+              <div class="ud-label text-xs">Próxima visita</div>
+              <div
+                class="text-sm ff-mono"
+                style="color: var(--ff-text-primary)"
+              >
+                {{ formatIsoDate(selectedInstallment.nextVisitDate) }}
+              </div>
+              @if (selectedInstallment.nextVisitScheduledByName) {
+                <div
+                  class="text-[11px] leading-tight"
+                  style="color: var(--ff-text-secondary)"
+                >
+                  Programada por: {{ selectedInstallment.nextVisitScheduledByName }}
+                </div>
+              }
+            </div>
+          }
+
           @if (canActOnInstallments) {
             <div class="flex flex-col gap-2 px-4 py-3">
               @if (selectedInstallment.status === "OVERDUE") {
@@ -512,4 +552,5 @@
 <app-schedule-visit-dialog
   [(visible)]="showScheduleVisitDialog"
   [installment]="scheduleVisitInstallment"
+  (scheduled)="reloadNeeded.emit()"
 />

@@ -80,6 +80,8 @@ function toInstallment(raw: CreditInstallmentRaw): CreditInstallment {
     generationType: raw.generation_type ?? null,
     paidMethod: raw.paid_method ?? null,
     paidByName: raw.paid_by_name ?? null,
+    nextVisitDate: raw.next_visit_date ?? null,
+    nextVisitScheduledByName: raw.next_visit_scheduled_by_name ?? null,
   };
 }
 
