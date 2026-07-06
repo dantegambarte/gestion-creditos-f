@@ -146,6 +146,7 @@
             <tr>
               <th>Nº</th>
               <th>Vencimiento</th>
+              <th>Próx. visita</th>
               <th class="text-right">Monto</th>
               <th class="text-right">Pagado</th>
               <th class="text-right">Mora</th>
@@ -168,22 +169,20 @@
               (click)="selectInstallment(inst)"
             >
               <td class="ff-mono">{{ inst.installmentNumber }}</td>
+              <td class="ff-mono">{{ inst.dueDate | date: "dd/MM/yyyy" }}</td>
               <td class="ff-mono">
-                <div>{{ inst.dueDate | date: "dd/MM/yyyy" }}</div>
                 @if (inst.nextVisitDate) {
-                  <div
-                    class="mt-0.5 flex items-center gap-1 text-[11px] leading-tight"
-                    style="color: var(--ff-text-secondary)"
-                    [pTooltip]="
-                      inst.nextVisitScheduledByName
-                        ? 'Programada por: ' + inst.nextVisitScheduledByName
-                        : ''
-                    "
-                    tooltipPosition="top"
-                  >
-                    <i class="pi pi-calendar-plus text-[10px]"></i>
-                    Próx. visita: {{ formatIsoDate(inst.nextVisitDate) }}
-                  </div>
+                  <div>{{ formatIsoDate(inst.nextVisitDate) }}</div>
+                  @if (inst.nextVisitScheduledByName) {
+                    <div
+                      class="mt-0.5 text-[11px] leading-tight"
+                      style="color: var(--ff-text-secondary)"
+                    >
+                      Prog. por: {{ inst.nextVisitScheduledByName }}
+                    </div>
+                  }
+                } @else {
+                  <span style="color: var(--ff-text-muted)">-</span>
                 }
               </td>
               <td class="text-right ff-mono">
