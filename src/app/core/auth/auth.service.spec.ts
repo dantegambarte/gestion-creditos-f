@@ -11,8 +11,11 @@ import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { AuthUser } from '../models/interface/auth-user';
 import { Roles } from '../../shared/models/enums/roles.enum';
+import { environment } from '../../../environments/environment';
 
-const API = 'http://localhost:3000/api';
+// Base tomada del environment activo en tests (relativa: '/api'), no hardcodeada,
+// para que el spec siga a la app si cambia la baseURL.
+const API = environment.apiBaseUrl;
 
 const mockLoginResponse = {
   ok: true,
