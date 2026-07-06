@@ -59,12 +59,14 @@ export class SheetComponent implements OnInit, OnDestroy {
   selectedCollectorId: string | null = null;
 
   selectedDate: string = '';
-  selectedFilter: CollectionFilter = 'OVERDUE';
+  // Trabajo Diario: filtro recomendado para el día a día (incluye todo lo
+  // accionable hoy, mora incluida). Es el default para no dejar cuotas sin trabajar.
+  selectedFilter: CollectionFilter = 'TODAY_AND_OVERDUE';
   filterOptions: { label: string; value: CollectionFilter }[] = [
-    { label: 'Solo vencidas', value: 'OVERDUE' },
-    { label: 'Del día', value: 'TODAY' },
-    { label: 'Vencidas + hoy', value: 'TODAY_AND_OVERDUE' },
-    { label: 'Todas pendientes', value: 'ALL_PENDING' },
+    { label: 'Trabajo Diario (recomendado)', value: 'TODAY_AND_OVERDUE' },
+    { label: 'Solo hoy', value: 'TODAY' },
+    { label: 'Vencidas sin agenda', value: 'OVERDUE' },
+    { label: 'Todas las pendientes', value: 'ALL_PENDING' },
   ];
 
   generating = false;
