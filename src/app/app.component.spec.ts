@@ -1,5 +1,7 @@
 ﻿import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MessageService } from 'primeng/api';
 import { MockAuthService } from './core/auth/mock-auth.service';
 import { AuthServiceBase } from './core/auth/auth-service.base';
@@ -11,6 +13,11 @@ describe('AppComponent', () => {
       imports: [AppComponent],
       providers: [
         provideRouter([]),
+        // NotificationsService (vía el árbol de inyección del layout) necesita
+        // HttpClient; proveerlo hace este spec autosuficiente e independiente
+        // del orden aleatorio de ejecución de Jasmine.
+        provideHttpClient(),
+        provideHttpClientTesting(),
         MessageService,
         MockAuthService,
         { provide: AuthServiceBase, useExisting: MockAuthService },
