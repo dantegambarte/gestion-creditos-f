@@ -79,6 +79,10 @@ export interface CreditInstallment {
   paidMethod: string | null;
   /** Nombre de quien cobró la cuota, derivado del último pago aprobado. */
   paidByName: string | null;
+  /** Fecha de próxima visita agendada (YYYY-MM-DD), derivada de la última gestión. */
+  nextVisitDate: string | null;
+  /** Nombre de quien programó esa visita (admin o cobrador). */
+  nextVisitScheduledByName: string | null;
 }
 
 export interface CreditProduct {
@@ -285,6 +289,8 @@ export interface CreditInstallmentRaw {
   generation_type?: string | null;
   paid_method?: string | null;
   paid_by_name?: string | null;
+  next_visit_date?: string | null;
+  next_visit_scheduled_by_name?: string | null;
 }
 
 export interface CreditProductRaw {
