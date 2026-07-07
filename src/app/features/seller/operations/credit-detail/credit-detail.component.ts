@@ -379,6 +379,20 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     return map[frequency] ?? frequency;
   }
 
+  /**
+   * Devuelve la unidad de período para el sufijo del importe de cuota
+   * (ej. "$X / semana"). Evita el "/ mes" hardcodeado en frecuencias no mensuales.
+   * @param frequency Frecuencia de pago
+   */
+  frequencyUnitLabel(frequency: string): string {
+    const map: Record<string, string> = {
+      WEEKLY: 'semana',
+      BIWEEKLY: 'quincena',
+      MONTHLY: 'mes',
+    };
+    return map[frequency] ?? '';
+  }
+
   openApproveDialog(): void {
     this.showApproveDialog = true;
   }
