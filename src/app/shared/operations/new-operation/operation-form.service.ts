@@ -1449,7 +1449,11 @@ export class OperationFormService {
   }
 
   /**
-   * Calcula la primera cuota aplicando días corridos desde la aprobación.
+   * Calcula la primera cuota desde la aprobación según la frecuencia. MENSUAL
+   * avanza por MES CALENDARIO (mismo día del mes siguiente), igual que el
+   * backend (creditCalculator.addFrequencyPeriods). Antes usaba 30 días
+   * corridos, lo que desfasaba un día las cuotas mensuales respecto del
+   * cronograma real que genera el backend.
    * @param {Date} approvalDate - Fecha base de aprobación de la operación.
    * @param {'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'} frequency - Frecuencia elegida del plan.
    * @returns {Date} Primera fecha de vencimiento resultante.
@@ -1471,7 +1475,7 @@ export class OperationFormService {
       return dueDate;
     }
 
-    dueDate.setDate(dueDate.getDate() + 30);
+    dueDate.setMonth(dueDate.getMonth() + 1);
     return dueDate;
   }
 

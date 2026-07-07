@@ -226,7 +226,7 @@ describe('OperationFormService', () => {
     expect(service.operationForm.controls.advancedInstallmentsMethod.value).toBeNull();
   });
 
-  it('calcula la primera cuota mensual a 30 días corridos desde aprobación — CR-25', () => {
+  it('calcula la primera cuota mensual por mes calendario desde aprobación — CR-25', () => {
     const approvalDate = new Date(2026, 0, 1);
 
     const result = service.getFirstPaymentDateFromApprovalRule(
@@ -234,6 +234,7 @@ describe('OperationFormService', () => {
       'MONTHLY',
     );
 
-    expect(service.toApiDate(result)).toBe('2026-01-31');
+    // Mes calendario (mismo día del mes siguiente), igual que el backend.
+    expect(service.toApiDate(result)).toBe('2026-02-01');
   });
 });
