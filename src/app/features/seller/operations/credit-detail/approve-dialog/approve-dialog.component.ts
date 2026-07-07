@@ -41,7 +41,6 @@ export class ApproveDialogComponent implements OnChanges {
   /** Emite el crédito con el vendedor ya reasignado (antes de aprobar). */
   @Output() sellerChanged = new EventEmitter<CreditDetail>();
 
-  installmentsCount: number | null = null;
   processing = false;
 
   // Cambio de vendedor antes de aprobar (mismo patrón que la pantalla de aprobaciones).
@@ -62,14 +61,6 @@ export class ApproveDialogComponent implements OnChanges {
       this.showChangeSeller = false;
       this.selectedSellerId = null;
     }
-  }
-
-  /**
-   * Indica si la operación en aprobación es una venta y debe usar las cuotas ya definidas.
-   * @returns {boolean} True cuando no corresponde ajustar cuotas manualmente.
-   */
-  get usesFixedInstallments(): boolean {
-    return this.credit?.type === 'SALE';
   }
 
   /** Nombre del vendedor actual del crédito. */
@@ -150,7 +141,8 @@ export class ApproveDialogComponent implements OnChanges {
   }
 
   /**
-   * Ejecuta la aprobación; si se modificó la cantidad de cuotas, la incluye en el payload.
+   * Ejecuta la aprobación con las cuotas ya definidas en la pre-operación
+   * (tanto venta como préstamo son de solo lectura acá; no se ajustan al aprobar).
    */
   confirm(): void {
     if (!this.credit) return;
@@ -167,14 +159,8 @@ export class ApproveDialogComponent implements OnChanges {
     }
 
     this.processing = true;
-    const payload = this.usesFixedInstallments
-      ? {}
-      : this.installmentsCount !== null &&
-          this.installmentsCount !== this.credit.installmentsCount
-        ? { installmentsCount: this.installmentsCount }
-        : {};
 
-    this.creditsSvc.approve(this.credit.id, payload).subscribe({
+    this.creditsSvc.approve(this.credit.id, {}).subscribe({
       next: (updated) => {
         this.processing = false;
         this.close();

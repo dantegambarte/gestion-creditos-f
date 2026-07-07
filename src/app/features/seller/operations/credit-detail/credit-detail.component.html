@@ -99,7 +99,7 @@
           <div>
             <div class="ud-label text-xs">Cuota</div>
             <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
-              {{ installmentAmount | currencyArs: 0 }} / mes
+              {{ installmentAmount | currencyArs: 0 }} / {{ frequencyUnitLabel(credit.paymentFrequency) }}
             </div>
           </div>
         }
