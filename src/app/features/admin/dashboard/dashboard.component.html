@@ -89,9 +89,9 @@
     <div class="db-panel">
       <div class="db-panel__header">
         <div class="db-panel__title-stack">
-          <span>Ranking de cuotas vencidas</span>
+          <span>Ranking de clientes en mora</span>
           <span class="db-panel__subtitle">
-            Cuota más antigua por cliente. Puede haber más vencidas.
+            Top 5 por monto total de mora (misma definición que el KPI).
           </span>
         </div>
       </div>
@@ -106,10 +106,9 @@
         >
           <ng-template pTemplate="header">
             <tr>
-              <th>Vencimiento</th>
               <th>Días</th>
               <th>Cliente</th>
-              <th>Cuota</th>
+              <th>Cuotas</th>
               <th class="text-right">Monto</th>
               <th>Estado</th>
             </tr>
@@ -117,12 +116,11 @@
 
           <ng-template pTemplate="body" let-inst>
             <tr>
-              <td>{{ inst.dueDate | date: "dd/MM/yyyy" }}</td>
               <td>
                 <span class="ff-text-danger">{{ inst.daysOverdue }} días</span>
               </td>
               <td class="db-td--client">{{ inst.customerName }}</td>
-              <td>{{ inst.installmentNumber }}</td>
+              <td>{{ inst.overdueCount }}</td>
               <td class="text-right db-td--amount">
                 {{ inst.amountDue - inst.amountPaid | currencyArs: 2 }}
               </td>
@@ -138,7 +136,7 @@
 
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="6" class="db-empty">
+              <td colspan="5" class="db-empty">
                 @if (upcomingError) {
                   No se pudieron cargar los vencimientos.
                 } @else {
@@ -170,7 +168,11 @@
             @for (inst of upcomingInstallments; track inst.id) {
               <article class="db-overdue-card">
                 <div class="db-overdue-card__top">
-                  <span>{{ inst.dueDate | date: "dd/MM/yyyy" }}</span>
+                  <span
+                    >{{ inst.overdueCount }} cuota{{
+                      inst.overdueCount === 1 ? "" : "s"
+                    }}</span
+                  >
                   <span class="ff-text-danger"
                     >{{ inst.daysOverdue }} días</span
                   >
@@ -179,7 +181,7 @@
                   inst.customerName
                 }}</strong>
                 <div class="db-overdue-card__meta">
-                  <span>Cuota {{ inst.installmentNumber }}</span>
+                  <span>Mora total</span>
                   <span>{{
                     inst.amountDue - inst.amountPaid | currencyArs: 2
                   }}</span>
