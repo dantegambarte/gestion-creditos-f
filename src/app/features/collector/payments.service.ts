@@ -53,6 +53,7 @@ function toPayment(raw: PaymentRaw): Payment {
     adminDirect: raw.admin_direct ?? false,
     parentPaymentId: raw.parent_payment_id ?? null,
     reversalPaymentId: raw.reversal_payment_id ?? null,
+    concepto: raw.concepto,
   };
 }
 
@@ -146,6 +147,8 @@ export class PaymentsService {
     if (filters?.collectorId) params['collector_id'] = filters.collectorId;
     if (filters?.installmentId)
       params['installment_id'] = filters.installmentId;
+    if (filters?.dateFrom) params['date_from'] = filters.dateFrom;
+    if (filters?.dateTo) params['date_to'] = filters.dateTo;
     return this.api
       .get<PaymentRaw[]>('payments', params)
       .pipe(map((items) => items.map(toPayment)));

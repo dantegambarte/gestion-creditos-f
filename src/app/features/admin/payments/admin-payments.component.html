@@ -61,6 +61,28 @@
           styleClass="w-64 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
           appendTo="body"
         />
+        <p-calendar
+          [(ngModel)]="filterDateFrom"
+          (ngModelChange)="onDateFilterChange()"
+          dateFormat="dd/mm/yy"
+          placeholder="Desde"
+          [showClear]="!!filterDateFrom"
+          [maxDate]="filterDateTo || undefined"
+          appendTo="body"
+          styleClass="w-40"
+          inputStyleClass="h-11 rounded-xl"
+        />
+        <p-calendar
+          [(ngModel)]="filterDateTo"
+          (ngModelChange)="onDateFilterChange()"
+          dateFormat="dd/mm/yy"
+          placeholder="Hasta"
+          [showClear]="!!filterDateTo"
+          [minDate]="filterDateFrom || undefined"
+          appendTo="body"
+          styleClass="w-40"
+          inputStyleClass="h-11 rounded-xl"
+        />
       </div>
 
       @if (filteredPayments.length === 0) {
@@ -125,9 +147,7 @@
               </td>
               <td>
                 <div class="flex flex-col gap-1.5">
-                  <span class="font-semibold"
-                    >Cuota {{ p.installmentNumber }}</span
-                  >
+                  <span class="font-semibold">{{ movementLabel(p) }}</span>
                   <div class="flex flex-wrap gap-1">
                     <p-tag
                       [value]="p.amountDue | currencyArs: 0"
