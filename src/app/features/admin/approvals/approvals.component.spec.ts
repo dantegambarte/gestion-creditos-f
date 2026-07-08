@@ -121,6 +121,22 @@ describe('ApprovalsComponent', () => {
     expect(component.processingId).toBeNull();
   });
 
+  it('limpia la búsqueda desde el botón del input', () => {
+    component.searchTerm = 'Juan';
+    fixture.detectChanges();
+
+    const clearButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-cy="admin-approvals-search-clear"]',
+    );
+    clearButton.click();
+    fixture.detectChanges();
+
+    expect(component.searchTerm).toBe('');
+    expect(
+      fixture.nativeElement.querySelector('[data-cy="admin-approvals-search-clear"]'),
+    ).toBeNull();
+  });
+
   it('onApprove ignora clic si processingId activo', () => {
     component.processingId = 'CR001';
     component.onApprove(MOCK_CREDITS[0]);
