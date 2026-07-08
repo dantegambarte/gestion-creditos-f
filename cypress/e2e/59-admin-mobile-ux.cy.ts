@@ -107,23 +107,43 @@ const createRealPendingLoan = (): Cypress.Chainable<string> => {
 };
 
 /**
+ * Garantiza caja operativa abierta en la jornada actual — aprobar un LOAN
+ * desembolsa el préstamo desde la caja activa, sin ella responde 409.
+ * No falla si ya existe una (409 ACTIVE_SESSION_IN_BUSINESS_DAY).
+ */
+const ensureCashSessionOpen = (): Cypress.Chainable<void> => {
+  return cy.getAuthToken('ADMIN').then((token) =>
+    cy
+      .apiRequest('POST', '/cash-sessions', { opening_amount: 100000000 }, token)
+      .then((res) => {
+        expect(
+          [201, 409],
+          'abrir caja operativa (nueva o ya existente)',
+        ).to.include(res.status);
+      }),
+  );
+};
+
+/**
  * Garantiza que Aprobaciones tenga al menos una card accionable en mobile.
  */
 const ensureMobileApprovalCard = (): Cypress.Chainable<void> => {
   cy.location('pathname', { timeout: 20000 }).should('eq', ADMIN_APPROVALS_URL);
 
-  return cy.get('body', { timeout: 20000 }).then(($body) => {
-    if ($body.find('[data-cy="admin-approvals-mobile-card"]').length > 0) {
-      return;
-    }
+  return ensureCashSessionOpen().then(() =>
+    cy.get('body', { timeout: 20000 }).then(($body) => {
+      if ($body.find('[data-cy="admin-approvals-mobile-card"]').length > 0) {
+        return;
+      }
 
-    return createRealPendingLoan().then(() => {
-      cy.loginReal('ADMIN', ADMIN_APPROVALS_URL);
-      cy.get('[data-cy="admin-approvals-mobile-card"]', {
-        timeout: 20000,
-      }).should('have.length.greaterThan', 0);
-    });
-  });
+      return createRealPendingLoan().then(() => {
+        cy.loginReal('ADMIN', ADMIN_APPROVALS_URL);
+        cy.get('[data-cy="admin-approvals-mobile-card"]', {
+          timeout: 20000,
+        }).should('have.length.greaterThan', 0);
+      });
+    }),
+  );
 };
 
 describe('Admin Backoffice — Mobile UX', () => {

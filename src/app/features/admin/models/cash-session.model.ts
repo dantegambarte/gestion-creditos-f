@@ -109,6 +109,8 @@ export interface CashSessionSnapshot {
     expenses: CashByMethod;
     /** DEPRECATED V4: siempre 0. Las comisiones van a Caja General. */
     commissions: CashByMethod;
+    /** Desembolso de préstamos (LOAN) entregados en efectivo desde esta caja (rama DAILY). */
+    loans: CashByMethod;
   };
   conversions: {
     cash_delta: number;
@@ -217,6 +219,8 @@ export interface CashSessionClosureSnapshot {
   outflows: {
     expenses: CashByMethod;
     commissions: CashByMethod;
+    /** Desembolso de préstamos (LOAN) entregados en efectivo desde esta caja (rama DAILY). */
+    loans: CashByMethod;
   };
   conversions: {
     cash_delta: number;

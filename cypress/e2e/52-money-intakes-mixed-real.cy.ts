@@ -26,7 +26,11 @@ function adminToken(): Cypress.Chainable<string> {
   return cy.getAuthToken('ADMIN');
 }
 
-/** Resetea la jornada y abre una caja operativa limpia para aprobar ingresos. */
+/**
+ * Resetea la jornada y abre una caja operativa limpia para aprobar ingresos.
+ * opening_amount alto a propósito: createActiveLoan desembolsa el préstamo
+ * (total_amount) desde esta misma caja al aprobar — debe cubrirlo de sobra.
+ */
 function resetAndOpenSession(token: string): Cypress.Chainable<string> {
   return cy
     .apiRequest('DELETE', '/test/business-days/today', null, token)
@@ -35,7 +39,7 @@ function resetAndOpenSession(token: string): Cypress.Chainable<string> {
       return cy.apiRequest(
         'POST',
         '/cash-sessions',
-        { opening_amount: 10000 },
+        { opening_amount: 1000000 },
         token,
       );
     })

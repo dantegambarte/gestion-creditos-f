@@ -125,6 +125,20 @@ describe('El Viaje del Crédito — Multi-Rol (real)', () => {
     cy.loginReal('ADMIN', '/admin/approvals');
     cy.contains('Aprobación de Operaciones', { timeout: 20000 }).should('be.visible');
 
+    // Aprobar un LOAN desembolsa el préstamo desde la caja activa de la
+    // jornada — sin caja abierta responde 409 NO_ACTIVE_SESSION. No falla si
+    // ya existe una (409 ACTIVE_SESSION_IN_BUSINESS_DAY).
+    cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest('POST', '/cash-sessions', { opening_amount: 1000000 }, token)
+        .then((res) => {
+          expect(
+            [201, 409],
+            'abrir caja operativa (nueva o ya existente)',
+          ).to.include(res.status);
+        }),
+    );
+
     cy.intercept('PATCH', /\/api\/credits\/[^/]+\/approve$/).as('approveCredit');
     cy.contains('p-table tbody tr', customer.dni, { timeout: 20000 })
       .should('be.visible')
