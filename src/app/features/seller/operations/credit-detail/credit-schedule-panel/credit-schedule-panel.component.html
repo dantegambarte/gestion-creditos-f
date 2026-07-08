@@ -411,7 +411,7 @@
               </div>
 
               @if (canActOnInstallments) {
-                <div class="mt-3 flex justify-end gap-1">
+                <div class="mt-3 grid grid-cols-2 gap-2">
                   @if (inst.status === "OVERDUE") {
                     <p-button
                       icon="pi pi-exclamation-circle"
@@ -431,14 +431,26 @@
                     }
                   }
                   @if (inst.status === "PENDING" || inst.status === "OVERDUE" || inst.status === "PARTIAL") {
-                    <p-button
+                    <button
+                      type="button"
                       data-cy="installment-direct-payment"
-                      icon="pi pi-credit-card"
-                      severity="info"
-                      [text]="true"
-                      styleClass="!h-11 !w-11"
-                      (onClick)="$event.stopPropagation(); openDirectDialog(inst)"
-                    />
+                      (click)="$event.stopPropagation(); openDirectDialog(inst)"
+                      class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-semibold text-blue-100"
+                    >
+                      <i class="pi pi-credit-card text-xs"></i>
+                      Cobrar
+                    </button>
+                  }
+                  @if (canScheduleVisit(inst)) {
+                    <button
+                      type="button"
+                      data-cy="installment-schedule-visit"
+                      (click)="$event.stopPropagation(); openScheduleVisitDialog(inst)"
+                      class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-500/30 bg-slate-500/10 text-sm font-semibold text-slate-100"
+                    >
+                      <i class="pi pi-calendar-plus text-xs"></i>
+                      Visita
+                    </button>
                   }
                 </div>
               }
