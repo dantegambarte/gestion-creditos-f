@@ -323,26 +323,36 @@ textarea,
 
 // ─── p-checkbox ──────────────────────────────────────────────────────────────
 .p-checkbox .p-checkbox-box {
-  border: 1px solid var(--ff-border) !important;
-  background: var(--ff-secondary) !important;
+  border: 1px solid #34405a !important;
+  background: #151a28 !important;
   border-radius: 0.35rem !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
   transition:
     background-color 0.2s,
-    border-color 0.2s;
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .p-checkbox:not(.p-disabled):hover .p-checkbox-box {
   border-color: var(--ff-text-secondary) !important;
 }
 
-.p-checkbox.p-highlight .p-checkbox-box {
-  border-color: var(--ff-accent) !important;
-  background-color: var(--ff-accent) !important;
+.p-checkbox.p-highlight .p-checkbox-box,
+.p-checkbox .p-checkbox-box.p-highlight,
+.p-checkbox-checked .p-checkbox-box {
+  border-color: #37f0a4 !important;
+  background-color: #16a34a !important;
+  box-shadow:
+    0 0 0 3px rgba(55, 240, 164, 0.18),
+    0 8px 18px rgba(22, 163, 74, 0.22) !important;
 }
 
 // CR-15: ícono de tilde visible en fondo oscuro
-.p-checkbox.p-highlight .p-checkbox-box .p-checkbox-icon {
+.p-checkbox.p-highlight .p-checkbox-box .p-checkbox-icon,
+.p-checkbox .p-checkbox-box.p-highlight .p-checkbox-icon,
+.p-checkbox-checked .p-checkbox-box .p-checkbox-icon {
   color: #ffffff !important;
+  font-weight: 800 !important;
 }
 
 .p-radiobutton .p-radiobutton-box {
