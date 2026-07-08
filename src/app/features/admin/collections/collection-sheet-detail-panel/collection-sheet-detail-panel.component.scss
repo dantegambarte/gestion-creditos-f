@@ -120,6 +120,37 @@
   border-bottom: 1px solid var(--ff-border);
 }
 
+.sheet-detail-search__input {
+  padding-left: 2.75rem !important;
+}
+
+.sheet-detail-search__clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--ff-text-secondary);
+  cursor: pointer;
+  transform: translateY(-50%);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sheet-detail-search__clear:hover {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--ff-text-primary);
+}
+
+.sheet-detail-search__clear .pi {
+  font-size: 11px;
+}
+
 .log-rejection-text {
   color: #e16d7f;
 }

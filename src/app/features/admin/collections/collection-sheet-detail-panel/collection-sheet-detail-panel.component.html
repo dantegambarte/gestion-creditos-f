@@ -129,6 +129,36 @@
       </div>
     }
 
+    <div
+      class="sheet-detail-search border-b px-4 py-3"
+      style="border-color: var(--ff-border)"
+    >
+      <div class="relative w-full md:max-w-md">
+        <i
+          class="pi pi-search pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-sm text-[var(--ff-text-secondary)]"
+        ></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="searchTerm"
+          class="sheet-detail-search__input h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] py-0 pr-10 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-secondary)]"
+          placeholder="Buscar por persona, DNI, domicilio o detalle"
+          data-cy="sheet-detail-search-input"
+        />
+        @if (searchTerm) {
+          <button
+            type="button"
+            class="sheet-detail-search__clear"
+            aria-label="Limpiar búsqueda"
+            data-cy="sheet-detail-search-clear"
+            (click)="clearSearch()"
+          >
+            <i class="pi pi-times"></i>
+          </button>
+        }
+      </div>
+    </div>
+
     <!-- Tabs -->
     <div
       class="flex gap-1 px-5 pt-3 pb-0 shrink-0"
@@ -166,7 +196,9 @@
           class="flex items-center justify-center h-32"
           style="color: var(--ff-text-muted)"
         >
-          <span class="text-sm">Sin cuotas en esta categoría.</span>
+          <span class="text-sm">
+            {{ searchTerm ? "Sin resultados para la búsqueda." : "Sin cuotas en esta categoría." }}
+          </span>
         </div>
       } @else {
         <p-table
@@ -202,6 +234,9 @@
               <div class="row-client-sub">
                 @if (item.customerPhone) {
                   <span><i class="pi pi-phone mr-1"></i>{{ item.customerPhone }}</span>
+                }
+                @if (item.customerDni) {
+                  <span>DNI {{ item.customerDni }}</span>
                 }
                 @if (item.customerAddress) {
                   <span><i class="pi pi-map-marker mr-1"></i>{{ item.customerAddress }}</span>
@@ -377,6 +412,14 @@
                   <p class="row-client-sub mt-0.5 truncate">
                     @if (item.customerPhone) {
                       <span><i class="pi pi-phone mr-1"></i>{{ item.customerPhone }}</span>
+                    }
+                  </p>
+                  <p class="row-client-sub mt-1">
+                    @if (item.customerDni) {
+                      <span>DNI {{ item.customerDni }}</span>
+                    }
+                    @if (item.customerAddress) {
+                      <span><i class="pi pi-map-marker mr-1"></i>{{ item.customerAddress }}</span>
                     }
                   </p>
                 </div>

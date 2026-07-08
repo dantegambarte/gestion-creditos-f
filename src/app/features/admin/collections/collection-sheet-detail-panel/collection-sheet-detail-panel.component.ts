@@ -9,8 +9,10 @@ import {
   inject,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
@@ -46,8 +48,10 @@ export type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
   standalone: true,
   imports: [
     DatePipe,
+    FormsModule,
     CurrencyArsPipe,
     ButtonModule,
+    InputTextModule,
     ProgressSpinnerModule,
     SkeletonModule,
     TableModule,
@@ -83,6 +87,7 @@ export class CollectionSheetDetailPanelComponent
   selectedSheet: CollectionSheetDetail | null = null;
   loadingDetail = false;
   activeTab: DetailTab = 'ALL';
+  searchTerm = '';
 
   expandedLogItemId: string | null = null;
   managementLogs: Record<string, ManagementLogEntry[]> = {};
@@ -102,9 +107,25 @@ export class CollectionSheetDetailPanelComponent
    */
   get filteredItems(): CollectionSheetItem[] {
     if (!this.selectedSheet) return [];
-    if (this.activeTab === 'ALL') return this.selectedSheet.items;
-    return this.selectedSheet.items.filter(
-      (i) => i.installmentStatus === this.activeTab,
+    const byTab =
+      this.activeTab === 'ALL'
+        ? this.selectedSheet.items
+        : this.selectedSheet.items.filter(
+            (i) => i.installmentStatus === this.activeTab,
+          );
+    const term = this.normalizeText(this.searchTerm);
+
+    if (!term) return byTab;
+
+    return byTab.filter((item) =>
+      [
+        item.customerName,
+        item.customerDni,
+        item.customerPhone,
+        item.customerAddress,
+        item.collectionReference,
+        String(item.installmentNumber),
+      ].some((value) => this.normalizeText(value).includes(term)),
     );
   }
 
@@ -130,6 +151,7 @@ export class CollectionSheetDetailPanelComponent
     this.selectedSheet = null;
     this.loadingDetail = true;
     this.activeTab = 'ALL';
+    this.searchTerm = '';
     this.expandedLogItemId = null;
     this.collectionsService
       .getById(this.sheetMeta.id)
@@ -147,6 +169,13 @@ export class CollectionSheetDetailPanelComponent
         },
         error: () => {},
       });
+  }
+
+  /**
+   * Limpia el buscador de cuotas del detalle sin alterar la tab activa.
+   */
+  clearSearch(): void {
+    this.searchTerm = '';
   }
 
   /**
@@ -315,6 +344,18 @@ export class CollectionSheetDetailPanelComponent
       PARTIAL: 'Cob. pend.',
     };
     return map[status] ?? status;
+  }
+
+  /**
+   * Normaliza texto para buscar sin depender de mayúsculas, tildes o espacios.
+   * @param value Valor original del item o del input.
+   */
+  private normalizeText(value: string | number | null | undefined): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
   /** Etiqueta amigable del motivo de inclusión. */
