@@ -391,20 +391,22 @@
                 >
               </div>
 
-              <div class="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
-                <div class="rounded-xl border p-2" style="border-color: var(--ff-border)">
+              <div class="mt-3 grid grid-cols-2 gap-2 text-center text-sm">
+                <div class="min-w-0 rounded-xl border p-2" style="border-color: var(--ff-border)">
                   <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Monto</p>
-                  <p class="font-bold ff-mono">{{ inst.amountDue | currencyArs: 0 }}</p>
+                  <p class="break-words text-xs font-bold leading-tight ff-mono">
+                    {{ inst.amountDue | currencyArs: 0 }}
+                  </p>
                 </div>
-                <div class="rounded-xl border p-2" style="border-color: var(--ff-border)">
+                <div class="min-w-0 rounded-xl border p-2" style="border-color: var(--ff-border)">
                   <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Pagado</p>
-                  <p class="font-bold ff-mono" [style.color]="inst.amountPaid > 0 ? 'var(--ff-success)' : ''">
+                  <p class="break-words text-xs font-bold leading-tight ff-mono" [style.color]="inst.amountPaid > 0 ? 'var(--ff-success)' : ''">
                     {{ inst.amountPaid > 0 ? (inst.amountPaid | currencyArs: 0) : "—" }}
                   </p>
                 </div>
-                <div class="rounded-xl border p-2" style="border-color: var(--ff-border)">
+                <div class="col-span-2 min-w-0 rounded-xl border p-2" style="border-color: var(--ff-border)">
                   <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Mora</p>
-                  <p class="font-bold ff-mono" [style.color]="inst.penaltyAmount > 0 ? 'var(--ff-danger)' : ''">
+                  <p class="break-words text-xs font-bold leading-tight ff-mono" [style.color]="inst.penaltyAmount > 0 ? 'var(--ff-danger)' : ''">
                     {{ inst.penaltyAmount > 0 ? (inst.penaltyAmount | currencyArs: 0) : "—" }}
                   </p>
                 </div>

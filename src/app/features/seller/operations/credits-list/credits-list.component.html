@@ -1,18 +1,33 @@
 <div class="p-4">
   <div class="ff-panel">
-    <div class="ff-list-header">
-      <div class="ff-list-header__actions" style="flex: 1; flex-wrap: wrap">
-        <span class="p-input-icon-left">
-          <i class="pi pi-search" style="color: var(--ff-text-muted)"></i>
+    <div class="ff-list-header credits-list-header">
+      <div class="credits-list-title-block">
+        <h1 class="ff-page-title">Operaciones</h1>
+        <p class="credits-list-subtitle">
+          {{ filteredCredits.length }} operaciones
+        </p>
+      </div>
+      @if (canCreate) {
+        <p-button
+          label="Nueva operación"
+          icon="pi pi-plus"
+          severity="primary"
+          styleClass="credits-list-create h-11 px-5 rounded-xl shadow-sm"
+          (onClick)="navigateToCreate()"
+        />
+      }
+      <div class="ff-list-header__actions credits-list-filters">
+        <div class="credits-list-search">
+          <i class="pi pi-search credits-list-search__icon"></i>
           <input
             pInputText
             type="text"
             placeholder="Buscar por cliente o DNI"
             [(ngModel)]="searchTerm"
             (ngModelChange)="onSearchChange()"
-            class="h-11 w-64 pl-10"
+            class="credits-list-search__input h-11 w-full rounded-xl"
           />
-        </span>
+        </div>
         <p-dropdown
           [options]="statusOptions"
           [(ngModel)]="selectedStatus"
@@ -23,8 +38,8 @@
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-
-
+          appendTo="body"
+          styleClass="credits-list-filter-dropdown"
         />
         <p-dropdown
           [options]="typeOptions"
@@ -36,19 +51,10 @@
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-
-
+          appendTo="body"
+          styleClass="credits-list-filter-dropdown"
         />
       </div>
-      @if (canCreate) {
-        <p-button
-          label="Nueva operación"
-          icon="pi pi-plus"
-          severity="primary"
-          styleClass="h-11 px-5 rounded-xl shadow-sm"
-          (onClick)="navigateToCreate()"
-        />
-      }
     </div>
 
     @if (loading) {
@@ -90,8 +96,8 @@
             <th>Total a devolver</th>
             <th>Estado</th>
             <th>Vendedor</th>
-            <th>Creación</th>
-            <th>Aprobación</th>
+            <th class="hidden xl:table-cell">Creación</th>
+            <th class="hidden xl:table-cell">Aprobación</th>
             <th></th>
           </tr>
         </ng-template>
@@ -164,10 +170,10 @@
                 </div>
               }
             </td>
-            <td style="color: var(--ff-text-secondary)">
+            <td class="hidden xl:table-cell" style="color: var(--ff-text-secondary)">
               {{ credit.createdAt | date: "dd/MM/yyyy" }}
             </td>
-            <td style="color: var(--ff-text-secondary)">
+            <td class="hidden xl:table-cell" style="color: var(--ff-text-secondary)">
               {{ credit.approvedAt ? (credit.approvedAt | date: "dd/MM/yyyy") : "—" }}
             </td>
             <td>
@@ -189,44 +195,66 @@
       <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="credits-list-mobile-list">
         @for (credit of filteredCredits; track credit.id) {
           <article
-            class="rounded-2xl border border-[var(--ff-border)] p-4"
+            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.18)]"
             data-cy="credits-list-mobile-card"
-            (click)="navigateToDetail(credit.id)"
           >
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <p class="truncate font-medium">{{ credit.customerName }}</p>
-                <p class="ff-mono text-xs" style="color: var(--ff-text-muted)">
-                  {{ credit.customerDni }}
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="ff-badge shrink-0"
+                    [class.ff-badge--activo]="credit.type === 'SALE'"
+                    [class.ff-badge--pagado]="credit.type !== 'SALE'"
+                    >{{ credit.type === "SALE" ? "Venta" : "Préstamo" }}</span
+                  >
+                  <span
+                    class="ff-badge max-w-full whitespace-normal break-words leading-tight"
+                    [class.ff-badge--activo]="statusSeverity(credit.status) === 'success'"
+                    [class.ff-badge--pendiente]="statusSeverity(credit.status) === 'warning'"
+                    [class.ff-badge--vencido]="statusSeverity(credit.status) === 'danger'"
+                    [class.ff-badge--pagado]="statusSeverity(credit.status) === 'secondary'"
+                    >{{ statusLabel(credit.status) }}</span
+                  >
+                </div>
+                <p class="mt-3 truncate text-sm font-semibold text-[var(--ff-text-primary)]">
+                  {{ credit.customerName }}
+                </p>
+                <p class="mt-0.5 text-xs text-[var(--ff-text-muted)]">DNI {{ credit.customerDni }}</p>
+              </div>
+              <div class="shrink-0 text-right">
+                <p class="text-[11px] uppercase tracking-[0.16em] text-[var(--ff-text-muted)]">
+                  Total
+                </p>
+                <p class="font-mono text-base font-bold text-[var(--ff-text-primary)]">
+                  {{ (credit.totalToReturn ?? credit.totalAmount) | currencyArs: 2 }}
                 </p>
               </div>
-              <span
-                class="ff-badge shrink-0"
-                [class.ff-badge--activo]="credit.type === 'SALE'"
-                [class.ff-badge--pagado]="credit.type !== 'SALE'"
-                >{{ credit.type === "SALE" ? "Venta" : "Préstamo" }}</span
-              >
             </div>
 
-            <div class="mt-3 flex items-center justify-between">
-              <span class="ff-mono font-semibold" style="color: var(--ff-accent)">
-                {{ credit.totalAmount | currencyArs: 2 }}
-              </span>
-              <span
-                class="ff-badge"
-                [class.ff-badge--activo]="statusSeverity(credit.status) === 'success'"
-                [class.ff-badge--pendiente]="statusSeverity(credit.status) === 'warning'"
-                [class.ff-badge--vencido]="statusSeverity(credit.status) === 'danger'"
-                [class.ff-badge--pagado]="statusSeverity(credit.status) === 'secondary'"
-                >{{ statusLabel(credit.status) }}</span
-              >
-            </div>
+            <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Cuotas</dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">
+                  {{ credit.installmentsCount }} x {{ frequencyLabel(credit.paymentFrequency) }}
+                </dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Alta</dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">
+                  {{ credit.createdAt | date: "dd/MM/yy" }}
+                </dd>
+              </div>
+            </dl>
 
-            <p class="mt-2 text-xs" style="color: var(--ff-text-secondary)">
-              {{ credit.installmentsCount }} cuotas
-              {{ frequencyLabel(credit.paymentFrequency) }}s · Alta
-              {{ credit.createdAt | date: "dd/MM/yyyy" }}
-            </p>
+            <button
+              type="button"
+              class="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-semibold text-blue-200"
+              data-cy="credits-list-mobile-detail-action"
+              (click)="navigateToDetail(credit.id)"
+            >
+              Ver detalle
+              <i class="pi pi-arrow-right text-xs"></i>
+            </button>
           </article>
         }
       </div>

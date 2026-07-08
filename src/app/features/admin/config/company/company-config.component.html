@@ -107,7 +107,7 @@
     </div>
 
     <div
-      class="flex items-center gap-3 pt-2 border-t"
+      class="flex flex-wrap items-center gap-3 pt-2 border-t"
       style="border-color: var(--ff-border)"
     >
       <label class="text-sm ff-text-secondary whitespace-nowrap"
@@ -117,9 +117,9 @@
         [(ngModel)]="gracePeriod"
         [min]="0"
         [max]="90"
-        inputStyleClass="w-20 h-11 text-center"
+        inputStyleClass="w-24 h-11 text-center"
       />
-      <span class="text-sm ff-text-muted"
+      <span class="min-w-0 text-sm ff-text-muted"
         >días. Recordatorio a 30d, alerta a 45d.</span
       >
     </div>

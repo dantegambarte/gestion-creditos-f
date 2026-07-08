@@ -258,7 +258,7 @@
                     {{ getTypeLabel(op.type) }}
                   </span>
                   <span
-                    class="ff-badge"
+                    class="ff-badge max-w-full whitespace-normal break-words leading-tight"
                     [class.ff-badge--activo]="getStatusSeverity(op.status) === 'success'"
                     [class.ff-badge--pendiente]="getStatusSeverity(op.status) === 'warning'"
                     [class.ff-badge--vencido]="getStatusSeverity(op.status) === 'danger'"

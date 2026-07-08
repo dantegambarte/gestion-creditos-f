@@ -18,16 +18,16 @@
     </div>
 
     <div class="ff-list-header ff-list-header--filters">
-      <div class="ff-list-header__actions" style="flex-wrap: wrap">
-        <p-iconField iconPosition="left">
+      <div class="ff-list-header__actions products-list-filters">
+        <p-iconField iconPosition="left" styleClass="w-full md:w-auto">
           <p-inputIcon styleClass="pi pi-search ff-muted-icon z-10" />
           <input
             pInputText
             type="text"
-            placeholder="Buscar por título o descripción..."
+            placeholder="Buscar producto..."
             [(ngModel)]="searchTerm"
             (ngModelChange)="onSearchChange($event)"
-            class="h-11 w-72 pl-10 rounded-xl"
+            class="h-11 w-full rounded-xl pl-10 md:w-72"
             style="
               background: var(--ff-secondary);
               border-color: var(--ff-border);
@@ -45,7 +45,8 @@
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-          styleClass="h-11 min-w-40"
+          styleClass="h-11 w-full md:min-w-40"
+          appendTo="body"
           ariaLabel="Filtrar productos por estado"
         />
         <p-dropdown
@@ -58,7 +59,8 @@
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-          styleClass="h-11 min-w-48"
+          styleClass="h-11 w-full md:min-w-48"
+          appendTo="body"
           ariaLabel="Filtrar productos por categoría"
         />
       </div>
@@ -271,11 +273,11 @@
               >
             </div>
 
-            <div class="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
-              <div class="rounded-xl border p-2" style="border-color: var(--ff-border-subtle)">
+            <div class="mt-3 grid grid-cols-2 gap-2 text-center text-sm">
+              <div class="col-span-2 min-w-0 rounded-xl border p-2" style="border-color: var(--ff-border-subtle)">
                 <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Disponibles</p>
                 @if (product.availableCount === 0) {
-                  <span class="ff-badge ff-badge--vencido">SIN STOCK</span>
+                  <span class="ff-badge ff-badge--vencido max-w-full whitespace-normal break-words px-2 text-[10px] leading-tight">SIN STOCK</span>
                 } @else if (product.availableCount <= 3) {
                   <span class="font-bold ff-mono" style="color: var(--ff-warning)">
                     {{ product.availableCount }}
@@ -314,8 +316,7 @@
             <div class="mt-4 flex gap-3">
               <button
                 type="button"
-                class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-semibold"
-                style="border-color: var(--ff-border-subtle); color: var(--ff-text-secondary)"
+                class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-semibold text-blue-100"
                 data-cy="products-list-mobile-view-action"
                 (click)="navigateToDetail(product.id)"
               >

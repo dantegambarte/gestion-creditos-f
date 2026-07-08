@@ -49,19 +49,20 @@
           Definí la fecha del primer pago y simulá para ver el cronograma real.
         </div>
       } @else {
-        <!-- Desktop: 6 columnas -->
-        <div
-          class="hidden grid-cols-12 gap-2 border-b border-[var(--ff-border-subtle)] px-4 py-2 text-[11px] uppercase tracking-wide text-[var(--ff-text-muted)] md:grid"
-        >
-          <p class="col-span-1">N°</p>
-          <p class="col-span-3">Vencimiento</p>
-          <p class="col-span-2 text-right">Cuota</p>
-          <p class="col-span-2 text-right">Capital</p>
-          <p class="col-span-2 text-right">Interés</p>
-          <p class="col-span-2 text-right">Saldo</p>
-        </div>
-        <div class="hidden divide-y divide-[var(--ff-border-subtle)] md:block">
-          @for (item of getSimulationScheduleRows(); track item.installment) {
+        <!-- Desktop: tabla con scroll horizontal cuando el panel lateral queda angosto. -->
+        <div class="hidden overflow-x-auto md:block">
+          <div
+            class="grid min-w-[560px] grid-cols-12 gap-2 border-b border-[var(--ff-border-subtle)] px-4 py-2 text-[11px] uppercase tracking-wide text-[var(--ff-text-muted)]"
+          >
+            <p class="col-span-1">N°</p>
+            <p class="col-span-3">Vencimiento</p>
+            <p class="col-span-2 text-right">Cuota</p>
+            <p class="col-span-2 text-right">Capital</p>
+            <p class="col-span-2 text-right">Interés</p>
+            <p class="col-span-2 text-right">Saldo</p>
+          </div>
+          <div class="min-w-[560px] divide-y divide-[var(--ff-border-subtle)]">
+            @for (item of getSimulationScheduleRows(); track item.installment) {
             <div
               class="grid grid-cols-12 items-center gap-2 px-4 py-2.5 text-xs sm:text-sm"
               [class.opacity-70]="item.isAdvanced"
@@ -100,7 +101,8 @@
                 {{ item.remainingEstimated | currencyArs }}
               </p>
             </div>
-          }
+            }
+          </div>
         </div>
 
         <!-- Mobile: cards -->

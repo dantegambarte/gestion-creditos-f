@@ -14,3 +14,14 @@
   background: var(--ff-panel);
   padding: 0.875rem 1rem;
 }
+
+.products-list-filters {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .products-list-filters,
+  .products-list-filters > * {
+    width: 100%;
+  }
+}
