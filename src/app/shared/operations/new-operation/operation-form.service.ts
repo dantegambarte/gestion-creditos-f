@@ -13,6 +13,7 @@ import { ProductRate } from '../../../features/admin/config/models/interfaces/pr
 import { InterestRatesService } from '../../../features/admin/config/services/interest-rates.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
 import {
+  CreditStatus,
   PaymentFrequency,
   SimulatePayload,
   SimulateResult,
@@ -1857,9 +1858,9 @@ export class OperationFormService {
 
   /**
    * Construye el payload y lo envía al backend para aprobación.
-   * @returns {Observable<unknown>} respuesta del backend.
+   * @returns {Observable<{ id: string; status: CreditStatus }>} crédito creado.
    */
-  submit(): Observable<unknown> {
+  submit(): Observable<{ id: string; status: CreditStatus }> {
     const client = this.selectedClient();
     const type = this.operationForm.controls.operationType.value;
     const installmentsCount =

@@ -327,10 +327,14 @@
       <i class="pi pi-spinner pi-spin text-3xl text-[var(--ff-success)]"></i>
       <div>
         <p class="text-base font-semibold text-[var(--ff-text-primary)]">
-          Enviando para aprobación
+          {{ openingCreatedOperation ? "Abriendo operación" : "Enviando para aprobación" }}
         </p>
         <p class="mt-1 text-sm text-[var(--ff-text-secondary)]">
-          Estamos registrando la pre-operación. Esperá un instante...
+          {{
+            openingCreatedOperation
+              ? "La operación ya fue creada. Estamos cargando el detalle..."
+              : "Estamos registrando la pre-operación. Esperá un instante..."
+          }}
         </p>
       </div>
     </div>

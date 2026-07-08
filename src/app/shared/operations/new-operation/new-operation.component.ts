@@ -57,6 +57,7 @@ export class NewOperationComponent implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
 
   activeIndex = 0;
+  openingCreatedOperation = false;
   readonly steps: MenuItem[] = [
     { label: 'Tipo de Operación' },
     { label: 'Cliente' },
@@ -199,23 +200,29 @@ export class NewOperationComponent implements OnInit {
    * Envía la operación para aprobación y maneja navegación posterior al resultado.
    */
   submitOperation(): void {
+    this.openingCreatedOperation = false;
     this.state.submit().subscribe({
-      next: () => {
+      next: (created) => {
+        this.openingCreatedOperation = true;
         this.messageService.add({
           severity: 'success',
           summary: 'Operación enviada',
-          detail: 'La operación fue enviada para aprobación correctamente.',
+          detail: 'La operación fue enviada para aprobación correctamente. Abriendo el detalle...',
           life: 3000,
         });
         this.onComplete.emit();
-        const base = this.router.url.split('/operations')[0];
-        const destination = base === '/admin' ? 'approvals' : 'operations';
+        const base = this.router.url.startsWith('/admin') ? '/admin' : '/seller';
         setTimeout(() => {
-          this.router.navigate([base, destination]);
-          this.state.submitting.set(false);
+          this.router
+            .navigate([base, 'operations', created.id])
+            .finally(() => {
+              this.openingCreatedOperation = false;
+              this.state.submitting.set(false);
+            });
         }, 1500);
       },
       error: (err: unknown) => {
+        this.openingCreatedOperation = false;
         this.state.submitting.set(false);
         const apiMessage =
           typeof err === 'object' &&
