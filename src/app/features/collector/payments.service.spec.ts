@@ -35,6 +35,7 @@ const mockPaymentRaw: PaymentRaw = {
   admin_direct: false,
   parent_payment_id: null,
   reversal_payment_id: null,
+  concepto: 'Cobro de cuota',
 };
 
 describe('PaymentsService', () => {
