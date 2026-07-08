@@ -18,6 +18,7 @@ import {
 import { InstallmentStatus } from '../../seller/models/installment.model';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { BackButtonComponent } from '../../../shared/components/back-button/back-button.component';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-admin-collection-detail',
@@ -32,6 +33,7 @@ import { BackButtonComponent } from '../../../shared/components/back-button/back
     LoadingStateComponent,
     ErrorStateComponent,
     BackButtonComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './admin-collection-detail.component.html',
 })
