@@ -97,7 +97,7 @@ describe('El Viaje del Crédito — Multi-Rol (real)', () => {
     cy.get('p-inputNumber[formControlName="totalAmount"] input').clear().type('48000').blur();
     cy.get('[data-cy="btn-siguiente"] button', { timeout: 15000 }).should('not.be.disabled').click();
 
-    cy.contains('Configurar Plan de Pagos', { timeout: 15000 }).should('be.visible');
+    cy.get('[data-cy="ddl-installments"]', { timeout: 15000 }).should('be.visible');
     cy.get('[data-cy="ddl-installments"] .p-dropdown').first().click();
     cy.get('.p-dropdown-panel .p-dropdown-item').first().click();
     cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
@@ -146,8 +146,8 @@ describe('El Viaje del Crédito — Multi-Rol (real)', () => {
         cy.get('button').eq(1).click();
       });
 
-    cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', { timeout: 10000 }).should('be.visible');
-    cy.contains('.p-dialog button', 'Confirmar Aprobación').click();
+    cy.contains('.p-dialog .p-dialog-title', 'Aprobar Crédito', { timeout: 10000 }).should('be.visible');
+    cy.contains('.p-dialog button', 'Confirmar').click();
 
     cy.wait('@approveCredit').then((interception) => {
       expect(interception.response?.statusCode, 'aprobación de crédito').to.eq(200);
