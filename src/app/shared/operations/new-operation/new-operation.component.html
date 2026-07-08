@@ -157,6 +157,7 @@
             <div class="md:h-full md:min-h-0 md:overflow-hidden">
               <app-step-products
                 [form]="state.operationForm"
+                [selectedClient]="state.selectedClient()"
                 [operationTypeOptions]="state.operationTypeOptions"
                 [catalogProducts]="state.catalogProducts"
                 [cartLines]="state.cartLines()"

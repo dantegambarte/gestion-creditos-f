@@ -501,7 +501,7 @@
                   <span class="text-[var(--ff-text-muted)]">Cliente</span>
                   <span
                     class="max-w-[60%] truncate text-right font-semibold text-[var(--ff-text-primary)]"
-                    >Cliente seleccionado</span
+                    >{{ selectedClient?.name || "Sin cliente seleccionado" }}</span
                   >
                 </div>
                 <div class="flex items-center justify-between gap-3">

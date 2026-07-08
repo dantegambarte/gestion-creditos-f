@@ -219,6 +219,15 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     return this.auth.hasRole('ADMIN');
   }
 
+  /**
+   * Indica si el usuario puede ver información financiera sensible (tasa, monto
+   * financiado, interés, precios históricos). Se oculta a los roles de venta
+   * (SELLER / SELLER_COLLECTOR); el resto la ve normalmente.
+   */
+  get canViewFinancialData(): boolean {
+    return !this.auth.hasAnyRole(['SELLER', 'SELLER_COLLECTOR']);
+  }
+
   /** Un crédito REFINANCED o SETTLED no acepta más acciones sobre sus cuotas. */
   get canActOnInstallments(): boolean {
     return (
@@ -372,6 +381,20 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
       MONTHLY: 'Mensual',
     };
     return map[frequency] ?? frequency;
+  }
+
+  /**
+   * Devuelve la unidad de período para el sufijo del importe de cuota
+   * (ej. "$X / semana"). Evita el "/ mes" hardcodeado en frecuencias no mensuales.
+   * @param frequency Frecuencia de pago
+   */
+  frequencyUnitLabel(frequency: string): string {
+    const map: Record<string, string> = {
+      WEEKLY: 'semana',
+      BIWEEKLY: 'quincena',
+      MONTHLY: 'mes',
+    };
+    return map[frequency] ?? '';
   }
 
   openApproveDialog(): void {

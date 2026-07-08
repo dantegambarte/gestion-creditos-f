@@ -143,7 +143,7 @@ export class AttemptDialogComponent implements OnChanges {
           : {
               severity: 'success' as const,
               summary: 'Intento registrado',
-              detail: 'Cliente no encontrado.',
+              detail: 'Cliente no encontrado. Se agendó una nueva visita para mañana.',
             };
         this.attempted.emit({ itemId, toast });
       },

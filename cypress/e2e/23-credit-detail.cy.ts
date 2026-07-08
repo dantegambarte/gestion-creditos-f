@@ -45,6 +45,20 @@ describe('Detalle de Crédito — Seller (real)', () => {
       }
     });
   });
+
+  it('seller no ve informacion financiera sensible en el detalle', () => {
+    openFirstCreditDetailFromOperations();
+
+    cy.location('pathname').then((path) => {
+      if (path.includes('/seller/operations/')) {
+        // Etiquetas del bloque financiero que deben quedar ocultas al vendedor.
+        cy.contains('Tasa de interés').should('not.exist');
+        cy.contains('Monto financiado').should('not.exist');
+        cy.contains('Total de interés').should('not.exist');
+        cy.contains('th', 'Precio hist.').should('not.exist');
+      }
+    });
+  });
 });
 
 describe('Detalle de Crédito — Admin (real)', () => {
@@ -73,6 +87,23 @@ describe('Detalle de Crédito — Admin (real)', () => {
           const hasReject = $body.text().includes('Rechazar');
           if (hasApprove || hasReject) {
             cy.get('app-error-state').should('not.exist');
+          }
+        });
+      }
+    });
+  });
+
+  it('admin sí ve informacion financiera en un crédito financiado', () => {
+    openFirstCreditDetailFromOperations();
+
+    cy.location('pathname').then((path) => {
+      if (path.includes('/operations/')) {
+        cy.get('body').then(($body) => {
+          // Solo verifica cuando el crédito abierto es financiado (muestra
+          // "Total a devolver"); en ese caso el Admin debe ver el monto
+          // financiado, que al vendedor se le oculta.
+          if ($body.text().includes('Total a devolver')) {
+            cy.contains('Monto financiado').should('be.visible');
           }
         });
       }

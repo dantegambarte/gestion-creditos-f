@@ -266,9 +266,9 @@ export interface CollectionGenerateResultRaw {
 // ── Labels ─────────────────────────────────────────────────────────────────────
 
 export const COLLECTION_FILTER_LABELS: Record<CollectionFilter, string> = {
-  TODAY: 'Hoy',
-  OVERDUE: 'Vencidas',
-  TODAY_AND_OVERDUE: 'Hoy y vencidas',
+  TODAY: 'Solo hoy',
+  OVERDUE: 'Vencidas sin agenda',
+  TODAY_AND_OVERDUE: 'Trabajo Diario',
   ALL_PENDING: 'Todas las pendientes',
 };
 

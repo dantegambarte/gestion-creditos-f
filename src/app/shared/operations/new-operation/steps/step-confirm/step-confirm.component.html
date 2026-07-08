@@ -60,7 +60,7 @@
         </div>
 
         <div class="space-y-5 px-5 py-5">
-          @if (operationType === "SALE" && cartLines.length > 1) {
+          @if (canViewFinancialData && operationType === "SALE" && cartLines.length > 1) {
             <div>
               <p
                 class="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ff-text-muted)]"

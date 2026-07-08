@@ -244,6 +244,18 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
   }
 
   /**
+   * Formatea una fecha 'YYYY-MM-DD' a 'dd/MM/yyyy' sin sesgo de zona horaria.
+   * El pipe date interpreta el string plano como UTC y en AR (GMT-3) puede
+   * correr un día; acá se reordena la cadena directamente.
+   * @param iso Fecha en formato 'YYYY-MM-DD' (o null).
+   */
+  formatIsoDate(iso: string | null): string {
+    if (!iso) return '';
+    const [y, m, d] = iso.slice(0, 10).split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  /**
    * Etiqueta de ORIGEN del cobro derivada de generation_type. Devuelve null para
    * un cobro normal (no agrega ruido en el caso común).
    * @param inst Cuota a evaluar

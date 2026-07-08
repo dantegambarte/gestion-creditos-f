@@ -21,6 +21,7 @@ import {
   CatalogProduct,
   CatalogVariant,
 } from '../../operation-catalog.service';
+import { ClientOperation } from '../../../../models/interface/client';
 
 @Component({
   selector: 'app-step-products',
@@ -39,6 +40,7 @@ import {
 })
 export class StepProductsComponent implements OnChanges {
   @Input() form!: FormGroup;
+  @Input() selectedClient: ClientOperation | null = null;
   @Input() operationTypeOptions: { label: string; value: string }[] = [];
   @Input() catalogProducts: CatalogProduct[] = [];
   @Input() cartLines: CartLine[] = [];

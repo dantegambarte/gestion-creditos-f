@@ -10,13 +10,27 @@ import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { DateService } from '../../../core/services/date.service';
 import { FormatService } from '../../../core/services/format.service';
-import { Installment } from '../../seller/models/installment.model';
-import { InstallmentsService } from '../../seller/operations/installments.service';
 import { CashRegisterService } from '../cash-register/cash-register.service';
 import { KpiCard } from '../models/interface/kpi-card';
 import { ReportsService } from '../reports/reports.service';
 import { DashboardChartsComponent } from './dashboard-charts/dashboard-charts.component';
 import { DashboardPendingComponent } from './dashboard-pending/dashboard-pending.component';
+
+/**
+ * Fila de la tabla de morosos del dashboard. Deriva del reporte de mora
+ * (getOverdueReport), agrupado por cliente, para usar EXACTAMENTE la misma
+ * definición de "en mora" que el KPI (IS_OVERDUE_DERIVED), y no el status
+ * persistido de las cuotas.
+ */
+interface OverdueRow {
+  id: string;
+  customerName: string;
+  daysOverdue: number;
+  overdueCount: number;
+  amountDue: number;
+  amountPaid: number;
+  status: string;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -39,7 +53,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthServiceBase);
   private readonly reportsSvc = inject(ReportsService);
-  private readonly installmentsSvc = inject(InstallmentsService);
   private readonly cashRegisterSvc = inject(CashRegisterService);
   private readonly dateService = inject(DateService);
   private readonly fmt = inject(FormatService);
@@ -52,7 +65,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   showAlert = false;
   alertMessage = '';
   kpis: KpiCard[] = [];
-  upcomingInstallments: (Installment & { daysOverdue: number })[] = [];
+  upcomingInstallments: OverdueRow[] = [];
   upcomingError = false;
 
   /** Datos diarios del mes pasados al componente de gráficos cuando los KPIs terminan de cargar. */
@@ -126,7 +139,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
         this.kpis = [
           {
-            label: 'Recaudado hoy',
+            label: 'Recaudación de la jornada',
             value: this.fmt.currency(summary.todayTotal),
             subtitle: `${this.fmt.currency(summary.todayCash)} efec. · ${this.fmt.currency(summary.todayTransfer)} transf.`,
             trend: `${summary.todayPaymentsCount} cobros`,
@@ -203,51 +216,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga las cuotas vencidas (OVERDUE), agrupa por cliente y muestra la más antigua por cada uno.
+   * Carga los clientes en mora (top 5 por monto) desde el reporte de mora, que
+   * usa la MISMA definición derivada (IS_OVERDUE_DERIVED con días de gracia) que
+   * el KPI "En mora". Antes se usaba installments.list({status:'OVERDUE'}) — el
+   * status persistido —, lo que podía contradecir al KPI. Ahora ambos comparten
+   * la única fuente de verdad.
    */
   private loadUpcomingInstallments(): void {
     this.loadingUpcoming = true;
     this.upcomingError = false;
-    this.installmentsSvc
-      .list({ status: 'OVERDUE' })
+    this.reportsSvc
+      .getOverdueReport()
       .pipe(
-        catchError(() => of([])),
+        catchError(() => of(null)),
         takeUntil(this.destroy$),
       )
       .subscribe({
-        next: (overdue) => {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          const overdueByCustomer = overdue
-            .map((inst) => ({
-              ...inst,
-              daysOverdue: Math.abs(
-                Math.ceil(
-                  (new Date(inst.dueDate).getTime() - today.getTime()) /
-                    (1000 * 60 * 60 * 24),
-                ),
-              ),
-            }))
-            .reduce((map, inst) => {
-              const key = inst.customerId;
-              if (!map.has(key)) {
-                map.set(key, inst);
-              } else {
-                const existing = map.get(key)!;
-                if (new Date(inst.dueDate) < new Date(existing.dueDate)) {
-                  map.set(key, inst);
-                }
-              }
-              return map;
-            }, new Map<string, any>());
-
-          this.upcomingInstallments = Array.from(overdueByCustomer.values())
-            .sort(
-              (a, b) =>
-                b.amountDue - b.amountPaid - (a.amountDue - a.amountPaid),
-            )
-            .slice(0, 5);
+        next: (report) => {
+          if (!report) {
+            this.upcomingError = true;
+            this.upcomingInstallments = [];
+            this.loadingUpcoming = false;
+            return;
+          }
+          // byCustomer ya viene ordenado por monto de mora descendente.
+          this.upcomingInstallments = report.byCustomer.slice(0, 5).map((c) => ({
+            id: c.customerId,
+            customerName: c.customerName,
+            daysOverdue: c.maxDaysOverdue,
+            overdueCount: c.overdueCount,
+            amountDue: c.totalOverdue,
+            amountPaid: 0,
+            status: 'OVERDUE',
+          }));
           this.loadingUpcoming = false;
         },
         error: () => {

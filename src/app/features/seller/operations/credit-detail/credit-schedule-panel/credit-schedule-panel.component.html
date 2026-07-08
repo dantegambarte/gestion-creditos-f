@@ -92,6 +92,7 @@
               <th class="text-right">Monto</th>
               <th>Método</th>
               <th>Tipo</th>
+              <th>Cobrado por</th>
               <th>Aprobado por</th>
               <th>Fecha</th>
             </tr>
@@ -119,6 +120,9 @@
                 } @else {
                   <span class="ff-badge ff-badge--pagado">Normal</span>
                 }
+              </td>
+              <td class="text-sm text-[var(--ff-text-secondary)]">
+                {{ p.collectorName ?? "—" }}
               </td>
               <td class="text-sm text-[var(--ff-text-secondary)]">
                 {{ p.approverName ?? "—" }}
@@ -181,6 +185,7 @@
             <tr>
               <th>Nº</th>
               <th>Vencimiento</th>
+              <th>Próx. visita</th>
               <th class="text-right">Monto</th>
               <th class="text-right">Pagado</th>
               <th class="text-right">Mora</th>
@@ -204,6 +209,21 @@
             >
               <td class="ff-mono">{{ inst.installmentNumber }}</td>
               <td class="ff-mono">{{ inst.dueDate | date: "dd/MM/yyyy" }}</td>
+              <td class="ff-mono">
+                @if (inst.nextVisitDate) {
+                  <div>{{ formatIsoDate(inst.nextVisitDate) }}</div>
+                  @if (inst.nextVisitScheduledByName) {
+                    <div
+                      class="mt-0.5 text-[11px] leading-tight"
+                      style="color: var(--ff-text-secondary)"
+                    >
+                      Prog. por: {{ inst.nextVisitScheduledByName }}
+                    </div>
+                  }
+                } @else {
+                  <span style="color: var(--ff-text-muted)">-</span>
+                }
+              </td>
               <td class="text-right ff-mono">
                 {{ inst.amountDue | currencyArs: 0 }}
               </td>
@@ -531,6 +551,14 @@
                   </span>
                 </div>
               }
+              @if (selectedInstallment.paidByName) {
+                <div class="flex items-center justify-between">
+                  <span class="ud-label text-xs">Cobrado por</span>
+                  <span class="text-sm" style="color: var(--ff-text-primary)">
+                    {{ selectedInstallment.paidByName }}
+                  </span>
+                </div>
+              }
               @if (selectedInstallment.paidMethod) {
                 <div class="flex items-center justify-between">
                   <span class="ud-label text-xs">Forma</span>
@@ -557,6 +585,29 @@
                     }
                     {{ installmentOriginLabel(selectedInstallment) }}
                   </span>
+                </div>
+              }
+            </div>
+          }
+
+          @if (selectedInstallment.nextVisitDate) {
+            <div
+              class="space-y-0.5 border-b px-4 py-3"
+              style="border-color: var(--ff-border)"
+            >
+              <div class="ud-label text-xs">Próxima visita</div>
+              <div
+                class="text-sm ff-mono"
+                style="color: var(--ff-text-primary)"
+              >
+                {{ formatIsoDate(selectedInstallment.nextVisitDate) }}
+              </div>
+              @if (selectedInstallment.nextVisitScheduledByName) {
+                <div
+                  class="text-[11px] leading-tight"
+                  style="color: var(--ff-text-secondary)"
+                >
+                  Programada por: {{ selectedInstallment.nextVisitScheduledByName }}
                 </div>
               }
             </div>
@@ -624,4 +675,5 @@
 <app-schedule-visit-dialog
   [(visible)]="showScheduleVisitDialog"
   [installment]="scheduleVisitInstallment"
+  (scheduled)="reloadNeeded.emit()"
 />
