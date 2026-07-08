@@ -35,6 +35,7 @@ describe('ExpenseSidePanelComponent', () => {
     outflows: {
       expenses: { cash: 0, transfer: 0 },
       commissions: { cash: 0, transfer: 0 },
+      loans: { cash: 0, transfer: 0 },
     },
     conversions: { cash_delta: 0, transfer_delta: 0 },
     drops: { cash: 0, transfer: 0, items: [] },

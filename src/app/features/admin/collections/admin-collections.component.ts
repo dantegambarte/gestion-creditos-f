@@ -37,6 +37,7 @@ import {
   DetailTab,
 } from './collection-sheet-detail-panel/collection-sheet-detail-panel.component';
 import { GenerateCollectionDialogComponent } from './generate-collection-dialog/generate-collection-dialog.component';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-admin-collections',
@@ -58,6 +59,7 @@ import { GenerateCollectionDialogComponent } from './generate-collection-dialog/
     GenerateCollectionDialogComponent,
     CollectionSheetDetailPanelComponent,
     CollectionAlertsDialogComponent,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './admin-collections.component.html',
@@ -226,6 +228,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   selectSheet(sheet: CollectionSheet): void {
     this.selectedSheetMeta = sheet;
     this.openTabForPanel = null;
+    this.resetShellScroll();
   }
 
   /**
@@ -234,6 +237,18 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   onDetailClosed(): void {
     this.selectedSheetMeta = null;
     this.leftPanelCollapsed = false;
+    this.resetShellScroll();
+  }
+
+  /**
+   * Resetea el scroll del shell para que el cambio lista/detalle mobile no
+   * deje el header de la nueva vista recortado por la posicion anterior.
+   */
+  private resetShellScroll(): void {
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>('.ff-shell__main')?.scrollTo({ top: 0 });
+      window.scrollTo({ top: 0 });
+    });
   }
 
   /**

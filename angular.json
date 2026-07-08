@@ -58,11 +58,12 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "6.5kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "8kB",
+                  "maximumError": "12kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,

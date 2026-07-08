@@ -1,34 +1,94 @@
 <div class="space-y-6">
-  <!-- Filtro inline -->
-  <div class="flex flex-wrap items-center gap-4">
-    <div class="flex items-center gap-2">
-      <span class="text-sm text-[var(--ff-text-secondary)]">Stock ≤</span>
-      <p-inputNumber
-        [(ngModel)]="stockThreshold"
-        [min]="0"
-        [useGrouping]="false"
-        styleClass="w-28"
-        inputStyleClass="bg-[var(--ff-panel)] border-[var(--ff-border)] text-[var(--ff-text-primary)] text-sm h-9 rounded-lg px-3"
-        placeholder="sin filtro"
+  <div
+    class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+  >
+    <div
+      class="grid gap-3 md:grid-cols-[minmax(220px,1fr)_180px_140px_auto_auto] md:items-end"
+    >
+      <div>
+        <label
+          class="mb-2 block text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
+          Buscar producto
+        </label>
+        <input
+          pInputText
+          [(ngModel)]="searchText"
+          class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-4 text-base text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)] md:text-sm"
+          placeholder="Nombre o descripción"
+          data-cy="products-report-search"
+        />
+      </div>
+
+      <div>
+        <label
+          class="mb-2 block text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
+          Estado de stock
+        </label>
+        <p-dropdown
+          [(ngModel)]="stockMode"
+          [options]="stockModeOptions"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="w-full"
+          data-cy="products-report-stock-mode"
+        />
+      </div>
+
+      <div>
+        <label
+          class="mb-2 block text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-secondary)]"
+        >
+          Stock bajo ≤
+        </label>
+        <p-inputNumber
+          [(ngModel)]="stockThreshold"
+          [min]="0"
+          [useGrouping]="false"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11 bg-[var(--ff-secondary)] border-[var(--ff-border)] text-[var(--ff-text-primary)] text-base md:text-sm rounded-xl px-3"
+          placeholder="5"
+        />
+      </div>
+
+      <p-button
+        label="Filtrar"
+        icon="pi pi-search"
+        [loading]="loading"
+        styleClass="h-11 w-full justify-center rounded-xl px-5 md:w-auto"
+        (onClick)="consultProducts()"
       />
-    </div>
-    <p-button
-      label="Filtrar"
-      icon="pi pi-search"
-      [loading]="loading"
-      styleClass="ff-filter-btn"
-      (onClick)="consultProducts()"
-    />
-    <div class="ml-2 flex items-center gap-2">
-      <p-inputSwitch [(ngModel)]="onlyWithSales" />
-      <span class="text-sm text-[var(--ff-text-secondary)]"
-        >Solo con ventas</span
+
+      <label
+        class="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-3"
       >
+        <p-inputSwitch [(ngModel)]="onlyWithSales" />
+        <span class="text-sm text-[var(--ff-text-secondary)]"
+          >Solo con ventas</span
+        >
+      </label>
     </div>
   </div>
 
   @if (loading) {
-    <app-loading-state />
+    <div
+      class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+      data-cy="products-report-skeleton"
+    >
+      @for (_ of [1, 2, 3, 4, 5]; track _) {
+        <div
+          class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0"
+        >
+          <p-skeleton width="9rem" height="0.9rem" />
+          <p-skeleton width="4rem" height="0.9rem" styleClass="ml-auto" />
+          <p-skeleton width="3rem" height="0.9rem" />
+          <p-skeleton width="3rem" height="0.9rem" />
+          <p-skeleton width="4rem" height="0.9rem" />
+          <p-skeleton width="4rem" height="0.9rem" />
+        </div>
+      }
+    </div>
   } @else if (error) {
     <app-error-state />
   } @else if (filteredProductRows.length === 0) {
@@ -39,7 +99,10 @@
     <div
       class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
     >
-      <table class="w-full text-sm">
+      <table
+        class="hidden w-full text-sm md:table"
+        data-cy="products-report-table"
+      >
         <thead>
           <tr class="border-b border-[var(--ff-border-subtle)]">
             <th
@@ -129,6 +192,95 @@
           }
         </tbody>
       </table>
+
+      <div
+        class="flex flex-col gap-3 p-3 md:hidden"
+        data-cy="products-report-mobile-list"
+      >
+        @for (row of filteredProductRows; track row.id) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+            data-cy="products-report-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <p
+                class="min-w-0 truncate text-sm font-semibold text-[var(--ff-text-primary)]"
+              >
+                {{ row.title }}
+              </p>
+              @if (row.availableCount === 0) {
+                <span
+                  class="shrink-0 px-2 py-0.5 rounded text-xs font-bold bg-red-900/60 text-red-400 uppercase tracking-wide"
+                  >Sin stock</span
+                >
+              } @else if (
+                stockThreshold != null && row.availableCount <= stockThreshold
+              ) {
+                <span
+                  class="shrink-0 px-2 py-0.5 rounded text-xs font-bold bg-orange-900/60 text-orange-400 uppercase tracking-wide"
+                >
+                  Stock bajo ({{ row.availableCount }})
+                </span>
+              } @else {
+                <span class="shrink-0 text-xs text-[var(--ff-text-secondary)]"
+                  >Stock {{ row.availableCount }}</span
+                >
+              }
+            </div>
+
+            <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div
+                class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+              >
+                <dt class="text-xs text-[var(--ff-text-muted)]">Precio</dt>
+                <dd
+                  class="mt-1 font-mono font-semibold text-[var(--ff-text-secondary)]"
+                >
+                  @if (row.minPrice === row.maxPrice) {
+                    {{ formatCurrency(row.minPrice) }}
+                  } @else {
+                    {{ formatCurrency(row.minPrice) }}—{{
+                      formatCurrency(row.maxPrice)
+                    }}
+                  }
+                </dd>
+              </div>
+              <div
+                class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+              >
+                <dt class="text-xs text-[var(--ff-text-muted)]">
+                  Veces vendido
+                </dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-secondary)]">
+                  {{ row.timesSold }}
+                </dd>
+              </div>
+              <div
+                class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+              >
+                <dt class="text-xs text-[var(--ff-text-muted)]">Prom. venta</dt>
+                <dd
+                  class="mt-1 font-mono font-semibold text-[var(--ff-text-secondary)]"
+                >
+                  {{ formatCurrency(row.avgSellingPrice) }}
+                </dd>
+              </div>
+              <div
+                class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
+              >
+                <dt class="text-xs text-[var(--ff-text-muted)]">Ingresos</dt>
+                <dd class="mt-1 font-mono font-semibold text-green-400">
+                  {{ formatCurrency(row.totalRevenue) }}
+                </dd>
+              </div>
+            </dl>
+          </article>
+        }
+      </div>
+      <ff-back-top-fab
+        [itemCount]="filteredProductRows.length"
+        dataCy="products-report-back-top-action"
+      />
     </div>
   }
 </div>

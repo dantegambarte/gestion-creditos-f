@@ -1,7 +1,42 @@
 <p-toast />
 <div class="ff-page py-4">
   @if (loading) {
-    <app-loading-state />
+    <div class="ff-panel rounded-xl p-6 space-y-4" data-cy="product-edit-skeleton">
+      <p-skeleton width="40%" height="1.5rem" styleClass="mb-2" />
+
+      <div class="flex flex-col gap-1">
+        <p-skeleton width="30%" height="0.85rem" />
+        <p-skeleton height="2.75rem" borderRadius="0.5rem" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <p-skeleton width="40%" height="0.85rem" />
+        <p-skeleton height="4.5rem" borderRadius="0.5rem" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <p-skeleton width="20%" height="0.85rem" />
+        <p-skeleton height="2.75rem" borderRadius="0.5rem" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <p-skeleton width="35%" height="0.85rem" />
+        <p-skeleton height="2.75rem" borderRadius="0.5rem" />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1">
+          <p-skeleton width="30%" height="0.85rem" />
+          <p-skeleton height="2.75rem" borderRadius="0.5rem" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <p-skeleton width="35%" height="0.85rem" />
+          <p-skeleton height="2.75rem" borderRadius="0.5rem" />
+        </div>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <p-skeleton width="7rem" height="2.75rem" borderRadius="0.75rem" />
+        <p-skeleton width="9rem" height="2.75rem" borderRadius="0.75rem" />
+      </div>
+    </div>
   } @else if (error) {
     <app-error-state />
   } @else if (product && form) {

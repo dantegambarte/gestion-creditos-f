@@ -17,7 +17,9 @@ export type InstallmentStatus =
   | 'OVERDUE'
   | 'PARTIAL'
   | 'PLAN_CHANGE_CANCELLED'
-  | 'WRITTEN_OFF';
+  | 'WRITTEN_OFF'
+  | 'WAIVED'
+  | 'SETTLED';
 
 /** Resultado del castigo de un crédito (write off). */
 export interface WriteOffResult {

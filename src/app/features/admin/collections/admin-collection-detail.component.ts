@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../core/models/app-error';
@@ -17,6 +18,7 @@ import {
 import { InstallmentStatus } from '../../seller/models/installment.model';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { BackButtonComponent } from '../../../shared/components/back-button/back-button.component';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-admin-collection-detail',
@@ -27,9 +29,11 @@ import { BackButtonComponent } from '../../../shared/components/back-button/back
     ButtonModule,
     TagModule,
     TooltipModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     BackButtonComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './admin-collection-detail.component.html',
 })

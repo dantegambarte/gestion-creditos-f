@@ -17,11 +17,10 @@ interface NotifSetting {
   description: string;
   icon: string;
   enabled: boolean;
-  emailEnabled: boolean;
 }
 
-/** Metadata estática (label/descripción/icono) por tipo — el backend solo conoce enabled/email_enabled/frequency. */
-const SETTING_META: Record<NotificationType, Omit<NotifSetting, 'enabled' | 'emailEnabled'>> = {
+/** Metadata estática (label/descripción/icono) por tipo — el backend solo conoce enabled/frequency. */
+const SETTING_META: Record<NotificationType, Omit<NotifSetting, 'enabled'>> = {
   MORA: {
     id: 'MORA',
     label: 'Alertas de mora',
@@ -52,12 +51,6 @@ const SETTING_META: Record<NotificationType, Omit<NotifSetting, 'enabled' | 'ema
     description: 'Notificar al admin cuando se registra un nuevo cliente',
     icon: 'pi pi-user-plus',
   },
-  WEEKLY_REPORT: {
-    id: 'WEEKLY_REPORT',
-    label: 'Informes automáticos',
-    description: 'Enviar resumen semanal de operaciones por email',
-    icon: 'pi pi-chart-bar',
-  },
 };
 
 @Component({
@@ -79,7 +72,7 @@ export class NotificationsConfigComponent implements OnInit {
     this.loadHistory();
   }
 
-  /** Carga las 6 preferencias reales desde el backend y las mapea a NotifSetting. */
+  /** Carga las 5 preferencias reales desde el backend y las mapea a NotifSetting. */
   private loadPreferences(): void {
     this.loading = true;
     this.notificationsSvc.getPreferences().subscribe({
@@ -87,7 +80,6 @@ export class NotificationsConfigComponent implements OnInit {
         this.settings = prefs.map((p) => ({
           ...SETTING_META[p.type],
           enabled: p.enabled,
-          emailEnabled: p.email_enabled,
         }));
         this.loading = false;
       },
@@ -113,7 +105,6 @@ export class NotificationsConfigComponent implements OnInit {
     const updates = this.settings.map((s) =>
       this.notificationsSvc.updatePreference(s.id, {
         enabled: s.enabled,
-        email_enabled: s.emailEnabled,
       }),
     );
     // Disparamos todas las actualizaciones; no usamos forkJoin para mantener

@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { FfBackTopFabComponent } from './../components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +11,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 
 import {
@@ -24,6 +26,7 @@ import { CreditsService } from '../../features/seller/operations/credits.service
   selector: 'operations',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     CurrencyArsPipe,
     CommonModule,
     FormsModule,
@@ -35,6 +38,7 @@ import { CreditsService } from '../../features/seller/operations/credits.service
     IconFieldModule,
     InputIconModule,
     DialogModule,
+    SkeletonModule,
   ],
   templateUrl: './operations.component.html',
   styleUrl: './operations.component.scss',

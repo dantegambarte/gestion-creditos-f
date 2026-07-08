@@ -22,6 +22,7 @@ import { Installment } from '../../../models/installment.model';
 import { DirectPaymentDialogComponent } from '../direct-payment-dialog/direct-payment-dialog.component';
 import { PenaltyDialogComponent } from '../penalty-dialog/penalty-dialog.component';
 import { WaiveDialogComponent } from '../waive-dialog/waive-dialog.component';
+import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { ScheduleVisitDialogComponent } from '../schedule-visit-dialog/schedule-visit-dialog.component';
 
 @Component({
@@ -36,6 +37,7 @@ import { ScheduleVisitDialogComponent } from '../schedule-visit-dialog/schedule-
     PenaltyDialogComponent,
     WaiveDialogComponent,
     DirectPaymentDialogComponent,
+    FfBackTopFabComponent,
     ScheduleVisitDialogComponent,
   ],
   templateUrl: './credit-schedule-panel.component.html',
@@ -198,6 +200,8 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       PARTIAL: 'warning',
       PLAN_CHANGE_CANCELLED: 'secondary',
       WRITTEN_OFF: 'danger',
+      WAIVED: 'secondary',
+      SETTLED: 'success',
     };
     return map[status] ?? 'secondary';
   }
@@ -214,6 +218,8 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       PARTIAL: 'Parcial',
       PLAN_CHANGE_CANCELLED: 'Anulada (cambio de plan)',
       WRITTEN_OFF: 'Castigada',
+      WAIVED: 'Condonada',
+      SETTLED: 'Liquidada',
     };
     return map[status] ?? status;
   }

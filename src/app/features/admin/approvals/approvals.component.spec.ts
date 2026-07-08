@@ -121,6 +121,22 @@ describe('ApprovalsComponent', () => {
     expect(component.processingId).toBeNull();
   });
 
+  it('limpia la búsqueda desde el botón del input', () => {
+    component.searchTerm = 'Juan';
+    fixture.detectChanges();
+
+    const clearButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-cy="admin-approvals-search-clear"]',
+    );
+    clearButton.click();
+    fixture.detectChanges();
+
+    expect(component.searchTerm).toBe('');
+    expect(
+      fixture.nativeElement.querySelector('[data-cy="admin-approvals-search-clear"]'),
+    ).toBeNull();
+  });
+
   it('onApprove ignora clic si processingId activo', () => {
     component.processingId = 'CR001';
     component.onApprove(MOCK_CREDITS[0]);
@@ -135,7 +151,6 @@ describe('ApprovalsComponent', () => {
 
   it('confirmApprove quita la fila aprobada del array', () => {
     component.approvingRow = MOCK_CREDITS[0];
-    component.approveInstallmentsCount = 12;
     component.confirmApprove();
     expect(creditsSvc.approve).toHaveBeenCalledWith('CR001', {});
     expect(component.approvals.find((a) => a.id === 'CR001')).toBeUndefined();
@@ -144,7 +159,6 @@ describe('ApprovalsComponent', () => {
   it('confirmApprove muestra toast de éxito al aprobar', () => {
     const addSpy = spyOn(TestBed.inject(MessageService), 'add');
     component.approvingRow = MOCK_CREDITS[0];
-    component.approveInstallmentsCount = 12;
 
     component.confirmApprove();
 

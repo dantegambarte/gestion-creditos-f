@@ -12,9 +12,9 @@ import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../core/models/app-error';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { Payment, PaymentStatus } from '../models/payment.model';
 import { PaymentsService } from '../payments.service';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-collector-payments',
@@ -30,8 +30,8 @@ import { PaymentsService } from '../payments.service';
     DropdownModule,
     SkeletonModule,
     TooltipModule,
-    LoadingStateComponent,
     ErrorStateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './collector-payments.component.html',
 })

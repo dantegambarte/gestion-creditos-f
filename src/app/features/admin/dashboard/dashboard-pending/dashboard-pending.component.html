@@ -155,6 +155,7 @@
   </div>
 
   <div
+    #mobilePanel
     class="db-pending-mobile__panel"
     data-cy="dashboard-pending-mobile-panel"
   >
@@ -201,15 +202,19 @@
                     <span class="db-pending-type">{{
                       credit.type === "SALE" ? "VENTA" : "PRÉSTAMO"
                     }}</span>
-                    <strong>{{ credit.customerName }}</strong>
-                    <span class="db-pending-amount">{{
-                      credit.totalAmount | currencyArs
-                    }}</span>
-                    <span class="db-pending-installments"
-                      >{{ credit.installmentsCount }} cuotas</span
-                    >
+                    <strong class="db-pending-customer">{{
+                      credit.customerName
+                    }}</strong>
+                    <div class="db-pending-mobile__item-row">
+                      <span class="db-pending-amount">{{
+                        credit.totalAmount | currencyArs
+                      }}</span>
+                      <span class="db-pending-installments"
+                        >{{ credit.installmentsCount }} cuotas</span
+                      >
+                    </div>
                     <button
-                      class="db-pending-btn"
+                      class="db-pending-btn db-pending-btn--full"
                       [disabled]="isCashClosed"
                       [class.db-pending-btn--disabled]="isCashClosed"
                       (click)="reviewCredit(credit.id)"
@@ -263,15 +268,19 @@
                           ? "TRANSF."
                           : "MIXTO"
                     }}</span>
-                    <strong>{{ payment.customerName }}</strong>
-                    <span class="db-pending-amount">{{
-                      payment.amountReceived | currencyArs
-                    }}</span>
-                    <span class="db-pending-installments"
-                      >Cuota {{ payment.installmentNumber }}</span
-                    >
+                    <strong class="db-pending-customer">{{
+                      payment.customerName
+                    }}</strong>
+                    <div class="db-pending-mobile__item-row">
+                      <span class="db-pending-amount">{{
+                        payment.amountReceived | currencyArs
+                      }}</span>
+                      <span class="db-pending-installments"
+                        >Cuota {{ payment.installmentNumber }}</span
+                      >
+                    </div>
                     <button
-                      class="db-pending-btn"
+                      class="db-pending-btn db-pending-btn--full"
                       [disabled]="
                         isCashClosed || approvingPaymentId === payment.id
                       "

@@ -1,4 +1,13 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -8,7 +17,10 @@ import { InputTextModule } from 'primeng/inputtext';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../directives/currency-amount-input.directive';
 import { CartLine, CartLineRef } from '../../operation-form.service';
-import { CatalogProduct, CatalogVariant } from '../../operation-catalog.service';
+import {
+  CatalogProduct,
+  CatalogVariant,
+} from '../../operation-catalog.service';
 import { ClientOperation } from '../../../../models/interface/client';
 
 @Component({
@@ -39,11 +51,22 @@ export class StepProductsComponent implements OnChanges {
   @Input() loadingProductRatesByCatalogId: Record<string, boolean> = {};
 
   @Output() productAdded = new EventEmitter<CatalogProduct>();
-  @Output() productVariantAdded = new EventEmitter<{ product: CatalogProduct; variantId: string }>();
+  @Output() productVariantAdded = new EventEmitter<{
+    product: CatalogProduct;
+    variantId: string;
+  }>();
   /** Agrega una unidad PUNTUAL clickeada en el paso 2. Es la vía granular. */
-  @Output() unitAdded = new EventEmitter<{ product: CatalogProduct; variantId: string; unitId: string }>();
+  @Output() unitAdded = new EventEmitter<{
+    product: CatalogProduct;
+    variantId: string;
+    unitId: string;
+  }>();
   /** Quita una unidad PUNTUAL del carrito desde el paso 2. */
-  @Output() unitRemoved = new EventEmitter<{ productoId: string; variantId: string; unitId: string }>();
+  @Output() unitRemoved = new EventEmitter<{
+    productoId: string;
+    variantId: string;
+    unitId: string;
+  }>();
   @Output() productRemoved = new EventEmitter<string | CartLineRef>();
   @Output() quantityIncreased = new EventEmitter<string | CartLineRef>();
   @Output() quantityDecreased = new EventEmitter<string | CartLineRef>();
@@ -53,9 +76,12 @@ export class StepProductsComponent implements OnChanges {
   selectedProductId: string | null = null;
   selectedVariantId: string | null = null;
   private lastProductScrollTop = 0;
-  @ViewChild('catalogScrollContainer') private catalogScrollContainer?: ElementRef<HTMLDivElement>;
-  @ViewChild('productSection') private productSection?: ElementRef<HTMLDivElement>;
-  @ViewChild('variantSection') private variantSection?: ElementRef<HTMLDivElement>;
+  @ViewChild('catalogScrollContainer')
+  private catalogScrollContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('productSection')
+  private productSection?: ElementRef<HTMLDivElement>;
+  @ViewChild('variantSection')
+  private variantSection?: ElementRef<HTMLDivElement>;
   @ViewChild('unitsSection') private unitsSection?: ElementRef<HTMLDivElement>;
 
   /**
@@ -72,21 +98,31 @@ export class StepProductsComponent implements OnChanges {
   get filteredCatalogProducts(): CatalogProduct[] {
     const term = this.catalogSearchText.trim().toLowerCase();
     if (!term) return this.catalogProducts;
-    return this.catalogProducts.filter((p) => p.nombre.toLowerCase().includes(term));
+    return this.catalogProducts.filter((p) =>
+      p.nombre.toLowerCase().includes(term),
+    );
   }
 
   /**
    * Devuelve el producto actualmente seleccionado en el catálogo operacional.
    */
   get selectedProduct(): CatalogProduct | null {
-    return this.filteredCatalogProducts.find((product) => product.productoId === this.selectedProductId) ?? null;
+    return (
+      this.filteredCatalogProducts.find(
+        (product) => product.productoId === this.selectedProductId,
+      ) ?? null
+    );
   }
 
   /**
    * Devuelve la variante actualmente seleccionada para el producto activo.
    */
   get selectedVariant(): CatalogVariant | null {
-    return this.selectedProduct?.variants.find((variant) => variant.variantId === this.selectedVariantId) ?? null;
+    return (
+      this.selectedProduct?.variants.find(
+        (variant) => variant.variantId === this.selectedVariantId,
+      ) ?? null
+    );
   }
 
   /**
@@ -133,7 +169,8 @@ export class StepProductsComponent implements OnChanges {
    * @param {CatalogProduct} product - Producto elegido en el catálogo.
    */
   selectProduct(product: CatalogProduct): void {
-    this.lastProductScrollTop = this.catalogScrollContainer?.nativeElement.scrollTop ?? 0;
+    this.lastProductScrollTop =
+      this.catalogScrollContainer?.nativeElement.scrollTop ?? 0;
     this.selectedProductId = product.productoId;
     this.selectedVariantId = product.variants[0]?.variantId ?? null;
     this.scrollToSection('variant');
@@ -219,7 +256,10 @@ export class StepProductsComponent implements OnChanges {
    */
   isVariantOutOfStock(variant: CatalogVariant): boolean {
     if (!this.selectedProduct) return true;
-    const existing = this.findCartLine(this.selectedProduct.productoId, variant.variantId);
+    const existing = this.findCartLine(
+      this.selectedProduct.productoId,
+      variant.variantId,
+    );
     return (existing?.cantidad ?? 0) >= variant.stockDisponible;
   }
 
@@ -230,7 +270,10 @@ export class StepProductsComponent implements OnChanges {
    */
   getVariantRemainingStock(variant: CatalogVariant): number {
     if (!this.selectedProduct) return 0;
-    const existing = this.findCartLine(this.selectedProduct.productoId, variant.variantId);
+    const existing = this.findCartLine(
+      this.selectedProduct.productoId,
+      variant.variantId,
+    );
     return Math.max(variant.stockDisponible - (existing?.cantidad ?? 0), 0);
   }
 
@@ -247,7 +290,12 @@ export class StepProductsComponent implements OnChanges {
    */
   get selectedCartLine(): CartLine | null {
     if (!this.selectedProduct || !this.selectedVariant) return null;
-    return this.findCartLine(this.selectedProduct.productoId, this.selectedVariant.variantId) ?? null;
+    return (
+      this.findCartLine(
+        this.selectedProduct.productoId,
+        this.selectedVariant.variantId,
+      ) ?? null
+    );
   }
 
   /**
@@ -282,7 +330,8 @@ export class StepProductsComponent implements OnChanges {
     const selectedProductStillExists = this.filteredCatalogProducts.some(
       (product) => product.productoId === this.selectedProductId,
     );
-    if (!selectedProductStillExists) this.selectedProductId = firstProduct.productoId;
+    if (!selectedProductStillExists)
+      this.selectedProductId = firstProduct.productoId;
 
     const currentProduct = this.filteredCatalogProducts.find(
       (product) => product.productoId === this.selectedProductId,
@@ -290,7 +339,8 @@ export class StepProductsComponent implements OnChanges {
     const variantExists = currentProduct?.variants.some(
       (variant) => variant.variantId === this.selectedVariantId,
     );
-    if (!variantExists) this.selectedVariantId = currentProduct?.variants[0]?.variantId ?? null;
+    if (!variantExists)
+      this.selectedVariantId = currentProduct?.variants[0]?.variantId ?? null;
   }
 
   /**
@@ -299,14 +349,18 @@ export class StepProductsComponent implements OnChanges {
    * @param {string} variantId - Variante específica.
    * @returns {CartLine | undefined} Línea encontrada si existe.
    */
-  private findCartLine(productoId: string, variantId: string): CartLine | undefined {
+  private findCartLine(
+    productoId: string,
+    variantId: string,
+  ): CartLine | undefined {
     return this.cartLines.find(
       (line) => line.productoId === productoId && line.variantId === variantId,
     );
   }
 
   /**
-   * Hace scroll suave hasta la siguiente sección del flujo dentro del panel de catálogo.
+   * Hace scroll suave hasta la siguiente sección. En desktop usa el panel interno
+   * del catálogo; en mobile usa el viewport del wizard porque el panel crece natural.
    * @param {'product' | 'variant' | 'units'} section - Sección de destino a enfocar.
    */
   private scrollToSection(section: 'product' | 'variant' | 'units'): void {
@@ -319,6 +373,14 @@ export class StepProductsComponent implements OnChanges {
             : this.unitsSection?.nativeElement;
       const container = this.catalogScrollContainer?.nativeElement;
       if (!target || !container) return;
+
+      const hasInternalScroll =
+        container.scrollHeight > container.clientHeight + 1;
+      if (!hasInternalScroll) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+
       const nextTop = Math.max(0, target.offsetTop - container.offsetTop - 12);
       container.scrollTo({ top: nextTop, behavior: 'smooth' });
     }, 0);
@@ -331,7 +393,17 @@ export class StepProductsComponent implements OnChanges {
     setTimeout(() => {
       const container = this.catalogScrollContainer?.nativeElement;
       if (!container) return;
-      container.scrollTo({ top: this.lastProductScrollTop, behavior: 'smooth' });
+      if (container.scrollHeight > container.clientHeight + 1) {
+        container.scrollTo({
+          top: this.lastProductScrollTop,
+          behavior: 'smooth',
+        });
+        return;
+      }
+      this.productSection?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
     }, 0);
   }
 }

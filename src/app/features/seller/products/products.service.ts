@@ -22,6 +22,9 @@ function toVariant(raw: ProductVariantSummaryRaw): ProductVariantSummary {
     capacity: raw.capacity,
     currentPrice: raw.current_price,
     status: raw.status,
+    availableCount: raw.available_count,
+    reservedCount: raw.reserved_count,
+    soldCount: raw.sold_count,
   };
 }
 

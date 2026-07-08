@@ -1,4 +1,35 @@
 <p-toast />
+<p-toast key="network-status" />
+<p-toast key="pwa-update">
+  <ng-template let-message pTemplate="message">
+    <div class="flex w-full flex-col gap-3">
+      <div class="font-semibold text-slate-900">
+        {{ message.summary }}
+      </div>
+      <div class="text-sm text-slate-700">
+        {{ message.detail }}
+      </div>
+      @if (message.data?.actionLabel) {
+        <button
+          type="button"
+          class="h-11 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white"
+          data-cy="pwa-update-reload"
+          (click)="runToastAction(message)"
+        >
+          {{ message.data.actionLabel }}
+        </button>
+      }
+    </div>
+  </ng-template>
+</p-toast>
+<div
+  class="sr-only"
+  aria-live="polite"
+  aria-atomic="true"
+  data-cy="global-live-region"
+>
+  {{ liveAnnouncement }}
+</div>
 @if (!isPortalRoute() && (auth.currentUser$ | async)) {
   <div class="ff-shell">
     <sidebar />

@@ -14,6 +14,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 
@@ -59,6 +60,7 @@ function passwordMatchValidator(
     ButtonModule,
     InputTextModule,
     PasswordModule,
+    SkeletonModule,
     TagModule,
     ToastModule,
   ],

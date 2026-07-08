@@ -56,7 +56,10 @@ const mockUnreadCount = (count: number) => {
 const mockHistory = (items: MockNotification[]) => {
   cy.intercept('GET', '**/api/notifications?*', {
     statusCode: 200,
-    body: { ok: true, data: { items, total: items.length, page: 1, limit: 10 } },
+    body: {
+      ok: true,
+      data: { items, total: items.length, page: 1, limit: 10 },
+    },
   }).as('historyList');
 };
 
@@ -70,17 +73,32 @@ describe('Header — Campana de notificaciones (Desktop)', () => {
   });
 
   it('muestra el badge con el unread-count real del backend', () => {
-    cy.get('[data-cy="header-bell-badge"]').should('be.visible').and('contain.text', '3');
+    cy.get('[data-cy="header-bell-btn"]')
+      .should('have.attr', 'aria-label', 'Abrir notificaciones')
+      .and('have.attr', 'aria-haspopup', 'dialog')
+      .and('have.attr', 'aria-expanded', 'false');
+    cy.get('[data-cy="header-bell-badge"]')
+      .should('be.visible')
+      .and('contain.text', '3');
   });
 
   it('al abrir el dropdown lista las últimas notificaciones y marcar como leída decrementa el contador', () => {
     cy.intercept('POST', '**/api/notifications/notif-1/read', {
       statusCode: 200,
-      body: { ok: true, data: null, message: 'Notificación marcada como leída.' },
+      body: {
+        ok: true,
+        data: null,
+        message: 'Notificación marcada como leída.',
+      },
     }).as('markRead');
     mockUnreadCount(2);
 
     cy.get('[data-cy="header-bell-btn"]').click();
+    cy.get('[data-cy="header-bell-btn"]').should(
+      'have.attr',
+      'aria-expanded',
+      'true',
+    );
     cy.wait('@historyList');
     cy.get('[data-cy="header-bell-dropdown"]').should('be.visible');
     cy.contains('[data-cy="header-bell-item"]', 'Mora detectada').click();
@@ -94,7 +112,11 @@ describe('Header — Campana de notificaciones (Desktop)', () => {
     mockHistory([NAV_NOTIF]);
     cy.intercept('POST', '**/api/notifications/notif-nav-1/read', {
       statusCode: 200,
-      body: { ok: true, data: null, message: 'Notificación marcada como leída.' },
+      body: {
+        ok: true,
+        data: null,
+        message: 'Notificación marcada como leída.',
+      },
     }).as('markRead');
 
     cy.get('[data-cy="header-bell-btn"]').click();
@@ -108,7 +130,11 @@ describe('Header — Campana de notificaciones (Desktop)', () => {
   it('permite borrar una notificación individual', () => {
     cy.intercept('DELETE', '**/api/notifications/notif-1', {
       statusCode: 200,
-      body: { ok: true, data: null, message: 'Notificación borrada correctamente.' },
+      body: {
+        ok: true,
+        data: null,
+        message: 'Notificación borrada correctamente.',
+      },
     }).as('deleteNotification');
     mockUnreadCount(2);
 
@@ -117,13 +143,19 @@ describe('Header — Campana de notificaciones (Desktop)', () => {
     cy.get('[data-cy="header-bell-delete-item"]').click();
 
     cy.wait('@deleteNotification');
-    cy.contains('[data-cy="header-bell-item"]', 'Mora detectada').should('not.exist');
+    cy.contains('[data-cy="header-bell-item"]', 'Mora detectada').should(
+      'not.exist',
+    );
   });
 
   it('permite borrar todas las notificaciones', () => {
     cy.intercept('DELETE', '**/api/notifications', {
       statusCode: 200,
-      body: { ok: true, data: null, message: 'Notificaciones borradas correctamente.' },
+      body: {
+        ok: true,
+        data: null,
+        message: 'Notificaciones borradas correctamente.',
+      },
     }).as('deleteAllNotifications');
 
     cy.get('[data-cy="header-bell-btn"]').click();
@@ -145,13 +177,19 @@ describe('Header — Campana de notificaciones (Mobile 375x667)', () => {
   });
 
   it('muestra el badge con el unread-count real del backend en mobile', () => {
-    cy.get('[data-cy="header-bell-badge"]').should('be.visible').and('contain.text', '3');
+    cy.get('[data-cy="header-bell-badge"]')
+      .should('be.visible')
+      .and('contain.text', '3');
   });
 
   it('al abrir el dropdown en mobile lista las últimas notificaciones y marcar como leída decrementa el contador', () => {
     cy.intercept('POST', '**/api/notifications/notif-1/read', {
       statusCode: 200,
-      body: { ok: true, data: null, message: 'Notificación marcada como leída.' },
+      body: {
+        ok: true,
+        data: null,
+        message: 'Notificación marcada como leída.',
+      },
     }).as('markRead');
     mockUnreadCount(2);
 
@@ -188,7 +226,11 @@ describe('Header — Campana de notificaciones (Mobile 375x667)', () => {
   it('permite borrar una notificación individual en mobile', () => {
     cy.intercept('DELETE', '**/api/notifications/notif-1', {
       statusCode: 200,
-      body: { ok: true, data: null, message: 'Notificación borrada correctamente.' },
+      body: {
+        ok: true,
+        data: null,
+        message: 'Notificación borrada correctamente.',
+      },
     }).as('deleteNotification');
     mockUnreadCount(2);
 
@@ -197,13 +239,19 @@ describe('Header — Campana de notificaciones (Mobile 375x667)', () => {
     cy.get('[data-cy="header-bell-delete-item"]').click();
 
     cy.wait('@deleteNotification');
-    cy.contains('[data-cy="header-bell-item"]', 'Mora detectada').should('not.exist');
+    cy.contains('[data-cy="header-bell-item"]', 'Mora detectada').should(
+      'not.exist',
+    );
   });
 
   it('permite borrar todas las notificaciones en mobile', () => {
     cy.intercept('DELETE', '**/api/notifications', {
       statusCode: 200,
-      body: { ok: true, data: null, message: 'Notificaciones borradas correctamente.' },
+      body: {
+        ok: true,
+        data: null,
+        message: 'Notificaciones borradas correctamente.',
+      },
     }).as('deleteAllNotifications');
 
     cy.get('[data-cy="header-bell-btn"]').click();

@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { FfBackTopFabComponent } from './../components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -64,6 +65,7 @@ function toClient(c: Customer): Client {
   selector: 'app-clients',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     CommonModule,
     FormsModule,
     TableModule,

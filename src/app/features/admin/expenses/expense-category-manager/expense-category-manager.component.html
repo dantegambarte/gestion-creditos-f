@@ -14,6 +14,7 @@
       icon="pi pi-plus"
       severity="primary"
       styleClass="h-11 px-5 rounded-xl shadow-sm"
+      data-cy="expense-category-create-trigger"
       (onClick)="openCatCreate()"
     />
   </div>
@@ -66,32 +67,51 @@
 <p-dialog
   [(visible)]="showCatDialog"
   [modal]="true"
-  [style]="{ width: '380px' }"
-  header="Nueva categoría de gastos"
-  [closable]="!savingCat"
+  [showHeader]="false"
+  [closable]="false"
+  [style]="{ width: '380px', maxWidth: '95vw' }"
+  styleClass="cash-mobile-dialog"
+  contentStyleClass="!p-0"
 >
-  <div class="space-y-4 py-1">
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Nombre *</label>
-      <input
-        pInputText
-        [(ngModel)]="newCatName"
-        maxlength="100"
-        class="w-full h-11"
-        placeholder="Nombre de la categoría..."
-      />
-    </div>
-    @if (catDialogError) {
-      <p
-        class="text-sm rounded-lg px-3 py-2"
-        style="background: rgba(248, 113, 113, 0.12); color: var(--ff-danger)"
+  <section class="flex max-h-[88vh] flex-col overflow-hidden" data-cy="expense-category-create-dialog">
+    <header class="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--ff-border-subtle)] px-6 py-5">
+      <h2 class="text-lg font-bold" style="color: var(--ff-text-primary)">Nueva categoría de gastos</h2>
+      <button
+        type="button"
+        class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white disabled:opacity-50"
+        [disabled]="savingCat"
+        data-cy="expense-category-create-dialog-close"
+        (click)="showCatDialog = false"
       >
-        {{ catDialogError }}
-      </p>
-    }
-  </div>
-  <ng-template pTemplate="footer">
-    <div class="flex gap-3 w-full justify-end">
+        <i class="pi pi-times text-base"></i>
+      </button>
+    </header>
+
+    <div class="flex-1 overflow-y-auto px-6 py-5" data-cy="expense-category-create-dialog-body">
+      <div class="space-y-4">
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Nombre *</label>
+          <input
+            pInputText
+            [(ngModel)]="newCatName"
+            maxlength="100"
+            class="w-full h-11"
+            style="font-size: 16px"
+            placeholder="Nombre de la categoría..."
+          />
+        </div>
+        @if (catDialogError) {
+          <p
+            class="text-sm rounded-lg px-3 py-2"
+            style="background: rgba(248, 113, 113, 0.12); color: var(--ff-danger)"
+          >
+            {{ catDialogError }}
+          </p>
+        }
+      </div>
+    </div>
+
+    <footer class="flex shrink-0 gap-3 justify-end border-t border-[var(--ff-border-subtle)] px-6 py-4">
       <p-button
         label="Cancelar"
         severity="secondary"
@@ -105,10 +125,11 @@
         icon="pi pi-check"
         severity="primary"
         styleClass="h-11 px-5 rounded-xl"
+        data-cy="expense-category-create-submit"
         (onClick)="submitCatCreate()"
         [loading]="savingCat"
         [disabled]="!newCatName.trim()"
       />
-    </div>
-  </ng-template>
+    </footer>
+  </section>
 </p-dialog>

@@ -9,6 +9,7 @@ import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
+import { SkeletonModule } from 'primeng/skeleton';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { HeaderService } from '../../../../core/services/header.service';
 import { CustomersService } from '../customers.service';
@@ -23,6 +24,8 @@ import { EmptyStateComponent } from '../../../../shared/states/empty-state/empty
 import { AppError } from '../../../../core/models/app-error';
 import { UserRoleEnum } from '../../../../core/models/types/user-role';
 import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { UsersService } from '../../../admin/users/users.service';
 
 @Component({
   selector: 'app-clients-list',
@@ -35,14 +38,18 @@ import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
     ButtonModule,
     DropdownModule,
     InputTextModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     EmptyStateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './clients-list.component.html',
+  styleUrl: './clients-list.component.scss',
 })
 export class ClientsListComponent implements OnInit, OnDestroy {
   private readonly customersService = inject(CustomersService);
+  private readonly usersService = inject(UsersService);
   private readonly auth = inject(AuthServiceBase);
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
@@ -54,6 +61,7 @@ export class ClientsListComponent implements OnInit, OnDestroy {
   searchTerm = '';
   selectedStatus: CustomerStatus | null = null;
   selectedCollectorId: string | null = null;
+  collectorOptions: { label: string; value: string }[] = [];
 
   readonly statusOptions = [
     { label: 'Activo', value: 'ACTIVE' },
@@ -77,11 +85,7 @@ export class ClientsListComponent implements OnInit, OnDestroy {
    * @returns {boolean} - Verdadero si el usuario puede filtrar por cobrador, falso en caso contrario.
    */
   get canFilterByCollector(): boolean {
-    return this.auth.hasAnyRole([
-      UserRoleEnum.ADMIN,
-      UserRoleEnum.SELLER,
-      UserRoleEnum.SELLER_COLLECTOR,
-    ]);
+    return this.auth.hasAnyRole([UserRoleEnum.ADMIN]);
   }
 
   private readonly searchSubject = new Subject<string>();
@@ -90,6 +94,7 @@ export class ClientsListComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.header.set([{ label: 'Clientes' }]);
     this.loadCustomers();
+    if (this.canFilterByCollector) this.loadCollectors();
 
     this.sub = this.searchSubject
       .pipe(debounceTime(300), distinctUntilChanged())
@@ -150,6 +155,21 @@ export class ClientsListComponent implements OnInit, OnDestroy {
       error: (err: AppError) => {
         this.error = err;
         this.loading = false;
+      },
+    });
+  }
+
+  /** Carga cobradores activos para filtrar clientes por asignación. */
+  private loadCollectors(): void {
+    this.usersService.listCollectors().subscribe({
+      next: (users) => {
+        this.collectorOptions = users.map((user) => ({
+          label: user.fullName,
+          value: user.id,
+        }));
+      },
+      error: () => {
+        this.collectorOptions = [];
       },
     });
   }

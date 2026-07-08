@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
@@ -43,6 +44,7 @@ const ROLE_SEVERITY: Record<string, string> = {
     ToastModule,
     ConfirmDialogModule,
     TooltipModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     TempPasswordDialogComponent,

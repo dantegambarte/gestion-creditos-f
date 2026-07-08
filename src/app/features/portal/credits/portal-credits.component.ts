@@ -1,3 +1,4 @@
+import { FfBackTopFabComponent } from './../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -17,7 +18,7 @@ import { PortalCredit } from '../models/portal.models';
 @Component({
   selector: 'app-portal-credits',
   standalone: true,
-  imports: [CommonModule, CurrencyPipe, DatePipe, SkeletonModule, RouterLink],
+  imports: [FfBackTopFabComponent,CommonModule, CurrencyPipe, DatePipe, SkeletonModule, RouterLink],
   templateUrl: './portal-credits.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { ActiveTabScrollerDirective } from '../../../shared/directives/active-tab-scroller.directive';
 import { CommissionsFacade } from './commissions.facade';
 import { CommissionsHistoryTabComponent } from './history-tab/commissions-history-tab.component';
 import { CommissionsLiquidationDialogsComponent } from './liquidation-dialogs/commissions-liquidation-dialogs.component';
@@ -16,6 +17,7 @@ import { CommissionsSummaryTabComponent } from './summary-tab/commissions-summar
     CommissionsHistoryTabComponent,
     CommissionsSalariesTabComponent,
     CommissionsLiquidationDialogsComponent,
+    ActiveTabScrollerDirective,
   ],
   providers: [MessageService, CommissionsFacade],
   templateUrl: './commissions.component.html',

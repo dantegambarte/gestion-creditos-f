@@ -18,7 +18,6 @@ import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import {
   Payment,
   PaymentMethod,
@@ -28,6 +27,7 @@ import { PaymentsService } from '../../collector/payments.service';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
 import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-detail-dialog.component';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-admin-payments',
@@ -45,10 +45,10 @@ import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-de
     SkeletonModule,
     ToastModule,
     TooltipModule,
-    LoadingStateComponent,
     ErrorStateComponent,
     MessageModule,
     PaymentDetailDialogComponent,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './admin-payments.component.html',

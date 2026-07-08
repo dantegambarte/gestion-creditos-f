@@ -19,7 +19,10 @@ describe('Sidebar y Guardias de Ruta', () => {
   describe('Admin', () => {
     beforeEach(() => {
       cy.loginAs('ADMIN', '/admin/clients');
-      cy.location('pathname', { timeout: 15000 }).should('eq', '/admin/clients');
+      cy.location('pathname', { timeout: 15000 }).should(
+        'eq',
+        '/admin/clients',
+      );
       cy.get('body', { timeout: 15000 }).then(($body) => {
         const hasSidebar =
           $body.find('aside').length > 0 ||
@@ -28,10 +31,15 @@ describe('Sidebar y Guardias de Ruta', () => {
 
         if (!hasSidebar) {
           cy.loginAs('ADMIN', '/admin/clients');
-          cy.location('pathname', { timeout: 15000 }).should('eq', '/admin/clients');
+          cy.location('pathname', { timeout: 15000 }).should(
+            'eq',
+            '/admin/clients',
+          );
         }
       });
-      cy.get('aside, .sidebar, .app-sidebar', { timeout: 15000 }).should('be.visible');
+      cy.get('aside, .sidebar, .app-sidebar', { timeout: 15000 }).should(
+        'be.visible',
+      );
     });
 
     it('muestra grupos Principal, Gestión, Administración y Sistema', () => {
@@ -39,7 +47,9 @@ describe('Sidebar y Guardias de Ruta', () => {
       cy.contains('aside span', 'Gestión').should('be.visible');
       cy.contains('aside span', 'Administración').should('be.visible');
       // 'Sistema' puede estar debajo del fold del sidebar scrollable — scrollIntoView
-      cy.contains('aside span', 'Sistema').scrollIntoView().should('be.visible');
+      cy.contains('aside span', 'Sistema')
+        .scrollIntoView()
+        .should('be.visible');
     });
 
     it('muestra items exclusivos de admin: Usuarios, Aprobaciones, Reportes, Configuración', () => {
@@ -50,9 +60,13 @@ describe('Sidebar y Guardias de Ruta', () => {
     });
 
     it('el badge de Aprobaciones (si existe) tiene formato visible y no vacío', () => {
-      cy.get('[data-testid="nav-aprobaciones"]').scrollIntoView().should('be.visible');
+      cy.get('[data-testid="nav-aprobaciones"]')
+        .scrollIntoView()
+        .should('be.visible');
       cy.get('body').then(($body) => {
-        const badge = $body.find('[data-testid="nav-aprobaciones"] .nav-item__badge');
+        const badge = $body.find(
+          '[data-testid="nav-aprobaciones"] .nav-item__badge',
+        );
         if (badge.length === 0) {
           cy.get('[data-testid="nav-aprobaciones"]').should('be.visible');
           return;
@@ -80,17 +94,44 @@ describe('Sidebar y Guardias de Ruta', () => {
     });
 
     it('el ítem activo tiene estilo de selección', () => {
-      cy.contains('aside a', 'Clientes')
-        .should('have.class', 'nav-item--active');
+      cy.contains('aside a', 'Clientes').should(
+        'have.class',
+        'nav-item--active',
+      );
     });
 
     it('muestra información del usuario autenticado en el sidebar', () => {
       cy.get('aside').within(() => {
         cy.contains('ADMIN').should('be.visible');
-        cy.get('.sidebar__user-name').should('be.visible').invoke('text').then((text) => {
-          expect(text.trim()).to.not.equal('');
-        });
+        cy.get('.sidebar__user-name')
+          .should('be.visible')
+          .invoke('text')
+          .then((text) => {
+            expect(text.trim()).to.not.equal('');
+          });
       });
+    });
+
+    it('expone nombres accesibles en los controles globales del layout', () => {
+      cy.get('[data-cy="header-bell-btn"]')
+        .should('have.attr', 'aria-label', 'Abrir notificaciones')
+        .and('have.attr', 'aria-haspopup', 'dialog');
+
+      cy.get('[data-cy="header-user-menu-trigger"]')
+        .should('have.attr', 'aria-label', 'Abrir menú de usuario')
+        .and('have.attr', 'aria-haspopup', 'menu');
+
+      cy.viewport(375, 667);
+      cy.get('.mobile-bottom-nav__item--menu')
+        .should('have.attr', 'aria-label', 'Abrir menú')
+        .and('have.attr', 'aria-controls', 'mobile-navigation-menu')
+        .and('have.attr', 'aria-expanded', 'false')
+        .click()
+        .should('have.attr', 'aria-expanded', 'true');
+
+      cy.get('#mobile-navigation-menu')
+        .should('have.attr', 'role', 'dialog')
+        .and('have.attr', 'aria-modal', 'true');
     });
   });
 

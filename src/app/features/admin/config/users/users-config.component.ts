@@ -1,4 +1,5 @@
 import { Component, computed, signal } from '@angular/core';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
@@ -26,6 +27,7 @@ interface SystemUser {
   selector: 'app-users-config',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     ButtonModule,
     TagModule,
     DropdownModule,

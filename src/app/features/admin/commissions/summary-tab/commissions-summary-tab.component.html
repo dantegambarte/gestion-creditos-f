@@ -18,7 +18,19 @@
   </div>
 
   @if (loadingSummary) {
-    <app-loading-state />
+    <div class="admin-table-skeleton" data-cy="commissions-summary-skeleton">
+      @for (_ of [1, 2, 3, 4, 5]; track _) {
+        <div class="admin-table-skeleton__row">
+          <p-skeleton width="8rem" height="0.9rem" />
+          <p-skeleton width="4rem" height="1.4rem" borderRadius="999px" />
+          <p-skeleton width="5rem" height="1rem" />
+          <p-skeleton width="5rem" height="1rem" />
+          <p-skeleton width="5rem" height="1rem" />
+          <p-skeleton width="7rem" height="0.9rem" />
+          <p-skeleton width="5rem" height="2rem" styleClass="ml-auto" />
+        </div>
+      }
+    </div>
   } @else if (errorSummary) {
     <app-error-state />
   } @else if (employees.length === 0) {
@@ -28,7 +40,8 @@
   } @else {
     <p-table
       [value]="employees"
-      styleClass="p-datatable-sm p-datatable-hoverable-rows"
+      styleClass="hidden md:block p-datatable-sm p-datatable-hoverable-rows"
+      data-cy="admin-commissions-summary-table"
       responsiveLayout="scroll"
     >
       <ng-template pTemplate="header">
@@ -86,6 +99,58 @@
         </tr>
       </ng-template>
     </p-table>
+
+    <div class="flex flex-col gap-3 md:hidden" data-cy="admin-commissions-summary-mobile-list">
+      @for (emp of employees; track emp.userId) {
+        <article
+          class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.18)]"
+          data-cy="admin-commissions-summary-mobile-card"
+          [class.opacity-50]="rowDisabled(emp)"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-white">{{ emp.fullName }}</p>
+              <p class="mt-1 text-xs text-[var(--ff-text-muted)]">
+                @if (emp.earliestWeek) {
+                  {{ formatDate(emp.earliestWeek) }} — {{ formatDate(emp.latestWeek ?? "") }}
+                } @else {
+                  Sin período
+                }
+              </p>
+            </div>
+            <p-tag [value]="roleLabel(emp.role)" [styleClass]="roleTagClass(emp.role)" />
+          </div>
+
+          <dl class="mt-4 grid grid-cols-1 gap-3 text-sm">
+            <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+              <dt class="text-xs text-[var(--ff-text-muted)]">Total liquidado</dt>
+              <dd class="mt-1 font-mono text-lg font-bold text-emerald-400">{{ formatCurrency(emp.totalNet) }}</dd>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Comisiones</dt>
+                <dd class="mt-1 font-mono font-semibold text-[var(--ff-text-primary)]">{{ formatCurrency(emp.commissionsTotal) }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Sueldo fijo</dt>
+                <dd class="mt-1 font-mono font-semibold text-[var(--ff-text-primary)]">{{ formatCurrency(emp.salaryAmount) }}</dd>
+              </div>
+            </div>
+          </dl>
+
+          <p-button
+            label="Liquidar"
+            icon="pi pi-check-circle"
+            severity="success"
+            styleClass="mt-4 h-11 w-full justify-center rounded-xl px-5 text-sm font-semibold shadow-sm"
+            [disabled]="rowDisabled(emp)"
+            [pTooltip]="rowDisabled(emp) ? 'No hay monto a liquidar' : ''"
+            tooltipPosition="top"
+            (onClick)="triggerLiquidate(emp)"
+          />
+        </article>
+      }
+    </div>
   }
 </p-card>
 
@@ -99,7 +164,20 @@
   </div>
 
   @if (loadingLiquidations) {
-    <app-loading-state />
+    <div class="admin-table-skeleton" data-cy="commissions-recent-liquidations-skeleton">
+      @for (_ of [1, 2, 3]; track _) {
+        <div class="admin-table-skeleton__row">
+          <p-skeleton width="7rem" height="0.9rem" />
+          <p-skeleton width="8rem" height="0.9rem" />
+          <p-skeleton width="5rem" height="1rem" styleClass="ml-auto" />
+          <p-skeleton width="5rem" height="1rem" />
+          <p-skeleton width="5rem" height="1rem" />
+          <p-skeleton width="5rem" height="0.9rem" />
+          <p-skeleton width="6rem" height="0.9rem" />
+          <p-skeleton width="5rem" height="0.9rem" />
+        </div>
+      }
+    </div>
   } @else if (recentLiquidations.length === 0) {
     <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
       Sin liquidaciones registradas.
@@ -107,7 +185,8 @@
   } @else {
     <p-table
       [value]="recentLiquidations"
-      styleClass="p-datatable-sm p-datatable-hoverable-rows"
+      styleClass="hidden md:block p-datatable-sm p-datatable-hoverable-rows"
+      data-cy="admin-commissions-recent-table"
       responsiveLayout="scroll"
     >
       <ng-template pTemplate="header">
@@ -149,5 +228,49 @@
         </tr>
       </ng-template>
     </p-table>
+
+    <div class="flex flex-col gap-3 md:hidden" data-cy="admin-commissions-recent-mobile-list">
+      @for (liq of recentLiquidations; track liq.id) {
+        <article
+          class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.18)]"
+          data-cy="admin-commissions-recent-mobile-card"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-white">{{ liq.userName }}</p>
+              <p class="mt-1 text-xs text-[var(--ff-text-muted)]">
+                {{ formatDate(liq.weekStart) }} — {{ formatDate(liq.weekEnd) }}
+              </p>
+            </div>
+            <span class="shrink-0 rounded-full border border-[var(--ff-border-subtle)] px-2 py-1 text-xs text-[var(--ff-text-secondary)]">
+              {{ paymentMethodLabel(liq.paymentMethod) }}
+            </span>
+          </div>
+
+          <dl class="mt-4 grid grid-cols-1 gap-3 text-sm">
+            <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+              <dt class="text-xs text-[var(--ff-text-muted)]">Total liquidado</dt>
+              <dd class="mt-1 font-mono text-lg font-bold text-emerald-400">{{ formatCurrency(liq.totalPaid) }}</dd>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Comisiones</dt>
+                <dd class="mt-1 font-mono font-semibold text-[var(--ff-text-primary)]">{{ formatCurrency(liq.commissionsTotal) }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Sueldo</dt>
+                <dd class="mt-1 font-mono font-semibold text-[var(--ff-text-primary)]">{{ formatCurrency(liq.salaryAmount) }}</dd>
+              </div>
+            </div>
+            <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+              <dt class="text-xs text-[var(--ff-text-muted)]">Pagado por</dt>
+              <dd class="mt-1 text-sm font-semibold text-[var(--ff-text-primary)]">{{ liq.paidByName }}</dd>
+              <dd class="mt-1 text-xs text-[var(--ff-text-muted)]">{{ formatDate(liq.paidAt) }}</dd>
+            </div>
+          </dl>
+        </article>
+      }
+    </div>
+    <ff-back-top-fab [itemCount]="recentLiquidations.length" dataCy="commissions-summary-back-top-action" />
   }
 </p-card>

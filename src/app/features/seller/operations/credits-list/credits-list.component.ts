@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
@@ -23,6 +24,7 @@ import {
 } from '../../models/credit.model';
 import { CreditsService } from '../credits.service';
 import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-credits-list',
@@ -36,11 +38,14 @@ import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
     ButtonModule,
     DropdownModule,
     InputTextModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     EmptyStateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './credits-list.component.html',
+  styleUrl: './credits-list.component.scss',
 })
 export class CreditsListComponent implements OnInit {
   private readonly creditsService = inject(CreditsService);

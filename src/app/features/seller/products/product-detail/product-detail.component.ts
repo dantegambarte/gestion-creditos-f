@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -14,7 +16,6 @@ import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { HeaderService } from '../../../../core/services/header.service';
 import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { ProductDetail } from '../../models/product.model';
 import { ProductsService } from '../products.service';
 
@@ -23,6 +24,7 @@ import { ProductsService } from '../products.service';
   standalone: true,
   providers: [MessageService, ConfirmationService],
   imports: [
+    FfBackTopFabComponent,
     CurrencyArsPipe,
     CommonModule,
     ButtonModule,
@@ -30,10 +32,11 @@ import { ProductsService } from '../products.service';
     ToastModule,
     ConfirmDialogModule,
     TableModule,
-    LoadingStateComponent,
     ErrorStateComponent,
+    SkeletonModule,
   ],
   templateUrl: './product-detail.component.html',
+  styleUrl: './product-detail.component.scss',
 })
 export class ProductDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

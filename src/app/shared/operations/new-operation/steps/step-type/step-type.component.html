@@ -1,9 +1,9 @@
-<div class="mx-auto mt-10 w-[800px] max-w-full">
-  <div class="mb-10 text-center">
-    <h2 class="mb-3 text-2xl font-semibold text-[var(--ff-text-primary)]">
+<div class="mx-auto mt-4 w-full max-w-[800px] md:mt-10">
+  <div class="mb-6 text-center md:mb-10">
+    <h2 class="mb-3 text-xl font-semibold leading-tight text-[var(--ff-text-primary)] md:text-2xl">
       ¿Qué tipo de operación deseas registrar?
     </h2>
-    <p class="text-[15px] text-[var(--ff-text-secondary)]">
+    <p class="text-sm leading-relaxed text-[var(--ff-text-secondary)] md:text-[15px]">
       Selecciona la modalidad para configurar el crédito y los planes de pago.
     </p>
   </div>
@@ -12,19 +12,19 @@
     <button
       type="button"
       data-cy="btn-type-sale"
-      class="group flex flex-col items-center rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-8 text-left transition-all hover:border-[#3B82F6] hover:bg-[var(--ff-surface-hover)]"
+      class="group flex min-h-[176px] flex-col items-center rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5 text-left transition-all hover:border-[#3B82F6] hover:bg-[var(--ff-surface-hover)] md:p-8"
       (click)="selectType('SALE')"
     >
       <div
-        class="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#3B82F6]/10 transition-transform group-hover:scale-110"
+        class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#3B82F6]/10 transition-transform group-hover:scale-110 md:mb-6 md:h-16 md:w-16"
       >
         <i class="pi pi-shopping-cart text-[#3B82F6] text-2xl"></i>
       </div>
-      <h3 class="mb-2 text-lg font-semibold text-[var(--ff-text-primary)]">
+      <h3 class="mb-2 text-base font-semibold text-[var(--ff-text-primary)] md:text-lg">
         Venta de Productos
       </h3>
       <p
-        class="text-center text-[14px] leading-relaxed text-[var(--ff-text-secondary)]"
+        class="text-center text-sm leading-relaxed text-[var(--ff-text-secondary)]"
       >
         Financia artículos del inventario con sus respectivas tasas y
         condiciones.
@@ -34,19 +34,19 @@
     <button
       type="button"
       data-cy="btn-type-loan"
-      class="group flex flex-col items-center rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-8 text-left transition-all hover:border-[#10B981] hover:bg-[var(--ff-surface-hover)]"
+      class="group flex min-h-[176px] flex-col items-center rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5 text-left transition-all hover:border-[#10B981] hover:bg-[var(--ff-surface-hover)] md:p-8"
       (click)="selectType('LOAN')"
     >
       <div
-        class="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#10B981]/10 transition-transform group-hover:scale-110"
+        class="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#10B981]/10 transition-transform group-hover:scale-110 md:mb-6 md:h-16 md:w-16"
       >
         <i class="pi pi-money-bill text-[#10B981] text-2xl"></i>
       </div>
-      <h3 class="mb-2 text-lg font-semibold text-[var(--ff-text-primary)]">
+      <h3 class="mb-2 text-base font-semibold text-[var(--ff-text-primary)] md:text-lg">
         Préstamo Efectivo
       </h3>
       <p
-        class="text-center text-[14px] leading-relaxed text-[var(--ff-text-secondary)]"
+        class="text-center text-sm leading-relaxed text-[var(--ff-text-secondary)]"
       >
         Otorgamiento de capital en efectivo directo con plan de cuotas.
       </p>

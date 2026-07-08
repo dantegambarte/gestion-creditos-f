@@ -1,4 +1,4 @@
-// Contenido de la sección de Ayuda (Manual de Usuario finFlow v1.1, junio 2026).
+// Contenido de la sección de Ayuda (Manual de Usuario Productcred s.a.s. v1.1, junio 2026).
 // Texto-primero: se omiten las capturas de pantalla del documento original.
 // Es contenido estático versionado; no consulta backend.
 
@@ -30,11 +30,11 @@ export const HELP_SECTIONS: HelpSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: 'Este manual tiene como objetivo guiar al usuario en el uso de finFlow, el Sistema de Créditos y Ventas, explicando paso a paso las funciones principales según el rol de cada usuario y cómo resolver los mensajes y errores más frecuentes.',
+        text: 'Este manual tiene como objetivo guiar al usuario en el uso de Productcred s.a.s., el Sistema de Créditos y Ventas, explicando paso a paso las funciones principales según el rol de cada usuario y cómo resolver los mensajes y errores más frecuentes.',
       },
       {
         kind: 'p',
-        text: 'finFlow permite administrar el ciclo completo de préstamos en efectivo y ventas financiadas en cuotas: alta de clientes, generación de operaciones, aprobación, gestión de cobranza en campo, control de caja y reportes. Cada usuario accede únicamente a las funciones que corresponden a su rol.',
+        text: 'Productcred s.a.s. permite administrar el ciclo completo de préstamos en efectivo y ventas financiadas en cuotas: alta de clientes, generación de operaciones, aprobación, gestión de cobranza en campo, control de caja y reportes. Cada usuario accede únicamente a las funciones que corresponden a su rol.',
       },
       {
         kind: 'list',
@@ -69,7 +69,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: 'finFlow trabaja con perfiles de acceso. Cada perfil ve un panel principal y un menú distinto. Antes de operar, identificá con qué rol vas a ingresar:',
+        text: 'Productcred s.a.s. trabaja con perfiles de acceso. Cada perfil ve un panel principal y un menú distinto. Antes de operar, identificá con qué rol vas a ingresar:',
       },
       {
         kind: 'table',
@@ -121,7 +121,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: 'Apenas iniciás sesión, finFlow muestra un panel principal distinto según tu perfil. Esta sección describe en detalle cada uno: qué información presenta, qué significa cada tarjeta y qué acciones podés realizar desde ahí.',
+        text: 'Apenas iniciás sesión, Productcred s.a.s. muestra un panel principal distinto según tu perfil. Esta sección describe en detalle cada uno: qué información presenta, qué significa cada tarjeta y qué acciones podés realizar desde ahí.',
       },
       {
         kind: 'list',
@@ -671,7 +671,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'consideraciones',
     title: '10. Consideraciones finales',
     blocks: [
-      { kind: 'p', text: 'El presente manual constituye una guía práctica para el uso correcto de finFlow, el Sistema de Créditos y Ventas, detallando los principales flujos de trabajo, los paneles de cada rol, los mensajes de alerta y los procedimientos de gestión.' },
+      { kind: 'p', text: 'El presente manual constituye una guía práctica para el uso correcto de Productcred s.a.s., el Sistema de Créditos y Ventas, detallando los principales flujos de trabajo, los paneles de cada rol, los mensajes de alerta y los procedimientos de gestión.' },
       { kind: 'p', text: 'El objetivo es que cada usuario pueda operar de manera eficiente, segura y confiable, reduciendo errores y optimizando los procesos de la empresa.' },
       { kind: 'p', text: 'Este documento debe utilizarse como referencia permanente y actualizarse en cada nueva versión del sistema. Con el compromiso de mejora continua, será revisado periódicamente para incorporar nuevas funcionalidades y garantizar información clara y actualizada.' },
     ],

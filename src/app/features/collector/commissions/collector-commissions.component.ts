@@ -14,13 +14,13 @@ import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import {
   Commission,
   CommissionStatus,
   Liquidation,
 } from '../../admin/models/commission.model';
 import { CommissionsService } from '../../admin/commissions/commissions.service';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-collector-commissions',
@@ -34,8 +34,8 @@ import { CommissionsService } from '../../admin/commissions/commissions.service'
     TableModule,
     TagModule,
     ToastModule,
-    LoadingStateComponent,
     ErrorStateComponent,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './collector-commissions.component.html',

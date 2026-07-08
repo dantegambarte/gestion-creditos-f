@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
+import { SkeletonModule } from 'primeng/skeleton';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
@@ -23,6 +24,7 @@ import {
   GeneralCashMovementType,
 } from '../../report.models';
 import { ReportsService } from '../../reports.service';
+import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 const TYPE_LABELS: Record<CashMovementType, string> = {
   COBRO: 'Cobro',
@@ -70,6 +72,8 @@ const METHOD_LABELS: Record<string, string> = {
     DropdownModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    SkeletonModule,
+    FfBackTopFabComponent,
   ],
   templateUrl: './cash-movements-report.component.html',
 })

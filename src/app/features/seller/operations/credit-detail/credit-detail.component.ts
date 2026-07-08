@@ -1,10 +1,12 @@
 import { CommonModule, DatePipe, Location } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -39,6 +41,7 @@ import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog
   selector: 'app-credit-detail',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     CurrencyArsPipe,
     DatePipe,
     CommonModule,
@@ -48,6 +51,7 @@ import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog
     ToastModule,
     InputTextModule,
     TooltipModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     MessageModule,

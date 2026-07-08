@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +8,7 @@ import { MessageService } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
@@ -14,7 +16,6 @@ import { AppError } from '../../../core/models/app-error';
 import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { InstallmentStatus } from '../../seller/models/installment.model';
 import { InstallmentsService } from '../../seller/operations/installments.service';
 import { CollectionsService } from '../collections.service';
@@ -34,6 +35,7 @@ import {
 } from '../models/management-log.model';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { BackButtonComponent } from '../../../shared/components/back-button/back-button.component';
+import { ActiveTabScrollerDirective } from '../../../shared/directives/active-tab-scroller.directive';
 import { AttemptDialogComponent } from './attempt-dialog/attempt-dialog.component';
 import { PaymentDialogComponent } from './payment-dialog/payment-dialog.component';
 import { CollectionDialogSuccess } from './sheet-dialog.model';
@@ -43,6 +45,7 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
   selector: 'app-collection-sheet-detail',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     CurrencyArsPipe,
     DatePipe,
     FormsModule,
@@ -52,12 +55,13 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
     ToastModule,
     ProgressSpinnerModule,
     TooltipModule,
-    LoadingStateComponent,
+    SkeletonModule,
     ErrorStateComponent,
     PaymentDialogComponent,
     AttemptDialogComponent,
     VoidDialogComponent,
     BackButtonComponent,
+    ActiveTabScrollerDirective,
   ],
   providers: [MessageService],
   templateUrl: './collection-sheet-detail.component.html',

@@ -20,6 +20,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -67,6 +68,7 @@ function toProduct(p: ApiProduct): Product {
     CurrencyAmountInputDirective,
     InputTextareaModule,
     ToastModule,
+    SkeletonModule,
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss',

@@ -1,5 +1,6 @@
 import {
   Component,
+  ElementRef,
   EventEmitter,
   Input,
   OnChanges,
@@ -7,6 +8,7 @@ import {
   OnInit,
   Output,
   SimpleChanges,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -81,6 +83,8 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
   @Input() periodMax: Expense | null = null;
   @Input() periodMostFrequent = '';
   @Input() showStats = false;
+
+  @ViewChild('transferRefField') transferRefField?: ElementRef<HTMLElement>;
 
   /** Emite cuando el usuario cierra el panel con el botón X. */
   @Output() closed = new EventEmitter<void>();
@@ -202,6 +206,23 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
   /** Cierra el panel emitiendo el evento al padre. */
   close(): void {
     this.closed.emit();
+  }
+
+  /**
+   * Al elegir "Transferencia" aparece el campo Referencia debajo del fold
+   * visible en mobile. Lo llevamos a la vista para que el usuario note el
+   * cambio (en desktop el panel suele entrar completo, no hace nada visible).
+   */
+  onTransferSelected(): void {
+    setTimeout(() => {
+      // behavior: 'auto' (no smooth) — el scroll animado deja al elemento en
+      // una posición intermedia inconsistente para checks de visibilidad
+      // automatizados (Cypress calcula occlusion a mitad de la animación).
+      this.transferRefField?.nativeElement.scrollIntoView({
+        behavior: 'auto',
+        block: 'center',
+      });
+    });
   }
 
   /** Resetea el formulario al estado de creación. */

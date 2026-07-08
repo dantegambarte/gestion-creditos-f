@@ -1,8 +1,9 @@
 <section
-  class="flex h-full min-h-0 flex-col gap-5 overflow-hidden text-[var(--ff-text-primary)]"
+  class="flex min-h-0 w-full min-w-0 max-w-full flex-col gap-5 overflow-x-hidden text-[var(--ff-text-primary)] xl:h-full xl:overflow-hidden"
   [formGroup]="form"
+  data-cy="sale-products-step"
 >
-  <div class="shrink-0" data-cy="dropdown-operation-type">
+  <div class="min-w-0 shrink-0" data-cy="dropdown-operation-type">
     <label
       class="mb-2 block text-xs font-medium uppercase tracking-wide text-[var(--ff-text-secondary)]"
     >
@@ -14,9 +15,7 @@
       optionValue="value"
       [filter]="operationTypeOptions.length > 10"
       filterBy="label"
-
-
-      [showClear]="true"
+      [showClear]="false"
       formControlName="operationType"
       styleClass="w-full"
     />
@@ -88,11 +87,11 @@
   @if (form.controls["operationType"].value === "SALE") {
     @if (loadingSaleData) {
       <div
-        class="grid min-h-0 flex-1 gap-4 xl:grid-cols-[380px_380px_minmax(0,1fr)]"
+        class="grid min-h-0 min-w-0 flex-1 gap-4 xl:grid-cols-[380px_380px_minmax(0,1fr)]"
       >
         @for (col of [1, 2, 3]; track col) {
           <div
-            class="rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] p-4"
+            class="min-w-0 rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] p-4"
           >
             <div
               class="h-6 w-32 animate-pulse rounded bg-[var(--ff-secondary)]"
@@ -108,19 +107,22 @@
       </div>
     } @else {
       <div
-        class="grid h-full min-h-0 flex-1 gap-4 overflow-hidden xl:grid-cols-[376px_376px_minmax(0,1fr)]"
+        class="grid min-h-0 min-w-0 flex-1 gap-4 xl:h-full xl:overflow-hidden xl:grid-cols-[376px_376px_minmax(0,1fr)]"
       >
         <div
-          class="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] shadow-[0_10px_30px_rgba(0,0,0,0.22)]"
+          class="flex min-h-0 min-w-0 flex-col rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] shadow-[0_10px_30px_rgba(0,0,0,0.22)] xl:h-full xl:overflow-hidden"
+          data-cy="sale-catalog-panel"
         >
           <div
-            class="flex items-center justify-between border-b border-[var(--ff-border)] px-4 py-4"
+            class="flex min-w-0 items-center justify-between gap-3 border-b border-[var(--ff-border)] px-4 py-4"
           >
-            <h3 class="text-base font-semibold text-[var(--ff-text-primary)]">
+            <h3
+              class="min-w-0 truncate text-base font-semibold text-[var(--ff-text-primary)]"
+            >
               Catálogo
             </h3>
             <span
-              class="rounded bg-[#3B82F6]/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7EA6FF]"
+              class="shrink-0 rounded bg-[#3B82F6]/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7EA6FF]"
             >
               selección
             </span>
@@ -131,13 +133,13 @@
           >
             <div class="relative">
               <i
-                class="pi pi-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ff-text-muted)]"
+                class="pi pi-search pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[var(--ff-text-muted)]"
               ></i>
               <input
                 pInputText
                 [(ngModel)]="catalogSearchText"
                 [ngModelOptions]="{ standalone: true }"
-                class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] pl-10 pr-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)] focus:border-[#4F6BFF] focus:outline-none"
+                class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] !pl-12 pr-4 text-base text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)] focus:border-[#4F6BFF] focus:outline-none md:text-sm"
                 placeholder="Buscar por código, marca o descripción..."
               />
             </div>
@@ -145,7 +147,7 @@
 
           <div
             #catalogScrollContainer
-            class="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+            class="min-h-0 min-w-0 flex-1 px-4 py-4 xl:overflow-y-auto"
           >
             @if (filteredCatalogProducts.length === 0) {
               <div
@@ -159,7 +161,7 @@
                 </p>
               </div>
             } @else {
-              <div class="space-y-5">
+              <div class="min-w-0 space-y-5">
                 <div #productSection>
                   <p
                     class="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
@@ -167,7 +169,7 @@
                     1. Elegí el producto
                   </p>
                   <div
-                    class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] p-2 space-y-2"
+                    class="space-y-2 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] p-2"
                   >
                     @for (
                       product of filteredCatalogProducts;
@@ -176,7 +178,7 @@
                       <button
                         type="button"
                         [attr.data-cy]="'sale-product-' + product.productoId"
-                        class="w-full rounded-xl border px-3 py-3 text-left transition-colors"
+                        class="w-full min-w-0 rounded-xl border px-3 py-3 text-left transition-colors"
                         [class]="
                           selectedProductId === product.productoId
                             ? 'border-[#4F6BFF] bg-[var(--ff-secondary)] shadow-[0_0_0_1px_rgba(79,107,255,0.12)]'
@@ -184,8 +186,10 @@
                         "
                         (click)="selectProduct(product)"
                       >
-                        <div class="flex items-center justify-between gap-3">
-                          <div class="min-w-0">
+                        <div
+                          class="flex min-w-0 items-center justify-between gap-3"
+                        >
+                          <div class="min-w-0 flex-1">
                             <p
                               class="truncate text-[14px] font-semibold text-[var(--ff-text-primary)]"
                             >
@@ -198,7 +202,9 @@
                                 class="rounded bg-[#3553FF]/10 px-2 py-0.5 font-semibold text-[#8EA5FF]"
                                 >Producto</span
                               >
-                              <span>{{ getProductMeta(product) }}</span>
+                              <span class="min-w-0 truncate">{{
+                                getProductMeta(product)
+                              }}</span>
                             </div>
                           </div>
                           <i
@@ -213,9 +219,9 @@
                 @if (selectedProduct) {
                   <div #variantSection>
                     <div
-                      class="mb-3 flex items-center justify-between gap-3 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-3 py-3"
+                      class="mb-3 flex min-w-0 flex-col gap-3 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div class="min-w-0">
+                      <div class="min-w-0 flex-1">
                         <p
                           class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7EA6FF]"
                         >
@@ -230,7 +236,7 @@
                       <button
                         type="button"
                         data-cy="sale-reset-product"
-                        class="shrink-0 rounded-lg border border-[var(--ff-border)] px-3 py-2 text-[11px] font-semibold text-[#AFC2FF] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-white"
+                        class="min-h-11 shrink-0 rounded-lg border border-[var(--ff-border)] px-3 py-2 text-[11px] font-semibold text-[#AFC2FF] transition-colors hover:bg-[var(--ff-surface-hover)] hover:text-white"
                         (click)="resetSelection()"
                       >
                         Elegir otro producto
@@ -251,7 +257,7 @@
                         <button
                           type="button"
                           [attr.data-cy]="'sale-variant-' + variant.variantId"
-                          class="flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left transition-colors"
+                          class="flex w-full min-w-0 flex-col gap-3 rounded-xl border px-3 py-3 text-left transition-colors sm:flex-row sm:items-center sm:justify-between"
                           [class]="
                             selectedVariantId === variant.variantId
                               ? 'border-[#4F6BFF] bg-[var(--ff-secondary)] shadow-[0_0_0_1px_rgba(79,107,255,0.12)]'
@@ -259,7 +265,7 @@
                           "
                           (click)="selectVariant(variant.variantId)"
                         >
-                          <div class="flex min-w-0 items-center gap-3 pr-3">
+                          <div class="flex min-w-0 items-center gap-3 sm:pr-3">
                             <div
                               class="flex h-4 w-4 items-center justify-center rounded-full border border-[var(--ff-border)]"
                             >
@@ -282,7 +288,9 @@
                               </p>
                             </div>
                           </div>
-                          <div class="flex shrink-0 items-center gap-4">
+                          <div
+                            class="flex shrink-0 items-center justify-between gap-4 sm:justify-end"
+                          >
                             <span
                               class="text-sm font-semibold text-[var(--ff-text-primary)]"
                               >{{ variant.precio | currencyArs }}</span
@@ -306,7 +314,7 @@
                       3. Seleccioná la unidad (IMEI / serial)
                     </p>
                     <div
-                      class="max-h-[260px] overflow-y-auto rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)]"
+                      class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] md:max-h-[260px] md:overflow-y-auto"
                     >
                       @for (
                         unitCode of selectedVariantUnitCodes;
@@ -314,7 +322,7 @@
                         let i = $index
                       ) {
                         <div
-                          class="flex items-center justify-between border-b border-[var(--ff-border)] px-3 py-3 last:border-b-0"
+                          class="flex min-w-0 items-center justify-between gap-3 border-b border-[var(--ff-border)] px-3 py-3 last:border-b-0"
                         >
                           <span
                             class="truncate pr-3 text-xs font-semibold text-[var(--ff-text-primary)]"
@@ -362,7 +370,7 @@
         </div>
 
         <div
-          class="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] shadow-[0_10px_30px_rgba(0,0,0,0.22)]"
+          class="flex min-h-0 min-w-0 flex-col rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] shadow-[0_10px_30px_rgba(0,0,0,0.22)] xl:h-full xl:overflow-hidden"
         >
           <div
             class="flex items-center justify-between border-b border-[var(--ff-border)] px-4 py-4"
@@ -377,7 +385,7 @@
             </span>
           </div>
 
-          <div class="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <div class="min-h-0 min-w-0 flex-1 px-4 py-4 xl:overflow-y-auto">
             @if (cartLines.length === 0) {
               <div
                 class="rounded-xl border border-dashed border-[var(--ff-border)] bg-[var(--ff-panel)] px-4 py-10 text-center"
@@ -475,7 +483,9 @@
           </div>
         </div>
 
-        <div class="flex h-full min-h-0 flex-col gap-4 overflow-hidden">
+        <div
+          class="flex min-h-0 min-w-0 flex-col gap-4 xl:h-full xl:overflow-hidden"
+        >
           <div
             class="overflow-hidden rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel-raised)] shadow-[0_10px_30px_rgba(0,0,0,0.22)]"
           >
@@ -491,7 +501,7 @@
                   <span class="text-[var(--ff-text-muted)]">Cliente</span>
                   <span
                     class="max-w-[60%] truncate text-right font-semibold text-[var(--ff-text-primary)]"
-                    >{{ selectedClient?.name || "Sin cliente seleccionado" }}</span
+                    >{{ selectedClient?.name || "Sin cliente" }}</span
                   >
                 </div>
                 <div class="flex items-center justify-between gap-3">

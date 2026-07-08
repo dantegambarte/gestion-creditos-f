@@ -1,5 +1,6 @@
 import {
   Component,
+  ElementRef,
   EventEmitter,
   Input,
   OnChanges,
@@ -7,6 +8,7 @@ import {
   OnInit,
   Output,
   SimpleChanges,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { Router } from '@angular/router';
@@ -55,6 +57,8 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
   pendingPayments: PendingPaymentGroup[] = [];
   expandedCreditGroups = new Set<string>();
   expandedPaymentGroups = new Set<string>();
+
+  @ViewChild('mobilePanel') mobilePanelRef?: ElementRef<HTMLElement>;
 
   private readonly router = inject(Router);
   private readonly creditsSvc = inject(CreditsService);
@@ -123,6 +127,7 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
    */
   setMobileTab(tab: 'credits' | 'payments'): void {
     this.activeMobileTab = tab;
+    if (this.mobilePanelRef) this.mobilePanelRef.nativeElement.scrollTop = 0;
   }
 
   /**
@@ -315,19 +320,11 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Abre el primer grupo de cada pestaña para dar contexto sin desplegar todo.
+   * Limpia grupos expandidos al recargar datos: el usuario decide qué desplegar.
    */
   private syncExpandedGroups(): void {
-    this.expandedCreditGroups = new Set(
-      this.pendingCredits[0]
-        ? [this.groupKey(this.pendingCredits[0].sellerName)]
-        : [],
-    );
-    this.expandedPaymentGroups = new Set(
-      this.pendingPayments[0]
-        ? [this.groupKey(this.pendingPayments[0].collectorName)]
-        : [],
-    );
+    this.expandedCreditGroups = new Set();
+    this.expandedPaymentGroups = new Set();
   }
 
   private groupCreditsBySeller(credits: Credit[]): PendingCreditGroup[] {

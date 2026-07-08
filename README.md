@@ -1,4 +1,4 @@
-# finFlow — Gestión de Créditos
+# Productcred s.a.s. — Gestión de Créditos
 
 Frontend de la plataforma de gestión de créditos y cobros, construida con Angular 18 (Standalone Components).
 
@@ -9,6 +9,7 @@ Frontend de la plataforma de gestión de créditos y cobros, construida con Angu
 | Tecnología          | Versión       |
 | ------------------- | ------------- |
 | Angular             | 18.2.x        |
+| Angular SSR         | 18.2.x        |
 | TypeScript          | 5.5.2         |
 | Tailwind CSS        | 3.4.19        |
 | PrimeNG             | 17.18.15      |
@@ -118,23 +119,31 @@ Frontend de la plataforma de gestión de créditos y cobros, construida con Angu
 src/app/
 ├── core/                  # Servicios singleton, auth, HTTP
 │   ├── auth/              # Guards (authGuard, roleGuard, noAuthGuard, tempPasswordGuard)
+│   │                      # + AuthService, TokenRefreshService
+│   ├── directives/        # Directivas de uso global (ej: scroll)
 │   ├── http/              # ApiHttpService (wrapper REST genérico)
 │   ├── interceptors/      # JWT, loading, error
 │   ├── models/            # AuthUser, ApiResponse<T>, UserRole
-│   └── services/          # DateService, HeaderService, LoadingService
+│   ├── pipes/             # Pipes globales
+│   ├── routing/           # RoleBasedPreloadingStrategy
+│   └── services/          # DateService, FormatService, HeaderService,
+│                          # LoadingService, NetworkAwareService,
+│                          # NotificationsService, PwaUpdateService
 ├── features/
-│   ├── admin/             # Dashboard, aprobaciones, caja, usuarios, colecciones, pagos, comisiones, gastos, config
+│   ├── admin/             # Dashboard, aprobaciones, caja, usuarios, colecciones,
+│   │                      # pagos, comisiones, gastos, mora, reportes, config
 │   ├── seller/            # Clientes, operaciones, productos, comisiones
 │   ├── collector/         # Ruta de cobro, pagos, comisiones
 │   ├── portal/            # Portal cliente (login, dashboard, créditos)
-│   ├── profile/           # Perfil del usuario
+│   ├── profile/           # Perfil del usuario autenticado
 │   └── public/            # Login admin, recuperación/cambio de contraseña
 ├── shared/
-│   ├── components/        # TempPasswordDialog
+│   ├── components/        # BackButton, BackTopFab, TempPasswordDialog
+│   ├── directives/        # ActiveTabScroller, CurrencyAmountInput, PasswordTabSkip
 │   ├── layout/            # Header, Sidebar
 │   ├── clients/           # ClientDetailComponent (tabs: créditos, docs, historial)
-│   ├── operations/        # Wizard multi-paso (cliente → productos → condiciones → confirmación)
-│   ├── products/          # Catálogo de productos
+│   ├── operations/        # Wizard multi-paso (tipo → cliente → productos → condiciones → confirmación)
+│   ├── products/          # Catálogo de productos compartido
 │   ├── simulator/         # Simulador de créditos
 │   ├── states/            # LoadingState, EmptyState, ErrorState
 │   ├── models/            # Interfaces compartidas, enums (AppRoutes, UserRoleEnum)
@@ -145,23 +154,42 @@ src/app/
 ### Patrones clave
 
 - **Standalone Components** — sin NgModules
-- **Lazy loading** — cada feature route carga bajo demanda
+- **Lazy loading** — cada feature route carga bajo demanda con `RoleBasedPreloadingStrategy`
 - **Signals** — estado reactivo moderno (Angular Signals + RxJS)
+- **Smart/Dumb pattern** — componentes contenedor con servicio de fachada; steps del wizard son puramente presentacionales
 - **Adapter pattern** — servicios convierten `snake_case` (backend) ↔ `camelCase` (frontend)
 - **Guard composition** — `authGuard` + `roleGuard` + `tempPasswordGuard` apilados por ruta
 - **In-memory cache** — servicios de datos de configuración (tasas, categorías, parámetros) usan `shareReplay(1)` con `Map<key, Observable>` e invalidan en cada mutación via `tap()`
-- **SSR habilitado** — Express server (`server.ts`)
+- **SSR habilitado** — `@angular/ssr` con Express server (`main.server.ts`)
+- **PWA** — `manifest.webmanifest` + `ngsw-config.json`; soporte instalación en iOS/Android
 
 ---
 
 ## Roles
 
-| Rol                | Acceso                       |
-| ------------------ | ---------------------------- |
-| `ADMIN`            | Todo                         |
-| `SELLER`           | `/seller/*`                  |
-| `COLLECTOR`        | `/collector/*`               |
-| `SELLER_COLLECTOR` | `/seller/*` + `/collector/*` |
+| Rol                | Acceso                                |
+| ------------------ | ------------------------------------- |
+| `ADMIN`            | Todo                                  |
+| `SELLER`           | `/seller/*`                           |
+| `COLLECTOR`        | `/collector/*`                        |
+| `SELLER_COLLECTOR` | `/seller/*` + `/collector/*`          |
+| `CASHIER`          | `/admin/cash-register` (caja)         |
+
+---
+
+## Tests E2E
+
+Suite Cypress con más de 80 archivos de spec cubriendo:
+
+- Autenticación y guards
+- Navegación y sidebar (desktop + mobile)
+- Flujo completo nueva operación
+- Gestión de clientes
+- Aprobaciones, caja, cobranzas, portal
+- Comisiones, feriados, notificaciones, perfil
+- UX mobile (viewport 375×667 — iPhone SE)
+- PWA e instalabilidad
+- Negative cases y guards
 
 ---
 
@@ -172,44 +200,46 @@ src/app/
 npm install
 
 # Servidor de desarrollo
-ng serve
+npm start
 # → http://localhost:4200
 
-# Servidor de desarrollo accesible en red (para e2e)
-ng serve --host 0.0.0.0
-
-# Build producción
-ng build
+# Servidor accesible en red (para Cypress contra dispositivos reales)
+npm run start:e2e
 
 # Tests unitarios (Karma)
 ng test
 
-# Tests e2e — modo interactivo
-npx cypress open
+# Tests E2E — modo interactivo
+npm run e2e
 
-# Tests e2e — modo headless
-npx cypress run
+# Tests E2E — modo headless (con runner seguro)
+npm run e2e:run
 
 # Suite de smoke tests contra servidor real
 npm run e2e:smoke:real
 
-# Suite de smoke tests con servidor levantado automáticamente
+# Smoke tests con servidor levantado automáticamente
 npm run e2e:smoke:real:stable
 
-# Correr todos los e2e con reporte Mochawesome
+# Todos los E2E + reporte Mochawesome
 npm run e2e:all
+
+# Servir build SSR
+npm run serve:ssr:gestion-creditos-f
 ```
 
 ---
 
 ## Variables de entorno
 
-Configurar en `src/environments/environment.ts`:
+Configurar en `src/environments/environment.development.ts`:
 
 ```ts
 export const environment = {
   production: false,
-  apiBaseUrl: "http://localhost:3000",
-  tokenKey: "finflow_token",
+  useMocks: false,
+  apiBaseUrl: 'http://localhost:3000/api',
+  tokenKey: 'sgcf_token',
+  portalTokenKey: 'sgcf_portal_token',
 };
 ```

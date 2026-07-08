@@ -1,7 +1,7 @@
 <p-toast />
 
 <div class="space-y-4">
-  <div class="flex items-center justify-between gap-3">
+  <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
     <div>
       <h2 class="text-lg font-semibold text-[var(--ff-text-primary)]">
         Feriados
@@ -14,13 +14,13 @@
         anuales repetibles.
       </p>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <input
         pInputText
         type="number"
         [(ngModel)]="duplicateSourceYear"
         data-cy="holidays-duplicate-source-year"
-        class="w-32 h-11 px-3"
+        class="w-full h-11 px-3 text-base md:w-32 md:text-sm"
         min="2000"
         max="2999"
         placeholder="Año"
@@ -56,7 +56,7 @@
     <div
       class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
     >
-      <table class="w-full text-sm">
+      <table class="hidden w-full text-sm md:table" data-cy="holidays-table">
         <thead>
           <tr class="border-b border-[var(--ff-border-subtle)]">
             <th
@@ -150,6 +150,57 @@
           }
         </tbody>
       </table>
+
+      <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="holidays-mobile-list">
+        @if (holidays.length === 0) {
+          <p class="py-6 text-center text-sm text-[var(--ff-text-muted)]">
+            No hay feriados cargados.
+          </p>
+        }
+        @for (holiday of holidays; track holiday.id) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+            data-cy="holidays-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-[var(--ff-text-primary)]">
+                  {{ holiday.name }}
+                </p>
+                <p class="mt-0.5 text-xs text-[var(--ff-text-secondary)]">
+                  {{ holiday.date | date: "dd/MM/yyyy" }} · {{ typeLabel(holiday.type) }}
+                </p>
+              </div>
+              <p-tag
+                class="shrink-0"
+                [value]="holiday.active ? 'Activo' : 'Inactivo'"
+                [severity]="holiday.active ? 'success' : 'secondary'"
+              />
+            </div>
+
+            <div class="mt-3 flex flex-wrap gap-2">
+              <p-tag
+                [value]="holiday.affectsDueDates ? 'Afecta vencimientos' : 'No afecta vencimientos'"
+                [severity]="holiday.affectsDueDates ? 'warning' : 'secondary'"
+              />
+              <p-tag
+                [value]="holiday.repeatsAnnually ? 'Anual repetible' : 'No repetible'"
+                [severity]="holiday.repeatsAnnually ? 'info' : 'secondary'"
+              />
+            </div>
+
+            <button
+              type="button"
+              class="mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl border border-[var(--ff-border-subtle)] text-sm font-semibold text-blue-400"
+              data-cy="holidays-mobile-edit-action"
+              (click)="openEditDialog(holiday)"
+            >
+              Editar
+            </button>
+          </article>
+        }
+      </div>
+      <ff-back-top-fab [itemCount]="holidays.length" dataCy="holidays-back-top-action" />
     </div>
   }
 </div>

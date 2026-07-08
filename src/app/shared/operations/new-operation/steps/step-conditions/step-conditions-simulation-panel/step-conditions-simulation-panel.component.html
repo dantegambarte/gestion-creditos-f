@@ -49,39 +49,40 @@
           Definí la fecha del primer pago y simulá para ver el cronograma real.
         </div>
       } @else {
-        <div
-          class="grid grid-cols-12 gap-2 border-b border-[var(--ff-border-subtle)] px-4 py-2 text-[11px] uppercase tracking-wide text-[var(--ff-text-muted)]"
-        >
-          <p class="col-span-2">N°</p>
-          <p class="col-span-6">Vencimiento</p>
-          <p class="col-span-4 text-right">Monto</p>
-        </div>
-        <div
-          class="max-h-[184px] divide-y divide-[var(--ff-border-subtle)] overflow-y-auto"
-        >
-          @for (item of getSimulationScheduleRows(); track item.installment) {
+        <!-- Desktop: tabla con scroll horizontal cuando el panel lateral queda angosto. -->
+        <div class="hidden overflow-x-auto md:block">
+          <div
+            class="grid min-w-[560px] grid-cols-12 gap-2 border-b border-[var(--ff-border-subtle)] px-4 py-2 text-[11px] uppercase tracking-wide text-[var(--ff-text-muted)]"
+          >
+            <p class="col-span-1">N°</p>
+            <p class="col-span-3">Vencimiento</p>
+            <p class="col-span-2 text-right">Cuota</p>
+            <p class="col-span-2 text-right">Capital</p>
+            <p class="col-span-2 text-right">Interés</p>
+            <p class="col-span-2 text-right">Saldo</p>
+          </div>
+          <div class="min-w-[560px] divide-y divide-[var(--ff-border-subtle)]">
+            @for (item of getSimulationScheduleRows(); track item.installment) {
             <div
               class="grid grid-cols-12 items-center gap-2 px-4 py-2.5 text-xs sm:text-sm"
               [class.opacity-70]="item.isAdvanced"
             >
-              <p class="col-span-2 font-medium text-[var(--ff-text-primary)]">
+              <p class="col-span-1 font-medium text-[var(--ff-text-primary)]">
                 {{ item.installment }}
               </p>
               <p
-                class="col-span-6 text-[var(--ff-text-secondary)]"
+                class="col-span-3 text-[var(--ff-text-secondary)]"
                 [class.line-through]="item.isAdvanced"
               >
                 {{ getFormattedDate(item.dueDate) }}
               </p>
-              <div class="col-span-4 flex items-center justify-end gap-2">
+              <div class="col-span-2 flex items-center justify-end gap-1">
                 @if (item.isAdvanced) {
-                  <span
-                    class="inline-flex cursor-help items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300"
-                    pTooltip="Esta cuota fue cancelada al momento de aprobar la venta."
+                  <i
+                    class="pi pi-info-circle text-[10px] text-emerald-300"
+                    pTooltip="Cuota cancelada al aprobar la venta."
                     tooltipPosition="top"
-                  >
-                    <i class="pi pi-info-circle text-[10px]"></i> Adelantada
-                  </span>
+                  ></i>
                 }
                 <span
                   class="font-semibold text-emerald-300"
@@ -90,7 +91,71 @@
                   {{ item.amount | currencyArs }}
                 </span>
               </div>
+              <p class="col-span-2 text-right text-[var(--ff-text-primary)]">
+                {{ item.capital ?? 0 | currencyArs }}
+              </p>
+              <p class="col-span-2 text-right text-[var(--ff-text-secondary)]">
+                {{ item.interest ?? 0 | currencyArs }}
+              </p>
+              <p class="col-span-2 text-right text-[var(--ff-text-secondary)]">
+                {{ item.remainingEstimated | currencyArs }}
+              </p>
             </div>
+            }
+          </div>
+        </div>
+
+        <!-- Mobile: cards -->
+        <div class="space-y-3 p-3 md:hidden">
+          @for (item of getSimulationScheduleRows(); track item.installment) {
+            <article
+              class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3 text-sm"
+              [class.opacity-70]="item.isAdvanced"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <p class="font-semibold text-[var(--ff-text-primary)]">
+                  Cuota {{ item.installment }}
+                  @if (item.isAdvanced) {
+                    <span class="ml-1 text-[10px] font-normal text-emerald-400">· Adelantada</span>
+                  }
+                </p>
+                <p
+                  class="text-xs text-[var(--ff-text-secondary)]"
+                  [class.line-through]="item.isAdvanced"
+                >
+                  {{ getFormattedDate(item.dueDate) }}
+                </p>
+              </div>
+              <dl class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div class="rounded-lg bg-[var(--ff-bg)] p-2">
+                  <dt class="text-[var(--ff-text-muted)]">Cuota</dt>
+                  <dd
+                    class="mt-1 font-semibold text-emerald-300"
+                    [class.line-through]="item.isAdvanced"
+                  >
+                    {{ item.amount | currencyArs }}
+                  </dd>
+                </div>
+                <div class="rounded-lg bg-[var(--ff-bg)] p-2">
+                  <dt class="text-[var(--ff-text-muted)]">Saldo</dt>
+                  <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">
+                    {{ item.remainingEstimated | currencyArs }}
+                  </dd>
+                </div>
+                <div class="rounded-lg bg-[var(--ff-bg)] p-2">
+                  <dt class="text-[var(--ff-text-muted)]">Capital</dt>
+                  <dd class="mt-1 text-[var(--ff-text-primary)]">
+                    {{ item.capital ?? 0 | currencyArs }}
+                  </dd>
+                </div>
+                <div class="rounded-lg bg-[var(--ff-bg)] p-2">
+                  <dt class="text-[var(--ff-text-muted)]">Interés</dt>
+                  <dd class="mt-1 text-[var(--ff-text-secondary)]">
+                    {{ item.interest ?? 0 | currencyArs }}
+                  </dd>
+                </div>
+              </dl>
+            </article>
           }
         </div>
       }

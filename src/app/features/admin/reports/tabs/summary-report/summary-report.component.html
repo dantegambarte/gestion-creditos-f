@@ -1,6 +1,23 @@
 <div class="space-y-6">
   @if (loading) {
-    <app-loading-state />
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" data-cy="summary-report-skeleton">
+      @for (_ of [1, 2, 3, 4]; track _) {
+        <div class="space-y-2 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5">
+          <p-skeleton width="60%" height="0.7rem" />
+          <p-skeleton width="80%" height="2rem" />
+          <p-skeleton width="50%" height="0.7rem" />
+        </div>
+      }
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      @for (_ of [1, 2, 3]; track _) {
+        <div class="space-y-3 rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-5">
+          <p-skeleton width="70%" height="0.85rem" />
+          <p-skeleton width="40%" height="2.5rem" />
+          <p-skeleton width="60%" height="0.75rem" />
+        </div>
+      }
+    </div>
   } @else if (error) {
     <app-error-state />
   } @else if (summaryReport) {

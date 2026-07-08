@@ -20,6 +20,7 @@ import {
   DelinquencyStats,
 } from '../models/interface/delinquency';
 import { DelinquencyApplyDialogComponent } from './delinquency-apply-dialog/delinquency-apply-dialog.component';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-delinquency',
@@ -37,6 +38,7 @@ import { DelinquencyApplyDialogComponent } from './delinquency-apply-dialog/deli
     CardModule,
     MessageModule,
     DelinquencyApplyDialogComponent,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './delinquency.component.html',

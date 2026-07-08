@@ -7,12 +7,11 @@
  */
 
 const BASE_PREFERENCES = [
-  { type: 'MORA', enabled: true, email_enabled: false, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
-  { type: 'INSTALLMENT_DUE', enabled: true, email_enabled: false, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
-  { type: 'APPROVAL_REQUEST', enabled: true, email_enabled: false, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
-  { type: 'CASH_REGISTER', enabled: true, email_enabled: false, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
-  { type: 'NEW_CUSTOMER', enabled: false, email_enabled: false, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
-  { type: 'WEEKLY_REPORT', enabled: false, email_enabled: false, frequency: 'WEEKLY', updated_at: '2026-01-01T00:00:00Z' },
+  { type: 'MORA', enabled: true, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
+  { type: 'INSTALLMENT_DUE', enabled: true, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
+  { type: 'APPROVAL_REQUEST', enabled: true, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
+  { type: 'CASH_REGISTER', enabled: true, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
+  { type: 'NEW_CUSTOMER', enabled: false, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
 ];
 
 const mockPreferences = (prefs: typeof BASE_PREFERENCES) => {
@@ -46,9 +45,9 @@ describe('Admin — Configuración — Notificaciones (Desktop)', () => {
     cy.wait('@getPreferences');
   });
 
-  it('renderiza las 6 preferencias reales desde el backend', () => {
+  it('renderiza las 5 preferencias reales desde el backend', () => {
     cy.get('[data-cy="notif-setting-MORA"]').should('be.visible');
-    cy.get('[data-cy="notif-setting-WEEKLY_REPORT"]').scrollIntoView().should('be.visible');
+    cy.get('[data-cy="notif-setting-NEW_CUSTOMER"]').scrollIntoView().should('be.visible');
   });
 
   it('guardar preferencias persiste y refleja al recargar', () => {
@@ -100,9 +99,9 @@ describe('Admin — Configuración — Notificaciones (Mobile 375x667)', () => {
     cy.wait('@getPreferences');
   });
 
-  it('renderiza las 6 preferencias reales desde el backend en mobile', () => {
+  it('renderiza las 5 preferencias reales desde el backend en mobile', () => {
     cy.get('[data-cy="notif-setting-MORA"]').should('be.visible');
-    cy.get('[data-cy="notif-setting-WEEKLY_REPORT"]').scrollIntoView().should('be.visible');
+    cy.get('[data-cy="notif-setting-NEW_CUSTOMER"]').scrollIntoView().should('be.visible');
   });
 
   it('guardar preferencias persiste en mobile', () => {

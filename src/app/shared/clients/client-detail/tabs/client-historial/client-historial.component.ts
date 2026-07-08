@@ -1,5 +1,6 @@
 import { CommonModule, NgClass } from '@angular/common';
 import { Component, Input } from '@angular/core';
+import { FfBackTopFabComponent } from '../../../../components/back-top-fab/ff-back-top-fab.component';
 import { FormsModule } from '@angular/forms';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
@@ -19,6 +20,7 @@ import {
     CalendarModule,
     DropdownModule,
     TableModule,
+    FfBackTopFabComponent,
   ],
   templateUrl: './client-historial.component.html',
   styleUrl: './client-historial.component.scss',

@@ -3,7 +3,8 @@
   (visibleChange)="visibleChange.emit($event)"
   header="Registrar cobro"
   [modal]="true"
-  [style]="{ width: '440px' }"
+  [style]="{ width: '440px', maxWidth: '95vw' }"
+  styleClass="ff-fullscreen-form-dialog"
   [draggable]="false"
   [resizable]="false"
 >
@@ -214,7 +215,7 @@
   </div>
 
   <ng-template pTemplate="footer">
-    <div class="grid grid-cols-2 gap-3 w-full">
+    <div class="ff-mobile-dialog-actions grid grid-cols-2 gap-3 w-full">
       <p-button
         type="button"
         label="Cancelar"

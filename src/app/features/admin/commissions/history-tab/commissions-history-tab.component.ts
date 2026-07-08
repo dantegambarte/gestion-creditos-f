@@ -2,10 +2,11 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { Liquidation, PaymentMethod } from '../../models/commission.model';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-commissions-history-tab',
@@ -14,9 +15,10 @@ import { Liquidation, PaymentMethod } from '../../models/commission.model';
     FormsModule,
     CardModule,
     DropdownModule,
+    SkeletonModule,
     TableModule,
     TagModule,
-    LoadingStateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './commissions-history-tab.component.html',
 })

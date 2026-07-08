@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -21,6 +22,7 @@ type SalaryRow = {
   selector: 'app-commissions-salaries-tab',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     FormsModule,
     ButtonModule,
     CardModule,

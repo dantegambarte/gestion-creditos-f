@@ -3,7 +3,9 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
+import { SkeletonModule } from 'primeng/skeleton';
 import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
+import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Credit, CreditStatus } from '../../../models/credit.model';
 
 @Component({
@@ -14,7 +16,9 @@ import { Credit, CreditStatus } from '../../../models/credit.model';
     ButtonModule,
     TagModule,
     TooltipModule,
+    SkeletonModule,
     LoadingStateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './client-credits-history-panel.component.html',
 })

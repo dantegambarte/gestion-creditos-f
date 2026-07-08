@@ -8,8 +8,7 @@ export type NotificationType =
   | 'INSTALLMENT_DUE'
   | 'APPROVAL_REQUEST'
   | 'CASH_REGISTER'
-  | 'NEW_CUSTOMER'
-  | 'WEEKLY_REPORT';
+  | 'NEW_CUSTOMER';
 
 export interface NotificationItem {
   id: string;
@@ -32,7 +31,6 @@ export interface NotificationHistoryPage {
 export interface NotificationPreference {
   type: NotificationType;
   enabled: boolean;
-  email_enabled: boolean;
   frequency: 'INSTANT' | 'DAILY' | 'WEEKLY';
   updated_at: string;
 }
@@ -241,9 +239,7 @@ export class NotificationsService {
    */
   updatePreference(
     type: NotificationType,
-    data: Partial<
-      Pick<NotificationPreference, 'enabled' | 'email_enabled' | 'frequency'>
-    >,
+    data: Partial<Pick<NotificationPreference, 'enabled' | 'frequency'>>,
   ): Observable<NotificationPreference> {
     return this.api
       .put<NotificationPreference>(`notifications/preferences/${type}`, data)

@@ -22,12 +22,18 @@
     </div>
   }
 
-  <div class="ff-tab-nav reports-mobile-tabs mb-6 md:mb-8" data-cy="admin-reports-tabs">
+  <div
+    class="ff-tab-nav reports-mobile-tabs mb-6 md:mb-8"
+    appActiveTabScroller
+    data-cy="admin-reports-tabs"
+  >
     @for (tab of TABS; track tab.id) {
       <button
+        type="button"
         (click)="setTab(tab.id)"
         class="ff-tab"
         [class.ff-tab--active]="activeTab === tab.id"
+        [attr.aria-selected]="activeTab === tab.id"
       >
         <i [class]="tab.icon + ' text-xs'"></i>
         {{ tab.label }}

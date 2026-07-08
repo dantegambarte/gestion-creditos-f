@@ -16,13 +16,26 @@
     </div>
 
     <div class="operations-filters">
-      <input
-        pInputText
-        type="text"
-        placeholder="Buscar por cliente o DNI"
-        [(ngModel)]="searchTerm"
-        class="operations-search h-11 px-3 rounded-xl text-sm"
-      />
+      <div class="operations-search">
+        <input
+          pInputText
+          type="text"
+          placeholder="Buscar por cliente o DNI"
+          [(ngModel)]="searchTerm"
+          class="h-11 w-full rounded-xl py-0 pl-3 pr-10 text-sm"
+        />
+        @if (searchTerm) {
+          <button
+            type="button"
+            class="operations-search__clear"
+            aria-label="Limpiar búsqueda"
+            data-cy="operations-search-clear"
+            (click)="searchTerm = ''"
+          >
+            <i class="pi pi-times"></i>
+          </button>
+        }
+      </div>
 
       <p-dropdown
         [options]="statusOptions"
@@ -80,13 +93,28 @@
     </div>
 
     @if (loading) {
-      <div class="operations-empty">Cargando operaciones...</div>
+      <div class="operations-table-skeleton" data-cy="operations-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="operations-table-skeleton__row">
+            <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="9rem" height="1rem" />
+            <p-skeleton width="6rem" height="1rem" />
+            <p-skeleton width="5rem" height="1rem" />
+            <p-skeleton width="3rem" height="1rem" />
+            <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="6rem" height="1rem" />
+            <p-skeleton width="4rem" height="1rem" />
+            <p-skeleton width="2rem" height="2rem" borderRadius="0.5rem" />
+          </div>
+        }
+      </div>
     } @else if (filteredOperations.length === 0) {
       <div class="operations-empty">No hay operaciones para mostrar.</div>
     } @else {
       <p-table
         [value]="filteredOperations"
-        styleClass="operations-table"
+        styleClass="operations-table hidden md:block"
+        data-cy="operations-table"
         [responsiveLayout]="'scroll'"
         [paginator]="true"
         [rows]="10"
@@ -212,6 +240,98 @@
           </tr>
         </ng-template>
       </p-table>
+
+      <div class="flex flex-col gap-3 border-t border-[var(--ff-border)] p-4 md:hidden" data-cy="operations-mobile-list">
+        @for (op of filteredOperations; track op.id) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.18)]"
+            data-cy="operations-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span
+                    class="operations-type-badge"
+                    [class.operations-type-badge--sale]="op.type === 'SALE'"
+                    [class.operations-type-badge--loan]="op.type === 'LOAN'"
+                  >
+                    {{ getTypeLabel(op.type) }}
+                  </span>
+                  <span
+                    class="ff-badge max-w-full whitespace-normal break-words leading-tight"
+                    [class.ff-badge--activo]="getStatusSeverity(op.status) === 'success'"
+                    [class.ff-badge--pendiente]="getStatusSeverity(op.status) === 'warning'"
+                    [class.ff-badge--vencido]="getStatusSeverity(op.status) === 'danger'"
+                    [class.ff-badge--pagado]="getStatusSeverity(op.status) === 'secondary'"
+                  >{{ getStatusLabel(op.status) }}</span>
+                  @if (op.paymentCondition === "CASH") {
+                    <span class="text-[11px] font-semibold uppercase tracking-wide text-[#22C55E]">
+                      Contado
+                    </span>
+                  }
+                </div>
+                <p class="mt-3 truncate text-sm font-semibold text-[var(--ff-text-primary)]">
+                  {{ op.customerName }}
+                </p>
+                <p class="mt-0.5 text-xs text-[var(--ff-text-muted)]">DNI {{ op.customerDni }}</p>
+              </div>
+              <div class="shrink-0 text-right">
+                <p class="text-[11px] uppercase tracking-[0.16em] text-[var(--ff-text-muted)]">
+                  Total
+                </p>
+                <p class="font-mono text-base font-bold text-[var(--ff-text-primary)]">
+                  {{ op.totalToReturn != null ? (op.totalToReturn | currencyArs) : "—" }}
+                </p>
+              </div>
+            </div>
+
+            <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Cuotas</dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">{{ getInstallmentsSummary(op) }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Creación</dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">{{ op.createdAt | date: "dd/MM/yy" }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Aprobación</dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">{{ op.approvedAt ? (op.approvedAt | date: "dd/MM/yy") : "—" }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Tasa</dt>
+                <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">{{ getInterestRateLabel(op.effectiveRate) }}</dd>
+              </div>
+              <div class="col-span-2 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Vendedor</dt>
+                <dd class="mt-1 break-words font-semibold text-[var(--ff-text-primary)]">{{ op.createdByName || "Sin asignar" }}</dd>
+              </div>
+              <div class="col-span-2 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Cobrador</dt>
+                @if (op.collectorName) {
+                  <dd class="mt-1 break-words font-semibold text-[var(--ff-text-primary)]">{{ op.collectorName }}</dd>
+                } @else {
+                  <dd class="mt-1 flex items-center gap-1 text-xs font-semibold text-amber-500">
+                    <i class="pi pi-exclamation-triangle text-[11px]"></i>
+                    Sin cobrador
+                  </dd>
+                }
+              </div>
+            </dl>
+
+            <button
+              type="button"
+              class="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-semibold text-blue-200"
+              data-cy="operations-mobile-detail-action"
+              (click)="navigateToDetail(op.id)"
+            >
+              Ver detalle
+              <i class="pi pi-arrow-right text-xs"></i>
+            </button>
+          </article>
+        }
+      </div>
     }
+    <ff-back-top-fab [itemCount]="filteredOperations.length" dataCy="admin-operations-back-top-action" />
   </div>
 </div>

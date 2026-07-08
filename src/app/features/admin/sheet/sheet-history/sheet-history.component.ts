@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import {
   COLLECTION_FILTER_LABELS,
@@ -11,7 +13,7 @@ import {
 @Component({
   selector: 'app-sheet-history',
   standalone: true,
-  imports: [TableModule, ButtonModule, LoadingStateComponent],
+  imports: [TableModule, ButtonModule, SkeletonModule, LoadingStateComponent, FfBackTopFabComponent],
   templateUrl: './sheet-history.component.html',
 })
 export class SheetHistoryComponent {

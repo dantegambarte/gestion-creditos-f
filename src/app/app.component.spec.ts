@@ -2,6 +2,8 @@
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { SwUpdate } from '@angular/service-worker';
+import { EMPTY } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { MockAuthService } from './core/auth/mock-auth.service';
 import { AuthServiceBase } from './core/auth/auth-service.base';
@@ -21,6 +23,10 @@ describe('AppComponent', () => {
         MessageService,
         MockAuthService,
         { provide: AuthServiceBase, useExisting: MockAuthService },
+        // PwaUpdateService (inyectado por AppComponent) requiere SwUpdate, que
+        // solo existe en runtime real vía provideServiceWorker(). isEnabled en
+        // false alcanza: start() corta ahí y nunca se suscribe a versionUpdates.
+        { provide: SwUpdate, useValue: { isEnabled: false, versionUpdates: EMPTY } },
       ],
     }).compileComponents();
   });

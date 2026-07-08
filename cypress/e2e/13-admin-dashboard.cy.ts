@@ -87,6 +87,20 @@ function assertLastPendingButtonReachable(
     });
 }
 
+/**
+ * Expande un grupo de pendientes mobile solo si el item esperado todavia no
+ * esta renderizado dentro del panel.
+ * @param groupText texto del header del grupo
+ * @param itemText texto de un item interno esperado
+ */
+function ensurePendingGroupExpanded(groupText: string, itemText: string) {
+  cy.get('[data-cy="dashboard-pending-mobile-panel"]').then(($panel) => {
+    if (!$panel.text().includes(itemText)) {
+      cy.contains('.db-pending-mobile__group-header', groupText).click();
+    }
+  });
+}
+
 describe('Admin — Dashboard', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
@@ -240,12 +254,14 @@ describe('Admin — Dashboard', () => {
       '[data-cy="dashboard-pending-mobile-panel"]',
       'Administrador del Sistema',
     ).should('be.visible');
+    ensurePendingGroupExpanded('Administrador del Sistema', 'Crédito Pendiente 08');
     assertLastPendingButtonReachable('Crédito Pendiente 08', 'Revisar');
 
     cy.get('[data-cy="dashboard-pending-tab-payments"]').click();
     cy.contains('[data-cy="dashboard-pending-mobile-panel"]', 'María González')
       .scrollIntoView()
       .should('be.visible');
+    ensurePendingGroupExpanded('María González', 'Cobro Pendiente 08');
     assertLastPendingButtonReachable('Cobro Pendiente 08', 'Aprobar');
   });
 

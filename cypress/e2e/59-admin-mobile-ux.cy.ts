@@ -66,30 +66,31 @@ const createRealPendingLoan = (): Cypress.Chainable<string> => {
   cy.get('[data-cy="btn-type-loan"]', { timeout: 20000 }).click({
     force: true,
   });
-  cy.contains('Paso 2 de 5', { timeout: 20000 }).should('be.visible');
-
+  // El footer "Paso X de 5" es md:block (solo desktop) desde el rediseño
+  // mobile del wizard — en mobile no hay texto equivalente, así que se
+  // espera directo el contenido funcional del paso 2 (selección de cliente).
   cy.contains('[data-cy^="client-card-"]', 'ACTIVO', { timeout: 20000 })
     .should('be.visible')
     .click({ force: true });
-  cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
+  cy.get('[data-cy="btn-siguiente-mobile"] button').should('not.be.disabled').click();
 
   cy.get('p-inputNumber[formControlName="totalAmount"] input')
     .clear()
     .type('67000')
     .blur();
-  cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
+  cy.get('[data-cy="btn-siguiente-mobile"] button').should('not.be.disabled').click();
 
   cy.get('[data-cy="ddl-installments"] .p-dropdown')
     .first()
     .click({ force: true });
   cy.get('.p-dropdown-panel .p-dropdown-item').first().click({ force: true });
-  cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
+  cy.get('[data-cy="btn-siguiente-mobile"] button').should('not.be.disabled').click();
 
   cy.get('[data-cy="chk-identity"] .p-checkbox-box').click({ force: true });
   cy.get('[data-cy="chk-conditions"] .p-checkbox-box').click({ force: true });
   cy.get('[data-cy="chk-disbursement"] .p-checkbox-box').click({ force: true });
   cy.get('[data-cy="chk-capacity"] .p-checkbox-box').click({ force: true });
-  cy.get('[data-cy="btn-enviar-aprobacion"] button')
+  cy.get('[data-cy="btn-enviar-aprobacion-mobile"] button')
     .should('not.be.disabled')
     .click();
 
@@ -107,23 +108,51 @@ const createRealPendingLoan = (): Cypress.Chainable<string> => {
 };
 
 /**
+ * Garantiza caja operativa abierta y con fondos en la jornada actual —
+ * aprobar un LOAN desembolsa el préstamo desde la caja activa. Resetea la
+ * jornada de hoy antes de abrir para no heredar una caja ya castigada por
+ * aprobaciones previas de otras corridas (sin esto, 409 INSUFFICIENT_CASH
+ * sin que sea un bug real).
+ */
+const ensureCashSessionOpen = (): Cypress.Chainable<void> => {
+  return cy.getAuthToken('ADMIN').then((token) =>
+    cy
+      .apiRequest('DELETE', '/test/business-days/today', null, token)
+      .then((resetRes) => {
+        expect(resetRes.status, 'reset jornada de hoy').to.eq(200);
+        return cy.apiRequest(
+          'POST',
+          '/cash-sessions',
+          { opening_amount: 100000000 },
+          token,
+        );
+      })
+      .then((res) => {
+        expect(res.status, 'abrir caja operativa fresca').to.eq(201);
+      }),
+  );
+};
+
+/**
  * Garantiza que Aprobaciones tenga al menos una card accionable en mobile.
  */
 const ensureMobileApprovalCard = (): Cypress.Chainable<void> => {
   cy.location('pathname', { timeout: 20000 }).should('eq', ADMIN_APPROVALS_URL);
 
-  return cy.get('body', { timeout: 20000 }).then(($body) => {
-    if ($body.find('[data-cy="admin-approvals-mobile-card"]').length > 0) {
-      return;
-    }
+  return ensureCashSessionOpen().then(() =>
+    cy.get('body', { timeout: 20000 }).then(($body) => {
+      if ($body.find('[data-cy="admin-approvals-mobile-card"]').length > 0) {
+        return;
+      }
 
-    return createRealPendingLoan().then(() => {
-      cy.loginReal('ADMIN', ADMIN_APPROVALS_URL);
-      cy.get('[data-cy="admin-approvals-mobile-card"]', {
-        timeout: 20000,
-      }).should('have.length.greaterThan', 0);
-    });
-  });
+      return createRealPendingLoan().then(() => {
+        cy.loginReal('ADMIN', ADMIN_APPROVALS_URL);
+        cy.get('[data-cy="admin-approvals-mobile-card"]', {
+          timeout: 20000,
+        }).should('have.length.greaterThan', 0);
+      });
+    }),
+  );
 };
 
 describe('Admin Backoffice — Mobile UX', () => {
@@ -184,10 +213,10 @@ describe('Admin Backoffice — Mobile UX', () => {
       cy.get('[data-cy="admin-approvals-mobile-approve-action"]')
         .first()
         .click();
-      cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', {
+      cy.contains('.p-dialog .p-dialog-title', 'Aprobar Crédito', {
         timeout: 10000,
       }).should('be.visible');
-      cy.contains('.p-dialog button', 'Confirmar Aprobación').click();
+      cy.contains('.p-dialog button', 'Confirmar').click();
 
       cy.wait('@approveMobileCredit', { timeout: 30000 }).then(
         (interception) => {

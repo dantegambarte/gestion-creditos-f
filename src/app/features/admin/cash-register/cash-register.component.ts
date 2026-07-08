@@ -16,6 +16,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { RadioButtonModule } from 'primeng/radiobutton';
+import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { Subject, interval, of } from 'rxjs';
 import { catchError, finalize, switchMap, takeUntil } from 'rxjs/operators';
@@ -40,6 +41,7 @@ import { CashRegisterService } from './cash-register.service';
 import { CashSessionCloseDialogComponent } from './cash-session-close-dialog/cash-session-close-dialog.component';
 import { CashSessionOpenDialogComponent } from './cash-session-open-dialog/cash-session-open-dialog.component';
 import { CashSessionSnapshotDialogComponent } from './cash-session-snapshot-dialog/cash-session-snapshot-dialog.component';
+import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 type MovementTypeFilter = 'TODOS' | CashRegisterMovementType;
 type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
@@ -57,6 +59,7 @@ type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
     InputTextareaModule,
     RadioButtonModule,
     ToastModule,
+    SkeletonModule,
     CurrencyAmountInputDirective,
     LoadingStateComponent,
     ErrorStateComponent,
@@ -64,6 +67,7 @@ type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
     CashSessionCloseDialogComponent,
     CashSessionSnapshotDialogComponent,
     ExpenseSidePanelComponent,
+    FfBackTopFabComponent,
   ],
   providers: [MessageService],
   templateUrl: './cash-register.component.html',

@@ -229,7 +229,7 @@
             Cronograma de cuotas ({{ credit.installmentsCount }})
           </h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="hidden overflow-x-auto md:block">
           <table class="ff-table w-full text-xs" data-cy="portal-credit-detail-installments-table">
             <thead>
               <tr>
@@ -279,6 +279,65 @@
             </tbody>
           </table>
         </div>
+        <div class="flex flex-col gap-3 p-4 md:hidden" data-cy="portal-credit-detail-installments-mobile-list">
+          @for (inst of credit.installments; track inst.id) {
+            <article
+              class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+              data-cy="portal-credit-detail-installment-mobile-card"
+              [class.inst-overdue]="inst.status === 'OVERDUE'"
+              [class.inst-paid]="inst.status === 'PAID'"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-sm font-bold text-[var(--ff-text-primary)]">
+                    Cuota N° {{ inst.installmentNumber }}
+                  </p>
+                  <p class="mt-1 text-xs text-[var(--ff-text-muted)]">
+                    Vencimiento: {{ inst.dueDate | date:'dd/MM/yyyy' }}
+                  </p>
+                </div>
+                <span
+                  class="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold"
+                  [style.background]="inst.status === 'PAID' ? 'rgba(52,211,153,0.12)' :
+                                      inst.status === 'OVERDUE' ? 'rgba(248,113,113,0.12)' :
+                                      inst.status === 'PARTIAL' ? 'rgba(251,176,64,0.12)' : 'rgba(139,151,184,0.12)'"
+                  [style.color]="inst.status === 'PAID' ? '#34d399' :
+                                 inst.status === 'OVERDUE' ? '#f87171' :
+                                 inst.status === 'PARTIAL' ? 'var(--ff-warning)' : 'var(--ff-text-secondary)'"
+                >
+                  <i class="pi text-xs"
+                    [class.pi-check-circle]="inst.status === 'PAID'"
+                    [class.pi-exclamation-circle]="inst.status === 'OVERDUE'"
+                    [class.pi-clock]="inst.status === 'PARTIAL'"
+                    [class.pi-minus-circle]="inst.status === 'PENDING'"></i>
+                  {{ installmentLabel(inst.status) }}
+                </span>
+              </div>
+
+              <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Monto</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">
+                    {{ inst.amountDue | currency:'ARS':'symbol':'1.0-0' }}
+                  </dd>
+                </div>
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Pagado</dt>
+                  <dd class="mt-1 font-mono font-semibold" [style.color]="inst.amountPaid > 0 ? '#34d399' : 'var(--ff-text-muted)'">
+                    {{ inst.amountPaid > 0 ? (inst.amountPaid | currency:'ARS':'symbol':'1.0-0') : '—' }}
+                  </dd>
+                </div>
+              </dl>
+
+              @if (inst.penaltyAmount > 0) {
+                <p class="mt-3 text-xs font-semibold" style="color: #f87171">
+                  Mora: +{{ inst.penaltyAmount | currency:'ARS':'symbol':'1.0-0' }}
+                </p>
+              }
+            </article>
+          }
+        </div>
+        <ff-back-top-fab [itemCount]="credit.installments.length" dataCy="portal-credit-detail-back-top-action" />
         <div class="px-4 py-3 text-xs" style="border-top: 1px solid var(--ff-border); color: var(--ff-text-muted)">
           Los cobros son registrados por tu cobrador y aprobados por el negocio. Para consultas, contactá directamente.
         </div>

@@ -4,6 +4,7 @@
   <!-- LEFT PANEL: lista -->
   <div
     class="collection-master-panel flex flex-col transition-all duration-300 overflow-hidden shrink-0 min-h-0"
+    [class.collection-master-panel--detail-open]="!!selectedSheetMeta"
     [class.ff-panel]="!selectedSheetMeta"
     [class.border-r]="!!selectedSheetMeta && !leftPanelCollapsed"
     [style.width]="
@@ -267,13 +268,15 @@
           }
         </div>
       }
+    <ff-back-top-fab [itemCount]="visibleSheets.length" dataCy="admin-collections-back-top-action" />
     </div>
   </div>
 
   <!-- RIGHT PANEL: detalle -->
   @if (selectedSheetMeta) {
     <app-collection-sheet-detail-panel
-      class="flex-1 min-h-0 overflow-hidden"
+      class="collection-detail-panel flex-1 min-h-0 overflow-hidden"
+      data-cy="admin-collections-detail-panel"
       [sheetMeta]="selectedSheetMeta"
       [openTab]="openTabForPanel"
       [(collapsed)]="leftPanelCollapsed"

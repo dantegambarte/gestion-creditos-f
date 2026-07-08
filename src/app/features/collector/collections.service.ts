@@ -9,6 +9,10 @@ import {
   CollectionAlertsRaw,
   CollectionAlertsUnassignedItem,
   CollectionAlertsUnassignedItemRaw,
+  CollectionBatchOutcome,
+  CollectionBatchOutcomeRaw,
+  CollectionGenerateBatchPayload,
+  CollectionGenerateBatchResponseRaw,
   CollectionGenerateOutcome,
   CollectionGeneratePayload,
   CollectionGenerateResult,
@@ -150,6 +154,28 @@ function toGenerateResult(raw: CollectionGenerateResultRaw): CollectionGenerateR
   };
 }
 
+/**
+ * Convierte un resultado individual del batch a su forma estructurada,
+ * preservando cuál de los tres casos (generada/omitida/error) ocurrió.
+ */
+function toBatchOutcome(raw: CollectionBatchOutcomeRaw): CollectionBatchOutcome {
+  if (raw.error) {
+    return { collectorId: raw.collector_id, kind: 'error', error: raw.error };
+  }
+  if (raw.skipped) {
+    return {
+      collectorId: raw.collector_id,
+      kind: 'skipped',
+      result: toSkippedResult({ skipped: true, existing_sheet: raw.existing_sheet! }),
+    };
+  }
+  return {
+    collectorId: raw.collector_id,
+    kind: 'generated',
+    result: toGenerateResult({ sheet: raw.sheet!, alerts: raw.alerts! }),
+  };
+}
+
 @Injectable({ providedIn: 'root' })
 export class CollectionsService {
   private readonly api = inject(ApiHttpService);
@@ -213,5 +239,25 @@ export class CollectionsService {
             : toGenerateResult(raw as CollectionGenerateResultRaw),
         ),
       );
+  }
+
+  /**
+   * Genera planillas para varios cobradores en una sola request. El backend
+   * calcula la alerta global de clientes sin cobrador UNA sola vez y la
+   * comparte entre todos los resultados, en vez de recalcularla por cada
+   * cobrador como ocurría con N requests individuales en paralelo.
+   */
+  generateBatch(
+    payload: CollectionGenerateBatchPayload,
+  ): Observable<CollectionBatchOutcome[]> {
+    const body: Record<string, unknown> = {
+      collector_ids: payload.collectorIds,
+      date: payload.date,
+      filter: payload.filter,
+    };
+    if (payload.skipIfExists) body['skip_if_exists'] = true;
+    return this.api
+      .post<CollectionGenerateBatchResponseRaw>('collections/generate-batch', body)
+      .pipe(map((raw) => raw.results.map(toBatchOutcome)));
   }
 }

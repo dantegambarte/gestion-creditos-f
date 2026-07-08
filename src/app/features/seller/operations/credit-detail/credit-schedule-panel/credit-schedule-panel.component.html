@@ -1,6 +1,6 @@
 <div
   class="ff-panel flex flex-col overflow-hidden"
-  style="min-height: 400px; height: calc(100vh - 200px)"
+  style="min-height: min(400px, calc(100vh - 120px)); height: calc(100vh - 200px)"
 >
   <!-- Main tab selector: Cronograma / Cobros -->
   <div
@@ -82,7 +82,8 @@
       } @else {
         <p-table
           [value]="creditPayments"
-          styleClass="p-datatable-sm p-datatable-hoverable-rows"
+          styleClass="hidden md:block p-datatable-sm p-datatable-hoverable-rows"
+          data-cy="credit-payments-table"
           responsiveLayout="scroll"
         >
           <ng-template pTemplate="header">
@@ -132,16 +133,54 @@
             </tr>
           </ng-template>
         </p-table>
+
+        <div class="flex flex-col gap-3 md:hidden" data-cy="credit-payments-mobile-list">
+          @for (p of creditPayments; track p.id) {
+            <article
+              class="rounded-2xl border p-4"
+              style="border-color: var(--ff-border)"
+              [class.opacity-50]="p.isReversal"
+              data-cy="credit-payments-mobile-card"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <p class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
+                  Cuota {{ p.installmentNumber }}
+                </p>
+                @if (p.isReversal) {
+                  <span class="ff-badge ff-badge--vencido">Reversión</span>
+                } @else if (p.adminDirect) {
+                  <span class="ff-badge ff-badge--liquidado">Directo</span>
+                } @else if (p.parentPaymentId) {
+                  <span class="ff-badge ff-badge--pendiente">Adelanto</span>
+                } @else {
+                  <span class="ff-badge ff-badge--pagado">Normal</span>
+                }
+              </div>
+              <p
+                class="mt-1 ff-mono font-bold"
+                [style.color]="p.isReversal ? 'var(--ff-danger)' : 'var(--ff-success)'"
+              >
+                {{ p.isReversal ? "−" : "" }}{{ p.amountReceived | currencyArs: 2 }}
+              </p>
+              <p class="mt-1 text-xs" style="color: var(--ff-text-secondary)">
+                {{ paymentMethodLabel(p.paymentMethod) }}
+              </p>
+              <p class="mt-1 text-xs" style="color: var(--ff-text-muted)">
+                {{ p.approverName ?? "—" }} · {{ p.approvedAt | date: "dd/MM/yyyy" }}
+              </p>
+            </article>
+          }
+        </div>
       }
     </div>
   }
 
   <!-- Table + side panel row -->
   @if (mainTab === "installments" && credit) {
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-col lg:flex-row flex-1 overflow-hidden">
       <!-- Table -->
       <div class="flex-1 overflow-y-auto">
-        <p-table [value]="credit.installments" styleClass="p-datatable-sm">
+        <p-table [value]="credit.installments" styleClass="hidden md:block p-datatable-sm" data-cy="credit-schedule-table">
           <ng-template pTemplate="header">
             <tr>
               <th>Nº</th>
@@ -217,7 +256,7 @@
                       "
                       [class.ff-badge--vencido]="inst.status === 'OVERDUE'"
                       [class.ff-badge--liquidado]="
-                        inst.status === 'WAIVED' || inst.status === 'SETTLED'
+                        inst.status === 'WAIVED' || inst.status === 'SETTLED' || inst.status === 'WRITTEN_OFF'
                       "
                       >{{ inst.status === "PAID" ? "✓ " : ""
                       }}{{ installmentLabel(inst.status) }}</span
@@ -321,14 +360,113 @@
             </tr>
           </ng-template>
         </p-table>
+
+        <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="credit-schedule-mobile-list">
+          @for (inst of credit.installments; track inst.id) {
+            <article
+              class="rounded-2xl border p-4"
+              style="border-color: var(--ff-border)"
+              [style.background]="
+                selectedInstallment?.id === inst.id ? 'rgba(79,110,247,0.1)' : ''
+              "
+              data-cy="credit-schedule-mobile-card"
+              (click)="selectInstallment(inst)"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
+                    Cuota {{ inst.installmentNumber }}
+                  </p>
+                  <p class="mt-0.5 ff-mono text-xs" style="color: var(--ff-text-muted)">
+                    Vence {{ inst.dueDate | date: "dd/MM/yyyy" }}
+                  </p>
+                </div>
+                <span
+                  class="ff-badge shrink-0"
+                  [class.ff-badge--pagado]="inst.status === 'PAID'"
+                  [class.ff-badge--pendiente]="inst.status === 'PENDING' || inst.status === 'PARTIAL'"
+                  [class.ff-badge--vencido]="inst.status === 'OVERDUE'"
+                  [class.ff-badge--liquidado]="inst.status === 'WRITTEN_OFF' || inst.status === 'WAIVED' || inst.status === 'SETTLED'"
+                  >{{ installmentLabel(inst.status) }}</span
+                >
+              </div>
+
+              <div class="mt-3 grid grid-cols-2 gap-2 text-center text-sm">
+                <div class="min-w-0 rounded-xl border p-2" style="border-color: var(--ff-border)">
+                  <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Monto</p>
+                  <p class="break-words text-xs font-bold leading-tight ff-mono">
+                    {{ inst.amountDue | currencyArs: 0 }}
+                  </p>
+                </div>
+                <div class="min-w-0 rounded-xl border p-2" style="border-color: var(--ff-border)">
+                  <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Pagado</p>
+                  <p class="break-words text-xs font-bold leading-tight ff-mono" [style.color]="inst.amountPaid > 0 ? 'var(--ff-success)' : ''">
+                    {{ inst.amountPaid > 0 ? (inst.amountPaid | currencyArs: 0) : "—" }}
+                  </p>
+                </div>
+                <div class="col-span-2 min-w-0 rounded-xl border p-2" style="border-color: var(--ff-border)">
+                  <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Mora</p>
+                  <p class="break-words text-xs font-bold leading-tight ff-mono" [style.color]="inst.penaltyAmount > 0 ? 'var(--ff-danger)' : ''">
+                    {{ inst.penaltyAmount > 0 ? (inst.penaltyAmount | currencyArs: 0) : "—" }}
+                  </p>
+                </div>
+              </div>
+
+              @if (canActOnInstallments) {
+                <div class="mt-3 grid grid-cols-2 gap-2">
+                  @if (inst.status === "OVERDUE") {
+                    <p-button
+                      icon="pi pi-exclamation-circle"
+                      severity="danger"
+                      [text]="true"
+                      styleClass="!h-11 !w-11"
+                      (onClick)="$event.stopPropagation(); openPenaltyDialog(inst)"
+                    />
+                    @if (inst.penaltyAmount > 0) {
+                      <p-button
+                        icon="pi pi-minus-circle"
+                        severity="warning"
+                        [text]="true"
+                        styleClass="!h-11 !w-11"
+                        (onClick)="$event.stopPropagation(); openWaiveDialog(inst)"
+                      />
+                    }
+                  }
+                  @if (inst.status === "PENDING" || inst.status === "OVERDUE" || inst.status === "PARTIAL") {
+                    <button
+                      type="button"
+                      data-cy="installment-direct-payment"
+                      (click)="$event.stopPropagation(); openDirectDialog(inst)"
+                      class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-semibold text-blue-100"
+                    >
+                      <i class="pi pi-credit-card text-xs"></i>
+                      Cobrar
+                    </button>
+                  }
+                  @if (canScheduleVisit(inst)) {
+                    <button
+                      type="button"
+                      data-cy="installment-schedule-visit"
+                      (click)="$event.stopPropagation(); openScheduleVisitDialog(inst)"
+                      class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-500/30 bg-slate-500/10 text-sm font-semibold text-slate-100"
+                    >
+                      <i class="pi pi-calendar-plus text-xs"></i>
+                      Visita
+                    </button>
+                  }
+                </div>
+              }
+            </article>
+          }
+        </div>
+        <ff-back-top-fab [itemCount]="credit.installments.length" dataCy="credit-schedule-back-top-action" />
       </div>
 
       <!-- Cuota side panel -->
       @if (selectedInstallment) {
         <div
-          class="flex flex-col flex-shrink-0 border-l"
+          class="flex flex-col flex-shrink-0 border-t lg:border-t-0 lg:border-l w-full lg:w-[220px]"
           style="
-            width: 220px;
             border-color: var(--ff-border);
             background: var(--ff-secondary);
           "

@@ -1,0 +1,19 @@
+.seller-clients-search {
+  position: relative;
+}
+
+.seller-clients-search__icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  z-index: 1;
+  color: var(--ff-text-muted);
+  font-size: 0.875rem;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.seller-clients-search__input {
+  padding-left: 2.75rem !important;
+  padding-right: 0.875rem !important;
+}

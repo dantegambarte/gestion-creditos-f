@@ -1,3 +1,10 @@
+@media (max-width: 767.98px) {
+  :host ::ng-deep .ff-back-top-fab {
+    bottom: calc(var(--ff-mobile-bottom-nav-height) + 6rem + max(env(safe-area-inset-bottom), 0px));
+    z-index: 80;
+  }
+}
+
 ::ng-deep {
   .field-dark-border {
     .p-dropdown {

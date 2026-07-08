@@ -983,19 +983,38 @@ Cypress.Commands.add(
 );
 
 /**
- * Aprueba un crédito por id usando el token Admin.
+ * Garantiza una caja operativa abierta en la jornada actual, sin fallar si
+ * ya existe una (backend responde 409 ACTIVE_SESSION_IN_BUSINESS_DAY).
+ * Necesario desde que aprobar un LOAN exige caja activa para el desembolso.
+ */
+function ensureCashSessionOpen(token: string): Cypress.Chainable<void> {
+  return cy
+    .apiRequest('POST', '/cash-sessions', { opening_amount: 100000000 }, token)
+    .then((res) => {
+      expect(
+        [201, 409],
+        'abrir caja operativa (nueva o ya existente)',
+      ).to.include(res.status);
+    });
+}
+
+/**
+ * Aprueba un crédito por id usando el token Admin. Abre caja operativa si no
+ * hay una ya (LOAN y ventas con enganche/cuotas adelantadas la requieren).
  * Devuelve el crédito actualizado.
  */
 Cypress.Commands.add(
   'apiApproveCredit',
   (creditId: string): Cypress.Chainable<Record<string, unknown>> => {
     return cy.getAuthToken('ADMIN').then((token) =>
-      cy
-        .apiRequest('PATCH', `/credits/${creditId}/approve`, null, token)
-        .then((res) => {
-          expect(res.status, 'aprobar crédito').to.eq(200);
-          return res.body.data as Record<string, unknown>;
-        }),
+      ensureCashSessionOpen(token).then(() =>
+        cy
+          .apiRequest('PATCH', `/credits/${creditId}/approve`, null, token)
+          .then((res) => {
+            expect(res.status, 'aprobar crédito').to.eq(200);
+            return res.body.data as Record<string, unknown>;
+          }),
+      ),
     );
   },
 );

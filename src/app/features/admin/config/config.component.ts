@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
+import { ActiveTabScrollerDirective } from '../../../shared/directives/active-tab-scroller.directive';
 
 interface NavItem {
   label: string;
@@ -11,7 +12,7 @@ interface NavItem {
 @Component({
   selector: 'app-config',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, ActiveTabScrollerDirective],
   templateUrl: './config.component.html',
 })
 export class ConfigComponent {

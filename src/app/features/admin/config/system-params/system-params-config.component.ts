@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -111,6 +112,7 @@ export interface ParamRow extends SystemConfigParam {
   selector: 'app-system-params-config',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     DatePipe,
     FormsModule,
     ButtonModule,
