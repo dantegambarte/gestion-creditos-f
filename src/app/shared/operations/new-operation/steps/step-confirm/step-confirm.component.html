@@ -298,17 +298,17 @@
       <article
         class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-6 shadow-[0_12px_36px_rgba(0,0,0,0.2)]"
       >
-        <div class="mb-5 flex items-center justify-between">
+        <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 class="text-xl font-semibold text-[var(--ff-text-primary)]">
             Declaraciones y Autorizaciones
           </h3>
-          <div>
+          <div class="sm:shrink-0">
             <button
               type="button"
               [class]="
                 allDeclarationsChecked
-                  ? 'text-sm font-semibold text-[#F5A524] hover:underline'
-                  : 'text-sm font-semibold text-[#37F0A4] hover:underline'
+                  ? 'inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-[#F5A524]/60 bg-[#F5A524]/12 px-4 text-sm font-bold text-[#FFD38A] shadow-[0_10px_24px_rgba(245,165,36,0.12)] transition hover:bg-[#F5A524]/18 sm:w-auto'
+                  : 'inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-[#37F0A4]/60 bg-[#37F0A4]/12 px-4 text-sm font-bold text-[#6EF7BD] shadow-[0_10px_24px_rgba(55,240,164,0.12)] transition hover:bg-[#37F0A4]/18 sm:w-auto'
               "
               (click)="toggleAllDeclarations()"
               data-cy="btn-mark-all"
@@ -319,7 +319,7 @@
         </div>
 
         <div class="space-y-4">
-          <label class="flex items-center gap-3">
+          <label class="flex items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-white/[0.03]">
             <p-checkbox
               formControlName="chkIdentity"
               [binary]="true"
@@ -329,7 +329,7 @@
               >Verifiqué la identidad del cliente.</span
             >
           </label>
-          <label class="flex items-center gap-3">
+          <label class="flex items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-white/[0.03]">
             <p-checkbox
               formControlName="chkConditions"
               [binary]="true"
@@ -339,7 +339,7 @@
               >Expliqué condiciones y costos del plan.</span
             >
           </label>
-          <label class="flex items-center gap-3">
+          <label class="flex items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-white/[0.03]">
             <p-checkbox
               formControlName="chkDisbursement"
               [binary]="true"
@@ -349,7 +349,7 @@
               >Informé que el desembolso requiere aprobación.</span
             >
           </label>
-          <label class="flex items-center gap-3">
+          <label class="flex items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-white/[0.03]">
             <p-checkbox
               formControlName="chkCapacity"
               [binary]="true"
@@ -418,7 +418,7 @@
               <span class="text-[var(--ff-text-secondary)]">Nombre</span>
               <span
                 class="text-right font-semibold text-[var(--ff-text-primary)]"
-                >{{ selectedClient?.name || "Sin cliente seleccionado" }}</span
+                >{{ selectedClient?.name || "Sin cliente" }}</span
               >
             </div>
             <div class="mt-1 flex items-center justify-between gap-3">
