@@ -47,6 +47,31 @@
   width: min(100%, 300px);
 }
 
+.operations-search__clear {
+  position: absolute;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--ff-text-secondary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.operations-search__clear:hover {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--ff-text-primary);
+}
+
+.operations-search__clear .pi {
+  font-size: 11px;
+}
+
 .operations-search__icon {
   position: absolute;
   left: 14px;

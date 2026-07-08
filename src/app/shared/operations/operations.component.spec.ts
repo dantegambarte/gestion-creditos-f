@@ -16,9 +16,12 @@ describe('OperationsComponent', () => {
           id: '1',
           type: 'SALE',
           totalAmount: 35000,
+          totalToReturn: 52000,
           installmentsCount: 12,
           paymentFrequency: 'MONTHLY',
           interestRate: null,
+          effectiveRate: null,
+          paymentCondition: 'CASH',
           status: 'PENDING_APPROVAL',
           createdAt: '2026-04-15T00:00:00.000Z',
           approvedAt: null,
@@ -27,22 +30,26 @@ describe('OperationsComponent', () => {
           customerDni: '12345678',
           createdById: null,
           createdByName: null,
+          collectorName: null,
         },
         {
           id: '2',
           type: 'LOAN',
           totalAmount: 22000,
+          totalToReturn: 57000,
           installmentsCount: 8,
           paymentFrequency: 'MONTHLY',
           interestRate: null,
+          effectiveRate: 0.89,
           status: 'ACTIVE',
           createdAt: '2026-04-13T00:00:00.000Z',
-          approvedAt: null,
+          approvedAt: '2026-04-14T00:00:00.000Z',
           customerId: 'c2',
           customerName: 'Carlos Ruiz',
           customerDni: '33444555',
           createdById: null,
-          createdByName: null,
+          createdByName: 'Vendedor Demo',
+          collectorName: 'Cobrador Demo',
         },
       ]),
     ),
@@ -104,5 +111,45 @@ describe('OperationsComponent', () => {
     const table = fixture.nativeElement.querySelector('p-table');
     expect(table.getAttribute('ng-reflect-paginator')).toBe('true');
     expect(table.getAttribute('ng-reflect-rows')).toBe('10');
+  });
+
+  it('muestra en mobile la misma información operativa clave que desktop', () => {
+    const mobileCard: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-cy="operations-mobile-card"]',
+    );
+    const text = mobileCard.textContent ?? '';
+
+    expect(text).toContain('Total');
+    expect(text).toContain('52.000');
+    expect(text).not.toContain('35.000');
+    expect(text).toContain('Creación');
+    expect(text).toContain('Aprobación');
+    expect(text).toContain('Contado');
+    expect(text).toContain('Sin cobrador');
+  });
+
+  it('muestra vendedor y cobrador completos en las cards mobile', () => {
+    const mobileCards: NodeListOf<HTMLElement> =
+      fixture.nativeElement.querySelectorAll('[data-cy="operations-mobile-card"]');
+    const text = mobileCards[1].textContent ?? '';
+
+    expect(text).toContain('Vendedor Demo');
+    expect(text).toContain('Cobrador Demo');
+  });
+
+  it('limpia la búsqueda desde el botón del input', () => {
+    component.searchTerm = '33444555';
+    fixture.detectChanges();
+
+    const clearButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-cy="operations-search-clear"]',
+    );
+    clearButton.click();
+    fixture.detectChanges();
+
+    expect(component.searchTerm).toBe('');
+    expect(
+      fixture.nativeElement.querySelector('[data-cy="operations-search-clear"]'),
+    ).toBeNull();
   });
 });
