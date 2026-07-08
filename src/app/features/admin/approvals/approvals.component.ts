@@ -79,7 +79,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   approveCheckDoc = false;
   approveCheckClient = false;
   approveNote = '';
-  approveInstallmentsCount: number | null = null;
   processingApprove = false;
 
   // Cambio de vendedor antes de aprobar (solo dentro del diálogo de aprobación).
@@ -154,14 +153,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
     return 'Sin especificar';
   }
 
-  /**
-   * Indica si la fila en aprobación debe respetar las cuotas ya definidas en origen.
-   * @returns {boolean} True para ventas.
-   */
-  get approvingRowUsesFixedInstallments(): boolean {
-    return this.approvingRow?.type === 'SALE';
-  }
-
   private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
@@ -233,7 +224,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
     this.approveCheckDoc = false;
     this.approveCheckClient = false;
     this.approveNote = '';
-    this.approveInstallmentsCount = row.installmentsCount;
     this.showChangeSeller = false;
     this.selectedSellerId = null;
     this.showApproveDialog = true;
@@ -267,15 +257,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
     this.processingApprove = true;
     const row = this.approvingRow;
 
-    const payload =
-      !this.approvingRowUsesFixedInstallments &&
-      this.approveInstallmentsCount !== null &&
-      this.approveInstallmentsCount !== row.installmentsCount
-        ? { installmentsCount: this.approveInstallmentsCount }
-        : {};
-
     this.credits
-      .approve(row.id, payload)
+      .approve(row.id, {})
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
