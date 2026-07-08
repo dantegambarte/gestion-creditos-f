@@ -11,12 +11,12 @@
         </p>
         <div class="relative mt-3">
           <i
-            class="pi pi-search pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--ff-text-secondary)]"
+            class="pi pi-search pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[var(--ff-text-secondary)]"
           ></i>
           <input
             pInputText
             [(ngModel)]="searchText"
-            class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] pl-11 pr-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-secondary)] focus:border-[#4F6BFF] focus:outline-none"
+            class="h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] !pl-12 pr-4 text-base text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-secondary)] focus:border-[#4F6BFF] focus:outline-none md:text-sm"
             placeholder="Buscar por nombre o DNI"
             data-cy="input-search-client"
           />
@@ -63,7 +63,7 @@
           }
         </div>
       } @else {
-        <div class="max-h-[420px] space-y-2 overflow-y-auto p-3 pr-2">
+        <div class="space-y-2 p-3 pr-2 md:max-h-[420px] md:overflow-y-auto">
           @for (client of filteredClients; track client.id) {
             <button
               type="button"
@@ -217,6 +217,20 @@
                   {{ getQuickRegisterError("dni") }}
                 </p>
               }
+            </div>
+
+            <div>
+              <label
+                class="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ff-text-secondary)]"
+              >
+                Dirección
+              </label>
+              <input
+                pInputText
+                [(ngModel)]="quickRegisterDraft.address"
+                class="mt-2 h-11 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-4 text-sm text-[var(--ff-text-primary)] placeholder:text-[var(--ff-text-muted)]"
+                placeholder="Ej: Av. Corrientes 1234"
+              />
             </div>
 
             <div class="grid gap-4 md:grid-cols-2">

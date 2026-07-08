@@ -20,7 +20,67 @@
   </div>
 
   @if (loading) {
-    <app-loading-state />
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6" data-cy="product-detail-skeleton">
+      <div class="lg:col-span-5 flex flex-col gap-4">
+        <div class="ff-panel p-6 space-y-4">
+          <div class="flex gap-2">
+            <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+          </div>
+          <p-skeleton width="60%" height="1.5rem" />
+          <p-skeleton width="90%" height="0.9rem" />
+          <p-skeleton width="40%" height="0.9rem" />
+          <div class="flex items-center gap-3">
+            <p-skeleton width="4.5rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="8rem" height="0.8rem" />
+          </div>
+        </div>
+
+        <div class="ff-panel p-6">
+          <p-skeleton width="40%" height="0.75rem" styleClass="mb-4" />
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            @for (_ of [1, 2, 3]; track _) {
+              <div class="flex flex-col gap-2">
+                <p-skeleton width="70%" height="0.7rem" />
+                <p-skeleton width="50%" height="1.75rem" />
+              </div>
+            }
+          </div>
+          <p-skeleton height="0.5rem" borderRadius="999px" />
+        </div>
+
+        <div class="ff-panel p-4 flex flex-col gap-2">
+          <p-skeleton height="2.75rem" borderRadius="0.75rem" />
+          <p-skeleton height="2.75rem" borderRadius="0.75rem" />
+          <p-skeleton height="2.75rem" borderRadius="0.75rem" />
+        </div>
+      </div>
+
+      <div class="lg:col-span-7">
+        <div class="ff-panel overflow-hidden p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <p-skeleton width="6rem" height="1rem" />
+              <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+            </div>
+            <p-skeleton width="8rem" height="2.75rem" borderRadius="0.75rem" />
+          </div>
+          <div class="product-detail-table-skeleton">
+            @for (_ of [1, 2, 3]; track _) {
+              <div class="product-detail-table-skeleton__row">
+                <p-skeleton width="80%" height="1rem" />
+                <p-skeleton width="60%" height="1rem" />
+                <p-skeleton width="60%" height="1rem" />
+                <p-skeleton width="4rem" height="1rem" />
+                <p-skeleton width="2rem" height="1rem" />
+                <p-skeleton width="2rem" height="1rem" />
+                <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
   } @else if (error) {
     <app-error-state />
   } @else if (product) {
@@ -234,7 +294,7 @@
           </div>
 
           @if (product.variants.length > 0) {
-            <p-table [value]="product.variants" styleClass="p-datatable-sm">
+            <p-table [value]="product.variants" styleClass="hidden md:block p-datatable-sm" data-cy="product-detail-variants-table">
               <ng-template pTemplate="header">
                 <tr>
                   <th>COLOR</th>
@@ -296,6 +356,54 @@
                 </tr>
               </ng-template>
             </p-table>
+
+            <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="product-detail-variants-mobile-list">
+              @for (v of product.variants; track v.id) {
+                <article
+                  class="rounded-2xl border p-4"
+                  style="border-color: var(--ff-stroke)"
+                  data-cy="product-detail-variants-mobile-card"
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <p class="font-medium" style="color: var(--ff-text-primary)">
+                      {{ v.color ?? "—" }}
+                      @if (v.size) {
+                        · {{ v.size }}
+                      }
+                      @if (v.capacity) {
+                        · {{ v.capacity }}
+                      }
+                    </p>
+                    <span
+                      class="ff-badge shrink-0"
+                      [class.ff-badge--activo]="v.status === 'ACTIVE'"
+                      [class.ff-badge--inactivo]="v.status !== 'ACTIVE'"
+                      >{{ v.status === "ACTIVE" ? "Activa" : "Inactiva" }}</span
+                    >
+                  </div>
+                  <p class="mt-1 ff-mono font-bold" style="color: var(--ff-accent)">
+                    {{ v.currentPrice | currencyArs: 2 }}
+                  </p>
+                  <div class="mt-3 grid grid-cols-2 gap-2 text-center text-sm">
+                    <div class="rounded-xl border p-2" style="border-color: var(--ff-stroke)">
+                      <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Disponibles</p>
+                      <p class="font-bold ff-mono" style="color: var(--ff-success)">{{ v.availableCount }}</p>
+                    </div>
+                    <div class="rounded-xl border p-2" style="border-color: var(--ff-stroke)">
+                      <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Reservadas</p>
+                      <p class="font-bold ff-mono" style="color: var(--ff-text-muted)">{{ v.reservedCount }}</p>
+                    </div>
+                  </div>
+                  <a
+                    class="prod-action-link text-xs py-3"
+                    (click)="navigateToUnits(v.id)"
+                    style="cursor: pointer"
+                  >
+                    Ver unidades
+                  </a>
+                </article>
+              }
+            </div>
             @if (product.variants.length > 0) {
               <div
                 class="px-5 py-3"
@@ -319,6 +427,7 @@
                 </span>
               </div>
             }
+            <ff-back-top-fab [itemCount]="product.variants.length" dataCy="product-detail-back-top-action" />
           } @else {
             <div class="p-8 text-center">
               <p class="text-sm" style="color: var(--ff-text-muted)">

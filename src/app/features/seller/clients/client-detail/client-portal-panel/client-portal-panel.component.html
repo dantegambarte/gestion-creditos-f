@@ -3,6 +3,9 @@
 <app-temp-password-dialog
   [visible]="showTempPasswordDialog"
   [password]="tempPassword"
+  [customerName]="customer.fullName"
+  [customerDni]="customer.dni"
+  [customerPhone]="customer.phone"
   (closed)="onTempPasswordClosed()"
 />
 

@@ -37,7 +37,20 @@
     </div>
 
     @if (loading) {
-      <app-loading-state />
+      <div class="admin-table-skeleton" data-cy="seller-commissions-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="admin-table-skeleton__row">
+            <p-skeleton width="8rem" height="0.9rem" />
+            <p-skeleton width="7rem" height="1rem" />
+            <div class="admin-table-skeleton__stack">
+              <p-skeleton width="4rem" height="0.7rem" />
+              <p-skeleton width="5rem" height="0.9rem" />
+            </div>
+            <p-skeleton width="5rem" height="1rem" styleClass="ml-auto" />
+            <p-skeleton width="4rem" height="1.4rem" borderRadius="999px" />
+          </div>
+        }
+      </div>
     } @else if (error) {
       <app-error-state />
     } @else if (commissions.length === 0) {
@@ -49,7 +62,8 @@
         [value]="commissions"
         [paginator]="true"
         [rows]="20"
-        styleClass="p-datatable-sm p-datatable-hoverable-rows"
+        styleClass="hidden md:block p-datatable-sm p-datatable-hoverable-rows"
+        data-cy="seller-commissions-table"
         responsiveLayout="scroll"
       >
         <ng-template pTemplate="header">
@@ -87,6 +101,36 @@
           </tr>
         </ng-template>
       </p-table>
+
+      <div class="flex flex-col gap-3 md:hidden" data-cy="seller-commissions-mobile-list">
+        @for (c of commissions; track c.id) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] p-4"
+            data-cy="seller-commissions-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <p class="font-medium">{{ c.customerName }}</p>
+              <p-tag
+                class="shrink-0"
+                [value]="statusLabel(c.status)"
+                [severity]="statusSeverity(c.status)"
+              />
+            </div>
+            <p class="mt-0.5 text-xs text-[var(--ff-text-muted)]">
+              {{ formatDate(c.weekStart) }} — {{ formatDate(c.weekEnd) }}
+            </p>
+            <div class="mt-3 flex items-center justify-between text-sm">
+              <span class="text-[var(--ff-text-muted)]">
+                {{ creditTypeLabel(c.creditType) }} ·
+                {{ formatCurrency(c.creditAmount) }}
+              </span>
+              <span class="font-semibold text-blue-600 font-mono">
+                {{ formatCurrency(c.amount) }}
+              </span>
+            </div>
+          </article>
+        }
+      </div>
     }
   </p-card>
 
@@ -101,7 +145,18 @@
     </div>
 
     @if (loadingLiquidations) {
-      <app-loading-state />
+      <div class="admin-table-skeleton" data-cy="seller-liquidations-skeleton">
+        @for (_ of [1, 2, 3]; track _) {
+          <div class="admin-table-skeleton__row">
+            <p-skeleton width="8rem" height="0.9rem" />
+            <p-skeleton width="5rem" height="1rem" styleClass="ml-auto" />
+            <p-skeleton width="5rem" height="1rem" />
+            <p-skeleton width="5rem" height="1rem" />
+            <p-skeleton width="6rem" height="1.4rem" borderRadius="999px" />
+            <p-skeleton width="5rem" height="0.9rem" />
+          </div>
+        }
+      </div>
     } @else if (liquidations.length === 0) {
       <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
         Sin liquidaciones registradas.
@@ -111,7 +166,8 @@
         [value]="liquidations"
         [paginator]="true"
         [rows]="10"
-        styleClass="p-datatable-sm"
+        styleClass="hidden md:block p-datatable-sm"
+        data-cy="seller-liquidations-table"
         responsiveLayout="scroll"
       >
         <ng-template pTemplate="header">
@@ -150,6 +206,41 @@
           </tr>
         </ng-template>
       </p-table>
+
+      <div class="flex flex-col gap-3 md:hidden" data-cy="seller-liquidations-mobile-list">
+        @for (liq of liquidations; track liq.id) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] p-4"
+            data-cy="seller-liquidations-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <p class="text-sm text-[var(--ff-text-muted)]">
+                {{ formatDate(liq.weekStart) }} — {{ formatDate(liq.weekEnd) }}
+              </p>
+              <p-tag
+                class="shrink-0"
+                [value]="paymentMethodLabel(liq.paymentMethod)"
+                severity="secondary"
+              />
+            </div>
+            <p class="mt-2 text-lg font-semibold text-green-600 font-mono">
+              {{ formatCurrency(liq.totalPaid) }}
+            </p>
+            <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
+              <span class="text-[var(--ff-text-muted)]">
+                Comisiones: {{ formatCurrency(liq.commissionsTotal) }}
+              </span>
+              <span class="text-[var(--ff-text-muted)]">
+                Sueldo: {{ formatCurrency(liq.salaryAmount) }}
+              </span>
+            </div>
+            <p class="mt-2 text-xs text-[var(--ff-text-muted)]">
+              {{ formatDate(liq.paidAt) }}
+            </p>
+          </article>
+        }
+      </div>
     }
   </p-card>
+  <ff-back-top-fab [itemCount]="commissions.length + liquidations.length" dataCy="seller-commissions-back-top-action" />
 </div>

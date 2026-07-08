@@ -1,7 +1,7 @@
 <aside class="sidebar flex flex-col h-dvh shrink-0 select-none">
   <!-- Logo -->
   <div class="sidebar__logo">
-    <span class="sidebar__logo-text">finFlow</span>
+    <span class="sidebar__logo-text">Productcred</span>
   </div>
 
   <!-- Nav -->
@@ -42,13 +42,13 @@
 
   <!-- Footer usuario -->
   <div class="sidebar__footer">
-    @if (currentUser) {
+    @if (currentUser(); as user) {
       <div class="sidebar__user">
-        <div class="sidebar__avatar">{{ currentUser.avatar }}</div>
+        <div class="sidebar__avatar">{{ user.avatar }}</div>
         <div class="min-w-0 flex-1">
-          <p class="sidebar__user-name truncate">{{ currentUser.name }}</p>
+          <p class="sidebar__user-name truncate">{{ user.name }}</p>
           <p class="sidebar__user-role">
-            @for (role of currentUser.roles; track role) {
+            @for (role of user.roles; track role) {
               {{ role }}
             }
           </p>
@@ -60,10 +60,11 @@
       <li>
         <a
           pRipple
-          [routerLink]="null"
-          pTooltip="Próximamente"
-          tooltipPosition="right"
-          class="nav-item nav-item--disabled"
+          routerLink="/profile"
+          routerLinkActive="nav-item--active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="nav-item"
+          data-cy="nav-mi-perfil"
         >
           <div class="flex items-center gap-2">
             <i class="pi pi-user nav-item__icon"></i>
@@ -87,3 +88,125 @@
     </ul>
   </div>
 </aside>
+
+<div
+  class="mobile-menu-backdrop"
+  [class.mobile-menu-backdrop--open]="mobileMenuOpen()"
+  (click)="closeMobileMenu()"
+></div>
+
+<section
+  id="mobile-navigation-menu"
+  class="mobile-menu-sheet"
+  [class.mobile-menu-sheet--open]="mobileMenuOpen()"
+  aria-label="Menú de navegación mobile"
+  role="dialog"
+  [attr.aria-modal]="mobileMenuOpen()"
+  [attr.aria-hidden]="!mobileMenuOpen()"
+>
+  <div class="mobile-menu-sheet__handle"></div>
+
+  <div class="mobile-menu-sheet__header">
+    <div>
+      <p class="mobile-menu-sheet__eyebrow">Navegación</p>
+      <h2 class="mobile-menu-sheet__title">Productcred</h2>
+    </div>
+
+    <button
+      type="button"
+      class="mobile-menu-sheet__close"
+      aria-label="Cerrar menú"
+      (click)="closeMobileMenu()"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  </div>
+
+  <nav class="mobile-menu-sheet__nav" aria-label="Navegación completa">
+    @for (item of visibleItems; track item.label) {
+      @if (item.isGroupLabel) {
+        <p class="mobile-menu-sheet__group">{{ item.label }}</p>
+      } @else {
+        <a
+          pRipple
+          [routerLink]="item.route"
+          [class.mobile-menu-sheet__item--active]="isRouteActive(item.route)"
+          class="mobile-menu-sheet__item"
+          [attr.data-testid]="item.testId ?? null"
+          (click)="closeMobileMenu()"
+        >
+          <span class="mobile-menu-sheet__item-left">
+            <i class="{{ item.icon }}"></i>
+            <span>{{ item.label }}</span>
+          </span>
+
+          @if (item.badge) {
+            <span class="nav-item__badge">{{ item.badge }}</span>
+          }
+        </a>
+      }
+    }
+  </nav>
+
+  <div class="mobile-menu-sheet__account">
+    <p class="mobile-menu-sheet__group">Cuenta</p>
+
+    <div class="mobile-menu-sheet__account-panel">
+      <a
+        pRipple
+        routerLink="/profile"
+        class="mobile-menu-sheet__account-row"
+        data-cy="nav-mi-perfil-mobile"
+        (click)="closeMobileMenu()"
+      >
+        <i class="pi pi-user"></i>
+        <span>Mi perfil</span>
+      </a>
+
+      <button
+        pRipple
+        type="button"
+        data-testid="logout-btn-mobile"
+        class="mobile-menu-sheet__account-row mobile-menu-sheet__account-row--logout"
+        (click)="logout()"
+      >
+        <i class="pi pi-sign-out"></i>
+        <span>Cerrar sesión</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<nav class="mobile-bottom-nav" aria-label="Navegación principal mobile">
+  @for (item of mobilePrimaryItems(); track item.label) {
+    <a
+      pRipple
+      [routerLink]="item.route"
+      [class.mobile-bottom-nav__item--active]="isRouteActive(item.route)"
+      class="mobile-bottom-nav__item"
+      [attr.data-testid]="item.testId ?? null"
+      (click)="closeMobileMenu()"
+    >
+      <i class="{{ item.icon }}"></i>
+      <span>{{ item.label }}</span>
+
+      @if (item.badge) {
+        <span class="mobile-bottom-nav__badge">{{ item.badge }}</span>
+      }
+    </a>
+  }
+
+  <button
+    pRipple
+    type="button"
+    class="mobile-bottom-nav__item mobile-bottom-nav__item--menu"
+    [class.mobile-bottom-nav__item--active]="mobileMenuOpen()"
+    aria-label="Abrir menú"
+    aria-controls="mobile-navigation-menu"
+    [attr.aria-expanded]="mobileMenuOpen()"
+    (click)="toggleMobileMenu()"
+  >
+    <i class="pi pi-bars"></i>
+    <span>Más</span>
+  </button>
+</nav>

@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
+import { SkeletonModule } from 'primeng/skeleton';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
@@ -9,6 +10,7 @@ import { DateService } from '../../../../../core/services/date.service';
 import { FormatService } from '../../../../../core/services/format.service';
 import { ErrorStateComponent } from '../../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
+import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { CollectionReport } from '../../report.models';
 import { ReportsService } from '../../reports.service';
 
@@ -21,6 +23,8 @@ import { ReportsService } from '../../reports.service';
     CalendarModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    SkeletonModule,
+    FfBackTopFabComponent,
   ],
   templateUrl: './collection-report.component.html',
 })

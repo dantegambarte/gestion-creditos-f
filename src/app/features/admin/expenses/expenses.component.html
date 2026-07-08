@@ -3,10 +3,10 @@
 <div class="flex h-full flex-col overflow-hidden">
   <!-- ── Header full-width ───────────────────────────────────── -->
   <div
-    class="flex flex-shrink-0 items-center justify-between border-b border-[var(--ff-border-subtle)] px-6 pb-4 pt-6"
+    class="flex flex-shrink-0 flex-col items-start gap-3 border-b border-[var(--ff-border-subtle)] px-4 pb-4 pt-6 sm:flex-row sm:items-center sm:justify-between md:px-6"
   >
     <h1 class="ff-page-title">Gastos</h1>
-    <div class="flex items-center gap-3">
+    <div class="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
       @if (rows.length && !showCatsPanel) {
         <span class="font-bold text-red-400 font-mono">
           {{ fmt.currency(periodTotal) }}
@@ -19,6 +19,7 @@
         label="Registrar gasto +"
         severity="primary"
         styleClass="h-11 px-5 rounded-xl shadow-sm"
+        data-cy="expenses-register-trigger"
         (onClick)="openCreate()"
       />
     </div>
@@ -96,13 +97,30 @@
           icon="pi pi-tags"
           [outlined]="true"
           styleClass="h-10 px-4 shrink-0 xl:justify-self-end !border-cyan-400/80 !text-cyan-200 !bg-cyan-500/10 hover:!bg-cyan-500/20 shadow-[0_0_0_1px_rgba(34,211,238,0.25)]"
+          data-cy="expenses-manage-categories-action"
           (onClick)="toggleCatsPanel()"
         />
       </div>
 
       <!-- Tabla -->
       @if (loading) {
-        <app-loading-state />
+        <div class="ff-panel">
+          <div class="admin-table-skeleton" data-cy="expenses-skeleton">
+            @for (_ of [1, 2, 3, 4, 5]; track _) {
+              <div class="admin-table-skeleton__row">
+                <p-skeleton width="4.5rem" height="1rem" />
+                <div class="admin-table-skeleton__stack">
+                  <p-skeleton width="10rem" height="1rem" />
+                  <p-skeleton width="6rem" height="0.8rem" />
+                </div>
+                <p-skeleton width="5rem" height="1.5rem" borderRadius="0.25rem" />
+                <p-skeleton width="6rem" height="1rem" />
+                <p-skeleton width="5rem" height="1rem" />
+                <p-skeleton width="7rem" height="1rem" />
+              </div>
+            }
+          </div>
+        </div>
       } @else if (rows.length === 0) {
         <p class="py-16 text-center text-2xl text-[var(--ff-text-muted)]">
           Sin gastos para el período seleccionado.
@@ -111,7 +129,8 @@
         <div class="ff-panel">
           <p-table
             [value]="rows"
-            styleClass="p-datatable-sm p-datatable-hoverable-rows"
+            styleClass="hidden md:block p-datatable-sm p-datatable-hoverable-rows"
+            data-cy="expenses-table"
             responsiveLayout="scroll"
           >
             <ng-template pTemplate="header">
@@ -210,6 +229,65 @@
             </ng-template>
           </p-table>
 
+          <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="expenses-mobile-list">
+            @for (e of rows; track e.id) {
+              <article
+                class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+                data-cy="expenses-mobile-card"
+                (click)="selectExpense(e)"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-[var(--ff-text-primary)]">
+                      {{ e.description }}
+                    </p>
+                    <p class="mt-0.5 text-xs text-indigo-200/80">
+                      {{ formatDate(e.expenseDate || e.createdAt) }}
+                    </p>
+                  </div>
+                  @if (e.categoryName) {
+                    <span
+                      class="shrink-0 rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide"
+                      [style.background-color]="getCategoryBadgeColor(e.categoryName)"
+                      [style.color]="getCategoryBadgeTextColor(e.categoryName)"
+                    >
+                      {{ e.categoryName }}
+                    </span>
+                  }
+                </div>
+
+                <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Método</dt>
+                    <dd class="mt-1 flex items-center gap-1.5 font-semibold">
+                      @if (e.paymentMethod === "CASH") {
+                        <i class="pi pi-wallet text-green-400 text-xs"></i>
+                        <span>Efectivo</span>
+                      } @else {
+                        <i class="pi pi-credit-card text-cyan-300 text-xs"></i>
+                        <span>Transferencia</span>
+                      }
+                    </dd>
+                  </div>
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Monto</dt>
+                    <dd class="mt-1 font-mono font-bold text-red-400">{{ fmt.currency(e.amount) }}</dd>
+                  </div>
+                </dl>
+
+                <p class="mt-3 text-xs text-[var(--ff-text-secondary)]">
+                  Registrado por {{ e.createdByName }}
+                </p>
+              </article>
+            }
+            <article class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel-raised)] p-4 font-semibold text-sm">
+              <div class="flex items-center justify-between">
+                <span>Total del período</span>
+                <span class="font-mono text-red-400">{{ fmt.currency(periodTotal) }}</span>
+              </div>
+            </article>
+          </div>
+
           @if (total > limit) {
             <div class="px-4 pb-3">
               <p-paginator
@@ -242,5 +320,6 @@
         (categoriesChanged)="onCategoriesChanged()"
       />
     }
+    <ff-back-top-fab [itemCount]="rows.length" dataCy="expenses-back-top-action" />
   </div>
 </div>

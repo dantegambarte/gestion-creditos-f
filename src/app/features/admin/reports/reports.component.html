@@ -1,4 +1,4 @@
-<div class="p-6">
+<div class="p-4 md:p-6" data-cy="admin-reports-page">
   <div class="ff-page-header">
     <div>
       <h1 class="ff-page-title">Reportes</h1>
@@ -22,12 +22,18 @@
     </div>
   }
 
-  <div class="ff-tab-nav mb-8">
+  <div
+    class="ff-tab-nav reports-mobile-tabs mb-6 md:mb-8"
+    appActiveTabScroller
+    data-cy="admin-reports-tabs"
+  >
     @for (tab of TABS; track tab.id) {
       <button
+        type="button"
         (click)="setTab(tab.id)"
         class="ff-tab"
         [class.ff-tab--active]="activeTab === tab.id"
+        [attr.aria-selected]="activeTab === tab.id"
       >
         <i [class]="tab.icon + ' text-xs'"></i>
         {{ tab.label }}

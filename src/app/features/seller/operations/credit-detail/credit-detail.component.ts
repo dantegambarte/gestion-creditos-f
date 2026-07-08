@@ -1,10 +1,12 @@
 import { CommonModule, DatePipe, Location } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
@@ -39,6 +41,7 @@ import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog
   selector: 'app-credit-detail',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     CurrencyArsPipe,
     DatePipe,
     CommonModule,
@@ -48,6 +51,7 @@ import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog
     ToastModule,
     InputTextModule,
     TooltipModule,
+    SkeletonModule,
     LoadingStateComponent,
     ErrorStateComponent,
     MessageModule,
@@ -96,6 +100,11 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     return this.credit?.installments[0]?.amountDue ?? null;
   }
 
+  /** Venta de contado: oculta la información de financiación en el detalle. */
+  get isCashSale(): boolean {
+    return this.credit?.paymentCondition === 'CASH';
+  }
+
   /**
    * Resume cómo debe mostrarse el pago inicial cuando el backend no distingue su origen.
    * @returns {string} Etiqueta visible para el bloque financiero.
@@ -131,17 +140,17 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Calcula el monto estimado asociado al adelanto de cuotas.
-   * @returns {number} Importe equivalente al adelanto cuando existe.
+   * Monto real adelantado: suma del amount_due de las cuotas adelantadas (las
+   * primeras N), no un promedio de capital. Refleja exactamente lo que se cobró
+   * al aprobar. No depende del enganche (que usa credit.downPayment aparte).
+   * @returns {number} Importe total de las cuotas adelantadas.
    */
   get prepaidInstallmentsAmount(): number {
     if (!this.credit || this.credit.prepaidInstallments <= 0) return 0;
-    const installmentsCount = this.credit.installmentsCount || 0;
-    if (installmentsCount <= 0) return 0;
-    return Math.round(
-      (this.credit.financedAmount / installmentsCount) *
-        this.credit.prepaidInstallments,
-    );
+    const n = this.credit.prepaidInstallments;
+    return this.credit.installments
+      .filter((i) => i.installmentNumber <= n)
+      .reduce((sum, i) => sum + (i.amountDue ?? 0), 0);
   }
 
   /**
@@ -152,6 +161,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   paymentMethodLabel(method: string | null | undefined): string {
     if (method === 'TRANSFER') return 'Transferencia';
     if (method === 'CASH') return 'Efectivo';
+    if (method === 'MIXED') return 'Efectivo + Transferencia';
     return 'Sin especificar';
   }
 
@@ -207,6 +217,15 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
    */
   get isAdmin(): boolean {
     return this.auth.hasRole('ADMIN');
+  }
+
+  /**
+   * Indica si el usuario puede ver información financiera sensible (tasa, monto
+   * financiado, interés, precios históricos). Se oculta a los roles de venta
+   * (SELLER / SELLER_COLLECTOR); el resto la ve normalmente.
+   */
+  get canViewFinancialData(): boolean {
+    return !this.auth.hasAnyRole(['SELLER', 'SELLER_COLLECTOR']);
   }
 
   /** Un crédito REFINANCED o SETTLED no acepta más acciones sobre sus cuotas. */
@@ -362,6 +381,20 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
       MONTHLY: 'Mensual',
     };
     return map[frequency] ?? frequency;
+  }
+
+  /**
+   * Devuelve la unidad de período para el sufijo del importe de cuota
+   * (ej. "$X / semana"). Evita el "/ mes" hardcodeado en frecuencias no mensuales.
+   * @param frequency Frecuencia de pago
+   */
+  frequencyUnitLabel(frequency: string): string {
+    const map: Record<string, string> = {
+      WEEKLY: 'semana',
+      BIWEEKLY: 'quincena',
+      MONTHLY: 'mes',
+    };
+    return map[frequency] ?? '';
   }
 
   openApproveDialog(): void {

@@ -1,8 +1,12 @@
 <header class="app-header">
   <!-- Izquierda: solo acciones contextuales -->
   <div class="flex items-center gap-3">
+    <div class="app-header__mobile-brand">
+      <span class="app-header__mobile-logo">Productcred</span>
+    </div>
+
     @if (headerService.actions().length > 0) {
-      <div class="flex items-center gap-2">
+      <div class="app-header__actions flex items-center gap-2">
         @for (action of headerService.actions(); track action.label) {
           <p-button
             [label]="action.label"
@@ -30,15 +34,97 @@
     </div>
 
     <!-- Campana -->
-    <button class="app-header__bell">
+    <button
+      type="button"
+      class="app-header__bell"
+      data-cy="header-bell-btn"
+      aria-label="Abrir notificaciones"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="bellOpen"
+      aria-controls="header-notifications-panel"
+      (click)="bellPanel.toggle($event); onBellOpen()"
+    >
       <i class="pi pi-bell text-lg"></i>
-      <span class="app-header__bell-dot"></span>
+      @if (notifSvc.unreadCount() > 0) {
+        <span class="app-header__bell-dot" data-cy="header-bell-badge">{{
+          notifSvc.unreadCount() > 9 ? "9+" : notifSvc.unreadCount()
+        }}</span>
+      }
     </button>
+
+    <p-overlayPanel
+      #bellPanel
+      styleClass="app-header__bell-panel"
+      (onShow)="bellOpen = true"
+      (onHide)="bellOpen = false"
+    >
+      <div class="flex flex-col gap-2" data-cy="header-bell-dropdown">
+        <div
+          id="header-notifications-panel"
+          class="flex items-center justify-between gap-3 px-1"
+        >
+          <h3 class="text-sm font-semibold ff-text-primary">Notificaciones</h3>
+          @if (recentNotifications.length > 0) {
+            <button
+              type="button"
+              class="app-header__notification-clear"
+              data-cy="header-bell-clear-all"
+              (click)="onDeleteAllNotifications()"
+            >
+              Borrar todas
+            </button>
+          }
+        </div>
+        @if (loadingNotifications) {
+          <p class="text-xs ff-text-muted px-1">Cargando…</p>
+        } @else if (recentNotifications.length === 0) {
+          <p class="text-xs ff-text-muted px-1">No tenés notificaciones.</p>
+        } @else {
+          <div
+            class="app-header__notification-list flex flex-col gap-1 overflow-y-auto"
+          >
+            @for (item of recentNotifications; track item.id) {
+              <div
+                class="app-header__notification-row rounded-lg hover:bg-[var(--ff-secondary)] transition-colors"
+                [class.font-semibold]="!item.read_at"
+              >
+                <button
+                  type="button"
+                  class="app-header__notification-main text-left"
+                  data-cy="header-bell-item"
+                  (click)="onNotificationClick(item); bellPanel.hide()"
+                >
+                  <p class="text-sm ff-text-primary">{{ item.title }}</p>
+                  <p class="text-xs ff-text-muted">{{ item.message }}</p>
+                </button>
+                <button
+                  type="button"
+                  class="app-header__notification-delete"
+                  data-cy="header-bell-delete-item"
+                  title="Borrar notificación"
+                  aria-label="Borrar notificación"
+                  (click)="onDeleteNotification($event, item)"
+                >
+                  <i class="pi pi-times text-xs"></i>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </p-overlayPanel>
 
     <!-- Usuario -->
     @if (auth.currentUser$ | async; as user) {
-      <div
-        class="flex items-center gap-2 pl-3 app-header__user-section cursor-pointer hover:opacity-80 transition-opacity"
+      <button
+        type="button"
+        class="flex items-center gap-2 pl-3 app-header__user-section app-header__user-trigger cursor-pointer hover:opacity-80 transition-opacity"
+        data-cy="header-user-menu-trigger"
+        aria-label="Abrir menú de usuario"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="userMenuOpen"
+        aria-controls="header-user-menu-panel"
+        (click)="userPanel.toggle($event)"
       >
         <div class="text-right hidden sm:block">
           <p class="app-header__user-name leading-none">{{ user.name }}</p>
@@ -47,7 +133,48 @@
         <div class="app-header__avatar">
           {{ user.name.charAt(0) }}
         </div>
-      </div>
+      </button>
+
+      <p-overlayPanel
+        #userPanel
+        styleClass="app-header__user-panel"
+        (onShow)="userMenuOpen = true"
+        (onHide)="userMenuOpen = false"
+      >
+        <div
+          id="header-user-menu-panel"
+          class="app-header__user-menu"
+          data-cy="header-user-menu"
+          role="menu"
+        >
+          <div class="app-header__user-menu-head">
+            <span class="app-header__user-menu-name">{{ user.name }}</span>
+            <span class="app-header__user-menu-role">{{ user.roles }}</span>
+          </div>
+
+          <a
+            routerLink="/profile"
+            class="app-header__user-menu-item"
+            data-cy="header-mi-perfil"
+            role="menuitem"
+            (click)="userPanel.hide()"
+          >
+            <i class="pi pi-user"></i>
+            <span>Mi perfil</span>
+          </a>
+
+          <button
+            type="button"
+            class="app-header__user-menu-item app-header__user-menu-item--danger"
+            data-cy="header-logout"
+            role="menuitem"
+            (click)="userPanel.hide(); auth.logout()"
+          >
+            <i class="pi pi-sign-out"></i>
+            <span>Cerrar sesión</span>
+          </button>
+        </div>
+      </p-overlayPanel>
     }
   </div>
 </header>

@@ -12,12 +12,12 @@ import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { AppError } from '../../../../core/models/app-error';
 import { HeaderService } from '../../../../core/services/header.service';
 import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { ProductBrandsService } from '../../../admin/config/services/product-brands.service';
 import { ProductCategoriesService } from '../../../admin/config/services/product-categories.service';
 import { ProductDetail } from '../../models/product.model';
@@ -35,8 +35,8 @@ import { ProductsService } from '../products.service';
     InputTextModule,
     InputTextareaModule,
     ToastModule,
-    LoadingStateComponent,
     ErrorStateComponent,
+    SkeletonModule,
   ],
   templateUrl: './product-edit.component.html',
 })

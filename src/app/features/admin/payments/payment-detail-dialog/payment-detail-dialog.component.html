@@ -2,18 +2,34 @@
 <p-dialog
   [visible]="visible"
   (visibleChange)="visibleChange.emit($event)"
-  header="Detalle del cobro"
   [modal]="true"
-  [style]="{ width: '520px' }"
+  [showHeader]="false"
+  [closable]="false"
+  [style]="{ width: '520px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
+  styleClass="cash-mobile-dialog"
+  contentStyleClass="!p-0"
 >
+  <section class="flex max-h-[88vh] flex-col overflow-hidden" data-cy="payment-detail-dialog">
+    <header class="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--ff-border-subtle)] px-6 py-5">
+      <h2 class="text-lg font-bold text-[var(--ff-text-primary)]">Detalle del cobro</h2>
+      <button
+        type="button"
+        class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white"
+        data-cy="payment-detail-dialog-close"
+        (click)="visibleChange.emit(false)"
+      >
+        <i class="pi pi-times text-base"></i>
+      </button>
+    </header>
+    <div class="flex-1 overflow-y-auto px-6 py-5" data-cy="payment-detail-dialog-body">
   @if (loadingDetail) {
     <div class="py-8 text-center text-[var(--ff-text-secondary)]">
       Cargando...
     </div>
   } @else if (selectedPayment) {
-    <div class="flex flex-col gap-3 py-2">
+    <div class="flex flex-col gap-3">
       @if (
         selectedPayment.status === "REJECTED" && selectedPayment.rejectionReason
       ) {
@@ -127,7 +143,7 @@
             icon="pi pi-times"
             severity="danger"
             [outlined]="true"
-            styleClass="w-full h-11 px-5 rounded-xl justify-center"
+            styleClass="ff-reject-action w-full h-11 px-5 rounded-xl justify-center"
             (onClick)="openRejectDialog()"
           />
           <p-button
@@ -171,6 +187,8 @@
       }
     </div>
   }
+    </div>
+  </section>
 </p-dialog>
 
 <!-- ── Reject Dialog ───────────────────────────────────────────── -->
@@ -178,7 +196,7 @@
   [(visible)]="showRejectDialog"
   header="Rechazar cobro"
   [modal]="true"
-  [style]="{ width: '440px' }"
+  [style]="{ width: '440px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
 >
@@ -214,7 +232,7 @@
         label="Cancelar"
         severity="secondary"
         [outlined]="true"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        styleClass="ff-reject-action w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="showRejectDialog = false"
       />
       <p-button
@@ -236,7 +254,7 @@
   (onHide)="onReverseDialogHide()"
   header="Revertir cobro"
   [modal]="true"
-  [style]="{ width: '440px' }"
+  [style]="{ width: '440px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
 >

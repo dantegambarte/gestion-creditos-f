@@ -2,7 +2,49 @@
 
 <div class="ff-page py-4 sheet-view">
   @if (loading) {
-    <app-loading-state />
+    <div class="sheet-skeleton" data-cy="sheet-detail-skeleton">
+      <p-skeleton width="8rem" height="1rem" styleClass="mb-2" />
+      <p-skeleton width="14rem" height="1.5rem" styleClass="mb-3" />
+      <p-skeleton width="100%" height="1.5rem" styleClass="mb-3" />
+
+      <div class="hidden md:block" data-cy="sheet-detail-desktop-skeleton">
+        <div class="sheet-table-skeleton">
+          @for (_ of [1, 2, 3, 4, 5]; track _) {
+            <div class="sheet-table-skeleton__row">
+              <p-skeleton width="2rem" height="1rem" />
+              <p-skeleton width="9rem" height="1rem" />
+              <p-skeleton width="7rem" height="1rem" />
+              <p-skeleton width="3rem" height="1rem" />
+              <p-skeleton width="4rem" height="1rem" />
+              <p-skeleton width="5rem" height="1rem" />
+              <p-skeleton width="4rem" height="1rem" />
+              <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+              <p-skeleton width="4rem" height="2rem" borderRadius="0.5rem" />
+            </div>
+          }
+        </div>
+      </div>
+
+      <div
+        class="sheet-mobile-skeleton block md:hidden"
+        data-cy="sheet-detail-mobile-skeleton"
+      >
+        @for (_ of [1, 2, 3]; track _) {
+          <article class="sheet-mobile-skeleton-card">
+            <div class="sheet-mobile-skeleton-card__head">
+              <p-skeleton width="60%" height="0.95rem" />
+              <p-skeleton width="25%" height="1rem" />
+            </div>
+            <p-skeleton width="80%" height="0.75rem" styleClass="mb-2" />
+            <div class="sheet-mobile-skeleton-card__meta">
+              <p-skeleton height="1rem" />
+              <p-skeleton height="1rem" />
+            </div>
+            <p-skeleton height="2.25rem" borderRadius="0.5rem" />
+          </article>
+        }
+      </div>
+    </div>
   } @else if (error) {
     <app-error-state />
   } @else if (sheet) {
@@ -48,7 +90,7 @@
 
     <div class="sheet-layout" [class.sheet-layout--panel-open]="sidePanelOpen">
       <section class="sheet-table-wrap">
-        <div class="sheet-tabs mb-2">
+        <div class="sheet-tabs mb-2" appActiveTabScroller>
           <button
             type="button"
             class="sheet-tab"
@@ -75,7 +117,7 @@
           </button>
         </div>
 
-        <div class="sheet-table-scroll">
+        <div class="sheet-table-scroll hidden md:block">
           <table class="sheet-table">
             <thead>
               <tr>
@@ -150,6 +192,96 @@
             </tbody>
           </table>
         </div>
+
+        <div class="sheet-mobile-list block md:hidden">
+          @for (item of filteredItems; track item.installmentId) {
+            <article
+              class="sheet-mobile-card"
+              [class.sheet-mobile-card--selected]="
+                selectedItem?.installmentId === item.installmentId
+              "
+              [class.sheet-mobile-card--overdue]="
+                item.installmentStatus === 'OVERDUE'
+              "
+              [class.sheet-mobile-card--paid]="
+                item.installmentStatus === 'PAID'
+              "
+              (click)="selectItem(item)"
+            >
+              <div class="sheet-mobile-card__head">
+                <div class="sheet-mobile-card__identity">
+                  <div class="sheet-mobile-card__title-row">
+                    <span class="sheet-mobile-card__order"
+                      >#{{ item.orderNumber }}</span
+                    >
+                    <h2>{{ item.customerName }}</h2>
+                  </div>
+                  <p>{{ item.collectionReference }}</p>
+                </div>
+                <div class="sheet-mobile-card__amount">
+                  {{ availableBalance(item) | currencyArs: 0 }}
+                </div>
+              </div>
+
+              <div class="sheet-mobile-card__meta">
+                <span>
+                  <i class="pi pi-calendar"></i>
+                  Cuota {{ item.installmentNumber }} ·
+                  {{ item.dueDate | date: "dd/MM/yy" }}
+                </span>
+                <span>
+                  <i class="pi pi-phone"></i>
+                  {{ item.customerPhone || "Sin teléfono" }}
+                </span>
+                <span class="sheet-mobile-card__address">
+                  <i class="pi pi-map-marker"></i>
+                  {{ item.customerAddress || "Sin domicilio" }}
+                </span>
+              </div>
+
+              <div class="sheet-mobile-card__chips">
+                <span
+                  class="status-badge"
+                  [class.status-overdue]="item.installmentStatus === 'OVERDUE'"
+                  [class.status-paid]="item.installmentStatus === 'PAID'"
+                >
+                  {{ installmentLabel(item.installmentStatus) }}
+                </span>
+                @if (displayPenalty(item) > 0) {
+                  <span class="sheet-mobile-card__penalty">
+                    +{{ displayPenalty(item) | currencyArs: 0 }} mora
+                  </span>
+                }
+                @if (item.live?.hasPendingPayment) {
+                  <span class="sheet-mobile-card__pending">
+                    Pre-carga pendiente
+                  </span>
+                }
+              </div>
+
+              <div class="sheet-mobile-card__actions">
+                @if (canRegisterPayment(item)) {
+                  <button
+                    type="button"
+                    class="action-btn action-btn--mobile"
+                    (click)="$event.stopPropagation(); openPaymentDialog(item)"
+                  >
+                    Cobrar
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    class="action-btn action-btn--mobile"
+                    disabled
+                  >
+                    No disponible
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+        <ff-back-top-fab [itemCount]="filteredItems.length" dataCy="sheet-detail-collector-back-top-action" />
       </section>
 
       @if (!sidePanelOpen) {

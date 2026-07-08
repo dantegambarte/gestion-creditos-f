@@ -79,40 +79,10 @@
       }
     </div>
 
-    <div class="flex flex-col gap-1">
-      <label for="assignedCollectorId" class="auth-label">Cobrador asignado</label>
-      <p-dropdown
-        inputId="assignedCollectorId"
-        formControlName="assignedCollectorId"
-        [options]="collectorOptions"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="collectorOptions.length > 10"
-        filterBy="label"
-
-
-        [placeholder]="
-          collectorsLoading
-            ? 'Cargando cobradores…'
-            : collectorsLoadFailed
-              ? 'No se pudieron cargar cobradores'
-            : collectorOptions.length === 0
-              ? 'No hay cobradores activos'
-              : 'Seleccionar cobrador'
-        "
-        [showClear]="true"
-        appendTo="body"
-        styleClass="w-full h-11"
-        [class.ng-invalid]="isInvalid('assignedCollectorId')"
-        [class.ng-dirty]="isInvalid('assignedCollectorId')"
-      />
-      @if (collectorsLoadFailed) {
-        <small class="text-amber-400">Podés registrar el cliente sin asignar cobrador por ahora.</small>
-      }
-      @if (isInvalid("assignedCollectorId")) {
-        <small class="text-red-500">{{ getError("assignedCollectorId") }}</small>
-      }
-    </div>
+    <p class="text-sm" style="color: var(--ff-text-secondary)">
+      El cobrador se asigna posteriormente. Un administrador lo cargará al
+      actualizar el cliente.
+    </p>
 
     <div class="flex gap-3 pt-2">
       <p-button

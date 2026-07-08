@@ -1,16 +1,67 @@
 <p-toast position="top-right" />
 
-<div class="ff-page py-6">
-  <p class="text-sm ff-text-muted mb-6">/ Mi Perfil</p>
+<div class="ff-page py-6" data-cy="profile-page">
+  <div class="mb-6 flex flex-col gap-1">
+    <h1 class="text-2xl font-bold ff-text-primary">Mi perfil</h1>
+    <p class="text-sm ff-text-secondary">
+      Administrá tus datos personales y la seguridad de tu cuenta.
+    </p>
+  </div>
 
-  <div class="flex flex-col lg:flex-row gap-6">
-    <div class="w-full lg:w-64 shrink-0">
-      <div
-        class="ff-panel border p-6 flex flex-col items-center text-center gap-3"
-      >
-        @if (currentUser) {
+  @if (loadingProfile && !profile) {
+    <div
+      class="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6"
+      data-cy="profile-skeleton"
+    >
+      <aside class="ff-panel border p-6 h-fit">
+        <div class="flex flex-col items-center text-center gap-4">
+          <p-skeleton shape="circle" size="5rem" />
+          <p-skeleton width="60%" height="1.1rem" />
+          <div class="flex justify-center gap-2 w-full">
+            <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+          </div>
+          <p-skeleton width="80%" height="0.9rem" />
+        </div>
+
+        <div class="mt-6 flex flex-col gap-3">
+          <p-skeleton width="100%" height="2rem" />
+          <p-skeleton width="100%" height="2rem" />
+          <p-skeleton width="100%" height="2rem" />
+        </div>
+
+        <p-skeleton width="100%" height="2.75rem" borderRadius="0.75rem" styleClass="mt-6" />
+      </aside>
+
+      <main class="flex flex-col gap-6">
+        <section class="ff-panel border p-6">
+          <p-skeleton width="40%" height="1.1rem" styleClass="mb-1" />
+          <p-skeleton width="60%" height="0.85rem" styleClass="mb-5" />
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <p-skeleton height="2.75rem" borderRadius="0.75rem" />
+            <p-skeleton height="2.75rem" borderRadius="0.75rem" />
+            <p-skeleton height="2.75rem" borderRadius="0.75rem" />
+            <p-skeleton height="2.75rem" borderRadius="0.75rem" />
+          </div>
+        </section>
+
+        <section class="ff-panel border p-6">
+          <p-skeleton width="30%" height="1.1rem" styleClass="mb-1" />
+          <p-skeleton width="60%" height="0.85rem" styleClass="mb-5" />
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <p-skeleton height="2.75rem" borderRadius="0.75rem" />
+            <p-skeleton height="2.75rem" borderRadius="0.75rem" />
+            <p-skeleton height="2.75rem" borderRadius="0.75rem" />
+          </div>
+        </section>
+      </main>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
+      <aside class="ff-panel border p-6 h-fit" data-cy="profile-summary-card">
+        <div class="flex flex-col items-center text-center gap-4">
           <p-avatar
-            [label]="currentUser.avatar"
+            [label]="currentUser?.avatar ?? ''"
             shape="circle"
             size="xlarge"
             styleClass="font-bold text-2xl w-20 h-20"
@@ -19,213 +70,225 @@
               color: 'var(--primary-color-text)',
             }"
           />
+
           <div>
             <p class="text-lg font-bold ff-text-primary">
-              {{ currentUser.full_name }}
+              {{ profile?.full_name ?? currentUser?.full_name }}
             </p>
-            <p-tag [value]="roleLabel" styleClass="mt-1 text-xs" />
-            <p class="text-sm ff-text-secondary mt-2">
-              {{ currentUser.email }}
+            <div class="mt-2 flex justify-center gap-2">
+              <p-tag [value]="roleLabel" styleClass="text-xs" />
+              <p-tag
+                [value]="statusLabel"
+                severity="success"
+                styleClass="text-xs"
+              />
+            </div>
+            <p class="text-sm ff-text-secondary mt-3 break-all">
+              {{ profile?.email || 'Sin email cargado' }}
             </p>
           </div>
-        }
+        </div>
 
-        <button
-          pRipple
-          (click)="logout()"
-          class="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl border transition-colors text-sm font-medium"
-          style="
-            border-color: rgba(248, 113, 113, 0.35);
-            color: var(--ff-danger);
-            background: rgba(248, 113, 113, 0.08);
-          "
-        >
-          <i class="pi pi-sign-out"></i>
-          Cerrar Sesión
-        </button>
-      </div>
-    </div>
+        <div class="mt-6 grid grid-cols-1 gap-3 text-sm">
+          <div class="flex justify-between gap-4 border-t pt-3 border-[var(--ff-border-subtle)]">
+            <span class="ff-text-muted">DNI</span>
+            <span class="ff-text-primary font-mono">{{ profile?.dni || 'Sin DNI' }}</span>
+          </div>
+          <div class="flex justify-between gap-4 border-t pt-3 border-[var(--ff-border-subtle)]">
+            <span class="ff-text-muted">Miembro desde</span>
+            <span class="ff-text-primary text-right">{{ displayDate(profile?.created_at) }}</span>
+          </div>
+          <div class="flex justify-between gap-4 border-t pt-3 border-[var(--ff-border-subtle)]">
+            <span class="ff-text-muted">Último acceso</span>
+            <span class="ff-text-primary text-right">{{ displayDate(profile?.last_login_at) }}</span>
+          </div>
+        </div>
 
-    <div class="flex-1 flex flex-col gap-6">
-      <div class="ff-panel border p-6">
-        <h2 class="text-base font-bold ff-text-primary mb-5">
-          Datos Personales
-        </h2>
+        <p-button
+          label="Cerrar sesión"
+          icon="pi pi-sign-out"
+          severity="danger"
+          [outlined]="true"
+          styleClass="mt-6 w-full justify-center h-11 rounded-xl"
+          (onClick)="logout()"
+        />
+      </aside>
 
-        <form
-          [formGroup]="personalForm"
-          (ngSubmit)="savePersonal()"
-          class="flex flex-col gap-4"
-        >
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold ff-text-secondary"
-                >Nombre</label
-              >
-              <p-iconField iconPosition="left">
-                <p-inputIcon styleClass="pi pi-user ff-muted-icon z-10" />
+      <main class="flex flex-col gap-6">
+        <section class="ff-panel border p-6" data-cy="profile-personal-card">
+          <div class="mb-5">
+            <h2 class="text-base font-bold ff-text-primary">Datos personales</h2>
+            <p class="text-sm ff-text-secondary mt-1">
+              Estos datos identifican tu cuenta dentro del sistema.
+            </p>
+          </div>
+
+          <form
+            [formGroup]="personalForm"
+            (ngSubmit)="savePersonal()"
+            class="flex flex-col gap-4"
+            data-cy="profile-personal-form"
+          >
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-semibold ff-text-secondary">Nombre completo</label>
                 <input
                   pInputText
-                  formControlName="nombre"
-                  class="w-full h-11 pl-10 rounded-xl"
+                  formControlName="full_name"
+                  class="w-full h-11 px-3 rounded-xl"
+                  data-cy="profile-name-input"
                 />
-              </p-iconField>
-            </div>
+                @if (submittedPersonal && personalForm.get('full_name')?.invalid) {
+                  <small class="text-red-400">Ingresá al menos 3 caracteres.</small>
+                }
+              </div>
 
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold ff-text-secondary"
-                >Email</label
-              >
-              <p-iconField iconPosition="left">
-                <p-inputIcon styleClass="pi pi-envelope ff-muted-icon z-10" />
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-semibold ff-text-secondary">Email</label>
                 <input
                   pInputText
                   formControlName="email"
-                  class="w-full h-11 pl-10 rounded-xl"
+                  class="w-full h-11 px-3 rounded-xl"
+                  type="email"
+                  data-cy="profile-email-input"
                 />
-              </p-iconField>
+                @if (submittedPersonal && personalForm.get('email')?.invalid) {
+                  <small class="text-red-400">Ingresá un email válido.</small>
+                }
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-semibold ff-text-secondary">Teléfono</label>
+                <input
+                  pInputText
+                  formControlName="phone"
+                  class="w-full h-11 px-3 rounded-xl"
+                  placeholder="+54 11 5555-5555"
+                  data-cy="profile-phone-input"
+                />
+                @if (submittedPersonal && personalForm.get('phone')?.invalid) {
+                  <small class="text-red-400">Usá entre 6 y 30 caracteres válidos.</small>
+                }
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-semibold ff-text-secondary">Dirección</label>
+                <input
+                  pInputText
+                  formControlName="address"
+                  class="w-full h-11 px-3 rounded-xl"
+                  data-cy="profile-address-input"
+                />
+                @if (submittedPersonal && personalForm.get('address')?.invalid) {
+                  <small class="text-red-400">La dirección no puede superar 255 caracteres.</small>
+                }
+              </div>
             </div>
-          </div>
 
-          <div class="flex flex-col gap-1.5">
-            <label class="text-sm font-semibold ff-text-secondary"
-              >Teléfono</label
-            >
-            <p-iconField iconPosition="left">
-              <p-inputIcon styleClass="pi pi-phone ff-muted-icon z-10" />
-              <input
-                pInputText
-                formControlName="telefono"
-                class="w-full h-11 pl-10 rounded-xl"
+            <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2">
+              <p-button
+                type="button"
+                label="Recargar"
+                severity="secondary"
+                [outlined]="true"
+                styleClass="h-11 px-5 rounded-xl"
+                [disabled]="loadingProfile || loadingPersonal"
+                (onClick)="loadProfile()"
               />
-            </p-iconField>
+              <p-button
+                type="submit"
+                label="Guardar datos"
+                icon="pi pi-check"
+                styleClass="h-11 px-5 rounded-xl"
+                [loading]="loadingPersonal"
+                [disabled]="personalForm.invalid || loadingPersonal"
+                data-cy="profile-save-personal"
+              />
+            </div>
+          </form>
+        </section>
+
+        <section class="ff-panel border p-6" data-cy="profile-password-card">
+          <div class="mb-5">
+            <h2 class="text-base font-bold ff-text-primary">Seguridad</h2>
+            <p class="text-sm ff-text-secondary mt-1">
+              Cambiá tu contraseña sin cerrar la sesión actual.
+            </p>
           </div>
 
-          <div class="flex justify-end">
-            <p-button
-              type="submit"
-              label="Guardar datos"
-              styleClass="py-2.5 px-6"
-              [loading]="loadingPersonal"
-            />
-          </div>
-        </form>
-      </div>
-
-      <div class="ff-panel border p-6">
-        <h2 class="text-base font-bold ff-text-primary mb-5">
-          Cambiar Contraseña
-        </h2>
-
-        <form
-          [formGroup]="passwordForm"
-          (ngSubmit)="changePassword()"
-          class="flex flex-col gap-4"
-        >
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold ff-text-secondary"
-                >Contraseña actual</label
-              >
-              <p-iconField iconPosition="left">
-                <p-inputIcon styleClass="pi pi-lock ff-muted-icon z-10" />
+          <form
+            [formGroup]="passwordForm"
+            (ngSubmit)="changePassword()"
+            class="flex flex-col gap-4"
+            data-cy="profile-password-form"
+          >
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-semibold ff-text-secondary">Contraseña actual</label>
                 <p-password
                   formControlName="currentPassword"
                   [feedback]="false"
                   [toggleMask]="true"
                   styleClass="w-full"
-                  inputStyleClass="w-full h-11 pl-10"
+                  inputStyleClass="w-full h-11 px-3"
                   placeholder="••••••••"
+                  data-cy="profile-current-password"
                 />
-              </p-iconField>
-            </div>
+                @if (submittedPassword && passwordForm.get('currentPassword')?.invalid) {
+                  <small class="text-red-400">Campo obligatorio.</small>
+                }
+              </div>
 
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold ff-text-secondary"
-                >Nueva contraseña</label
-              >
-              <p-iconField iconPosition="left">
-                <p-inputIcon styleClass="pi pi-lock ff-muted-icon z-10" />
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-semibold ff-text-secondary">Nueva contraseña</label>
                 <p-password
                   formControlName="newPassword"
                   [feedback]="false"
                   [toggleMask]="true"
                   styleClass="w-full"
-                  inputStyleClass="w-full h-11 pl-10"
-                  placeholder="••••••••"
+                  inputStyleClass="w-full h-11 px-3"
+                  placeholder="Mínimo 8 caracteres"
+                  data-cy="profile-new-password"
                 />
-              </p-iconField>
-            </div>
+                @if (submittedPassword && passwordForm.get('newPassword')?.invalid) {
+                  <small class="text-red-400">Mínimo 8 caracteres.</small>
+                }
+              </div>
 
-            <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold ff-text-secondary"
-                >Confirmar contraseña</label
-              >
-              <p-iconField iconPosition="left">
-                <p-inputIcon styleClass="pi pi-lock ff-muted-icon z-10" />
+              <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-semibold ff-text-secondary">Confirmar contraseña</label>
                 <p-password
                   formControlName="confirmPassword"
                   [feedback]="false"
                   [toggleMask]="true"
                   styleClass="w-full"
-                  inputStyleClass="w-full h-11 pl-10"
-                  placeholder="••••••••"
+                  inputStyleClass="w-full h-11 px-3"
+                  placeholder="Repetí la nueva contraseña"
+                  data-cy="profile-confirm-password"
                 />
-              </p-iconField>
+                @if (submittedPassword && passwordForm.get('confirmPassword')?.hasError('required')) {
+                  <small class="text-red-400">Campo obligatorio.</small>
+                }
+                @if (submittedPassword && passwordForm.get('confirmPassword')?.hasError('mismatch')) {
+                  <small class="text-red-400">Las contraseñas no coinciden.</small>
+                }
+              </div>
             </div>
-          </div>
 
-          <div>
-            <p-button
-              type="submit"
-              label="Cambiar contraseña"
-              styleClass="py-2.5 px-6"
-              [loading]="loadingPassword"
-            />
-          </div>
-        </form>
-      </div>
-
-      <div class="ff-panel border p-6">
-        <h2 class="text-base font-bold ff-text-primary mb-5">Preferencias</h2>
-
-        <div
-          class="flex flex-col divide-y"
-          style="border-color: var(--ff-border-subtle)"
-        >
-          <div class="flex items-center justify-between py-4">
-            <span class="text-sm ff-text-secondary"
-              >Recibir notificaciones por email</span
-            >
-            <p-inputSwitch [(ngModel)]="emailNotifications" />
-          </div>
-          <div class="flex items-center justify-between py-4">
-            <span class="text-sm ff-text-secondary">Modo oscuro</span>
-            <p-inputSwitch [(ngModel)]="darkMode" />
-          </div>
-          <div class="flex items-center justify-between py-4">
-            <span class="text-sm ff-text-secondary">Idioma</span>
-            <p-dropdown
-              [(ngModel)]="selectedLanguage"
-              [options]="languages"
-              optionLabel="label"
-              optionValue="value"
-              [filter]="languages.length > 10"
-              filterBy="label"
-              styleClass="w-36"
-            />
-          </div>
-        </div>
-
-        <div class="mt-4">
-          <p-button
-            label="Guardar cambios"
-            styleClass="w-full justify-center py-2.5"
-            [loading]="loadingPrefs"
-            (onClick)="savePreferences()"
-          />
-        </div>
-      </div>
+            <div class="flex justify-end pt-2">
+              <p-button
+                type="submit"
+                label="Cambiar contraseña"
+                icon="pi pi-lock"
+                styleClass="h-11 px-5 rounded-xl"
+                [loading]="loadingPassword"
+                [disabled]="passwordForm.invalid || loadingPassword"
+                data-cy="profile-change-password"
+              />
+            </div>
+          </form>
+        </section>
+      </main>
     </div>
-  </div>
+  }
 </div>

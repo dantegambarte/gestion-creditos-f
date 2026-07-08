@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { SimpleChange } from '@angular/core';
+import { AuthServiceBase } from '../../../../../core/auth/auth-service.base';
+import { provideAuthTesting } from '../../../../../core/auth/testing/auth-testing';
 import { StepConditionsComponent } from './step-conditions.component';
 
 describe('StepConditionsComponent', () => {
@@ -10,6 +12,7 @@ describe('StepConditionsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [StepConditionsComponent],
+      providers: [provideAuthTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(StepConditionsComponent);
@@ -36,6 +39,20 @@ describe('StepConditionsComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  describe('canViewFinancialData', () => {
+    it('es true para roles no vendedores (ej. ADMIN)', () => {
+      const auth = TestBed.inject(AuthServiceBase);
+      spyOn(auth, 'hasAnyRole').and.returnValue(false);
+      expect(component.canViewFinancialData).toBeTrue();
+    });
+
+    it('es false para roles de venta (SELLER / SELLER_COLLECTOR)', () => {
+      const auth = TestBed.inject(AuthServiceBase);
+      spyOn(auth, 'hasAnyRole').and.returnValue(true);
+      expect(component.canViewFinancialData).toBeFalse();
+    });
   });
 
   it('configura el calendario con appendTo body y autoZIndex para evitar clipping — CR-10', () => {

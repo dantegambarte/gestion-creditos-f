@@ -1,7 +1,9 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { FfBackTopFabComponent } from './../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
+import { SkeletonModule } from 'primeng/skeleton';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
@@ -16,11 +18,13 @@ import { ReportsService } from '../../reports.service';
   selector: 'app-cash-conversions-report',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     FormsModule,
     ButtonModule,
     CalendarModule,
     LoadingStateComponent,
     ErrorStateComponent,
+    SkeletonModule,
   ],
   templateUrl: './cash-conversions-report.component.html',
 })

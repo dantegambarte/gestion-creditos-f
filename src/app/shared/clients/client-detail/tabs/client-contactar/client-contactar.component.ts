@@ -39,7 +39,7 @@ export class ClientContactarComponent {
   openWhatsApp(text?: string): void {
     const phone = this.client.phone.replace(/\D/g, '');
     if (!phone) return;
-    const body = text?.trim() || `Hola ${this.client.name}, le contactamos desde finFlow.`;
+    const body = text?.trim() || `Hola ${this.client.name}, le contactamos desde Productcred s.a.s.`;
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(body)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   }

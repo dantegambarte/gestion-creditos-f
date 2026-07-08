@@ -10,107 +10,49 @@
           Resultado de la simulación
         </h3>
         <p class="mt-1 text-sm text-[var(--ff-text-secondary)]">
-          Vista estimada del plan financiero según la configuración actual.
+          {{ getPlanSummary() }}
         </p>
       </div>
-      <div class="flex items-center gap-2">
-        <span
-          class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300"
-        >
-          {{ getSimulationStatusLabel() }}
-        </span>
-        <span
-          class="rounded-full border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-2.5 py-1 text-[11px] font-semibold text-[#93C5FD]"
-        >
-          {{ getSelectedFrequencyLabel() }}
-        </span>
-      </div>
+      <span
+        class="rounded-full border border-[#3B82F6]/20 bg-[#3B82F6]/10 px-2.5 py-1 text-[11px] font-semibold text-[#93C5FD]"
+      >
+        {{ getSelectedFrequencyLabel() }}
+      </span>
     </div>
   </div>
 
-  <div class="grid gap-5 p-5 xl:grid-cols-[minmax(0,2fr)_minmax(260px,1fr)]">
-    <div class="space-y-5">
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div
-          class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3"
-        >
-          <p
-            class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
-          >
-            Cuota estimada
-          </p>
-          <p class="mt-1 text-base font-semibold text-[var(--ff-text-primary)]">
-            {{ valorCuota | currencyArs }}
-          </p>
-        </div>
-        <div
-          class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3"
-        >
-          <p
-            class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
-          >
-            Cantidad de cuotas
-          </p>
-          <p class="mt-1 text-base font-semibold text-[var(--ff-text-primary)]">
-            {{ selectedInstallmentsCount }}
-          </p>
-        </div>
-        <div
-          class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3"
-        >
-          <p
-            class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
-          >
-            Intereses estimados
-          </p>
-          <p class="mt-1 text-base font-semibold text-[var(--ff-text-primary)]">
-            {{ totalInterestAmount | currencyArs }}
-          </p>
-        </div>
-        <div
-          class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3"
-        >
-          <p
-            class="text-[11px] uppercase tracking-wide text-[var(--ff-text-secondary)]"
-          >
-            Total del plan
-          </p>
-          <p class="mt-1 text-base font-semibold text-[var(--ff-text-primary)]">
-            {{ totalADevolver | currencyArs }}
-          </p>
-        </div>
+  <div class="p-5">
+    <div
+      class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)]"
+    >
+      <div
+        class="flex items-center justify-between border-b border-[var(--ff-border-subtle)] px-4 py-3"
+      >
+        <p class="text-sm font-semibold text-[var(--ff-text-primary)]">
+          Cronograma de pagos
+        </p>
+        <p class="text-xs text-[var(--ff-text-secondary)]">
+          {{ getSimulationScheduleRows().length }} cuotas
+        </p>
       </div>
 
-      <div
-        class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)]"
-      >
-        <div
-          class="flex items-center justify-between border-b border-[var(--ff-border-subtle)] px-4 py-3"
-        >
-          <p class="text-sm font-semibold text-[var(--ff-text-primary)]">
-            Cronograma de pagos
-          </p>
-          <p class="text-xs text-[var(--ff-text-secondary)]">
-            {{ getSimulationScheduleRows().length }} filas visibles
-          </p>
+      @if (simulationError) {
+        <div class="px-4 py-4 text-sm text-red-300">
+          {{ simulationError }}
         </div>
-
-        @if (simulationError) {
-          <div class="px-4 py-4 text-sm text-red-300">
-            {{ simulationError }}
-          </div>
-        } @else if (simulationLoading) {
-          <div class="px-4 py-4 text-sm text-[var(--ff-text-secondary)]">
-            Calculando cronograma real...
-          </div>
-        } @else if (getSimulationScheduleRows().length === 0) {
-          <div class="px-4 py-4 text-sm text-[var(--ff-text-secondary)]">
-            Definí la fecha del primer pago y simulá para ver el cronograma
-            real.
-          </div>
-        } @else {
+      } @else if (simulationLoading) {
+        <div class="px-4 py-4 text-sm text-[var(--ff-text-secondary)]">
+          Calculando cronograma real...
+        </div>
+      } @else if (getSimulationScheduleRows().length === 0) {
+        <div class="px-4 py-4 text-sm text-[var(--ff-text-secondary)]">
+          Definí la fecha del primer pago y simulá para ver el cronograma real.
+        </div>
+      } @else {
+        <!-- Desktop: tabla con scroll horizontal cuando el panel lateral queda angosto. -->
+        <div class="hidden overflow-x-auto md:block">
           <div
-            class="grid grid-cols-12 gap-2 border-b border-[var(--ff-border-subtle)] px-4 py-2 text-[11px] uppercase tracking-wide text-[var(--ff-text-muted)]"
+            class="grid min-w-[560px] grid-cols-12 gap-2 border-b border-[var(--ff-border-subtle)] px-4 py-2 text-[11px] uppercase tracking-wide text-[var(--ff-text-muted)]"
           >
             <p class="col-span-1">N°</p>
             <p class="col-span-3">Vencimiento</p>
@@ -119,92 +61,137 @@
             <p class="col-span-2 text-right">Interés</p>
             <p class="col-span-2 text-right">Saldo</p>
           </div>
-          <div class="divide-y divide-[var(--ff-border-subtle)]">
+          <div class="min-w-[560px] divide-y divide-[var(--ff-border-subtle)]">
             @for (item of getSimulationScheduleRows(); track item.installment) {
-              <div
-                class="grid grid-cols-12 items-center gap-2 px-4 py-2.5 text-xs sm:text-sm"
+            <div
+              class="grid grid-cols-12 items-center gap-2 px-4 py-2.5 text-xs sm:text-sm"
+              [class.opacity-70]="item.isAdvanced"
+            >
+              <p class="col-span-1 font-medium text-[var(--ff-text-primary)]">
+                {{ item.installment }}
+              </p>
+              <p
+                class="col-span-3 text-[var(--ff-text-secondary)]"
+                [class.line-through]="item.isAdvanced"
               >
-                <p class="col-span-1 font-medium text-[var(--ff-text-primary)]">
-                  {{ item.installment }}
-                </p>
-                <p class="col-span-3 text-[var(--ff-text-secondary)]">
-                  {{ getFormattedDate(item.dueDate) }}
-                </p>
-                <p class="col-span-2 text-right font-semibold text-emerald-300">
+                {{ getFormattedDate(item.dueDate) }}
+              </p>
+              <div class="col-span-2 flex items-center justify-end gap-1">
+                @if (item.isAdvanced) {
+                  <i
+                    class="pi pi-info-circle text-[10px] text-emerald-300"
+                    pTooltip="Cuota cancelada al aprobar la venta."
+                    tooltipPosition="top"
+                  ></i>
+                }
+                <span
+                  class="font-semibold text-emerald-300"
+                  [class.line-through]="item.isAdvanced"
+                >
                   {{ item.amount | currencyArs }}
-                </p>
-                <p class="col-span-2 text-right text-[var(--ff-text-primary)]">
-                  {{ item.capital ?? 0 | currencyArs }}
-                </p>
-                <p
-                  class="col-span-2 text-right text-[var(--ff-text-secondary)]"
-                >
-                  {{ item.interest ?? 0 | currencyArs }}
-                </p>
-                <p
-                  class="col-span-2 text-right text-[var(--ff-text-secondary)]"
-                >
-                  {{ item.remainingEstimated | currencyArs }}
-                </p>
+                </span>
               </div>
+              <p class="col-span-2 text-right text-[var(--ff-text-primary)]">
+                {{ item.capital ?? 0 | currencyArs }}
+              </p>
+              <p class="col-span-2 text-right text-[var(--ff-text-secondary)]">
+                {{ item.interest ?? 0 | currencyArs }}
+              </p>
+              <p class="col-span-2 text-right text-[var(--ff-text-secondary)]">
+                {{ item.remainingEstimated | currencyArs }}
+              </p>
+            </div>
             }
           </div>
-        }
+        </div>
 
-        @if (hasHiddenScheduleRows()) {
-          <p
-            class="border-t border-[var(--ff-border-subtle)] px-4 py-2 text-xs text-[var(--ff-text-secondary)]"
-          >
-            Se muestran las primeras
-            {{ getSimulationScheduleRows().length }} cuotas de
-            {{ selectedInstallmentsCount }}.
-          </p>
-        }
-      </div>
+        <!-- Mobile: cards -->
+        <div class="space-y-3 p-3 md:hidden">
+          @for (item of getSimulationScheduleRows(); track item.installment) {
+            <article
+              class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3 text-sm"
+              [class.opacity-70]="item.isAdvanced"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <p class="font-semibold text-[var(--ff-text-primary)]">
+                  Cuota {{ item.installment }}
+                  @if (item.isAdvanced) {
+                    <span class="ml-1 text-[10px] font-normal text-emerald-400">· Adelantada</span>
+                  }
+                </p>
+                <p
+                  class="text-xs text-[var(--ff-text-secondary)]"
+                  [class.line-through]="item.isAdvanced"
+                >
+                  {{ getFormattedDate(item.dueDate) }}
+                </p>
+              </div>
+              <dl class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div class="rounded-lg bg-[var(--ff-bg)] p-2">
+                  <dt class="text-[var(--ff-text-muted)]">Cuota</dt>
+                  <dd
+                    class="mt-1 font-semibold text-emerald-300"
+                    [class.line-through]="item.isAdvanced"
+                  >
+                    {{ item.amount | currencyArs }}
+                  </dd>
+                </div>
+                <div class="rounded-lg bg-[var(--ff-bg)] p-2">
+                  <dt class="text-[var(--ff-text-muted)]">Saldo</dt>
+                  <dd class="mt-1 font-semibold text-[var(--ff-text-primary)]">
+                    {{ item.remainingEstimated | currencyArs }}
+                  </dd>
+                </div>
+                <div class="rounded-lg bg-[var(--ff-bg)] p-2">
+                  <dt class="text-[var(--ff-text-muted)]">Capital</dt>
+                  <dd class="mt-1 text-[var(--ff-text-primary)]">
+                    {{ item.capital ?? 0 | currencyArs }}
+                  </dd>
+                </div>
+                <div class="rounded-lg bg-[var(--ff-bg)] p-2">
+                  <dt class="text-[var(--ff-text-muted)]">Interés</dt>
+                  <dd class="mt-1 text-[var(--ff-text-secondary)]">
+                    {{ item.interest ?? 0 | currencyArs }}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+          }
+        </div>
+      }
+
+      @if (hasHiddenScheduleRows()) {
+        <p
+          class="border-t border-[var(--ff-border-subtle)] px-4 py-2 text-xs text-[var(--ff-text-secondary)]"
+        >
+          Se muestran las primeras
+          {{ getSimulationScheduleRows().length }} cuotas de
+          {{ selectedInstallmentsCount }}.
+        </p>
+      }
     </div>
 
     <div
-      class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+      class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
-      <p
-        class="text-xs font-semibold uppercase tracking-wide text-[var(--ff-text-secondary)]"
-      >
-        Resumen del plan
+      <p class="text-xs text-[var(--ff-text-secondary)]">
+        Primer vencimiento:
+        <span class="font-semibold text-[var(--ff-text-primary)]">
+          {{
+            getFirstSimulationDueDate()
+              ? getFormattedDate(getFirstSimulationDueDate()!)
+              : "Sin fecha"
+          }}
+        </span>
       </p>
-      <p class="mt-2 text-sm font-semibold text-[var(--ff-text-primary)]">
-        {{ getPlanSummary() }}
-      </p>
-      <p class="mt-2 text-xs text-[var(--ff-text-secondary)]">
-        Si te cierra esta simulación, continuá al paso de confirmación para
-        registrar la operación.
-      </p>
-
-      <div class="mt-4 space-y-2 text-xs text-[var(--ff-text-secondary)]">
-        <div class="flex items-center justify-between">
-          <span>Primer vencimiento</span>
-          <span class="font-semibold text-[var(--ff-text-primary)]">
-            {{
-              getFirstSimulationDueDate()
-                ? getFormattedDate(getFirstSimulationDueDate()!)
-                : "Sin fecha"
-            }}
-          </span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span>Frecuencia</span>
-          <span class="font-semibold text-[var(--ff-text-primary)]">{{
-            getSelectedFrequencyLabel()
-          }}</span>
-        </div>
-      </div>
 
       <button
         type="button"
-        class="mt-5 w-full rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors"
+        class="w-full rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors sm:w-auto"
         [class]="
           canContinueWithPlan
-            ? 'mt-5 w-full rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/10 px-3 py-2.5 text-sm font-semibold text-[#93C5FD] transition-colors hover:bg-[#3B82F6]/20'
-            : 'mt-5 w-full rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-3 py-2.5 text-sm font-semibold text-[var(--ff-text-muted)] opacity-60 cursor-not-allowed'
+            ? 'rounded-xl border border-[#3B82F6]/30 bg-[#3B82F6]/10 px-3 py-2.5 text-sm font-semibold text-[#93C5FD] transition-colors hover:bg-[#3B82F6]/20'
+            : 'rounded-xl border border-[var(--ff-border)] bg-[var(--ff-secondary)] px-3 py-2.5 text-sm font-semibold text-[var(--ff-text-muted)] opacity-60 cursor-not-allowed'
         "
         [disabled]="!canContinueWithPlan"
         (click)="continueRequested.emit()"

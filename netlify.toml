@@ -1,0 +1,12 @@
+[build]
+  command = "ng build --configuration production"
+  publish = "dist/gestion-creditos-f"
+
+[build.environment]
+  NODE_VERSION = "26"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+

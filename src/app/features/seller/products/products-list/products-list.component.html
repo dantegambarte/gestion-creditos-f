@@ -18,16 +18,16 @@
     </div>
 
     <div class="ff-list-header ff-list-header--filters">
-      <div class="ff-list-header__actions" style="flex-wrap: wrap">
-        <p-iconField iconPosition="left">
+      <div class="ff-list-header__actions products-list-filters">
+        <p-iconField iconPosition="left" styleClass="w-full md:w-auto">
           <p-inputIcon styleClass="pi pi-search ff-muted-icon z-10" />
           <input
             pInputText
             type="text"
-            placeholder="Buscar por título o descripción..."
+            placeholder="Buscar producto..."
             [(ngModel)]="searchTerm"
             (ngModelChange)="onSearchChange($event)"
-            class="h-11 w-72 pl-10 rounded-xl"
+            class="h-11 w-full rounded-xl pl-10 md:w-72"
             style="
               background: var(--ff-secondary);
               border-color: var(--ff-border);
@@ -45,7 +45,8 @@
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-          styleClass="h-11 min-w-40"
+          styleClass="h-11 w-full md:min-w-40"
+          appendTo="body"
           ariaLabel="Filtrar productos por estado"
         />
         <p-dropdown
@@ -58,14 +59,28 @@
           [showClear]="true"
           optionLabel="label"
           optionValue="value"
-          styleClass="h-11 min-w-48"
+          styleClass="h-11 w-full md:min-w-48"
+          appendTo="body"
           ariaLabel="Filtrar productos por categoría"
         />
       </div>
     </div>
 
     @if (loading) {
-      <app-loading-state />
+      <div class="products-table-skeleton" data-cy="products-list-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="products-table-skeleton__row">
+            <p-skeleton width="80%" height="1rem" />
+            <p-skeleton width="70%" height="1rem" />
+            <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="2rem" height="1rem" />
+            <p-skeleton width="2rem" height="1rem" />
+            <p-skeleton width="2rem" height="1rem" />
+            <p-skeleton width="4.5rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="3.5rem" height="1.5rem" />
+          </div>
+        }
+      </div>
     } @else if (error) {
       <app-error-state />
     } @else if (products.length === 0) {
@@ -76,7 +91,8 @@
         [paginator]="true"
         [rows]="10"
         [rowsPerPageOptions]="[10, 25, 50]"
-        styleClass="p-datatable-sm"
+        styleClass="hidden md:block p-datatable-sm"
+        data-cy="products-list-table"
       >
         <ng-template pTemplate="header">
           <tr>
@@ -218,6 +234,110 @@
           </tr>
         </ng-template>
       </p-table>
+
+      <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="products-list-mobile-list">
+        @for (product of products; track product.id) {
+          <article
+            class="rounded-2xl border p-4"
+            style="border-color: var(--ff-border-subtle)"
+            [style.background]="product.status !== 'ACTIVE' ? 'rgba(239, 68, 68, 0.08)' : null"
+            [style.box-shadow]="
+              product.status !== 'ACTIVE'
+                ? 'inset 3px 0 0 rgba(248, 113, 113, 0.75)'
+                : null
+            "
+            data-cy="products-list-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate font-bold text-sm" style="color: var(--ff-text-primary)">
+                  {{ product.title }}
+                </p>
+                @if (product.description) {
+                  <p class="mt-0.5 truncate text-xs" style="color: var(--ff-text-muted)">
+                    {{ product.description }}
+                  </p>
+                }
+                <p class="mt-1 truncate text-xs" style="color: var(--ff-text-secondary)">
+                  {{ product.brandName ?? "—" }}
+                  @if (product.categoryName) {
+                    · {{ product.categoryName }}
+                  }
+                </p>
+              </div>
+              <span
+                class="ff-badge shrink-0"
+                [class.ff-badge--activo]="product.status === 'ACTIVE'"
+                [class.ff-badge--inactivo]="product.status !== 'ACTIVE'"
+                >{{ product.status === "ACTIVE" ? "ACTIVO" : "INACTIVO" }}</span
+              >
+            </div>
+
+            <div class="mt-3 grid grid-cols-2 gap-2 text-center text-sm">
+              <div class="col-span-2 min-w-0 rounded-xl border p-2" style="border-color: var(--ff-border-subtle)">
+                <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Disponibles</p>
+                @if (product.availableCount === 0) {
+                  <span class="ff-badge ff-badge--vencido max-w-full whitespace-normal break-words px-2 text-[10px] leading-tight">SIN STOCK</span>
+                } @else if (product.availableCount <= 3) {
+                  <span class="font-bold ff-mono" style="color: var(--ff-warning)">
+                    {{ product.availableCount }}
+                  </span>
+                } @else {
+                  <span class="font-bold ff-mono" style="color: var(--ff-success)">{{
+                    product.availableCount
+                  }}</span>
+                }
+              </div>
+              <div class="rounded-xl border p-2" style="border-color: var(--ff-border-subtle)">
+                <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Reservadas</p>
+                <p class="font-bold ff-mono" style="color: var(--ff-text-secondary)">
+                  {{ product.reservedCount }}
+                </p>
+              </div>
+              <div class="rounded-xl border p-2" style="border-color: var(--ff-border-subtle)">
+                <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Vendidas</p>
+                <p class="font-bold ff-mono" style="color: var(--ff-text-muted)">
+                  {{ product.soldCount }}
+                </p>
+              </div>
+            </div>
+
+            @if (product.variants.length > 1) {
+              <p class="mt-3 text-xs">
+                <span
+                  class="ff-badge"
+                  style="background: rgba(79, 110, 247, 0.18); color: var(--ff-accent)"
+                >
+                  {{ product.variants.length }} VARIANTES
+                </span>
+              </p>
+            }
+
+            <div class="mt-4 flex gap-3">
+              <button
+                type="button"
+                class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-semibold text-blue-100"
+                data-cy="products-list-mobile-view-action"
+                (click)="navigateToDetail(product.id)"
+              >
+                <i class="pi pi-eye text-sm"></i> Ver
+              </button>
+              @if (canCreate) {
+                <button
+                  type="button"
+                  class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border text-sm font-semibold"
+                  style="border-color: var(--ff-border-subtle); color: var(--ff-text-secondary)"
+                  data-cy="products-list-mobile-edit-action"
+                  (click)="navigateToEdit(product.id)"
+                >
+                  <i class="pi pi-pencil text-sm"></i> Editar
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
     }
+    <ff-back-top-fab [itemCount]="products.length" dataCy="products-list-back-top-action" />
   </div>
 </div>

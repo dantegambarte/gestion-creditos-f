@@ -97,7 +97,7 @@ describe('El Viaje del Crédito — Multi-Rol (real)', () => {
     cy.get('p-inputNumber[formControlName="totalAmount"] input').clear().type('48000').blur();
     cy.get('[data-cy="btn-siguiente"] button', { timeout: 15000 }).should('not.be.disabled').click();
 
-    cy.contains('Configurar Plan de Pagos', { timeout: 15000 }).should('be.visible');
+    cy.get('[data-cy="ddl-installments"]', { timeout: 15000 }).should('be.visible');
     cy.get('[data-cy="ddl-installments"] .p-dropdown').first().click();
     cy.get('.p-dropdown-panel .p-dropdown-item').first().click();
     cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
@@ -125,6 +125,20 @@ describe('El Viaje del Crédito — Multi-Rol (real)', () => {
     cy.loginReal('ADMIN', '/admin/approvals');
     cy.contains('Aprobación de Operaciones', { timeout: 20000 }).should('be.visible');
 
+    // Aprobar un LOAN desembolsa el préstamo desde la caja activa de la
+    // jornada — sin caja abierta responde 409 NO_ACTIVE_SESSION. No falla si
+    // ya existe una (409 ACTIVE_SESSION_IN_BUSINESS_DAY).
+    cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest('POST', '/cash-sessions', { opening_amount: 1000000 }, token)
+        .then((res) => {
+          expect(
+            [201, 409],
+            'abrir caja operativa (nueva o ya existente)',
+          ).to.include(res.status);
+        }),
+    );
+
     cy.intercept('PATCH', /\/api\/credits\/[^/]+\/approve$/).as('approveCredit');
     cy.contains('p-table tbody tr', customer.dni, { timeout: 20000 })
       .should('be.visible')
@@ -132,8 +146,8 @@ describe('El Viaje del Crédito — Multi-Rol (real)', () => {
         cy.get('button').eq(1).click();
       });
 
-    cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', { timeout: 10000 }).should('be.visible');
-    cy.contains('.p-dialog button', 'Confirmar Aprobación').click();
+    cy.contains('.p-dialog .p-dialog-title', 'Aprobar Crédito', { timeout: 10000 }).should('be.visible');
+    cy.contains('.p-dialog button', 'Confirmar').click();
 
     cy.wait('@approveCredit').then((interception) => {
       expect(interception.response?.statusCode, 'aprobación de crédito').to.eq(200);

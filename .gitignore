@@ -58,3 +58,6 @@ cypress/reports
 cypress/downloads
 cypress-report.txt
 e2e-run-monitor.log
+
+# Local Netlify folder
+.netlify

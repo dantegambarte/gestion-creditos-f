@@ -181,4 +181,57 @@ describe('CreditCreateComponent', () => {
       'El enganche no puede ser mayor al total de la venta.',
     );
   });
+
+  /**
+   * Carga el formulario de una venta de contado con el carrito provisto.
+   * @param method método de pago de contado (CASH/TRANSFER/MIXED)
+   */
+  function completeCashSaleForm(method: string) {
+    component.form.patchValue({
+      type: 'SALE',
+      paymentCondition: 'CASH',
+      customerId: 'cust-1',
+      cashSaleMethod: method,
+    });
+    component.onPaymentConditionChange('CASH');
+    component.cart = [
+      {
+        unitId: 'unit-1',
+        unitCode: 'U-001',
+        productName: 'Moto X',
+        variantLabel: 'Rojo',
+        price: 1000,
+        variantId: 'var-1',
+      },
+    ];
+  }
+
+  it('crea una venta de contado en efectivo (1 cuota, pago total)', () => {
+    completeCashSaleForm('CASH');
+
+    component.onSubmit();
+
+    expect(creditsServiceSpy.create).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        type: 'SALE',
+        paymentCondition: 'CASH',
+        paymentMethod: 'CASH',
+        paymentAmount: 1000,
+        installmentsCount: 1,
+        units: [{ unitId: 'unit-1' }],
+      }),
+    );
+  });
+
+  it('bloquea contado mixto si efectivo + transferencia no suma el total', () => {
+    completeCashSaleForm('MIXED');
+    component.form.patchValue({ cashSaleCash: 400, cashSaleTransfer: 400 });
+
+    component.onSubmit();
+
+    expect(creditsServiceSpy.create).not.toHaveBeenCalled();
+    expect(component.unitsError).toBe(
+      'El efectivo y la transferencia deben sumar el total de la venta.',
+    );
+  });
 });

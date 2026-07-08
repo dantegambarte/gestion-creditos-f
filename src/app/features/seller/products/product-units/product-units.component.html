@@ -82,12 +82,24 @@
     <!-- ── LEFT: table ── -->
     <div [class]="isAdmin ? 'lg:col-span-7' : 'lg:col-span-12'">
       @if (loading) {
-        <app-loading-state />
+        <div class="ff-panel overflow-hidden p-5" data-cy="product-units-skeleton">
+          <div class="product-units-table-skeleton">
+            @for (_ of [1, 2, 3, 4, 5]; track _) {
+              <div class="product-units-table-skeleton__row">
+                <p-skeleton width="70%" height="1rem" />
+                <p-skeleton width="4.5rem" height="1.5rem" borderRadius="999px" />
+                <p-skeleton width="80%" height="1rem" />
+                <p-skeleton width="3rem" height="1rem" />
+                <p-skeleton width="4rem" height="1rem" />
+              </div>
+            }
+          </div>
+        </div>
       } @else if (error) {
         <app-error-state />
       } @else {
         <div class="ff-panel overflow-hidden">
-          <p-table [value]="filteredUnits" styleClass="p-datatable-sm">
+          <p-table [value]="filteredUnits" styleClass="hidden md:block p-datatable-sm" data-cy="product-units-table">
             <ng-template pTemplate="header">
               <tr>
                 <th>CÓDIGO DE UNIDAD</th>
@@ -158,6 +170,58 @@
               </tr>
             </ng-template>
           </p-table>
+
+          <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="product-units-mobile-list">
+            @if (filteredUnits.length === 0) {
+              <p class="py-8 text-center text-sm" style="color: var(--ff-text-muted)">
+                Sin unidades en este estado.
+              </p>
+            }
+            @for (u of filteredUnits; track u.id) {
+              <article
+                class="rounded-2xl border p-4"
+                style="border-color: var(--ff-stroke)"
+                data-cy="product-units-mobile-card"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <p class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
+                    {{ u.unitCode }}
+                  </p>
+                  <span
+                    class="ff-badge shrink-0"
+                    [class.ff-badge--activo]="u.status === 'AVAILABLE'"
+                    [class.ff-badge--pendiente]="u.status === 'RESERVED'"
+                    [class.ff-badge--inactivo]="u.status === 'SOLD' || u.status === 'INACTIVE'"
+                    >{{ statusLabel(u.status) }}</span
+                  >
+                </div>
+                <p class="mt-1 text-sm" style="color: var(--ff-text-muted)">
+                  {{ u.notes ?? "—" }}
+                </p>
+                <p class="mt-1 text-xs ff-mono" style="color: var(--ff-text-muted)">
+                  Alta: {{ u.createdAt | date: "dd/MM/yy" }}
+                </p>
+
+                @if (isAdmin && u.status === "AVAILABLE") {
+                  <div class="mt-3 flex items-center gap-3">
+                    <a
+                      class="prod-action-link text-xs py-3"
+                      (click)="openEdit(u)"
+                      style="cursor: pointer"
+                      >Editar</a
+                    >
+                    <a
+                      class="prod-action-link text-xs py-3"
+                      style="color: var(--ff-danger); cursor: pointer"
+                      (click)="confirmDeactivate(u)"
+                      >Dar de baja</a
+                    >
+                  </div>
+                }
+              </article>
+            }
+          </div>
+          <ff-back-top-fab [itemCount]="filteredUnits.length" dataCy="product-units-back-top-action" />
         </div>
       }
     </div>

@@ -22,6 +22,8 @@ import { Installment } from '../../../models/installment.model';
 import { DirectPaymentDialogComponent } from '../direct-payment-dialog/direct-payment-dialog.component';
 import { PenaltyDialogComponent } from '../penalty-dialog/penalty-dialog.component';
 import { WaiveDialogComponent } from '../waive-dialog/waive-dialog.component';
+import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { ScheduleVisitDialogComponent } from '../schedule-visit-dialog/schedule-visit-dialog.component';
 
 @Component({
   selector: 'app-credit-schedule-panel',
@@ -35,6 +37,8 @@ import { WaiveDialogComponent } from '../waive-dialog/waive-dialog.component';
     PenaltyDialogComponent,
     WaiveDialogComponent,
     DirectPaymentDialogComponent,
+    FfBackTopFabComponent,
+    ScheduleVisitDialogComponent,
   ],
   templateUrl: './credit-schedule-panel.component.html',
 })
@@ -63,6 +67,16 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
   waiveInstallment: CreditDetail['installments'][number] | null = null;
   showDirectDialog = false;
   directInstallment: CreditDetail['installments'][number] | null = null;
+  showScheduleVisitDialog = false;
+  scheduleVisitInstallment: CreditDetail['installments'][number] | null = null;
+
+  /** Estados de cuota sobre los que el admin puede programar una visita. */
+  private readonly SCHEDULABLE_STATUSES = ['PENDING', 'PARTIAL', 'OVERDUE'];
+
+  /** True si la cuota admite programar una visita (no pagada / no terminal). */
+  canScheduleVisit(inst: CreditDetail['installments'][number]): boolean {
+    return this.SCHEDULABLE_STATUSES.includes(inst.status);
+  }
 
   get paidCount(): number {
     return (
@@ -148,6 +162,11 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
     this.showDirectDialog = true;
   }
 
+  openScheduleVisitDialog(inst: CreditDetail['installments'][number]): void {
+    this.scheduleVisitInstallment = inst;
+    this.showScheduleVisitDialog = true;
+  }
+
   /**
    * Propaga el patch de cuota al padre para actualizar el crédito local.
    * @param updated Cuota actualizada parcialmente
@@ -181,6 +200,8 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       PARTIAL: 'warning',
       PLAN_CHANGE_CANCELLED: 'secondary',
       WRITTEN_OFF: 'danger',
+      WAIVED: 'secondary',
+      SETTLED: 'success',
     };
     return map[status] ?? 'secondary';
   }
@@ -197,6 +218,8 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       PARTIAL: 'Parcial',
       PLAN_CHANGE_CANCELLED: 'Anulada (cambio de plan)',
       WRITTEN_OFF: 'Castigada',
+      WAIVED: 'Condonada',
+      SETTLED: 'Liquidada',
     };
     return map[status] ?? status;
   }
@@ -205,9 +228,48 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
    * Etiqueta del método de pago.
    * @param method Método de pago
    */
-  paymentMethodLabel(method: 'CASH' | 'TRANSFER' | 'MIXED'): string {
+  paymentMethodLabel(method: string | null): string {
     if (method === 'CASH') return 'Efectivo';
     if (method === 'TRANSFER') return 'Transferencia';
-    return 'Mixto';
+    if (method === 'MIXED') return 'Mixto';
+    return '—';
+  }
+
+  /**
+   * True si la cuota fue cancelada como adelanto al aprobar la venta.
+   * @param inst Cuota a evaluar
+   */
+  isPrepaidOnApproval(inst: CreditDetail['installments'][number]): boolean {
+    return inst.generationType === 'APPROVAL_PREPAYMENT';
+  }
+
+  /**
+   * Formatea una fecha 'YYYY-MM-DD' a 'dd/MM/yyyy' sin sesgo de zona horaria.
+   * El pipe date interpreta el string plano como UTC y en AR (GMT-3) puede
+   * correr un día; acá se reordena la cadena directamente.
+   * @param iso Fecha en formato 'YYYY-MM-DD' (o null).
+   */
+  formatIsoDate(iso: string | null): string {
+    if (!iso) return '';
+    const [y, m, d] = iso.slice(0, 10).split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  /**
+   * Etiqueta de ORIGEN del cobro derivada de generation_type. Devuelve null para
+   * un cobro normal (no agrega ruido en el caso común).
+   * @param inst Cuota a evaluar
+   */
+  installmentOriginLabel(
+    inst: CreditDetail['installments'][number],
+  ): string | null {
+    if (inst.generationType === 'APPROVAL_PREPAYMENT') {
+      // En contado la única cuota representa el pago total al aprobar, no un adelanto.
+      return this.credit?.paymentCondition === 'CASH'
+        ? 'Pago de contado'
+        : 'Cuota adelantada';
+    }
+    if (inst.generationType === 'ADVANCE_DISTRIBUTION') return 'Pago adelantado';
+    return null;
   }
 }

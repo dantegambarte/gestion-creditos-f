@@ -6,7 +6,7 @@
   [closable]="false"
   [draggable]="false"
   [resizable]="false"
-  styleClass="!bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
+  styleClass="cash-mobile-dialog !bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
   contentStyleClass="!bg-[var(--ff-panel)] p-0 border-none"
   [contentStyle]="{
     padding: '0',
@@ -18,30 +18,53 @@
   }"
   [style]="{ width: '560px', maxWidth: '95vw' }"
 >
-  <section class="bg-[var(--ff-panel)] text-[var(--ff-text-secondary)]">
+  <section
+    class="flex max-h-[88vh] flex-col overflow-hidden bg-[var(--ff-panel)] text-[var(--ff-text-secondary)]"
+    data-cy="cash-snapshot-dialog"
+  >
     <header
-      class="flex items-center justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
+      class="flex items-start justify-between gap-4 border-b border-[var(--ff-border)] px-4 py-4 md:px-6 md:py-5"
     >
-      <h2 class="text-xl font-bold text-[var(--ff-text-primary)]">
+      <h2 class="text-lg font-bold text-[var(--ff-text-primary)] md:text-xl">
         Snapshot (X report) — caja operativa
       </h2>
       <button
         type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
         (click)="close()"
       >
         <i class="pi pi-times text-base"></i>
       </button>
     </header>
 
-    <div class="px-6 py-5">
+    <div class="flex-1 overflow-y-auto px-4 py-4 pb-24 md:px-6 md:py-5 md:pb-5" data-cy="cash-snapshot-dialog-body">
       @if (loading) {
-        <app-loading-state message="Cargando snapshot..."></app-loading-state>
+        <div
+          class="overflow-hidden rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)]"
+          data-cy="cash-snapshot-skeleton"
+        >
+          <div
+            class="flex items-center gap-4 border-b border-[var(--ff-border)] bg-[var(--ff-panel-raised)] px-4 py-3"
+          >
+            <p-skeleton width="6rem" height="0.7rem" />
+            <p-skeleton width="5rem" height="0.7rem" styleClass="ml-auto" />
+            <p-skeleton width="6rem" height="0.7rem" />
+          </div>
+          @for (_ of [1, 2, 3, 4, 5, 6, 7]; track _) {
+            <div
+              class="flex items-center gap-4 border-b border-[var(--ff-border)] px-4 py-3 last:border-0"
+            >
+              <p-skeleton width="9rem" height="0.9rem" />
+              <p-skeleton width="5rem" height="0.9rem" styleClass="ml-auto" />
+              <p-skeleton width="5rem" height="0.9rem" />
+            </div>
+          }
+        </div>
       } @else if (snapshot) {
         <div
           class="overflow-hidden rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)]"
         >
-          <table class="w-full border-collapse text-sm">
+          <table class="hidden w-full border-collapse text-sm md:table" data-cy="cash-snapshot-table">
             <thead>
               <tr
                 class="border-b border-[var(--ff-border)] bg-[var(--ff-panel-raised)] text-xs uppercase tracking-[0.14em] text-[var(--ff-text-secondary)]"
@@ -140,6 +163,21 @@
                 </td>
               </tr>
               <tr class="bg-[var(--ff-bg)]">
+                <td class="px-4 py-3 font-semibold text-red-300">
+                  Egresos operativos · préstamos
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono font-semibold text-red-300"
+                >
+                  {{ format.currency(snapshot.outflows.loans.cash) }}
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono font-semibold text-red-300"
+                >
+                  {{ format.currency(snapshot.outflows.loans.transfer) }}
+                </td>
+              </tr>
+              <tr class="bg-[var(--ff-panel)]">
                 <td
                   class="px-4 py-3 font-semibold text-[var(--ff-text-primary)]"
                 >
@@ -156,7 +194,7 @@
                   {{ format.currency(snapshot.conversions.transfer_delta) }}
                 </td>
               </tr>
-              <tr class="bg-[var(--ff-panel)]">
+              <tr class="bg-[var(--ff-bg)]">
                 <td
                   class="px-4 py-3 font-semibold text-[var(--ff-text-primary)]"
                 >
@@ -203,6 +241,135 @@
               </tr>
             </tfoot>
           </table>
+          <div class="space-y-3 p-3 md:hidden" data-cy="cash-snapshot-mobile-list">
+            <article class="rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4">
+              <h3 class="text-sm font-semibold text-[var(--ff-text-primary)]">Apertura</h3>
+              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Efectivo</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.opening.cash) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Transferencia</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.opening.transfer) }}</dd>
+                </div>
+              </dl>
+            </article>
+            <article class="rounded-2xl border border-blue-400/20 bg-blue-500/10 p-4">
+              <h3 class="text-sm font-semibold text-blue-200">Cobros · pagos aprobados</h3>
+              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Efectivo</dt>
+                  <dd class="mt-1 font-mono font-bold text-emerald-300">{{ format.currency(snapshot.collections.payments.cash) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Transferencia</dt>
+                  <dd class="mt-1 font-mono font-bold text-emerald-300">{{ format.currency(snapshot.collections.payments.transfer) }}</dd>
+                </div>
+              </dl>
+            </article>
+            <article class="rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4">
+              <h3 class="text-sm font-semibold text-[var(--ff-text-secondary)]">Cobros · enganches</h3>
+              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Efectivo</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.collections.down_payments.cash) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Transferencia</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.collections.down_payments.transfer) }}</dd>
+                </div>
+              </dl>
+            </article>
+            <article class="rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4">
+              <h3 class="text-sm font-semibold text-[var(--ff-text-secondary)]">Cobros · ingresos manuales</h3>
+              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Efectivo</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.collections.manual_incomes.cash) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Transferencia</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.collections.manual_incomes.transfer) }}</dd>
+                </div>
+              </dl>
+            </article>
+            <article class="rounded-2xl border border-red-400/20 bg-red-500/10 p-4">
+              <h3 class="text-sm font-semibold text-red-200">Egresos operativos · gastos</h3>
+              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Efectivo</dt>
+                  <dd class="mt-1 font-mono font-bold text-red-300">{{ format.currency(snapshot.outflows.expenses.cash) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Transferencia</dt>
+                  <dd class="mt-1 font-mono font-bold text-red-300">{{ format.currency(snapshot.outflows.expenses.transfer) }}</dd>
+                </div>
+              </dl>
+            </article>
+            <article class="rounded-2xl border border-red-400/20 bg-red-500/10 p-4">
+              <h3 class="text-sm font-semibold text-red-200">Egresos operativos · préstamos</h3>
+              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Efectivo</dt>
+                  <dd class="mt-1 font-mono font-bold text-red-300">{{ format.currency(snapshot.outflows.loans.cash) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Transferencia</dt>
+                  <dd class="mt-1 font-mono font-bold text-red-300">{{ format.currency(snapshot.outflows.loans.transfer) }}</dd>
+                </div>
+              </dl>
+            </article>
+            <article class="rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4">
+              <h3 class="text-sm font-semibold text-[var(--ff-text-primary)]">Conversiones (delta)</h3>
+              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Efectivo</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.conversions.cash_delta) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Transferencia</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.conversions.transfer_delta) }}</dd>
+                </div>
+              </dl>
+            </article>
+            <article class="rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4">
+              <h3 class="text-sm font-semibold text-[var(--ff-text-primary)]">Drops a Caja General</h3>
+              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Efectivo</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.drops.cash) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Transferencia</dt>
+                  <dd class="mt-1 font-mono font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.drops.transfer) }}</dd>
+                </div>
+              </dl>
+              @if (snapshot.drops.items.length > 0) {
+                <div class="mt-3 space-y-2 border-t border-[var(--ff-border)] pt-3">
+                  @for (item of snapshot.drops.items; track item.id) {
+                    <div class="flex items-center justify-between gap-3 text-xs text-[var(--ff-text-secondary)]">
+                      <span class="font-mono">#{{ item.id.slice(0, 8) }} · {{ item.payment_method }}</span>
+                      <span class="font-mono">{{ format.currency(item.amount) }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </article>
+            <article class="rounded-2xl border border-blue-400/25 bg-blue-500/10 p-4">
+              <h3 class="text-sm font-semibold text-blue-100">Esperado en caja</h3>
+              <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Efectivo</dt>
+                  <dd class="mt-1 font-mono text-lg font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.expected.cash) }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Transferencia</dt>
+                  <dd class="mt-1 font-mono text-lg font-bold text-[var(--ff-text-primary)]">{{ format.currency(snapshot.expected.transfer) }}</dd>
+                </div>
+              </dl>
+            </article>
+          </div>
         </div>
 
         <p class="mt-4 text-xs leading-relaxed text-[var(--ff-text-secondary)]">
@@ -220,7 +387,7 @@
     </div>
 
     <footer
-      class="flex justify-end border-t border-[var(--ff-border)] px-6 py-4"
+      class="flex shrink-0 justify-end border-t border-[var(--ff-border)] px-4 py-3 md:px-6 md:py-4"
     >
       <button
         type="button"

@@ -1,5 +1,5 @@
-﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+﻿import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import { NewOperationComponent } from './new-operation.component';
@@ -10,12 +10,15 @@ import { InterestRatesService } from '../../../features/admin/config/services/in
 import { ProductRatesService } from '../../../features/admin/config/services/product-rates.service';
 import { OperationFormService } from './operation-form.service';
 import { MessageService } from 'primeng/api';
+import { provideAuthTesting } from '../../../core/auth/testing/auth-testing';
 
 describe('NewOperationComponent', () => {
   let component: NewOperationComponent;
   let fixture: ComponentFixture<NewOperationComponent>;
   let formService: OperationFormService;
   let creditsServiceSpy: jasmine.SpyObj<CreditsService>;
+  let messageService: MessageService;
+  let router: Router;
 
   beforeEach(async () => {
     creditsServiceSpy = jasmine.createSpyObj('CreditsService', ['create']);
@@ -27,6 +30,7 @@ describe('NewOperationComponent', () => {
       imports: [NewOperationComponent],
       providers: [
         provideRouter([]),
+        ...provideAuthTesting(),
         { provide: CreditsService, useValue: creditsServiceSpy },
         {
           provide: CustomersService,
@@ -59,6 +63,8 @@ describe('NewOperationComponent', () => {
     fixture = TestBed.createComponent(NewOperationComponent);
     component = fixture.componentInstance;
     formService = fixture.debugElement.injector.get(OperationFormService);
+    messageService = fixture.debugElement.injector.get(MessageService);
+    router = TestBed.inject(Router);
     fixture.detectChanges();
   });
 
@@ -142,4 +148,31 @@ describe('NewOperationComponent', () => {
       expect(formService.declarationsAccepted).toBeTrue();
     });
   });
+
+  it('apaga el overlay y abre el detalle de la operación creada', fakeAsync(() => {
+    spyOn(formService, 'submit').and.returnValue(
+      of({ id: 'credit-created-1', status: 'PENDING_APPROVAL' }),
+    );
+    const messageSpy = spyOn(messageService, 'add');
+    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+    spyOnProperty(router, 'url', 'get').and.returnValue(
+      '/admin/operations/new',
+    );
+    formService.submitting.set(true);
+
+    component.submitOperation();
+
+    expect(formService.submitting()).toBeTrue();
+    expect(component.openingCreatedOperation).toBeTrue();
+    expect(messageSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({ summary: 'Operación enviada' }),
+    );
+
+    tick(1500);
+    expect(navigateSpy).toHaveBeenCalledWith([
+      '/admin',
+      'operations',
+      'credit-created-1',
+    ]);
+  }));
 });

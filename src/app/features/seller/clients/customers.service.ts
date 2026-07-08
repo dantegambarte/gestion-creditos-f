@@ -105,6 +105,7 @@ function fromCreatePayload(p: CustomerCreatePayload): Record<string, unknown> {
 function fromUpdatePayload(p: CustomerUpdatePayload): Record<string, unknown> {
   const body: Record<string, unknown> = {};
   if (p.fullName !== undefined) body['full_name'] = p.fullName;
+  if (p.dni !== undefined) body['dni'] = p.dni;
   if (p.address !== undefined) body['address'] = p.address;
   if (p.phone !== undefined) body['phone'] = p.phone;
   if (p.email !== undefined) body['email'] = p.email;

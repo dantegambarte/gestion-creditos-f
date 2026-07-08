@@ -9,16 +9,16 @@ import {
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { FormatService } from '../../../../core/services/format.service';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { CollectionsService } from '../../../collector/collections.service';
 import { CollectionSheetDetail } from '../../../collector/models/collection.model';
 
 @Component({
   selector: 'app-sheet-review-dialog',
   standalone: true,
-  imports: [DialogModule, ButtonModule, TableModule, LoadingStateComponent],
+  imports: [DialogModule, ButtonModule, TableModule, SkeletonModule],
   templateUrl: './sheet-review-dialog.component.html',
 })
 export class SheetReviewDialogComponent implements OnChanges {

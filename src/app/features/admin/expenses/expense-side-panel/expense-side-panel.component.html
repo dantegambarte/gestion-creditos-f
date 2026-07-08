@@ -1,38 +1,45 @@
 <div
-  class="w-[480px] max-w-[95vw] flex-shrink-0 border-l overflow-y-auto"
+  class="expense-side-panel-shell flex h-full max-h-[88vh] w-[480px] max-w-[95vw] flex-shrink-0 flex-col overflow-hidden border-l"
+  data-cy="expense-side-panel"
   style="
     border-color: var(--ff-border);
     background: var(--ff-panel-raised);
     color: var(--ff-text-primary);
   "
 >
-  <!-- Form registrar / editar gasto -->
-  <div class="p-5 pt-3 space-y-4">
-    <div class="flex items-center justify-between">
-      <h2 class="text-base font-semibold">
-        {{
-          showCats
-            ? "Categorías de gastos"
-            : isEditMode
-              ? "Editar gasto"
-              : "Registrar gasto"
-        }}
-      </h2>
-      <button
-        type="button"
-        class="w-8 h-8 rounded-lg border transition-colors flex items-center justify-center"
-        style="
-          border-color: var(--ff-border);
-          color: var(--ff-text-secondary);
-          background: var(--ff-secondary);
-        "
-        title="Cerrar"
-        (click)="close()"
-      >
-        <i class="pi pi-times text-sm"></i>
-      </button>
-    </div>
+  <!-- Header fijo: nunca se va con el scroll -->
+  <div
+    class="flex items-center justify-between shrink-0 border-b px-5 py-4"
+    style="border-color: var(--ff-border)"
+    data-cy="expense-side-panel-header"
+  >
+    <h2 class="text-base font-semibold">
+      {{
+        showCats
+          ? "Categorías de gastos"
+          : isEditMode
+            ? "Editar gasto"
+            : "Registrar gasto"
+      }}
+    </h2>
+    <button
+      type="button"
+      class="w-11 h-11 rounded-lg border transition-colors flex items-center justify-center"
+      style="
+        border-color: var(--ff-border);
+        color: var(--ff-text-secondary);
+        background: var(--ff-secondary);
+      "
+      title="Cerrar"
+      data-cy="expense-side-panel-close"
+      (click)="close()"
+    >
+      <i class="pi pi-times text-sm"></i>
+    </button>
+  </div>
 
+  <!-- Form registrar / editar gasto -->
+  <div class="flex-1 overflow-y-auto p-5 space-y-4" data-cy="expense-side-panel-body">
     @if (showCats) {
       <app-expense-category-manager
         (categoriesChanged)="categoriesChanged.emit()"
@@ -141,6 +148,7 @@
         <div class="flex gap-4">
           <label
             class="flex items-center gap-2 cursor-pointer text-sm ff-text-secondary"
+            data-cy="expense-payment-cash-option"
           >
             <p-radioButton
               name="paymentMethod"
@@ -152,12 +160,14 @@
           </label>
           <label
             class="flex items-center gap-2 cursor-pointer text-sm ff-text-secondary"
+            data-cy="expense-payment-transfer-option"
           >
             <p-radioButton
               name="paymentMethod"
               value="TRANSFER"
               [(ngModel)]="createPaymentMethod"
               inputId="pm_transfer"
+              (onClick)="onTransferSelected()"
             />
             <span>Transferencia</span>
           </label>
@@ -165,7 +175,7 @@
       </div>
 
       @if (createPaymentMethod === "TRANSFER") {
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1" #transferRefField>
           <label class="auth-label">Referencia</label>
           <input
             pInputText
@@ -173,6 +183,7 @@
             maxlength="100"
             class="w-full h-11 px-3"
             placeholder="Nro. de operación..."
+            data-cy="expense-transfer-reference-input"
           />
         </div>
       }
@@ -185,19 +196,6 @@
           {{ createError }}
         </p>
       }
-
-      <p-button
-        [label]="isEditMode ? 'Guardar cambios' : 'Registrar gasto'"
-        styleClass="w-full justify-center py-2.5 mt-3"
-        [loading]="saving"
-        [disabled]="
-          !createAmount ||
-          createAmount <= 0 ||
-          !createDescription.trim() ||
-          (createPaymentMethod === 'TRANSFER' && !createTransferRef.trim())
-        "
-        (onClick)="submitCreate()"
-      />
 
       @if (isEditMode) {
         <div class="grid grid-cols-2 gap-3">
@@ -262,6 +260,23 @@
       </div>
     </div>
   }
+@if (!showCats) {
+  <footer class="shrink-0 border-t p-4" style="border-color: var(--ff-border); background: var(--ff-panel-raised)">
+    <p-button
+      [label]="isEditMode ? 'Guardar cambios' : 'Registrar gasto'"
+      styleClass="w-full h-11 justify-center rounded-xl"
+      data-cy="expense-submit-action"
+      [loading]="saving"
+      [disabled]="
+        !createAmount ||
+        createAmount <= 0 ||
+        !createDescription.trim() ||
+        (createPaymentMethod === 'TRANSFER' && !createTransferRef.trim())
+      "
+      (onClick)="submitCreate()"
+    />
+  </footer>
+}
 </div>
 
 <!-- Dialog: confirmar eliminación -->

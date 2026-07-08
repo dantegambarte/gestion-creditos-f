@@ -5,3 +5,25 @@
 .row-sin-stock td {
   background-color: #fff1f2 !important;
 }
+
+.products-table-skeleton {
+  padding: 8px 0;
+}
+
+.products-table-skeleton__row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--ff-border-subtle);
+}
+
+.products-table-skeleton__row:last-child {
+  border-bottom: none;
+}
+
+.products-table-skeleton__product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

@@ -3,7 +3,7 @@
   (visibleChange)="visibleChange.emit($event)"
   header="Rechazar Crédito"
   [modal]="true"
-  [style]="{ width: '440px' }"
+  [style]="{ width: '440px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
 >
@@ -58,7 +58,7 @@
         label="Cancelar"
         severity="secondary"
         [outlined]="true"
-        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        styleClass="ff-reject-action w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="close()"
       />
       <p-button

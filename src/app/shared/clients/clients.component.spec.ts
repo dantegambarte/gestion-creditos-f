@@ -190,21 +190,21 @@ describe('ClientsComponent', () => {
   });
 
   describe('CL-14 — Risk mapping usa delinquency del cliente', () => {
-    it('client con delinquency "Mora alta" tiene risk "Mora alta"', () => {
+    it('client con delinquency "con mora" tiene risk "con mora"', () => {
       const customerWithMora = {
         ...MOCK_CUSTOMERS[0],
-        delinquency: 'Mora alta',
+        delinquency: 'con mora',
       };
       customersServiceSpy.list.and.returnValue(of([customerWithMora]));
       component.loadClients();
-      expect(component.clients[0].risk).toBe('Mora alta');
+      expect(component.clients[0].risk).toBe('con mora');
     });
 
-    it('client sin delinquency usa "Al dia" como fallback', () => {
+    it('client sin delinquency usa "sin mora" como fallback', () => {
       const customerNoDelin = { ...MOCK_CUSTOMERS[0], delinquency: undefined };
       customersServiceSpy.list.and.returnValue(of([customerNoDelin]));
       component.loadClients();
-      expect(component.clients[0].risk).toBe('Al dia');
+      expect(component.clients[0].risk).toBe('sin mora');
     });
   });
 });

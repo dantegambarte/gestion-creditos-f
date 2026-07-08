@@ -1,6 +1,9 @@
 <div class="space-y-6">
   <!-- Filtro inline -->
-  <div class="flex flex-wrap items-center gap-3">
+  <div
+    class="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center"
+    data-cy="admin-cash-sessions-report-filters"
+  >
     <span class="text-sm text-[var(--ff-text-secondary)]">Desde</span>
     <p-calendar
       [(ngModel)]="dateFrom"
@@ -9,8 +12,8 @@
       [showIcon]="true"
       iconDisplay="input"
       appendTo="body"
-      styleClass="w-44"
-      inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
+      styleClass="w-full md:w-44"
+      inputStyleClass="w-full h-11 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-base md:text-sm"
     />
     <span class="text-sm text-[var(--ff-text-secondary)]">hasta</span>
     <p-calendar
@@ -20,14 +23,14 @@
       [showIcon]="true"
       iconDisplay="input"
       appendTo="body"
-      styleClass="w-44"
-      inputStyleClass="w-full h-10 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-sm"
+      styleClass="w-full md:w-44"
+      inputStyleClass="w-full h-11 bg-[var(--ff-panel)] border border-[var(--ff-border)] text-[var(--ff-text-primary)] rounded-lg px-3 py-2 text-base md:text-sm"
     />
     <p-button
       label="Consultar"
       icon="pi pi-search"
       severity="primary"
-      styleClass="h-11 px-5 rounded-xl shadow-sm justify-center"
+      styleClass="h-11 w-full justify-center rounded-xl px-5 shadow-sm md:w-auto"
       [disabled]="!rangeValid"
       [loading]="loading"
       (onClick)="consult()"
@@ -40,7 +43,44 @@
   }
 
   @if (loading) {
-    <app-loading-state />
+    <div
+      class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+    >
+      <div
+        class="hidden md:block"
+        data-cy="admin-cash-sessions-report-desktop-skeleton"
+      >
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div
+            class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0"
+          >
+            <p-skeleton width="7rem" height="0.9rem" />
+            <p-skeleton width="5rem" height="1.5rem" borderRadius="999px" />
+            <p-skeleton width="5rem" height="0.9rem" styleClass="ml-auto" />
+          </div>
+        }
+      </div>
+      <div
+        class="space-y-3 p-4 md:hidden"
+        data-cy="admin-cash-sessions-report-mobile-skeleton"
+      >
+        @for (_ of [1, 2, 3]; track _) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <p-skeleton width="6rem" height="1rem" />
+              <p-skeleton width="4rem" height="1.5rem" borderRadius="999px" />
+            </div>
+            <p-skeleton
+              height="2.75rem"
+              borderRadius="0.75rem"
+              styleClass="mt-4"
+            />
+          </article>
+        }
+      </div>
+    </div>
   } @else if (error) {
     <app-error-state [message]="error.message" />
   } @else if (businessDays.length === 0) {
@@ -51,7 +91,10 @@
     <div
       class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
     >
-      <table class="w-full text-sm">
+      <table
+        class="hidden w-full text-sm md:table"
+        data-cy="admin-cash-sessions-report-table"
+      >
         <thead>
           <tr class="border-b border-[var(--ff-border-subtle)]">
             <th
@@ -98,6 +141,51 @@
           }
         </tbody>
       </table>
+      <div
+        class="space-y-3 p-4 md:hidden"
+        data-cy="admin-cash-sessions-report-mobile-list"
+      >
+        @for (day of businessDays; track day.id) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+            data-cy="admin-cash-sessions-report-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p
+                  class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ff-text-muted)]"
+                >
+                  Fecha
+                </p>
+                <p
+                  class="mt-1 font-mono text-base font-bold text-[var(--ff-text-primary)]"
+                >
+                  {{ formatDate(day.business_date) }}
+                </p>
+              </div>
+              <span
+                class="rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-widest {{
+                  statusBadgeClasses(day.status)
+                }}"
+              >
+                {{ businessDayStatusLabel(day.status) }}
+              </span>
+            </div>
+            <button
+              type="button"
+              class="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 text-sm font-semibold text-cyan-200"
+              (click)="openJornada(day)"
+            >
+              Ver detalle
+              <i class="pi pi-arrow-right text-xs"></i>
+            </button>
+          </article>
+        }
+      </div>
+      <ff-back-top-fab
+        [itemCount]="businessDays.length"
+        dataCy="cash-sessions-back-top-action"
+      />
     </div>
   }
 </div>
@@ -139,7 +227,7 @@
       </div>
       <button
         type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
+        class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
         (click)="closeJornadaDialog()"
       >
         <i class="pi pi-times text-base"></i>
@@ -148,7 +236,31 @@
 
     <div class="max-h-[60vh] overflow-y-auto px-6 py-5">
       @if (loadingJornada()) {
-        <app-loading-state message="Cargando cajas..."></app-loading-state>
+        <div class="space-y-3" data-cy="jornada-sessions-skeleton">
+          @for (_ of [1, 2]; track _) {
+            <div
+              class="space-y-3 rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+            >
+              <div class="flex items-center justify-between gap-4">
+                <div class="space-y-1.5">
+                  <p-skeleton width="8rem" height="0.9rem" />
+                  <p-skeleton width="11rem" height="0.7rem" />
+                </div>
+                <p-skeleton width="4rem" height="1.4rem" borderRadius="999px" />
+              </div>
+              <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                @for (__ of [1, 2, 3, 4]; track __) {
+                  <div
+                    class="rounded-lg bg-[var(--ff-panel)] px-3 py-2 space-y-1"
+                  >
+                    <p-skeleton width="3.5rem" height="0.6rem" />
+                    <p-skeleton width="4.5rem" height="0.9rem" />
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
       } @else if (jornadaError()) {
         <div
           class="rounded-xl border border-red-400/25 bg-red-500/10 p-3 text-sm text-red-200"
@@ -324,7 +436,7 @@
       </div>
       <button
         type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
+        class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400"
         (click)="closeSessionDialog()"
       >
         <i class="pi pi-times text-base"></i>
@@ -333,7 +445,20 @@
 
     <div class="max-h-[60vh] space-y-4 overflow-y-auto px-6 py-5">
       @if (loadingSession()) {
-        <app-loading-state message="Cargando cierre..."></app-loading-state>
+        <div
+          class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-4"
+          data-cy="session-detail-skeleton"
+        >
+          <p-skeleton width="7rem" height="0.7rem" styleClass="mb-3" />
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            @for (_ of [1, 2, 3, 4, 5, 6]; track _) {
+              <div class="space-y-1.5">
+                <p-skeleton width="4rem" height="0.6rem" />
+                <p-skeleton width="6rem" height="0.9rem" />
+              </div>
+            }
+          </div>
+        </div>
       } @else if (sessionError()) {
         <div
           class="rounded-xl border border-red-400/25 bg-red-500/10 p-3 text-sm text-red-200"
@@ -543,7 +668,7 @@
           <div
             class="overflow-hidden rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)]"
           >
-            <table class="w-full border-collapse text-sm">
+            <table class="hidden w-full border-collapse text-sm md:table">
               <thead>
                 <tr
                   class="border-b border-[var(--ff-border)] bg-[var(--ff-secondary)] text-xs uppercase tracking-[0.14em] text-[var(--ff-text-secondary)]"
@@ -603,6 +728,67 @@
                 }
               </tbody>
             </table>
+
+            <div
+              class="flex flex-col gap-3 p-3 md:hidden"
+              data-cy="cash-session-detail-closure-mobile-list"
+            >
+              @for (
+                detail of sessionDetail()!.closure_details;
+                track detail.id
+              ) {
+                <article
+                  class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-3"
+                  data-cy="cash-session-detail-closure-mobile-card"
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <p
+                        class="truncate text-sm font-semibold text-[var(--ff-text-primary)]"
+                      >
+                        {{
+                          paymentMethodLabels[detail.payment_method] ||
+                            detail.payment_method
+                        }}
+                      </p>
+                      @if (detail.notes) {
+                        <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
+                          {{ detail.notes }}
+                        </p>
+                      }
+                    </div>
+                    <p
+                      class="shrink-0 text-right font-mono text-sm font-semibold"
+                      [class.text-emerald-300]="
+                        differenceTone(detail.difference_status) === 'success'
+                      "
+                      [class.text-amber-300]="
+                        differenceTone(detail.difference_status) === 'warning'
+                      "
+                      [class.text-red-300]="
+                        differenceTone(detail.difference_status) === 'danger'
+                      "
+                    >
+                      {{ formatCurrency(detail.difference) }}
+                    </p>
+                  </div>
+                  <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p class="text-[var(--ff-text-muted)]">Esperado</p>
+                      <p class="font-mono text-[var(--ff-text-primary)]">
+                        {{ formatCurrency(detail.expected_amount) }}
+                      </p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-[var(--ff-text-muted)]">Declarado</p>
+                      <p class="font-mono text-[var(--ff-text-primary)]">
+                        {{ formatCurrency(detail.declared_amount) }}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
           </div>
         } @else {
           <p class="py-4 text-center text-sm text-[var(--ff-text-muted)]">

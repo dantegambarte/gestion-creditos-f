@@ -3,12 +3,12 @@
   (visibleChange)="visibleChange.emit($event)"
   header="Anular gestión"
   [modal]="true"
-  [style]="{ width: '420px' }"
+  [style]="{ width: '420px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
 >
   <div class="flex flex-col gap-3 py-2">
-    @if (item && item.antecedentType) {
+    @if (item && item.live?.todayAttemptType) {
       <div
         class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
       >
@@ -20,7 +20,7 @@
         </p>
         <p class="mt-1 text-sm text-[var(--ff-text-muted)]">
           Gestión a anular:
-          <strong>{{ antecedentLabel(item.antecedentType) }}</strong>
+          <strong>{{ antecedentLabel(item.live!.todayAttemptType!) }}</strong>
         </p>
       </div>
       <p class="text-sm text-[var(--ff-text-secondary)]">

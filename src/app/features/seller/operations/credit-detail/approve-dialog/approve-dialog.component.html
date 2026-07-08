@@ -3,37 +3,99 @@
   (visibleChange)="visibleChange.emit($event)"
   header="Aprobar Crédito"
   [modal]="true"
-  [style]="{ width: '440px' }"
+  [style]="{ width: '440px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
 >
   <div class="flex flex-col gap-4 py-2">
-    @if (usesFixedInstallments) {
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Cantidad de cuotas definida</label>
-        <div
-          class="w-full rounded-xl p-3 text-sm font-medium"
-          style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
-        >
-          {{ credit?.installmentsCount }} cuota(s)
+    <!-- Vendedor asignado + cambio antes de aprobar -->
+    <div
+      class="rounded-lg p-3"
+      style="background: var(--ff-secondary); border: 1px solid var(--ff-border)"
+    >
+      @if (!showChangeSeller) {
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <p class="text-xs" style="color: var(--ff-text-muted)">
+              Vendedor asignado
+            </p>
+            <p
+              class="text-sm font-medium mt-0.5"
+              style="color: var(--ff-text-primary)"
+            >
+              👤 {{ currentSellerName }}
+            </p>
+          </div>
+          <p-button
+            label="Cambiar vendedor"
+            icon="pi pi-user-edit"
+            size="small"
+            [text]="true"
+            severity="secondary"
+            (onClick)="openChangeSeller()"
+          />
         </div>
-        <p class="text-xs" style="color: var(--ff-text-muted)">
-          Se aprobará la operación con las cuotas ya definidas en la pre-operación.
-        </p>
+      } @else {
+        <div class="flex flex-col gap-2">
+          <label class="auth-label">Seleccione nuevo vendedor</label>
+          <p-dropdown
+            [options]="sellerOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedSellerId"
+            [filter]="true"
+            filterBy="label"
+            [loading]="loadingSellers"
+            placeholder="Elegir vendedor"
+            appendTo="body"
+            styleClass="w-full"
+          />
+          <p class="text-xs" style="color: #f5a524">
+            ⚠ Una vez aprobado el crédito, el vendedor ya no podrá modificarse.
+          </p>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <p-button
+              label="Cancelar"
+              size="small"
+              severity="secondary"
+              [outlined]="true"
+              styleClass="w-full"
+              (onClick)="cancelChangeSeller()"
+              [disabled]="processingSeller"
+            />
+            <p-button
+              label="Guardar"
+              size="small"
+              styleClass="w-full"
+              (onClick)="saveSeller()"
+              [loading]="processingSeller"
+              [disabled]="!selectedSellerId || processingSeller"
+            />
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="auth-label">Cantidad de cuotas definida</label>
+      <div
+        class="w-full rounded-xl p-3 text-sm font-medium"
+        style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
+      >
+        {{ credit?.installmentsCount }} cuota(s)
       </div>
-    } @else {
-      <div class="flex flex-col gap-1">
-        <label class="auth-label">Cantidad de cuotas (puede ajustarse)</label>
-        <input
-          type="number"
-          [(ngModel)]="installmentsCount"
-          min="1"
-          max="120"
-          class="w-full rounded-xl p-3 text-sm outline-none"
-          style="border: 1px solid var(--ff-border); background: var(--ff-secondary); color: var(--ff-text-primary)"
-        />
-      </div>
-    }
+      <p class="text-xs" style="color: var(--ff-text-muted)">
+        Se aprobará la operación con las cuotas ya definidas en la pre-operación.
+      </p>
+    </div>
+
+    <p
+      class="text-xs px-1"
+      style="color: var(--ff-text-muted); line-height: 1.4"
+    >
+      ⚠ Al aprobar quedan definitivos el <strong>vendedor</strong>, el cliente,
+      el importe, el enganche y las cuotas. No podrán modificarse después.
+    </p>
   </div>
   <ng-template pTemplate="footer">
     <div class="grid grid-cols-2 gap-3 w-full">
@@ -51,7 +113,7 @@
         styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirm()"
         [loading]="processing"
-        [disabled]="isCashClosed || processing"
+        [disabled]="isCashClosed || processing || showChangeSeller"
         [pTooltip]="isCashClosed ? 'La caja está cerrada' : ''"
         tooltipPosition="top"
       />

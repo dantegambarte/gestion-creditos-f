@@ -47,7 +47,8 @@
         } @else {
           <p-table
             [value]="sheets"
-            styleClass="p-datatable-sm"
+            styleClass="hidden md:block p-datatable-sm"
+            data-cy="collector-route-sheets-table"
             responsiveLayout="scroll"
           >
             <ng-template pTemplate="header">
@@ -92,6 +93,38 @@
               </tr>
             </ng-template>
           </p-table>
+
+          <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="collector-route-sheets-mobile-list">
+            @for (sheet of sheets; track sheet.id) {
+              <article
+                class="rounded-xl border p-3"
+                style="border-color: var(--ff-border)"
+                data-cy="collector-route-sheets-mobile-card"
+              >
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <span class="font-semibold">{{ sheet.sheetDate | date: "dd/MM/yyyy" }}</span>
+                    @if (isTodaySheet(sheet.sheetDate)) {
+                      <span class="route-badge route-badge--today">Hoy</span>
+                    }
+                  </div>
+                  <p-tag [value]="filterLabel(sheet.filterUsed)" severity="info" />
+                </div>
+                <p class="mt-2 text-sm" style="color: var(--ff-text-muted)">
+                  {{ sheet.totalItems }} cuotas · {{ sheet.collectorName }}
+                </p>
+                <p-button
+                  label="Ver planilla →"
+                  size="small"
+                  severity="primary"
+                  [outlined]="true"
+                  styleClass="mt-3 w-full !h-11 !rounded-md !text-xs !font-semibold"
+                  (onClick)="goToSheet(sheet)"
+                />
+              </article>
+            }
+          </div>
+          <ff-back-top-fab [itemCount]="sheets.length" dataCy="collector-route-back-top-action" />
         }
       </div>
     </p-card>

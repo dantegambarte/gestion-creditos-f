@@ -17,12 +17,13 @@ import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { TooltipModule } from 'primeng/tooltip';
-import { Subject, forkJoin, of } from 'rxjs';
-import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../core/models/app-error';
 import { DateService } from '../../../../core/services/date.service';
 import { CollectionsService } from '../../../collector/collections.service';
 import {
+  CollectionBatchOutcome,
   CollectionFilter,
   CollectionGenerateOutcome,
   CollectionGenerateResult,
@@ -62,32 +63,59 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   private readonly msg = inject(MessageService);
   private readonly dateSvc = inject(DateService);
 
+  /**
+   * Define el tamaño del modal segun viewport: fullscreen real en mobile y
+   * modal compacto en desktop.
+   */
+  get dialogStyle(): Record<string, string> {
+    const isMobile =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 640px)').matches;
+
+    if (isMobile) {
+      return {
+        width: '100vw',
+        maxWidth: '100vw',
+        height: '100dvh',
+        maxHeight: '100dvh',
+      };
+    }
+
+    return { width: '600px', maxWidth: '95vw', maxHeight: '90dvh' };
+  }
+
   readonly todayDate: Date = this.dateSvc.startOfToday();
   selectedCollectorId: string = this.ALL_COLLECTORS;
   selectedDate: string = this.dateSvc.toLocalIso(new Date());
-  selectedFilter: CollectionFilter = 'TODAY';
+  // Trabajo Diario es el filtro recomendado para el uso cotidiano: incluye TODO
+  // lo accionable del día (mora + vence hoy + visitas de hoy + visitas vencidas),
+  // de modo que generarlo a diario no deja ninguna cuota sin trabajar.
+  selectedFilter: CollectionFilter = 'TODAY_AND_OVERDUE';
   /**
-   * Etiquetas y leyendas alineadas con la semantica real de cada filtro
-   * (auditoria de planillas). Se omite TODAY_AND_OVERDUE: devuelve
-   * practicamente el mismo conjunto que TODAY y el operador no nota
-   * diferencia. Se mantiene el tipo CollectionFilter para compat con
-   * planillas pre-existentes que se hayan generado con ese valor.
+   * Etiquetas y leyendas alineadas con la semantica real de cada filtro.
+   * TODAY_AND_OVERDUE ("Trabajo Diario") es el default: a diferencia de TODAY,
+   * SÍ incluye la mora vieja, garantizando que nada accionable quede afuera.
    */
   filterOptions: { label: string; value: CollectionFilter; description: string }[] = [
     {
-      label:       'Para cobrar hoy',
+      label:       'Trabajo Diario (recomendado)',
+      value:       'TODAY_AND_OVERDUE',
+      description: 'Todo lo que hay que gestionar hoy: mora + cuotas que vencen hoy + visitas agendadas para hoy + visitas vencidas. Es la planilla para generar todos los dias.',
+    },
+    {
+      label:       'Solo hoy',
       value:       'TODAY',
-      description: 'Cuotas que vencen hoy + visitas agendadas para hoy. No incluye mora vieja.',
+      description: 'Cuotas que vencen hoy + visitas agendadas para hoy. NO incluye mora vieja (usar Trabajo Diario para no dejar mora sin trabajar).',
     },
     {
       label:       'Vencidas sin agenda',
       value:       'OVERDUE',
-      description: 'Cuotas en mora cuya proxima visita ya paso o nunca se agendo. No incluye vencidas con visita hoy.',
+      description: 'Solo mora: cuotas vencidas cuya proxima visita ya paso o nunca se agendo. No incluye vencidas con visita hoy.',
     },
     {
       label:       'Todas las pendientes',
       value:       'ALL_PENDING',
-      description: 'Todas las cuotas del cobrador con saldo > 0, sin filtrar por fecha ni agenda.',
+      description: 'Panorama completo: todas las cuotas del cobrador con saldo > 0, sin filtrar por fecha ni agenda (incluye las que tienen visita a futuro).',
     },
   ];
 
@@ -341,7 +369,7 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   }
 
   /**
-   * Genera planillas para todos los cobradores en paralelo.
+   * Genera planillas para todos los cobradores en una sola request batch.
    * Muestra toast de resultado y emite batchCompleted para que el padre recargue.
    */
   private generateForAll(): void {
@@ -364,33 +392,13 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
     if (collectors.length === 0) return;
 
     this.generatingAll = true;
-    const requests = collectors.map((c) =>
-      this.collectionsService
-        .generate({
-          collectorId: c.id,
-          date: this.selectedDate,
-          filter: this.selectedFilter,
-          skipIfExists,
-        })
-        .pipe(
-          map((result) => ({
-            success: true as const,
-            collectorId: c.id,
-            collectorName: c.fullName,
-            result,
-          })),
-          catchError((err: AppError) =>
-            of({
-              success: false as const,
-              collectorId: c.id,
-              collectorName: c.fullName,
-              error: err,
-            }),
-          ),
-        ),
-    );
-
-    forkJoin(requests)
+    this.collectionsService
+      .generateBatch({
+        collectorIds: collectors.map((c) => c.id),
+        date: this.selectedDate,
+        filter: this.selectedFilter,
+        skipIfExists,
+      })
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => (this.generatingAll = false)),
@@ -403,28 +411,28 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   /**
    * Procesa los resultados del batch: contabiliza éxitos, regeneraciones,
    * omisiones y errores, y muestra los toasts correspondientes.
-   * @param outcomes - Resultados individuales de cada request en paralelo.
+   * @param outcomes - Un resultado por cobrador, devuelto por la request batch.
    * @param preExistingIds - IDs de cobradores que ya tenían planilla activa antes del batch.
    */
   private handleBatchOutcomes(
-    outcomes: Array<
-      | { success: true; collectorId: string; collectorName: string; result: CollectionGenerateOutcome }
-      | { success: false; collectorId: string; collectorName: string; error: AppError }
-    >,
+    outcomes: CollectionBatchOutcome[],
     preExistingIds: Set<string>,
   ): void {
+    const collectorName = (collectorId: string): string =>
+      this.collectors.find((c) => c.id === collectorId)?.fullName ?? collectorId;
+
     let generated = 0;
     let regenerated = 0;
     let skipped = 0;
-    const failures: { collectorName: string; error: AppError }[] = [];
+    const failures: { collectorName: string; error: { status: number; message: string } }[] = [];
     let withAlerts = 0;
 
     for (const o of outcomes) {
-      if (!o.success) {
-        failures.push({ collectorName: o.collectorName, error: o.error });
+      if (o.kind === 'error') {
+        failures.push({ collectorName: collectorName(o.collectorId), error: o.error });
         continue;
       }
-      if ('skipped' in o.result) {
+      if (o.kind === 'skipped') {
         skipped++;
         continue;
       }

@@ -52,6 +52,59 @@ describe('StepClientComponent', () => {
     expect(component.filteredClients).toEqual([component.clients[1]]);
   });
 
+  it('acepta DNI de 7 a 9 dígitos', () => {
+    component.quickRegisterDraft.dni = '123456';
+    expect(component.quickRegisterDniIsValid).toBeFalse();
+
+    component.quickRegisterDraft.dni = '1234567';
+    expect(component.quickRegisterDniIsValid).toBeTrue();
+
+    component.quickRegisterDraft.dni = '123456789';
+    expect(component.quickRegisterDniIsValid).toBeTrue();
+
+    component.quickRegisterDraft.dni = '1234567890';
+    expect(component.quickRegisterDniIsValid).toBeFalse();
+  });
+
+  it('emite la dirección en el payload del registro rápido', () => {
+    const emitted: unknown[] = [];
+    component.quickRegisterSubmitted.subscribe((p) => emitted.push(p));
+
+    component.quickRegisterDraft = {
+      fullName: 'Juan Martínez',
+      dni: '12345678',
+      address: 'Av. Corrientes 1234',
+      phone: '',
+      email: '',
+    };
+    component.submitQuickRegister();
+
+    expect(emitted.length).toBe(1);
+    expect(emitted[0]).toEqual(
+      jasmine.objectContaining({
+        fullName: 'Juan Martínez',
+        dni: '12345678',
+        address: 'Av. Corrientes 1234',
+      }),
+    );
+  });
+
+  it('omite la dirección cuando queda vacía', () => {
+    const emitted: any[] = [];
+    component.quickRegisterSubmitted.subscribe((p) => emitted.push(p));
+
+    component.quickRegisterDraft = {
+      fullName: 'Juan Martínez',
+      dni: '12345678',
+      address: '   ',
+      phone: '',
+      email: '',
+    };
+    component.submitQuickRegister();
+
+    expect(emitted[0].address).toBeUndefined();
+  });
+
   it('muestra el resumen enriquecido de créditos del cliente seleccionado — CR-27', () => {
     component.selectedClientId = '1';
     component.selectedClientSummary = {

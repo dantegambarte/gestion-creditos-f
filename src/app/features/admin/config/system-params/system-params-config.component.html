@@ -10,8 +10,9 @@
   } @else {
     <div
       class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
+      data-cy="admin-system-params-panel"
     >
-      <table class="w-full text-sm">
+      <table class="hidden w-full text-sm md:table" data-cy="admin-system-params-table">
         <thead>
           <tr class="border-b border-[var(--ff-border-subtle)]">
             <th
@@ -105,6 +106,70 @@
           }
         </tbody>
       </table>
+      <div class="space-y-3 p-4 md:hidden" data-cy="admin-system-params-mobile-list">
+        @if (rows.length === 0) {
+          <p class="py-8 text-center text-sm text-[var(--ff-text-muted)]">
+            Sin parámetros disponibles.
+          </p>
+        }
+        @for (row of rows; track row.key) {
+          <article
+            class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+            data-cy="admin-system-params-mobile-card"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <h2 class="text-sm font-semibold text-[var(--ff-text-primary)]">
+                  {{ row.meta.label }}
+                </h2>
+                <p class="mt-1 text-xs text-[var(--ff-text-muted)]">
+                  {{ row.meta.hint || "Sin descripción adicional" }}
+                </p>
+              </div>
+              <span class="shrink-0 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1 font-mono text-xs font-bold text-emerald-300">
+                {{ formatValue(row) }}
+              </span>
+            </div>
+            <dl class="mt-4 grid grid-cols-1 gap-3 text-sm">
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Rango permitido</dt>
+                <dd class="mt-1 font-medium text-[var(--ff-text-secondary)]">{{ row.meta.range }}</dd>
+              </div>
+              <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                <dt class="text-xs text-[var(--ff-text-muted)]">Última actualización</dt>
+                <dd class="mt-1 font-medium text-[var(--ff-text-secondary)]">
+                  @if (row.updatedAt) {
+                    {{ row.updatedAt | date: "dd/MM/yyyy" }}
+                    @if (row.updatedBy) {
+                      · {{ row.updatedBy }}
+                    }
+                  } @else {
+                    —
+                  }
+                </dd>
+              </div>
+            </dl>
+            <div class="mt-4 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                (click)="openEdit(row)"
+                class="h-11 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-semibold text-blue-200"
+                data-cy="admin-system-params-mobile-edit-action"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                (click)="confirmReset(row)"
+                class="h-11 rounded-xl border border-amber-400/30 bg-amber-500/10 text-sm font-semibold text-amber-200"
+              >
+                Restaurar
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+      <ff-back-top-fab [itemCount]="rows.length" dataCy="system-params-back-top-action" />
     </div>
   }
 </div>
@@ -114,7 +179,7 @@
   [(visible)]="showEditDialog"
   [header]="editingRow ? editingRow.meta.label : 'Editar'"
   [modal]="true"
-  [style]="{ width: '22rem' }"
+  [style]="{ width: '22rem', maxWidth: 'calc(100vw - 2rem)' }"
   [closable]="!saving"
 >
   @if (editingRow) {
@@ -150,6 +215,7 @@
             [useGrouping]="false"
             styleClass="w-full"
             inputStyleClass="w-full h-11 px-3"
+            data-cy="admin-system-params-edit-input"
           />
         }
         <span class="text-xs text-[var(--ff-text-muted)]"
@@ -191,7 +257,7 @@
   [(visible)]="showConfirmDialog"
   header="Restaurar valor por defecto"
   [modal]="true"
-  [style]="{ width: '22rem' }"
+  [style]="{ width: '22rem', maxWidth: 'calc(100vw - 2rem)' }"
 >
   <p class="text-sm py-2">{{ confirmMessage }}</p>
   <ng-template pTemplate="footer">

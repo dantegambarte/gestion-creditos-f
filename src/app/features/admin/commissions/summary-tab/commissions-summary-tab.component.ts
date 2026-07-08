@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../../core/models/app-error';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import {
   Liquidation,
   PaymentMethod,
@@ -17,12 +18,13 @@ import {
   selector: 'app-commissions-summary-tab',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     ButtonModule,
     CardModule,
+    SkeletonModule,
     TableModule,
     TagModule,
     TooltipModule,
-    LoadingStateComponent,
     ErrorStateComponent,
   ],
   templateUrl: './commissions-summary-tab.component.html',

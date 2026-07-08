@@ -8,6 +8,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
@@ -16,13 +17,14 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AppError } from '../../../../core/models/app-error';
 import { UserRole } from '../../../../core/models/types/user-role';
 import { HeaderService } from '../../../../core/services/header.service';
+import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
 import { EmptyStateComponent } from '../../../../shared/states/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { UserCreateComponent } from '../user-create/user-create.component';
 import { User, UserListFilters, UserStatus } from '../user.model';
 import { UsersService } from '../users.service';
-import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
+import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'Administrador',
@@ -52,11 +54,13 @@ const ROLE_SEVERITY: Record<string, string> = {
     IconFieldModule,
     InputIconModule,
     InputTextModule,
+    SkeletonModule,
     TooltipModule,
     LoadingStateComponent,
     ErrorStateComponent,
     EmptyStateComponent,
     UserCreateComponent,
+    FfBackTopFabComponent,
   ],
   templateUrl: './users-list.component.html',
 })

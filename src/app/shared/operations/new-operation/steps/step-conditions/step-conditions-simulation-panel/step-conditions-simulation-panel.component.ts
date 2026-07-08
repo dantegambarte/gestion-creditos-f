@@ -1,12 +1,13 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { TooltipModule } from 'primeng/tooltip';
 import { CurrencyArsPipe } from '../../../../../../core/pipes/currency-ars.pipe';
 import { SimulateResult } from '../../../../../../features/seller/models/credit.model';
 
 @Component({
   selector: 'app-step-conditions-simulation-panel',
   standalone: true,
-  imports: [CurrencyArsPipe],
+  imports: [CurrencyArsPipe, TooltipModule],
   templateUrl: './step-conditions-simulation-panel.component.html',
 })
 export class StepConditionsSimulationPanelComponent {
@@ -19,6 +20,7 @@ export class StepConditionsSimulationPanelComponent {
   @Input() totalInterestAmount = 0;
   @Input() canContinueWithPlan = false;
   @Input() selectedInstallmentsCount = 0;
+  @Input() advancedInstallmentsCount = 0;
   @Output() continueRequested = new EventEmitter<void>();
 
   /**
@@ -37,23 +39,6 @@ export class StepConditionsSimulationPanelComponent {
   }
 
   /**
-   * Estado breve de la simulación para el badge de estado.
-   */
-  getSimulationStatusLabel(): string {
-    if (
-      this.selectedInstallmentsCount <= 0 ||
-      this.valorCuota <= 0 ||
-      this.totalADevolver <= 0
-    ) {
-      return 'Completá los datos para simular';
-    }
-    if (this.simulationLoading) return 'Calculando simulación';
-    if (this.simulationError) return 'Simulación no disponible';
-    if (this.simulationResult) return 'Simulación actualizada';
-    return 'Lista para simular';
-  }
-
-  /**
    * Genera las filas del cronograma. Usa datos reales del backend si existen,
    * o una estimación local si no.
    */
@@ -64,30 +49,65 @@ export class StepConditionsSimulationPanelComponent {
     capital?: number;
     interest?: number;
     remainingEstimated: number;
+    isAdvanced?: boolean;
   }[] {
     if (this.simulationResult?.schedule?.length) {
-      return this.simulationResult.schedule.map((row) => ({
+      const adv = Math.max(0, this.advancedInstallmentsCount ?? 0);
+      const isAdvanceMode =
+        this.form.controls['initialPaymentType']?.value ===
+        'ADVANCED_INSTALLMENTS';
+      const rows = this.simulationResult.schedule.map((row) => ({
         installment: row.installmentNumber,
         dueDate: this.parseLocalDate(row.dueDate),
         amount: row.amount,
         capital: row.capital,
         interest: row.interest,
         remainingEstimated: row.remainingEstimated ?? 0,
+        isAdvanced: isAdvanceMode && row.installmentNumber <= adv,
       }));
+      if (adv <= 0 || !isAdvanceMode) {
+        return rows;
+      }
+      return rows.map((row, index) => {
+        if (row.isAdvanced) {
+          return row;
+        }
+        const fallback = rows[Math.max(0, index - adv)]?.dueDate;
+        return {
+          ...row,
+          dueDate: fallback ?? row.dueDate,
+        };
+      });
     }
 
     const startDate = this.form.controls['firstPaymentDate']
       ?.value as Date | null;
     if (!startDate || this.selectedInstallmentsCount <= 0) return [];
 
-    const rows = Math.min(this.selectedInstallmentsCount, 8);
-    return Array.from({ length: rows }).map((_, index) => {
-      const paidAmount = this.valorCuota * (index + 1);
+    const totalRows = Math.min(this.selectedInstallmentsCount, 8);
+    const adv = Math.max(0, this.advancedInstallmentsCount ?? 0);
+    const isAdvanceMode =
+      this.form.controls['initialPaymentType']?.value ===
+      'ADVANCED_INSTALLMENTS';
+
+    return Array.from({ length: totalRows }).map((_, index) => {
+      const installmentNumber = index + 1;
+      const isAdvanced = isAdvanceMode && installmentNumber <= adv;
+
+      // If advanced installments exist, remaining installments take the
+      // dates of the advanced slots (shifted earlier). Example: 4 total,
+      // 2 advanced -> installment 3 uses date of 1, installment 4 uses date of 2.
+      const effectiveIndex = isAdvanced
+        ? index
+        : Math.max(0, index - adv);
+
+      const paidAmount = this.valorCuota * installmentNumber;
       return {
-        installment: index + 1,
-        dueDate: this.addFrequencyToDate(startDate, index),
+        installment: installmentNumber,
+        dueDate: this.addFrequencyToDate(startDate, effectiveIndex),
         amount: this.valorCuota,
         remainingEstimated: Math.max(0, this.totalADevolver - paidAmount),
+        isAdvanced,
       };
     });
   }

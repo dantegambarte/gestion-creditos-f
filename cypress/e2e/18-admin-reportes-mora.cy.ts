@@ -30,6 +30,21 @@ describe('Admin — Reportes', () => {
     cy.get('button.ff-tab').eq(1).click({ force: true });
     cy.get('app-error-state').should('not.exist');
   });
+
+  it('en mobile muestra los KPIs de mora en una columna sin overflow', () => {
+    cy.viewport(375, 667);
+    cy.contains('button.ff-tab', 'Mora').click({ force: true });
+
+    cy.get('[data-cy="overdue-report-kpi-grid"]', { timeout: 15000 })
+      .should('be.visible')
+      .children()
+      .should('have.length', 4)
+      .each(($card) => {
+        const rect = $card[0].getBoundingClientRect();
+        expect(rect.width).to.be.greaterThan(300);
+        expect(rect.right).to.be.lessThan(Cypress.config('viewportWidth') + 1);
+      });
+  });
 });
 
 describe('Admin — Reportes — Movimientos de caja', () => {

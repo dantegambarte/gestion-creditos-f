@@ -1,11 +1,13 @@
-import { AsyncPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { AsyncPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { Component, DestroyRef, PLATFORM_ID, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { PrimeNGConfig } from 'primeng/api';
+import { Message, MessageService, PrimeNGConfig } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { filter, map } from 'rxjs/operators';
 import { AuthServiceBase } from './core/auth/auth-service.base';
+import { NetworkAwareService } from './core/services/network-aware.service';
+import { PwaUpdateService } from './core/services/pwa-update.service';
 import { HeaderComponent } from './shared/layout/header/header.component';
 import { SidebarComponent } from './shared/layout/sidebar/sidebar.component';
 
@@ -28,11 +30,34 @@ export class AppComponent {
   auth = inject(AuthServiceBase);
   private router = inject(Router);
   private primengConfig = inject(PrimeNGConfig);
+  private messageService = inject(MessageService);
+  private document = inject(DOCUMENT);
+  private platformId = inject(PLATFORM_ID);
+  private destroyRef = inject(DestroyRef);
+  private networkAwareService = inject(NetworkAwareService);
+  private pwaUpdateService = inject(PwaUpdateService);
 
   private noLayoutRoutes = ['/portal', '/change-password'];
+  liveAnnouncement = '';
 
   constructor() {
     this.configurePrimeNgLocale();
+    this.resetScrollOnNavigation();
+    this.announceGlobalToasts();
+    this.startPwaRuntimeServices();
+  }
+
+  /** Activa listeners globales de red y actualizaciones PWA desde el arranque. */
+  private startPwaRuntimeServices(): void {
+    this.networkAwareService.start();
+    this.pwaUpdateService.start();
+  }
+
+  /** Ejecuta acciones declaradas por toasts globales, como aplicar una actualización PWA. */
+  runToastAction(message: Message): void {
+    const action = (message.data as { action?: () => void } | undefined)
+      ?.action;
+    action?.();
   }
 
   /**
@@ -86,6 +111,54 @@ export class AppComponent {
     });
   }
 
+  /**
+   * Reinicia el scroll global al cambiar de pantalla para evitar heredar la posición anterior.
+   */
+  private resetScrollOnNavigation(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        requestAnimationFrame(() => {
+          const shellMain = this.document.querySelector('.ff-shell__main');
+          if (shellMain instanceof HTMLElement) {
+            shellMain.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          }
+
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        });
+      });
+  }
+
+  /**
+   * Publica los toasts globales en una región aria-live para lectores de pantalla.
+   */
+  private announceGlobalToasts(): void {
+    const subscription = this.messageService.messageObserver.subscribe(
+      (message) => {
+        const messages = Array.isArray(message) ? message : [message];
+        this.liveAnnouncement = messages
+          .map((item) => this.toAnnouncementText(item))
+          .filter(Boolean)
+          .join('. ');
+      },
+    );
+
+    this.destroyRef.onDestroy(() => subscription.unsubscribe());
+  }
+
+  /**
+   * Convierte un mensaje visual de PrimeNG en texto claro para tecnología asistiva.
+   * @param message - Toast emitido por MessageService.
+   */
+  private toAnnouncementText(message: Message): string {
+    return [message.summary, message.detail].filter(Boolean).join(': ');
+  }
+
+  /** Indica si una URL debe renderizarse sin shell administrativo. */
   private matchesNoLayout(url: string): boolean {
     return this.noLayoutRoutes.some((r) => url.startsWith(r));
   }

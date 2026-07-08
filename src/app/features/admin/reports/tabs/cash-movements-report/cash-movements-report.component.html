@@ -70,7 +70,27 @@
 
   @if (scope === "GENERAL") {
     @if (loadingGeneralReport) {
-      <app-loading-state />
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-3" data-cy="cash-movements-general-skeleton">
+        @for (_ of [1, 2, 3]; track _) {
+          <div class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4">
+            <p-skeleton width="60%" height="0.7rem" />
+            <p-skeleton width="40%" height="1.4rem" styleClass="mt-1" />
+          </div>
+        }
+      </div>
+      <div class="overflow-hidden rounded-xl border border-[var(--ff-border)]">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="flex items-center gap-4 border-b border-[var(--ff-border)] px-4 py-3 last:border-0">
+            <p-skeleton width="6rem" height="0.9rem" />
+            <p-skeleton width="4rem" height="1.4rem" borderRadius="999px" />
+            <p-skeleton width="4rem" height="1.4rem" borderRadius="999px" />
+            <p-skeleton width="4rem" height="0.9rem" styleClass="ml-auto" />
+            <p-skeleton width="7rem" height="0.9rem" />
+            <p-skeleton width="5rem" height="0.9rem" />
+            <p-skeleton width="4rem" height="0.9rem" />
+          </div>
+        }
+      </div>
     } @else if (generalReportError) {
       <app-error-state [message]="generalReportError.message" />
     } @else if (generalReport) {
@@ -107,9 +127,9 @@
         </p>
       } @else {
         <div
-          class="overflow-x-auto rounded-xl border border-[var(--ff-border)]"
+          class="overflow-hidden rounded-xl border border-[var(--ff-border)]"
         >
-          <table class="w-full text-sm">
+          <table class="hidden w-full text-sm md:table" data-cy="cash-movements-general-table">
             <thead
               class="bg-[var(--ff-panel)] text-xs uppercase text-[var(--ff-text-secondary)]"
             >
@@ -155,11 +175,58 @@
               }
             </tbody>
           </table>
+
+          <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="cash-movements-general-mobile-list">
+            @for (row of generalReport.rows; track row.id) {
+              <article
+                class="rounded-2xl border border-[var(--ff-border)] bg-[var(--ff-panel)] p-4"
+                data-cy="cash-movements-general-mobile-card"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-[var(--ff-text-primary)]">
+                      {{ row.description || "—" }}
+                    </p>
+                    <p class="mt-0.5 text-xs text-[var(--ff-text-secondary)]">
+                      {{ formatDateTime(row.createdAt) }}
+                    </p>
+                  </div>
+                  <span
+                    class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                    [class]="directionBadgeClasses(row.direction)"
+                  >
+                    {{ row.direction === "IN" ? "Ingreso" : "Egreso" }}
+                  </span>
+                </div>
+
+                <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Tipo</dt>
+                    <dd class="mt-1 truncate font-semibold">{{ generalTypeLabel(row.movementType) }}</dd>
+                  </div>
+                  <div class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Monto</dt>
+                    <dd class="mt-1 font-mono font-semibold">{{ formatCurrency(row.amount) }}</dd>
+                  </div>
+                  <div class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3 col-span-2">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Beneficiario / Usuario</dt>
+                    <dd class="mt-1 truncate font-semibold">
+                      {{ row.beneficiaryName || "—" }} · {{ row.performedByName || "—" }}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            }
+          </div>
+          <ff-back-top-fab [itemCount]="generalReport.rows.length" dataCy="cash-movements-back-top-action" />
         </div>
       }
     }
   } @else if (loadingDays) {
-    <app-loading-state />
+    <div class="w-72" data-cy="business-days-skeleton">
+      <p-skeleton width="4rem" height="0.75rem" styleClass="mb-1" />
+      <p-skeleton width="100%" height="2.5rem" borderRadius="0.5rem" />
+    </div>
   } @else if (daysError) {
     <app-error-state [message]="daysError.message" />
   } @else if (businessDays.length === 0) {
@@ -201,7 +268,27 @@
 
   @if (selectedSessionId) {
     @if (loadingReport) {
-      <app-loading-state />
+      <div class="grid grid-cols-2 gap-3 lg:grid-cols-5" data-cy="cash-movements-session-skeleton">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="space-y-1 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4">
+            <p-skeleton width="70%" height="0.7rem" />
+            <p-skeleton width="55%" height="1.4rem" />
+          </div>
+        }
+      </div>
+      <div class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]">
+        @for (_ of [1, 2, 3, 4, 5]; track _) {
+          <div class="flex items-center gap-4 border-b border-[var(--ff-border-subtle)] px-5 py-3 last:border-0">
+            <p-skeleton width="6rem" height="0.9rem" />
+            <p-skeleton width="4rem" height="1.4rem" borderRadius="999px" />
+            <p-skeleton width="4rem" height="0.9rem" />
+            <p-skeleton width="4rem" height="0.9rem" styleClass="ml-auto" />
+            <p-skeleton width="7rem" height="0.9rem" />
+            <p-skeleton width="5rem" height="0.9rem" />
+            <p-skeleton width="4rem" height="0.9rem" />
+          </div>
+        }
+      </div>
     } @else if (reportError) {
       <app-error-state [message]="reportError.message" />
     } @else if (report) {
@@ -278,7 +365,7 @@
         <div
           class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
         >
-          <table class="w-full text-sm">
+          <table class="hidden w-full text-sm md:table" data-cy="cash-movements-session-table">
             <thead>
               <tr class="border-b border-[var(--ff-border-subtle)]">
                 <th
@@ -364,6 +451,55 @@
               }
             </tbody>
           </table>
+
+          <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="cash-movements-session-mobile-list">
+            @for (row of report.rows; track row.id) {
+              <article
+                class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+                data-cy="cash-movements-session-mobile-card"
+                (click)="openMovementDetail(row)"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-[var(--ff-text-primary)]">
+                      {{ row.description }}
+                    </p>
+                    <p class="mt-0.5 font-mono text-xs text-[var(--ff-text-secondary)]">
+                      {{ formatDateTime(row.occurredAt) }}
+                    </p>
+                  </div>
+                  <span
+                    class="shrink-0 text-[10px] uppercase tracking-widest px-2 py-1 rounded-md font-semibold {{
+                      typeBadgeClasses(row.type)
+                    }}"
+                  >
+                    {{ typeLabel(row.type) }}
+                  </span>
+                </div>
+
+                <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Método</dt>
+                    <dd class="mt-1 font-semibold">{{ methodLabel(row.paymentMethod) }}</dd>
+                  </div>
+                  <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Monto</dt>
+                    <dd class="mt-1 font-mono font-semibold text-blue-400">{{ formatCurrency(row.amount) }}</dd>
+                  </div>
+                </dl>
+
+                <button
+                  type="button"
+                  class="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-sm font-semibold text-cyan-200"
+                  data-cy="cash-movements-session-mobile-detail-action"
+                  (click)="$event.stopPropagation(); openMovementDetail(row)"
+                >
+                  Ver detalle
+                  <i class="pi pi-chevron-right text-xs"></i>
+                </button>
+              </article>
+            }
+          </div>
         </div>
       }
     }
@@ -378,15 +514,16 @@
   [draggable]="false"
   [resizable]="false"
   [style]="{ width: '720px', maxWidth: '95vw' }"
-  styleClass="!bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
+  styleClass="cash-mobile-dialog !bg-[var(--ff-panel)] !border !border-[var(--ff-border-subtle)]"
   contentStyleClass="!bg-[var(--ff-panel)] p-0 border-none"
 >
   @if (selectedMovement; as movement) {
     <section
-      class="overflow-hidden rounded-2xl bg-[var(--ff-panel)] text-[var(--ff-text-primary)]"
+      class="flex max-h-[88vh] flex-col overflow-hidden rounded-2xl bg-[var(--ff-panel)] text-[var(--ff-text-primary)]"
+      data-cy="cash-movement-detail-dialog"
     >
       <header
-        class="flex items-start justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
+        class="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--ff-border)] px-6 py-5"
       >
         <div>
           <p
@@ -405,14 +542,14 @@
         </div>
         <button
           type="button"
-          class="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ff-secondary)] text-[var(--ff-text-secondary)] transition hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
+          class="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--ff-secondary)] text-[var(--ff-text-secondary)] transition hover:bg-[var(--ff-surface-hover)] hover:text-[var(--ff-text-primary)]"
           (click)="closeMovementDetail()"
         >
           <i class="pi pi-times"></i>
         </button>
       </header>
 
-      <div class="space-y-4 px-6 py-5">
+      <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5" data-cy="cash-movement-detail-dialog-body">
         <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
           <div
             class="rounded-xl border border-[var(--ff-border)] bg-[var(--ff-bg)] p-3"

@@ -1,4 +1,4 @@
-// Contenido de la sección de Ayuda (Manual de Usuario finFlow v1.1, junio 2026).
+// Contenido de la sección de Ayuda (Manual de Usuario Productcred s.a.s. v1.1, junio 2026).
 // Texto-primero: se omiten las capturas de pantalla del documento original.
 // Es contenido estático versionado; no consulta backend.
 
@@ -13,7 +13,7 @@ export type HelpBlock =
   | { kind: 'list'; intro?: string; items: string[] }
   | { kind: 'table'; table: HelpTable }
   | { kind: 'note'; text: string }
-  | { kind: 'sub'; title: string; blocks: HelpBlock[] };
+  | { kind: 'sub'; id: string; title: string; blocks: HelpBlock[] };
 
 export interface HelpSection {
   id: string;
@@ -30,11 +30,11 @@ export const HELP_SECTIONS: HelpSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: 'Este manual tiene como objetivo guiar al usuario en el uso de finFlow, el Sistema de Créditos y Ventas, explicando paso a paso las funciones principales según el rol de cada usuario y cómo resolver los mensajes y errores más frecuentes.',
+        text: 'Este manual tiene como objetivo guiar al usuario en el uso de Productcred s.a.s., el Sistema de Créditos y Ventas, explicando paso a paso las funciones principales según el rol de cada usuario y cómo resolver los mensajes y errores más frecuentes.',
       },
       {
         kind: 'p',
-        text: 'finFlow permite administrar el ciclo completo de préstamos en efectivo y ventas financiadas en cuotas: alta de clientes, generación de operaciones, aprobación, gestión de cobranza en campo, control de caja y reportes. Cada usuario accede únicamente a las funciones que corresponden a su rol.',
+        text: 'Productcred s.a.s. permite administrar el ciclo completo de préstamos en efectivo y ventas financiadas en cuotas: alta de clientes, generación de operaciones, aprobación, gestión de cobranza en campo, control de caja y reportes. Cada usuario accede únicamente a las funciones que corresponden a su rol.',
       },
       {
         kind: 'list',
@@ -69,7 +69,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: 'finFlow trabaja con perfiles de acceso. Cada perfil ve un panel principal y un menú distinto. Antes de operar, identificá con qué rol vas a ingresar:',
+        text: 'Productcred s.a.s. trabaja con perfiles de acceso. Cada perfil ve un panel principal y un menú distinto. Antes de operar, identificá con qué rol vas a ingresar:',
       },
       {
         kind: 'table',
@@ -121,7 +121,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     blocks: [
       {
         kind: 'p',
-        text: 'Apenas iniciás sesión, finFlow muestra un panel principal distinto según tu perfil. Esta sección describe en detalle cada uno: qué información presenta, qué significa cada tarjeta y qué acciones podés realizar desde ahí.',
+        text: 'Apenas iniciás sesión, Productcred s.a.s. muestra un panel principal distinto según tu perfil. Esta sección describe en detalle cada uno: qué información presenta, qué significa cada tarjeta y qué acciones podés realizar desde ahí.',
       },
       {
         kind: 'list',
@@ -135,6 +135,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'panel-admin',
         title: '5.1 Panel del Administrador',
         blocks: [
           { kind: 'p', text: 'Es el panel más completo. Está pensado para tener, de un vistazo, el estado del negocio en el día y en el mes, los pendientes de aprobación y los accesos rápidos a las tareas más habituales.' },
@@ -200,6 +201,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'panel-vendedor',
         title: '5.2 Panel del Vendedor',
         blocks: [
           { kind: 'p', text: 'Al iniciar sesión, el vendedor ve directamente la pantalla de Operaciones, con el listado de las operaciones que cargó y su estado. Desde aquí gestiona todo su trabajo de venta.' },
@@ -236,6 +238,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'panel-cobrador',
         title: '5.3 Panel del Cobrador (Mi Ruta)',
         blocks: [
           { kind: 'p', text: 'El cobrador inicia en la pantalla “Mi Ruta”, pensada para usarse en el celular durante la cobranza en campo. Muestra las planillas asignadas para el día y un resumen de los últimos cobros.' },
@@ -263,6 +266,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'panel-vendedor-cobrador',
         title: '5.4 Panel del Vendedor-Cobrador',
         blocks: [
           { kind: 'p', text: 'Es un perfil combinado: reúne las funciones de Vendedor y de Cobrador. Al iniciar sesión muestra la pantalla de Operaciones (igual que el vendedor) y, en el menú lateral, suma las opciones de cobranza.' },
@@ -279,6 +283,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'portal-cliente',
         title: '5.5 Portal del Cliente',
         blocks: [
           { kind: 'p', text: 'El cliente accede a un portal de autogestión con el resumen de su cuenta. Es de solo consulta: el cliente no registra pagos, ya que los cobros los realiza el cobrador y los aprueba el negocio.' },
@@ -311,6 +316,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: 'p', text: 'Esta sección describe, paso a paso, las operaciones más habituales del sistema. Cada flujo indica el rol que lo realiza, los pasos a seguir y los mensajes que pueden aparecer.' },
       {
         kind: 'sub',
+        id: 'flujo-nuevo-cliente',
         title: '6.1 Registrar un nuevo cliente',
         blocks: [
           { kind: 'p', text: 'Objetivo: dar de alta un nuevo cliente en el sistema. Rol: Administrador o Vendedor.' },
@@ -339,6 +345,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'flujo-pre-venta',
         title: '6.2 Realizar una pre-venta',
         blocks: [
           { kind: 'p', text: 'Objetivo: registrar la venta financiada de un producto en cuotas. Rol: Vendedor (o Administrador).' },
@@ -368,6 +375,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'flujo-pre-prestamo',
         title: '6.3 Realizar un pre-préstamo',
         blocks: [
           { kind: 'p', text: 'Objetivo: dar de alta un nuevo préstamo en efectivo. Rol: Vendedor (o Administrador).' },
@@ -394,6 +402,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'flujo-aprobar',
         title: '6.4 Aprobar una pre-venta o un pre-préstamo',
         blocks: [
           { kind: 'p', text: 'Objetivo: revisar y aprobar (o rechazar) las operaciones cargadas por los vendedores. Rol: Administrador. El procedimiento es el mismo tanto para una pre-venta como para un pre-préstamo.' },
@@ -421,6 +430,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'flujo-productos',
         title: '6.5 Gestión de Productos',
         blocks: [
           { kind: 'h', text: '6.5.1 Crear un nuevo producto' },
@@ -455,6 +465,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'flujo-planillas',
         title: '6.6 Gestión de Planillas de cobro',
         blocks: [
           { kind: 'p', text: 'Objetivo: generar las planillas de cobro que usarán los cobradores. Rol: Administrador.' },
@@ -473,6 +484,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'flujo-usuarios',
         title: '6.7 Gestión de Usuarios',
         blocks: [
           { kind: 'h', text: '6.7.1 Crear un nuevo usuario' },
@@ -507,6 +519,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'flujo-cobros',
         title: '6.8 Gestión de Cobros',
         blocks: [
           { kind: 'h', text: '6.8.1 Registrar un pre-cobro (cobrador)' },
@@ -559,6 +572,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       },
       {
         kind: 'sub',
+        id: 'flujo-caja',
         title: '6.9 Gestión de Caja',
         blocks: [
           { kind: 'p', text: 'Objetivo: controlar los ingresos y egresos de dinero de la jornada. Rol: Administrador.' },
@@ -657,7 +671,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     id: 'consideraciones',
     title: '10. Consideraciones finales',
     blocks: [
-      { kind: 'p', text: 'El presente manual constituye una guía práctica para el uso correcto de finFlow, el Sistema de Créditos y Ventas, detallando los principales flujos de trabajo, los paneles de cada rol, los mensajes de alerta y los procedimientos de gestión.' },
+      { kind: 'p', text: 'El presente manual constituye una guía práctica para el uso correcto de Productcred s.a.s., el Sistema de Créditos y Ventas, detallando los principales flujos de trabajo, los paneles de cada rol, los mensajes de alerta y los procedimientos de gestión.' },
       { kind: 'p', text: 'El objetivo es que cada usuario pueda operar de manera eficiente, segura y confiable, reduciendo errores y optimizando los procesos de la empresa.' },
       { kind: 'p', text: 'Este documento debe utilizarse como referencia permanente y actualizarse en cada nueva versión del sistema. Con el compromiso de mejora continua, será revisado periódicamente para incorporar nuevas funcionalidades y garantizar información clara y actualizada.' },
     ],

@@ -1,4 +1,7 @@
-import { InterestRate } from '../../features/admin/config/models/interfaces/interest-rate.model';
+import {
+  InterestRate,
+  PaymentFrequency,
+} from '../../features/admin/config/models/interfaces/interest-rate.model';
 import { ProductRate } from '../../features/admin/config/models/interfaces/product';
 
 /**
@@ -39,20 +42,27 @@ export function calculateFinancedCapital(baseCapital: number, downPayment: numbe
 }
 
 /**
- * Busca la tasa de préstamo que corresponde al monto y las cuotas elegidas.
+ * Busca la tasa de préstamo que corresponde al monto, las cuotas y la frecuencia
+ * elegidas. La frecuencia es clave: el backend tiene tasas distintas por
+ * frecuencia para la misma cantidad de cuotas y monto, así que sin filtrarla la
+ * estimación local podía tomar la tasa de otra frecuencia (ej. semanal en vez de
+ * mensual) y mostrar montos que no coincidían con la simulación real.
  * @param {InterestRate[]} rates - Tasas de préstamo disponibles.
  * @param {number} installments - Cuotas seleccionadas.
  * @param {number} amount - Monto del préstamo.
+ * @param {PaymentFrequency} [frequency] - Frecuencia seleccionada. Si se omite, no filtra por frecuencia (compatibilidad).
  * @returns {number} Tasa encontrada, o 0 si no hay coincidencia.
  */
 export function findLoanInterestRate(
   rates: InterestRate[],
   installments: number,
   amount: number,
+  frequency?: PaymentFrequency,
 ): number {
   const match = rates.find(
     (r) =>
       r.installmentsCount === installments &&
+      (frequency == null || r.paymentFrequency === frequency) &&
       amount >= r.minAmount &&
       (r.maxAmount == null || amount <= r.maxAmount),
   );

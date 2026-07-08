@@ -1,4 +1,5 @@
 import { NgClass } from '@angular/common';
+import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -33,6 +34,7 @@ const FREQ_LABELS: Record<PaymentFrequency, string> = {
   selector: 'app-product-rates-config',
   standalone: true,
   imports: [
+    FfBackTopFabComponent,
     NgClass,
     FormsModule,
     ButtonModule,

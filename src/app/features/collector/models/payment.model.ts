@@ -28,6 +28,11 @@ export interface Payment {
   parentPaymentId: string | null;
   /** ID del payment de reversión que anuló este cobro (null si no fue revertido). */
   reversalPaymentId: string | null;
+  /**
+   * Concepto del movimiento clasificado por el backend (única fuente compartida
+   * con Caja y Reportes): p. ej. "Venta de contado", "Cobro de cuota", etc.
+   */
+  concepto: string;
 }
 
 export interface PaymentDetail extends Payment {
@@ -46,6 +51,9 @@ export interface PaymentListFilters {
   status?: PaymentStatus;
   collectorId?: string;
   installmentId?: string;
+  /** Filtro por fecha (YYYY-MM-DD) sobre approved_at, aplicado en el backend. */
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export interface PaymentCreatePayload {
@@ -143,6 +151,7 @@ export interface PaymentRaw {
   admin_direct: boolean;
   parent_payment_id: string | null;
   reversal_payment_id: string | null;
+  concepto: string;
 }
 
 export interface PaymentDetailRaw extends PaymentRaw {

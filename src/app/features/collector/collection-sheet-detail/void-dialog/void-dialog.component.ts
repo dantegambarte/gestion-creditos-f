@@ -42,13 +42,19 @@ export class VoidDialogComponent {
   }
 
   /**
-   * Confirma la anulación del intento del día.
+   * Confirma la anulación de la gestión del día.
+   *
+   * Se anula la gestión VIVA de hoy (`live.todayAttemptId`), NO el antecedente
+   * congelado en el snapshot (`antecedentId`), que corresponde al último intento
+   * previo a la generación de la planilla — normalmente de un día anterior y por
+   * lo tanto no anulable (el backend exige mismo día → 409).
    */
   confirmVoid(): void {
     if (this.processingVoid) return;
-    if (!this.item?.antecedentId) return;
+    const attemptId = this.item?.live?.todayAttemptId;
+    if (!attemptId) return;
     this.processingVoid = true;
-    this.attemptsService.void(this.item.antecedentId).subscribe({
+    this.attemptsService.void(attemptId).subscribe({
       next: () => {
         this.processingVoid = false;
         this.close();

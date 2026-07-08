@@ -1,5 +1,5 @@
-<div class="flex flex-col h-full">
-  <div class="px-6 pt-6">
+<div class="flex flex-col h-full" data-cy="admin-config-page">
+  <div class="px-4 pt-4 md:px-6 md:pt-6">
     <div class="ff-page-header mb-4">
       <div>
         <h1 class="ff-page-title">Configuración</h1>
@@ -9,7 +9,11 @@
   </div>
 
   <!-- Tab nav -->
-  <nav class="ff-tab-nav px-6 pt-4">
+  <nav
+    class="ff-tab-nav config-mobile-tabs px-4 pt-4 md:px-6"
+    appActiveTabScroller
+    data-cy="admin-config-tabs"
+  >
     @for (item of navItems; track item.path) {
       <a
         [routerLink]="item.path"
@@ -24,7 +28,7 @@
   </nav>
 
   <!-- Content -->
-  <div class="flex-1 overflow-y-auto p-6">
+  <div class="flex-1 overflow-y-auto p-4 md:p-6">
     <router-outlet />
   </div>
 </div>

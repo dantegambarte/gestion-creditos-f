@@ -1,5 +1,37 @@
 @if (loading) {
-  <app-loading-state message="Cargando cliente..." />
+  <div class="client-detail-wrapper" data-cy="shared-client-detail-skeleton">
+    <div class="client-header">
+      <div class="client-header-left">
+        <p-skeleton shape="circle" size="3rem" />
+        <div class="client-info">
+          <p-skeleton width="9rem" height="1.05rem" styleClass="mb-2" />
+          <p-skeleton width="14rem" height="0.78rem" />
+        </div>
+      </div>
+      <div class="client-stats">
+        @for (_ of [1, 2, 3]; track _) {
+          <div class="stat-item">
+            <p-skeleton width="4rem" height="1.15rem" styleClass="mb-1" />
+            <p-skeleton width="5.5rem" height="0.7rem" />
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="tabs-bar">
+      @for (_ of [1, 2, 3, 4]; track _) {
+        <div class="tab-btn">
+          <p-skeleton width="4.5rem" height="0.85rem" />
+        </div>
+      }
+    </div>
+
+    <div class="p-6 space-y-3">
+      @for (_ of [1, 2, 3, 4]; track _) {
+        <p-skeleton height="3.5rem" borderRadius="0.5rem" />
+      }
+    </div>
+  </div>
 } @else if (client) {
   <div class="client-detail-wrapper">
     <div class="client-header">

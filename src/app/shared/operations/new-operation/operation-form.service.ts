@@ -13,6 +13,7 @@ import { ProductRate } from '../../../features/admin/config/models/interfaces/pr
 import { InterestRatesService } from '../../../features/admin/config/services/interest-rates.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
 import {
+  CreditStatus,
   PaymentFrequency,
   SimulatePayload,
   SimulateResult,
@@ -81,6 +82,13 @@ export class OperationFormService {
     operationType: this.fb.control<'SALE' | 'LOAN' | null>(null, [
       Validators.required,
     ]),
+    // Condición de pago de la venta: financiada (cuotas) o contado (pago único).
+    paymentCondition: this.fb.control<'FINANCED' | 'CASH'>('FINANCED'),
+    // Pago de la venta de contado (solo aplica si paymentCondition === 'CASH').
+    cashSaleMethod: this.fb.control<'CASH' | 'TRANSFER' | 'MIXED' | null>('CASH'),
+    cashSaleCash: this.fb.control<number | null>(null, [Validators.min(0)]),
+    cashSaleTransfer: this.fb.control<number | null>(null, [Validators.min(0)]),
+    cashSaleTransferReference: this.fb.control<string | null>(null),
     totalAmount: this.fb.control<number | null>(null),
     initialPaymentType: this.fb.control<
       'NONE' | 'DOWN_PAYMENT' | 'ADVANCED_INSTALLMENTS'
@@ -175,6 +183,69 @@ export class OperationFormService {
     { label: 'Venta', value: 'SALE' as const },
     { label: 'Préstamo', value: 'LOAN' as const },
   ];
+
+  readonly cashPaymentMethodOptions = [
+    { label: 'Efectivo', value: 'CASH' as const },
+    { label: 'Transferencia', value: 'TRANSFER' as const },
+    { label: 'Mixto', value: 'MIXED' as const },
+  ];
+
+  /** Venta de contado: SALE con condición de pago CASH (sin financiación). */
+  get isCashSale(): boolean {
+    return (
+      this.operationForm.controls.operationType.value === 'SALE' &&
+      this.operationForm.controls.paymentCondition.value === 'CASH'
+    );
+  }
+
+  /**
+   * Cambia entre venta financiada y contado. En contado se relajan las
+   * validaciones de frecuencia (no hay cuotas) y se resetea el pago inicial.
+   * @param {'FINANCED' | 'CASH'} condition - Condición de pago elegida.
+   */
+  setPaymentCondition(condition: 'FINANCED' | 'CASH'): void {
+    this.resetSimulationResult();
+    this.operationForm.controls.paymentCondition.setValue(condition, {
+      emitEvent: false,
+    });
+    const freq = this.operationForm.controls.paymentFrequency;
+    this.operationForm.controls.cashSaleMethod.setValue('CASH');
+    this.operationForm.controls.cashSaleCash.setValue(null);
+    this.operationForm.controls.cashSaleTransfer.setValue(null);
+    this.operationForm.controls.cashSaleTransferReference.setValue(null);
+    if (condition === 'CASH') {
+      freq.clearValidators();
+      freq.setValue(null, { emitEvent: false });
+      this.operationForm.controls.initialPaymentType.setValue('NONE');
+      // En contado no hay primera cuota: volver al modo derivado (que deshabilita
+      // y excluye firstPaymentDate de la validación) por si venía personalizado.
+      this.operationForm.controls.firstPaymentDateMode.setValue('APPROVAL_DATE');
+      freq.updateValueAndValidity({ emitEvent: false });
+    } else {
+      freq.setValidators([Validators.required]);
+      freq.updateValueAndValidity({ emitEvent: false });
+      this.ensureValidFrequencySelection();
+    }
+  }
+
+  /**
+   * Valida que el pago de una venta de contado esté completo: hay total, método
+   * elegido y, si es mixto, el desglose cierra contra el total del carrito.
+   */
+  isCashPaymentValid(): boolean {
+    const total = this.totalCarrito();
+    if (total <= 0) return false;
+    const method = this.operationForm.controls.cashSaleMethod.value;
+    if (!method) return false;
+    if (method === 'MIXED') {
+      return this.isSplitMatchingTotal(
+        this.operationForm.controls.cashSaleCash.value,
+        this.operationForm.controls.cashSaleTransfer.value,
+        total,
+      );
+    }
+    return true;
+  }
 
   // ── Financial getters ─────────────────────────────────────────────────────
 
@@ -429,6 +500,8 @@ export class OperationFormService {
       return false;
     }
     if (step === 2) {
+      // Venta de contado: el paso de condiciones solo exige el pago del total.
+      if (this.isCashSale) return this.isCashPaymentValid();
       const isSale = this.operationForm.controls.operationType.value === 'SALE';
       const firstPaymentDateMode =
         this.operationForm.controls.firstPaymentDateMode.value;
@@ -656,6 +729,28 @@ export class OperationFormService {
   private _setupFormSubscriptions(): void {
     this.operationForm.controls.operationType.valueChanges.subscribe((type) => {
       this.resetSimulationResult();
+      // La condición de pago solo aplica a ventas; al cambiar de tipo se vuelve
+      // a FINANCED y se restauran las validaciones de frecuencia.
+      if (this.operationForm.controls.paymentCondition.value === 'CASH') {
+        this.operationForm.controls.paymentCondition.setValue('FINANCED', {
+          emitEvent: false,
+        });
+        this.operationForm.controls.cashSaleMethod.setValue('CASH', {
+          emitEvent: false,
+        });
+        this.operationForm.controls.cashSaleCash.setValue(null, {
+          emitEvent: false,
+        });
+        this.operationForm.controls.cashSaleTransfer.setValue(null, {
+          emitEvent: false,
+        });
+        this.operationForm.controls.cashSaleTransferReference.setValue(null, {
+          emitEvent: false,
+        });
+        this.operationForm.controls.paymentFrequency.setValidators([
+          Validators.required,
+        ]);
+      }
       const totalAmountControl = this.operationForm.controls.totalAmount;
       const installmentsControl = this.operationForm.controls.installmentsCount;
       if (type) this.setOperationType(type);
@@ -1355,7 +1450,11 @@ export class OperationFormService {
   }
 
   /**
-   * Calcula la primera cuota aplicando días corridos desde la aprobación.
+   * Calcula la primera cuota desde la aprobación según la frecuencia. MENSUAL
+   * avanza por MES CALENDARIO (mismo día del mes siguiente), igual que el
+   * backend (creditCalculator.addFrequencyPeriods). Antes usaba 30 días
+   * corridos, lo que desfasaba un día las cuotas mensuales respecto del
+   * cronograma real que genera el backend.
    * @param {Date} approvalDate - Fecha base de aprobación de la operación.
    * @param {'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'} frequency - Frecuencia elegida del plan.
    * @returns {Date} Primera fecha de vencimiento resultante.
@@ -1377,7 +1476,7 @@ export class OperationFormService {
       return dueDate;
     }
 
-    dueDate.setDate(dueDate.getDate() + 30);
+    dueDate.setMonth(dueDate.getMonth() + 1);
     return dueDate;
   }
 
@@ -1684,11 +1783,14 @@ export class OperationFormService {
     if (type === 'LOAN') {
       const installments =
         this.operationForm.controls.installmentsCount.value ?? 0;
+      const frequency =
+        this.operationForm.controls.paymentFrequency.value ?? undefined;
       this.dynamicRate.set(
         findLoanInterestRate(
           this.interestRates(),
           installments,
           this.prestamoTotal,
+          frequency,
         ),
       );
       return;
@@ -1756,9 +1858,9 @@ export class OperationFormService {
 
   /**
    * Construye el payload y lo envía al backend para aprobación.
-   * @returns {Observable<unknown>} respuesta del backend.
+   * @returns {Observable<{ id: string; status: CreditStatus }>} crédito creado.
    */
-  submit(): Observable<unknown> {
+  submit(): Observable<{ id: string; status: CreditStatus }> {
     const client = this.selectedClient();
     const type = this.operationForm.controls.operationType.value;
     const installmentsCount =
@@ -1793,8 +1895,38 @@ export class OperationFormService {
       ? this.toApiDate(firstPaymentDate)
       : undefined;
 
+    // Venta de contado: paga el total de una vez. No lleva cuotas, frecuencia,
+    // enganche ni adelantos; el split lo consume el backend al aprobar.
+    const cashMethod = this.operationForm.controls.cashSaleMethod.value;
+    const cashSalePayload =
+      type === 'SALE' && this.isCashSale
+        ? {
+            customerId: client!.id,
+            type,
+            paymentCondition: 'CASH' as const,
+            units: selectedUnits.map((p) => ({ unitId: p.id })),
+            paymentMethod: cashMethod,
+            paymentAmount:
+              cashMethod === 'MIXED' ? undefined : this.totalCarrito(),
+            paymentCash:
+              cashMethod === 'MIXED'
+                ? (this.operationForm.controls.cashSaleCash.value ?? 0)
+                : undefined,
+            paymentTransfer:
+              cashMethod === 'MIXED'
+                ? (this.operationForm.controls.cashSaleTransfer.value ?? 0)
+                : undefined,
+            transferReference:
+              cashMethod === 'CASH'
+                ? undefined
+                : (this.operationForm.controls.cashSaleTransferReference
+                    .value ?? undefined),
+          }
+        : null;
+
     const payload =
-      type === 'SALE'
+      cashSalePayload ??
+      (type === 'SALE'
         ? {
             customerId: client!.id,
             type,
@@ -1870,7 +2002,7 @@ export class OperationFormService {
             interestRate: this.interestRate,
             firstPaymentDate: firstPaymentDateApi,
             paymentFrequency: freq,
-          };
+          });
 
     this.submitting.set(true);
     return this.creditsService.create(payload as never);

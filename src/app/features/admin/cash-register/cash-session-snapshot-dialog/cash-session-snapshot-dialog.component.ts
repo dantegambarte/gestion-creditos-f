@@ -9,9 +9,9 @@ import {
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { SkeletonModule } from 'primeng/skeleton';
 import { finalize } from 'rxjs/operators';
 import { FormatService } from '../../../../core/services/format.service';
-import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { CashSessionSnapshot } from '../../models/cash-session.model';
 import { CashRegisterService } from '../cash-register.service';
 
@@ -23,7 +23,7 @@ import { CashRegisterService } from '../cash-register.service';
 @Component({
   selector: 'app-cash-session-snapshot-dialog',
   standalone: true,
-  imports: [ButtonModule, DialogModule, LoadingStateComponent],
+  imports: [ButtonModule, DialogModule, SkeletonModule],
   templateUrl: './cash-session-snapshot-dialog.component.html',
 })
 export class CashSessionSnapshotDialogComponent implements OnChanges {

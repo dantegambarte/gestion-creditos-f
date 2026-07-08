@@ -120,8 +120,124 @@
   border-bottom: 1px solid var(--ff-border);
 }
 
+.sheet-detail-search__input {
+  padding-left: 2.75rem !important;
+}
+
+.sheet-detail-search__clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--ff-text-secondary);
+  cursor: pointer;
+  transform: translateY(-50%);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sheet-detail-search__clear:hover {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--ff-text-primary);
+}
+
+.sheet-detail-search__clear .pi {
+  font-size: 11px;
+}
+
 .log-rejection-text {
   color: #e16d7f;
+}
+
+.sheet-detail-back-action {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.sheet-detail-title p:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-detail-subtitle {
+  margin-top: 0.125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 767.98px) {
+  :host {
+    width: 100%;
+  }
+
+  .sheet-detail-back-action {
+    width: auto;
+    height: auto;
+    border: 0 !important;
+    background: transparent !important;
+    padding: 0;
+    color: var(--ff-text-secondary) !important;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .sheet-detail-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.25rem 1rem 1rem !important;
+  }
+
+  .sheet-detail-title {
+    width: 100%;
+  }
+
+  .sheet-detail-title p:first-child {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    font-size: 1.15rem;
+    line-height: 1.25;
+  }
+
+  .sheet-detail-subtitle {
+    display: -webkit-box;
+    overflow: hidden;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 0.8rem;
+    line-height: 1.35;
+  }
+
+  .sheet-detail-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .row-client-main {
+    font-size: 0.9rem;
+    text-transform: none;
+  }
+
+  .row-client-sub {
+    font-size: 0.75rem;
+  }
+
+  .detail-status {
+    border-radius: 999px;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.68rem;
+  }
 }
 
 :host ::ng-deep .admin-detail-table.p-datatable .p-datatable-thead > tr > th {

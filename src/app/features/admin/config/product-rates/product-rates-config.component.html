@@ -34,7 +34,7 @@
       <div
         class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
       >
-        <table class="w-full text-sm">
+        <table class="hidden w-full text-sm md:table" data-cy="product-rates-table">
           <thead>
             <tr class="border-b border-[var(--ff-border-subtle)]">
               <th
@@ -134,13 +134,71 @@
             }
           </tbody>
         </table>
+
+        <div class="flex flex-col gap-4 p-3 md:hidden" data-cy="product-rates-mobile-list">
+          @if (groups.length === 0) {
+            <p class="py-6 text-center text-sm text-[var(--ff-text-muted)]">
+              Sin tasas para los filtros seleccionados.
+            </p>
+          }
+          @for (group of groups; track group.productId) {
+            <div>
+              <p class="mb-2 text-xs font-bold text-blue-400 uppercase tracking-widest">
+                {{ group.productName }}
+              </p>
+              <div class="flex flex-col gap-3">
+                @for (rate of group.rates; track rate.id) {
+                  <article
+                    class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
+                    data-cy="product-rates-mobile-card"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div>
+                        <p class="font-semibold text-[var(--ff-text-primary)]">
+                          {{ freqLabel(rate.paymentFrequency) }} · {{ rate.installmentsCount }} cuotas
+                        </p>
+                      </div>
+                      <p-tag
+                        class="shrink-0"
+                        [value]="rate.active ? 'Activa' : 'Inactiva'"
+                        [severity]="rate.active ? 'success' : 'secondary'"
+                      />
+                    </div>
+                    <p class="mt-3 text-lg font-bold text-emerald-400">
+                      {{ rateDisplay(rate.rate) }}
+                    </p>
+                    <div class="mt-3 flex gap-4">
+                      <button
+                        (click)="openEdit(rate)"
+                        class="py-3 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        (click)="confirmToggle(rate)"
+                        [class]="
+                          rate.active
+                            ? 'py-3 text-sm text-rose-400 hover:text-rose-300 transition-colors'
+                            : 'py-3 text-sm text-emerald-400 hover:text-emerald-300 transition-colors'
+                        "
+                      >
+                        {{ rate.active ? "Desactivar" : "Activar" }}
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        <ff-back-top-fab [itemCount]="groups.length" dataCy="product-rates-back-top-action" />
       </div>
     }
 
     <!-- Panel lateral: Nueva tasa por producto (flotante) -->
     @if (showCreateDialog) {
       <div
-        class="absolute top-0 right-0 w-[380px] border rounded-2xl p-5 space-y-4 shadow-2xl z-10"
+        class="static mt-4 w-full border rounded-2xl p-5 space-y-4 shadow-2xl z-10 md:absolute md:top-0 md:right-0 md:mt-0 md:w-[380px]"
         style="
           border-color: var(--ff-border);
           background: var(--ff-panel-raised);
@@ -247,7 +305,7 @@
   [(visible)]="showEditDialog"
   header="Editar Tasa"
   [modal]="true"
-  [style]="{ width: '22rem' }"
+  [style]="{ width: '22rem', maxWidth: '95vw' }"
   [closable]="!saving"
 >
   @if (editingRate) {
@@ -304,7 +362,7 @@
   [(visible)]="showConfirmDialog"
   header="Confirmar"
   [modal]="true"
-  [style]="{ width: '20rem' }"
+  [style]="{ width: '20rem', maxWidth: '95vw' }"
 >
   <p class="text-sm py-2">{{ confirmMessage }}</p>
   <ng-template pTemplate="footer">

@@ -14,7 +14,9 @@
       <div class="mt-3 flex flex-wrap gap-2">
         <span class="ff-badge">Total {{ rows.length }}</span>
         <span class="ff-badge ff-badge--activo">Activas {{ activeCount }}</span>
-        <span class="ff-badge ff-badge--inactivo">Inactivas {{ inactiveCount }}</span>
+        <span class="ff-badge ff-badge--inactivo"
+          >Inactivas {{ inactiveCount }}</span
+        >
         <span class="ff-badge" style="color: var(--ff-accent)">
           Con productos {{ withProductsCount }}
         </span>
@@ -26,6 +28,7 @@
         icon="pi pi-plus"
         severity="primary"
         styleClass="h-11 px-5 rounded-xl shadow-sm"
+        data-cy="product-brands-create-trigger"
         (onClick)="openCreate()"
       />
     }
@@ -33,7 +36,7 @@
 
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
     <!-- ── LEFT: table ── -->
-    <div [ngClass]="showDialog ? 'lg:col-span-7' : 'lg:col-span-12'">
+    <div class="lg:col-span-12">
       <div class="ff-panel overflow-hidden">
         @if (loading) {
           <div class="p-6 space-y-3">
@@ -48,7 +51,11 @@
             </p>
           </div>
         } @else {
-          <p-table [value]="rows" styleClass="p-datatable-sm">
+          <p-table
+            [value]="rows"
+            styleClass="hidden md:block p-datatable-sm"
+            data-cy="product-brands-table"
+          >
             <ng-template pTemplate="header">
               <tr>
                 <th>NOMBRE</th>
@@ -107,68 +114,184 @@
               </tr>
             </ng-template>
           </p-table>
+
+          <div
+            class="flex flex-col gap-3 p-3 md:hidden"
+            data-cy="product-brands-mobile-list"
+          >
+            @for (brand of rows; track brand.id) {
+              <article
+                class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+                [class.opacity-60]="!brand.active"
+                data-cy="product-brands-mobile-card"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-sm font-bold text-[var(--ff-text-primary)]">
+                      {{ brand.name }}
+                    </p>
+                    <p class="mt-1 text-xs text-[var(--ff-text-muted)]">
+                      Alta {{ brand.createdAt | date: "dd/MM/yyyy" }}
+                    </p>
+                  </div>
+                  <span
+                    class="ff-badge shrink-0"
+                    [class.ff-badge--activo]="brand.active"
+                    [class.ff-badge--inactivo]="!brand.active"
+                  >
+                    {{ brand.active ? "ACTIVA" : "INACTIVA" }}
+                  </span>
+                </div>
+                <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div
+                    class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3"
+                  >
+                    <dt class="text-xs text-[var(--ff-text-muted)]">
+                      Productos asociados
+                    </dt>
+                    <dd
+                      class="mt-1 font-mono text-lg font-bold text-[var(--ff-accent)]"
+                    >
+                      {{ brand.productCount }}
+                    </dd>
+                  </div>
+                  <div
+                    class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3"
+                  >
+                    <dt class="text-xs text-[var(--ff-text-muted)]">Estado</dt>
+                    <dd class="mt-1 font-semibold">
+                      {{ brand.active ? "Activa" : "Inactiva" }}
+                    </dd>
+                  </div>
+                </dl>
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    class="h-11 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-bold text-blue-200"
+                    (click)="openEdit(brand)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="h-11 rounded-xl border text-sm font-bold"
+                    [style.borderColor]="
+                      brand.active
+                        ? 'rgba(248,113,113,0.35)'
+                        : 'rgba(34,197,94,0.35)'
+                    "
+                    [style.color]="
+                      brand.active ? 'var(--ff-danger)' : 'var(--ff-success)'
+                    "
+                    (click)="toggle(brand)"
+                  >
+                    {{ brand.active ? "Desactivar" : "Activar" }}
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
         }
       </div>
+      <ff-back-top-fab [itemCount]="rows.length" dataCy="product-brands-back-top-action" />
     </div>
-
-    <!-- ── RIGHT: create form ── -->
-    @if (showDialog) {
-      <div class="lg:col-span-5 flex flex-col gap-4">
-        <!-- Nueva marca form -->
-        <div class="ff-panel p-5 space-y-4">
-          <div class="flex items-center justify-between gap-3">
-            <h3 class="font-bold text-sm" style="color: var(--ff-text-primary)">
-              Nueva marca
-            </h3>
-            <p-button
-              type="button"
-              icon="pi pi-times"
-              severity="secondary"
-              [text]="true"
-              [rounded]="true"
-              styleClass="h-9 w-9"
-              (onClick)="closeCreate()"
-            />
-          </div>
-          <div class="flex flex-col gap-1">
-          <label
-            class="text-xs font-bold uppercase tracking-wider"
-            style="color: var(--ff-text-muted)"
-          >
-            Nombre de la marca
-          </label>
-          <input
-            pInputText
-            [(ngModel)]="newName"
-            maxlength="100"
-            class="w-full h-11 !px-3"
-            placeholder="Ej: Samsung, Apple..."
-          />
-          <small class="text-xs" style="color: var(--ff-text-muted)"
-            >El nombre debe ser único.</small
-          >
-          </div>
-          @if (dialogError) {
-          <p
-            class="text-sm px-3 py-2 rounded-lg"
-            style="color: var(--ff-danger); background: rgba(239, 68, 68, 0.1)"
-          >
-            {{ dialogError }}
-          </p>
-          }
-          <p-button
-            label="Crear marca"
-            severity="primary"
-            styleClass="w-full justify-center h-11 rounded-xl"
-            [loading]="saving"
-            [disabled]="!newName.trim() || saving"
-            (onClick)="submitCreate()"
-          />
-        </div>
-      </div>
-    }
   </div>
 </div>
+
+<!-- Dialog: Nueva marca -->
+<p-dialog
+  [(visible)]="showDialog"
+  [modal]="true"
+  [showHeader]="false"
+  [closable]="false"
+  [draggable]="false"
+  [resizable]="false"
+  [focusTrap]="true"
+  [focusOnShow]="true"
+  [style]="{ width: '420px', maxWidth: '95vw' }"
+  styleClass="cash-mobile-dialog"
+  contentStyleClass="!p-0"
+>
+  <section
+    class="flex max-h-[88vh] flex-col overflow-hidden"
+    data-cy="product-brands-create-dialog"
+  >
+    <header
+      class="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--ff-border-subtle)] px-6 py-5"
+    >
+      <div>
+        <h2 class="text-lg font-bold text-[var(--ff-text-primary)]">
+          Nueva marca
+        </h2>
+        <p class="mt-1 text-sm text-[var(--ff-text-muted)]">
+          Agregá una marca al catálogo.
+        </p>
+      </div>
+      <button
+        type="button"
+        class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white disabled:opacity-50"
+        aria-label="Cerrar diálogo de nueva marca"
+        [disabled]="saving"
+        (click)="closeCreate()"
+      >
+        <i class="pi pi-times text-base"></i>
+      </button>
+    </header>
+    <div
+      class="flex-1 overflow-y-auto px-6 py-5"
+      data-cy="product-brands-create-dialog-body"
+    >
+      <div class="flex flex-col gap-1">
+        <label
+          for="product-brand-name"
+          class="text-xs font-bold uppercase tracking-wider text-[var(--ff-text-muted)]"
+          >Nombre de la marca</label
+        >
+        <input
+          id="product-brand-name"
+          pInputText
+          [(ngModel)]="newName"
+          maxlength="100"
+          class="w-full h-11 !px-3"
+          placeholder="Ej: Samsung, Apple..."
+          autofocus
+        />
+        <small class="text-xs text-[var(--ff-text-muted)]"
+          >El nombre debe ser único.</small
+        >
+      </div>
+      @if (dialogError) {
+        <p
+          class="mt-4 rounded-lg px-3 py-2 text-sm"
+          style="color: var(--ff-danger); background: rgba(239, 68, 68, 0.1)"
+        >
+          {{ dialogError }}
+        </p>
+      }
+    </div>
+    <footer
+      class="flex shrink-0 gap-3 border-t border-[var(--ff-border-subtle)] px-6 py-4"
+    >
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="h-11 flex-1 rounded-xl justify-center"
+        (onClick)="closeCreate()"
+        [disabled]="saving"
+      />
+      <p-button
+        label="Crear marca"
+        severity="primary"
+        styleClass="h-11 flex-1 rounded-xl justify-center"
+        data-cy="product-brands-create-submit"
+        [loading]="saving"
+        [disabled]="!newName.trim() || saving"
+        (onClick)="submitCreate()"
+      />
+    </footer>
+  </section>
+</p-dialog>
 
 <!-- Dialog: Editar marca -->
 <p-dialog
@@ -177,7 +300,10 @@
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
-  [style]="{ width: '380px' }"
+  [focusTrap]="true"
+  [focusOnShow]="true"
+  closeAriaLabel="Cerrar diálogo de edición de marca"
+  [style]="{ width: '380px', maxWidth: '95vw' }"
 >
   <div class="flex flex-col gap-4 py-2">
     <div class="flex flex-col gap-1">

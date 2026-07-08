@@ -4,6 +4,7 @@
   <!-- LEFT PANEL: lista -->
   <div
     class="collection-master-panel flex flex-col transition-all duration-300 overflow-hidden shrink-0 min-h-0"
+    [class.collection-master-panel--detail-open]="!!selectedSheetMeta"
     [class.ff-panel]="!selectedSheetMeta"
     [class.border-r]="!!selectedSheetMeta && !leftPanelCollapsed"
     [style.width]="
@@ -22,7 +23,8 @@
         label="Generar nueva planilla"
         icon="pi pi-plus"
         severity="primary"
-        styleClass="h-11 px-5 rounded-xl shadow-sm"
+        styleClass="h-11 w-full justify-center rounded-xl px-5 shadow-sm sm:w-auto"
+        data-cy="admin-collections-generate-action"
         (onClick)="openGenerateDialog()"
       />
     </div>
@@ -40,11 +42,11 @@
         [filter]="collectorOptions.length > 10"
         filterBy="label"
         [showClear]="!!filterCollectorId"
-        styleClass="w-44 h-11 text-sm"
-        appendTo="body"
-        (onChange)="applyFilters()"
-      />
-      <div class="relative">
+          styleClass="w-full h-11 text-sm md:w-44"
+          appendTo="body"
+          (onChange)="applyFilters()"
+        />
+      <div class="relative w-full md:w-auto">
         <p-calendar
           [(ngModel)]="filterDate"
           dataType="string"
@@ -52,8 +54,8 @@
           [showIcon]="true"
           iconDisplay="input"
           appendTo="body"
-          styleClass="w-44"
-          inputStyleClass="native-date-input h-11 pr-6"
+          styleClass="w-full md:w-44"
+          inputStyleClass="native-date-input h-11 w-full pr-6"
           (onSelect)="applyFilters()"
         />
         @if (filterDate) {
@@ -83,10 +85,10 @@
         [filter]="filterUsedOptions.length > 10"
         filterBy="label"
         [showClear]="!!filterUsed"
-        styleClass="w-52 h-11 text-sm"
-        appendTo="body"
-        (onChange)="applyFilters()"
-      />
+          styleClass="w-full h-11 text-sm md:w-52"
+          appendTo="body"
+          (onChange)="applyFilters()"
+        />
       <div
         class="collection-switch-row"
         (click)="
@@ -124,9 +126,36 @@
     <!-- Tabla -->
     <div class="flex-1 overflow-y-auto">
       @if (loading) {
-        <div class="p-4 space-y-2">
+        <div
+          class="hidden space-y-2 p-4 md:block"
+          data-cy="admin-collections-desktop-skeleton-list"
+        >
           @for (i of [1, 2, 3, 4, 5]; track i) {
             <p-skeleton height="2.5rem" />
+          }
+        </div>
+        <div
+          class="space-y-3 p-4 md:hidden"
+          data-cy="admin-collections-mobile-skeleton-list"
+        >
+          @for (i of [1, 2, 3]; track i) {
+            <article
+              class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4"
+              data-cy="admin-collections-mobile-skeleton-card"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0 flex-1 space-y-2">
+                  <p-skeleton height="1rem" width="70%" borderRadius="0.5rem" />
+                  <p-skeleton height="0.75rem" width="45%" borderRadius="0.5rem" />
+                </div>
+                <p-skeleton height="1.5rem" width="5rem" borderRadius="999px" />
+              </div>
+              <div class="mt-4 grid grid-cols-2 gap-3">
+                <p-skeleton height="2.5rem" borderRadius="0.625rem" />
+                <p-skeleton height="2.5rem" borderRadius="0.625rem" />
+              </div>
+              <p-skeleton styleClass="mt-4" height="2.5rem" borderRadius="0.75rem" />
+            </article>
           }
         </div>
       } @else if (error) {
@@ -134,6 +163,7 @@
       } @else if (sheets.length === 0) {
         <div
           class="collection-empty-state flex flex-col items-center justify-center h-40 gap-2"
+          data-cy="admin-collections-mobile-empty-state"
         >
           <i class="pi pi-inbox text-2xl"></i>
           <span class="text-sm">No hay planillas generadas.</span>
@@ -143,7 +173,8 @@
           [value]="visibleSheets"
           [paginator]="true"
           [rows]="20"
-          styleClass="p-datatable-sm p-datatable-hoverable-rows ff-data-table collection-table"
+          styleClass="hidden md:block p-datatable-sm p-datatable-hoverable-rows ff-data-table collection-table"
+          data-cy="admin-collections-table"
         >
           <ng-template pTemplate="header">
             <tr>
@@ -189,14 +220,63 @@
             </tr>
           </ng-template>
         </p-table>
+        <div
+          class="space-y-3 p-4 md:hidden"
+          data-cy="admin-collections-mobile-list"
+        >
+          @for (sheet of visibleSheets; track sheet.id) {
+            <article
+              class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.18)]"
+              data-cy="admin-collections-mobile-card"
+              (click)="selectSheet(sheet)"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-[var(--ff-text-primary)]">
+                    {{ sheet.collectorName }}
+                  </p>
+                  <p class="mt-1 text-xs text-[var(--ff-text-muted)]">
+                    {{ sheet.sheetDate | date: "dd/MM/yyyy" }}
+                  </p>
+                </div>
+                @if (sheet.status === "REGENERATED") {
+                  <span class="collection-regenerated-badge shrink-0 rounded-full px-2 py-1 text-[10px] font-bold uppercase">
+                    Regenerada
+                  </span>
+                }
+              </div>
+              <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Filtro</dt>
+                  <dd class="mt-1 font-semibold text-blue-200">{{ filterLabel(sheet.filterUsed) }}</dd>
+                </div>
+                <div class="rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-3">
+                  <dt class="text-xs text-[var(--ff-text-muted)]">Cuotas</dt>
+                  <dd class="mt-1 font-mono text-lg font-bold text-[var(--ff-text-primary)]">{{ sheet.totalItems }}</dd>
+                </div>
+              </dl>
+              <button
+                type="button"
+                class="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 text-sm font-semibold text-blue-200"
+                data-cy="admin-collections-mobile-view-action"
+                (click)="$event.stopPropagation(); selectSheet(sheet)"
+              >
+                Ver detalle
+                <i class="pi pi-chevron-right text-xs"></i>
+              </button>
+            </article>
+          }
+        </div>
       }
+    <ff-back-top-fab [itemCount]="visibleSheets.length" dataCy="admin-collections-back-top-action" />
     </div>
   </div>
 
   <!-- RIGHT PANEL: detalle -->
   @if (selectedSheetMeta) {
     <app-collection-sheet-detail-panel
-      class="flex-1 min-h-0 overflow-hidden"
+      class="collection-detail-panel flex-1 min-h-0 overflow-hidden"
+      data-cy="admin-collections-detail-panel"
       [sheetMeta]="selectedSheetMeta"
       [openTab]="openTabForPanel"
       [(collapsed)]="leftPanelCollapsed"

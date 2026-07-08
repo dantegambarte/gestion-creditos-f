@@ -1,37 +1,56 @@
 <p-dialog
   [(visible)]="visible"
-  header="Aplicar mora"
   [modal]="true"
-  [style]="{ width: '380px' }"
+  [showHeader]="false"
+  [closable]="false"
+  [style]="{ width: '380px', maxWidth: '95vw' }"
   [draggable]="false"
   [resizable]="false"
+  styleClass="cash-mobile-dialog"
+  contentStyleClass="!p-0"
   (onHide)="close()"
 >
-  <div class="flex flex-col gap-4 py-2">
-    <p class="text-sm" style="color: var(--ff-text-primary)">
-      Cliente: <strong>{{ row?.clientName }}</strong> · Cuota #{{
-        row?.installmentNumber
-      }}
-    </p>
-    <div class="flex flex-col gap-1">
-      <label class="auth-label">Monto de mora</label>
-      <input
-        type="number"
-        [(ngModel)]="applyAmount"
-        min="0.01"
-        step="0.01"
-        class="w-full rounded-xl p-3 text-sm outline-none"
-        style="
-          border: 1px solid var(--ff-border);
-          background: var(--ff-secondary);
-          color: var(--ff-text-primary);
-        "
-        placeholder="0.00"
-      />
+  <section class="flex max-h-[88vh] flex-col overflow-hidden" data-cy="delinquency-apply-dialog">
+    <header class="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--ff-border-subtle)] px-6 py-5">
+      <h2 class="text-lg font-bold" style="color: var(--ff-text-primary)">Aplicar mora</h2>
+      <button
+        type="button"
+        class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500 text-white"
+        data-cy="delinquency-apply-dialog-close"
+        (click)="close()"
+      >
+        <i class="pi pi-times text-base"></i>
+      </button>
+    </header>
+
+    <div class="flex-1 overflow-y-auto px-6 py-5" data-cy="delinquency-apply-dialog-body">
+      <div class="flex flex-col gap-4">
+        <p class="text-sm" style="color: var(--ff-text-primary)">
+          Cliente: <strong>{{ row?.clientName }}</strong> · Cuota #{{
+            row?.installmentNumber
+          }}
+        </p>
+        <div class="flex flex-col gap-1">
+          <label class="auth-label">Monto de mora</label>
+          <input
+            type="number"
+            [(ngModel)]="applyAmount"
+            min="0.01"
+            step="0.01"
+            class="w-full rounded-xl p-3 text-sm outline-none"
+            style="
+              border: 1px solid var(--ff-border);
+              background: var(--ff-secondary);
+              color: var(--ff-text-primary);
+              font-size: 16px;
+            "
+            placeholder="0.00"
+          />
+        </div>
+      </div>
     </div>
-  </div>
-  <ng-template pTemplate="footer">
-    <div class="grid grid-cols-2 gap-3 w-full">
+
+    <footer class="flex shrink-0 gap-3 border-t border-[var(--ff-border-subtle)] px-6 py-4">
       <p-button
         type="button"
         label="Cancelar"
@@ -44,10 +63,11 @@
         label="Aplicar"
         severity="warning"
         styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        data-cy="delinquency-apply-dialog-submit"
         (onClick)="confirmApply()"
         [loading]="loading"
         [disabled]="!applyAmount || applyAmount <= 0"
       />
-    </div>
-  </ng-template>
+    </footer>
+  </section>
 </p-dialog>
