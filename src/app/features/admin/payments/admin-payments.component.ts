@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
 import { MessageModule } from 'primeng/message';
@@ -36,6 +37,7 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
     DatePipe,
     FormsModule,
     ButtonModule,
+    CalendarModule,
     CardModule,
     TableModule,
     TagModule,
@@ -66,6 +68,13 @@ export class AdminPaymentsComponent implements OnInit {
 
   filterStatus: PaymentStatus | null = null;
   filterCollectorId: string | null = null;
+  // Rango de fechas: se aplica en el BACKEND (sobre approved_at) al recargar, no
+  // client-side, para no traer todo el historial de cobros.
+  filterDateFrom: Date | null = null;
+  filterDateTo: Date | null = null;
+
+  /** Concepto que marca una venta de contado (clasificado por el backend). */
+  private readonly CONCEPT_CASH_SALE = 'Venta de contado';
 
   showDetailDialog = false;
   selectedPaymentId: string | null = null;
@@ -157,6 +166,23 @@ export class AdminPaymentsComponent implements OnInit {
   }
 
   /**
+   * Etiqueta de la operación cobrada. Una venta de contado NO se muestra como
+   * "Cuota 1" (detalle de implementación): se muestra tal cual la clasificó el
+   * backend ("Venta de contado"). El resto conserva el número de cuota.
+   * @param p cobro
+   */
+  movementLabel(p: Payment): string {
+    return p.concepto === this.CONCEPT_CASH_SALE
+      ? p.concepto
+      : `Cuota ${p.installmentNumber}`;
+  }
+
+  /** Recarga desde el backend cuando cambia el rango de fechas. */
+  onDateFilterChange(): void {
+    this.load();
+  }
+
+  /**
    * Devuelve la etiqueta legible del método de pago.
    * @param method método de pago registrado en el cobro
    */
@@ -239,7 +265,16 @@ export class AdminPaymentsComponent implements OnInit {
   private load(): void {
     this.loading = true;
     this.error = null;
-    this.paymentsService.list().subscribe({
+    this.paymentsService
+      .list({
+        dateFrom: this.filterDateFrom
+          ? this.dateSvc.toLocalIso(this.filterDateFrom)
+          : undefined,
+        dateTo: this.filterDateTo
+          ? this.dateSvc.toLocalIso(this.filterDateTo)
+          : undefined,
+      })
+      .subscribe({
       next: (data) => {
         this.payments = data;
         this.loading = false;
