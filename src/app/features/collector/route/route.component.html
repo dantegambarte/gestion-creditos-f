@@ -18,14 +18,30 @@
       <ng-template pTemplate="header">
         <div class="route-card__header">
           <span>Planillas asignadas</span>
-          @if (!loadingSheets && !errorSheets) {
-            <span class="route-badge route-badge--primary">
-              {{ sheets.length }} planilla{{ sheets.length !== 1 ? "s" : "" }}
-            </span>
-          }
+          <div class="route-card__header-actions">
+            @if (!loadingSheets && !errorSheets) {
+              <span class="route-badge route-badge--primary">
+                {{ sheets.length }} planilla{{ sheets.length !== 1 ? "s" : "" }}
+              </span>
+            }
+            <button
+              type="button"
+              class="route-collapse-btn"
+              [attr.aria-expanded]="sheetsExpanded"
+              aria-label="Mostrar u ocultar planillas asignadas"
+              (click)="toggleSheets()"
+            >
+              <i
+                class="pi"
+                [class.pi-chevron-up]="sheetsExpanded"
+                [class.pi-chevron-down]="!sheetsExpanded"
+              ></i>
+            </button>
+          </div>
         </div>
       </ng-template>
 
+      @if (sheetsExpanded) {
       <div class="route-card-scroll">
         @if (loadingSheets) {
           <p-table [value]="[1, 2, 3]" styleClass="p-datatable-sm">
@@ -127,6 +143,7 @@
           <ff-back-top-fab [itemCount]="sheets.length" dataCy="collector-route-back-top-action" />
         }
       </div>
+      }
     </p-card>
 
     <p-card styleClass="route-card route-card--aside">
@@ -142,14 +159,30 @@
               Ver todos mis cobros →
             </button>
           </div>
-          @if (!loadingPayments) {
-            <span class="route-badge route-badge--warning">
-              {{ recentPayments.length }} cobros
-            </span>
-          }
+          <div class="route-card__header-actions">
+            @if (!loadingPayments) {
+              <span class="route-badge route-badge--warning">
+                {{ recentPayments.length }} cobros
+              </span>
+            }
+            <button
+              type="button"
+              class="route-collapse-btn"
+              [attr.aria-expanded]="recentPaymentsExpanded"
+              aria-label="Mostrar u ocultar cobros recientes"
+              (click)="toggleRecentPayments()"
+            >
+              <i
+                class="pi"
+                [class.pi-chevron-up]="recentPaymentsExpanded"
+                [class.pi-chevron-down]="!recentPaymentsExpanded"
+              ></i>
+            </button>
+          </div>
         </div>
       </ng-template>
 
+      @if (recentPaymentsExpanded) {
       <div class="payments-panel">
         @if (loadingPayments) {
           <p-table [value]="[1, 2, 3]" styleClass="p-datatable-sm">
@@ -196,6 +229,7 @@
           </div>
         }
       </div>
+      }
     </p-card>
   </div>
 </div>

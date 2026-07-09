@@ -110,11 +110,40 @@
           <button
             type="button"
             class="sheet-tab"
+            [class.sheet-tab--active]="activeTab === 'NO_OVERDUE'"
+            (click)="setTab('NO_OVERDUE')"
+          >
+            Sin mora ({{ noOverdueCount() }})
+          </button>
+          <button
+            type="button"
+            class="sheet-tab"
             [class.sheet-tab--active]="activeTab === 'PENDING_PAYMENT'"
             (click)="setTab('PENDING_PAYMENT')"
           >
-            Pendiente cobro ({{ pendingPaymentCount() }})
+            Pre-cargas pendientes ({{ pendingPaymentCount() }})
           </button>
+        </div>
+
+        <div class="sheet-search">
+          <input
+            type="text"
+            pInputText
+            class="sheet-search__input"
+            [(ngModel)]="searchTerm"
+            placeholder="Buscar cliente, DNI o teléfono..."
+            aria-label="Buscar cuotas de la planilla"
+          />
+          @if (searchTerm) {
+            <button
+              type="button"
+              class="sheet-search__clear"
+              aria-label="Limpiar búsqueda"
+              (click)="clearSearch()"
+            >
+              <i class="pi pi-times"></i>
+            </button>
+          }
         </div>
 
         <div class="sheet-table-scroll hidden md:block">
@@ -181,7 +210,7 @@
                           $event.stopPropagation(); openPaymentDialog(item)
                         "
                       >
-                        Cobrar
+                        Registrar cobro
                       </button>
                     } @else {
                       <span class="cell-sub">—</span>
@@ -194,6 +223,21 @@
         </div>
 
         <div class="sheet-mobile-list block md:hidden">
+          @if (filteredItems.length === 0) {
+            <div class="sheet-empty-state">
+              <i class="pi pi-inbox"></i>
+              <strong>
+                {{ searchTerm ? "Sin resultados" : "No hay cuotas en esta vista" }}
+              </strong>
+              <span>
+                @if (searchTerm) {
+                  Probá con otro nombre, DNI, teléfono o dirección.
+                } @else {
+                  Esta pestaña muestra pre-cargas pendientes de aprobación, no cuotas pendientes de cobrar.
+                }
+              </span>
+            </div>
+          }
           @for (item of filteredItems; track item.installmentId) {
             <article
               class="sheet-mobile-card"
@@ -252,7 +296,7 @@
                     +{{ displayPenalty(item) | currencyArs: 0 }} mora
                   </span>
                 }
-                @if (item.live?.hasPendingPayment) {
+                @if (hasPendingPaymentLive(item)) {
                   <span class="sheet-mobile-card__pending">
                     Pre-carga pendiente
                   </span>
@@ -266,7 +310,7 @@
                     class="action-btn action-btn--mobile"
                     (click)="$event.stopPropagation(); openPaymentDialog(item)"
                   >
-                    Cobrar
+                    Registrar cobro
                   </button>
                 } @else {
                   <button
@@ -284,7 +328,7 @@
         <ff-back-top-fab [itemCount]="filteredItems.length" dataCy="sheet-detail-collector-back-top-action" />
       </section>
 
-      @if (!sidePanelOpen) {
+      @if (!sidePanelOpen && selectedItem) {
         <button
           type="button"
           class="open-side-panel-btn"

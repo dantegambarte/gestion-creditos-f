@@ -52,6 +52,8 @@ export class RouteComponent implements OnInit {
   loadingSheets = true;
   loadingPayments = true;
   errorSheets: AppError | null = null;
+  sheetsExpanded = false;
+  recentPaymentsExpanded = false;
 
   today = new Date();
 
@@ -118,6 +120,16 @@ export class RouteComponent implements OnInit {
    */
   goToPayments(): void {
     this.router.navigate(['/collector/payments']);
+  }
+
+  /** Alterna la visibilidad de la sección de planillas asignadas. */
+  toggleSheets(): void {
+    this.sheetsExpanded = !this.sheetsExpanded;
+  }
+
+  /** Alterna la visibilidad de la sección de cobros recientes. */
+  toggleRecentPayments(): void {
+    this.recentPaymentsExpanded = !this.recentPaymentsExpanded;
   }
 
   /**
