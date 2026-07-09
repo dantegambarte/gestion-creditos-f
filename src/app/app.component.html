@@ -1,18 +1,18 @@
 <p-toast />
 <p-toast key="network-status" />
-<p-toast key="pwa-update">
+<p-toast key="pwa-update" styleClass="pwa-update-toast">
   <ng-template let-message pTemplate="message">
-    <div class="flex w-full flex-col gap-3">
-      <div class="font-semibold text-slate-900">
+    <div class="flex w-full flex-col gap-3 pwa-update-toast__body">
+      <div class="font-semibold text-[var(--ff-text-primary)]">
         {{ message.summary }}
       </div>
-      <div class="text-sm text-slate-700">
+      <div class="text-sm text-[var(--ff-text-secondary)]">
         {{ message.detail }}
       </div>
       @if (message.data?.actionLabel) {
         <button
           type="button"
-          class="h-11 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white"
+          class="h-11 rounded-xl bg-[var(--ff-accent)] px-4 text-sm font-semibold text-white"
           data-cy="pwa-update-reload"
           (click)="runToastAction(message)"
         >

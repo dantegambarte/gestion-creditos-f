@@ -612,6 +612,18 @@ p-iconfield .p-inputtext,
   color: var(--ff-text-secondary) !important;
 }
 
+.pwa-update-toast .p-toast-message {
+  max-height: none;
+}
+
+.pwa-update-toast .pwa-update-toast__body {
+  min-width: 0;
+}
+
+.pwa-update-toast [data-cy="pwa-update-reload"] {
+  width: 100%;
+}
+
 @media (max-width: 767.98px) {
   .p-toast {
     left: 0.75rem !important;
@@ -651,6 +663,10 @@ p-iconfield .p-inputtext,
 
   .p-toast .p-toast-icon-close {
     flex: 0 0 auto;
+  }
+
+  .pwa-update-toast .p-toast-message {
+    max-height: none;
   }
 }
 

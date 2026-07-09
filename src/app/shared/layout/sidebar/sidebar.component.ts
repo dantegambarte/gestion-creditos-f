@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AvatarModule } from 'primeng/avatar';
@@ -25,6 +25,7 @@ import { NAV_CONFIG } from '../../utils/nav-config';
 export class SidebarComponent {
   private auth = inject(AuthServiceBase);
   private router = inject(Router);
+  private el = inject(ElementRef);
 
   currentUser = toSignal(this.auth.currentUser$, { initialValue: null });
   mobileMenuOpen = signal(false);
@@ -93,8 +94,14 @@ export class SidebarComponent {
 
   /**
    * Cierra el menú mobile luego de navegar para liberar el viewport.
+   * Saca el foco del elemento activo antes de aplicar aria-hidden, evitando
+   * el warning de accesibilidad por foco retenido dentro de un ancestro oculto.
    */
   closeMobileMenu(): void {
+    const active = document.activeElement as HTMLElement | null;
+    if (active && this.el.nativeElement.contains(active)) {
+      active.blur();
+    }
     this.mobileMenuOpen.set(false);
   }
 
