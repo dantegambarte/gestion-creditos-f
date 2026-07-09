@@ -1,7 +1,7 @@
 <p-toast />
 
-<div class="ff-page py-6 space-y-6">
-  <div class="flex items-center justify-between">
+<div class="ff-page py-4 md:py-6">
+  <div class="flex items-center justify-between gap-3">
     <div>
       <h1 class="text-2xl font-bold text-[var(--ff-text-primary)]">
         Mis comisiones
@@ -19,22 +19,32 @@
     />
   </div>
 
-  <p-card styleClass="shadow-sm block mb-8">
-    <div class="flex flex-wrap gap-3 mb-4 items-center">
-      <p-dropdown
-        [options]="statusOptions"
-        [(ngModel)]="filterStatus"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Todos los estados"
-        [filter]="statusOptions.length > 10"
-        filterBy="label"
-        [showClear]="!!filterStatus"
-        styleClass="w-56 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
-        appendTo="body"
-        (onChange)="onFilterChange()"
-      />
-    </div>
+  <div class="mt-3 flex flex-col gap-3 md:mt-4 md:gap-4">
+    <p-card styleClass="shadow-sm block [&_.p-card-content]:p-0">
+      <div class="mb-3">
+        <h2 class="text-base font-semibold text-[var(--ff-text-primary)]">
+          Detalle de comisiones
+        </h2>
+        <p class="text-xs text-[var(--ff-text-secondary)]">
+          Filtrá el estado y revisá cada comisión generada.
+        </p>
+      </div>
+
+      <div class="mb-3 flex flex-wrap items-center gap-3">
+        <p-dropdown
+          [options]="statusOptions"
+          [(ngModel)]="filterStatus"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Todos los estados"
+          [filter]="statusOptions.length > 10"
+          filterBy="label"
+          [showClear]="!!filterStatus"
+          styleClass="w-full sm:w-56 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
+          appendTo="body"
+          (onChange)="onFilterChange()"
+        />
+      </div>
 
     @if (loading) {
       <div class="admin-table-skeleton" data-cy="collector-commissions-skeleton">
@@ -54,7 +64,7 @@
     } @else if (error) {
       <app-error-state />
     } @else if (commissions.length === 0) {
-      <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+      <p class="py-6 text-center text-sm text-[var(--ff-text-muted)]">
         Sin comisiones registradas.
       </p>
     } @else {
@@ -132,17 +142,17 @@
         }
       </div>
     }
-  </p-card>
+    </p-card>
 
-  <p-card styleClass="shadow-sm block mt-8">
-    <div class="mb-4">
-      <h2 class="text-base font-semibold text-[var(--ff-text-primary)]">
-        Mis liquidaciones
-      </h2>
-      <p class="text-xs text-[var(--ff-text-secondary)]">
-        Pagos recibidos por tus comisiones acumuladas.
-      </p>
-    </div>
+    <p-card styleClass="shadow-sm block [&_.p-card-content]:p-0">
+      <div class="mb-3">
+        <h2 class="text-base font-semibold text-[var(--ff-text-primary)]">
+          Mis liquidaciones
+        </h2>
+        <p class="text-xs text-[var(--ff-text-secondary)]">
+          Pagos recibidos por tus comisiones acumuladas.
+        </p>
+      </div>
 
     @if (loadingLiquidations) {
       <div class="admin-table-skeleton" data-cy="collector-liquidations-skeleton">
@@ -158,7 +168,7 @@
         }
       </div>
     } @else if (liquidations.length === 0) {
-      <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
+      <p class="py-6 text-center text-sm text-[var(--ff-text-muted)]">
         Sin liquidaciones registradas.
       </p>
     } @else {
@@ -241,6 +251,7 @@
         }
       </div>
     }
-  </p-card>
+    </p-card>
+  </div>
   <ff-back-top-fab [itemCount]="commissions.length + liquidations.length" dataCy="collector-commissions-back-top-action" />
 </div>

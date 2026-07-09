@@ -13,6 +13,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { PasswordModule } from 'primeng/password';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
+import { PasswordTabSkipDirective } from '../../../shared/directives/password-tab-skip.directive';
 import { PortalAuthService } from '../auth/portal-auth.service';
 
 function passwordsMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -29,6 +30,7 @@ function passwordsMatchValidator(control: AbstractControl): ValidationErrors | n
     ReactiveFormsModule,
     ButtonModule,
     PasswordModule,
+    PasswordTabSkipDirective,
     IconFieldModule,
     InputIconModule,
   ],

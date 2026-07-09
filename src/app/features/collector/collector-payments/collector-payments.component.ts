@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
+import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
@@ -28,6 +29,7 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
     TableModule,
     TagModule,
     DropdownModule,
+    InputTextModule,
     SkeletonModule,
     TooltipModule,
     ErrorStateComponent,
@@ -43,6 +45,7 @@ export class CollectorPaymentsComponent implements OnInit {
   loading = true;
   error: AppError | null = null;
   filterStatus: PaymentStatus | null = null;
+  searchTerm = '';
 
   readonly STATUS_OPTIONS = [
     { label: 'Pendiente', value: 'PENDING' as PaymentStatus },
@@ -51,11 +54,15 @@ export class CollectorPaymentsComponent implements OnInit {
   ];
 
   /**
-   * Devuelve la lista de pagos filtrada por estado, según el valor seleccionado en `filterStatus`. Si no hay ningún filtro aplicado (`filterStatus` es null), devuelve la lista completa de pagos. De lo contrario, devuelve solo aquellos pagos cuyo estado coincide con el filtro seleccionado.
+   * Devuelve la lista de pagos filtrada por estado y texto libre.
    */
   get filteredPayments(): Payment[] {
-    if (!this.filterStatus) return this.payments;
-    return this.payments.filter((p) => p.status === this.filterStatus);
+    const query = this.searchTerm.trim().toLowerCase();
+    return this.payments.filter((p) => {
+      const matchesStatus = !this.filterStatus || p.status === this.filterStatus;
+      const matchesSearch = !query || this.paymentMatchesSearch(p, query);
+      return matchesStatus && matchesSearch;
+    });
   }
 
   ngOnInit(): void {
@@ -101,6 +108,43 @@ export class CollectorPaymentsComponent implements OnInit {
    */
   refresh(): void {
     this.load();
+  }
+
+  /**
+   * Limpia el texto de búsqueda para volver a mostrar los cobros del estado seleccionado.
+   */
+  clearSearch(): void {
+    this.searchTerm = '';
+  }
+
+  /**
+   * Indica si un cobro coincide con el texto ingresado por el usuario.
+   */
+  private paymentMatchesSearch(payment: Payment, query: string): boolean {
+    const values = [
+      payment.customerName,
+      payment.customerDni,
+      `cuota ${payment.installmentNumber}`,
+      String(payment.installmentNumber),
+      String(payment.amountReceived),
+      this.statusLabel(payment.status),
+      this.paymentMethodLabel(payment.paymentMethod),
+      payment.createdAt,
+    ];
+
+    return values.some((value) => value.toLowerCase().includes(query));
+  }
+
+  /**
+   * Devuelve la etiqueta del método de pago de un cobro.
+   */
+  paymentMethodLabel(method: Payment['paymentMethod']): string {
+    const map: Record<Payment['paymentMethod'], string> = {
+      CASH: 'Efectivo',
+      TRANSFER: 'Transferencia',
+      MIXED: 'Mixto',
+    };
+    return map[method];
   }
 
   /**

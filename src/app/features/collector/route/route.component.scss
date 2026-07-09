@@ -1,6 +1,7 @@
 .collector-route {
   width: 100%;
   box-sizing: border-box;
+  padding-top: 0.75rem;
   height: calc(100vh - 5.4rem);
   display: flex;
   flex-direction: column;
@@ -92,17 +93,44 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0.9rem;
+  gap: 1rem;
+  padding: 0.85rem 0.95rem;
   font-size: 0.86rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
+.route-card__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.route-collapse-btn {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  border: 1px solid #34405f;
+  border-radius: 0.45rem;
+  background: rgba(54, 70, 110, 0.28);
+  color: #a9b8e8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.route-collapse-btn:hover {
+  background: rgba(71, 91, 142, 0.38);
+  color: #dce5ff;
+}
+
 .route-card__header-main {
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
+  min-width: 0;
 }
 
 .route-header-link {
@@ -124,7 +152,10 @@
 
 .route-badge {
   border-radius: 0.35rem;
-  padding: 0.12rem 0.45rem;
+  min-height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.5rem;
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;

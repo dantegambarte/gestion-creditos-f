@@ -39,7 +39,30 @@
     <app-error-state />
   } @else {
     <p-card styleClass="shadow-sm">
-      <div class="flex gap-3 mb-4">
+      <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div class="relative w-full sm:max-w-sm">
+          <input
+            pInputText
+            type="text"
+            class="h-11 w-full rounded-xl pl-10 pr-10 text-sm"
+            placeholder="Buscar cliente, DNI o cuota..."
+            [(ngModel)]="searchTerm"
+            data-cy="collector-payments-search"
+          />
+          <i
+            class="pi pi-search pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--ff-text-muted)]"
+          ></i>
+          @if (searchTerm) {
+            <button
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ff-text-muted)] transition-colors hover:text-[var(--ff-text-primary)]"
+              aria-label="Limpiar búsqueda"
+              (click)="clearSearch()"
+            >
+              <i class="pi pi-times text-sm"></i>
+            </button>
+          }
+        </div>
         <p-dropdown
           [options]="STATUS_OPTIONS"
           [(ngModel)]="filterStatus"
@@ -49,14 +72,14 @@
           [filter]="STATUS_OPTIONS.length > 10"
           filterBy="label"
           [showClear]="!!filterStatus"
-          styleClass="w-56 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
+          styleClass="w-full sm:w-56 h-11 rounded-xl [&_.p-dropdown-label]:flex [&_.p-dropdown-label]:items-center [&_.p-dropdown-label]:py-0 [&_.p-dropdown-label]:leading-tight [&_.p-dropdown-label]:truncate"
           appendTo="body"
         />
       </div>
 
       @if (filteredPayments.length === 0) {
         <p class="py-8 text-center text-sm text-[var(--ff-text-muted)]">
-          Sin cobros registrados.
+          {{ searchTerm ? "No encontramos cobros para esa búsqueda." : "Sin cobros registrados." }}
         </p>
       } @else {
         <p-table
@@ -90,13 +113,7 @@
                 {{ p.amountReceived | currencyArs: 2 }}
               </td>
               <td>
-                {{
-                  p.paymentMethod === "CASH"
-                    ? "Efectivo"
-                    : p.paymentMethod === "TRANSFER"
-                      ? "Transferencia"
-                      : "Mixto"
-                }}
+                {{ paymentMethodLabel(p.paymentMethod) }}
               </td>
               <td class="text-center">
                 @if (p.status === "REJECTED" && p.rejectionReason) {
@@ -155,13 +172,7 @@
                 <span class="font-semibold text-blue-600">{{ p.amountReceived | currencyArs: 2 }}</span>
               </div>
               <p class="mt-1 text-xs text-[var(--ff-text-secondary)]">
-                {{
-                  p.paymentMethod === "CASH"
-                    ? "Efectivo"
-                    : p.paymentMethod === "TRANSFER"
-                      ? "Transferencia"
-                      : "Mixto"
-                }}
+                {{ paymentMethodLabel(p.paymentMethod) }}
                 · {{ p.createdAt | date: "dd/MM/yyyy HH:mm" }}
               </p>
             </article>
