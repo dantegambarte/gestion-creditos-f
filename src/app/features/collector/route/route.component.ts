@@ -127,9 +127,19 @@ export class RouteComponent implements OnInit {
     this.sheetsExpanded = !this.sheetsExpanded;
   }
 
+  /** Expande planillas al tocar la tarjeta cerrada sin contraerla por accidente. */
+  expandSheets(): void {
+    if (!this.sheetsExpanded) this.sheetsExpanded = true;
+  }
+
   /** Alterna la visibilidad de la sección de cobros recientes. */
   toggleRecentPayments(): void {
     this.recentPaymentsExpanded = !this.recentPaymentsExpanded;
+  }
+
+  /** Expande cobros recientes al tocar la tarjeta cerrada sin contraerla por accidente. */
+  expandRecentPayments(): void {
+    if (!this.recentPaymentsExpanded) this.recentPaymentsExpanded = true;
   }
 
   /**

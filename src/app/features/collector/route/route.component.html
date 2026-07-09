@@ -14,7 +14,10 @@
   </div>
 
   <div class="route-grid">
-    <p-card styleClass="route-card route-card--main">
+    <p-card
+      styleClass="route-card route-card--main"
+      (click)="expandSheets()"
+    >
       <ng-template pTemplate="header">
         <div class="route-card__header">
           <span>Planillas asignadas</span>
@@ -29,7 +32,7 @@
               class="route-collapse-btn"
               [attr.aria-expanded]="sheetsExpanded"
               aria-label="Mostrar u ocultar planillas asignadas"
-              (click)="toggleSheets()"
+              (click)="$event.stopPropagation(); toggleSheets()"
             >
               <i
                 class="pi"
@@ -103,7 +106,7 @@
                     severity="primary"
                     [outlined]="true"
                     styleClass="!h-7 !px-3 !rounded-md !text-xs !font-semibold"
-                    (onClick)="goToSheet(sheet)"
+                    (onClick)="$event.stopPropagation(); goToSheet(sheet)"
                   />
                 </td>
               </tr>
@@ -135,18 +138,26 @@
                   severity="primary"
                   [outlined]="true"
                   styleClass="mt-3 w-full !h-11 !rounded-md !text-xs !font-semibold"
-                  (onClick)="goToSheet(sheet)"
+                  (onClick)="$event.stopPropagation(); goToSheet(sheet)"
                 />
               </article>
             }
           </div>
-          <ff-back-top-fab [itemCount]="sheets.length" dataCy="collector-route-back-top-action" />
+          <ff-back-top-fab
+            [itemCount]="sheets.length"
+            [scrollThreshold]="240"
+            scrollContainerSelector=".route-card-scroll"
+            dataCy="collector-route-back-top-action"
+          />
         }
       </div>
       }
     </p-card>
 
-    <p-card styleClass="route-card route-card--aside">
+    <p-card
+      styleClass="route-card route-card--aside"
+      (click)="expandRecentPayments()"
+    >
       <ng-template pTemplate="header">
         <div class="route-card__header">
           <div class="route-card__header-main">
@@ -154,7 +165,7 @@
             <button
               type="button"
               class="route-header-link"
-              (click)="goToPayments()"
+              (click)="$event.stopPropagation(); goToPayments()"
             >
               Ver todos mis cobros →
             </button>
@@ -170,7 +181,7 @@
               class="route-collapse-btn"
               [attr.aria-expanded]="recentPaymentsExpanded"
               aria-label="Mostrar u ocultar cobros recientes"
-              (click)="toggleRecentPayments()"
+              (click)="$event.stopPropagation(); toggleRecentPayments()"
             >
               <i
                 class="pi"
@@ -227,6 +238,12 @@
               </div>
             }
           </div>
+          <ff-back-top-fab
+            [itemCount]="recentPayments.length"
+            [scrollThreshold]="240"
+            scrollContainerSelector=".payments-list"
+            dataCy="collector-route-payments-back-top-action"
+          />
         }
       </div>
       }

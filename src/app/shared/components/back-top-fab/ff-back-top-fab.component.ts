@@ -31,9 +31,11 @@ export class FfBackTopFabComponent implements AfterViewInit, OnDestroy {
   /** Selector CSS del contenedor de scroll. Por defecto usa .ff-shell__main. */
   @Input() scrollContainerSelector = '.ff-shell__main';
 
+  /** Distancia mínima de scroll antes de mostrar el botón. */
+  @Input() scrollThreshold = 520;
+
   private readonly cdr = inject(ChangeDetectorRef);
   private scrolledPast = false;
-  private readonly scrollThreshold = 520;
   private scrollContainer: HTMLElement | Window | null = null;
 
   get show(): boolean {
