@@ -34,7 +34,6 @@ describe('Mi Perfil', () => {
     cy.get('[data-cy="header-mi-perfil"]').click();
 
     cy.location('pathname').should('eq', '/profile');
-    cy.wait('@getProfile');
     cy.get('[data-cy="profile-page"]').should('be.visible');
   });
 
@@ -57,7 +56,6 @@ describe('Mi Perfil', () => {
     }).as('saveProfile');
 
     cy.loginAs('ADMIN', '/profile');
-    cy.wait('@getProfile');
 
     cy.get('[data-cy="profile-page"]').should('be.visible');
     cy.get('[data-cy="profile-name-input"]').clear().type('Carlos López Actualizado');
@@ -74,7 +72,6 @@ describe('Mi Perfil', () => {
   it('muestra el formulario de perfil en mobile', () => {
     cy.viewport(375, 667);
     cy.loginAs('ADMIN', '/profile');
-    cy.wait('@getProfile');
 
     cy.get('[data-cy="profile-page"]').should('be.visible');
     cy.get('[data-cy="profile-summary-card"]').should('be.visible');

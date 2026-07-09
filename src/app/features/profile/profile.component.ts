@@ -23,6 +23,7 @@ import { ApiHttpService } from '../../core/http/api-http.service';
 import { AppError } from '../../core/models/app-error';
 import { AuthUser } from '../../core/models/interface/auth-user';
 import { DateService } from '../../core/services/date.service';
+import { PasswordTabSkipDirective } from '../../shared/directives/password-tab-skip.directive';
 
 interface UserProfile {
   id: string;
@@ -60,6 +61,7 @@ function passwordMatchValidator(
     ButtonModule,
     InputTextModule,
     PasswordModule,
+    PasswordTabSkipDirective,
     SkeletonModule,
     TagModule,
     ToastModule,
@@ -109,6 +111,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.auth.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user) => {
       this.currentUser = user;
+      if (user && !this.profile) {
+        this.seedFromAuthUser(user);
+      }
     });
 
     this.passwordForm
@@ -117,8 +122,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.passwordForm.get('confirmPassword')?.updateValueAndValidity();
       });
-
-    this.loadProfile();
   }
 
   ngOnDestroy(): void {
@@ -267,6 +270,35 @@ export class ProfileComponent implements OnInit, OnDestroy {
   displayDate(value?: string | null): string {
     if (!value) return 'Sin registro';
     return this.dateService.display(new Date(value), "d 'de' MMMM, yyyy HH:mm");
+  }
+
+  /**
+   * Siembra la vista de perfil con los datos ya disponibles en sesión (de 'auth/me'),
+   * evitando un llamado redundante a 'users/me' al entrar a la pantalla.
+   */
+  private seedFromAuthUser(user: AuthUser): void {
+    this.profile = {
+      id: user.id,
+      full_name: user.full_name,
+      dni: user.dni ?? null,
+      email: user.email ?? null,
+      phone: user.phone ?? null,
+      address: user.address ?? null,
+      role: user.roles[0] ?? '',
+      status: user.status ?? 'ACTIVE',
+      is_temp_password: user.is_temp_password,
+      failed_attempts: 0,
+      locked_at: null,
+      last_login_at: user.last_login_at ?? null,
+      created_at: user.created_at ?? null,
+      updated_at: null,
+    };
+    this.personalForm.reset({
+      full_name: user.full_name,
+      email: user.email ?? '',
+      phone: user.phone ?? '',
+      address: user.address ?? '',
+    });
   }
 
   /**
