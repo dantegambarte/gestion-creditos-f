@@ -7,6 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
@@ -50,6 +51,7 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
     DatePipe,
     FormsModule,
     ButtonModule,
+    InputTextModule,
     TagModule,
     BadgeModule,
     ToastModule,
@@ -83,8 +85,11 @@ export class CollectionSheetDetailComponent implements OnInit {
   loading = true;
   error: AppError | null = null;
 
-  /** Tab activa del listado: todas, con mora, o con pre-carga pendiente. */
-  activeTab: 'ALL' | 'OVERDUE' | 'PENDING_PAYMENT' = 'ALL';
+  /** Tab activa del listado: todas, con mora, sin mora, o con pre-carga pendiente. */
+  activeTab: 'ALL' | 'OVERDUE' | 'NO_OVERDUE' | 'PENDING_PAYMENT' = 'ALL';
+
+  /** Texto ingresado para buscar dentro de las cuotas visibles. */
+  searchTerm = '';
 
   /** ID de la cuota cuyo refresh silencioso está en curso (spinner local). */
   processingItemId: string | null = null;
@@ -207,18 +212,17 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   /**
-   * True si la planilla es operable hoy. El backend adjunta la capa `live` solo
-   * a planillas ACTIVE del día; si es null, es un documento read-only (cerrada,
-   * regenerada o de otra fecha) y no se permite ninguna gestión.
+   * True si la planilla activa permite gestionar esta cuota. Usa el snapshot como
+   * fallback porque algunas respuestas ACTIVE llegan sin capa `live`.
    */
   isOperable(item: CollectionSheetItem): boolean {
-    return item.live !== null;
+    return this.sheet?.status === 'ACTIVE' && item.installmentStatus !== 'PAID';
   }
 
   /**
    * Reglas para "Cobrar":
-   *  - planilla operable hoy, cuota no saldada, no en procesamiento, sin
-   *    pre-carga viva pendiente.
+   *  - planilla operable, cuota no saldada, no en procesamiento, sin
+   *    pre-carga pendiente.
    *  - Mantenido habilitado incluso tras un intento del día: si el cliente
    *    aparece con plata después de marcar "no pagó/no encontrado", el cobrador
    *    debe poder registrar el cobro.
@@ -227,7 +231,7 @@ export class CollectionSheetDetailComponent implements OnInit {
     if (!this.isOperable(item)) return false;
     if (item.managementStatus === 'PAID') return false;
     if (this.isItemProcessing(item)) return false;
-    if (item.live!.hasPendingPayment) return false;
+    if (this.hasPendingPaymentLive(item)) return false;
     return true;
   }
 
@@ -342,8 +346,14 @@ export class CollectionSheetDetailComponent implements OnInit {
     this.sidePanelOpen = true;
   }
 
+  /** Abre el panel de cobro y desplaza la vista hasta el panel renderizado. */
   openSidePanel(): void {
     this.sidePanelOpen = true;
+    setTimeout(() => {
+      document
+        .querySelector('.sheet-side')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   closeSidePanel(): void {
@@ -370,9 +380,24 @@ export class CollectionSheetDetailComponent implements OnInit {
 
   /** Items visibles según la tab activa. */
   get filteredItems(): CollectionSheetItem[] {
+    const items = this.itemsByActiveTab();
+    const term = this.normalizeSearch(this.searchTerm);
+    if (!term) return items;
+    return items.filter((item) => this.itemMatchesSearch(item, term));
+  }
+
+  /** Limpia la búsqueda actual sin cambiar la tab activa. */
+  clearSearch(): void {
+    this.searchTerm = '';
+  }
+
+  /** Items visibles antes de aplicar texto de búsqueda. */
+  private itemsByActiveTab(): CollectionSheetItem[] {
     switch (this.activeTab) {
       case 'OVERDUE':
         return this.items.filter((i) => this.isOverdue(i));
+      case 'NO_OVERDUE':
+        return this.items.filter((i) => !this.isOverdue(i));
       case 'PENDING_PAYMENT':
         return this.items.filter((i) => this.hasPendingPaymentLive(i));
       default:
@@ -380,9 +405,46 @@ export class CollectionSheetDetailComponent implements OnInit {
     }
   }
 
+  /** Normaliza texto para búsquedas tolerantes a mayúsculas y acentos. */
+  private normalizeSearch(value: string | null | undefined): string {
+    return (value ?? '')
+      .toString()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  /** Evalúa si una cuota contiene el término buscado en sus datos principales. */
+  private itemMatchesSearch(item: CollectionSheetItem, term: string): boolean {
+    const searchable = [
+      item.orderNumber,
+      item.customerName,
+      item.customerDni,
+      item.customerPhone,
+      item.customerAddress,
+      item.collectionReference,
+      item.installmentNumber,
+      item.dueDate,
+      this.installmentLabel(item.installmentStatus),
+      this.availableBalance(item),
+    ]
+      .map((value) => this.normalizeSearch(String(value ?? '')))
+      .join(' ');
+    return searchable.includes(term);
+  }
+
   /** Cambia la tab activa del listado. */
-  setTab(tab: 'ALL' | 'OVERDUE' | 'PENDING_PAYMENT'): void {
+  setTab(tab: 'ALL' | 'OVERDUE' | 'NO_OVERDUE' | 'PENDING_PAYMENT'): void {
     this.activeTab = tab;
+    const firstVisible = this.filteredItems[0] ?? null;
+    const selectedStillVisible = this.filteredItems.some(
+      (item) => item.installmentId === this.selectedItem?.installmentId,
+    );
+    if (!selectedStillVisible) {
+      this.selectedItem = firstVisible;
+      this.sidePanelOpen = false;
+    }
   }
 
   /**
@@ -390,6 +452,11 @@ export class CollectionSheetDetailComponent implements OnInit {
    */
   overdueCount(): number {
     return this.items.filter((item) => this.isOverdue(item)).length;
+  }
+
+  /** Devuelve cuántas cuotas no tienen mora en la planilla. */
+  noOverdueCount(): number {
+    return this.items.filter((item) => !this.isOverdue(item)).length;
   }
 
   /**
