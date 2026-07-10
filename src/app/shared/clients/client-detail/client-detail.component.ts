@@ -12,6 +12,7 @@ import { CreditsService } from '../../../features/seller/operations/credits.serv
 import { AppRoutes } from '../../models/enums/routes.enum';
 import { ClientDetail } from '../../models/interface/client';
 import { Credit } from '../../models/interface/credit';
+import { FREQUENCY_LABELS } from '../../models/payment-frequency';
 import { ErrorStateComponent } from '../../states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../states/loading-state/loading-state.component';
 import { ClientContactarComponent } from './tabs/client-contactar/client-contactar.component';
@@ -84,7 +85,15 @@ function toUiCredit(c: ApiCredit): Credit | null {
     pendingBalance: c.totalAmount,
     currentInstallment: 1,
     totalInstallments: c.installmentsCount,
-    monthlyInstallment: 0,
+    // Las cuotas son uniformes: el valor por cuota es el plan contractual
+    // dividido por la cantidad. 0 si el plan aún no existe (sin aprobar).
+    installmentAmount:
+      c.totalToReturn != null && c.installmentsCount > 0
+        ? Math.round(c.totalToReturn / c.installmentsCount)
+        : 0,
+    installmentLabel: FREQUENCY_LABELS[c.paymentFrequency]
+      ? `Cuota ${FREQUENCY_LABELS[c.paymentFrequency]}`
+      : 'Cuota',
     nextDueDate: c.approvedAt ?? c.createdAt,
     rate:
       c.interestRate != null ? `${(c.interestRate * 100).toFixed(2)}%` : 'N/A',

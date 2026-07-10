@@ -6,7 +6,10 @@ export interface Credit {
   pendingBalance: number;
   currentInstallment: number;
   totalInstallments: number;
-  monthlyInstallment: number;
+  /** Valor de la cuota (todas son uniformes). 0 si el plan aún no existe. */
+  installmentAmount: number;
+  /** Etiqueta según la frecuencia real: "Cuota Diaria/Semanal/Quincenal/Mensual". */
+  installmentLabel: string;
   nextDueDate: string;
   rate: string;
   status: 'ACTIVE' | 'OVERDUE' | 'PAID';
