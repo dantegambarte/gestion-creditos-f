@@ -118,7 +118,7 @@ export class InterestRatesConfigComponent implements OnInit {
       return true;
     });
 
-    const order: PaymentFrequency[] = ['WEEKLY', 'BIWEEKLY', 'MONTHLY'];
+    const order: PaymentFrequency[] = ['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY'];
     return order
       .map((freq) => ({
         frequency: freq,
