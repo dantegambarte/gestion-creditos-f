@@ -20,6 +20,10 @@ import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { FormatService } from '../../../../../core/services/format.service';
 import { CurrencyAmountInputDirective } from '../../../../../shared/directives/currency-amount-input.directive';
 import {
+  FREQUENCY_OPTIONS,
+  PaymentFrequency,
+} from '../../../../../shared/models/payment-frequency';
+import {
   CreditDetail,
   RefinanceResult,
   SimulateResult,
@@ -50,15 +54,11 @@ export class RefinanceDialogComponent implements OnChanges {
   /** Emite cuando la refinanciación fue confirmada con éxito. El padre recarga. */
   @Output() refinanced = new EventEmitter<void>();
 
-  readonly FREQUENCY_OPTIONS = [
-    { label: 'Mensual', value: 'MONTHLY' },
-    { label: 'Quincenal', value: 'BIWEEKLY' },
-    { label: 'Semanal', value: 'WEEKLY' },
-  ];
+  readonly FREQUENCY_OPTIONS = FREQUENCY_OPTIONS;
 
   refinanceStep: 1 | 2 = 1;
   refinanceInstallmentsCount: number | null = null;
-  refinanceFrequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' = 'MONTHLY';
+  refinanceFrequency: PaymentFrequency = 'MONTHLY';
   refinanceReason = '';
   refinanceExtraCharges: number | null = null;
   refinanceNotes = '';

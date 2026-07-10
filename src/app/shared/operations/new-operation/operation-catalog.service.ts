@@ -4,6 +4,7 @@ import { ProductRatesService } from '../../../features/admin/config/services/pro
 import { ProductRate } from '../../../features/admin/config/models/interfaces/product';
 import { ProductUnitsService } from '../../../features/seller/products/product-units.service';
 import { ProductOperation } from '../../models/interface/product';
+import { PaymentFrequency } from '../../models/payment-frequency';
 
 export type CatalogProduct = {
   productoId: string;
@@ -31,7 +32,7 @@ export type CatalogVariant = {
 export type SaleInstallmentOption = {
   label: string;
   value: number;
-  frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY';
+  frequency: PaymentFrequency;
 };
 
 @Injectable()

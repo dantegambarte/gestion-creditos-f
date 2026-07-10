@@ -152,6 +152,7 @@ export class StepConfirmComponent {
    */
   get paymentFrequencyLabel(): string {
     const frequency = this.form?.controls['paymentFrequency']?.value;
+    if (frequency === 'DAILY') return 'Diaria';
     if (frequency === 'WEEKLY') return 'Semanal';
     if (frequency === 'BIWEEKLY') return 'Quincenal';
     if (frequency === 'MONTHLY') return 'Mensual';

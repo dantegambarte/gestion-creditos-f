@@ -14,7 +14,8 @@ export interface ProductBrandRaw {
   product_count?: number | string | null;
 }
 
-export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+import type { PaymentFrequency } from '../../../../../shared/models/payment-frequency';
+export type { PaymentFrequency };
 
 export interface ProductRate {
   id: string;
