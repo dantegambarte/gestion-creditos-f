@@ -20,6 +20,12 @@ import { ProductRate } from '../../../../../features/admin/config/models/interfa
 import { SimulateResult } from '../../../../../features/seller/models/credit.model';
 import { CurrencyAmountInputDirective } from '../../../../directives/currency-amount-input.directive';
 import {
+  FREQUENCY_LABELS,
+  FREQUENCY_OFFSET_LABELS,
+  FREQUENCY_OPTIONS,
+  PaymentFrequency,
+} from '../../../../models/payment-frequency';
+import {
   CartLine,
   FirstPaymentDateMode,
   SaleInstallmentOption,
@@ -60,18 +66,14 @@ export class StepConditionsComponent implements OnChanges {
 
   readonly allPaymentFrequencies: {
     label: string;
-    value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
-  }[] = [
-    { label: 'Semanal', value: 'WEEKLY' },
-    { label: 'Quincenal', value: 'BIWEEKLY' },
-    { label: 'Mensual', value: 'MONTHLY' },
-  ];
+    value: PaymentFrequency;
+  }[] = FREQUENCY_OPTIONS;
 
   @Input() form!: FormGroup;
   @Input() cartLines: CartLine[] = [];
   @Input() paymentFrequencyOptions: {
     label: string;
-    value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+    value: PaymentFrequency;
   }[] = [];
   @Input() installmentsOptions: {
     label: string;
@@ -184,14 +186,11 @@ export class StepConditionsComponent implements OnChanges {
    */
   getApprovalFrequencyHint(): string {
     const frequency = this.form.controls['paymentFrequency']?.value as
-      | 'WEEKLY'
-      | 'BIWEEKLY'
-      | 'MONTHLY'
+      | PaymentFrequency
       | null;
-    if (frequency === 'WEEKLY') return '+ 7 días';
-    if (frequency === 'BIWEEKLY') return '+ 14 días';
-    if (frequency === 'MONTHLY') return '+ 1 mes';
-    return 'según frecuencia';
+    return frequency
+      ? FREQUENCY_OFFSET_LABELS[frequency]
+      : 'según frecuencia';
   }
 
   /**
@@ -299,17 +298,17 @@ export class StepConditionsComponent implements OnChanges {
 
   /**
    * Indica si una frecuencia es la actualmente seleccionada en el formulario.
-   * @param {'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'} value - Frecuencia a comparar.
+   * @param {PaymentFrequency} value - Frecuencia a comparar.
    */
-  isFrequencySelected(value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'): boolean {
+  isFrequencySelected(value: PaymentFrequency): boolean {
     return this.form.controls['paymentFrequency']?.value === value;
   }
 
   /**
    * Actualiza la frecuencia de pago desde los botones premium del layout.
-   * @param {'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'} value - Frecuencia elegida por el usuario.
+   * @param {PaymentFrequency} value - Frecuencia elegida por el usuario.
    */
-  selectFrequency(value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'): void {
+  selectFrequency(value: PaymentFrequency): void {
     if (!this.isFrequencyAvailable(value)) return;
     this.form.controls['paymentFrequency']?.setValue(value);
     this.form.controls['paymentFrequency']?.markAsDirty();
@@ -318,9 +317,9 @@ export class StepConditionsComponent implements OnChanges {
 
   /**
    * Indica si una frecuencia está habilitada según las opciones actuales del negocio.
-   * @param {'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'} value - Frecuencia a validar.
+   * @param {PaymentFrequency} value - Frecuencia a validar.
    */
-  isFrequencyAvailable(value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'): boolean {
+  isFrequencyAvailable(value: PaymentFrequency): boolean {
     return this.paymentFrequencyOptions.some(
       (option) => option.value === value,
     );
@@ -334,11 +333,7 @@ export class StepConditionsComponent implements OnChanges {
     const selectedFrequency = this.form.controls['paymentFrequency']?.value as
       | string
       | null;
-    const formatFrequency = (f: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY') => {
-      if (f === 'MONTHLY') return 'Mensual';
-      if (f === 'BIWEEKLY') return 'Quincenal';
-      return 'Semanal';
-    };
+    const formatFrequency = (f: PaymentFrequency) => FREQUENCY_LABELS[f];
     const unique = new Map<string, SaleInstallmentOption>();
     for (const rate of line.rates.filter(
       (r) => !selectedFrequency || r.paymentFrequency === selectedFrequency,

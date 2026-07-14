@@ -1,4 +1,5 @@
-export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+import type { PaymentFrequency } from '../../../../../shared/models/payment-frequency';
+export type { PaymentFrequency };
 
 export interface InterestRate {
   id: string;

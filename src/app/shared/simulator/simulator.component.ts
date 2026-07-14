@@ -20,12 +20,14 @@ import { SimulateResult } from '../../features/seller/models/credit.model';
 import { CurrencyAmountInputDirective } from '../directives/currency-amount-input.directive';
 
 const FREQUENCY_LABELS: Record<string, string> = {
+  DAILY: 'Diaria',
   MONTHLY: 'Mensual',
   BIWEEKLY: 'Quincenal',
   WEEKLY: 'Semanal',
 };
 
 const FREQUENCY_ORDER: Record<string, number> = {
+  DAILY: -1,
   WEEKLY: 0,
   BIWEEKLY: 1,
   MONTHLY: 2,

@@ -376,6 +376,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
    */
   frequencyLabel(frequency: string): string {
     const map: Record<string, string> = {
+      DAILY: 'Diaria',
       WEEKLY: 'Semanal',
       BIWEEKLY: 'Quincenal',
       MONTHLY: 'Mensual',
@@ -390,6 +391,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
    */
   frequencyUnitLabel(frequency: string): string {
     const map: Record<string, string> = {
+      DAILY: 'día',
       WEEKLY: 'semana',
       BIWEEKLY: 'quincena',
       MONTHLY: 'mes',

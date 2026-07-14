@@ -165,6 +165,7 @@ export class OperationsComponent implements OnInit {
    * @returns {string} Etiqueta corta para la tabla.
    */
   getFrequencyShortLabel(frequency: Credit['paymentFrequency']): string {
+    if (frequency === 'DAILY') return 'Diar.';
     if (frequency === 'MONTHLY') return 'Mens.';
     if (frequency === 'BIWEEKLY') return 'Quinc.';
     return 'Sem.';

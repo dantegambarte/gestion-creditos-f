@@ -1,3 +1,5 @@
+import { PaymentFrequency } from '../../../shared/models/payment-frequency';
+
 export interface PortalCustomer {
   id: string;
   fullName: string;
@@ -51,7 +53,7 @@ export interface PortalCredit {
   totalToReturn: number;
   installmentsCount: number;
   installmentAmount: number | null;
-  paymentFrequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+  paymentFrequency: PaymentFrequency;
   status: 'ACTIVE' | 'SETTLED';
   createdAt: string;
   approvedAt: string | null;
