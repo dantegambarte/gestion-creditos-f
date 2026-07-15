@@ -84,9 +84,15 @@
   } @else if (error) {
     <app-error-state [message]="error.message" />
   } @else if (businessDays.length === 0) {
-    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
-      Sin jornadas para el período seleccionado.
-    </p>
+    <div
+      class="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-6 py-14 text-center"
+      data-cy="cash-sessions-empty-state"
+    >
+      <i class="pi pi-inbox text-2xl text-[var(--ff-text-muted)]"></i>
+      <p class="text-sm text-[var(--ff-text-muted)]">
+        Sin jornadas para el período seleccionado.
+      </p>
+    </div>
   } @else {
     <div
       class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
@@ -268,9 +274,15 @@
           {{ jornadaError()!.message }}
         </div>
       } @else if (jornadaSessions().length === 0) {
-        <p class="py-8 text-center text-sm text-[var(--ff-text-muted)]">
-          No hay cajas registradas en esta jornada.
-        </p>
+        <div
+          class="flex min-h-32 flex-col items-center justify-center gap-3 rounded-xl border border-[var(--ff-border-subtle)] px-6 py-10 text-center"
+          data-cy="cash-sessions-day-empty-state"
+        >
+          <i class="pi pi-inbox text-xl text-[var(--ff-text-muted)]"></i>
+          <p class="text-sm text-[var(--ff-text-muted)]">
+            No hay cajas registradas en esta jornada.
+          </p>
+        </div>
       } @else {
         <div class="space-y-3">
           @for (session of jornadaSessions(); track session.id) {

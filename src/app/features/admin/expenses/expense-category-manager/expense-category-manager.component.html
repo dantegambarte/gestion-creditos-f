@@ -25,9 +25,16 @@
       }
     </div>
   } @else if (catRows.length === 0) {
-    <p class="text-sm ff-text-secondary text-center py-4">
-      Sin categorías registradas.
-    </p>
+    <div
+      class="flex min-h-32 flex-col items-center justify-center gap-3 rounded-xl border px-4 py-10 text-center"
+      style="border-color: var(--ff-border-subtle)"
+      data-cy="expense-categories-empty-state"
+    >
+      <i class="pi pi-inbox text-xl text-[var(--ff-text-muted)]"></i>
+      <p class="text-sm text-[var(--ff-text-muted)]">
+        Sin categorías registradas.
+      </p>
+    </div>
   } @else {
     <div class="space-y-2 max-h-[58vh] overflow-y-auto pr-1">
       @for (cat of catRows; track cat.id) {

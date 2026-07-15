@@ -34,6 +34,17 @@
       <div
         class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
       >
+        @if (groups.length === 0) {
+          <div
+            class="flex min-h-40 flex-col items-center justify-center gap-3 px-6 py-14 text-center"
+            data-cy="product-rates-empty-state"
+          >
+            <i class="pi pi-inbox text-2xl text-[var(--ff-text-muted)]"></i>
+            <p class="text-sm text-[var(--ff-text-muted)]">
+              Sin tasas para los filtros seleccionados.
+            </p>
+          </div>
+        } @else {
         <table class="hidden w-full text-sm md:table" data-cy="product-rates-table">
           <thead>
             <tr class="border-b border-[var(--ff-border-subtle)]">
@@ -65,16 +76,6 @@
             </tr>
           </thead>
           <tbody>
-            @if (groups.length === 0) {
-              <tr>
-                <td
-                  colspan="5"
-                  class="px-5 py-10 text-center text-[var(--ff-text-muted)]"
-                >
-                  Sin tasas para los filtros seleccionados.
-                </td>
-              </tr>
-            }
             @for (group of groups; track group.productId) {
               <!-- Separador de producto -->
               <tr>
@@ -136,11 +137,6 @@
         </table>
 
         <div class="flex flex-col gap-4 p-3 md:hidden" data-cy="product-rates-mobile-list">
-          @if (groups.length === 0) {
-            <p class="py-6 text-center text-sm text-[var(--ff-text-muted)]">
-              Sin tasas para los filtros seleccionados.
-            </p>
-          }
           @for (group of groups; track group.productId) {
             <div>
               <p class="mb-2 text-xs font-bold text-blue-400 uppercase tracking-widest">
@@ -191,6 +187,7 @@
             </div>
           }
         </div>
+        }
         <ff-back-top-fab [itemCount]="groups.length" dataCy="product-rates-back-top-action" />
       </div>
     }
