@@ -74,6 +74,7 @@ export class ClientCreditsHistoryPanelComponent {
   creditFrequencyLabel(frequency: string | null | undefined): string {
     if (!frequency) return '—';
     const map: Record<string, string> = {
+      DAILY: 'Diaria',
       WEEKLY: 'Semanal',
       BIWEEKLY: 'Quincenal',
       MONTHLY: 'Mensual',

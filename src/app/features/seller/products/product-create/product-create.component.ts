@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
@@ -24,7 +25,7 @@ import { ProductsService } from '../products.service';
 @Component({
   selector: 'app-product-create',
   standalone: true,
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -165,7 +166,11 @@ export class ProductCreateComponent implements OnInit {
           });
           // Espera 1.5 s para que el usuario vea el toast antes de redirigir
           setTimeout(
-            () => this.router.navigate([`/${this.routePrefix}/products`, product.id]),
+            () =>
+              this.router.navigate([
+                `/${this.routePrefix}/products`,
+                product.id,
+              ]),
             1500,
           );
         },
@@ -184,7 +189,9 @@ export class ProductCreateComponent implements OnInit {
             this.messageService.add({
               severity: 'warn',
               summary: 'Datos inválidos',
-              detail: err.message || 'La categoría o marca seleccionada no es válida.',
+              detail:
+                err.message ||
+                'La categoría o marca seleccionada no es válida.',
             });
             return;
           }

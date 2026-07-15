@@ -10,6 +10,7 @@ import {
 import { Subject, finalize, takeUntil } from 'rxjs';
 
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../core/services/dedup-message.service';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -66,7 +67,7 @@ function passwordMatchValidator(
     TagModule,
     ToastModule,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './profile.component.html',
 })
 export class ProfileComponent implements OnInit, OnDestroy {
@@ -94,10 +95,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.personalForm = this.fb.group({
       full_name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.email]],
-      phone: [
-        '',
-        [Validators.pattern(/^[0-9+()\s-]{6,30}$/)],
-      ],
+      phone: ['', [Validators.pattern(/^[0-9+()\s-]{6,30}$/)]],
       address: ['', [Validators.maxLength(255)]],
     });
 

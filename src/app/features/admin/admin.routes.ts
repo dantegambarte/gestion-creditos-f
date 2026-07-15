@@ -169,19 +169,25 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () =>
       import('./reports/reports.component').then((c) => c.ReportsComponent),
   },
+  // Compatibilidad de URL: Configuración ya no duplica la gestión de usuarios.
+  // Las rutas antiguas bajo /config/users redirigen a la única pantalla real.
+  // Deben declararse ANTES de la ruta CONFIG (más específicas) y 'new' antes
+  // que ':id'.
+  {
+    path: `${AppRoutes.CONFIG}/users/new`,
+    redirectTo: AppRoutes.USERS_NEW,
+  },
+  {
+    path: `${AppRoutes.CONFIG}/users/:id`,
+    redirectTo: AppRoutes.USERS_DETAIL,
+  },
   {
     path: AppRoutes.CONFIG,
     loadComponent: () =>
       import('./config/config.component').then((c) => c.ConfigComponent),
     children: [
-      { path: '', redirectTo: 'company', pathMatch: 'full' },
-      {
-        path: 'company',
-        loadComponent: () =>
-          import('./config/company/company-config.component').then(
-            (c) => c.CompanyConfigComponent,
-          ),
-      },
+      { path: '', redirectTo: 'rates', pathMatch: 'full' },
+      { path: 'company', redirectTo: 'rates', pathMatch: 'full' },
       {
         path: 'rates',
         loadComponent: () =>
@@ -203,13 +209,7 @@ export const ADMIN_ROUTES: Routes = [
             (c) => c.SystemParamsConfigComponent,
           ),
       },
-      {
-        path: 'users',
-        loadComponent: () =>
-          import('./config/users/users-config.component').then(
-            (c) => c.UsersConfigComponent,
-          ),
-      },
+      { path: 'users', redirectTo: '/admin/users', pathMatch: 'full' },
       {
         path: 'notifications',
         loadComponent: () =>

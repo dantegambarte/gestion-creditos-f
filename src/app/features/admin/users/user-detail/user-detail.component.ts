@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -36,7 +37,10 @@ const ROLE_SEVERITY: Record<string, string> = {
 @Component({
   selector: 'app-user-detail',
   standalone: true,
-  providers: [MessageService, ConfirmationService],
+  providers: [
+    { provide: MessageService, useClass: DedupMessageService },
+    ConfirmationService,
+  ],
   imports: [
     CommonModule,
     ButtonModule,
@@ -86,6 +90,36 @@ export class UserDetailComponent implements OnInit {
   }
 
   /**
+   * Genera iniciales consistentes para el avatar del usuario.
+   * @param name Nombre completo del usuario.
+   */
+  initials(name: string): string {
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  /**
+   * Asigna un color estable al avatar según el nombre.
+   * @param name Nombre usado como semilla visual.
+   */
+  avatarColor(name: string): string {
+    const colors = [
+      'bg-blue-500',
+      'bg-purple-500',
+      'bg-green-500',
+      'bg-orange-500',
+      'bg-pink-500',
+      'bg-teal-500',
+    ];
+    return colors[name.charCodeAt(0) % colors.length];
+  }
+
+  /**
    * Obtiene el ID del usuario desde la ruta.
    */
   private get userId(): string {
@@ -101,9 +135,15 @@ export class UserDetailComponent implements OnInit {
   }
 
   /**
-   * Navega a la lista de usuarios.
+   * Navega a la lista de usuarios, o al origen indicado por returnTo
+   * (ej. Configuración → Usuarios).
    */
   goBack(): void {
+    const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+    if (returnTo === 'config-users') {
+      this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.CONFIG, 'users']);
+      return;
+    }
     this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS]);
   }
 

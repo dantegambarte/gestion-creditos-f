@@ -3,6 +3,7 @@ import { FfBackTopFabComponent } from './../../../../shared/components/back-top-
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -23,7 +24,10 @@ import { VariantFormPanelComponent } from './variant-form-panel/variant-form-pan
 @Component({
   selector: 'app-product-variants',
   standalone: true,
-  providers: [MessageService, ConfirmationService],
+  providers: [
+    { provide: MessageService, useClass: DedupMessageService },
+    ConfirmationService,
+  ],
   imports: [
     FfBackTopFabComponent,
     CommonModule,

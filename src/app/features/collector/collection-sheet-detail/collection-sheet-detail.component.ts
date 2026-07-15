@@ -5,6 +5,7 @@ import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../core/services/dedup-message.service';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -65,7 +66,7 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
     BackButtonComponent,
     ActiveTabScrollerDirective,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './collection-sheet-detail.component.html',
   styleUrl: './collection-sheet-detail.component.scss',
 })
@@ -110,7 +111,9 @@ export class CollectionSheetDetailComponent implements OnInit {
   showVoidDialog = false;
   voidDialogItem: CollectionSheetItem | null = null;
 
-  get todayIso(): string { return this.dateSvc.toLocalIso(new Date()); }
+  get todayIso(): string {
+    return this.dateSvc.toLocalIso(new Date());
+  }
 
   private get sheetId(): string {
     return this.route.snapshot.paramMap.get('sheetId')!;
@@ -203,7 +206,10 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   availableBalance(item: CollectionSheetItem): number {
-    return Math.max(0, this.displayAmountDue(item) - this.displayAmountPaid(item));
+    return Math.max(
+      0,
+      this.displayAmountDue(item) - this.displayAmountPaid(item),
+    );
   }
 
   /** True si una acción está en curso sobre esta cuota (refresh silencioso). */
@@ -264,7 +270,10 @@ export class CollectionSheetDetailComponent implements OnInit {
   canVoidTodayAttempt(item: CollectionSheetItem): boolean {
     const live = item.live;
     if (!live?.todayAttemptId) return false;
-    return live.todayAttemptType === 'NO_PAYMENT' || live.todayAttemptType === 'NOT_FOUND';
+    return (
+      live.todayAttemptType === 'NO_PAYMENT' ||
+      live.todayAttemptType === 'NOT_FOUND'
+    );
   }
 
   // ── Apertura de dialogs ──────────────────────────────────────────────────────

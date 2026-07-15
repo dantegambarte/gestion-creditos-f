@@ -48,35 +48,52 @@
   } @else if (user) {
     <!-- READ-ONLY VIEW -->
     @if (!editMode) {
-      <div class="ff-panel p-6 space-y-6">
-        <!-- Header -->
-        <div class="flex items-center justify-between flex-wrap gap-3">
-          <div class="flex items-center gap-3 flex-wrap">
-            <h2
-              data-cy="admin-user-detail-title"
-              class="text-xl font-semibold"
-              style="color: var(--ff-text-primary)"
+      <div class="ff-panel overflow-hidden">
+        <div class="flex flex-col gap-5 border-b p-5 md:flex-row md:items-start md:justify-between md:p-6" style="border-color: var(--ff-border-subtle)">
+          <div class="flex min-w-0 items-start gap-4">
+            <div
+              [class]="
+                'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-sm ' +
+                avatarColor(user.fullName)
+              "
             >
-              {{ user.fullName }}
-            </h2>
-            <p-tag
-              [value]="roleLabel(user.role)"
-              [severity]="roleSeverity(user.role)"
-            />
-            <span
-              class="ff-badge"
-              [class.ff-badge--activo]="user.status === 'ACTIVE'"
-              [class.ff-badge--inactivo]="user.status !== 'ACTIVE'"
-              >{{ user.status === "ACTIVE" ? "Activo" : "Inactivo" }}</span
-            >
+              {{ initials(user.fullName) }}
+            </div>
+            <div class="min-w-0">
+              <div class="mb-2 flex flex-wrap items-center gap-2">
+                <h2
+                  data-cy="admin-user-detail-title"
+                  class="truncate text-2xl font-semibold text-[var(--ff-text-primary)]"
+                >
+                  {{ user.fullName }}
+                </h2>
+                <p-tag
+                  [value]="roleLabel(user.role)"
+                  [severity]="roleSeverity(user.role)"
+                  styleClass="text-xs"
+                />
+                <p-tag
+                  [value]="user.status === 'ACTIVE' ? 'Activo' : 'Inactivo'"
+                  [severity]="user.status === 'ACTIVE' ? 'success' : 'secondary'"
+                  styleClass="text-xs"
+                />
+              </div>
+              <p class="text-sm text-[var(--ff-text-secondary)]">
+                {{ user.email || "Sin email registrado" }}
+              </p>
+              <p class="mt-1 font-mono text-xs text-[var(--ff-text-muted)]">
+                DNI {{ user.dni }}
+              </p>
+            </div>
           </div>
-          <div class="flex gap-2 flex-wrap">
+
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-end">
             <p-button
               data-cy="admin-user-detail-edit-action"
               label="Editar"
               icon="pi pi-pencil"
-              severity="secondary"
-              [outlined]="true"
+              severity="primary"
+              styleClass="w-full h-11 rounded-xl px-4 justify-center lg:w-auto"
               (onClick)="enterEditMode()"
             />
             @if (user.status === "ACTIVE") {
@@ -86,6 +103,7 @@
                 icon="pi pi-ban"
                 severity="danger"
                 [outlined]="true"
+                styleClass="w-full h-11 rounded-xl px-4 justify-center lg:w-auto"
                 (onClick)="confirmDeactivate()"
               />
             } @else {
@@ -93,8 +111,9 @@
                 data-cy="admin-user-detail-status-action"
                 label="Activar"
                 icon="pi pi-check-circle"
-                severity="secondary"
+                severity="primary"
                 [outlined]="true"
+                styleClass="w-full h-11 rounded-xl px-4 justify-center lg:w-auto"
                 (onClick)="confirmActivate()"
               />
             }
@@ -104,6 +123,7 @@
               icon="pi pi-refresh"
               severity="secondary"
               [outlined]="true"
+              styleClass="w-full h-11 rounded-xl px-4 justify-center lg:w-auto"
               (onClick)="confirmResetPassword()"
             />
             @if (user.lockedAt) {
@@ -112,70 +132,59 @@
                 icon="pi pi-lock-open"
                 severity="secondary"
                 [outlined]="true"
+                styleClass="w-full h-11 rounded-xl px-4 justify-center lg:w-auto"
                 (onClick)="confirmUnlock()"
               />
             }
           </div>
         </div>
 
-        <!-- Fields -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <span class="ud-label">DNI</span>
-            <p class="ud-value ff-mono">{{ user.dni }}</p>
+        <div class="grid gap-4 p-5 md:grid-cols-2 md:p-6 xl:grid-cols-4">
+          <div class="rounded-2xl border p-4" style="border-color: var(--ff-border-subtle); background: var(--ff-secondary)">
+            <span class="ud-label">Email</span>
+            <p class="ud-value truncate">{{ user.email || "—" }}</p>
           </div>
-          @if (user.email) {
-            <div>
-              <span class="ud-label">Email</span>
-              <p class="ud-value">{{ user.email }}</p>
-            </div>
-          }
-          @if (user.address) {
-            <div>
-              <span class="ud-label">Dirección</span>
-              <p class="ud-value">{{ user.address }}</p>
-            </div>
-          }
-          <div>
+          <div class="rounded-2xl border p-4" style="border-color: var(--ff-border-subtle); background: var(--ff-secondary)">
+            <span class="ud-label">Dirección</span>
+            <p class="ud-value truncate">{{ user.address || "—" }}</p>
+          </div>
+          <div class="rounded-2xl border p-4" style="border-color: var(--ff-border-subtle); background: var(--ff-secondary)">
             <span class="ud-label">Alta</span>
-            <p class="ud-value">
-              {{ user.createdAt | date: "dd/MM/yyyy HH:mm" }}
-            </p>
+            <p class="ud-value">{{ user.createdAt | date: "dd/MM/yyyy HH:mm" }}</p>
           </div>
-          <div>
+          <div class="rounded-2xl border p-4" style="border-color: var(--ff-border-subtle); background: var(--ff-secondary)">
             <span class="ud-label">Último acceso</span>
             <p class="ud-value">
-              {{
-                user.lastLoginAt
-                  ? (user.lastLoginAt | date: "dd/MM/yyyy HH:mm")
-                  : "—"
-              }}
+              {{ user.lastLoginAt ? (user.lastLoginAt | date: "dd/MM/yyyy HH:mm") : "Nunca" }}
             </p>
           </div>
         </div>
 
-        <!-- Status section -->
-        <div class="ud-section-divider space-y-2">
-          <h3 class="font-semibold" style="color: var(--ff-text-secondary)">
-            Estado de la cuenta
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        <div class="border-t p-5 md:p-6" style="border-color: var(--ff-border-subtle)">
+          <div class="mb-4 flex items-center gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600/20 text-blue-300">
+              <i class="pi pi-shield"></i>
+            </div>
             <div>
+              <h3 class="font-semibold text-[var(--ff-text-primary)]">Estado de la cuenta</h3>
+              <p class="text-xs text-[var(--ff-text-muted)]">Seguridad, bloqueo y acceso.</p>
+            </div>
+          </div>
+          <div class="grid gap-3 text-sm md:grid-cols-3">
+            <div class="rounded-2xl border p-4" style="border-color: var(--ff-border-subtle)">
               <span class="ud-label">Contraseña temporal</span>
               <p class="ud-value">{{ user.isTempPassword ? "Sí" : "No" }}</p>
             </div>
-            <div>
+            <div class="rounded-2xl border p-4" style="border-color: var(--ff-border-subtle)">
               <span class="ud-label">Intentos fallidos</span>
               <p class="ud-value">{{ user.failedAttempts }}</p>
             </div>
-            @if (user.lockedAt) {
-              <div>
-                <span class="ud-label">Bloqueado desde</span>
-                <p class="ud-value" style="color: var(--ff-danger)">
-                  {{ user.lockedAt | date: "dd/MM/yyyy HH:mm" }}
-                </p>
-              </div>
-            }
+            <div class="rounded-2xl border p-4" style="border-color: var(--ff-border-subtle)">
+              <span class="ud-label">Bloqueo</span>
+              <p class="ud-value" [style.color]="user.lockedAt ? 'var(--ff-danger)' : 'var(--ff-text-primary)'">
+                {{ user.lockedAt ? (user.lockedAt | date: "dd/MM/yyyy HH:mm") : "Sin bloqueo" }}
+              </p>
+            </div>
           </div>
         </div>
       </div>

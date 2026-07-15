@@ -19,7 +19,6 @@ export class ConfigComponent {
   private auth = inject(AuthServiceBase);
 
   navItems: NavItem[] = [
-    { label: 'General', icon: 'pi pi-building', path: 'company' },
     { label: 'Tasas de Interés', icon: 'pi pi-percentage', path: 'rates' },
     {
       label: 'Tasa por Producto',
@@ -32,7 +31,6 @@ export class ConfigComponent {
       path: 'system-params',
     },
     { label: 'Feriados', icon: 'pi pi-calendar-plus', path: 'holidays' },
-    { label: 'Usuarios', icon: 'pi pi-users', path: 'users' },
     { label: 'Notificaciones', icon: 'pi pi-bell', path: 'notifications' },
   ];
 

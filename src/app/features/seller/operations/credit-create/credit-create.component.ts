@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -19,6 +20,7 @@ import { AppError } from '../../../../core/models/app-error';
 import { HeaderService } from '../../../../core/services/header.service';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
+import { FREQUENCY_OPTIONS } from '../../../../shared/models/payment-frequency';
 import { CustomersService } from '../../clients/customers.service';
 import {
   CartUnit,
@@ -37,7 +39,7 @@ import { BackButtonComponent } from '../../../../shared/components/back-button/b
 @Component({
   selector: 'app-credit-create',
   standalone: true,
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -77,11 +79,7 @@ export class CreditCreateComponent implements OnInit {
 
   cart: CartUnit[] = [];
 
-  readonly frequencyOptions = [
-    { label: 'Semanal', value: 'WEEKLY' },
-    { label: 'Quincenal', value: 'BIWEEKLY' },
-    { label: 'Mensual', value: 'MONTHLY' },
-  ];
+  readonly frequencyOptions = FREQUENCY_OPTIONS;
 
   readonly paymentMethodOptions = [
     { label: 'Efectivo', value: 'CASH' },

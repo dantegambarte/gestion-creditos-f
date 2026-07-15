@@ -9,6 +9,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -69,7 +70,7 @@ type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
     ExpenseSidePanelComponent,
     FfBackTopFabComponent,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './cash-register.component.html',
   styleUrl: './cash-register.component.scss',
 })
@@ -214,7 +215,10 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     () => {
       const snap = this.sessionSnapshot();
       return snap
-        ? { cash: snap.conversions.cash_delta, transfer: snap.conversions.transfer_delta }
+        ? {
+            cash: snap.conversions.cash_delta,
+            transfer: snap.conversions.transfer_delta,
+          }
         : { cash: 0, transfer: 0 };
     },
   );

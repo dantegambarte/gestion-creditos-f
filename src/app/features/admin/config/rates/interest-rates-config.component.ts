@@ -3,6 +3,7 @@ import { FfBackTopFabComponent } from './../../../../shared/components/back-top-
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -22,12 +23,10 @@ import {
 } from '../models/interfaces/interest-rate.model';
 import { FormatService } from '../../../../core/services/format.service';
 import { InterestRatesService } from '../services/interest-rates.service';
-
-const FREQ_LABELS: Record<PaymentFrequency, string> = {
-  WEEKLY: 'Semanal',
-  BIWEEKLY: 'Quincenal',
-  MONTHLY: 'Mensual',
-};
+import {
+  FREQUENCY_LABELS as FREQ_LABELS,
+  FREQUENCY_OPTIONS,
+} from '../../../../shared/models/payment-frequency';
 
 @Component({
   selector: 'app-interest-rates-config',
@@ -45,7 +44,7 @@ const FREQ_LABELS: Record<PaymentFrequency, string> = {
     TagModule,
     ToastModule,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './interest-rates-config.component.html',
 })
 export class InterestRatesConfigComponent implements OnInit {
@@ -62,9 +61,7 @@ export class InterestRatesConfigComponent implements OnInit {
 
   readonly freqOptions = [
     { label: 'Todas las frecuencias', value: null },
-    { label: 'Semanal', value: 'WEEKLY' as PaymentFrequency },
-    { label: 'Quincenal', value: 'BIWEEKLY' as PaymentFrequency },
-    { label: 'Mensual', value: 'MONTHLY' as PaymentFrequency },
+    ...FREQUENCY_OPTIONS,
   ];
 
   readonly activeOptions = [
@@ -122,7 +119,7 @@ export class InterestRatesConfigComponent implements OnInit {
       return true;
     });
 
-    const order: PaymentFrequency[] = ['WEEKLY', 'BIWEEKLY', 'MONTHLY'];
+    const order: PaymentFrequency[] = ['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY'];
     return order
       .map((freq) => ({
         frequency: freq,

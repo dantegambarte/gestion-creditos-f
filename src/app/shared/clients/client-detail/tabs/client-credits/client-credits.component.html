@@ -111,9 +111,9 @@
             </div>
           } @else {
             <div class="stat-cell">
-              <span class="cell-label">Cuota Mensual</span>
+              <span class="cell-label">{{ credit.installmentLabel }}</span>
               <span class="cell-value"
-                >${{ credit.monthlyInstallment.toLocaleString("es-AR") }}</span
+                >${{ credit.installmentAmount.toLocaleString("es-AR") }}</span
               >
             </div>
             <div class="stat-cell">

@@ -2,6 +2,22 @@ import { UserRole } from '../../../core/models/types/user-role';
 
 export type UserStatus = 'ACTIVE' | 'INACTIVE';
 
+/** Etiqueta visible por rol — única fuente para todos los listados de usuarios. */
+export const ROLE_LABEL: Record<string, string> = {
+  ADMIN: 'Administrador',
+  SELLER: 'Vendedor',
+  COLLECTOR: 'Cobrador',
+  SELLER_COLLECTOR: 'Vendedor/Cobrador',
+};
+
+/** Severidad visual del tag por rol (PrimeNG). */
+export const ROLE_SEVERITY: Record<string, string> = {
+  ADMIN: 'danger',
+  SELLER: 'info',
+  COLLECTOR: 'success',
+  SELLER_COLLECTOR: 'warning',
+};
+
 export interface User {
   id: string;
   fullName: string;

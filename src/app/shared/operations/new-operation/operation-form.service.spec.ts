@@ -237,4 +237,16 @@ describe('OperationFormService', () => {
     // Mes calendario (mismo día del mes siguiente), igual que el backend.
     expect(service.toApiDate(result)).toBe('2026-02-01');
   });
+
+  it('calcula la primera cuota diaria un día después de la aprobación (días corridos)', () => {
+    const approvalDate = new Date(2026, 0, 31);
+
+    const result = service.getFirstPaymentDateFromApprovalRule(
+      approvalDate,
+      'DAILY',
+    );
+
+    // +1 día corrido, cruzando fin de mes.
+    expect(service.toApiDate(result)).toBe('2026-02-01');
+  });
 });

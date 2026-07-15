@@ -28,10 +28,12 @@ export class StepConditionsSimulationPanelComponent {
    */
   getSelectedFrequencyLabel(): string {
     const frequency = this.form.controls['paymentFrequency']?.value as
+      | 'DAILY'
       | 'WEEKLY'
       | 'BIWEEKLY'
       | 'MONTHLY'
       | null;
+    if (frequency === 'DAILY') return 'Diaria';
     if (frequency === 'WEEKLY') return 'Semanal';
     if (frequency === 'BIWEEKLY') return 'Quincenal';
     if (frequency === 'MONTHLY') return 'Mensual';

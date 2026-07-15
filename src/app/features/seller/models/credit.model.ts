@@ -9,7 +9,8 @@ export type CreditStatus =
 export type CreditType = 'SALE' | 'LOAN';
 /** Condición de pago de una venta: financiada (cuotas) o contado (pago único). */
 export type PaymentCondition = 'FINANCED' | 'CASH';
-export type PaymentFrequency = 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+import type { PaymentFrequency } from '../../../shared/models/payment-frequency';
+export type { PaymentFrequency };
 export type IntakePaymentMethod = 'CASH' | 'TRANSFER' | 'MIXED';
 export type InstallmentStatus =
   | 'PENDING'

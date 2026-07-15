@@ -3,6 +3,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
@@ -61,7 +62,7 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
     CollectionAlertsDialogComponent,
     FfBackTopFabComponent,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './admin-collections.component.html',
   styleUrl: './admin-collections.component.scss',
 })
@@ -142,8 +143,13 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
         switchMap(() => {
           this.loading = true;
           this.error = null;
-          const filters: { collectorId?: string; date?: string; includeRegenerated?: boolean } = {};
-          if (this.filterCollectorId) filters.collectorId = this.filterCollectorId;
+          const filters: {
+            collectorId?: string;
+            date?: string;
+            includeRegenerated?: boolean;
+          } = {};
+          if (this.filterCollectorId)
+            filters.collectorId = this.filterCollectorId;
           if (this.filterDate) filters.date = this.filterDate;
           if (this.filterIncludeRegenerated) filters.includeRegenerated = true;
           return this.collectionsService.list(filters);
@@ -155,9 +161,15 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
           this.sheets = data;
           this.loading = false;
           if (this.pendingOpenSheetId) {
-            const sheetToOpen = data.find((s) => s.id === this.pendingOpenSheetId);
+            const sheetToOpen = data.find(
+              (s) => s.id === this.pendingOpenSheetId,
+            );
             this.pendingOpenSheetId = null;
-            this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: {},
+              replaceUrl: true,
+            });
             if (sheetToOpen) {
               this.openTabForPanel = this.pendingOpenTab;
               this.selectedSheetMeta = sheetToOpen;
@@ -246,7 +258,9 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
    */
   private resetShellScroll(): void {
     requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>('.ff-shell__main')?.scrollTo({ top: 0 });
+      document
+        .querySelector<HTMLElement>('.ff-shell__main')
+        ?.scrollTo({ top: 0 });
       window.scrollTo({ top: 0 });
     });
   }
@@ -332,6 +346,4 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
   private load(): void {
     this.load$.next();
   }
-
 }
-

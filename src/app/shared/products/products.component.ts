@@ -12,6 +12,7 @@ import { of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -51,7 +52,7 @@ function toProduct(p: ApiProduct): Product {
 @Component({
   selector: 'app-products',
   standalone: true,
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   imports: [
     CommonModule,
     FormsModule,
@@ -217,8 +218,15 @@ export class ProductsComponent implements OnInit {
     this.submitted = true;
     if (this.form.invalid) return;
 
-    const { codigo, categoria, descripcion, marca, modelo, precioVenta, stockInicial } =
-      this.form.value;
+    const {
+      codigo,
+      categoria,
+      descripcion,
+      marca,
+      modelo,
+      precioVenta,
+      stockInicial,
+    } = this.form.value;
     const nameParts = [codigo, marca, modelo].filter(Boolean);
     const name = nameParts.join(' ') || descripcion || codigo;
     const description = descripcion || name;

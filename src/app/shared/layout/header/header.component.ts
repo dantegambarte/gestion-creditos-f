@@ -1,5 +1,5 @@
 import { AsyncPipe, CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
@@ -24,7 +24,7 @@ import {
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
   today: string;
   recentNotifications: NotificationItem[] = [];
   loadingNotifications = false;
@@ -43,6 +43,10 @@ export class HeaderComponent implements OnInit {
 
   ngOnInit(): void {
     this.notifSvc.startPolling();
+  }
+
+  ngOnDestroy(): void {
+    this.notifSvc.stopPolling();
   }
 
   /** Se ejecuta al abrir el dropdown de la campana — fetch on-open de las últimas notificaciones. */

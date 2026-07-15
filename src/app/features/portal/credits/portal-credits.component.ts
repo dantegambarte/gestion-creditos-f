@@ -181,9 +181,11 @@ export class PortalCreditsComponent implements OnInit {
    */
   frequencyUnit(freq: PortalCredit['paymentFrequency']): string {
     switch (freq) {
+      case 'DAILY':     return 'día';
       case 'MONTHLY':   return 'mes';
       case 'WEEKLY':    return 'sem.';
       case 'BIWEEKLY':  return 'quincena';
+      default:          return '';
     }
   }
 
