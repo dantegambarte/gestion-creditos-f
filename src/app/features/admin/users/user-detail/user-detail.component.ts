@@ -90,6 +90,36 @@ export class UserDetailComponent implements OnInit {
   }
 
   /**
+   * Genera iniciales consistentes para el avatar del usuario.
+   * @param name Nombre completo del usuario.
+   */
+  initials(name: string): string {
+    return name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  /**
+   * Asigna un color estable al avatar según el nombre.
+   * @param name Nombre usado como semilla visual.
+   */
+  avatarColor(name: string): string {
+    const colors = [
+      'bg-blue-500',
+      'bg-purple-500',
+      'bg-green-500',
+      'bg-orange-500',
+      'bg-pink-500',
+      'bg-teal-500',
+    ];
+    return colors[name.charCodeAt(0) % colors.length];
+  }
+
+  /**
    * Obtiene el ID del usuario desde la ruta.
    */
   private get userId(): string {
