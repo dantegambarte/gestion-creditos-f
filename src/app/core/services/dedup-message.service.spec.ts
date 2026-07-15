@@ -6,9 +6,14 @@ describe('DedupMessageService', () => {
   let service: DedupMessageService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    // El servicio NO es providedIn:'root' (se provee por componente para
+    // reemplazar a MessageService), así que hay que registrarlo en el TestBed.
+    TestBed.configureTestingModule({ providers: [DedupMessageService] });
     service = TestBed.inject(DedupMessageService);
     jasmine.clock().install();
+    // El servicio usa Date.now(): sin mockDate(), tick() no avanza Date y el
+    // test de la ventana de dedupe compara contra la hora real.
+    jasmine.clock().mockDate();
   });
 
   afterEach(() => {
