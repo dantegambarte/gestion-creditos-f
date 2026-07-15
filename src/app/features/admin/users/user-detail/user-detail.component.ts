@@ -101,9 +101,15 @@ export class UserDetailComponent implements OnInit {
   }
 
   /**
-   * Navega a la lista de usuarios.
+   * Navega a la lista de usuarios, o al origen indicado por returnTo
+   * (ej. Configuración → Usuarios).
    */
   goBack(): void {
+    const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+    if (returnTo === 'config-users') {
+      this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.CONFIG, 'users']);
+      return;
+    }
     this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS]);
   }
 

@@ -169,6 +169,25 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () =>
       import('./reports/reports.component').then((c) => c.ReportsComponent),
   },
+  // Alias bajo /config del alta y detalle de usuario: mismas pantallas que
+  // /admin/users/... pero con URL dentro de Configuración, para que el menú
+  // lateral quede en "Configuración" cuando se llega desde Config → Usuarios.
+  // Deben declararse ANTES de la ruta CONFIG (más específicas) y 'new' antes
+  // que ':id'.
+  {
+    path: `${AppRoutes.CONFIG}/users/new`,
+    loadComponent: () =>
+      import('./users/user-create/user-create.component').then(
+        (c) => c.UserCreateComponent,
+      ),
+  },
+  {
+    path: `${AppRoutes.CONFIG}/users/:id`,
+    loadComponent: () =>
+      import('./users/user-detail/user-detail.component').then(
+        (c) => c.UserDetailComponent,
+      ),
+  },
   {
     path: AppRoutes.CONFIG,
     loadComponent: () =>
