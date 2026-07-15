@@ -8,13 +8,15 @@ import { AppRoutes } from '../../shared/models/enums/routes.enum';
 import { AuthServiceBase } from '../auth/auth-service.base';
 import { TokenRefreshService } from '../auth/token-refresh.service';
 import { TokenRefreshStateService } from '../auth/token-refresh-state.service';
+import { NotificationsService } from '../services/notifications.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const router        = inject(Router);
-  const auth          = inject(AuthServiceBase);
-  const tokenRefresh  = inject(TokenRefreshService);
-  const refreshState  = inject(TokenRefreshStateService);
+  const router = inject(Router);
+  const auth = inject(AuthServiceBase);
+  const tokenRefresh = inject(TokenRefreshService);
+  const refreshState = inject(TokenRefreshStateService);
   const messageService = inject(MessageService);
+  const notifSvc = inject(NotificationsService);
 
   return next(req).pipe(
     catchError((err) => {
@@ -22,12 +24,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => err);
       }
 
-      const isTokenExpired = err?.status === 401 && err?.error?.message === 'TOKEN_EXPIRED';
-      const isRefreshUrl   = req.url.includes('/auth/refresh');
+      const isTokenExpired =
+        err?.status === 401 && err?.error?.message === 'TOKEN_EXPIRED';
+      const isRefreshUrl = req.url.includes('/auth/refresh');
       // Detecta endpoints del portal del cliente buscando "/portal/" como segmento.
       // No usar includes('portal') porque hace match con acciones admin como
       // customers/{id}/enable-portal y dispara redirect a /portal/login.
-      const isPortal       = req.url.includes('/portal/');
+      const isPortal = req.url.includes('/portal/');
 
       // Token expirado → refresh automático + reintento de la request original
       if (isTokenExpired && !isRefreshUrl) {
@@ -43,19 +46,23 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             switchMap((newToken) => {
               refreshState.isRefreshing = false;
               refreshState.tokenSubject.next(newToken);
-              const tokenKey = isPortal ? environment.portalTokenKey : environment.tokenKey;
+              const tokenKey = isPortal
+                ? environment.portalTokenKey
+                : environment.tokenKey;
               if (typeof localStorage !== 'undefined') {
                 localStorage.setItem(tokenKey, newToken);
               }
               return next(
-                req.clone({ setHeaders: { Authorization: `Bearer ${newToken}` } }),
+                req.clone({
+                  setHeaders: { Authorization: `Bearer ${newToken}` },
+                }),
               );
             }),
             catchError((refreshErr) => {
               refreshState.isRefreshing = false;
               refreshState.tokenSubject.next(null);
               _showGlobalHttpError(messageService, refreshErr);
-              _redirectToLogin(router, auth, isPortal);
+              _redirectToLogin(router, auth, notifSvc, isPortal);
               return throwError(() => refreshErr);
             }),
           );
@@ -65,7 +72,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
             filter((t): t is string => t !== null),
             take(1),
             switchMap((newToken) =>
-              next(req.clone({ setHeaders: { Authorization: `Bearer ${newToken}` } })),
+              next(
+                req.clone({
+                  setHeaders: { Authorization: `Bearer ${newToken}` },
+                }),
+              ),
             ),
           );
         }
@@ -73,7 +84,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       if (err?.status === 401) {
         _showGlobalHttpError(messageService, err);
-        _redirectToLogin(router, auth, isPortal);
+        _redirectToLogin(router, auth, notifSvc, isPortal);
       }
 
       if (err?.status !== 401) {
@@ -82,7 +93,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       if (_shouldRedirectToChangePassword(err)) {
         // Redirigir solo cuando el backend indica explícitamente "contraseña temporal".
-        router.navigate([isPortal ? AppRoutes.PORTAL_CHANGE_PASSWORD : AppRoutes.CHANGE_PASSWORD]);
+        router.navigate([
+          isPortal
+            ? AppRoutes.PORTAL_CHANGE_PASSWORD
+            : AppRoutes.CHANGE_PASSWORD,
+        ]);
       }
 
       return throwError(() => err);
@@ -138,7 +153,12 @@ export function _httpErrorSummary(status: number | undefined): string | null {
   return null;
 }
 
-function _redirectToLogin(router: Router, auth: AuthServiceBase, isPortal: boolean): void {
+export function _redirectToLogin(
+  router: Router,
+  auth: AuthServiceBase,
+  notifSvc: NotificationsService,
+  isPortal: boolean,
+): void {
   if (isPortal) {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(environment.portalTokenKey);
@@ -146,6 +166,7 @@ function _redirectToLogin(router: Router, auth: AuthServiceBase, isPortal: boole
     }
     router.navigate([AppRoutes.PORTAL_LOGIN]);
   } else {
+    notifSvc.stopPolling();
     auth.clearSession();
     router.navigate([AppRoutes.LOGIN]);
   }
