@@ -3,6 +3,7 @@ import { FfBackTopFabComponent } from './../../../../shared/components/back-top-
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -22,7 +23,10 @@ import { ProductsService } from '../products.service';
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  providers: [MessageService, ConfirmationService],
+  providers: [
+    { provide: MessageService, useClass: DedupMessageService },
+    ConfirmationService,
+  ],
   imports: [
     FfBackTopFabComponent,
     CurrencyArsPipe,

@@ -3,6 +3,7 @@ import { FfBackTopFabComponent } from './../../../../shared/components/back-top-
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
@@ -33,7 +34,10 @@ import { ProductCategoriesService } from '../services/product-categories.service
     TagModule,
     ToastModule,
   ],
-  providers: [MessageService, ConfirmationService],
+  providers: [
+    { provide: MessageService, useClass: DedupMessageService },
+    ConfirmationService,
+  ],
   templateUrl: './product-categories-config.component.html',
 })
 export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {

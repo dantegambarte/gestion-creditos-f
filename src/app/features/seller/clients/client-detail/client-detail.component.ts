@@ -1,11 +1,8 @@
 import { CommonModule, Location } from '@angular/common';
-import {
-  Component,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TagModule } from 'primeng/tag';
@@ -29,7 +26,10 @@ import { ClientPortalPanelComponent } from './client-portal-panel/client-portal-
 @Component({
   selector: 'app-client-detail',
   standalone: true,
-  providers: [MessageService, ConfirmationService],
+  providers: [
+    { provide: MessageService, useClass: DedupMessageService },
+    ConfirmationService,
+  ],
   imports: [
     CommonModule,
     ButtonModule,

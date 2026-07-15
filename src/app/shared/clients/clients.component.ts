@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -82,7 +83,7 @@ function toClient(c: Customer): Client {
     ClientCreateDialogComponent,
     ClientEditDialogComponent,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './clients.component.html',
   styleUrl: './clients.component.scss',
 })

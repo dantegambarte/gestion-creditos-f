@@ -1,4 +1,10 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  ViewChild,
+} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -9,6 +15,7 @@ import {
 
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -43,7 +50,7 @@ import { UserRoleEnum } from './../../../core/models/types/user-role';
     InputIconModule,
     PasswordTabSkipDirective,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
@@ -184,7 +191,9 @@ export class LoginComponent implements OnDestroy, AfterViewInit {
     }
 
     const rememberMe = localStorage.getItem(this.REMEMBER_ME_KEY) === 'true';
-    const dni = rememberMe ? (localStorage.getItem(this.REMEMBERED_DNI_KEY) ?? '') : '';
+    const dni = rememberMe
+      ? (localStorage.getItem(this.REMEMBERED_DNI_KEY) ?? '')
+      : '';
     return { rememberMe, dni };
   }
 
