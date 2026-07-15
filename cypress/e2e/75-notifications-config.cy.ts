@@ -6,7 +6,14 @@
  *  - Repetido en mobile (375x667) por regla obligatoria del CLAUDE.md de frontend.
  */
 
-const BASE_PREFERENCES = [
+type PreferenceMock = {
+  type: string;
+  enabled: boolean;
+  frequency: 'INSTANT' | 'DAILY' | 'WEEKLY';
+  updated_at: string;
+};
+
+const BASE_PREFERENCES: PreferenceMock[] = [
   { type: 'MORA', enabled: true, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
   { type: 'INSTALLMENT_DUE', enabled: true, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
   { type: 'APPROVAL_REQUEST', enabled: true, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
@@ -14,7 +21,7 @@ const BASE_PREFERENCES = [
   { type: 'NEW_CUSTOMER', enabled: false, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
 ];
 
-const mockPreferences = (prefs: typeof BASE_PREFERENCES) => {
+const mockPreferences = (prefs: PreferenceMock[]) => {
   cy.intercept('GET', '**/api/notifications/preferences', {
     statusCode: 200,
     body: { ok: true, data: prefs },
@@ -46,34 +53,55 @@ describe('Admin — Configuración — Notificaciones (Desktop)', () => {
   });
 
   it('renderiza las 5 preferencias reales desde el backend', () => {
+    cy.get('[data-cy^="notif-setting-"]').should('have.length', 5);
     cy.get('[data-cy="notif-setting-MORA"]').should('be.visible');
     cy.get('[data-cy="notif-setting-NEW_CUSTOMER"]').scrollIntoView().should('be.visible');
+    cy.get('[data-cy="notif-save-btn"] button').should('be.disabled');
+  });
+
+  it('ignora preferencias desconocidas para evitar filas vacías', () => {
+    mockPreferences([
+      ...BASE_PREFERENCES,
+      {
+        type: 'UNKNOWN_LEGACY',
+        enabled: true,
+        frequency: 'INSTANT',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+    ]);
+
+    cy.reload();
+    cy.wait('@getPreferences');
+
+    cy.get('[data-cy^="notif-setting-"]').should('have.length', 5);
+    cy.get('[data-cy="notif-setting-UNKNOWN_LEGACY"]').should('not.exist');
   });
 
   it('guardar preferencias persiste y refleja al recargar', () => {
-    // Cypress usa el intercept MÁS RECIENTE cuando varios matchean la misma request:
-    // el genérico va PRIMERO para que el específico de NEW_CUSTOMER (registrado después) tenga prioridad.
-    cy.intercept('PUT', '**/api/notifications/preferences/*', {
-      statusCode: 200,
-      body: { ok: true, data: {}, message: 'Preferencia actualizada correctamente.' },
-    }).as('updateGeneric');
+    cy.intercept('PUT', '**/api/notifications/preferences/*', (req) => {
+      throw new Error(`No se esperaba PUT por tipo: ${req.url}`);
+    }).as('unexpectedSingleUpdate');
 
-    cy.intercept('PUT', '**/api/notifications/preferences/NEW_CUSTOMER', (req) => {
-      expect(req.body.enabled).to.equal(true);
+    cy.intercept('PATCH', '**/api/notifications/preferences', (req) => {
+      expect(req.body.preferences).to.deep.equal([
+        { type: 'NEW_CUSTOMER', enabled: true },
+      ]);
       req.reply({
         statusCode: 200,
         body: {
           ok: true,
-          data: { ...BASE_PREFERENCES[4], enabled: true },
-          message: 'Preferencia actualizada correctamente.',
+          data: [{ ...BASE_PREFERENCES[4], enabled: true }],
+          message: 'Preferencias actualizadas correctamente.',
         },
       });
-    }).as('updateNewCustomer');
+    }).as('updatePreferences');
 
     cy.get('[data-cy="notif-toggle-push-NEW_CUSTOMER"]').click();
+    cy.get('[data-cy="notif-save-btn"] button').should('not.be.disabled');
     cy.get('[data-cy="notif-save-btn"]').click();
 
-    cy.wait('@updateNewCustomer');
+    cy.wait('@updatePreferences');
+    cy.get('[data-cy="notif-save-btn"] button').should('be.disabled');
 
     // Recargar con preferencias ya persistidas (NEW_CUSTOMER ahora enabled=true).
     const updatedPrefs = BASE_PREFERENCES.map((p) =>
@@ -100,18 +128,43 @@ describe('Admin — Configuración — Notificaciones (Mobile 375x667)', () => {
   });
 
   it('renderiza las 5 preferencias reales desde el backend en mobile', () => {
+    cy.get('[data-cy^="notif-setting-"]').should('have.length', 5);
     cy.get('[data-cy="notif-setting-MORA"]').should('be.visible');
     cy.get('[data-cy="notif-setting-NEW_CUSTOMER"]').scrollIntoView().should('be.visible');
+    cy.get('[data-cy="notif-save-btn"] button').should('be.disabled');
+
+    cy.get('[data-cy="notif-info-panels"]').then(($panels) => {
+      cy.get('[data-cy="notif-setting-NEW_CUSTOMER"]').then(($lastSetting) => {
+        const panelsRect = $panels[0].getBoundingClientRect();
+        const settingRect = $lastSetting[0].getBoundingClientRect();
+        expect(panelsRect.top).to.be.gte(settingRect.bottom - 1);
+      });
+    });
+
+    cy.window().then((win) => {
+      expect(win.document.documentElement.scrollWidth).to.be.lte(
+        win.innerWidth,
+      );
+    });
   });
 
   it('guardar preferencias persiste en mobile', () => {
-    cy.intercept('PUT', '**/api/notifications/preferences/*', {
-      statusCode: 200,
-      body: { ok: true, data: {}, message: 'Preferencia actualizada correctamente.' },
-    }).as('updateGeneric');
+    cy.intercept('PATCH', '**/api/notifications/preferences', (req) => {
+      expect(req.body.preferences).to.deep.equal([
+        { type: 'NEW_CUSTOMER', enabled: true },
+      ]);
+      req.reply({
+        statusCode: 200,
+        body: {
+          ok: true,
+          data: [{ ...BASE_PREFERENCES[4], enabled: true }],
+          message: 'Preferencias actualizadas correctamente.',
+        },
+      });
+    }).as('updatePreferences');
 
     cy.get('[data-cy="notif-toggle-push-NEW_CUSTOMER"]').click();
     cy.get('[data-cy="notif-save-btn"]').click();
-    cy.wait('@updateGeneric');
+    cy.wait('@updatePreferences');
   });
 });

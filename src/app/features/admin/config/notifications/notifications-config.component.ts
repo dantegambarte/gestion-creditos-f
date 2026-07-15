@@ -53,10 +53,20 @@ const SETTING_META: Record<NotificationType, Omit<NotifSetting, 'enabled'>> = {
   },
 };
 
+/** Verifica que una preferencia recibida por API tenga metadata visual soportada. */
+const isKnownNotificationType = (type: string): type is NotificationType =>
+  type in SETTING_META;
+
 @Component({
   selector: 'app-notifications-config',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, InputSwitchModule, SkeletonModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ButtonModule,
+    InputSwitchModule,
+    SkeletonModule,
+  ],
   templateUrl: './notifications-config.component.html',
 })
 export class NotificationsConfigComponent implements OnInit {
@@ -66,21 +76,31 @@ export class NotificationsConfigComponent implements OnInit {
   history: NotificationHistoryPage['items'] = [];
   loading = false;
   saving = false;
+  hasChanges = false;
+  private originalEnabled = new Map<NotificationType, boolean>();
 
   ngOnInit(): void {
     this.loadPreferences();
     this.loadHistory();
   }
 
-  /** Carga las 5 preferencias reales desde el backend y las mapea a NotifSetting. */
+  /** Carga las 5 preferencias reales desde el backend y descarta tipos desconocidos. */
   private loadPreferences(): void {
     this.loading = true;
     this.notificationsSvc.getPreferences().subscribe({
       next: (prefs: NotificationPreference[]) => {
-        this.settings = prefs.map((p) => ({
-          ...SETTING_META[p.type],
-          enabled: p.enabled,
-        }));
+        this.settings = prefs.reduce<NotifSetting[]>((settings, p) => {
+          if (!isKnownNotificationType(p.type)) return settings;
+
+          const meta = SETTING_META[p.type];
+
+          settings.push({
+            ...meta,
+            enabled: p.enabled,
+          });
+          return settings;
+        }, []);
+        this.captureOriginalState();
         this.loading = false;
       },
       error: () => {
@@ -97,23 +117,52 @@ export class NotificationsConfigComponent implements OnInit {
     });
   }
 
-  /** Persiste las preferencias modificadas — una llamada PUT por tipo. */
+  /** Recalcula si hay cambios pendientes contra el estado cargado desde backend. */
+  onSettingChange(): void {
+    this.hasChanges = this.settings.some(
+      (setting) => this.originalEnabled.get(setting.id) !== setting.enabled,
+    );
+  }
+
+  /** Persiste solo las preferencias modificadas en una única request batch. */
   save(): void {
-    if (this.loading || this.settings.length === 0) return;
+    if (this.loading || this.saving || !this.hasChanges) return;
+
+    const updates = this.settings
+      .filter(
+        (setting) => this.originalEnabled.get(setting.id) !== setting.enabled,
+      )
+      .map((setting) => ({
+        type: setting.id,
+        enabled: setting.enabled,
+      }));
+
+    if (updates.length === 0) return;
 
     this.saving = true;
-    const updates = this.settings.map((s) =>
-      this.notificationsSvc.updatePreference(s.id, {
-        enabled: s.enabled,
-      }),
+    this.notificationsSvc.updatePreferences(updates).subscribe({
+      next: (updatedPreferences) => {
+        const updatedByType = new Map(
+          updatedPreferences.map((preference) => [preference.type, preference]),
+        );
+        this.settings = this.settings.map((setting) => {
+          const updated = updatedByType.get(setting.id);
+          return updated ? { ...setting, enabled: updated.enabled } : setting;
+        });
+        this.captureOriginalState();
+        this.saving = false;
+      },
+      error: () => {
+        this.saving = false;
+      },
+    });
+  }
+
+  /** Guarda el snapshot local usado para detectar cambios pendientes. */
+  private captureOriginalState(): void {
+    this.originalEnabled = new Map(
+      this.settings.map((setting) => [setting.id, setting.enabled]),
     );
-    // Disparamos todas las actualizaciones; no usamos forkJoin para mantener
-    // este componente sin dependencias extra de rxjs — cada PUT es independiente.
-    let remaining = updates.length;
-    const done = () => {
-      remaining -= 1;
-      if (remaining <= 0) this.saving = false;
-    };
-    updates.forEach((obs) => obs.subscribe({ next: done, error: done }));
+    this.hasChanges = false;
   }
 }

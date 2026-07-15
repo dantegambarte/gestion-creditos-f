@@ -2133,6 +2133,12 @@ table.ff-table {
     border-radius: 2px 2px 0 0;
     background: rgba(96, 165, 250, 0.06);
   }
+
+  .config-mobile-content {
+    padding-bottom: calc(
+      var(--ff-mobile-bottom-nav-height, 72px) + max(env(safe-area-inset-bottom), 0px) + 1.25rem
+    ) !important;
+  }
 }
 
 // ─── Header de listado estándar ──────────────────────────────────────────────
