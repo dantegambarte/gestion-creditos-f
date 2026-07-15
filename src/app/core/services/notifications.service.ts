@@ -29,7 +29,7 @@ export interface NotificationHistoryPage {
 }
 
 export interface NotificationPreference {
-  type: NotificationType;
+  type: NotificationType | string;
   enabled: boolean;
   frequency: 'INSTANT' | 'DAILY' | 'WEEKLY';
   updated_at: string;
@@ -208,7 +208,7 @@ export class NotificationsService {
     this.unreadCount.set(count);
   }
 
-  /** Lee las 6 preferencias de notificación (config global, solo ADMIN) usando cache de sesión. */
+  /** Lee las preferencias de notificación (config global, solo ADMIN) usando cache de sesión. */
   getPreferences(forceRefresh = false): Observable<NotificationPreference[]> {
     if (!forceRefresh && this.preferencesCache) {
       return of(this.preferencesCache);
@@ -245,13 +245,32 @@ export class NotificationsService {
       .put<NotificationPreference>(`notifications/preferences/${type}`, data)
       .pipe(
         tap((updatedPreference) =>
-          this.updatePreferencesCache(updatedPreference),
+          this.updatePreferenceCache(updatedPreference),
+        ),
+      );
+  }
+
+  /** Actualiza varias preferencias en una sola request batch. */
+  updatePreferences(
+    preferences: Array<
+      { type: NotificationType } & Partial<
+        Pick<NotificationPreference, 'enabled' | 'frequency'>
+      >
+    >,
+  ): Observable<NotificationPreference[]> {
+    return this.api
+      .patch<NotificationPreference[]>('notifications/preferences', {
+        preferences,
+      })
+      .pipe(
+        tap((updatedPreferences) =>
+          this.updatePreferencesCache(updatedPreferences),
         ),
       );
   }
 
   /** Actualiza el cache local de preferencias después de guardar una preferencia. */
-  private updatePreferencesCache(
+  private updatePreferenceCache(
     updatedPreference: NotificationPreference,
   ): void {
     if (!this.preferencesCache) return;
@@ -260,6 +279,20 @@ export class NotificationsService {
       preference.type === updatedPreference.type
         ? updatedPreference
         : preference,
+    );
+  }
+
+  /** Actualiza el cache local con una lista de preferencias devueltas por batch. */
+  private updatePreferencesCache(
+    updatedPreferences: NotificationPreference[],
+  ): void {
+    if (!this.preferencesCache) return;
+
+    const byType = new Map(
+      updatedPreferences.map((preference) => [preference.type, preference]),
+    );
+    this.preferencesCache = this.preferencesCache.map(
+      (preference) => byType.get(preference.type) ?? preference,
     );
   }
 }

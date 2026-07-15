@@ -122,9 +122,26 @@
 }
 
 .operations-empty {
-  padding: 24px 16px;
+  display: flex;
+  min-height: 160px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 16px;
+  border-top: 1px solid var(--ff-border-subtle);
   color: var(--ff-text-secondary);
   font-size: 14px;
+  text-align: center;
+}
+
+.operations-empty__icon {
+  color: var(--ff-text-muted);
+  font-size: 24px;
+}
+
+.operations-empty p {
+  margin: 0;
 }
 
 .operations-table-skeleton {

@@ -12,6 +12,17 @@
       class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
       data-cy="admin-system-params-panel"
     >
+      @if (rows.length === 0) {
+        <div
+          class="flex min-h-40 flex-col items-center justify-center gap-3 px-6 py-14 text-center"
+          data-cy="admin-system-params-empty-state"
+        >
+          <i class="pi pi-inbox text-2xl text-[var(--ff-text-muted)]"></i>
+          <p class="text-sm text-[var(--ff-text-muted)]">
+            Sin parámetros disponibles.
+          </p>
+        </div>
+      } @else {
       <table class="hidden w-full text-sm md:table" data-cy="admin-system-params-table">
         <thead>
           <tr class="border-b border-[var(--ff-border-subtle)]">
@@ -48,16 +59,6 @@
           </tr>
         </thead>
         <tbody>
-          @if (rows.length === 0) {
-            <tr>
-              <td
-                colspan="6"
-                class="px-5 py-10 text-center text-[var(--ff-text-muted)]"
-              >
-                Sin parámetros disponibles.
-              </td>
-            </tr>
-          }
           @for (row of rows; track row.key) {
             <tr
               class="border-b border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
@@ -107,11 +108,6 @@
         </tbody>
       </table>
       <div class="space-y-3 p-4 md:hidden" data-cy="admin-system-params-mobile-list">
-        @if (rows.length === 0) {
-          <p class="py-8 text-center text-sm text-[var(--ff-text-muted)]">
-            Sin parámetros disponibles.
-          </p>
-        }
         @for (row of rows; track row.key) {
           <article
             class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
@@ -169,6 +165,7 @@
           </article>
         }
       </div>
+      }
       <ff-back-top-fab [itemCount]="rows.length" dataCy="system-params-back-top-action" />
     </div>
   }

@@ -56,6 +56,17 @@
     <div
       class="overflow-hidden rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"
     >
+      @if (holidays.length === 0) {
+        <div
+          class="flex min-h-40 flex-col items-center justify-center gap-3 px-6 py-14 text-center"
+          data-cy="holidays-empty-state"
+        >
+          <i class="pi pi-inbox text-2xl text-[var(--ff-text-muted)]"></i>
+          <p class="text-sm text-[var(--ff-text-muted)]">
+            No hay feriados cargados.
+          </p>
+        </div>
+      } @else {
       <table class="hidden w-full text-sm md:table" data-cy="holidays-table">
         <thead>
           <tr class="border-b border-[var(--ff-border-subtle)]">
@@ -97,16 +108,6 @@
           </tr>
         </thead>
         <tbody>
-          @if (holidays.length === 0) {
-            <tr>
-              <td
-                colspan="7"
-                class="px-5 py-10 text-center text-[var(--ff-text-muted)]"
-              >
-                No hay feriados cargados.
-              </td>
-            </tr>
-          }
           @for (holiday of holidays; track holiday.id) {
             <tr
               class="border-b border-[var(--ff-border-subtle)] transition-colors hover:bg-[var(--ff-surface-hover)]"
@@ -152,11 +153,6 @@
       </table>
 
       <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="holidays-mobile-list">
-        @if (holidays.length === 0) {
-          <p class="py-6 text-center text-sm text-[var(--ff-text-muted)]">
-            No hay feriados cargados.
-          </p>
-        }
         @for (holiday of holidays; track holiday.id) {
           <article
             class="rounded-2xl border border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] p-4"
@@ -200,6 +196,7 @@
           </article>
         }
       </div>
+      }
       <ff-back-top-fab [itemCount]="holidays.length" dataCy="holidays-back-top-action" />
     </div>
   }

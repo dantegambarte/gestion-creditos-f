@@ -109,7 +109,10 @@
         }
       </div>
     } @else if (filteredOperations.length === 0) {
-      <div class="operations-empty">No hay operaciones para mostrar.</div>
+      <div class="operations-empty" data-cy="operations-empty-state">
+        <i class="pi pi-inbox operations-empty__icon"></i>
+        <p>No hay operaciones para mostrar.</p>
+      </div>
     } @else {
       <p-table
         [value]="filteredOperations"
