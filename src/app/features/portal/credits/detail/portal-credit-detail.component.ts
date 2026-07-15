@@ -78,6 +78,7 @@ export class PortalCreditDetailComponent implements OnInit {
    */
   get frequencyLabel(): string {
     switch (this.credit?.paymentFrequency) {
+      case 'DAILY':     return 'Diaria';
       case 'WEEKLY':    return 'Semanal';
       case 'BIWEEKLY':  return 'Quincenal';
       case 'MONTHLY':   return 'Mensual';

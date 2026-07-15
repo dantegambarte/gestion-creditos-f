@@ -24,12 +24,10 @@ import {
   ProductRateGroup,
 } from '../models/interfaces/product';
 import { ProductRatesService } from '../services/product-rates.service';
-
-const FREQ_LABELS: Record<PaymentFrequency, string> = {
-  WEEKLY: 'Semanal',
-  BIWEEKLY: 'Quincenal',
-  MONTHLY: 'Mensual',
-};
+import {
+  FREQUENCY_LABELS as FREQ_LABELS,
+  FREQUENCY_OPTIONS,
+} from '../../../../shared/models/payment-frequency';
 
 @Component({
   selector: 'app-product-rates-config',
@@ -62,11 +60,7 @@ export class ProductRatesConfigComponent implements OnInit {
 
   filterProductId: string | null = null;
 
-  readonly freqOptions = [
-    { label: 'Semanal', value: 'WEEKLY' as PaymentFrequency },
-    { label: 'Quincenal', value: 'BIWEEKLY' as PaymentFrequency },
-    { label: 'Mensual', value: 'MONTHLY' as PaymentFrequency },
-  ];
+  readonly freqOptions = [...FREQUENCY_OPTIONS];
 
   showCreateDialog = false;
   createForm: CreateForm = this.emptyForm();

@@ -20,6 +20,7 @@ import { AppError } from '../../../../core/models/app-error';
 import { HeaderService } from '../../../../core/services/header.service';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
+import { FREQUENCY_OPTIONS } from '../../../../shared/models/payment-frequency';
 import { CustomersService } from '../../clients/customers.service';
 import {
   CartUnit,
@@ -78,11 +79,7 @@ export class CreditCreateComponent implements OnInit {
 
   cart: CartUnit[] = [];
 
-  readonly frequencyOptions = [
-    { label: 'Semanal', value: 'WEEKLY' },
-    { label: 'Quincenal', value: 'BIWEEKLY' },
-    { label: 'Mensual', value: 'MONTHLY' },
-  ];
+  readonly frequencyOptions = FREQUENCY_OPTIONS;
 
   readonly paymentMethodOptions = [
     { label: 'Efectivo', value: 'CASH' },

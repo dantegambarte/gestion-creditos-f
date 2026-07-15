@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
@@ -22,6 +22,10 @@ describe('UserCreateComponent — US-03 validaciones de formulario', () => {
         { provide: Router, useValue: routerSpy },
         { provide: UsersService, useValue: usersServiceSpy },
         { provide: HeaderService, useValue: headerServiceSpy },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { queryParamMap: convertToParamMap({}) } },
+        },
         MessageService,
       ],
     }).compileComponents();

@@ -22,6 +22,7 @@ import { CustomerCreatePayload } from '../../../features/seller/models/customer.
 import { CreditsService } from '../../../features/seller/operations/credits.service';
 import { ClientOperation } from '../../models/interface/client';
 import { ProductOperation } from '../../models/interface/product';
+import { FREQUENCY_LABELS } from '../../models/payment-frequency';
 import {
   calculateFinancedCapital,
   calculateInstallmentValue,
@@ -115,10 +116,9 @@ export class OperationFormService {
       Validators.min(0),
     ]),
     advancedInstallmentsTransferReference: this.fb.control<string | null>(null),
-    paymentFrequency: this.fb.control<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null>(
-      null,
-      [Validators.required],
-    ),
+    paymentFrequency: this.fb.control<PaymentFrequency | null>(null, [
+      Validators.required,
+    ]),
     installmentsCount: this.fb.control<number | null>(null, [
       Validators.required,
     ]),
@@ -358,7 +358,7 @@ export class OperationFormService {
    */
   get paymentFrequencyOptions(): {
     label: string;
-    value: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
+    value: PaymentFrequency;
   }[] {
     const type = this.operationForm.controls.operationType.value;
     const baseFrequencies =
@@ -368,13 +368,7 @@ export class OperationFormService {
             line.rates.map((r) => r.paymentFrequency),
           );
     const unique = Array.from(new Set(baseFrequencies));
-    const labelByFrequency: Record<'WEEKLY' | 'BIWEEKLY' | 'MONTHLY', string> =
-      {
-        WEEKLY: 'Semanal',
-        BIWEEKLY: 'Quincenal',
-        MONTHLY: 'Mensual',
-      };
-    return unique.map((f) => ({ label: labelByFrequency[f], value: f }));
+    return unique.map((f) => ({ label: FREQUENCY_LABELS[f], value: f }));
   }
 
   /**
@@ -383,16 +377,12 @@ export class OperationFormService {
   get installmentsOptions(): {
     label: string;
     value: number;
-    frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY';
+    frequency: PaymentFrequency;
   }[] {
     const type = this.operationForm.controls.operationType.value;
     const selectedFrequency =
       this.operationForm.controls.paymentFrequency.value;
-    const formatFrequency = (f: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY') => {
-      if (f === 'MONTHLY') return 'Mensual';
-      if (f === 'BIWEEKLY') return 'Quincenal';
-      return 'Semanal';
-    };
+    const formatFrequency = (f: PaymentFrequency) => FREQUENCY_LABELS[f];
 
     if (type === 'LOAN') {
       const amount = this.prestamoTotal;
@@ -408,7 +398,7 @@ export class OperationFormService {
         {
           label: string;
           value: number;
-          frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY';
+          frequency: PaymentFrequency;
         }
       >();
       for (const r of matchingRates) {
@@ -430,7 +420,7 @@ export class OperationFormService {
         {
           label: string;
           value: number;
-          frequency: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY';
+          frequency: PaymentFrequency;
         }
       >();
       for (const r of this.cartLines()
@@ -565,11 +555,7 @@ export class OperationFormService {
   getInstallmentsOptionsForLine(line: CartLine): SaleInstallmentOption[] {
     const selectedFrequency =
       this.operationForm.controls.paymentFrequency.value;
-    const formatFrequency = (f: 'MONTHLY' | 'BIWEEKLY' | 'WEEKLY') => {
-      if (f === 'MONTHLY') return 'Mensual';
-      if (f === 'BIWEEKLY') return 'Quincenal';
-      return 'Semanal';
-    };
+    const formatFrequency = (f: PaymentFrequency) => FREQUENCY_LABELS[f];
     const unique = new Map<string, SaleInstallmentOption>();
     for (const rate of line.rates.filter(
       (r) => !selectedFrequency || r.paymentFrequency === selectedFrequency,
@@ -1456,15 +1442,20 @@ export class OperationFormService {
    * corridos, lo que desfasaba un día las cuotas mensuales respecto del
    * cronograma real que genera el backend.
    * @param {Date} approvalDate - Fecha base de aprobación de la operación.
-   * @param {'WEEKLY' | 'BIWEEKLY' | 'MONTHLY'} frequency - Frecuencia elegida del plan.
+   * @param {PaymentFrequency} frequency - Frecuencia elegida del plan.
    * @returns {Date} Primera fecha de vencimiento resultante.
    */
   getFirstPaymentDateFromApprovalRule(
     approvalDate: Date,
-    frequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY',
+    frequency: PaymentFrequency,
   ): Date {
     const dueDate = new Date(approvalDate);
     dueDate.setHours(0, 0, 0, 0);
+
+    if (frequency === 'DAILY') {
+      dueDate.setDate(dueDate.getDate() + 1);
+      return dueDate;
+    }
 
     if (frequency === 'WEEKLY') {
       dueDate.setDate(dueDate.getDate() + 7);

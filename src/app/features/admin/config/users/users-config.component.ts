@@ -1,153 +1,127 @@
-import { Component, computed, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
-import { InputSwitchModule } from 'primeng/inputswitch';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
-import { Roles } from '../../../../shared/models/enums/roles.enum';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { AppError } from '../../../../core/models/app-error';
+import { UserRole } from '../../../../core/models/types/user-role';
+import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
 import {
-  UserForm,
-  UserFormModalComponent,
-  UserRecord,
-} from './user-form-modal/user-form-modal.component';
+  ROLE_LABEL,
+  ROLE_SEVERITY,
+  User,
+  UserListFilters,
+} from '../../users/user.model';
+import { UsersService } from '../../users/users.service';
 
-interface SystemUser {
-  id: string;
-  name: string;
-  email: string;
-  dni: string;
-  role: Roles;
-  active: boolean;
-  lastLogin: string;
-}
-
+/**
+ * Listado de usuarios dentro de Configuración. Reutiliza el servicio y los
+ * modelos de la sección Usuarios (features/admin/users): lista real desde la
+ * API con filtros server-side, y las acciones navegan a las pantallas
+ * completas ya existentes (alta con password temporal y detalle/edición).
+ */
 @Component({
   selector: 'app-users-config',
   standalone: true,
   imports: [
+    DatePipe,
     FfBackTopFabComponent,
     ButtonModule,
     TagModule,
     DropdownModule,
+    IconFieldModule,
+    InputIconModule,
     InputTextModule,
-    InputSwitchModule,
     FormsModule,
-    UserFormModalComponent,
   ],
   templateUrl: './users-config.component.html',
 })
-export class UsersConfigComponent {
-  searchQuery = signal('');
-  selectedRole = signal<string | null>(null);
-  modalVisible = false;
-  editingUser: UserRecord | null = null;
+export class UsersConfigComponent implements OnInit, OnDestroy {
+  private readonly usersService = inject(UsersService);
+  private readonly router = inject(Router);
 
-  roleOptions = [
+  users: User[] = [];
+  loading = true;
+  error: AppError | null = null;
+
+  searchTerm = '';
+  selectedRole: UserRole | null = null;
+
+  private readonly search$ = new Subject<string>();
+  private searchSub?: Subscription;
+
+  readonly roleOptions = [
     { label: 'Todos los roles', value: null },
-    { label: 'Administrador', value: 'ADMIN' },
-    { label: 'Vendedor', value: 'SELLER' },
-    { label: 'Cobrador', value: 'COLLECTOR' },
-    { label: 'Cajero', value: 'CASHIER' },
+    ...Object.entries(ROLE_LABEL).map(([value, label]) => ({ label, value })),
   ];
 
-  allUsers: SystemUser[] = [
-    {
-      id: 'U001',
-      name: 'Carlos Andrade',
-      email: 'c.andrade@siscreditos.com',
-      dni: '30123456',
-      role: Roles.ADMIN,
-      active: true,
-      lastLogin: 'Hoy, 09:42 am',
-    },
-    {
-      id: 'U002',
-      name: 'María López',
-      email: 'm.lopez@siscreditos.com',
-      dni: '32456789',
-      role: Roles.SELLER,
-      active: true,
-      lastLogin: 'Ayer, 03:15 pm',
-    },
-    {
-      id: 'U003',
-      name: 'Roberto García',
-      email: 'r.garcia@siscreditos.com',
-      dni: '28987654',
-      role: Roles.CASHIER,
-      active: true,
-      lastLogin: 'Hoy, 08:00 am',
-    },
-    {
-      id: 'U004',
-      name: 'Jorge Peñafiel',
-      email: 'j.peñafiel@siscreditos.com',
-      dni: '35112233',
-      role: Roles.COLLECTOR,
-      active: true,
-      lastLogin: '18/04/2025',
-    },
-    {
-      id: 'U005',
-      name: 'Ana Torres',
-      email: 'a.torres@siscreditos.com',
-      dni: '29334455',
-      role: Roles.SELLER,
-      active: false,
-      lastLogin: '05/03/2025',
-    },
-  ];
+  ngOnInit(): void {
+    this.searchSub = this.search$
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => this.loadUsers());
+    this.loadUsers();
+  }
 
-  filteredUsers = computed(() => {
-    const q = this.searchQuery().toLowerCase();
-    const role = this.selectedRole();
-    return this.allUsers.filter((u) => {
-      const matchSearch =
-        !q ||
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.dni.includes(q);
-      const matchRole = !role || u.role === role;
-      return matchSearch && matchRole;
+  ngOnDestroy(): void {
+    this.searchSub?.unsubscribe();
+  }
+
+  /**
+   * Carga los usuarios reales desde la API aplicando búsqueda y rol.
+   */
+  private loadUsers(): void {
+    const filters: UserListFilters = {};
+    if (this.selectedRole) filters.role = this.selectedRole;
+    if (this.searchTerm.trim()) filters.search = this.searchTerm.trim();
+
+    this.loading = true;
+    this.error = null;
+    this.usersService.list(filters).subscribe({
+      next: (data) => {
+        this.users = data;
+        this.loading = false;
+      },
+      error: (err: AppError) => {
+        this.error = err;
+        this.loading = false;
+      },
     });
-  });
+  }
 
+  onSearch(value: string): void {
+    this.searchTerm = value;
+    this.search$.next(value);
+  }
+
+  onRoleChange(value: UserRole | null): void {
+    this.selectedRole = value;
+    this.loadUsers();
+  }
+
+  /** Alta real: pantalla existente con diálogo de password temporal, bajo la
+   * URL /config para que el menú lateral siga marcando Configuración.
+   * returnTo hace que al terminar/cancelar se vuelva acá y no a la lista del menú. */
   openNew(): void {
-    this.editingUser = null;
-    this.modalVisible = true;
+    this.router.navigate(
+      ['/', AppRoutes.ADMIN, AppRoutes.CONFIG, 'users', 'new'],
+      { queryParams: { returnTo: 'config-users' } },
+    );
   }
 
-  openEdit(user: SystemUser): void {
-    this.editingUser = { ...user };
-    this.modalVisible = true;
-  }
-
-  onSaved(form: UserForm): void {
-    if (this.editingUser) {
-      const idx = this.allUsers.findIndex((u) => u.id === this.editingUser!.id);
-      if (idx !== -1) {
-        this.allUsers[idx] = {
-          ...this.allUsers[idx],
-          name: form.name,
-          email: form.email,
-          dni: form.dni,
-          role: form.role as Roles,
-          active: form.active,
-        };
-      }
-    } else {
-      this.allUsers.push({
-        id: 'U' + (this.allUsers.length + 1).toString().padStart(3, '0'),
-        name: form.name,
-        email: form.email,
-        dni: form.dni,
-        role: form.role as Roles,
-        active: form.active,
-        lastLogin: '—',
-      });
-    }
+  /** Edición real: detalle existente (editar, activar/desactivar, reset). */
+  openEdit(user: User): void {
+    this.router.navigate(
+      ['/', AppRoutes.ADMIN, AppRoutes.CONFIG, 'users', user.id],
+      { queryParams: { returnTo: 'config-users' } },
+    );
   }
 
   initials(name: string): string {
@@ -172,34 +146,18 @@ export class UsersConfigComponent {
   }
 
   roleLabel(role: string): string {
-    const map: Record<string, string> = {
-      ADMIN: 'Administrador',
-      SELLER: 'Vendedor',
-      COLLECTOR: 'Cobrador',
-      CASHIER: 'Cajero',
-    };
-    return map[role] ?? role;
+    return ROLE_LABEL[role] ?? role;
   }
 
   roleSeverity(
     role: string,
   ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' {
-    const map: Record<
-      string,
-      'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast'
-    > = {
-      ADMIN: 'danger',
-      SELLER: 'info',
-      COLLECTOR: 'warning',
-      CASHIER: 'success',
-    };
-    return map[role] ?? 'secondary';
-  }
-
-  onSearch(value: string): void {
-    this.searchQuery.set(value);
-  }
-  onRoleChange(value: string | null): void {
-    this.selectedRole.set(value);
+    return (ROLE_SEVERITY[role] ?? 'secondary') as
+      | 'success'
+      | 'info'
+      | 'warning'
+      | 'danger'
+      | 'secondary'
+      | 'contrast';
   }
 }
