@@ -2139,6 +2139,10 @@ table.ff-table {
       var(--ff-mobile-bottom-nav-height, 72px) + max(env(safe-area-inset-bottom), 0px) + 1.25rem
     ) !important;
   }
+
+  .notif-save-actions--clean {
+    display: none !important;
+  }
 }
 
 // ─── Header de listado estándar ──────────────────────────────────────────────

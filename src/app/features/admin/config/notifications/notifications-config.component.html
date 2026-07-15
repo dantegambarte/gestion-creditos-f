@@ -94,7 +94,10 @@
       }
     </div>
 
-    <div class="flex justify-stretch sm:justify-end">
+    <div
+      class="notif-save-actions flex justify-stretch sm:justify-end"
+      [class.notif-save-actions--clean]="!hasChanges"
+    >
       <p-button
         label="Guardar preferencias"
         data-cy="notif-save-btn"
@@ -163,22 +166,58 @@
       class="border rounded-2xl p-4 space-y-3"
       style="border-color: var(--ff-border); background: var(--ff-panel-raised)"
     >
-      <h3 class="text-xs font-bold ff-text-secondary uppercase tracking-widest">
-        Historial de alertas
-      </h3>
-      <div class="space-y-2">
+      <div class="flex items-center justify-between gap-3">
+        <h3 class="text-xs font-bold ff-text-secondary uppercase tracking-widest">
+          Historial de alertas
+        </h3>
+        <button
+          type="button"
+          class="md:hidden text-xs font-semibold text-blue-400"
+          data-cy="notif-history-toggle"
+          (click)="toggleMobileHistory()"
+        >
+          {{ mobileHistoryExpanded ? 'Ocultar' : 'Ver' }}
+        </button>
+      </div>
+      <p class="md:hidden text-xs ff-text-muted">
+        Últimas alertas del sistema.
+      </p>
+      <div class="hidden md:block space-y-2">
         @if (history.length === 0) {
           <p class="text-xs ff-text-muted">Sin notificaciones recientes.</p>
         }
         @for (item of history; track item.id) {
           <div class="flex items-center justify-between gap-2">
-            <span class="text-sm ff-text-secondary truncate">{{ item.title }}</span>
+            <span
+              class="text-sm ff-text-secondary truncate"
+              [title]="item.title"
+              >{{ item.title }}</span
+            >
             <span class="text-xs ff-text-muted whitespace-nowrap">{{
               item.created_at | date: 'short'
             }}</span>
           </div>
         }
       </div>
+      @if (mobileHistoryExpanded) {
+        <div class="md:hidden space-y-2" data-cy="notif-history-mobile-list">
+          @if (history.length === 0) {
+            <p class="text-xs ff-text-muted">Sin notificaciones recientes.</p>
+          }
+          @for (item of history; track item.id) {
+            <div class="flex items-center justify-between gap-2">
+              <span
+                class="text-sm ff-text-secondary truncate"
+                [title]="item.title"
+                >{{ item.title }}</span
+              >
+              <span class="text-xs ff-text-muted whitespace-nowrap">{{
+                item.created_at | date: 'short'
+              }}</span>
+            </div>
+          }
+        </div>
+      }
     </div>
   </div>
 </div>

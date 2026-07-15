@@ -77,6 +77,7 @@ export class NotificationsConfigComponent implements OnInit {
   loading = false;
   saving = false;
   hasChanges = false;
+  mobileHistoryExpanded = false;
   private originalEnabled = new Map<NotificationType, boolean>();
 
   ngOnInit(): void {
@@ -156,6 +157,11 @@ export class NotificationsConfigComponent implements OnInit {
         this.saving = false;
       },
     });
+  }
+
+  /** Alterna la visibilidad del historial en mobile para no saturar la pantalla. */
+  toggleMobileHistory(): void {
+    this.mobileHistoryExpanded = !this.mobileHistoryExpanded;
   }
 
   /** Guarda el snapshot local usado para detectar cambios pendientes. */

@@ -20,6 +20,7 @@ const BASE_PREFERENCES: PreferenceMock[] = [
   { type: 'CASH_REGISTER', enabled: true, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
   { type: 'NEW_CUSTOMER', enabled: false, frequency: 'INSTANT', updated_at: '2026-01-01T00:00:00Z' },
 ];
+const HISTORY_TITLE = 'Recordatorio de cierre de caja pendiente de confirmación';
 
 const mockPreferences = (prefs: PreferenceMock[]) => {
   cy.intercept('GET', '**/api/notifications/preferences', {
@@ -31,7 +32,26 @@ const mockPreferences = (prefs: PreferenceMock[]) => {
 const mockHistory = () => {
   cy.intercept('GET', '**/api/notifications?*', {
     statusCode: 200,
-    body: { ok: true, data: { items: [], total: 0, page: 1, limit: 10 } },
+    body: {
+      ok: true,
+      data: {
+        items: [
+          {
+            id: 'notif-history-1',
+            type: 'CASH_REGISTER',
+            title: HISTORY_TITLE,
+            message: 'Mensaje de prueba',
+            read_at: null,
+            entity_type: null,
+            entity_id: null,
+            created_at: '2026-07-14T21:00:00Z',
+          },
+        ],
+        total: 1,
+        page: 1,
+        limit: 10,
+      },
+    },
   }).as('historyList');
 };
 
@@ -57,6 +77,12 @@ describe('Admin — Configuración — Notificaciones (Desktop)', () => {
     cy.get('[data-cy="notif-setting-MORA"]').should('be.visible');
     cy.get('[data-cy="notif-setting-NEW_CUSTOMER"]').scrollIntoView().should('be.visible');
     cy.get('[data-cy="notif-save-btn"] button').should('be.disabled');
+    cy.get('[data-cy="notif-history-mobile-list"]').should('not.exist');
+    cy.contains('span', /^Recordatorio/).should(
+      'have.attr',
+      'title',
+      HISTORY_TITLE,
+    );
   });
 
   it('ignora preferencias desconocidas para evitar filas vacías', () => {
@@ -146,6 +172,12 @@ describe('Admin — Configuración — Notificaciones (Mobile 375x667)', () => {
         win.innerWidth,
       );
     });
+
+    cy.get('[data-cy="notif-history-toggle"]').click();
+    cy.get('[data-cy="notif-history-mobile-list"]').should('be.visible');
+    cy.get('[data-cy="notif-history-mobile-list"]')
+      .contains('span', /^Recordatorio/)
+      .should('have.attr', 'title', HISTORY_TITLE);
   });
 
   it('guardar preferencias persiste en mobile', () => {
@@ -164,6 +196,7 @@ describe('Admin — Configuración — Notificaciones (Mobile 375x667)', () => {
     }).as('updatePreferences');
 
     cy.get('[data-cy="notif-toggle-push-NEW_CUSTOMER"]').click();
+    cy.get('[data-cy="notif-save-btn"] button').should('be.visible');
     cy.get('[data-cy="notif-save-btn"]').click();
     cy.wait('@updatePreferences');
   });
