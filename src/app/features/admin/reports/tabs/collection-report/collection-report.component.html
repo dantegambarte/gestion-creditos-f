@@ -195,9 +195,15 @@
 
     <!-- Tabla flat -->
     @if (collectionReport.daily.length === 0) {
-      <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
-        Sin datos para el período seleccionado.
-      </p>
+      <div
+        class="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-6 py-14 text-center"
+        data-cy="collection-report-empty-state"
+      >
+        <i class="pi pi-inbox text-2xl text-[var(--ff-text-muted)]"></i>
+        <p class="text-sm text-[var(--ff-text-muted)]">
+          Sin datos para el período seleccionado.
+        </p>
+      </div>
     } @else {
       <div
         class="overflow-hidden rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)]"

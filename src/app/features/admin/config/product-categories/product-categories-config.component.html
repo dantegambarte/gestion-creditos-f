@@ -45,8 +45,12 @@
             }
           </div>
         } @else if (rows.length === 0) {
-          <div class="p-8 text-center">
-            <p class="text-sm" style="color: var(--ff-text-muted)">
+          <div
+            class="flex min-h-40 flex-col items-center justify-center gap-3 px-6 py-14 text-center"
+            data-cy="product-categories-empty-state"
+          >
+            <i class="pi pi-inbox text-2xl text-[var(--ff-text-muted)]"></i>
+            <p class="text-sm text-[var(--ff-text-muted)]">
               Sin categorías registradas.
             </p>
           </div>

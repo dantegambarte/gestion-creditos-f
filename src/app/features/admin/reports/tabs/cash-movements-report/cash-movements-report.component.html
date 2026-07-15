@@ -122,9 +122,15 @@
       </div>
 
       @if (generalReport.rows.length === 0) {
-        <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
-          No hay movimientos de Caja General en el período seleccionado.
-        </p>
+        <div
+          class="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-6 py-14 text-center"
+          data-cy="cash-movements-general-empty-state"
+        >
+          <i class="pi pi-inbox text-2xl text-[var(--ff-text-muted)]"></i>
+          <p class="text-sm text-[var(--ff-text-muted)]">
+            No hay movimientos de Caja General en el período seleccionado.
+          </p>
+        </div>
       } @else {
         <div
           class="overflow-hidden rounded-xl border border-[var(--ff-border)]"
@@ -230,9 +236,15 @@
   } @else if (daysError) {
     <app-error-state [message]="daysError.message" />
   } @else if (businessDays.length === 0) {
-    <p class="py-10 text-center text-sm text-[var(--ff-text-muted)]">
-      No hay jornadas en el período seleccionado.
-    </p>
+    <div
+      class="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] px-6 py-14 text-center"
+      data-cy="cash-movements-days-empty-state"
+    >
+      <i class="pi pi-inbox text-2xl text-[var(--ff-text-muted)]"></i>
+      <p class="text-sm text-[var(--ff-text-muted)]">
+        No hay jornadas en el período seleccionado.
+      </p>
+    </div>
   } @else {
     <div class="flex flex-wrap items-end gap-3">
       <div class="w-72">
