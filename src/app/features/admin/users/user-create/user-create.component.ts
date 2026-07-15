@@ -13,7 +13,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
@@ -48,8 +48,14 @@ export class UserCreateComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly usersService = inject(UsersService);
   private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
   private readonly header = inject(HeaderService);
   private readonly messageService = inject(MessageService);
+
+  /** Origen del alta (ej. 'config-users'): al terminar/cancelar se vuelve ahí. */
+  private get returnTo(): string | null {
+    return this.activatedRoute.snapshot.queryParamMap.get('returnTo');
+  }
 
   form!: FormGroup;
   submitting = false;
@@ -185,12 +191,11 @@ export class UserCreateComponent implements OnInit {
     if (this.isModal) {
       this.created.emit();
     } else {
-      this.router.navigate([
-        '/',
-        AppRoutes.ADMIN,
-        AppRoutes.USERS,
-        this.createdUserId,
-      ]);
+      // Propaga returnTo al detalle para que su "volver" también respete el origen.
+      this.router.navigate(
+        ['/', AppRoutes.ADMIN, AppRoutes.USERS, this.createdUserId],
+        this.returnTo ? { queryParams: { returnTo: this.returnTo } } : {},
+      );
     }
   }
 
@@ -200,6 +205,8 @@ export class UserCreateComponent implements OnInit {
   cancel(): void {
     if (this.isModal) {
       this.cancelled.emit();
+    } else if (this.returnTo === 'config-users') {
+      this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.CONFIG, 'users']);
     } else {
       this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS]);
     }

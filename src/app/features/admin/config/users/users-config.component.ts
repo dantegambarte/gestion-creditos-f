@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { Subject, Subscription } from 'rxjs';
@@ -35,6 +37,8 @@ import { UsersService } from '../../users/users.service';
     ButtonModule,
     TagModule,
     DropdownModule,
+    IconFieldModule,
+    InputIconModule,
     InputTextModule,
     FormsModule,
   ],
@@ -102,14 +106,19 @@ export class UsersConfigComponent implements OnInit, OnDestroy {
     this.loadUsers();
   }
 
-  /** Alta real: pantalla existente con diálogo de password temporal. */
+  /** Alta real: pantalla existente con diálogo de password temporal.
+   * returnTo hace que al terminar/cancelar se vuelva acá y no a la lista del menú. */
   openNew(): void {
-    this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS, 'new']);
+    this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS, 'new'], {
+      queryParams: { returnTo: 'config-users' },
+    });
   }
 
   /** Edición real: detalle existente (editar, activar/desactivar, reset). */
   openEdit(user: User): void {
-    this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS, user.id]);
+    this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS, user.id], {
+      queryParams: { returnTo: 'config-users' },
+    });
   }
 
   initials(name: string): string {
