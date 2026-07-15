@@ -190,12 +190,20 @@ export class UserCreateComponent implements OnInit {
     this.tempPassword = '';
     if (this.isModal) {
       this.created.emit();
-    } else {
-      // Propaga returnTo al detalle para que su "volver" también respete el origen.
+    } else if (this.returnTo === 'config-users') {
+      // Detalle bajo /config (misma pantalla): el menú lateral sigue en
+      // Configuración. Propaga returnTo para que su "volver" respete el origen.
       this.router.navigate(
-        ['/', AppRoutes.ADMIN, AppRoutes.USERS, this.createdUserId],
-        this.returnTo ? { queryParams: { returnTo: this.returnTo } } : {},
+        ['/', AppRoutes.ADMIN, AppRoutes.CONFIG, 'users', this.createdUserId],
+        { queryParams: { returnTo: this.returnTo } },
       );
+    } else {
+      this.router.navigate([
+        '/',
+        AppRoutes.ADMIN,
+        AppRoutes.USERS,
+        this.createdUserId,
+      ]);
     }
   }
 

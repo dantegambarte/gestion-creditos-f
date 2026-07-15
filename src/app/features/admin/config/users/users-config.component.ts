@@ -106,19 +106,22 @@ export class UsersConfigComponent implements OnInit, OnDestroy {
     this.loadUsers();
   }
 
-  /** Alta real: pantalla existente con diálogo de password temporal.
+  /** Alta real: pantalla existente con diálogo de password temporal, bajo la
+   * URL /config para que el menú lateral siga marcando Configuración.
    * returnTo hace que al terminar/cancelar se vuelva acá y no a la lista del menú. */
   openNew(): void {
-    this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS, 'new'], {
-      queryParams: { returnTo: 'config-users' },
-    });
+    this.router.navigate(
+      ['/', AppRoutes.ADMIN, AppRoutes.CONFIG, 'users', 'new'],
+      { queryParams: { returnTo: 'config-users' } },
+    );
   }
 
   /** Edición real: detalle existente (editar, activar/desactivar, reset). */
   openEdit(user: User): void {
-    this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS, user.id], {
-      queryParams: { returnTo: 'config-users' },
-    });
+    this.router.navigate(
+      ['/', AppRoutes.ADMIN, AppRoutes.CONFIG, 'users', user.id],
+      { queryParams: { returnTo: 'config-users' } },
+    );
   }
 
   initials(name: string): string {
