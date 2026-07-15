@@ -1,10 +1,15 @@
-<div class="ff-panel p-6">
-  <h3 class="text-lg font-semibold mb-4" style="color: var(--ff-text-primary)">
-    Editar usuario
-  </h3>
+<div class="ff-panel overflow-hidden">
+  <div class="border-b p-5 md:p-6" style="border-color: var(--ff-border-subtle)">
+    <h3 class="text-xl font-semibold text-[var(--ff-text-primary)]">
+      Editar usuario
+    </h3>
+    <p class="mt-1 text-sm text-[var(--ff-text-secondary)]">
+      Actualizá los datos operativos del usuario.
+    </p>
+  </div>
 
   @if (roleChanged) {
-    <div class="auth-warning-banner mb-4">
+    <div class="auth-warning-banner m-5 md:m-6">
       <i class="pi pi-exclamation-triangle shrink-0"></i>
       <p class="text-sm">
         Cambiar el rol invalidará la sesión activa del usuario.
@@ -16,109 +21,117 @@
     data-cy="admin-user-detail-edit-form"
     [formGroup]="editForm"
     (ngSubmit)="onSubmit()"
-    class="space-y-4"
+    class="space-y-5 p-5 md:p-6"
   >
-    <div class="flex flex-col gap-1">
-      <label for="editFullName" class="auth-label">Nombre completo *</label>
-      <input
-        data-cy="admin-user-detail-edit-fullname-input"
-        id="editFullName"
-        pInputText
-        formControlName="fullName"
-        [class.ng-invalid]="isInvalid('fullName')"
-        [class.ng-dirty]="isInvalid('fullName')"
-      />
-      @if (isInvalid("fullName")) {
-        <small class="auth-error">
-          <i class="pi pi-exclamation-circle text-xs"></i>
-          {{ getError("fullName") }}
-        </small>
-      }
+    <div class="grid gap-5 md:grid-cols-2">
+      <div class="flex flex-col gap-1.5">
+        <label for="editFullName" class="auth-label">Nombre completo *</label>
+        <input
+          data-cy="admin-user-detail-edit-fullname-input"
+          id="editFullName"
+          pInputText
+          formControlName="fullName"
+          class="h-11 w-full px-3"
+          [class.ng-invalid]="isInvalid('fullName')"
+          [class.ng-dirty]="isInvalid('fullName')"
+        />
+        @if (isInvalid("fullName")) {
+          <small class="auth-error">
+            <i class="pi pi-exclamation-circle text-xs"></i>
+            {{ getError("fullName") }}
+          </small>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="editDni" class="auth-label">DNI *</label>
+        <input
+          id="editDni"
+          pInputText
+          formControlName="dni"
+          class="h-11 w-full px-3"
+          [class.ng-invalid]="isInvalid('dni')"
+          [class.ng-dirty]="isInvalid('dni')"
+        />
+        @if (isInvalid("dni")) {
+          <small class="auth-error">
+            <i class="pi pi-exclamation-circle text-xs"></i>
+            {{ getError("dni") }}
+          </small>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="editEmail" class="auth-label">Email</label>
+        <input
+          data-cy="admin-user-detail-edit-email-input"
+          id="editEmail"
+          pInputText
+          formControlName="email"
+          class="h-11 w-full px-3"
+          [class.ng-invalid]="isInvalid('email')"
+          [class.ng-dirty]="isInvalid('email')"
+        />
+        @if (isInvalid("email")) {
+          <small class="auth-error">
+            <i class="pi pi-exclamation-circle text-xs"></i>
+            {{ getError("email") }}
+          </small>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label for="editRole" class="auth-label">Rol *</label>
+        <p-dropdown
+          inputId="editRole"
+          formControlName="role"
+          [options]="roleOptions"
+          optionLabel="label"
+          optionValue="value"
+          [filter]="roleOptions.length > 10"
+          filterBy="label"
+          styleClass="w-full h-11 rounded-xl"
+          appendTo="body"
+        />
+      </div>
+
+      <div class="flex flex-col gap-1.5 md:col-span-2">
+        <label for="editAddress" class="auth-label">Dirección</label>
+        <input
+          id="editAddress"
+          pInputText
+          formControlName="address"
+          class="h-11 w-full px-3"
+          [class.ng-invalid]="isInvalid('address')"
+          [class.ng-dirty]="isInvalid('address')"
+        />
+        @if (isInvalid("address")) {
+          <small class="auth-error">
+            <i class="pi pi-exclamation-circle text-xs"></i>
+            {{ getError("address") }}
+          </small>
+        }
+      </div>
     </div>
 
-    <div class="flex flex-col gap-1">
-      <label for="editDni" class="auth-label">DNI *</label>
-      <input
-        id="editDni"
-        pInputText
-        formControlName="dni"
-        [class.ng-invalid]="isInvalid('dni')"
-        [class.ng-dirty]="isInvalid('dni')"
-      />
-      @if (isInvalid("dni")) {
-        <small class="auth-error">
-          <i class="pi pi-exclamation-circle text-xs"></i>
-          {{ getError("dni") }}
-        </small>
-      }
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label for="editEmail" class="auth-label">Email</label>
-      <input
-        data-cy="admin-user-detail-edit-email-input"
-        id="editEmail"
-        pInputText
-        formControlName="email"
-        [class.ng-invalid]="isInvalid('email')"
-        [class.ng-dirty]="isInvalid('email')"
-      />
-      @if (isInvalid("email")) {
-        <small class="auth-error">
-          <i class="pi pi-exclamation-circle text-xs"></i>
-          {{ getError("email") }}
-        </small>
-      }
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label for="editAddress" class="auth-label">Dirección</label>
-      <input
-        id="editAddress"
-        pInputText
-        formControlName="address"
-        [class.ng-invalid]="isInvalid('address')"
-        [class.ng-dirty]="isInvalid('address')"
-      />
-      @if (isInvalid("address")) {
-        <small class="auth-error">
-          <i class="pi pi-exclamation-circle text-xs"></i>
-          {{ getError("address") }}
-        </small>
-      }
-    </div>
-
-    <div class="flex flex-col gap-1">
-      <label for="editRole" class="auth-label">Rol *</label>
-      <p-dropdown
-        inputId="editRole"
-        formControlName="role"
-        [options]="roleOptions"
-        optionLabel="label"
-        optionValue="value"
-        [filter]="roleOptions.length > 10"
-        filterBy="label"
-        styleClass="w-full"
-        appendTo="body"
-      />
-    </div>
-
-    <div class="flex gap-3 pt-2">
-      <p-button
-        data-cy="admin-user-detail-save-action"
-        type="submit"
-        label="Guardar cambios"
-        icon="pi pi-check"
-        [loading]="saving"
-        [disabled]="editForm.invalid || !formHasChanges || saving"
-      />
+    <div class="flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-end" style="border-color: var(--ff-border-subtle)">
       <p-button
         data-cy="admin-user-detail-cancel-edit-action"
         type="button"
         label="Cancelar"
         severity="secondary"
         [outlined]="true"
+        styleClass="w-full h-11 rounded-xl px-5 justify-center sm:w-auto"
         (onClick)="cancelled.emit()"
+      />
+      <p-button
+        data-cy="admin-user-detail-save-action"
+        type="submit"
+        label="Guardar cambios"
+        icon="pi pi-check"
+        styleClass="w-full h-11 rounded-xl px-5 justify-center sm:w-auto"
+        [loading]="saving"
+        [disabled]="editForm.invalid || !formHasChanges || saving"
       />
     </div>
   </form>

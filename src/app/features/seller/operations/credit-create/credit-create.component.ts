@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -38,7 +39,7 @@ import { BackButtonComponent } from '../../../../shared/components/back-button/b
 @Component({
   selector: 'app-credit-create',
   standalone: true,
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   imports: [
     CommonModule,
     ReactiveFormsModule,

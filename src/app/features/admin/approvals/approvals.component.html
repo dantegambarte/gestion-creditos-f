@@ -5,7 +5,7 @@
   <div class="p-4">
     <p-message
       severity="warn"
-      text="⚠️ La caja del día está CERRADA. No se pueden aprobar créditos de hoy. Los créditos y sus pagos iniciales, incluyendo enganches o cuotas adelantadas, se aprobarán juntos cuando se abra una nueva caja."
+      text="La caja del día está CERRADA. No se pueden aprobar créditos de hoy. Los créditos y sus pagos iniciales, incluyendo enganches o cuotas adelantadas, se aprobarán juntos cuando se abra una nueva caja."
       styleClass="w-full"
     />
   </div>
@@ -232,6 +232,13 @@
                     tooltipPosition="top"
                   />
                 </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="7" class="py-10 text-center text-sm" style="color: var(--ff-text-muted)">
+                No hay operaciones pendientes para aprobar.
               </td>
             </tr>
           </ng-template>

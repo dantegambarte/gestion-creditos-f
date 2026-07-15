@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
@@ -50,7 +51,7 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
     PaymentDetailDialogComponent,
     FfBackTopFabComponent,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './admin-payments.component.html',
 })
 export class AdminPaymentsComponent implements OnInit {
@@ -275,14 +276,14 @@ export class AdminPaymentsComponent implements OnInit {
           : undefined,
       })
       .subscribe({
-      next: (data) => {
-        this.payments = data;
-        this.loading = false;
-      },
-      error: (err: AppError) => {
-        this.error = err;
-        this.loading = false;
-      },
-    });
+        next: (data) => {
+          this.payments = data;
+          this.loading = false;
+        },
+        error: (err: AppError) => {
+          this.error = err;
+          this.loading = false;
+        },
+      });
   }
 }

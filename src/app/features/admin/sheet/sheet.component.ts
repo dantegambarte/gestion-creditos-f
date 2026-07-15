@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { jsPDF } from 'jspdf';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
@@ -42,7 +43,7 @@ import { SheetReviewDialogComponent } from './sheet-review-dialog/sheet-review-d
     SheetHistoryComponent,
     SheetReviewDialogComponent,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './sheet.component.html',
   styleUrl: './sheet.component.scss',
 })
@@ -194,7 +195,9 @@ export class SheetComponent implements OnInit, OnDestroy {
               .pipe(
                 map((generated) => ({
                   success: true as const,
-                  result: this.mapDetailToResult((generated as CollectionGenerateResult).sheet),
+                  result: this.mapDetailToResult(
+                    (generated as CollectionGenerateResult).sheet,
+                  ),
                   collectorName: c.fullName,
                 })),
                 catchError((err: AppError) =>

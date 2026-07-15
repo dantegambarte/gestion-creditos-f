@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { MockAuthService } from '../../../core/auth/mock-auth.service';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
+import { NotificationsService } from '../../../core/services/notifications.service';
 import { HeaderComponent } from './header.component';
 
 describe('HeaderComponent', () => {
@@ -29,5 +30,23 @@ describe('HeaderComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('arranca el polling de unread-count al iniciar', () => {
+    const notifSvc = TestBed.inject(NotificationsService);
+    const startSpy = spyOn(notifSvc, 'startPolling');
+
+    component.ngOnInit();
+
+    expect(startSpy).toHaveBeenCalled();
+  });
+
+  it('corta el polling al destruirse (logout / navegación fuera del shell autenticado)', () => {
+    const notifSvc = TestBed.inject(NotificationsService);
+    const stopSpy = spyOn(notifSvc, 'stopPolling');
+
+    component.ngOnDestroy();
+
+    expect(stopSpy).toHaveBeenCalled();
   });
 });

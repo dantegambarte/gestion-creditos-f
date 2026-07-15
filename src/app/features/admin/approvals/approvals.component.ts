@@ -7,6 +7,7 @@ import { Subject } from 'rxjs';
 import { catchError, of, takeUntil } from 'rxjs';
 
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../core/services/dedup-message.service';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -55,7 +56,7 @@ import { UsersService } from '../users/users.service';
     MessageModule,
     FfBackTopFabComponent,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './approvals.component.html',
   styleUrl: './approvals.component.scss',
 })
@@ -120,7 +121,9 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
    * Retorna el monto del enganche del crédito aprobado.
    */
   get approvingRowDownPayment(): number {
-    return this.approvingDetail?.downPayment ?? this.approvingRow?.downPayment ?? 0;
+    return (
+      this.approvingDetail?.downPayment ?? this.approvingRow?.downPayment ?? 0
+    );
   }
 
   /**
@@ -227,14 +230,17 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
     this.showChangeSeller = false;
     this.selectedSellerId = null;
     this.showApproveDialog = true;
-    this.credits.getById(row.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (detail) => {
-        this.approvingDetail = detail;
-      },
-      error: () => {
-        this.approvingDetail = row;
-      },
-    });
+    this.credits
+      .getById(row.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (detail) => {
+          this.approvingDetail = detail;
+        },
+        error: () => {
+          this.approvingDetail = row;
+        },
+      });
   }
 
   /**
@@ -248,7 +254,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
       this.msg.add({
         severity: 'error',
         summary: 'Caja Cerrada',
-        detail: 'No puedes aprobar créditos. La caja del día está CERRADA. El crédito y sus pagos iniciales se aprobarán juntos cuando se abra una nueva caja.',
+        detail:
+          'No puedes aprobar créditos. La caja del día está CERRADA. El crédito y sus pagos iniciales se aprobarán juntos cuando se abra una nueva caja.',
         life: 5000,
       });
       return;
@@ -299,7 +306,9 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   /** ID del vendedor actual (para preseleccionar y detectar "mismo vendedor"). */
   get currentSellerId(): string | null {
     return (
-      this.approvingDetail?.createdById ?? this.approvingRow?.createdById ?? null
+      this.approvingDetail?.createdById ??
+      this.approvingRow?.createdById ??
+      null
     );
   }
 
@@ -452,5 +461,4 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   viewDetail(id: string): void {
     this.router.navigate(['/admin/operations', id]);
   }
-
 }

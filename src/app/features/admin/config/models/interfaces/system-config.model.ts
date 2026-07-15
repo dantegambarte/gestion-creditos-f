@@ -11,11 +11,9 @@ export interface SystemConfigUpdatePayload {
 }
 
 export type ConfigTab =
-  | 'empresa'
   | 'tasas'
   | 'tasas-producto'
   | 'parametros'
-  | 'usuarios'
   | 'notificaciones'
   | 'categorias-producto'
   | 'marcas';

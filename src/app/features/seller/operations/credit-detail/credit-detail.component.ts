@@ -3,6 +3,7 @@ import { FfBackTopFabComponent } from './../../../../shared/components/back-top-
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
@@ -64,7 +65,7 @@ import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog
     CreditSchedulePanelComponent,
     BackButtonComponent,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './credit-detail.component.html',
   styleUrl: './credit-detail.component.scss',
 })

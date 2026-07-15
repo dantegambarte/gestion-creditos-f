@@ -3,6 +3,7 @@ import { FfBackTopFabComponent } from './../../../../shared/components/back-top-
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -33,7 +34,7 @@ import { HolidayFormDialogComponent } from './holiday-form-dialog/holiday-form-d
     HolidayFormDialogComponent,
     HolidayDuplicatePreviewDialogComponent,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './holidays-config.component.html',
   styleUrl: './holidays-config.component.scss',
 })

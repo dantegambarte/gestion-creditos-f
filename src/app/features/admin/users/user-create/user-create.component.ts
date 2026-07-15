@@ -15,6 +15,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
@@ -37,7 +38,7 @@ import { UsersService } from '../users.service';
     ToastModule,
     TempPasswordDialogComponent,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './user-create.component.html',
 })
 export class UserCreateComponent implements OnInit {

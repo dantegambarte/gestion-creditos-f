@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
@@ -40,7 +41,7 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
     DelinquencyApplyDialogComponent,
     FfBackTopFabComponent,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './delinquency.component.html',
   styleUrl: './delinquency.component.scss',
 })

@@ -3,6 +3,7 @@ import { FfBackTopFabComponent } from './../../../../shared/components/back-top-
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
@@ -123,7 +124,7 @@ export interface ParamRow extends SystemConfigParam {
     TableModule,
     ToastModule,
   ],
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './system-params-config.component.html',
 })
 export class SystemParamsConfigComponent implements OnInit {
@@ -169,16 +170,12 @@ export class SystemParamsConfigComponent implements OnInit {
     this.loading = true;
     this.svc.getAll().subscribe({
       next: (params) => {
-        this.rows = params.map((p) => ({
-          ...p,
-          meta: PARAM_META[p.key] ?? {
-            label: p.key,
-            range: '–',
-            hint: '',
-            min: 0,
-            max: 999999,
-          },
-        }));
+        this.rows = params
+          .filter((p) => PARAM_META[p.key])
+          .map((p) => ({
+            ...p,
+            meta: PARAM_META[p.key],
+          }));
         this.loading = false;
       },
       error: () => {

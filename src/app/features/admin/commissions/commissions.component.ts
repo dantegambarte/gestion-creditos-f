@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../core/services/dedup-message.service';
 import { ToastModule } from 'primeng/toast';
 import { ActiveTabScrollerDirective } from '../../../shared/directives/active-tab-scroller.directive';
 import { CommissionsFacade } from './commissions.facade';
@@ -19,7 +20,10 @@ import { CommissionsSummaryTabComponent } from './summary-tab/commissions-summar
     CommissionsLiquidationDialogsComponent,
     ActiveTabScrollerDirective,
   ],
-  providers: [MessageService, CommissionsFacade],
+  providers: [
+    { provide: MessageService, useClass: DedupMessageService },
+    CommissionsFacade,
+  ],
   templateUrl: './commissions.component.html',
 })
 export class CommissionsComponent implements OnInit, OnDestroy {

@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
@@ -11,8 +12,16 @@ import { CustomersService } from '../../customers.service';
 @Component({
   selector: 'app-client-portal-panel',
   standalone: true,
-  providers: [MessageService, ConfirmationService],
-  imports: [ButtonModule, ConfirmDialogModule, ToastModule, TempPasswordDialogComponent],
+  providers: [
+    { provide: MessageService, useClass: DedupMessageService },
+    ConfirmationService,
+  ],
+  imports: [
+    ButtonModule,
+    ConfirmDialogModule,
+    ToastModule,
+    TempPasswordDialogComponent,
+  ],
   templateUrl: './client-portal-panel.component.html',
 })
 export class ClientPortalPanelComponent {
@@ -47,7 +56,8 @@ export class ClientPortalPanelComponent {
       acceptLabel: 'Habilitar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.enablePortal(this.customer.id).subscribe({
           next: ({ tempPassword }) => {
@@ -70,11 +80,16 @@ export class ClientPortalPanelComponent {
       acceptLabel: 'Deshabilitar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
-      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.disablePortal(this.customer.id).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Portal deshabilitado', detail: '' });
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Portal deshabilitado',
+              detail: '',
+            });
             this.customerChanged.emit();
           },
           error: (err: AppError) => this.handleActionError(err),
@@ -93,7 +108,8 @@ export class ClientPortalPanelComponent {
       acceptLabel: 'Resetear',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.resetPortalPassword(this.customer.id).subscribe({
           next: ({ tempPassword }) => {
@@ -116,11 +132,16 @@ export class ClientPortalPanelComponent {
       acceptLabel: 'Desbloquear',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass:
+        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.unlockPortal(this.customer.id).subscribe({
           next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Portal desbloqueado', detail: '' });
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Portal desbloqueado',
+              detail: '',
+            });
             this.customerChanged.emit();
           },
           error: (err: AppError) => this.handleActionError(err),

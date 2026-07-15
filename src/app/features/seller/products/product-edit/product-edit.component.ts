@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { DedupMessageService } from '../../../../core/services/dedup-message.service';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
@@ -26,7 +27,7 @@ import { ProductsService } from '../products.service';
 @Component({
   selector: 'app-product-edit',
   standalone: true,
-  providers: [MessageService],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }],
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -69,7 +70,10 @@ export class ProductEditComponent implements OnInit {
   ngOnInit(): void {
     this.header.set([
       { label: 'Productos', route: `/${this.routePrefix}/products` },
-      { label: 'Producto', route: `/${this.routePrefix}/products/${this.productId}` },
+      {
+        label: 'Producto',
+        route: `/${this.routePrefix}/products/${this.productId}`,
+      },
       { label: 'Editar' },
     ]);
 
@@ -148,7 +152,10 @@ export class ProductEditComponent implements OnInit {
           });
           setTimeout(
             () =>
-              this.router.navigate([`/${this.routePrefix}/products`, this.productId]),
+              this.router.navigate([
+                `/${this.routePrefix}/products`,
+                this.productId,
+              ]),
             1000,
           );
         },
@@ -208,7 +215,10 @@ export class ProductEditComponent implements OnInit {
         });
         this.header.set([
           { label: 'Productos', route: `/${this.routePrefix}/products` },
-          { label: data.title, route: `/${this.routePrefix}/products/${this.productId}` },
+          {
+            label: data.title,
+            route: `/${this.routePrefix}/products/${this.productId}`,
+          },
           { label: 'Editar' },
         ]);
         this.loading = false;

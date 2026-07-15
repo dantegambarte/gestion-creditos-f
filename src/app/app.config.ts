@@ -14,13 +14,13 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { RoleBasedPreloadingStrategy } from './core/routing/role-based-preloading.strategy';
+import { DedupMessageService } from './core/services/dedup-message.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes, withPreloading(RoleBasedPreloadingStrategy)),
     provideAnimations(),
-    MessageService,
-    // Orden: loading (spinner global) → auth (JWT) → error (toasts/redirects)
+    { provide: MessageService, useClass: DedupMessageService },
     provideHttpClient(
       withFetch(),
       withInterceptors([loadingInterceptor, authInterceptor, errorInterceptor]),
