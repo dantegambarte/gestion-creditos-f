@@ -57,12 +57,12 @@
           <th
             class="px-5 py-3 text-left text-xs font-semibold ff-text-muted uppercase tracking-wide"
           >
-            Email
+            DNI
           </th>
           <th
             class="px-5 py-3 text-left text-xs font-semibold ff-text-muted uppercase tracking-wide"
           >
-            DNI
+            Email
           </th>
           <th
             class="px-5 py-3 text-left text-xs font-semibold ff-text-muted uppercase tracking-wide"
@@ -112,8 +112,8 @@
                   <span class="font-medium ff-text-primary">{{ user.fullName }}</span>
                 </div>
               </td>
-              <td class="px-5 py-3 ff-text-secondary">{{ user.email || "—" }}</td>
               <td class="px-5 py-3 ff-text-secondary">{{ user.dni }}</td>
+              <td class="px-5 py-3 ff-text-secondary">{{ user.email || "—" }}</td>
               <td class="px-5 py-3">
                 <p-tag
                   [value]="roleLabel(user.role)"
