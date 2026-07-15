@@ -170,16 +170,12 @@ export class SystemParamsConfigComponent implements OnInit {
     this.loading = true;
     this.svc.getAll().subscribe({
       next: (params) => {
-        this.rows = params.map((p) => ({
-          ...p,
-          meta: PARAM_META[p.key] ?? {
-            label: p.key,
-            range: '–',
-            hint: '',
-            min: 0,
-            max: 999999,
-          },
-        }));
+        this.rows = params
+          .filter((p) => PARAM_META[p.key])
+          .map((p) => ({
+            ...p,
+            meta: PARAM_META[p.key],
+          }));
         this.loading = false;
       },
       error: () => {
