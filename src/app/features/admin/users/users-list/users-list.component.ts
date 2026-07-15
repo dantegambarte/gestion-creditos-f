@@ -22,23 +22,15 @@ import { EmptyStateComponent } from '../../../../shared/states/empty-state/empty
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { UserCreateComponent } from '../user-create/user-create.component';
-import { User, UserListFilters, UserStatus } from '../user.model';
+import {
+  ROLE_LABEL,
+  ROLE_SEVERITY,
+  User,
+  UserListFilters,
+  UserStatus,
+} from '../user.model';
 import { UsersService } from '../users.service';
 import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
-
-const ROLE_LABEL: Record<string, string> = {
-  ADMIN: 'Administrador',
-  SELLER: 'Vendedor',
-  COLLECTOR: 'Cobrador',
-  SELLER_COLLECTOR: 'Vendedor/Cobrador',
-};
-
-const ROLE_SEVERITY: Record<string, string> = {
-  ADMIN: 'danger',
-  SELLER: 'info',
-  COLLECTOR: 'success',
-  SELLER_COLLECTOR: 'warning',
-};
 
 @Component({
   selector: 'app-users-list',
