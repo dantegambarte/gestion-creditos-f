@@ -9,11 +9,8 @@ import { DedupMessageService } from '../../../core/services/dedup-message.servic
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../core/models/app-error';
 import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
@@ -27,18 +24,14 @@ import {
   COLLECTION_FILTER_LABELS,
   CollectionSheetDetail,
   CollectionSheetItem,
-  ManagementStatus,
 } from '../models/collection.model';
 import { CollectionAttemptType } from '../models/collection-attempt.model';
-import {
-  MANAGEMENT_EVENT_LABELS,
-  ManagementEventType,
-  ManagementLogEntry,
-} from '../models/management-log.model';
+import { ManagementLogEntry } from '../models/management-log.model';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { BackButtonComponent } from '../../../shared/components/back-button/back-button.component';
 import { ActiveTabScrollerDirective } from '../../../shared/directives/active-tab-scroller.directive';
 import { AttemptDialogComponent } from './attempt-dialog/attempt-dialog.component';
+import { CollectionSheetPaymentPanelComponent } from './payment-panel/collection-sheet-payment-panel.component';
 import { PaymentDialogComponent } from './payment-dialog/payment-dialog.component';
 import { CollectionDialogSuccess } from './sheet-dialog.model';
 import { VoidDialogComponent } from './void-dialog/void-dialog.component';
@@ -53,14 +46,12 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
     FormsModule,
     ButtonModule,
     InputTextModule,
-    TagModule,
     BadgeModule,
     ToastModule,
-    ProgressSpinnerModule,
-    TooltipModule,
     SkeletonModule,
     ErrorStateComponent,
     PaymentDialogComponent,
+    CollectionSheetPaymentPanelComponent,
     AttemptDialogComponent,
     VoidDialogComponent,
     BackButtonComponent,
@@ -83,6 +74,11 @@ export class CollectionSheetDetailComponent implements OnInit {
   items: CollectionSheetItem[] = [];
   selectedItem: CollectionSheetItem | null = null;
   sidePanelOpen = false;
+  private selectedItemScrollSnapshot: {
+    container: HTMLElement | Window;
+    sourceElement: HTMLElement | null;
+    top: number;
+  } | null = null;
   loading = true;
   error: AppError | null = null;
 
@@ -139,33 +135,6 @@ export class CollectionSheetDetailComponent implements OnInit {
 
   antecedentLabel(t: AntecedentType): string {
     return ANTECEDENT_TYPE_LABELS[t];
-  }
-
-  /** Etiqueta de la gestión del día derivada del management_status vivo. */
-  managementLabel(status: ManagementStatus): string {
-    const map: Record<ManagementStatus, string> = {
-      PENDING: 'Pendiente',
-      VISITED: 'Cobro registrado',
-      PAID: 'Cobrada',
-      NO_PAYMENT: 'No pagó',
-      NOT_FOUND: 'No encontrado',
-    };
-    return map[status] ?? status;
-  }
-
-  installmentSeverity(
-    status: InstallmentStatus,
-  ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
-    const map: Record<
-      InstallmentStatus,
-      'success' | 'info' | 'warning' | 'danger' | 'secondary'
-    > = {
-      PENDING: 'info',
-      OVERDUE: 'danger',
-      PAID: 'success',
-      PARTIAL: 'warning',
-    };
-    return map[status] ?? 'secondary';
   }
 
   installmentLabel(status: InstallmentStatus): string {
@@ -330,10 +299,6 @@ export class CollectionSheetDetailComponent implements OnInit {
     return this.expandedLogItemId === item.installmentId;
   }
 
-  eventTypeLabel(type: ManagementEventType): string {
-    return MANAGEMENT_EVENT_LABELS[type];
-  }
-
   /**
    * True si el item en `index` es la primera cuota de su cliente.
    */
@@ -350,14 +315,24 @@ export class CollectionSheetDetailComponent implements OnInit {
     return this.items.filter((i) => i.customerName === customerName).length;
   }
 
-  selectItem(item: CollectionSheetItem): void {
+  /** Selecciona una cuota y guarda el scroll real para volver ahí al cerrar el panel. */
+  selectItem(item: CollectionSheetItem, event?: Event): void {
+    this.selectedItemScrollSnapshot = this.captureScrollSnapshot(
+      event?.currentTarget ?? undefined,
+    );
     this.selectedItem = item;
     this.sidePanelOpen = true;
+    this.scrollSidePanelIntoView();
   }
 
   /** Abre el panel de cobro y desplaza la vista hasta el panel renderizado. */
   openSidePanel(): void {
     this.sidePanelOpen = true;
+    this.scrollSidePanelIntoView();
+  }
+
+  /** Espera el render del panel hijo y lo desplaza al inicio visible de la pantalla. */
+  private scrollSidePanelIntoView(): void {
     setTimeout(() => {
       document
         .querySelector('.sheet-side')
@@ -367,6 +342,82 @@ export class CollectionSheetDetailComponent implements OnInit {
 
   closeSidePanel(): void {
     this.sidePanelOpen = false;
+    this.scrollSelectedItemIntoView();
+  }
+
+  /** Al cerrar el panel, vuelve a la fila/card seleccionada para no dejar al usuario al final de la lista. */
+  private scrollSelectedItemIntoView(): void {
+    setTimeout(() => {
+      if (this.selectedItemScrollSnapshot) {
+        this.restoreScrollSnapshot(this.selectedItemScrollSnapshot);
+        return;
+      }
+
+      const installmentId = this.selectedItem?.installmentId;
+      if (!installmentId) return;
+      this.findVisibleInstallmentElement(installmentId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 50);
+  }
+
+  /** Busca la fila/card visible porque desktop y mobile comparten el mismo installmentId. */
+  private findVisibleInstallmentElement(installmentId: string): Element | null {
+    const nodes = Array.from(
+      document.querySelectorAll(`[data-installment-id="${installmentId}"]`),
+    );
+    return nodes.find((node) => node.getClientRects().length > 0) ?? null;
+  }
+
+  /** Captura el scroll del contenedor real; en mobile no siempre scrollea window. */
+  private captureScrollSnapshot(target: EventTarget | undefined): {
+    container: HTMLElement | Window;
+    sourceElement: HTMLElement | null;
+    top: number;
+  } {
+    const element = target instanceof HTMLElement ? target : null;
+    const container = element ? this.findScrollContainer(element) : window;
+    return {
+      container,
+      sourceElement: element,
+      top: container instanceof Window ? window.scrollY : container.scrollTop,
+    };
+  }
+
+  /** Restaura el scroll guardado del contenedor que originó la apertura del panel. */
+  private restoreScrollSnapshot(snapshot: {
+    container: HTMLElement | Window;
+    sourceElement: HTMLElement | null;
+    top: number;
+  }): void {
+    if (snapshot.sourceElement?.isConnected) {
+      snapshot.sourceElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+      return;
+    }
+
+    if (snapshot.container instanceof Window) {
+      snapshot.container.scrollTo({ top: snapshot.top, behavior: 'smooth' });
+      return;
+    }
+    snapshot.container.scrollTo({ top: snapshot.top, behavior: 'smooth' });
+  }
+
+  /** Encuentra el ancestro que realmente scrollea, evitando asumir que siempre es window. */
+  private findScrollContainer(element: HTMLElement): HTMLElement | Window {
+    let current = element.parentElement;
+    while (current) {
+      const style = window.getComputedStyle(current);
+      const canScroll = /(auto|scroll)/.test(style.overflowY);
+      if (canScroll && current.scrollHeight > current.clientHeight) {
+        return current;
+      }
+      current = current.parentElement;
+    }
+    return window;
   }
 
   /**
@@ -473,35 +524,6 @@ export class CollectionSheetDetailComponent implements OnInit {
    */
   pendingPaymentCount(): number {
     return this.items.filter((item) => this.hasPendingPaymentLive(item)).length;
-  }
-
-  /**
-   * Devuelve el progreso de la cuota en formato "X de N".
-   * @param item Cuota seleccionada dentro de la planilla.
-   */
-  installmentProgress(item: CollectionSheetItem): string {
-    const ref = item.collectionReference ?? '';
-    const match = ref.match(/cuota\s+(\d+)\s+de\s+(\d+)/i);
-    if (match) {
-      return `${match[1]} de ${match[2]}`;
-    }
-    return `${item.installmentNumber}`;
-  }
-
-  /** Severity para el tag del evento en el log. */
-  eventSeverity(
-    type: ManagementEventType,
-  ): 'success' | 'warning' | 'secondary' {
-    const map: Record<
-      ManagementEventType,
-      'success' | 'warning' | 'secondary'
-    > = {
-      PAYMENT: 'success',
-      NO_PAYMENT: 'warning',
-      NOT_FOUND: 'secondary',
-      SCHEDULED_VISIT: 'secondary',
-    };
-    return map[type];
   }
 
   private loadLog(installmentId: string): void {

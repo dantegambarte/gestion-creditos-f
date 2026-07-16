@@ -147,7 +147,7 @@
         </div>
 
         <div class="sheet-table-scroll hidden md:block">
-          <table class="sheet-table">
+          <table class="sheet-table" data-cy="sheet-detail-table">
             <thead>
               <tr>
                 <th>#</th>
@@ -164,10 +164,12 @@
             <tbody>
               @for (item of filteredItems; track item.installmentId) {
                 <tr
+                  data-cy="sheet-detail-table-row"
+                  [attr.data-installment-id]="item.installmentId"
                   [class.row-selected]="
                     selectedItem?.installmentId === item.installmentId
                   "
-                  (click)="selectItem(item)"
+                  (click)="selectItem(item, $event)"
                 >
                   <td>{{ item.orderNumber }}</td>
                   <td>
@@ -222,7 +224,7 @@
           </table>
         </div>
 
-        <div class="sheet-mobile-list block md:hidden">
+        <div class="sheet-mobile-list block md:hidden" data-cy="sheet-detail-mobile-list">
           @if (filteredItems.length === 0) {
             <div class="sheet-empty-state">
               <i class="pi pi-inbox"></i>
@@ -241,6 +243,8 @@
           @for (item of filteredItems; track item.installmentId) {
             <article
               class="sheet-mobile-card"
+              data-cy="sheet-detail-mobile-card"
+              [attr.data-installment-id]="item.installmentId"
               [class.sheet-mobile-card--selected]="
                 selectedItem?.installmentId === item.installmentId
               "
@@ -250,7 +254,7 @@
               [class.sheet-mobile-card--paid]="
                 item.installmentStatus === 'PAID'
               "
-              (click)="selectItem(item)"
+              (click)="selectItem(item, $event)"
             >
               <div class="sheet-mobile-card__head">
                 <div class="sheet-mobile-card__identity">
@@ -308,6 +312,7 @@
                   <button
                     type="button"
                     class="action-btn action-btn--mobile"
+                    data-cy="sheet-detail-mobile-register-payment-action"
                     (click)="$event.stopPropagation(); openPaymentDialog(item)"
                   >
                     Registrar cobro
@@ -339,243 +344,21 @@
         </button>
       }
 
-      @if (sidePanelOpen) {
-        <aside class="sheet-side">
-          <div class="side-head">
-            <h3>Registrar cobro</h3>
-            <button
-              type="button"
-              class="side-close-btn"
-              (click)="closeSidePanel()"
-              aria-label="Cerrar panel de cobro"
-            >
-              <i class="pi pi-times"></i>
-            </button>
-          </div>
-          @if (selectedItem) {
-            <div class="side-customer">{{ selectedItem.customerName }}</div>
-            <div
-              class="side-status"
-              [class.side-status--pending]="
-                selectedItem.installmentStatus === 'OVERDUE'
-              "
-            >
-              {{ installmentLabel(selectedItem.installmentStatus) }}
-            </div>
-
-            <div class="side-summary">
-              <p>
-                <span>Cuota</span
-                ><strong>{{ installmentProgress(selectedItem) }}</strong>
-              </p>
-              <p>
-                <span>Vencimiento</span
-                ><strong>{{ selectedItem.dueDate | date: "dd/MM/yy" }}</strong>
-              </p>
-              <p>
-                <span>Monto cuota</span
-                ><strong>{{
-                  displayCapital(selectedItem) | currencyArs: 2
-                }}</strong>
-              </p>
-              <p>
-                <span>Mora aplicada</span
-                ><strong class="mora">{{
-                  displayPenalty(selectedItem) | currencyArs: 2
-                }}</strong>
-              </p>
-              @if (displayAmountPaid(selectedItem) > 0) {
-                <p>
-                  <span>Pagado</span
-                  ><strong>{{
-                    displayAmountPaid(selectedItem) | currencyArs: 2
-                  }}</strong>
-                </p>
-              }
-              <p class="total">
-                <span>Saldo total</span
-                ><strong>{{
-                  availableBalance(selectedItem) | currencyArs: 2
-                }}</strong>
-              </p>
-            </div>
-
-            @if (selectedItem.live?.hasPendingPayment) {
-              <div class="side-note">
-                Ya tiene una pre-carga pendiente de aprobación.
-              </div>
-            }
-
-            @if (alreadyManagedToday(selectedItem)) {
-              <div class="side-note">
-                Ya gestionada:
-                <strong>{{
-                  managementLabel(selectedItem.managementStatus)
-                }}</strong>
-                @if (canVoidTodayAttempt(selectedItem)) {
-                  <p-button
-                    label="Anular gestión"
-                    icon="pi pi-undo"
-                    severity="secondary"
-                    [outlined]="true"
-                    styleClass="w-full justify-center mt-2"
-                    (onClick)="openVoidDialog(selectedItem)"
-                  />
-                }
-              </div>
-            }
-
-            <div class="side-actions">
-              <p-button
-                label="Registrar pre-carga"
-                styleClass="w-full justify-center sheet-primary-btn"
-                [disabled]="!canRegisterPayment(selectedItem)"
-                (onClick)="openPaymentDialog(selectedItem)"
-              />
-
-              <div class="attempt-actions">
-                <p-button
-                  label="No pagó"
-                  severity="warning"
-                  [outlined]="true"
-                  styleClass="w-full justify-center attempt-btn attempt-btn--warn"
-                  [disabled]="!canRegisterAttempt(selectedItem)"
-                  (onClick)="openAttemptDialog(selectedItem, 'NO_PAYMENT')"
-                />
-                <p-button
-                  label="No encontrado"
-                  severity="secondary"
-                  [outlined]="true"
-                  styleClass="w-full justify-center attempt-btn attempt-btn--neutral"
-                  [disabled]="!canRegisterAttempt(selectedItem)"
-                  (onClick)="openAttemptDialog(selectedItem, 'NOT_FOUND')"
-                />
-              </div>
-
-              <div class="side-help">
-                <p class="side-help__title">i ¿Qué es una pre-carga?</p>
-                <p class="side-help__text">
-                  El cobro queda en estado "Pendiente" hasta que un
-                  administrador lo apruebe o rechace.
-                </p>
-              </div>
-            </div>
-
-            <!-- Historial de gestiones (incluye anuladas marcadas ANULADO) -->
-            <div class="side-log mt-3">
-              <button
-                type="button"
-                class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"
-                (click)="toggleLog(selectedItem)"
-              >
-                <i
-                  class="pi text-[10px]"
-                  [class.pi-chevron-down]="!isLogExpanded(selectedItem)"
-                  [class.pi-chevron-up]="isLogExpanded(selectedItem)"
-                ></i>
-                {{
-                  isLogExpanded(selectedItem)
-                    ? "Ocultar historial"
-                    : "Ver historial de gestiones"
-                }}
-              </button>
-              @if (isLogExpanded(selectedItem)) {
-                <div class="mt-2">
-                  @if (
-                    loadingLogItemId === selectedItem.installmentId &&
-                    !managementLogs[selectedItem.installmentId]
-                  ) {
-                    <div
-                      class="flex items-center gap-2 text-xs text-[var(--ff-text-muted)]"
-                    >
-                      <p-progressSpinner
-                        [style]="{ width: '16px', height: '16px' }"
-                        strokeWidth="4"
-                      />
-                      <span>Cargando...</span>
-                    </div>
-                  } @else if (
-                    managementLogs[selectedItem.installmentId] &&
-                    managementLogs[selectedItem.installmentId].length === 0
-                  ) {
-                    <p class="text-xs text-[var(--ff-text-muted)]">
-                      Sin gestiones registradas.
-                    </p>
-                  } @else if (managementLogs[selectedItem.installmentId]) {
-                    <ul class="flex flex-col gap-2">
-                      @for (
-                        entry of managementLogs[selectedItem.installmentId];
-                        track entry.eventId
-                      ) {
-                        <li
-                          class="flex items-start gap-2 text-xs"
-                          [class.opacity-50]="!!entry.voidedAt"
-                          [class.line-through]="!!entry.voidedAt"
-                        >
-                          <p-tag
-                            [value]="eventTypeLabel(entry.eventType)"
-                            [severity]="
-                              entry.voidedAt
-                                ? 'secondary'
-                                : eventSeverity(entry.eventType)
-                            "
-                            styleClass="!text-[10px] !py-0.5"
-                          />
-                          <div class="flex-1 min-w-0">
-                            <div
-                              class="flex flex-wrap items-center gap-x-2 gap-y-0.5"
-                            >
-                              <span class="text-[var(--ff-text-secondary)]">{{
-                                entry.createdAt | date: "dd/MM/yyyy HH:mm"
-                              }}</span>
-                              @if (entry.voidedAt) {
-                                <span
-                                  class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-800"
-                                  style="text-decoration: none"
-                                  >ANULADO</span
-                                >
-                              }
-                              @if (
-                                entry.eventType === "PAYMENT" &&
-                                entry.amount !== null
-                              ) {
-                                <span class="font-semibold text-green-700">{{
-                                  entry.amount | currencyArs: 2
-                                }}</span>
-                              }
-                              @if (entry.nextVisitDate) {
-                                <span class="text-purple-700"
-                                  >→ próx. visita
-                                  {{
-                                    entry.nextVisitDate | date: "dd/MM/yyyy"
-                                  }}</span
-                                >
-                              }
-                            </div>
-                            @if (entry.reason) {
-                              <p class="mt-0.5 text-[var(--ff-text-secondary)]">
-                                {{ entry.reason }}
-                              </p>
-                            }
-                            @if (entry.notes) {
-                              <p
-                                class="mt-0.5 italic text-[var(--ff-text-muted)]"
-                              >
-                                "{{ entry.notes }}"
-                              </p>
-                            }
-                          </div>
-                        </li>
-                      }
-                    </ul>
-                  }
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="cell-sub">Seleccioná una cuota para ver el detalle.</p>
-          }
-        </aside>
+      @if (sidePanelOpen && selectedItem; as panelItem) {
+        <app-collection-sheet-payment-panel
+          [item]="panelItem"
+          [canRegisterPayment]="canRegisterPayment(panelItem)"
+          [canRegisterAttempt]="canRegisterAttempt(panelItem)"
+          [canVoidTodayAttempt]="canVoidTodayAttempt(panelItem)"
+          [logExpanded]="isLogExpanded(panelItem)"
+          [loadingLog]="loadingLogItemId === panelItem.installmentId"
+          [managementLog]="managementLogs[panelItem.installmentId]"
+          (closePanel)="closeSidePanel()"
+          (registerPayment)="openPaymentDialog(panelItem)"
+          (registerAttempt)="openAttemptDialog(panelItem, $event)"
+          (voidAttempt)="openVoidDialog(panelItem)"
+          (toggleLog)="toggleLog(panelItem)"
+        />
       }
     </div>
   }
