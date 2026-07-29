@@ -4,7 +4,6 @@ import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
-import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import {
   NotificationItem,
@@ -33,12 +32,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   constructor(
     public auth: AuthServiceBase,
-    private dateService: DateService,
     public headerService: HeaderService,
     public notifSvc: NotificationsService,
     private router: Router,
   ) {
-    this.today = this.dateService.display(new Date(), "EEEE d 'de' MMMM, yyyy");
+    this.today = this.formatToday();
   }
 
   ngOnInit(): void {
@@ -106,5 +104,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
       return ['/admin/cash-register'];
     }
     return null;
+  }
+
+  /** Formatea la fecha del header sin arrastrar date-fns al bundle inicial. */
+  private formatToday(): string {
+    return new Intl.DateTimeFormat('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date());
   }
 }

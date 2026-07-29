@@ -274,9 +274,12 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Verifica el estado de cierre de caja del día actual.
+   * Verifica el estado de cierre de caja del día actual. Solo ADMIN puede
+   * consultar el dashboard de caja (403 para el resto), y `isCashClosed` solo
+   * afecta acciones de admin, así que se omite la llamada para otros roles.
    */
   private checkCashRegisterStatus(): void {
+    if (!this.isAdmin) return;
     this.cashRegisterSvc
       .getDashboard()
       .pipe(catchError(() => of(null)))

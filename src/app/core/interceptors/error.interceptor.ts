@@ -82,7 +82,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      if (err?.status === 401) {
+      if (err?.status === 401 && !_isInternalSessionAlreadyClosed(isPortal)) {
         _showGlobalHttpError(messageService, err);
         _redirectToLogin(router, auth, notifSvc, isPortal);
       }
@@ -151,6 +151,15 @@ export function _httpErrorSummary(status: number | undefined): string | null {
   if (status === 403) return 'No tienes permisos para esta acción';
   if (status && status >= 500) return 'Error interno del servidor';
   return null;
+}
+
+/**
+ * Detecta 401 tardíos disparados después de un logout manual ya aplicado.
+ * @param isPortal Indica si la request pertenece al portal cliente.
+ */
+export function _isInternalSessionAlreadyClosed(isPortal: boolean): boolean {
+  if (isPortal || typeof localStorage === 'undefined') return false;
+  return !localStorage.getItem(environment.tokenKey);
 }
 
 export function _redirectToLogin(

@@ -231,6 +231,8 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.1em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .operations-type-badge--sale {
@@ -244,11 +246,15 @@
 }
 
 :host ::ng-deep .ff-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 22px;
   padding: 0 9px;
   border-radius: 5px;
   font-size: 11px;
   letter-spacing: 0.08em;
+  line-height: 1;
 }
 
 :host ::ng-deep .ff-badge--activo {
