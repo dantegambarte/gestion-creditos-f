@@ -15,6 +15,7 @@ import { UserRole, UserRoleEnum } from '../models/types/user-role';
 import { environment } from '../../../environments/environment';
 import { AuthServiceBase } from './auth-service.base';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
+import { MessageService } from 'primeng/api';
 import {
   LoginCredentials,
   LoginResponseData,
@@ -27,6 +28,7 @@ const isBrowser = typeof localStorage !== 'undefined';
 export class AuthService extends AuthServiceBase {
   private readonly api = inject(ApiHttpService);
   private readonly router = inject(Router);
+  private readonly messageService = inject(MessageService);
 
   private readonly TOKEN_KEY = environment.tokenKey;
   private readonly USER_KEY = 'sgcf_user';
@@ -47,7 +49,7 @@ export class AuthService extends AuthServiceBase {
   }
 
   /**
-   * Cierra la sesión del usuario actual, limpia el estado y redirige al login.
+   * Cierra la sesión del usuario actual, limpia el estado local y muestra confirmación.
    */
   logout(): void {
     this.api
@@ -55,6 +57,7 @@ export class AuthService extends AuthServiceBase {
       .pipe(catchError(() => of(null)))
       .subscribe();
     this.clear();
+    this.messageService.add({ severity: 'success', summary: 'Sesión cerrada' });
     this.router.navigate([AppRoutes.LOGIN]);
   }
 

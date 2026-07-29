@@ -12,6 +12,7 @@ import { AuthService } from './auth.service';
 import { AuthUser } from '../models/interface/auth-user';
 import { Roles } from '../../shared/models/enums/roles.enum';
 import { environment } from '../../../environments/environment';
+import { MessageService } from 'primeng/api';
 
 // Base tomada del environment activo en tests (relativa: '/api'), no hardcodeada,
 // para que el spec siga a la app si cambia la baseURL.
@@ -50,6 +51,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let http: HttpTestingController;
   let router: Router;
+  let messageService: MessageService;
 
   beforeEach(() => {
     localStorage.clear();
@@ -57,6 +59,7 @@ describe('AuthService', () => {
     TestBed.configureTestingModule({
       providers: [
         AuthService,
+        MessageService,
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
@@ -66,7 +69,9 @@ describe('AuthService', () => {
     service = TestBed.inject(AuthService);
     http = TestBed.inject(HttpTestingController);
     router = TestBed.inject(Router);
+    messageService = TestBed.inject(MessageService);
     spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+    spyOn(messageService, 'add');
   });
 
   afterEach(() => {
@@ -191,5 +196,9 @@ describe('AuthService', () => {
     expect(localStorage.getItem('sgcf_token')).toBeNull();
     expect(localStorage.getItem('sgcf_user')).toBeNull();
     expect(emitted).toBeNull();
+    expect(messageService.add).toHaveBeenCalledWith({
+      severity: 'success',
+      summary: 'Sesión cerrada',
+    });
   }));
 });

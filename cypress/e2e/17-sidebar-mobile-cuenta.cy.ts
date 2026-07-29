@@ -38,7 +38,14 @@ describe('Sidebar mobile — sección Cuenta', () => {
   });
 
   it('cierra sesión y redirige a /login al tocar "Cerrar sesión"', () => {
+    cy.intercept('POST', '**/api/auth/logout', { ok: true, data: null }).as(
+      'logout',
+    );
+
     cy.get('[data-testid="logout-btn-mobile"]').click();
+    cy.wait('@logout');
     cy.url().should('include', '/login');
+    cy.contains('.p-toast-message', 'Sesión cerrada').should('be.visible');
+    cy.contains('.p-toast-message', 'Sesión expirada').should('not.exist');
   });
 });

@@ -283,6 +283,15 @@
   margin-top: 1rem;
 }
 
+.sheet-mobile-inline-panel {
+  margin-top: 0.75rem;
+  scroll-margin-top: 0.75rem;
+}
+
+.sheet-mobile-inline-panel + .sheet-mobile-card {
+  margin-top: 1rem;
+}
+
 .sheet-empty-state {
   min-height: 9rem;
   border: 1px dashed var(--ff-border);

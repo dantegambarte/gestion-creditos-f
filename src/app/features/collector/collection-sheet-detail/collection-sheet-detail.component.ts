@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { FfBackTopFabComponent } from './../../../shared/components/back-top-fab/ff-back-top-fab.component';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -74,6 +74,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   items: CollectionSheetItem[] = [];
   selectedItem: CollectionSheetItem | null = null;
   sidePanelOpen = false;
+  isMobileLayout = this.detectMobileLayout();
   private selectedItemScrollSnapshot: {
     container: HTMLElement | Window;
     sourceElement: HTMLElement | null;
@@ -121,6 +122,12 @@ export class CollectionSheetDetailComponent implements OnInit {
       { label: 'Planilla' },
     ]);
     this.load();
+  }
+
+  /** Actualiza el modo responsive usado para ubicar el panel de cobro. */
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.isMobileLayout = this.detectMobileLayout();
   }
 
   goBack(): void {
@@ -334,10 +341,11 @@ export class CollectionSheetDetailComponent implements OnInit {
   /** Espera el render del panel hijo y lo desplaza al inicio visible de la pantalla. */
   private scrollSidePanelIntoView(): void {
     setTimeout(() => {
-      document
-        .querySelector('.sheet-side')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+      this.findPaymentPanelElement()?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 50);
   }
 
   closeSidePanel(): void {
@@ -391,19 +399,27 @@ export class CollectionSheetDetailComponent implements OnInit {
     sourceElement: HTMLElement | null;
     top: number;
   }): void {
-    if (snapshot.sourceElement?.isConnected) {
-      snapshot.sourceElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-      return;
-    }
-
     if (snapshot.container instanceof Window) {
       snapshot.container.scrollTo({ top: snapshot.top, behavior: 'smooth' });
       return;
     }
     snapshot.container.scrollTo({ top: snapshot.top, behavior: 'smooth' });
+  }
+
+  /** Devuelve el panel activo según el layout, evitando seleccionar nodos ocultos. */
+  private findPaymentPanelElement(): Element | null {
+    if (this.isMobileLayout && this.selectedItem) {
+      return document.querySelector(
+        `[data-cy="sheet-payment-panel-inline"][data-installment-id="${this.selectedItem.installmentId}"] .sheet-side`,
+      );
+    }
+    return document.querySelector('[data-cy="sheet-payment-panel-desktop"] .sheet-side');
+  }
+
+  /** Detecta si la UI debe usar el panel inline mobile. */
+  private detectMobileLayout(): boolean {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(max-width: 767.98px)').matches;
   }
 
   /** Encuentra el ancestro que realmente scrollea, evitando asumir que siempre es window. */

@@ -3,6 +3,7 @@ import { AuthServiceBase } from '../auth/auth-service.base';
 import { NotificationsService } from '../services/notifications.service';
 import {
   _httpErrorSummary,
+  _isInternalSessionAlreadyClosed,
   _redirectToLogin,
   _shouldRedirectToChangePassword,
 } from './error.interceptor';
@@ -44,6 +45,19 @@ describe('errorInterceptor helpers', () => {
     expect(_httpErrorSummary(400)).toBeNull();
     expect(_httpErrorSummary(404)).toBeNull();
     expect(_httpErrorSummary(undefined)).toBeNull();
+  });
+
+  it('detecta 401 tardíos internos cuando el logout ya limpió el token', () => {
+    localStorage.removeItem('sgcf_token');
+
+    expect(_isInternalSessionAlreadyClosed(false)).toBeTrue();
+    expect(_isInternalSessionAlreadyClosed(true)).toBeFalse();
+  });
+
+  it('mantiene 401 internos como sesión activa cuando todavía existe token', () => {
+    localStorage.setItem('sgcf_token', 'live.token');
+
+    expect(_isInternalSessionAlreadyClosed(false)).toBeFalse();
   });
 });
 

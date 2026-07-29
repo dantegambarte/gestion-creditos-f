@@ -91,14 +91,22 @@ describe('Collector Sheet Detail — Payment Panel', () => {
       .should('be.visible')
       .then(($card) => {
         const initialTop = $card[0].getBoundingClientRect().top;
+        const installmentId = $card.attr('data-installment-id');
 
         cy.wrap($card).click();
 
-        cy.get('[data-cy="sheet-payment-panel"]').should('exist');
+        cy.get('[data-cy="sheet-payment-panel-inline"]')
+          .should('have.attr', 'data-installment-id', installmentId)
+          .and('be.visible')
+          .then(($panel) => {
+            expect($panel.prev().attr('data-installment-id')).to.eq(installmentId);
+          });
+        cy.get('[data-cy="sheet-payment-panel"]').should('be.visible');
         cy.get('[data-cy="sheet-payment-panel-customer"]').should(
           'contain',
           'Cliente Panel 11',
         );
+        cy.contains('button', 'Registrar pre-carga').should('be.visible');
 
         cy.get('[data-cy="sheet-payment-panel-close"]').click({ force: true });
         cy.wrap(null).should(() => {

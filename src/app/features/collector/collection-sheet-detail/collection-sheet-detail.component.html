@@ -328,12 +328,38 @@
                 }
               </div>
             </article>
+            @if (
+              isMobileLayout &&
+              sidePanelOpen &&
+              selectedItem?.installmentId === item.installmentId
+            ) {
+              <div
+                class="sheet-mobile-inline-panel"
+                data-cy="sheet-payment-panel-inline"
+                [attr.data-installment-id]="item.installmentId"
+              >
+                <app-collection-sheet-payment-panel
+                  [item]="item"
+                  [canRegisterPayment]="canRegisterPayment(item)"
+                  [canRegisterAttempt]="canRegisterAttempt(item)"
+                  [canVoidTodayAttempt]="canVoidTodayAttempt(item)"
+                  [logExpanded]="isLogExpanded(item)"
+                  [loadingLog]="loadingLogItemId === item.installmentId"
+                  [managementLog]="managementLogs[item.installmentId]"
+                  (closePanel)="closeSidePanel()"
+                  (registerPayment)="openPaymentDialog(item)"
+                  (registerAttempt)="openAttemptDialog(item, $event)"
+                  (voidAttempt)="openVoidDialog(item)"
+                  (toggleLog)="toggleLog(item)"
+                />
+              </div>
+            }
           }
         </div>
         <ff-back-top-fab [itemCount]="filteredItems.length" dataCy="sheet-detail-collector-back-top-action" />
       </section>
 
-      @if (!sidePanelOpen && selectedItem) {
+      @if (!isMobileLayout && !sidePanelOpen && selectedItem) {
         <button
           type="button"
           class="open-side-panel-btn"
@@ -344,21 +370,23 @@
         </button>
       }
 
-      @if (sidePanelOpen && selectedItem; as panelItem) {
-        <app-collection-sheet-payment-panel
-          [item]="panelItem"
-          [canRegisterPayment]="canRegisterPayment(panelItem)"
-          [canRegisterAttempt]="canRegisterAttempt(panelItem)"
-          [canVoidTodayAttempt]="canVoidTodayAttempt(panelItem)"
-          [logExpanded]="isLogExpanded(panelItem)"
-          [loadingLog]="loadingLogItemId === panelItem.installmentId"
-          [managementLog]="managementLogs[panelItem.installmentId]"
-          (closePanel)="closeSidePanel()"
-          (registerPayment)="openPaymentDialog(panelItem)"
-          (registerAttempt)="openAttemptDialog(panelItem, $event)"
-          (voidAttempt)="openVoidDialog(panelItem)"
-          (toggleLog)="toggleLog(panelItem)"
-        />
+      @if (!isMobileLayout && sidePanelOpen && selectedItem; as panelItem) {
+        <div data-cy="sheet-payment-panel-desktop">
+          <app-collection-sheet-payment-panel
+            [item]="panelItem"
+            [canRegisterPayment]="canRegisterPayment(panelItem)"
+            [canRegisterAttempt]="canRegisterAttempt(panelItem)"
+            [canVoidTodayAttempt]="canVoidTodayAttempt(panelItem)"
+            [logExpanded]="isLogExpanded(panelItem)"
+            [loadingLog]="loadingLogItemId === panelItem.installmentId"
+            [managementLog]="managementLogs[panelItem.installmentId]"
+            (closePanel)="closeSidePanel()"
+            (registerPayment)="openPaymentDialog(panelItem)"
+            (registerAttempt)="openAttemptDialog(panelItem, $event)"
+            (voidAttempt)="openVoidDialog(panelItem)"
+            (toggleLog)="toggleLog(panelItem)"
+          />
+        </div>
       }
     </div>
   }
