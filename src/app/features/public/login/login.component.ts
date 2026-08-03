@@ -153,11 +153,10 @@ export class LoginComponent implements OnDestroy, AfterViewInit {
       ]);
     if (user.roles.includes(UserRoleEnum.COLLECTOR))
       return void this.router.navigate([AppRoutes.ROUTE]);
+    // El cobrador mixto (SELLER_COLLECTOR) también arranca en Mi Ruta: su tarea
+    // principal es la cobranza. Desde ahí puede navegar a Operaciones si vende.
     if (user.roles.includes(UserRoleEnum.SELLER_COLLECTOR))
-      return void this.router.navigate([
-        AppRoutes.SELLER,
-        AppRoutes.OPERATIONS,
-      ]);
+      return void this.router.navigate([AppRoutes.ROUTE]);
 
     this.router.navigate([AppRoutes.LOGIN]);
   }
