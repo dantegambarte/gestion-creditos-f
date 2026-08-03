@@ -171,8 +171,9 @@ export class AuthService extends AuthServiceBase {
       return void this.router.navigate([AppRoutes.OPERATIONS]);
     if (roles.includes(UserRoleEnum.COLLECTOR))
       return void this.router.navigate([AppRoutes.ROUTE]);
+    // SELLER_COLLECTOR arranca en Mi Ruta (cobranza como tarea principal).
     if (roles.includes(UserRoleEnum.SELLER_COLLECTOR))
-      return void this.router.navigate([AppRoutes.OPERATIONS]);
+      return void this.router.navigate([AppRoutes.ROUTE]);
     this.router.navigate([AppRoutes.LOGIN]);
   }
 

@@ -28,6 +28,52 @@
   color: rgba(158, 175, 214, 0.85);
 }
 
+// Resumen de recaudación de la planilla actual (arriba de la sección de cobros).
+.collection-summary {
+  // margin-bottom separa la tarjeta de la primera cuota de la lista.
+  margin: 0.75rem 0.75rem 0.7rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--ff-border);
+  border-radius: 0.75rem;
+  background: var(--ff-panel);
+}
+
+.collection-summary__row {
+  // "Recaudado:" y el monto a la par (no separados a los extremos).
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.collection-summary__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ff-text-muted);
+}
+
+.collection-summary__total {
+  // A tono con la palabra (antes se veía muy grande al lado del label).
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--ff-text-primary);
+}
+
+.collection-summary__split {
+  margin-top: 0.35rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.1rem;
+  font-size: 0.8rem;
+  color: var(--ff-text-secondary);
+
+  strong {
+    color: var(--ff-text-primary);
+    font-weight: 700;
+  }
+}
+
 .route-counter {
   font-size: 0.8125rem;
   letter-spacing: 0.06em;

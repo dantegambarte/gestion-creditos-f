@@ -193,6 +193,32 @@
         </div>
       </ng-template>
 
+      @if (currentSheetDate && !loadingPayments) {
+        <div
+          class="collection-summary"
+          data-cy="collector-route-collection-summary"
+        >
+          <div class="collection-summary__row">
+            <span class="collection-summary__label">Recaudado:</span>
+            <span class="collection-summary__total">{{
+              dailyCollection.total | currencyArs: 2
+            }}</span>
+          </div>
+          <div class="collection-summary__split">
+            <span
+              >Efectivo:
+              <strong>{{ dailyCollection.cash | currencyArs: 2 }}</strong></span
+            >
+            <span
+              >Transferencia:
+              <strong>{{
+                dailyCollection.transfer | currencyArs: 2
+              }}</strong></span
+            >
+          </div>
+        </div>
+      }
+
       @if (recentPaymentsExpanded) {
       <div class="payments-panel">
         @if (loadingPayments) {

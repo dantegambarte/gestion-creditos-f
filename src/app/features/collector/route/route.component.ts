@@ -61,6 +61,39 @@ export class RouteComponent implements OnInit {
     return this.dateSvc.toLocalIso(new Date());
   }
 
+  /**
+   * Fecha de la planilla actual del cobrador (la más reciente). Ancla el resumen
+   * de recaudación a esa planilla: cuando aparece una de otro día, el resumen
+   * cambia solo. null si el cobrador no tiene planillas.
+   */
+  get currentSheetDate(): string | null {
+    if (!this.sheets.length) return null;
+    return this.sheets.reduce(
+      (latest, s) => (s.sheetDate > latest ? s.sheetDate : latest),
+      this.sheets[0].sheetDate,
+    );
+  }
+
+  /**
+   * Recaudación de la planilla actual: total, efectivo y transferencia. Suma los
+   * cobros del DÍA de esa planilla (PENDING + APPROVED, sin reversiones), sin
+   * mezclar otros días. Se reinicia solo cuando la planilla actual es de otro día.
+   */
+  get dailyCollection(): { total: number; cash: number; transfer: number } {
+    const date = this.currentSheetDate;
+    if (!date) return { total: 0, cash: 0, transfer: 0 };
+    let cash = 0;
+    let transfer = 0;
+    for (const p of this.recentPayments) {
+      if (p.isReversal) continue;
+      if (p.status !== 'PENDING' && p.status !== 'APPROVED') continue;
+      if (this.dateSvc.toLocalIso(new Date(p.createdAt)) !== date) continue;
+      cash += p.amountCash;
+      transfer += p.amountTransfer;
+    }
+    return { total: cash + transfer, cash, transfer };
+  }
+
   ngOnInit(): void {
     this.header.set([{ label: 'Mi Ruta' }]);
     this.loadSheets();
