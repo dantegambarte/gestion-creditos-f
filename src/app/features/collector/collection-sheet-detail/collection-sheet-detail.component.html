@@ -94,26 +94,18 @@
           <button
             type="button"
             class="sheet-tab"
-            [class.sheet-tab--active]="activeTab === 'ALL'"
-            (click)="setTab('ALL')"
+            [class.sheet-tab--active]="activeTab === 'PENDING'"
+            (click)="setTab('PENDING')"
           >
-            Todas ({{ items.length }})
+            Por gestionar ({{ pendingCount() }})
           </button>
           <button
             type="button"
             class="sheet-tab"
-            [class.sheet-tab--active]="activeTab === 'OVERDUE'"
-            (click)="setTab('OVERDUE')"
+            [class.sheet-tab--active]="activeTab === 'MANAGED'"
+            (click)="setTab('MANAGED')"
           >
-            Con mora ({{ overdueCount() }})
-          </button>
-          <button
-            type="button"
-            class="sheet-tab"
-            [class.sheet-tab--active]="activeTab === 'NO_OVERDUE'"
-            (click)="setTab('NO_OVERDUE')"
-          >
-            Sin mora ({{ noOverdueCount() }})
+            Gestionadas ({{ managedCount() }})
           </button>
           <button
             type="button"
@@ -175,6 +167,9 @@
                   <td>
                     <div class="cell-main">{{ item.customerName }}</div>
                     <div class="cell-sub">{{ item.collectionReference }}</div>
+                    @if (additionalDebtLabel(item); as extra) {
+                      <div class="cell-sub cell-sub--extra-debt">{{ extra }}</div>
+                    }
                   </td>
                   <td>
                     <div class="cell-main">{{ item.customerPhone || "-" }}</div>
@@ -234,8 +229,12 @@
               <span>
                 @if (searchTerm) {
                   Probá con otro nombre, DNI, teléfono o dirección.
+                } @else if (activeTab === 'PENDING_PAYMENT') {
+                  Esta pestaña muestra pre-cargas pendientes de aprobación.
+                } @else if (activeTab === 'MANAGED') {
+                  Todavía no gestionaste ninguna cuota en esta jornada.
                 } @else {
-                  Esta pestaña muestra pre-cargas pendientes de aprobación, no cuotas pendientes de cobrar.
+                  No te quedan cuotas por gestionar. ¡Buen trabajo!
                 }
               </span>
             </div>
@@ -265,6 +264,9 @@
                     <h2>{{ item.customerName }}</h2>
                   </div>
                   <p>{{ item.collectionReference }}</p>
+                  @if (additionalDebtLabel(item); as extra) {
+                    <p class="sheet-mobile-card__extra-debt">{{ extra }}</p>
+                  }
                 </div>
                 <div class="sheet-mobile-card__amount">
                   {{ availableBalance(item) | currencyArs: 0 }}

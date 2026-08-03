@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { jsPDF } from 'jspdf';
 import {
+  additionalDebtText,
   COLLECTION_FILTER_LABELS,
   CollectionSheetDetail,
 } from '../../collector/models/collection.model';
@@ -150,9 +151,13 @@ export class CollectionPdfService {
       setFont(7.5, 'normal');
       const ref =
         entry.collectionReference || `Cuota ${entry.installmentNumber} · —`;
-      const refLines = (
+      let refLines = (
         doc.splitTextToSize(ref, COLS.cli.w - 3) as string[]
       ).slice(0, 2);
+      // "Además adeuda N más" ocupa la 2ª línea (info clave del crédito) para
+      // que el PDF muestre lo mismo que la planilla del cobrador y del admin.
+      const extra = additionalDebtText(entry.additionalInstallmentsCount);
+      if (extra) refLines = [refLines[0], extra];
       return {
         height: refLines.length >= 2 ? ROW_H_WRAPPED : ROW_H_BASE,
         refLines,
@@ -407,6 +412,7 @@ export class CollectionPdfService {
       dueDate: item.dueDate,
       paymentStatus: this.mapInstallmentStatus(item.installmentStatus),
       collectionReference: item.collectionReference,
+      additionalInstallmentsCount: item.additionalInstallmentsCount,
     }));
     return {
       collectorId: detail.collectorId,

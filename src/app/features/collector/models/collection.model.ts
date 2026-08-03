@@ -108,6 +108,11 @@ export interface CollectionSheetItem {
   customerDni: string | null;
   /** Estado de gestión del día (snapshot del campo editable management_status). */
   managementStatus: ManagementStatus;
+  /**
+   * Otras cuotas del MISMO crédito incluidas en la planilla (la lectura colapsa
+   * a la cuota más antigua por crédito). Alimenta el texto "adeuda N más".
+   */
+  additionalInstallmentsCount: number;
   /** Capa viva de gestión; null si la planilla no es operable hoy. */
   live: CollectionSheetItemLive | null;
 }
@@ -215,6 +220,7 @@ export interface CollectionSheetItemRaw {
   customer_address: string | null;
   customer_dni: string | null;
   management_status: ManagementStatus;
+  additional_installments_count: number;
   live: CollectionSheetItemLiveRaw | null;
 }
 
@@ -283,6 +289,19 @@ export const SHEET_STATUS_LABELS: Record<CollectionSheetStatus, string> = {
   ACTIVE: 'Activa',
   REGENERATED: 'Regenerada',
 };
+
+/**
+ * Texto "Además adeuda N cuotas más" ("1 cuota más" en singular) según cuántas
+ * otras cuotas del mismo crédito hay en la planilla. null si no hay adicionales.
+ * Compartido por la planilla del cobrador, el detalle del admin y el PDF para
+ * que el mensaje se vea igual en todos lados.
+ */
+export function additionalDebtText(
+  count: number | null | undefined,
+): string | null {
+  if (!count || count <= 0) return null;
+  return `Además adeuda ${count} ${count === 1 ? 'cuota' : 'cuotas'} más.`;
+}
 
 export interface CollectionGeneratePayload {
   collectorId: string;
