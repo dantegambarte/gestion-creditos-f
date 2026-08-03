@@ -19,6 +19,7 @@ import { InstallmentStatus } from '../../seller/models/installment.model';
 import { InstallmentsService } from '../../seller/operations/installments.service';
 import { CollectionsService } from '../collections.service';
 import {
+  additionalDebtText,
   ANTECEDENT_TYPE_LABELS,
   AntecedentType,
   COLLECTION_FILTER_LABELS,
@@ -83,8 +84,8 @@ export class CollectionSheetDetailComponent implements OnInit {
   loading = true;
   error: AppError | null = null;
 
-  /** Tab activa del listado: todas, con mora, sin mora, o con pre-carga pendiente. */
-  activeTab: 'ALL' | 'OVERDUE' | 'NO_OVERDUE' | 'PENDING_PAYMENT' = 'ALL';
+  /** Tab activa: por gestionar (default), gestionadas, o con pre-carga pendiente. */
+  activeTab: 'PENDING' | 'MANAGED' | 'PENDING_PAYMENT' = 'PENDING';
 
   /** Texto ingresado para buscar dentro de las cuotas visibles. */
   searchTerm = '';
@@ -235,6 +236,14 @@ export class CollectionSheetDetailComponent implements OnInit {
    */
   alreadyManagedToday(item: CollectionSheetItem): boolean {
     return item.managementStatus !== 'PENDING';
+  }
+
+  /**
+   * Texto "Además adeuda N cuotas más" cuando el mismo crédito aporta más cuotas
+   * a la planilla (la lectura muestra solo la más antigua). null si no hay más.
+   */
+  additionalDebtLabel(item: CollectionSheetItem): string | null {
+    return additionalDebtText(item.additionalInstallmentsCount);
   }
 
   /**
@@ -470,14 +479,12 @@ export class CollectionSheetDetailComponent implements OnInit {
   /** Items visibles antes de aplicar texto de búsqueda. */
   private itemsByActiveTab(): CollectionSheetItem[] {
     switch (this.activeTab) {
-      case 'OVERDUE':
-        return this.items.filter((i) => this.isOverdue(i));
-      case 'NO_OVERDUE':
-        return this.items.filter((i) => !this.isOverdue(i));
+      case 'MANAGED': // Gestionadas: la cuota ya tuvo alguna gestión hoy.
+        return this.items.filter((i) => this.alreadyManagedToday(i));
       case 'PENDING_PAYMENT':
         return this.items.filter((i) => this.hasPendingPaymentLive(i));
-      default:
-        return this.items;
+      default: // 'PENDING' → Por Gestionar: sin gestión del día.
+        return this.items.filter((i) => !this.alreadyManagedToday(i));
     }
   }
 
@@ -511,7 +518,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   /** Cambia la tab activa del listado. */
-  setTab(tab: 'ALL' | 'OVERDUE' | 'NO_OVERDUE' | 'PENDING_PAYMENT'): void {
+  setTab(tab: 'PENDING' | 'MANAGED' | 'PENDING_PAYMENT'): void {
     this.activeTab = tab;
     const firstVisible = this.filteredItems[0] ?? null;
     const selectedStillVisible = this.filteredItems.some(
@@ -523,16 +530,14 @@ export class CollectionSheetDetailComponent implements OnInit {
     }
   }
 
-  /**
-   * Devuelve cuántas cuotas están "con mora" (derivado por fecha) en la planilla.
-   */
-  overdueCount(): number {
-    return this.items.filter((item) => this.isOverdue(item)).length;
+  /** Cuotas por gestionar (sin ninguna gestión del día). */
+  pendingCount(): number {
+    return this.items.filter((item) => !this.alreadyManagedToday(item)).length;
   }
 
-  /** Devuelve cuántas cuotas no tienen mora en la planilla. */
-  noOverdueCount(): number {
-    return this.items.filter((item) => !this.isOverdue(item)).length;
+  /** Cuotas ya gestionadas hoy (cobro, parcial, no pagó, no encontrado, …). */
+  managedCount(): number {
+    return this.items.filter((item) => this.alreadyManagedToday(item)).length;
   }
 
   /**

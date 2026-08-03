@@ -221,6 +221,19 @@
   font-size: 0.65rem;
 }
 
+// "Además adeuda N cuotas más": ámbar suave (informativo, no alarma como la mora).
+.cell-sub--extra-debt {
+  color: #e6a55c;
+  font-weight: 600;
+}
+
+.sheet-mobile-card__extra-debt {
+  margin-top: 0.15rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: #e6a55c;
+}
+
 .amount {
   text-align: right;
   font-weight: 700;

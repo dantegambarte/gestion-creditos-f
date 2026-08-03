@@ -12,8 +12,10 @@ import { ErrorStateComponent } from '../../../shared/states/error-state/error-st
 import { LoadingStateComponent } from '../../../shared/states/loading-state/loading-state.component';
 import { CollectionsService } from '../../collector/collections.service';
 import {
+  additionalDebtText,
   COLLECTION_FILTER_LABELS,
   CollectionSheetDetail,
+  CollectionSheetItem,
 } from '../../collector/models/collection.model';
 import { InstallmentStatus } from '../../seller/models/installment.model';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
@@ -83,6 +85,14 @@ export class AdminCollectionDetailComponent implements OnInit {
     return (
       COLLECTION_FILTER_LABELS[f as keyof typeof COLLECTION_FILTER_LABELS] ?? f
     );
+  }
+
+  /**
+   * Texto "Además adeuda N cuotas más" del crédito (mismo criterio y wording
+   * que la planilla del cobrador). null si no hay cuotas adicionales.
+   */
+  additionalDebtLabel(item: CollectionSheetItem): string | null {
+    return additionalDebtText(item.additionalInstallmentsCount);
   }
 
   /**

@@ -12,6 +12,8 @@ export interface PlanillaEntry {
   paymentStatus: string;
   /** Frase contextual armada en backend, p.ej. "Cuota 1 de 12 · crédito de Lavarropas". */
   collectionReference: string;
+  /** Otras cuotas del mismo crédito incluidas en la planilla (para "adeuda N más"). */
+  additionalInstallmentsCount: number;
 }
 
 export interface GeneratedPlanillaResult {

@@ -94,6 +94,7 @@ function toSheetItem(raw: CollectionSheetItemRaw): CollectionSheetItem {
     customerAddress: raw.customer_address,
     customerDni: raw.customer_dni,
     managementStatus: raw.management_status,
+    additionalInstallmentsCount: raw.additional_installments_count ?? 0,
     live: raw.live
       ? {
           installmentStatus: raw.live.installment_status,
