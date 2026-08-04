@@ -45,6 +45,8 @@ import { ScheduleVisitDialogComponent } from '../schedule-visit-dialog/schedule-
 export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
   @Input() credit: CreditDetail | null = null;
   @Input() canActOnInstallments = false;
+  /** Habilita SOLO el botón "Programar visita" (admin, vendedor y mixto). */
+  @Input() canScheduleVisits = false;
   /** Emite cuando penalty/waive actualiza una cuota localmente. */
   @Output() installmentPatched = new EventEmitter<Partial<Installment>>();
   /** Emite cuando el cobro directo exige recargar el crédito completo. */
