@@ -53,6 +53,7 @@ describe('CollectionSheetDetailPanelComponent', () => {
         customerAddress: 'Corrientes 345',
         customerDni: '27678901',
         managementStatus: 'PENDING',
+        additionalInstallmentsCount: 0,
         live: null,
       },
       {
@@ -83,6 +84,7 @@ describe('CollectionSheetDetailPanelComponent', () => {
         customerAddress: 'Chacabuco 456',
         customerDni: '30111222',
         managementStatus: 'PENDING',
+        additionalInstallmentsCount: 0,
         live: null,
       },
     ],
