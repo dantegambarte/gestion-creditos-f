@@ -52,7 +52,9 @@ export class RouteComponent implements OnInit {
   loadingSheets = true;
   loadingPayments = true;
   errorSheets: AppError | null = null;
-  sheetsExpanded = false;
+  // Arranca expandida: con una sola planilla del día, el cobrador la ve directo
+  // sin tener que desplegar la tarjeta.
+  sheetsExpanded = true;
   recentPaymentsExpanded = false;
 
   today = new Date();
@@ -62,16 +64,30 @@ export class RouteComponent implements OnInit {
   }
 
   /**
-   * Fecha de la planilla actual del cobrador (la más reciente). Ancla el resumen
-   * de recaudación a esa planilla: cuando aparece una de otro día, el resumen
-   * cambia solo. null si el cobrador no tiene planillas.
+   * Planilla actual del cobrador = la ÚLTIMA generada (mayor created_at). Es la
+   * única que se muestra en Mi Ruta; las anteriores quedan en el historial del
+   * admin pero no se listan acá. null si el cobrador no tiene planillas.
    */
-  get currentSheetDate(): string | null {
+  get currentSheet(): CollectionSheet | null {
     if (!this.sheets.length) return null;
     return this.sheets.reduce(
-      (latest, s) => (s.sheetDate > latest ? s.sheetDate : latest),
-      this.sheets[0].sheetDate,
+      (latest, s) => (s.createdAt > latest.createdAt ? s : latest),
+      this.sheets[0],
     );
+  }
+
+  /** La planilla actual como lista (0 o 1) para reutilizar la tabla/cards existentes. */
+  get currentSheetList(): CollectionSheet[] {
+    const sheet = this.currentSheet;
+    return sheet ? [sheet] : [];
+  }
+
+  /**
+   * Fecha de la planilla actual. Ancla el resumen de recaudación a esa planilla:
+   * al generarse una planilla de otro día, la recaudación cambia sola.
+   */
+  get currentSheetDate(): string | null {
+    return this.currentSheet?.sheetDate ?? null;
   }
 
   /**
