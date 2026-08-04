@@ -102,6 +102,10 @@ export class RouteComponent implements OnInit {
     let transfer = 0;
     for (const p of this.recentPayments) {
       if (p.isReversal) continue;
+      // Un cobro aprobado y luego revertido queda en APPROVED, pero con
+      // reversalPaymentId seteado: no debe sumar (el dinero se devolvió). El
+      // rechazo de una pre-carga ya queda cubierto por el filtro de status.
+      if (p.reversalPaymentId) continue;
       if (p.status !== 'PENDING' && p.status !== 'APPROVED') continue;
       if (this.dateSvc.toLocalIso(new Date(p.createdAt)) !== date) continue;
       cash += p.amountCash;
