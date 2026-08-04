@@ -92,8 +92,11 @@ export class RouteComponent implements OnInit {
 
   /**
    * Recaudación de la planilla actual: total, efectivo y transferencia. Suma los
-   * cobros del DÍA de esa planilla (PENDING + APPROVED, sin reversiones), sin
-   * mezclar otros días. Se reinicia solo cuando la planilla actual es de otro día.
+   * cobros desde el día de esa planilla (sheetDate) en adelante (PENDING +
+   * APPROVED, sin reversiones ni cobros revertidos). Cuenta "en adelante" y no
+   * "solo ese día" porque la planilla sigue activa pasada la medianoche: los
+   * cobros hechos de madrugada sobre la misma planilla deben seguir contando. Se
+   * reinicia al generar una planilla nueva: su sheetDate deja afuera lo anterior.
    */
   get dailyCollection(): { total: number; cash: number; transfer: number } {
     const date = this.currentSheetDate;
@@ -107,7 +110,9 @@ export class RouteComponent implements OnInit {
       // rechazo de una pre-carga ya queda cubierto por el filtro de status.
       if (p.reversalPaymentId) continue;
       if (p.status !== 'PENDING' && p.status !== 'APPROVED') continue;
-      if (this.dateSvc.toLocalIso(new Date(p.createdAt)) !== date) continue;
+      // "Menor que" (no "distinto de"): cuenta el sheetDate y lo posterior, para
+      // no perder los cobros hechos pasada la medianoche sobre la misma planilla.
+      if (this.dateSvc.toLocalIso(new Date(p.createdAt)) < date) continue;
       cash += p.amountCash;
       transfer += p.amountTransfer;
     }
