@@ -97,6 +97,61 @@ export class PaymentDialogComponent implements OnChanges {
     return Math.max(0, item.amountDue - item.amountPaid);
   }
 
+  /**
+   * Tope máximo que puede ingresar el cobrador: el saldo TOTAL pendiente del
+   * crédito (capa viva). El excedente sobre la cuota actual lo reparte el backend
+   * a las cuotas siguientes. Si no hay capa viva (planilla no operable), cae al
+   * saldo de la cuota — el mismo tope que antes.
+   * @param item Cuota a evaluar.
+   */
+  maxAllowed(item: CollectionSheetItem): number {
+    return item.live?.creditPendingBalance ?? this.availableBalance(item);
+  }
+
+  /**
+   * True cuando el monto supera la cuota actual pero es VÁLIDO (no excede el saldo
+   * total del crédito): el excedente se repartirá a las cuotas siguientes. En la
+   * última cuota maxAllowed == saldo de la cuota, así que nunca da true (no hay
+   * cuota siguiente a la cual adelantar).
+   */
+  get advancesNextInstallments(): boolean {
+    if (!this.item) return false;
+    return (
+      this.paymentAmount > this.availableBalance(this.item) &&
+      this.paymentAmount <= this.maxAllowed(this.item)
+    );
+  }
+
+  /** True cuando el monto ingresado supera el saldo total del crédito (tope máximo). */
+  get exceedsCreditTotal(): boolean {
+    if (!this.item) return false;
+    return this.paymentAmount > this.maxAllowed(this.item);
+  }
+
+  /**
+   * Ajusta el monto ingresado al máximo cobrable (saldo total del crédito). Para un
+   * solo medio setea ese input; en mixto escala ambos en proporción para que la
+   * suma dé exactamente el máximo.
+   */
+  adjustToMax(): void {
+    if (!this.item) return;
+    const max = this.maxAllowed(this.item);
+    const current = this.paymentAmount;
+    if (current <= max) return;
+    if (this.paymentMethod === 'CASH') {
+      this.paymentCashAmount = max;
+    } else if (this.paymentMethod === 'TRANSFER') {
+      this.paymentTransferAmount = max;
+    } else {
+      const cash = this.paymentCashAmount ?? 0;
+      const newCash =
+        current > 0 ? this.roundMoney((cash / current) * max) : max;
+      this.paymentCashAmount = newCash;
+      this.paymentTransferAmount = this.roundMoney(max - newCash);
+    }
+    this.onPaymentAmountChange();
+  }
+
   /** Devuelve el total ingresado sumando los importes habilitados por medio. */
   get paymentAmount(): number {
     return this.roundMoney(
@@ -118,7 +173,7 @@ export class PaymentDialogComponent implements OnChanges {
   get paymentFormInvalid(): boolean {
     return (
       this.paymentAmount <= 0 ||
-      (!!this.item && this.paymentAmount > this.availableBalance(this.item)) ||
+      (!!this.item && this.paymentAmount > this.maxAllowed(this.item)) ||
       (this.isPartialPayment() && !this.paymentNextVisitDate)
     );
   }
@@ -159,16 +214,17 @@ export class PaymentDialogComponent implements OnChanges {
     if (this.processingPayment) return;
     if (!this.item || this.paymentFormInvalid) return;
 
-    const balance = this.availableBalance(this.item);
-    if (this.paymentAmount > balance) {
+    const maxAllowed = this.maxAllowed(this.item);
+    if (this.paymentAmount > maxAllowed) {
       this.msg.add({
         severity: 'warn',
         summary: 'Monto inválido',
-        detail: `El monto no puede superar el saldo disponible ($${balance.toFixed(2)})`,
+        detail: `El monto no puede superar el saldo total del crédito ($${maxAllowed.toFixed(2)})`,
       });
       return;
     }
 
+    const balance = this.availableBalance(this.item);
     const isPartial = this.paymentAmount < balance;
     const partialDateIso = isPartial ? this.paymentNextVisitDate : '';
     if (isPartial && !partialDateIso) {

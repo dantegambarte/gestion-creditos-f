@@ -59,7 +59,6 @@
           locale="es-AR"
           [minFractionDigits]="0"
           [min]="0"
-          [max]="item ? availableBalance(item) : null"
           styleClass="w-full"
           inputStyleClass="w-full h-11 rounded-xl bg-[var(--ff-panel)] px-3 text-sm text-[var(--ff-text-primary)]"
           placeholder="$ 0"
@@ -81,7 +80,6 @@
           locale="es-AR"
           [minFractionDigits]="0"
           [min]="0"
-          [max]="item ? availableBalance(item) : null"
           styleClass="w-full"
           inputStyleClass="w-full h-11 rounded-xl bg-[var(--ff-panel)] px-3 text-sm text-[var(--ff-text-primary)]"
           placeholder="$ 0"
@@ -106,6 +104,36 @@
     <p class="text-xs text-[var(--ff-text-muted)]">
       Total a registrar: <strong>{{ paymentAmount | currencyArs: 2 }}</strong>
     </p>
+
+    @if (advancesNextInstallments) {
+      <p
+        class="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900"
+        data-cy="collector-payment-advances-hint"
+      >
+        El monto supera la cuota actual: el excedente se aplicará a las cuotas
+        siguientes del crédito.
+      </p>
+    }
+
+    @if (exceedsCreditTotal && item) {
+      <div
+        class="flex items-start justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+        data-cy="collector-payment-exceeds-hint"
+      >
+        <span>
+          El monto supera el saldo total del crédito ({{
+            maxAllowed(item) | currencyArs: 2
+          }}). Ese es el máximo que podés cobrar.
+        </span>
+        <button
+          type="button"
+          class="shrink-0 font-semibold text-amber-900 underline"
+          (click)="adjustToMax()"
+        >
+          Usar máximo
+        </button>
+      </div>
+    }
 
     @if (isPartialPayment()) {
       <div

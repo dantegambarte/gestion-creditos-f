@@ -42,6 +42,12 @@ export interface CollectionSheetItemLive {
   amountPaid: number | null;
   /** Mora viva acumulada. */
   penaltyAmount: number | null;
+  /**
+   * Saldo total pendiente del crédito (todas sus cuotas no saldadas, menos las
+   * pre-cargas PENDING). Tope hasta el que el cobrador puede ingresar un
+   * excedente que el backend reparte a las cuotas siguientes.
+   */
+  creditPendingBalance: number | null;
   /** Pre-carga PENDING viva sobre la cuota (no el snapshot congelado). */
   hasPendingPayment: boolean;
   /** Id del último intento (no anulado) del día — habilita "Deshacer". */
@@ -229,6 +235,7 @@ export interface CollectionSheetItemLiveRaw {
   amount_due: number | null;
   amount_paid: number | null;
   penalty_amount: number | null;
+  credit_pending_balance: number | null;
   has_pending_payment: boolean;
   today_attempt_id: string | null;
   today_attempt_type: Exclude<
