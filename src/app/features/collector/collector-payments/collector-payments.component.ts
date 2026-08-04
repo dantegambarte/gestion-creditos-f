@@ -3,6 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { CalendarModule } from 'primeng/calendar';
 import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputTextModule } from 'primeng/inputtext';
@@ -11,6 +12,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../core/models/app-error';
+import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { Payment, PaymentStatus } from '../models/payment.model';
@@ -28,6 +30,7 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
     CardModule,
     TableModule,
     TagModule,
+    CalendarModule,
     DropdownModule,
     InputTextModule,
     SkeletonModule,
@@ -40,12 +43,18 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
 export class CollectorPaymentsComponent implements OnInit {
   private readonly paymentsService = inject(PaymentsService);
   private readonly header = inject(HeaderService);
+  private readonly dateSvc = inject(DateService);
 
   payments: Payment[] = [];
   loading = true;
   error: AppError | null = null;
   filterStatus: PaymentStatus | null = null;
+  /** Día seleccionado para filtrar por fecha del cobro (null = sin filtro). */
+  filterDate: Date | null = null;
   searchTerm = '';
+
+  /** Hoy, como tope del calendario: no hay cobros con fecha futura. */
+  readonly today: Date = this.dateSvc.startOfToday();
 
   readonly STATUS_OPTIONS = [
     { label: 'Pendiente', value: 'PENDING' as PaymentStatus },
@@ -54,15 +63,26 @@ export class CollectorPaymentsComponent implements OnInit {
   ];
 
   /**
-   * Devuelve la lista de pagos filtrada por estado y texto libre.
+   * Devuelve la lista de pagos filtrada por estado, texto libre y fecha. Los tres
+   * filtros se combinan (AND): un pago debe cumplir todos los que estén activos.
    */
   get filteredPayments(): Payment[] {
     const query = this.searchTerm.trim().toLowerCase();
+    const dateIso = this.filterDate
+      ? this.dateSvc.toLocalIso(this.filterDate)
+      : null;
     return this.payments.filter((p) => {
       const matchesStatus = !this.filterStatus || p.status === this.filterStatus;
       const matchesSearch = !query || this.paymentMatchesSearch(p, query);
-      return matchesStatus && matchesSearch;
+      const matchesDate =
+        !dateIso || this.dateSvc.toLocalIso(new Date(p.createdAt)) === dateIso;
+      return matchesStatus && matchesSearch && matchesDate;
     });
+  }
+
+  /** True si hay algún filtro activo (para el mensaje de lista vacía). */
+  get hasActiveFilters(): boolean {
+    return !!this.searchTerm.trim() || !!this.filterStatus || !!this.filterDate;
   }
 
   ngOnInit(): void {
