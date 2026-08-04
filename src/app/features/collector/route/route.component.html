@@ -8,7 +8,9 @@
     </div>
     @if (!loadingSheets && !errorSheets) {
       <span class="route-counter">
-        {{ sheets.length }} PLANILLA{{ sheets.length !== 1 ? "S" : "" }}
+        {{ currentSheetList.length }} PLANILLA{{
+          currentSheetList.length !== 1 ? "S" : ""
+        }}
       </span>
     }
   </div>
@@ -20,11 +22,11 @@
     >
       <ng-template pTemplate="header">
         <div class="route-card__header">
-          <span>Planillas asignadas</span>
+          <span>Tu planilla del día</span>
           <div class="route-card__header-actions">
-            @if (!loadingSheets && !errorSheets) {
+            @if (!loadingSheets && !errorSheets && currentSheet) {
               <span class="route-badge route-badge--primary">
-                {{ sheets.length }} planilla{{ sheets.length !== 1 ? "s" : "" }}
+                {{ currentSheet.sheetDate | date: "dd/MM/yyyy" }}
               </span>
             }
             <button
@@ -59,13 +61,13 @@
           </p-table>
         } @else if (errorSheets) {
           <app-error-state />
-        } @else if (sheets.length === 0) {
+        } @else if (!currentSheet) {
           <p class="py-6 text-center text-sm text-[var(--ff-text-muted)]">
-            No tenés planillas generadas.
+            No tenés una planilla generada.
           </p>
         } @else {
           <p-table
-            [value]="sheets"
+            [value]="currentSheetList"
             styleClass="hidden md:block p-datatable-sm"
             data-cy="collector-route-sheets-table"
             responsiveLayout="scroll"
@@ -114,7 +116,7 @@
           </p-table>
 
           <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="collector-route-sheets-mobile-list">
-            @for (sheet of sheets; track sheet.id) {
+            @for (sheet of currentSheetList; track sheet.id) {
               <article
                 class="rounded-xl border p-3"
                 style="border-color: var(--ff-border)"
@@ -144,7 +146,7 @@
             }
           </div>
           <ff-back-top-fab
-            [itemCount]="sheets.length"
+            [itemCount]="currentSheetList.length"
             [scrollThreshold]="240"
             scrollContainerSelector=".route-card-scroll"
             dataCy="collector-route-back-top-action"
