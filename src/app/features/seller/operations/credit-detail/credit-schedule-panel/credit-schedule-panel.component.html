@@ -218,7 +218,7 @@
               <th class="text-right">Pagado</th>
               <th class="text-right">Mora</th>
               <th>Estado</th>
-              @if (canActOnInstallments) {
+              @if (canActOnInstallments || canScheduleVisits) {
                 <th class="text-center">Acciones</th>
               }
             </tr>
@@ -304,10 +304,10 @@
                   }
                 </div>
               </td>
-              @if (canActOnInstallments) {
+              @if (canActOnInstallments || canScheduleVisits) {
                 <td class="text-center">
                   <div class="flex justify-center gap-1">
-                    @if (inst.status === "OVERDUE") {
+                    @if (canActOnInstallments && inst.status === "OVERDUE") {
                       <p-button
                         icon="pi pi-exclamation-circle"
                         severity="danger"
@@ -336,7 +336,8 @@
                       }
                     }
                     @if (
-                      inst.status === "PENDING" || inst.status === "OVERDUE"
+                      canActOnInstallments &&
+                      (inst.status === "PENDING" || inst.status === "OVERDUE")
                     ) {
                       <p-button
                         data-cy="installment-direct-payment"
@@ -352,7 +353,7 @@
                         "
                       />
                     }
-                    @if (inst.status === "PARTIAL") {
+                    @if (canActOnInstallments && inst.status === "PARTIAL") {
                       <p-button
                         data-cy="installment-direct-payment"
                         icon="pi pi-credit-card"
@@ -367,7 +368,7 @@
                         "
                       />
                     }
-                    @if (canScheduleVisit(inst)) {
+                    @if (canScheduleVisits && canScheduleVisit(inst)) {
                       <p-button
                         data-cy="installment-schedule-visit"
                         icon="pi pi-calendar-plus"
@@ -440,9 +441,9 @@
                 </div>
               </div>
 
-              @if (canActOnInstallments) {
+              @if (canActOnInstallments || canScheduleVisits) {
                 <div class="mt-3 grid grid-cols-2 gap-2">
-                  @if (inst.status === "OVERDUE") {
+                  @if (canActOnInstallments && inst.status === "OVERDUE") {
                     <p-button
                       icon="pi pi-exclamation-circle"
                       severity="danger"
@@ -460,7 +461,7 @@
                       />
                     }
                   }
-                  @if (inst.status === "PENDING" || inst.status === "OVERDUE" || inst.status === "PARTIAL") {
+                  @if (canActOnInstallments && (inst.status === "PENDING" || inst.status === "OVERDUE" || inst.status === "PARTIAL")) {
                     <button
                       type="button"
                       data-cy="installment-direct-payment"
@@ -471,7 +472,7 @@
                       Cobrar
                     </button>
                   }
-                  @if (canScheduleVisit(inst)) {
+                  @if (canScheduleVisits && canScheduleVisit(inst)) {
                     <button
                       type="button"
                       data-cy="installment-schedule-visit"
@@ -655,9 +656,9 @@
             </div>
           }
 
-          @if (canActOnInstallments) {
+          @if (canActOnInstallments || canScheduleVisits) {
             <div class="flex flex-col gap-2 px-4 py-3">
-              @if (selectedInstallment.status === "OVERDUE") {
+              @if (canActOnInstallments && selectedInstallment.status === "OVERDUE") {
                 <p-button
                   label="Aplicar mora"
                   severity="warning"
@@ -677,7 +678,7 @@
                   />
                 }
               }
-              @if (canScheduleVisit(selectedInstallment)) {
+              @if (canScheduleVisits && canScheduleVisit(selectedInstallment)) {
                 <p-button
                   label="Programar visita"
                   icon="pi pi-calendar-plus"

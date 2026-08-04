@@ -1,9 +1,11 @@
+import { registerLocaleData } from '@angular/common';
 import {
   provideHttpClient,
   withFetch,
   withInterceptors,
 } from '@angular/common/http';
-import { ApplicationConfig, isDevMode } from '@angular/core';
+import localeEsAr from '@angular/common/locales/es-AR';
+import { ApplicationConfig, isDevMode, LOCALE_ID } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, withPreloading } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -16,8 +18,14 @@ import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { RoleBasedPreloadingStrategy } from './core/routing/role-based-preloading.strategy';
 import { DedupMessageService } from './core/services/dedup-message.service';
 
+// Datos del locale es-AR para los pipes date/number/percent (nombres de día y
+// mes en español, miles con "." y decimales con ","). Sin esto Angular usa el
+// default en-US y las fechas con EEEE/MMMM salen en inglés.
+registerLocaleData(localeEsAr);
+
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: LOCALE_ID, useValue: 'es-AR' },
     provideRouter(routes, withPreloading(RoleBasedPreloadingStrategy)),
     provideAnimations(),
     { provide: MessageService, useClass: DedupMessageService },

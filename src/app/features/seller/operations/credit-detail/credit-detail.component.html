@@ -469,6 +469,7 @@
       <app-credit-schedule-panel
         [credit]="credit"
         [canActOnInstallments]="canActOnInstallments"
+        [canScheduleVisits]="canScheduleVisits"
         (installmentPatched)="updateInstallmentInList($event)"
         (reloadNeeded)="load()"
       />

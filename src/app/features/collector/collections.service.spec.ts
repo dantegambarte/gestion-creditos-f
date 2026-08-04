@@ -56,6 +56,7 @@ const mockDetailRaw: CollectionSheetDetailRaw = {
       customer_address: 'Av. Corrientes 1234',
       customer_dni: '12345678',
       management_status: 'PENDING',
+      additional_installments_count: 0,
       live: null,
     },
   ],

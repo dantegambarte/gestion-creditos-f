@@ -238,6 +238,18 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Programar la próxima visita lo pueden hacer, además del admin, el vendedor y
+   * el mixto: andan en el campo y el cliente les avisa cuándo va a pagar. Solo
+   * sobre créditos activos (las cuotas deben estar vigentes).
+   */
+  get canScheduleVisits(): boolean {
+    return (
+      this.auth.hasAnyRole(['ADMIN', 'SELLER', 'SELLER_COLLECTOR']) &&
+      this.credit?.status === 'ACTIVE'
+    );
+  }
+
   /** ID del crédito predecesor (el que fue refinanciado para crear este). */
   get predecessorCreditId(): string | null {
     return this.credit?.refinancingChain?.predecessorId ?? null;
