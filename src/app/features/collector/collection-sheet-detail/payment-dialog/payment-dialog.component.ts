@@ -97,6 +97,23 @@ export class PaymentDialogComponent implements OnChanges {
     return Math.max(0, item.amountDue - item.amountPaid);
   }
 
+  /**
+   * Tope máximo que puede ingresar el cobrador: el saldo TOTAL pendiente del
+   * crédito (capa viva). El excedente sobre la cuota actual lo reparte el backend
+   * a las cuotas siguientes. Si no hay capa viva (planilla no operable), cae al
+   * saldo de la cuota — el mismo tope que antes.
+   * @param item Cuota a evaluar.
+   */
+  maxAllowed(item: CollectionSheetItem): number {
+    return item.live?.creditPendingBalance ?? this.availableBalance(item);
+  }
+
+  /** True cuando el monto supera la cuota actual y adelantará cuotas siguientes. */
+  get advancesNextInstallments(): boolean {
+    if (!this.item) return false;
+    return this.paymentAmount > this.availableBalance(this.item);
+  }
+
   /** Devuelve el total ingresado sumando los importes habilitados por medio. */
   get paymentAmount(): number {
     return this.roundMoney(
@@ -118,7 +135,7 @@ export class PaymentDialogComponent implements OnChanges {
   get paymentFormInvalid(): boolean {
     return (
       this.paymentAmount <= 0 ||
-      (!!this.item && this.paymentAmount > this.availableBalance(this.item)) ||
+      (!!this.item && this.paymentAmount > this.maxAllowed(this.item)) ||
       (this.isPartialPayment() && !this.paymentNextVisitDate)
     );
   }
@@ -159,16 +176,17 @@ export class PaymentDialogComponent implements OnChanges {
     if (this.processingPayment) return;
     if (!this.item || this.paymentFormInvalid) return;
 
-    const balance = this.availableBalance(this.item);
-    if (this.paymentAmount > balance) {
+    const maxAllowed = this.maxAllowed(this.item);
+    if (this.paymentAmount > maxAllowed) {
       this.msg.add({
         severity: 'warn',
         summary: 'Monto inválido',
-        detail: `El monto no puede superar el saldo disponible ($${balance.toFixed(2)})`,
+        detail: `El monto no puede superar el saldo total del crédito ($${maxAllowed.toFixed(2)})`,
       });
       return;
     }
 
+    const balance = this.availableBalance(this.item);
     const isPartial = this.paymentAmount < balance;
     const partialDateIso = isPartial ? this.paymentNextVisitDate : '';
     if (isPartial && !partialDateIso) {

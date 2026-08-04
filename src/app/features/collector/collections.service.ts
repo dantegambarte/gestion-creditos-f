@@ -101,6 +101,7 @@ function toSheetItem(raw: CollectionSheetItemRaw): CollectionSheetItem {
           amountDue: raw.live.amount_due,
           amountPaid: raw.live.amount_paid,
           penaltyAmount: raw.live.penalty_amount,
+          creditPendingBalance: raw.live.credit_pending_balance,
           hasPendingPayment: !!raw.live.has_pending_payment,
           todayAttemptId: raw.live.today_attempt_id,
           todayAttemptType: raw.live.today_attempt_type,

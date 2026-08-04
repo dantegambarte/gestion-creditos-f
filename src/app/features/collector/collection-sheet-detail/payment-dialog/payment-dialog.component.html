@@ -59,7 +59,7 @@
           locale="es-AR"
           [minFractionDigits]="0"
           [min]="0"
-          [max]="item ? availableBalance(item) : null"
+          [max]="item ? maxAllowed(item) : null"
           styleClass="w-full"
           inputStyleClass="w-full h-11 rounded-xl bg-[var(--ff-panel)] px-3 text-sm text-[var(--ff-text-primary)]"
           placeholder="$ 0"
@@ -81,7 +81,7 @@
           locale="es-AR"
           [minFractionDigits]="0"
           [min]="0"
-          [max]="item ? availableBalance(item) : null"
+          [max]="item ? maxAllowed(item) : null"
           styleClass="w-full"
           inputStyleClass="w-full h-11 rounded-xl bg-[var(--ff-panel)] px-3 text-sm text-[var(--ff-text-primary)]"
           placeholder="$ 0"
@@ -106,6 +106,16 @@
     <p class="text-xs text-[var(--ff-text-muted)]">
       Total a registrar: <strong>{{ paymentAmount | currencyArs: 2 }}</strong>
     </p>
+
+    @if (advancesNextInstallments) {
+      <p
+        class="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900"
+        data-cy="collector-payment-advances-hint"
+      >
+        El monto supera la cuota actual: el excedente se aplicará a las cuotas
+        siguientes del crédito.
+      </p>
+    }
 
     @if (isPartialPayment()) {
       <div
