@@ -82,37 +82,56 @@ export class RouteComponent implements OnInit {
     return sheet ? [sheet] : [];
   }
 
-  /**
-   * Fecha de la planilla actual. Ancla el resumen de recaudación a esa planilla:
-   * al generarse una planilla de otro día, la recaudación cambia sola.
-   */
+  /** Fecha (sheetDate) de la planilla actual. Solo gatea la visibilidad del resumen. */
   get currentSheetDate(): string | null {
     return this.currentSheet?.sheetDate ?? null;
   }
 
   /**
+   * Inicio de la ventana de recaudación: el instante (created_at) de la planilla
+   * MÁS ANTIGUA del mismo día que la planilla actual. Se ancla al created_at y NO
+   * al sheetDate porque la planilla queda activa pasada la medianoche: los cobros
+   * de madrugada pertenecen a la sesión anterior y no deben colarse en el total de
+   * la planilla nueva. Tomar la más antigua del día hace que regenerar la planilla
+   * el mismo día conserve lo ya cobrado. Devuelve ms epoch; null si no hay planilla.
+   */
+  get collectionWindowStart(): number | null {
+    const current = this.currentSheet;
+    if (!current) return null;
+    let start = new Date(current.createdAt).getTime();
+    for (const s of this.sheets) {
+      if (s.sheetDate !== current.sheetDate) continue;
+      const t = new Date(s.createdAt).getTime();
+      if (t < start) start = t;
+    }
+    return start;
+  }
+
+  /** Cobros dentro de la ventana de la planilla actual (alimenta lista y total). */
+  get windowPayments(): Payment[] {
+    const start = this.collectionWindowStart;
+    if (start === null) return [];
+    return this.recentPayments.filter(
+      (p) => new Date(p.createdAt).getTime() >= start,
+    );
+  }
+
+  /**
    * Recaudación de la planilla actual: total, efectivo y transferencia. Suma los
-   * cobros desde el día de esa planilla (sheetDate) en adelante (PENDING +
-   * APPROVED, sin reversiones ni cobros revertidos). Cuenta "en adelante" y no
-   * "solo ese día" porque la planilla sigue activa pasada la medianoche: los
-   * cobros hechos de madrugada sobre la misma planilla deben seguir contando. Se
-   * reinicia al generar una planilla nueva: su sheetDate deja afuera lo anterior.
+   * cobros hechos desde que se generó la planilla (ventana por created_at, ver
+   * collectionWindowStart), en estado PENDING + APPROVED, sin reversiones ni
+   * cobros revertidos. Se reinicia al generar una planilla nueva.
    */
   get dailyCollection(): { total: number; cash: number; transfer: number } {
-    const date = this.currentSheetDate;
-    if (!date) return { total: 0, cash: 0, transfer: 0 };
     let cash = 0;
     let transfer = 0;
-    for (const p of this.recentPayments) {
+    for (const p of this.windowPayments) {
       if (p.isReversal) continue;
       // Un cobro aprobado y luego revertido queda en APPROVED, pero con
       // reversalPaymentId seteado: no debe sumar (el dinero se devolvió). El
       // rechazo de una pre-carga ya queda cubierto por el filtro de status.
       if (p.reversalPaymentId) continue;
       if (p.status !== 'PENDING' && p.status !== 'APPROVED') continue;
-      // "Menor que" (no "distinto de"): cuenta el sheetDate y lo posterior, para
-      // no perder los cobros hechos pasada la medianoche sobre la misma planilla.
-      if (this.dateSvc.toLocalIso(new Date(p.createdAt)) < date) continue;
       cash += p.amountCash;
       transfer += p.amountTransfer;
     }
