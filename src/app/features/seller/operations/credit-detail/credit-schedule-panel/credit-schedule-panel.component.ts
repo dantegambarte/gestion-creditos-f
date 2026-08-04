@@ -100,6 +100,20 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
   }
 
   /**
+   * Monto que adeuda el cliente: suma de (amountDue - amountPaid) de las
+   * cuotas vigentes (pendiente/parcial/vencida). Misma fórmula que
+   * settlementTotalAmount en credit-detail.component.ts.
+   */
+  get owedAmount(): number {
+    if (!this.credit?.installments) return 0;
+    return this.credit.installments
+      .filter((inst) =>
+        ['PENDING', 'PARTIAL', 'OVERDUE'].includes(inst.status),
+      )
+      .reduce((sum, inst) => sum + (inst.amountDue - inst.amountPaid), 0);
+  }
+
+  /**
    * Resetea el estado del panel cuando cambia el crédito.
    */
   ngOnChanges(changes: SimpleChanges): void {
