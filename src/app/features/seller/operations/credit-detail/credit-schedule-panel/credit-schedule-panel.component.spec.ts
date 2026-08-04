@@ -83,6 +83,7 @@ describe('CreditSchedulePanelComponent', () => {
     component = fixture.componentInstance;
     component.credit = credit;
     component.canActOnInstallments = true;
+    component.canScheduleVisits = true;
     fixture.detectChanges();
   });
 
@@ -118,5 +119,26 @@ describe('CreditSchedulePanelComponent', () => {
 
     expect(component.showScheduleVisitDialog).toBeTrue();
     expect(component.scheduleVisitInstallment?.id).toBe('installment-1');
+  });
+
+  it('rol vendedor: ve "Programar visita" pero no las acciones admin (cobro/mora)', () => {
+    // Vendedor/mixto: puede agendar visitas pero el crédito es solo lectura para él.
+    component.canActOnInstallments = false;
+    component.canScheduleVisits = true;
+    fixture.detectChanges();
+
+    const mobileCard: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-cy="credit-schedule-mobile-card"]',
+    );
+    const text = mobileCard.textContent ?? '';
+
+    expect(
+      mobileCard.querySelector('[data-cy="installment-schedule-visit"]'),
+    ).toBeTruthy();
+    expect(text).toContain('Visita');
+    expect(text).not.toContain('Cobrar');
+    expect(
+      mobileCard.querySelector('[data-cy="installment-direct-payment"]'),
+    ).toBeNull();
   });
 });
