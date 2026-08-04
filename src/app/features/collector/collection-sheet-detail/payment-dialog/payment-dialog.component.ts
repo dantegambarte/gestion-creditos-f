@@ -108,10 +108,48 @@ export class PaymentDialogComponent implements OnChanges {
     return item.live?.creditPendingBalance ?? this.availableBalance(item);
   }
 
-  /** True cuando el monto supera la cuota actual y adelantará cuotas siguientes. */
+  /**
+   * True cuando el monto supera la cuota actual pero es VÁLIDO (no excede el saldo
+   * total del crédito): el excedente se repartirá a las cuotas siguientes. En la
+   * última cuota maxAllowed == saldo de la cuota, así que nunca da true (no hay
+   * cuota siguiente a la cual adelantar).
+   */
   get advancesNextInstallments(): boolean {
     if (!this.item) return false;
-    return this.paymentAmount > this.availableBalance(this.item);
+    return (
+      this.paymentAmount > this.availableBalance(this.item) &&
+      this.paymentAmount <= this.maxAllowed(this.item)
+    );
+  }
+
+  /** True cuando el monto ingresado supera el saldo total del crédito (tope máximo). */
+  get exceedsCreditTotal(): boolean {
+    if (!this.item) return false;
+    return this.paymentAmount > this.maxAllowed(this.item);
+  }
+
+  /**
+   * Ajusta el monto ingresado al máximo cobrable (saldo total del crédito). Para un
+   * solo medio setea ese input; en mixto escala ambos en proporción para que la
+   * suma dé exactamente el máximo.
+   */
+  adjustToMax(): void {
+    if (!this.item) return;
+    const max = this.maxAllowed(this.item);
+    const current = this.paymentAmount;
+    if (current <= max) return;
+    if (this.paymentMethod === 'CASH') {
+      this.paymentCashAmount = max;
+    } else if (this.paymentMethod === 'TRANSFER') {
+      this.paymentTransferAmount = max;
+    } else {
+      const cash = this.paymentCashAmount ?? 0;
+      const newCash =
+        current > 0 ? this.roundMoney((cash / current) * max) : max;
+      this.paymentCashAmount = newCash;
+      this.paymentTransferAmount = this.roundMoney(max - newCash);
+    }
+    this.onPaymentAmountChange();
   }
 
   /** Devuelve el total ingresado sumando los importes habilitados por medio. */
