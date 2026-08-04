@@ -175,7 +175,7 @@
           <div class="route-card__header-actions">
             @if (!loadingPayments) {
               <span class="route-badge route-badge--warning">
-                {{ recentPayments.length }} cobros
+                {{ windowPayments.length }} cobros
               </span>
             }
             <button
@@ -233,13 +233,13 @@
               </tr>
             </ng-template>
           </p-table>
-        } @else if (recentPayments.length === 0) {
+        } @else if (windowPayments.length === 0) {
           <p class="py-6 text-center text-sm text-[var(--ff-text-muted)]">
             Sin cobros pendientes.
           </p>
         } @else {
           <div class="payments-list">
-            @for (p of recentPayments; track p.id) {
+            @for (p of windowPayments; track p.id) {
               <div class="payment-item">
                 <div class="payment-item__top">
                   <span class="payment-item__name">{{ p.customerName }}</span>
@@ -267,7 +267,7 @@
             }
           </div>
           <ff-back-top-fab
-            [itemCount]="recentPayments.length"
+            [itemCount]="windowPayments.length"
             [scrollThreshold]="240"
             scrollContainerSelector=".payments-list"
             dataCy="collector-route-payments-back-top-action"
