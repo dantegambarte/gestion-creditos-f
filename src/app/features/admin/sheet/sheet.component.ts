@@ -414,6 +414,7 @@ export class SheetComponent implements OnInit, OnDestroy {
       dueDate: item.dueDate,
       paymentStatus: this.mapInstallmentStatus(item.installmentStatus),
       collectionReference: item.collectionReference,
+      additionalInstallmentsCount: item.additionalInstallmentsCount,
     }));
     return {
       collectorId: detail.collectorId,
