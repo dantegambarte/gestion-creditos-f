@@ -195,11 +195,24 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   /**
-   * True si la planilla activa permite gestionar esta cuota. Usa el snapshot como
-   * fallback porque algunas respuestas ACTIVE llegan sin capa `live`.
+   * True si la planilla es del DÍA EN CURSO. Terminado el día, la planilla queda
+   * read-only: no se cobra ni se gestiona. Para seguir cobrando, el admin genera
+   * una planilla del día. sheetDate viene como 'YYYY-MM-DD'.
+   */
+  get isTodaySheet(): boolean {
+    return !!this.sheet && this.sheet.sheetDate === this.todayIso;
+  }
+
+  /**
+   * True si la planilla permite gestionar esta cuota: activa, del día en curso y
+   * cuota no saldada. Una planilla de un día anterior queda read-only.
    */
   isOperable(item: CollectionSheetItem): boolean {
-    return this.sheet?.status === 'ACTIVE' && item.installmentStatus !== 'PAID';
+    return (
+      this.sheet?.status === 'ACTIVE' &&
+      this.isTodaySheet &&
+      item.installmentStatus !== 'PAID'
+    );
   }
 
   /**
