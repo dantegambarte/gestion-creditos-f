@@ -88,6 +88,20 @@
       </div>
     }
 
+    @if (sheet.status === "ACTIVE" && !isTodaySheet) {
+      <div
+        class="mb-4 flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 p-3"
+        data-cy="collector-sheet-readonly-banner"
+      >
+        <i class="pi pi-lock text-amber-500"></i>
+        <span class="text-sm text-[var(--ff-text-secondary)]">
+          Esta planilla es de un <strong>día anterior</strong> (solo lectura). Para
+          cobrar, se necesita una planilla del día en curso (la genera el
+          administrador).
+        </span>
+      </div>
+    }
+
     <div class="sheet-layout" [class.sheet-layout--panel-open]="sidePanelOpen">
       <section class="sheet-table-wrap">
         <div class="sheet-tabs mb-2" appActiveTabScroller>
