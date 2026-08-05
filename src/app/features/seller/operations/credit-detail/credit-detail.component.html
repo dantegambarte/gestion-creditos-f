@@ -470,6 +470,7 @@
         [credit]="credit"
         [canActOnInstallments]="canActOnInstallments"
         [canScheduleVisits]="canScheduleVisits"
+        [owedAmount]="settlementTotalAmount"
         (installmentPatched)="updateInstallmentInList($event)"
         (reloadNeeded)="load()"
       />

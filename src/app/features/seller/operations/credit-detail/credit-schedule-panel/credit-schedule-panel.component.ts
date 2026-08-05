@@ -47,6 +47,11 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
   @Input() canActOnInstallments = false;
   /** Habilita SOLO el botón "Programar visita" (admin, vendedor y mixto). */
   @Input() canScheduleVisits = false;
+  /**
+   * Saldo total pendiente del crédito (lo adeudado). Lo calcula el padre
+   * (settlementTotalAmount) y se recibe por Input para no duplicar la fórmula.
+   */
+  @Input() owedAmount = 0;
   /** Emite cuando penalty/waive actualiza una cuota localmente. */
   @Output() installmentPatched = new EventEmitter<Partial<Installment>>();
   /** Emite cuando el cobro directo exige recargar el crédito completo. */
@@ -99,20 +104,6 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
       this.credit?.installments.filter((i) => i.status === 'OVERDUE').length ??
       0
     );
-  }
-
-  /**
-   * Monto que adeuda el cliente: suma de (amountDue - amountPaid) de las
-   * cuotas vigentes (pendiente/parcial/vencida). Misma fórmula que
-   * settlementTotalAmount en credit-detail.component.ts.
-   */
-  get owedAmount(): number {
-    if (!this.credit?.installments) return 0;
-    return this.credit.installments
-      .filter((inst) =>
-        ['PENDING', 'PARTIAL', 'OVERDUE'].includes(inst.status),
-      )
-      .reduce((sum, inst) => sum + (inst.amountDue - inst.amountPaid), 0);
   }
 
   /**
