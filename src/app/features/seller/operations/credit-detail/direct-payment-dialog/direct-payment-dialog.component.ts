@@ -110,10 +110,21 @@ export class DirectPaymentDialogComponent implements OnChanges {
       : this.installmentBalance;
   }
 
+  /**
+   * Monto efectivo ingresado. En un solo medio es `amount`; en mixto es la suma de
+   * efectivo + transferencia (el total se deriva, no se ingresa por separado, para
+   * quedar alineado con el flujo del cobrador).
+   */
+  get effectiveAmount(): number {
+    return this.method === 'MIXED'
+      ? (this.amountCash ?? 0) + (this.amountTransfer ?? 0)
+      : (this.amount ?? 0);
+  }
+
   /** Un cobro parcial (no cubre el saldo de la cuota) exige próxima visita en pre-carga. */
   get isPartial(): boolean {
     return overpayment.isPartialPayment(
-      this.amount ?? 0,
+      this.effectiveAmount,
       this.installmentBalance,
     );
   }
@@ -121,7 +132,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
   /** El monto supera la cuota y el excedente se aplicará a las cuotas siguientes. */
   get advancesNextInstallments(): boolean {
     return overpayment.advancesNextInstallments(
-      this.amount ?? 0,
+      this.effectiveAmount,
       this.installmentBalance,
       this.maxAllowed,
     );
@@ -129,7 +140,10 @@ export class DirectPaymentDialogComponent implements OnChanges {
 
   /** El monto supera el saldo total del crédito (tope máximo). */
   get exceedsCreditBalance(): boolean {
-    return overpayment.exceedsCreditBalance(this.amount ?? 0, this.maxAllowed);
+    return overpayment.exceedsCreditBalance(
+      this.effectiveAmount,
+      this.maxAllowed,
+    );
   }
 
   /**
@@ -138,7 +152,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
    */
   adjustToMax(): void {
     const max = this.maxAllowed;
-    if ((this.amount ?? 0) <= max) return;
+    if (this.effectiveAmount <= max) return;
     if (this.method === 'MIXED') {
       const current = (this.amountCash ?? 0) + (this.amountTransfer ?? 0);
       if (current > 0) {
@@ -146,8 +160,9 @@ export class DirectPaymentDialogComponent implements OnChanges {
         this.amountCash = cash;
         this.amountTransfer = this.roundMoney(max - cash);
       }
+    } else {
+      this.amount = max;
     }
-    this.amount = max;
   }
 
   /** Redondea importes para evitar decimales residuales. */
@@ -158,17 +173,13 @@ export class DirectPaymentDialogComponent implements OnChanges {
   get formValid(): boolean {
     return (
       !!this.installment &&
-      (this.amount ?? 0) > 0 &&
-      (this.amount ?? 0) <= this.maxAllowed &&
+      this.effectiveAmount > 0 &&
+      this.effectiveAmount <= this.maxAllowed &&
       (this.registerMode !== 'PRE_CARGA' ||
         !this.isPartial ||
         !!this.nextVisitDate) &&
       (this.method !== 'MIXED' ||
-        (Math.round(
-          ((this.amountCash ?? 0) + (this.amountTransfer ?? 0)) * 100,
-        ) === Math.round((this.amount ?? 0) * 100) &&
-          (this.amountCash ?? 0) > 0 &&
-          (this.amountTransfer ?? 0) > 0))
+        ((this.amountCash ?? 0) > 0 && (this.amountTransfer ?? 0) > 0))
     );
   }
 
@@ -211,7 +222,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
   private processPayment(): void {
     const payload = {
       installmentId: this.installment!.id,
-      amountReceived: this.amount!,
+      amountReceived: this.effectiveAmount,
       ...(this.method === 'MIXED'
         ? {
             amountCash: this.amountCash ?? 0,
