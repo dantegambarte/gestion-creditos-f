@@ -10,6 +10,12 @@ describe('MockAuthService', () => {
   let router: Router;
 
   beforeEach(() => {
+    // Limpiar ANTES de construir el servicio: MockAuthService rehidrata _user$
+    // desde localStorage en su constructor. Si otro spec (Karma corre todos en el
+    // mismo navegador, en orden aleatorio) dejó un token, el servicio arrancaría
+    // autenticado y un clear() posterior limpiaría localStorage pero NO el _user$
+    // ya seteado → isAuthenticated() daría true (falla intermitente).
+    localStorage.clear();
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
       providers: [
@@ -19,7 +25,6 @@ describe('MockAuthService', () => {
     });
     service = TestBed.inject(MockAuthService);
     router = TestBed.inject(Router);
-    localStorage.clear();
   });
 
   afterEach(() => localStorage.clear());
