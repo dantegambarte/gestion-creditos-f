@@ -292,7 +292,9 @@ export class PaymentDialogComponent implements OnChanges {
               : err.status === 409
                 ? 'Advertencia'
                 : 'Error',
-          detail: err.message ?? 'No se pudo registrar el cobro.',
+          detail: err.message?.includes('WRITTEN_OFF')
+            ? 'No se pueden registrar cobros: este crédito está castigado (incobrable).'
+            : (err.message ?? 'No se pudo registrar el cobro.'),
         });
       },
     });

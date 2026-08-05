@@ -4,33 +4,61 @@
 >
   <!-- Main tab selector: Cronograma / Cobros -->
   <div
-    class="flex items-center gap-1 px-4 pt-3 pb-0 flex-shrink-0 border-b"
+    class="relative flex items-center justify-between gap-3 px-4 pt-3 pb-0 flex-shrink-0 border-b"
     style="border-color: var(--ff-border)"
   >
-    <button
-      class="px-4 py-2 text-sm font-semibold border-b-2 transition-colors"
-      [style.borderColor]="
-        mainTab === 'installments' ? 'var(--ff-accent)' : 'transparent'
-      "
-      [style.color]="
-        mainTab === 'installments' ? 'var(--ff-accent)' : 'var(--ff-text-muted)'
-      "
-      (click)="mainTab = 'installments'"
-    >
-      Cronograma
-    </button>
-    <button
-      class="px-4 py-2 text-sm font-semibold border-b-2 transition-colors"
-      [style.borderColor]="
-        mainTab === 'payments' ? 'var(--ff-accent)' : 'transparent'
-      "
-      [style.color]="
-        mainTab === 'payments' ? 'var(--ff-accent)' : 'var(--ff-text-muted)'
-      "
-      (click)="switchToPayments()"
-    >
-      Cobros
-    </button>
+    <div class="flex items-center gap-1">
+      <button
+        class="px-4 py-2 text-sm font-semibold border-b-2 transition-colors"
+        [style.borderColor]="
+          mainTab === 'installments' ? 'var(--ff-accent)' : 'transparent'
+        "
+        [style.color]="
+          mainTab === 'installments' ? 'var(--ff-accent)' : 'var(--ff-text-muted)'
+        "
+        (click)="mainTab = 'installments'"
+      >
+        Cronograma
+      </button>
+      <button
+        class="px-4 py-2 text-sm font-semibold border-b-2 transition-colors"
+        [style.borderColor]="
+          mainTab === 'payments' ? 'var(--ff-accent)' : 'transparent'
+        "
+        [style.color]="
+          mainTab === 'payments' ? 'var(--ff-accent)' : 'var(--ff-text-muted)'
+        "
+        (click)="switchToPayments()"
+      >
+        Cobros
+      </button>
+    </div>
+
+    @if (credit) {
+      <div
+        class="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-4 text-sm min-w-0"
+      >
+        <span class="truncate">
+          <span class="font-semibold" style="color: var(--ff-text-muted)">Cliente: </span>
+          <span class="font-semibold" style="color: var(--ff-accent)">{{ credit.customerName }}</span>
+        </span>
+        @if (credit.createdByName) {
+          <span class="truncate">
+            <span class="font-semibold" style="color: var(--ff-text-muted)">Vendedor: </span>
+            <span class="font-semibold" style="color: var(--ff-text-secondary)">{{ credit.createdByName }}</span>
+          </span>
+        }
+      </div>
+    }
+
+    @if (credit) {
+      <div class="hidden lg:flex items-center gap-2 pb-2 text-sm shrink-0">
+        <span class="font-semibold" style="color: var(--ff-text-muted)">Adeuda: </span>
+        <span class="ff-mono font-semibold" style="color: var(--ff-danger)">
+          {{ owedAmount | currencyArs: 0 }}
+        </span>
+      </div>
+    }
   </div>
 
   <!-- Sub-tabs for installments view -->
