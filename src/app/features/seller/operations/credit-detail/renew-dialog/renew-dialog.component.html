@@ -1,0 +1,149 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Renovar préstamo"
+  [modal]="true"
+  [style]="{ width: '440px', maxWidth: '95vw' }"
+  styleClass="ff-fullscreen-form-dialog"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="flex flex-col gap-4 py-2">
+    <div class="rounded-lg bg-blue-50 border border-blue-200 p-3">
+      <p class="text-xs text-blue-700">
+        <i class="pi pi-info-circle mr-1"></i>
+        Se cobra el interés del período y se extiende el vencimiento un período.
+        El capital no cambia.
+      </p>
+    </div>
+
+    <div
+      class="flex items-center justify-between rounded-lg border p-3"
+      style="border-color: var(--ff-border)"
+    >
+      <span class="text-sm font-medium" style="color: var(--ff-text-secondary)"
+        >Interés a renovar</span
+      >
+      <span
+        class="ff-mono text-lg font-bold"
+        style="color: var(--ff-accent)"
+        data-cy="renew-interest"
+        >{{ interest | currencyArs: 2 }}</span
+      >
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+        >Método de pago</label
+      >
+      <p-dropdown
+        data-cy="renew-payment-method"
+        [options]="PAYMENT_METHOD_OPTIONS"
+        [(ngModel)]="method"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full h-11"
+        appendTo="body"
+      />
+    </div>
+
+    @if (method === "TRANSFER") {
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+          >Referencia de transferencia</label
+        >
+        <input
+          pInputText
+          [(ngModel)]="transferRef"
+          placeholder="N° de operación o referencia"
+          class="w-full h-11 px-3"
+          maxlength="100"
+        />
+      </div>
+    }
+
+    @if (method === "MIXED") {
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-sm font-medium"
+            style="color: var(--ff-text-primary)"
+            >Efectivo</label
+          >
+          <p-inputNumber
+            data-cy="renew-cash-amount"
+            appCurrencyAmountInput
+            [(ngModel)]="amountCash"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [minFractionDigits]="0"
+            [allowEmpty]="true"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label
+            class="text-sm font-medium"
+            style="color: var(--ff-text-primary)"
+            >Transferencia</label
+          >
+          <p-inputNumber
+            data-cy="renew-transfer-amount"
+            appCurrencyAmountInput
+            [(ngModel)]="amountTransfer"
+            mode="currency"
+            currency="ARS"
+            locale="es-AR"
+            [minFractionDigits]="0"
+            [allowEmpty]="true"
+            [min]="0"
+            styleClass="w-full"
+            inputStyleClass="w-full h-11 px-3"
+          />
+        </div>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+          >Referencia de transferencia</label
+        >
+        <input
+          pInputText
+          [(ngModel)]="transferRef"
+          placeholder="N° de operación o referencia"
+          class="w-full h-11 px-3"
+          maxlength="100"
+        />
+      </div>
+      <p class="text-xs" style="color: var(--ff-text-secondary)">
+        Total: <strong>{{ effectiveAmount | currencyArs: 2 }}</strong> — debe
+        sumar el interés ({{ interest | currencyArs: 2 }}).
+      </p>
+    }
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="ff-mobile-dialog-actions grid grid-cols-2 gap-3 w-full">
+      <p-button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="close()"
+      />
+      <p-button
+        label="Renovar"
+        data-cy="renew-submit"
+        icon="pi pi-replay"
+        severity="primary"
+        styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        (onClick)="confirm()"
+        [loading]="processing"
+        [disabled]="!formValid"
+      />
+    </div>
+  </ng-template>
+</p-dialog>

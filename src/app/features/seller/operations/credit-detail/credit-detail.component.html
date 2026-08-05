@@ -204,6 +204,19 @@
             (onClick)="openRefinanceDialog()"
             styleClass="ff-credit-action-btn ff-credit-action-btn--refinance h-11 px-5 rounded-xl"
           />
+          @if (canRenew) {
+            <p-button
+              label="Renovar"
+              data-cy="credit-renew-action"
+              icon="pi pi-replay"
+              severity="success"
+              [outlined]="true"
+              size="small"
+              pTooltip="Cobrar el interés del período y extender el vencimiento"
+              (onClick)="openRenewDialog()"
+              styleClass="ff-credit-action-btn h-11 px-5 rounded-xl"
+            />
+          }
           @if (credit.type === 'LOAN' || credit.type === 'SALE') {
             <p-button
               label="Cambiar plan"
@@ -516,4 +529,11 @@
   [(visible)]="showWriteOffDialog"
   [credit]="credit"
   (writtenOff)="onWrittenOff()"
+/>
+
+<app-renew-dialog
+  [(visible)]="showRenewDialog"
+  [creditId]="credit?.id ?? null"
+  [interest]="renewalInterest"
+  (renewed)="load()"
 />

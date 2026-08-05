@@ -23,6 +23,7 @@ import {
   PlanChangeResult,
   RejectPayload,
   RefinancePayload,
+  RenewPayload,
   RefinanceResult,
   RefinanceResultRaw,
   RefinancingChain,
@@ -510,6 +511,25 @@ export class CreditsService {
           }),
         ),
       );
+  }
+
+  /**
+   * Renueva un préstamo de una sola cuota: cobra el interés del período (monto
+   * fijo, calculado en backend) y extiende el vencimiento un período. Solo se
+   * envía el medio de pago; en mixto, el split debe sumar el interés.
+   */
+  renew(id: string, payload: RenewPayload): Observable<void> {
+    const body: Record<string, unknown> = {
+      payment_method: payload.paymentMethod,
+    };
+    if (payload.amountCash != null) body['amount_cash'] = payload.amountCash;
+    if (payload.amountTransfer != null)
+      body['amount_transfer'] = payload.amountTransfer;
+    if (payload.transferReference)
+      body['transfer_reference'] = payload.transferReference;
+    return this.api
+      .post<unknown>(`credits/${id}/renew`, body)
+      .pipe(map(() => undefined));
   }
 
   /**
