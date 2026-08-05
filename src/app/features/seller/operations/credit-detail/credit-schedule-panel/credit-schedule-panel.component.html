@@ -715,6 +715,7 @@
 <app-direct-payment-dialog
   [(visible)]="showDirectDialog"
   [installment]="directInstallment"
+  [creditPendingBalance]="owedAmount"
   (paid)="onDirectPaid()"
 />
 
