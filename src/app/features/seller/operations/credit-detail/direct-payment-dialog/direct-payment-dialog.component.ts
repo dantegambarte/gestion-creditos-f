@@ -24,6 +24,7 @@ import { CurrencyAmountInputDirective } from '../../../../../shared/directives/c
 import { CashRegisterService } from '../../../../admin/cash-register/cash-register.service';
 import { PaymentsService } from '../../../../collector/payments.service';
 import { CreditDetail } from '../../../models/credit.model';
+import * as overpayment from '../../../../../shared/utils/overpayment.util';
 
 @Component({
   selector: 'app-direct-payment-dialog',
@@ -47,6 +48,12 @@ export class DirectPaymentDialogComponent implements OnChanges {
   @Input() visible = false;
   @Output() visibleChange = new EventEmitter<boolean>();
   @Input() installment: CreditDetail['installments'][number] | null = null;
+  /**
+   * Saldo total pendiente del crédito (settlementTotalAmount del detalle). Tope
+   * hasta el que el admin puede ingresar un excedente que se reparte a las cuotas
+   * siguientes. Si es 0 (no se pasó), se cae al saldo de la cuota.
+   */
+  @Input() creditPendingBalance = 0;
   /** Se emite cuando el cobro fue registrado; el padre debe recargar. */
   @Output() paid = new EventEmitter<void>();
 
@@ -54,7 +61,8 @@ export class DirectPaymentDialogComponent implements OnChanges {
 
   /** PRE_CARGA: pasa por el flujo normal (pendiente de aprobación). DIRECT: se registra y aprueba en el mismo paso. */
   registerMode: 'PRE_CARGA' | 'DIRECT' = 'PRE_CARGA';
-  maxAmount = 0;
+  /** Saldo pendiente de la cuota seleccionada (base del concepto de pago parcial). */
+  installmentBalance = 0;
   amount: number | null = null;
   method: 'CASH' | 'TRANSFER' | 'MIXED' = 'CASH';
   amountCash: number | null = null;
@@ -78,8 +86,10 @@ export class DirectPaymentDialogComponent implements OnChanges {
   /** Precarga el monto máximo cada vez que cambia la cuota seleccionada. */
   ngOnChanges(): void {
     if (this.installment) {
-      this.maxAmount = this.installment.amountDue - this.installment.amountPaid;
-      this.amount = this.maxAmount;
+      this.installmentBalance =
+        this.installment.amountDue - this.installment.amountPaid;
+      // El monto inicial es el de la cuota; el admin decide si cobra un excedente.
+      this.amount = this.installmentBalance;
       this.registerMode = 'PRE_CARGA';
       this.method = 'CASH';
       this.amountCash = null;
@@ -90,25 +100,91 @@ export class DirectPaymentDialogComponent implements OnChanges {
     }
   }
 
-  /** Un cobro parcial (no cubre el saldo total de la cuota) exige próxima visita en modo pre-carga. */
+  /**
+   * Tope máximo cobrable: el saldo pendiente del crédito. Si no se recibió (0),
+   * cae al saldo de la cuota (comportamiento anterior).
+   */
+  get maxAllowed(): number {
+    return this.creditPendingBalance > 0
+      ? this.creditPendingBalance
+      : this.installmentBalance;
+  }
+
+  /**
+   * Monto efectivo ingresado. En un solo medio es `amount`; en mixto es la suma de
+   * efectivo + transferencia (el total se deriva, no se ingresa por separado, para
+   * quedar alineado con el flujo del cobrador).
+   */
+  get effectiveAmount(): number {
+    return this.method === 'MIXED'
+      ? (this.amountCash ?? 0) + (this.amountTransfer ?? 0)
+      : (this.amount ?? 0);
+  }
+
+  /** Un cobro parcial (no cubre el saldo de la cuota) exige próxima visita en pre-carga. */
   get isPartial(): boolean {
-    return (this.amount ?? 0) < this.maxAmount;
+    return overpayment.isPartialPayment(
+      this.effectiveAmount,
+      this.installmentBalance,
+    );
+  }
+
+  /** El monto supera la cuota y el excedente se aplicará a las cuotas siguientes. */
+  get advancesNextInstallments(): boolean {
+    return overpayment.advancesNextInstallments(
+      this.effectiveAmount,
+      this.installmentBalance,
+      this.maxAllowed,
+    );
+  }
+
+  /** El monto supera el saldo total del crédito (tope máximo). */
+  get exceedsCreditBalance(): boolean {
+    return overpayment.exceedsCreditBalance(
+      this.effectiveAmount,
+      this.maxAllowed,
+    );
+  }
+
+  /**
+   * Sugiere el máximo cobrable. En un solo medio setea ese monto. En mixto reparte
+   * efectivo/transferencia en números ENTEROS que suman el máximo, respetando la
+   * proporción ya ingresada, y avisa que son montos SUGERIDOS para verificar/ajustar
+   * a los reales.
+   */
+  adjustToMax(): void {
+    if (this.effectiveAmount <= this.maxAllowed) return;
+    // Enteros y ≤ máximo: floor evita decimales y no supera el tope.
+    const target = Math.floor(this.maxAllowed);
+    if (this.method === 'MIXED') {
+      const current = (this.amountCash ?? 0) + (this.amountTransfer ?? 0);
+      const cash =
+        current > 0
+          ? Math.round(((this.amountCash ?? 0) / current) * target)
+          : Math.floor(target / 2);
+      this.amountCash = cash;
+      this.amountTransfer = target - cash;
+      this.msg.add({
+        severity: 'info',
+        summary: 'Montos sugeridos',
+        detail: `Repartimos efectivo y transferencia para que sumen el máximo ($${target.toLocaleString('es-AR')}). Verificá y ajustá a los montos reales si hace falta.`,
+        life: 6000,
+      });
+    } else {
+      this.amount = target;
+    }
   }
 
   get formValid(): boolean {
     return (
       !!this.installment &&
-      (this.amount ?? 0) > 0 &&
-      (this.amount ?? 0) <= this.maxAmount &&
+      this.effectiveAmount > 0 &&
+      this.effectiveAmount <= this.maxAllowed &&
       (this.registerMode !== 'PRE_CARGA' ||
         !this.isPartial ||
         !!this.nextVisitDate) &&
       (this.method !== 'MIXED' ||
-        (Math.round(
-          ((this.amountCash ?? 0) + (this.amountTransfer ?? 0)) * 100,
-        ) === Math.round((this.amount ?? 0) * 100) &&
-          (this.amountCash ?? 0) > 0 &&
-          (this.amountTransfer ?? 0) > 0))
+        ((this.amountCash ?? 0) > 0 && (this.amountTransfer ?? 0) > 0))
     );
   }
 
@@ -151,7 +227,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
   private processPayment(): void {
     const payload = {
       installmentId: this.installment!.id,
-      amountReceived: this.amount!,
+      amountReceived: this.effectiveAmount,
       ...(this.method === 'MIXED'
         ? {
             amountCash: this.amountCash ?? 0,
@@ -189,9 +265,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
             err.status === 409 || err.status === 422
               ? 'Advertencia'
               : 'Error',
-          detail: err.message?.includes('WRITTEN_OFF')
-            ? 'No se pueden registrar cobros: este crédito está castigado (incobrable).'
-            : (err.message ?? 'No se pudo registrar el cobro.'),
+          detail: this.errorDetail(err),
         });
       },
     };
@@ -201,5 +275,18 @@ export class DirectPaymentDialogComponent implements OnChanges {
     } else {
       this.paymentsSvc.create(payload).subscribe(onSettled);
     }
+  }
+
+  /**
+   * Mensaje de error legible. El 422 por saldo (caso de concurrencia: el saldo del
+   * crédito cambió por una pre-carga pendiente u otra actualización mientras se
+   * operaba) se explica de forma clara e invita a revisar el detalle y reintentar.
+   */
+  private errorDetail(err: AppError): string {
+    if (err.message?.includes('WRITTEN_OFF'))
+      return 'No se pueden registrar cobros: este crédito está castigado (incobrable).';
+    if (err.status === 422 && err.message?.includes('saldo total pendiente'))
+      return 'El saldo disponible del crédito cambió mientras realizabas la operación (por ejemplo, por una pre-carga pendiente u otra actualización). Revisá el detalle e intentá nuevamente.';
+    return err.message ?? 'No se pudo registrar el cobro.';
   }
 }

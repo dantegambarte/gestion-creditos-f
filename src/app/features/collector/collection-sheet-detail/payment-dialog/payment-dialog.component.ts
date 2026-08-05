@@ -20,6 +20,7 @@ import { AppError } from '../../../../core/models/app-error';
 import { DateService } from '../../../../core/services/date.service';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
+import * as overpayment from '../../../../shared/utils/overpayment.util';
 import { CollectionSheetItem } from '../../models/collection.model';
 import {
   PaymentCreatePayload,
@@ -116,38 +117,51 @@ export class PaymentDialogComponent implements OnChanges {
    */
   get advancesNextInstallments(): boolean {
     if (!this.item) return false;
-    return (
-      this.paymentAmount > this.availableBalance(this.item) &&
-      this.paymentAmount <= this.maxAllowed(this.item)
+    return overpayment.advancesNextInstallments(
+      this.paymentAmount,
+      this.availableBalance(this.item),
+      this.maxAllowed(this.item),
     );
   }
 
   /** True cuando el monto ingresado supera el saldo total del crédito (tope máximo). */
   get exceedsCreditTotal(): boolean {
     if (!this.item) return false;
-    return this.paymentAmount > this.maxAllowed(this.item);
+    return overpayment.exceedsCreditBalance(
+      this.paymentAmount,
+      this.maxAllowed(this.item),
+    );
   }
 
   /**
-   * Ajusta el monto ingresado al máximo cobrable (saldo total del crédito). Para un
-   * solo medio setea ese input; en mixto escala ambos en proporción para que la
-   * suma dé exactamente el máximo.
+   * Sugiere el máximo cobrable. Para un solo medio setea ese monto. En mixto reparte
+   * efectivo/transferencia en números ENTEROS que suman el máximo, respetando la
+   * proporción ya ingresada, y avisa que son montos SUGERIDOS para verificar/ajustar.
    */
   adjustToMax(): void {
     if (!this.item) return;
     const max = this.maxAllowed(this.item);
-    const current = this.paymentAmount;
-    if (current <= max) return;
+    if (this.paymentAmount <= max) return;
+    // Enteros y ≤ máximo: floor evita decimales y no supera el tope.
+    const target = Math.floor(max);
     if (this.paymentMethod === 'CASH') {
-      this.paymentCashAmount = max;
+      this.paymentCashAmount = target;
     } else if (this.paymentMethod === 'TRANSFER') {
-      this.paymentTransferAmount = max;
+      this.paymentTransferAmount = target;
     } else {
-      const cash = this.paymentCashAmount ?? 0;
-      const newCash =
-        current > 0 ? this.roundMoney((cash / current) * max) : max;
-      this.paymentCashAmount = newCash;
-      this.paymentTransferAmount = this.roundMoney(max - newCash);
+      const current = this.paymentAmount;
+      const cash =
+        current > 0
+          ? Math.round(((this.paymentCashAmount ?? 0) / current) * target)
+          : Math.floor(target / 2);
+      this.paymentCashAmount = cash;
+      this.paymentTransferAmount = target - cash;
+      this.msg.add({
+        severity: 'info',
+        summary: 'Montos sugeridos',
+        detail: `Repartimos efectivo y transferencia para que sumen el máximo ($${target.toLocaleString('es-AR')}). Verificá y ajustá a los montos reales si hace falta.`,
+        life: 6000,
+      });
     }
     this.onPaymentAmountChange();
   }
@@ -173,15 +187,18 @@ export class PaymentDialogComponent implements OnChanges {
   get paymentFormInvalid(): boolean {
     return (
       this.paymentAmount <= 0 ||
-      (!!this.item && this.paymentAmount > this.maxAllowed(this.item)) ||
+      this.exceedsCreditTotal ||
       (this.isPartialPayment() && !this.paymentNextVisitDate)
     );
   }
 
   /** True si el monto ingresado dejaría la cuota en estado parcial. */
   isPartialPayment(): boolean {
-    if (!this.item || this.paymentAmount <= 0) return false;
-    return this.paymentAmount < this.availableBalance(this.item);
+    if (!this.item) return false;
+    return overpayment.isPartialPayment(
+      this.paymentAmount,
+      this.availableBalance(this.item),
+    );
   }
 
   /** Ajusta los importes visibles al cambiar entre pago simple y mixto. */
@@ -292,12 +309,23 @@ export class PaymentDialogComponent implements OnChanges {
               : err.status === 409
                 ? 'Advertencia'
                 : 'Error',
-          detail: err.message?.includes('WRITTEN_OFF')
-            ? 'No se pueden registrar cobros: este crédito está castigado (incobrable).'
-            : (err.message ?? 'No se pudo registrar el cobro.'),
+          detail: this.errorDetail(err),
         });
       },
     });
+  }
+
+  /**
+   * Mensaje de error legible. El 422 por saldo (concurrencia: el saldo del crédito
+   * cambió por otra pre-carga u otra actualización mientras se registraba) se
+   * explica de forma clara e invita a revisar la cuota y reintentar.
+   */
+  private errorDetail(err: AppError): string {
+    if (err.message?.includes('WRITTEN_OFF'))
+      return 'No se pueden registrar cobros: este crédito está castigado (incobrable).';
+    if (err.status === 422 && err.message?.includes('saldo total pendiente'))
+      return 'El saldo disponible del crédito cambió mientras registrabas el cobro (por ejemplo, por otra pre-carga u otra actualización). Revisá la cuota e intentá nuevamente.';
+    return err.message ?? 'No se pudo registrar el cobro.';
   }
 
   private formatDate(iso: string): string {
