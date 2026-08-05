@@ -134,25 +134,34 @@ export class PaymentDialogComponent implements OnChanges {
   }
 
   /**
-   * Ajusta el monto ingresado al máximo cobrable (saldo total del crédito). Para un
-   * solo medio setea ese input; en mixto escala ambos en proporción para que la
-   * suma dé exactamente el máximo.
+   * Sugiere el máximo cobrable. Para un solo medio setea ese monto. En mixto reparte
+   * efectivo/transferencia en números ENTEROS que suman el máximo, respetando la
+   * proporción ya ingresada, y avisa que son montos SUGERIDOS para verificar/ajustar.
    */
   adjustToMax(): void {
     if (!this.item) return;
     const max = this.maxAllowed(this.item);
-    const current = this.paymentAmount;
-    if (current <= max) return;
+    if (this.paymentAmount <= max) return;
+    // Enteros y ≤ máximo: floor evita decimales y no supera el tope.
+    const target = Math.floor(max);
     if (this.paymentMethod === 'CASH') {
-      this.paymentCashAmount = max;
+      this.paymentCashAmount = target;
     } else if (this.paymentMethod === 'TRANSFER') {
-      this.paymentTransferAmount = max;
+      this.paymentTransferAmount = target;
     } else {
-      const cash = this.paymentCashAmount ?? 0;
-      const newCash =
-        current > 0 ? this.roundMoney((cash / current) * max) : max;
-      this.paymentCashAmount = newCash;
-      this.paymentTransferAmount = this.roundMoney(max - newCash);
+      const current = this.paymentAmount;
+      const cash =
+        current > 0
+          ? Math.round(((this.paymentCashAmount ?? 0) / current) * target)
+          : Math.floor(target / 2);
+      this.paymentCashAmount = cash;
+      this.paymentTransferAmount = target - cash;
+      this.msg.add({
+        severity: 'info',
+        summary: 'Montos sugeridos',
+        detail: `Repartimos efectivo y transferencia para que sumen el máximo ($${target.toLocaleString('es-AR')}). Verificá y ajustá a los montos reales si hace falta.`,
+        life: 6000,
+      });
     }
     this.onPaymentAmountChange();
   }

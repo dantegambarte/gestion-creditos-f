@@ -147,27 +147,32 @@ export class DirectPaymentDialogComponent implements OnChanges {
   }
 
   /**
-   * Ajusta el monto al máximo cobrable (saldo del crédito). En pago mixto reparte
-   * efectivo/transferencia en proporción para que la suma dé exactamente el máximo.
+   * Sugiere el máximo cobrable. En un solo medio setea ese monto. En mixto reparte
+   * efectivo/transferencia en números ENTEROS que suman el máximo, respetando la
+   * proporción ya ingresada, y avisa que son montos SUGERIDOS para verificar/ajustar
+   * a los reales.
    */
   adjustToMax(): void {
-    const max = this.maxAllowed;
-    if (this.effectiveAmount <= max) return;
+    if (this.effectiveAmount <= this.maxAllowed) return;
+    // Enteros y ≤ máximo: floor evita decimales y no supera el tope.
+    const target = Math.floor(this.maxAllowed);
     if (this.method === 'MIXED') {
       const current = (this.amountCash ?? 0) + (this.amountTransfer ?? 0);
-      if (current > 0) {
-        const cash = this.roundMoney(((this.amountCash ?? 0) / current) * max);
-        this.amountCash = cash;
-        this.amountTransfer = this.roundMoney(max - cash);
-      }
+      const cash =
+        current > 0
+          ? Math.round(((this.amountCash ?? 0) / current) * target)
+          : Math.floor(target / 2);
+      this.amountCash = cash;
+      this.amountTransfer = target - cash;
+      this.msg.add({
+        severity: 'info',
+        summary: 'Montos sugeridos',
+        detail: `Repartimos efectivo y transferencia para que sumen el máximo ($${target.toLocaleString('es-AR')}). Verificá y ajustá a los montos reales si hace falta.`,
+        life: 6000,
+      });
     } else {
-      this.amount = max;
+      this.amount = target;
     }
-  }
-
-  /** Redondea importes para evitar decimales residuales. */
-  private roundMoney(value: number): number {
-    return Math.round(value * 100) / 100;
   }
 
   get formValid(): boolean {
