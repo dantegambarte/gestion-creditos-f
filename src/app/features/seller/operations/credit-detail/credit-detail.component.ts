@@ -35,6 +35,7 @@ import { WriteOffDialogComponent } from './write-off-dialog/write-off-dialog.com
 import { CreditSchedulePanelComponent } from './credit-schedule-panel/credit-schedule-panel.component';
 import { PlanChangeDialogComponent } from './plan-change-dialog/plan-change-dialog.component';
 import { RefinanceDialogComponent } from './refinance-dialog/refinance-dialog.component';
+import { RenewDialogComponent } from './renew-dialog/renew-dialog.component';
 import { RejectDialogComponent } from './reject-dialog/reject-dialog.component';
 import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog.component';
 
@@ -59,6 +60,7 @@ import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog
     ApproveDialogComponent,
     RejectDialogComponent,
     RefinanceDialogComponent,
+    RenewDialogComponent,
     PlanChangeDialogComponent,
     WriteOffDialogComponent,
     SettlementDialogComponent,
@@ -96,9 +98,42 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   showRefinanceDialog = false;
   showPlanChangeDialog = false;
   showWriteOffDialog = false;
+  showRenewDialog = false;
 
   get installmentAmount(): number | null {
     return this.credit?.installments[0]?.amountDue ?? null;
+  }
+
+  /**
+   * True si el crédito es un préstamo de una sola cuota, activo y con la cuota sin
+   * pagar → habilita "Renovar" (solo admin). El resto de préstamos no se renuevan así.
+   */
+  get canRenew(): boolean {
+    return (
+      this.isAdmin &&
+      this.credit?.type === 'LOAN' &&
+      this.credit?.status === 'ACTIVE' &&
+      this.credit?.installments.length === 1 &&
+      this.credit?.installments[0]?.status !== 'PAID'
+    );
+  }
+
+  /**
+   * Interés del período a renovar = importe congelado de la cuota − capital.
+   * Se usa amountDue − penaltyAmount (= original_amount por el invariante del
+   * backend), NO amountDue crudo: la mora manual se suma a amountDue, así que
+   * tomarlo directo inflaría el interés con la mora ya contada aparte.
+   */
+  get renewalInterest(): number {
+    const inst = this.credit?.installments[0];
+    if (!inst || !this.credit) return 0;
+    const frozen = inst.amountDue - (inst.penaltyAmount ?? 0);
+    return Math.max(0, frozen - this.credit.totalAmount);
+  }
+
+  /** Mora (manual) acumulada en la cuota; se cobra junto con la renovación. */
+  get renewalMora(): number {
+    return this.credit?.installments[0]?.penaltyAmount ?? 0;
   }
 
   /** Venta de contado: oculta la información de financiación en el detalle. */
@@ -453,6 +488,11 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
    */
   openRefinanceDialog(): void {
     this.showRefinanceDialog = true;
+  }
+
+  /** Abre el diálogo de renovación del préstamo de una sola cuota. */
+  openRenewDialog(): void {
+    this.showRenewDialog = true;
   }
 
   /**

@@ -359,6 +359,18 @@ export interface RejectPayload {
   rejectionReason: string;
 }
 
+/**
+ * Renovación de un préstamo de una sola cuota: se cobra el interés del período
+ * (monto fijo, calculado en backend) y se extiende el vencimiento. Solo viaja el
+ * medio de pago; en mixto, el split debe sumar el interés.
+ */
+export interface RenewPayload {
+  paymentMethod: 'CASH' | 'TRANSFER' | 'MIXED';
+  amountCash?: number;
+  amountTransfer?: number;
+  transferReference?: string;
+}
+
 export interface EarlySettlementPayload {
   paymentMethod?: IntakePaymentMethod;
   amountCash?: number;
