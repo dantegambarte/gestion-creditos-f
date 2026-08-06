@@ -125,6 +125,11 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     return Math.max(0, inst.amountDue - this.credit.totalAmount);
   }
 
+  /** Mora (manual) acumulada en la cuota; se cobra junto con la renovación. */
+  get renewalMora(): number {
+    return this.credit?.installments[0]?.penaltyAmount ?? 0;
+  }
+
   /** Venta de contado: oculta la información de financiación en el detalle. */
   get isCashSale(): boolean {
     return this.credit?.paymentCondition === 'CASH';

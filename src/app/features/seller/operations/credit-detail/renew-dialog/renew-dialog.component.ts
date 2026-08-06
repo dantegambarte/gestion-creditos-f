@@ -46,6 +46,8 @@ export class RenewDialogComponent implements OnChanges {
   @Input() creditId: string | null = null;
   /** Interés del período a cobrar (monto fijo). */
   @Input() interest = 0;
+  /** Mora (manual) acumulada en la cuota; se cobra junto con la renovación. */
+  @Input() mora = 0;
   /** Emite cuando la renovación fue registrada; el padre recarga el crédito. */
   @Output() renewed = new EventEmitter<void>();
 
@@ -74,20 +76,25 @@ export class RenewDialogComponent implements OnChanges {
     }
   }
 
-  /** Total ingresado: en mixto la suma de los medios; en un solo medio, el interés. */
+  /** Total a cobrar = interés del período + mora acumulada en la cuota. */
+  get total(): number {
+    return this.interest + this.mora;
+  }
+
+  /** Total ingresado: en mixto la suma de los medios; en un solo medio, el total. */
   get effectiveAmount(): number {
     return this.method === 'MIXED'
       ? (this.amountCash ?? 0) + (this.amountTransfer ?? 0)
-      : this.interest;
+      : this.total;
   }
 
   get formValid(): boolean {
-    if (this.interest <= 0) return false;
+    if (this.total <= 0) return false;
     if (this.method !== 'MIXED') return true;
     return (
       (this.amountCash ?? 0) > 0 &&
       (this.amountTransfer ?? 0) > 0 &&
-      Math.round(this.effectiveAmount * 100) === Math.round(this.interest * 100)
+      Math.round(this.effectiveAmount * 100) === Math.round(this.total * 100)
     );
   }
 

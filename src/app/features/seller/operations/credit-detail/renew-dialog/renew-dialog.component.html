@@ -18,18 +18,49 @@
     </div>
 
     <div
-      class="flex items-center justify-between rounded-lg border p-3"
+      class="flex flex-col gap-2 rounded-lg border p-3"
       style="border-color: var(--ff-border)"
     >
-      <span class="text-sm font-medium" style="color: var(--ff-text-secondary)"
-        >Interés a cobrar</span
-      >
-      <span
-        class="ff-mono text-lg font-bold"
-        style="color: var(--ff-accent)"
-        data-cy="renew-interest"
-        >{{ interest | currencyArs: 2 }}</span
-      >
+      <div class="flex items-center justify-between">
+        <span
+          class="text-sm font-medium"
+          style="color: var(--ff-text-secondary)"
+        >
+          {{ mora > 0 ? "Interés" : "Interés a cobrar" }}
+        </span>
+        <span class="ff-mono text-lg font-bold" style="color: var(--ff-accent)" data-cy="renew-interest">
+          {{ interest | currencyArs: 2 }}
+        </span>
+      </div>
+      @if (mora > 0) {
+        <div class="flex items-center justify-between">
+          <span
+            class="text-sm font-medium"
+            style="color: var(--ff-text-secondary)"
+            >Mora</span
+          >
+          <span
+            class="ff-mono font-semibold"
+            style="color: var(--ff-danger)"
+            data-cy="renew-mora"
+            >{{ mora | currencyArs: 2 }}</span
+          >
+        </div>
+        <div
+          class="flex items-center justify-between border-t pt-2"
+          style="border-color: var(--ff-border)"
+        >
+          <span class="text-sm font-semibold" style="color: var(--ff-text-primary)"
+            >Total a cobrar</span
+          >
+          <span
+            class="ff-mono text-lg font-bold"
+            style="color: var(--ff-accent)"
+            data-cy="renew-total"
+            >{{ total | currencyArs: 2 }}</span
+          >
+        </div>
+      }
     </div>
 
     <div class="flex flex-col gap-1">
@@ -118,8 +149,8 @@
         />
       </div>
       <p class="text-xs" style="color: var(--ff-text-secondary)">
-        Total: <strong>{{ effectiveAmount | currencyArs: 2 }}</strong> — debe
-        sumar el interés ({{ interest | currencyArs: 2 }}).
+        Ingresado: <strong>{{ effectiveAmount | currencyArs: 2 }}</strong> — debe
+        sumar el total a cobrar ({{ total | currencyArs: 2 }}).
       </p>
     }
   </div>
