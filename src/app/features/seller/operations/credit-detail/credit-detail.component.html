@@ -186,12 +186,12 @@
         }
         @if (isAdmin && credit.status === 'ACTIVE') {
           <p-button
-            label="Cancelación total anticipada"
+            label="Pago total"
             icon="pi pi-wallet"
             severity="secondary"
             [outlined]="true"
             size="small"
-            pTooltip="Liquidar todas las cuotas pendientes en un solo pago"
+            pTooltip="Cancelación total anticipada: liquidar todas las cuotas pendientes en un solo pago"
             (onClick)="openSettlementDialog()"
             styleClass="ff-credit-action-btn ff-credit-action-btn--settlement h-11 px-5 rounded-xl"
           />
@@ -209,12 +209,12 @@
               label="Renovar"
               data-cy="credit-renew-action"
               icon="pi pi-replay"
-              severity="success"
+              severity="secondary"
               [outlined]="true"
               size="small"
               pTooltip="Cobrar el interés del período y extender el vencimiento"
               (onClick)="openRenewDialog()"
-              styleClass="ff-credit-action-btn h-11 px-5 rounded-xl"
+              styleClass="ff-credit-action-btn ff-credit-action-btn--renew h-11 px-5 rounded-xl"
             />
           }
           @if (credit.type === 'LOAN' || credit.type === 'SALE') {

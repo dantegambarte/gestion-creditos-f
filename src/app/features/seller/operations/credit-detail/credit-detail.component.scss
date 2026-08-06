@@ -80,13 +80,8 @@
   justify-content: center;
 }
 
-:host ::ng-deep .credit-action-bar .p-button.ff-credit-action-btn--settlement {
-  min-width: 17.75rem;
-}
-
 @media (max-width: 900px) {
-  :host ::ng-deep .credit-action-bar .p-button,
-  :host ::ng-deep .credit-action-bar .p-button.ff-credit-action-btn--settlement {
+  :host ::ng-deep .credit-action-bar .p-button {
     min-width: 100%;
   }
 }
@@ -127,7 +122,41 @@
   color: #f5f3ff !important;
 }
 
+/* Renovar: color propio (teal), distinto del resto de la barra. */
+:host ::ng-deep .p-button.ff-credit-action-btn--renew.p-button-outlined {
+  background: rgba(45, 212, 191, 0.15) !important;
+  border-color: rgba(45, 212, 191, 0.52) !important;
+  color: #99f6e4 !important;
+}
+
+:host ::ng-deep .p-button.ff-credit-action-btn--renew.p-button-outlined:hover:not(:disabled) {
+  background: rgba(45, 212, 191, 0.25) !important;
+  border-color: rgba(94, 234, 212, 0.8) !important;
+  color: #ccfbf1 !important;
+}
+
 :host ::ng-deep .p-button.ff-credit-action-btn.p-button-outlined .p-button-label,
 :host ::ng-deep .p-button.ff-credit-action-btn.p-button-outlined .p-button-icon {
   color: inherit !important;
+}
+
+/* En mobile los botones de acción se compactan: menos alto, menos padding, letra
+   e ícono más chicos y gap más ajustado, para que no se vean grandes ni
+   desparramados (siguen ocupando el ancho por la regla de max-width: 900px). */
+@media (max-width: 640px) {
+  .credit-action-bar {
+    gap: 0.5rem !important;
+  }
+
+  :host ::ng-deep .credit-action-bar .p-button {
+    height: 2.25rem !important;
+    padding-left: 0.85rem !important;
+    padding-right: 0.85rem !important;
+    font-size: 0.8125rem !important;
+    border-radius: 0.6rem !important;
+  }
+
+  :host ::ng-deep .credit-action-bar .p-button .p-button-icon {
+    font-size: 0.8125rem !important;
+  }
 }
