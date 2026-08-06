@@ -118,11 +118,17 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     );
   }
 
-  /** Interés del período a renovar = cuota (capital + interés) − capital. */
+  /**
+   * Interés del período a renovar = importe congelado de la cuota − capital.
+   * Se usa amountDue − penaltyAmount (= original_amount por el invariante del
+   * backend), NO amountDue crudo: la mora manual se suma a amountDue, así que
+   * tomarlo directo inflaría el interés con la mora ya contada aparte.
+   */
   get renewalInterest(): number {
     const inst = this.credit?.installments[0];
     if (!inst || !this.credit) return 0;
-    return Math.max(0, inst.amountDue - this.credit.totalAmount);
+    const frozen = inst.amountDue - (inst.penaltyAmount ?? 0);
+    return Math.max(0, frozen - this.credit.totalAmount);
   }
 
   /** Mora (manual) acumulada en la cuota; se cobra junto con la renovación. */
