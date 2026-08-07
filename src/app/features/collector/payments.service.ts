@@ -189,6 +189,8 @@ export class PaymentsService {
       body['transfer_reference'] = payload.transferReference;
     if (payload.notes) body['notes'] = payload.notes;
     if (payload.nextVisitDate) body['next_visit_date'] = payload.nextVisitDate;
+    if (payload.generationType)
+      body['generation_type'] = payload.generationType;
     return this.api
       .post<PaymentCreateResultRaw>('payments', body)
       .pipe(map(toCreateResult));

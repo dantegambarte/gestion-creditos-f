@@ -534,6 +534,7 @@
 <app-renew-dialog
   [(visible)]="showRenewDialog"
   [creditId]="credit?.id ?? null"
+  [installmentId]="renewalInstallmentId"
   [interest]="renewalInterest"
   [mora]="renewalMora"
   (renewed)="load()"
