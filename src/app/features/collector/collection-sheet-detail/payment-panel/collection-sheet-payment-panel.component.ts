@@ -25,12 +25,15 @@ export class CollectionSheetPaymentPanelComponent {
   @Input() canRegisterPayment = false;
   @Input() canRegisterAttempt = false;
   @Input() canVoidTodayAttempt = false;
+  /** Habilita "Renovar" (préstamo renovable de una sola cuota). */
+  @Input() canRenew = false;
   @Input() logExpanded = false;
   @Input() loadingLog = false;
   @Input() managementLog: ManagementLogEntry[] | null = null;
 
   @Output() closePanel = new EventEmitter<void>();
   @Output() registerPayment = new EventEmitter<void>();
+  @Output() registerRenewal = new EventEmitter<void>();
   @Output() registerAttempt = new EventEmitter<CollectionAttemptType>();
   @Output() voidAttempt = new EventEmitter<void>();
   @Output() toggleLog = new EventEmitter<void>();

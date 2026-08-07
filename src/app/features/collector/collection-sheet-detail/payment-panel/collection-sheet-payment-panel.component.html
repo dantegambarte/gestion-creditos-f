@@ -60,6 +60,17 @@
       (onClick)="registerPayment.emit()"
     />
 
+    @if (canRenew) {
+      <p-button
+        label="Renovar préstamo"
+        data-cy="sheet-payment-panel-renew"
+        icon="pi pi-replay"
+        [outlined]="true"
+        styleClass="w-full justify-center sheet-renew-btn"
+        (onClick)="registerRenewal.emit()"
+      />
+    }
+
     <div class="attempt-actions">
       <p-button
         label="No pagó"

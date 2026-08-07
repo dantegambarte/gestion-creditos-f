@@ -56,6 +56,12 @@ export class RenewDialogComponent implements OnChanges {
   @Input() interest = 0;
   /** Mora (manual) acumulada en la cuota; se cobra junto con la renovación. */
   @Input() mora = 0;
+  /**
+   * Habilita el modo "Directo" (registrar + aprobar en el acto). El admin lo tiene;
+   * el cobrador NO (solo pre-carga), así que la planilla lo pasa en false y el
+   * toggle se oculta.
+   */
+  @Input() allowDirect = true;
   /** Emite cuando la renovación fue registrada; el padre recarga el crédito. */
   @Output() renewed = new EventEmitter<void>();
 
