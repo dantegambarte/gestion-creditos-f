@@ -24,6 +24,7 @@ import {
   RejectPayload,
   RefinancePayload,
   RenewPayload,
+  RenewalQuote,
   RefinanceResult,
   RefinanceResultRaw,
   RefinancingChain,
@@ -530,6 +531,15 @@ export class CreditsService {
     return this.api
       .post<unknown>(`credits/${id}/renew`, body)
       .pipe(map(() => undefined));
+  }
+
+  /**
+   * Cotiza una renovación (solo lectura): si el préstamo es renovable y cuánto se
+   * cobraría (interés + mora). La usa la planilla del cobrador antes de abrir el
+   * diálogo de renovación.
+   */
+  getRenewalQuote(id: string): Observable<RenewalQuote> {
+    return this.api.get<RenewalQuote>(`credits/${id}/renewal-quote`);
   }
 
   /**

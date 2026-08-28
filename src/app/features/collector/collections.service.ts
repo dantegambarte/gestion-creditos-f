@@ -105,6 +105,7 @@ function toSheetItem(raw: CollectionSheetItemRaw): CollectionSheetItem {
           hasPendingPayment: !!raw.live.has_pending_payment,
           todayAttemptId: raw.live.today_attempt_id,
           todayAttemptType: raw.live.today_attempt_type,
+          renewable: !!raw.live.renewable,
         }
       : null,
   };

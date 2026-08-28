@@ -359,11 +359,13 @@
                   [canRegisterPayment]="canRegisterPayment(item)"
                   [canRegisterAttempt]="canRegisterAttempt(item)"
                   [canVoidTodayAttempt]="canVoidTodayAttempt(item)"
+                  [canRenew]="canRenew(item)"
                   [logExpanded]="isLogExpanded(item)"
                   [loadingLog]="loadingLogItemId === item.installmentId"
                   [managementLog]="managementLogs[item.installmentId]"
                   (closePanel)="closeSidePanel()"
                   (registerPayment)="openPaymentDialog(item)"
+                  (registerRenewal)="openRenewDialog(item)"
                   (registerAttempt)="openAttemptDialog(item, $event)"
                   (voidAttempt)="openVoidDialog(item)"
                   (toggleLog)="toggleLog(item)"
@@ -393,11 +395,13 @@
             [canRegisterPayment]="canRegisterPayment(panelItem)"
             [canRegisterAttempt]="canRegisterAttempt(panelItem)"
             [canVoidTodayAttempt]="canVoidTodayAttempt(panelItem)"
+            [canRenew]="canRenew(panelItem)"
             [logExpanded]="isLogExpanded(panelItem)"
             [loadingLog]="loadingLogItemId === panelItem.installmentId"
             [managementLog]="managementLogs[panelItem.installmentId]"
             (closePanel)="closeSidePanel()"
             (registerPayment)="openPaymentDialog(panelItem)"
+            (registerRenewal)="openRenewDialog(panelItem)"
             (registerAttempt)="openAttemptDialog(panelItem, $event)"
             (voidAttempt)="openVoidDialog(panelItem)"
             (toggleLog)="toggleLog(panelItem)"
@@ -413,6 +417,17 @@
   [item]="paymentDialogItem"
   (paid)="onDialogActionDone($event)"
 />
+
+@if (renewDialogItem) {
+  <app-renew-dialog
+    [(visible)]="showRenewDialog"
+    [allowDirect]="false"
+    [installmentId]="renewDialogItem.installmentId"
+    [interest]="renewQuoteInterest"
+    [mora]="renewQuoteMora"
+    (renewed)="onRenewed(renewDialogItem)"
+  />
+}
 
 <app-collection-attempt-dialog
   [(visible)]="showAttemptDialog"

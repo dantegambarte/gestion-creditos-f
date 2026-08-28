@@ -9,11 +9,48 @@
   [resizable]="false"
 >
   <div class="flex flex-col gap-4 py-2">
+    @if (allowDirect) {
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium" style="color: var(--ff-text-primary)"
+        >Tipo de registro</label
+      >
+      <div class="flex flex-col gap-2">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <p-radioButton
+            name="renewMode"
+            data-cy="renew-mode-pre-carga"
+            [(ngModel)]="registerMode"
+            value="PRE_CARGA"
+          />
+          <span class="text-sm">
+            Pre-carga (queda pendiente de aprobación)
+          </span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <p-radioButton
+            name="renewMode"
+            data-cy="renew-mode-direct"
+            [(ngModel)]="registerMode"
+            value="DIRECT"
+          />
+          <span class="text-sm">Directo (se registra y aprueba ahora)</span>
+        </label>
+      </div>
+    </div>
+    }
+
     <div class="rounded-lg bg-blue-50 border border-blue-200 p-3">
       <p class="text-xs text-blue-700">
         <i class="pi pi-info-circle mr-1"></i>
-        Se cobra el interés del período y se extiende el vencimiento un período.
-        El capital no cambia.
+        Se cobra el interés del período y se extiende el vencimiento un período; el
+        capital no cambia.
+        @if (registerMode === "DIRECT") {
+          Se registra y aprueba en el mismo paso (la caja del día debe estar
+          abierta).
+        } @else {
+          Queda como pre-carga pendiente de aprobación, igual que un cobrador en la
+          calle.
+        }
       </p>
     </div>
 
@@ -166,7 +203,7 @@
         (onClick)="close()"
       />
       <p-button
-        label="Renovar"
+        [label]="registerMode === 'DIRECT' ? 'Renovar ahora' : 'Registrar pre-carga'"
         data-cy="renew-submit"
         icon="pi pi-replay"
         severity="primary"

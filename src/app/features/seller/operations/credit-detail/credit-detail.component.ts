@@ -136,6 +136,11 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     return this.credit?.installments[0]?.penaltyAmount ?? 0;
   }
 
+  /** Cuota única del préstamo; el camino pre-carga de la renovación la necesita. */
+  get renewalInstallmentId(): string | null {
+    return this.credit?.installments[0]?.id ?? null;
+  }
+
   /** Venta de contado: oculta la información de financiación en el detalle. */
   get isCashSale(): boolean {
     return this.credit?.paymentCondition === 'CASH';

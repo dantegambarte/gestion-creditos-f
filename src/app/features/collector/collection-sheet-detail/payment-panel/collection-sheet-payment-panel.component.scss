@@ -136,6 +136,31 @@
   opacity: 1;
 }
 
+/* "Renovar préstamo": botón secundario tintado en teal — mismo peso que los de
+   intento, color propio (coherente con el botón Renovar del detalle admin). */
+:host ::ng-deep .sheet-renew-btn.p-button {
+  min-height: 2.25rem;
+  border-width: 1px;
+  font-weight: 700;
+}
+
+:host ::ng-deep .sheet-renew-btn.p-button:not(:disabled) {
+  border-color: rgba(45, 212, 191, 0.55);
+  background: rgba(45, 212, 191, 0.14);
+  color: #99f6e4;
+}
+
+:host ::ng-deep .sheet-renew-btn.p-button:not(:disabled):hover {
+  border-color: rgba(45, 212, 191, 0.8);
+  background: rgba(45, 212, 191, 0.22);
+  color: #ccfbf1;
+}
+
+:host ::ng-deep .sheet-renew-btn.p-button .p-button-label,
+:host ::ng-deep .sheet-renew-btn.p-button .p-button-icon {
+  color: inherit;
+}
+
 :host ::ng-deep .attempt-btn.p-button {
   min-height: 2.25rem;
   border-width: 1px;
@@ -212,6 +237,7 @@
   }
 
   :host ::ng-deep .sheet-primary-btn.p-button,
+  :host ::ng-deep .sheet-renew-btn.p-button,
   :host ::ng-deep .attempt-btn.p-button {
     min-height: 3rem;
   }

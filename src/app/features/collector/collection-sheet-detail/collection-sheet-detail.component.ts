@@ -17,6 +17,8 @@ import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { InstallmentStatus } from '../../seller/models/installment.model';
 import { InstallmentsService } from '../../seller/operations/installments.service';
+import { CreditsService } from '../../seller/operations/credits.service';
+import { RenewDialogComponent } from '../../seller/operations/credit-detail/renew-dialog/renew-dialog.component';
 import { CollectionsService } from '../collections.service';
 import {
   additionalDebtText,
@@ -55,6 +57,7 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
     CollectionSheetPaymentPanelComponent,
     AttemptDialogComponent,
     VoidDialogComponent,
+    RenewDialogComponent,
     BackButtonComponent,
     ActiveTabScrollerDirective,
   ],
@@ -66,6 +69,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly collectionsService = inject(CollectionsService);
   private readonly installmentsService = inject(InstallmentsService);
+  private readonly creditsService = inject(CreditsService);
   private readonly router = inject(Router);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
@@ -108,6 +112,12 @@ export class CollectionSheetDetailComponent implements OnInit {
 
   showVoidDialog = false;
   voidDialogItem: CollectionSheetItem | null = null;
+
+  showRenewDialog = false;
+  renewDialogItem: CollectionSheetItem | null = null;
+  renewQuoteInterest = 0;
+  renewQuoteMora = 0;
+  loadingRenewQuote = false;
 
   get todayIso(): string {
     return this.dateSvc.toLocalIso(new Date());
@@ -232,6 +242,15 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   /**
+   * Reglas para "Renovar": las mismas que cobrar, PLUS que la fila sea un préstamo
+   * renovable (flag `renewable` de la capa viva). Convive con "Cobrar": el cliente
+   * puede saldar todo (cobro) o solo pagar el interés para extender (renovar).
+   */
+  canRenew(item: CollectionSheetItem): boolean {
+    return this.canRegisterPayment(item) && !!item.live?.renewable;
+  }
+
+  /**
    * Reglas para "No pagó" / "No encontrado":
    *  - todas las del cobro, PLUS no se permite si ya hubo una gestión del día.
    *  - Tras un cobro (parcial o total) del día, también se bloquean (la
@@ -296,6 +315,50 @@ export class CollectionSheetDetailComponent implements OnInit {
     if (!this.canVoidTodayAttempt(item)) return;
     this.voidDialogItem = item;
     this.showVoidDialog = true;
+  }
+
+  /**
+   * Abre el diálogo de renovación (solo pre-carga para el cobrador). Antes pide la
+   * cotización (interés + mora) al backend, que es la única fuente del monto: la
+   * planilla no tiene el capital para calcularlo local.
+   */
+  openRenewDialog(item: CollectionSheetItem): void {
+    if (!this.canRenew(item) || this.loadingRenewQuote) return;
+    this.loadingRenewQuote = true;
+    this.creditsService.getRenewalQuote(item.creditId).subscribe({
+      next: (quote) => {
+        this.loadingRenewQuote = false;
+        if (!quote.renewable) {
+          this.msg.add({
+            severity: 'warn',
+            summary: 'No renovable',
+            detail: 'Este préstamo ya no puede renovarse.',
+          });
+          return;
+        }
+        this.renewDialogItem = item;
+        this.renewQuoteInterest = quote.interest ?? 0;
+        this.renewQuoteMora = quote.mora ?? 0;
+        this.showRenewDialog = true;
+      },
+      error: () => {
+        this.loadingRenewQuote = false;
+        this.msg.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No pudimos obtener el monto de la renovación. Reintentá.',
+        });
+      },
+    });
+  }
+
+  /** Tras registrar la pre-carga de renovación, refresca la fila como cualquier gestión. */
+  onRenewed(item: CollectionSheetItem): void {
+    this.silentReload(item.installmentId, {
+      severity: 'success',
+      summary: 'Renovación registrada',
+      detail: 'La renovación quedó como pre-carga pendiente de aprobación.',
+    });
   }
 
   /**

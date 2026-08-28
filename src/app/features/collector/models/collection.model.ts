@@ -58,6 +58,11 @@ export interface CollectionSheetItemLive {
     AntecedentType,
     'PARTIAL_PAYMENT' | 'SCHEDULED_VISIT'
   > | null;
+  /**
+   * True si la fila es un préstamo renovable (LOAN de 1 cuota, ACTIVE, no pagada):
+   * habilita la acción "Renovar". El monto lo trae el endpoint renewal-quote.
+   */
+  renewable: boolean;
 }
 
 /** Etiquetas amigables para mostrar en UI admin (no se muestra al cobrador). */
@@ -242,6 +247,7 @@ export interface CollectionSheetItemLiveRaw {
     AntecedentType,
     'PARTIAL_PAYMENT' | 'SCHEDULED_VISIT'
   > | null;
+  renewable: boolean;
 }
 
 export interface CollectionSheetDetailRaw extends CollectionSheetRaw {

@@ -371,6 +371,17 @@ export interface RenewPayload {
   transferReference?: string;
 }
 
+/**
+ * Cotización de renovación (GET /credits/:id/renewal-quote): si el préstamo es
+ * renovable y cuánto se cobraría. interest/mora/total solo vienen si renewable.
+ */
+export interface RenewalQuote {
+  renewable: boolean;
+  interest?: number;
+  mora?: number;
+  total?: number;
+}
+
 export interface EarlySettlementPayload {
   paymentMethod?: IntakePaymentMethod;
   amountCash?: number;

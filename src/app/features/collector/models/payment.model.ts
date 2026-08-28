@@ -66,6 +66,11 @@ export interface PaymentCreatePayload {
   notes?: string;
   /** Obligatorio cuando el cobro queda parcial (amount < saldo restante). */
   nextVisitDate?: string;
+  /**
+   * Tipo de generación del pago. Único valor que el cliente fija: 'RENEWAL'
+   * (pre-carga de renovación). Ausente = cobro normal.
+   */
+  generationType?: 'RENEWAL';
 }
 
 export interface PaymentCreateResult {
