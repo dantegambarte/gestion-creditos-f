@@ -3,6 +3,8 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { dbResetBlockReason, readEnvFile } = require('./cypress/scripts/db-reset-guard');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { findRealSpecs } = require('./cypress/scripts/real-spec-detector');
 
 const BACKEND_DIR = path.resolve(
   __dirname,
@@ -53,6 +55,10 @@ export default defineConfig({
     },
 
     setupNodeEvents(on, config) {
+      // Specs que usan el backend real: cypress/support/e2e.ts los saltea
+      // cuando realAuthEnabled es false, en vez de fallar en cy.loginReal.
+      config.env.realSpecs = findRealSpecs(__dirname);
+
       on('task', {
         /**
          * Ejecuta la semilla 05 de E2E contra la BD local.
@@ -130,6 +136,8 @@ export default defineConfig({
           }
         },
       });
+
+      return config;
     },
   },
 });
