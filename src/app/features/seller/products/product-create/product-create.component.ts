@@ -123,8 +123,10 @@ export class ProductCreateComponent implements OnInit {
 
   /**
    * Maneja el envío del formulario: valida, llama al servicio y gestiona la respuesta.
+   * Mantiene el envío bloqueado desde el alta hasta la navegación (o el error) para impedir altas duplicadas.
    */
   onSubmit(): void {
+    if (this.submitting) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -144,7 +146,7 @@ export class ProductCreateComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (product) => {
-          this.submitting = false;
+          // submitting queda en true hasta navegar: evita un segundo alta durante el delay del toast
           this.messageService.add({
             severity: 'success',
             summary: 'Éxito',
