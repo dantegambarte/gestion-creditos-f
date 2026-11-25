@@ -145,7 +145,8 @@ describe('Admin Collections — hardening real', () => {
     cy.contains('Generar planilla de cobro', { timeout: 15000 }).should(
       'be.visible',
     );
-    cy.contains('Se van a generar', { timeout: 15000 }).should('be.visible');
+    // El bloque queda bajo el footer fijo del diálogo en 720px de alto: scrollear primero.
+    cy.contains('Se van a generar', { timeout: 15000 }).scrollIntoView().should('be.visible');
 
     cy.get('body').then(($body) => {
       const hasRegenerateBox = $body.text().includes('Regenerar también las');
@@ -155,7 +156,7 @@ describe('Admin Collections — hardening real', () => {
       }
 
       cy.contains('Regenerar también las').click();
-      cy.contains('Se van a regenerar', { timeout: 8000 }).should('be.visible');
+      cy.contains('Se van a regenerar', { timeout: 8000 }).scrollIntoView().should('be.visible');
 
       cy.contains('Regenerar también las').click();
       cy.contains('Se van a regenerar').should('not.exist');
