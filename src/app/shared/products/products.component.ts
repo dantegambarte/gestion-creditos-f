@@ -147,9 +147,7 @@ export class ProductsComponent implements OnInit {
     if (!this.searchTerm) return this.products;
     const term = this.searchTerm.toLowerCase();
     return this.products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(term) ||
-        p.category.toLowerCase().includes(term),
+      (p) => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term),
     );
   }
 
@@ -206,9 +204,7 @@ export class ProductsComponent implements OnInit {
    * @param {string} productId - Identificador del producto a editar.
    */
   navigateToEdit(productId: string): void {
-    this.router.navigate([
-      AppRoutes.SELLER_PRODUCTS_EDIT.replace(':id', productId),
-    ]);
+    this.router.navigate([AppRoutes.SELLER_PRODUCTS_EDIT.replace(':id', productId)]);
   }
 
   /**
@@ -218,15 +214,8 @@ export class ProductsComponent implements OnInit {
     this.submitted = true;
     if (this.form.invalid) return;
 
-    const {
-      codigo,
-      categoria,
-      descripcion,
-      marca,
-      modelo,
-      precioVenta,
-      stockInicial,
-    } = this.form.value;
+    const { codigo, categoria, descripcion, marca, modelo, precioVenta, stockInicial } =
+      this.form.value;
     const nameParts = [codigo, marca, modelo].filter(Boolean);
     const name = nameParts.join(' ') || descripcion || codigo;
     const description = descripcion || name;
@@ -281,10 +270,7 @@ export class ProductsComponent implements OnInit {
    * @param {number} stockInicial - Cantidad inicial de unidades a crear.
    * @returns {Array<{ unitCode: string }>} Unidades listas para enviar al alta masiva.
    */
-  private buildInitialUnits(
-    codigoBase: string,
-    stockInicial: number,
-  ): Array<{ unitCode: string }> {
+  private buildInitialUnits(codigoBase: string, stockInicial: number): Array<{ unitCode: string }> {
     const total = Number(stockInicial ?? 0);
     if (!Number.isFinite(total) || total <= 0) return [];
 
