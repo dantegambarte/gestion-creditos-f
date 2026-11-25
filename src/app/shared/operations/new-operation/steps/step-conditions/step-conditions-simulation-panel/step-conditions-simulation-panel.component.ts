@@ -3,6 +3,7 @@ import { FormGroup } from '@angular/forms';
 import { TooltipModule } from 'primeng/tooltip';
 import { CurrencyArsPipe } from '../../../../../../core/pipes/currency-ars.pipe';
 import { SimulateResult } from '../../../../../../features/seller/models/credit.model';
+import { buildSchedulePreview } from '../../../operation-preview.helper';
 
 @Component({
   selector: 'app-step-conditions-simulation-panel',
@@ -38,7 +39,7 @@ export class StepConditionsSimulationPanelComponent {
 
   /**
    * Genera las filas del cronograma. Usa datos reales del backend si existen,
-   * o una estimación local si no.
+   * o una estimación local si no, vía el helper compartido con el resumen.
    */
   getSimulationScheduleRows(): {
     installment: number;
@@ -49,58 +50,33 @@ export class StepConditionsSimulationPanelComponent {
     remainingEstimated: number;
     isAdvanced?: boolean;
   }[] {
-    if (this.simulationResult?.schedule?.length) {
-      const adv = Math.max(0, this.advancedInstallmentsCount ?? 0);
-      const isAdvanceMode =
-        this.form.controls['initialPaymentType']?.value === 'ADVANCED_INSTALLMENTS';
-      const rows = this.simulationResult.schedule.map((row) => ({
-        installment: row.installmentNumber,
-        dueDate: this.parseLocalDate(row.dueDate),
-        amount: row.amount,
-        capital: row.capital,
-        interest: row.interest,
-        remainingEstimated: row.remainingEstimated ?? 0,
-        isAdvanced: isAdvanceMode && row.installmentNumber <= adv,
-      }));
-      if (adv <= 0 || !isAdvanceMode) {
-        return rows;
-      }
-      return rows.map((row, index) => {
-        if (row.isAdvanced) {
-          return row;
-        }
-        const fallback = rows[Math.max(0, index - adv)]?.dueDate;
-        return {
-          ...row,
-          dueDate: fallback ?? row.dueDate,
-        };
-      });
-    }
+    const backendSchedule = this.simulationResult?.schedule ?? [];
+    const approvalDate = new Date();
+    approvalDate.setHours(0, 0, 0, 0);
+    const rows = buildSchedulePreview({
+      simulation: this.simulationResult,
+      firstPaymentDate: this.form.controls['firstPaymentDate']?.value ?? null,
+      frequency: this.form.controls['paymentFrequency']?.value ?? null,
+      installmentsCount: this.selectedInstallmentsCount,
+      installmentValue: this.valorCuota,
+      advancedCount: this.advancedInstallmentsCount ?? 0,
+      isAdvanceMode: this.form.controls['initialPaymentType']?.value === 'ADVANCED_INSTALLMENTS',
+      approvalDate,
+      limit: backendSchedule.length > 0 ? backendSchedule.length : 8,
+    });
 
-    const startDate = this.form.controls['firstPaymentDate']?.value as Date | null;
-    if (!startDate || this.selectedInstallmentsCount <= 0) return [];
-
-    const totalRows = Math.min(this.selectedInstallmentsCount, 8);
-    const adv = Math.max(0, this.advancedInstallmentsCount ?? 0);
-    const isAdvanceMode =
-      this.form.controls['initialPaymentType']?.value === 'ADVANCED_INSTALLMENTS';
-
-    return Array.from({ length: totalRows }).map((_, index) => {
-      const installmentNumber = index + 1;
-      const isAdvanced = isAdvanceMode && installmentNumber <= adv;
-
-      // If advanced installments exist, remaining installments take the
-      // dates of the advanced slots (shifted earlier). Example: 4 total,
-      // 2 advanced -> installment 3 uses date of 1, installment 4 uses date of 2.
-      const effectiveIndex = isAdvanced ? index : Math.max(0, index - adv);
-
-      const paidAmount = this.valorCuota * installmentNumber;
+    return rows.map((row, index) => {
+      const backendRow = backendSchedule[index];
       return {
-        installment: installmentNumber,
-        dueDate: this.addFrequencyToDate(startDate, effectiveIndex),
-        amount: this.valorCuota,
-        remainingEstimated: Math.max(0, this.totalADevolver - paidAmount),
-        isAdvanced,
+        installment: row.installmentNumber,
+        dueDate: row.dueDate,
+        amount: row.amount,
+        capital: backendRow?.capital,
+        interest: backendRow?.interest,
+        remainingEstimated: backendRow
+          ? (backendRow.remainingEstimated ?? 0)
+          : Math.max(0, this.totalADevolver - this.valorCuota * row.installmentNumber),
+        isAdvanced: row.isAdvanced,
       };
     });
   }
@@ -145,42 +121,5 @@ export class StepConditionsSimulationPanelComponent {
       month: '2-digit',
       year: 'numeric',
     }).format(date);
-  }
-
-  /**
-   * Parsea un string 'YYYY-MM-DD' como fecha local sin sesgo UTC.
-   *
-   * `new Date('2026-05-01')` interpreta el string como medianoche UTC, lo
-   * que en zonas horarias negativas (ej. AR GMT-3) produce el día anterior
-   * al formatearse. El backend ya devuelve YYYY-MM-DD sin TZ; al parsearlo
-   * componente a componente garantizamos que el dia visible coincida con
-   * el dia que calculó el server.
-   */
-  private parseLocalDate(value: string): Date {
-    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
-    if (!match) return new Date(value);
-    const [, year, month, day] = match;
-    return new Date(Number(year), Number(month) - 1, Number(day));
-  }
-
-  /**
-   * Avanza una fecha según la frecuencia seleccionada para el índice de cuota dado.
-   * @param baseDate Fecha base del primer vencimiento
-   * @param index Posición de la cuota (0-based)
-   */
-  private addFrequencyToDate(baseDate: Date, index: number): Date {
-    const frequency = this.form.controls['paymentFrequency']?.value as
-      'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null;
-    const date = new Date(baseDate);
-    if (frequency === 'WEEKLY') {
-      date.setDate(date.getDate() + index * 7);
-      return date;
-    }
-    if (frequency === 'BIWEEKLY') {
-      date.setDate(date.getDate() + index * 14);
-      return date;
-    }
-    date.setMonth(date.getMonth() + index);
-    return date;
   }
 }
