@@ -114,9 +114,7 @@ export class StepConditionsComponent implements OnChanges {
   }
 
   get isCashSale(): boolean {
-    return (
-      this.isSale && this.form?.controls['paymentCondition']?.value === 'CASH'
-    );
+    return this.isSale && this.form?.controls['paymentCondition']?.value === 'CASH';
   }
 
   get cashSaleMethod(): string {
@@ -125,10 +123,7 @@ export class StepConditionsComponent implements OnChanges {
 
   /** Total a cobrar en una venta de contado (suma del carrito). */
   get cashSaleTotal(): number {
-    return this.cartLines.reduce(
-      (acc, line) => acc + line.precio * line.cantidad,
-      0,
-    );
+    return this.cartLines.reduce((acc, line) => acc + line.precio * line.cantidad, 0);
   }
 
   /**
@@ -145,18 +140,9 @@ export class StepConditionsComponent implements OnChanges {
    * @param {SimpleChanges} changes - Cambios detectados por Angular en los inputs del paso.
    */
   ngOnChanges(changes: SimpleChanges): void {
-    if (
-      changes['simulationResult'] ||
-      changes['simulationError'] ||
-      changes['simulationLoading']
-    ) {
-      const hasResolvedSimulation =
-        !!this.simulationResult || !!this.simulationError;
-      if (
-        this.hadResolvedSimulation &&
-        !hasResolvedSimulation &&
-        !this.simulationLoading
-      ) {
+    if (changes['simulationResult'] || changes['simulationError'] || changes['simulationLoading']) {
+      const hasResolvedSimulation = !!this.simulationResult || !!this.simulationError;
+      if (this.hadResolvedSimulation && !hasResolvedSimulation && !this.simulationLoading) {
         this.simulationVisible = false;
       }
       this.hadResolvedSimulation = hasResolvedSimulation;
@@ -167,8 +153,7 @@ export class StepConditionsComponent implements OnChanges {
    * Determina si el modo de fecha activa la fecha derivada desde aprobación.
    */
   isApprovalDateMode(): boolean {
-    const mode = this.form.controls['firstPaymentDateMode']
-      ?.value as FirstPaymentDateMode | null;
+    const mode = this.form.controls['firstPaymentDateMode']?.value as FirstPaymentDateMode | null;
     return mode === 'APPROVAL_DATE';
   }
 
@@ -176,8 +161,7 @@ export class StepConditionsComponent implements OnChanges {
    * Determina si el usuario está usando fecha personalizada.
    */
   isCustomDateMode(): boolean {
-    const mode = this.form.controls['firstPaymentDateMode']
-      ?.value as FirstPaymentDateMode | null;
+    const mode = this.form.controls['firstPaymentDateMode']?.value as FirstPaymentDateMode | null;
     return mode === 'CUSTOM_DATE';
   }
 
@@ -185,12 +169,8 @@ export class StepConditionsComponent implements OnChanges {
    * Devuelve el texto de frecuencia para la ayuda visual del bloque de fecha.
    */
   getApprovalFrequencyHint(): string {
-    const frequency = this.form.controls['paymentFrequency']?.value as
-      | PaymentFrequency
-      | null;
-    return frequency
-      ? FREQUENCY_OFFSET_LABELS[frequency]
-      : 'según frecuencia';
+    const frequency = this.form.controls['paymentFrequency']?.value as PaymentFrequency | null;
+    return frequency ? FREQUENCY_OFFSET_LABELS[frequency] : 'según frecuencia';
   }
 
   /**
@@ -220,10 +200,7 @@ export class StepConditionsComponent implements OnChanges {
       return this.simulationResult.installmentsCount;
     }
     if (this.form.controls['operationType'].value === 'SALE') {
-      return this.cartLines.reduce(
-        (acc, line) => acc + (line.selectedInstallments ?? 0),
-        0,
-      );
+      return this.cartLines.reduce((acc, line) => acc + (line.selectedInstallments ?? 0), 0);
     }
     return this.form.controls['installmentsCount']?.value ?? 0;
   }
@@ -239,10 +216,7 @@ export class StepConditionsComponent implements OnChanges {
     }
 
     const frequency = this.form.controls['paymentFrequency']?.value as
-      | 'WEEKLY'
-      | 'BIWEEKLY'
-      | 'MONTHLY'
-      | null;
+      'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null;
     if (frequency === 'WEEKLY') return 'Cuota semanal';
     if (frequency === 'BIWEEKLY') return 'Cuota quincenal';
     return 'Cuota mensual';
@@ -277,10 +251,7 @@ export class StepConditionsComponent implements OnChanges {
     total: number,
   ): boolean {
     if ((cash ?? 0) <= 0 || (transfer ?? 0) <= 0) return false;
-    return (
-      Math.round(((cash ?? 0) + (transfer ?? 0)) * 100) ===
-      Math.round(total * 100)
-    );
+    return Math.round(((cash ?? 0) + (transfer ?? 0)) * 100) === Math.round(total * 100);
   }
 
   /**
@@ -320,9 +291,7 @@ export class StepConditionsComponent implements OnChanges {
    * @param {PaymentFrequency} value - Frecuencia a validar.
    */
   isFrequencyAvailable(value: PaymentFrequency): boolean {
-    return this.paymentFrequencyOptions.some(
-      (option) => option.value === value,
-    );
+    return this.paymentFrequencyOptions.some((option) => option.value === value);
   }
 
   /**
@@ -330,9 +299,7 @@ export class StepConditionsComponent implements OnChanges {
    * @param {CartLine} line - Línea del carrito a evaluar.
    */
   getInstallmentsOptionsForLine(line: CartLine): SaleInstallmentOption[] {
-    const selectedFrequency = this.form.controls['paymentFrequency']?.value as
-      | string
-      | null;
+    const selectedFrequency = this.form.controls['paymentFrequency']?.value as string | null;
     const formatFrequency = (f: PaymentFrequency) => FREQUENCY_LABELS[f];
     const unique = new Map<string, SaleInstallmentOption>();
     for (const rate of line.rates.filter(
@@ -355,9 +322,7 @@ export class StepConditionsComponent implements OnChanges {
    * @param {CartLine} line - Línea del carrito a evaluar.
    */
   private getSelectedRateForLine(line: CartLine): ProductRate | undefined {
-    const selectedFrequency = this.form.controls['paymentFrequency']?.value as
-      | string
-      | null;
+    const selectedFrequency = this.form.controls['paymentFrequency']?.value as string | null;
     if (!line.selectedInstallments || !selectedFrequency) return undefined;
     return line.rates.find(
       (rate) =>
@@ -367,10 +332,7 @@ export class StepConditionsComponent implements OnChanges {
   }
 
   private getLineDownPayment(line: CartLine): number {
-    const totalCarrito = this.cartLines.reduce(
-      (acc, l) => acc + l.precio * l.cantidad,
-      0,
-    );
+    const totalCarrito = this.cartLines.reduce((acc, l) => acc + l.precio * l.cantidad, 0);
     if (this.validatedDownPayment <= 0 || totalCarrito <= 0) return 0;
     return (line.subtotal / totalCarrito) * this.validatedDownPayment;
   }
@@ -387,11 +349,7 @@ export class StepConditionsComponent implements OnChanges {
     const installments = line.selectedInstallments ?? 0;
     const rate = this.getSelectedRateForLine(line)?.rate ?? 0;
     if (installments <= 0) return 0;
-    return (
-      Math.ceil(
-        (this.getLineFinancedCapital(line) * (1 + rate)) / installments / 1000,
-      ) * 1000
-    );
+    return Math.ceil((this.getLineFinancedCapital(line) * (1 + rate)) / installments / 1000) * 1000;
   }
 
   /**
@@ -406,8 +364,7 @@ export class StepConditionsComponent implements OnChanges {
         currency: 'ARS',
         maximumFractionDigits: 0,
       }).format(value);
-    if (installments <= 0)
-      return `${line.cantidad} u. · ${money(line.subtotal)} total`;
+    if (installments <= 0) return `${line.cantidad} u. · ${money(line.subtotal)} total`;
     return `${line.cantidad} u. · ${installments} cuota${installments > 1 ? 's' : ''} de ${money(this.getLineInstallmentValue(line))}`;
   }
 

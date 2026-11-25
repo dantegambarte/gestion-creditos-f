@@ -68,9 +68,20 @@ describe('StepConditionsComponent', () => {
   describe('getInstallmentsOptionsForLine', () => {
     it('devuelve lista vacía si la línea no tiene tasas', () => {
       const result = component.getInstallmentsOptionsForLine({
-        productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
-        cantidad: 1, precio: 1000, subtotal: 1000, stockDisponible: 5,
-        unitIds: [], unitCodes: [], productIds: [], selectedUnitIds: [], rates: [], selectedInstallments: null,
+        productoId: 'p1',
+        nombre: 'Prod',
+        variantId: 'v1',
+        variantLabel: 'Std',
+        cantidad: 1,
+        precio: 1000,
+        subtotal: 1000,
+        stockDisponible: 5,
+        unitIds: [],
+        unitCodes: [],
+        productIds: [],
+        selectedUnitIds: [],
+        rates: [],
+        selectedInstallments: null,
       });
       expect(result).toEqual([]);
     });
@@ -78,9 +89,18 @@ describe('StepConditionsComponent', () => {
     it('filtra por frecuencia seleccionada en el formulario', () => {
       component.form.controls['paymentFrequency'].setValue('MONTHLY');
       const result = component.getInstallmentsOptionsForLine({
-        productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
-        cantidad: 1, precio: 1000, subtotal: 1000, stockDisponible: 5,
-        unitIds: [], unitCodes: [], productIds: [], selectedUnitIds: [],
+        productoId: 'p1',
+        nombre: 'Prod',
+        variantId: 'v1',
+        variantLabel: 'Std',
+        cantidad: 1,
+        precio: 1000,
+        subtotal: 1000,
+        stockDisponible: 5,
+        unitIds: [],
+        unitCodes: [],
+        productIds: [],
+        selectedUnitIds: [],
         rates: [
           { installmentsCount: 3, paymentFrequency: 'MONTHLY', rate: 0.1, active: true } as any,
           { installmentsCount: 2, paymentFrequency: 'WEEKLY', rate: 0.08, active: true } as any,
@@ -95,9 +115,20 @@ describe('StepConditionsComponent', () => {
   describe('getLineInstallmentValue', () => {
     it('devuelve 0 si no hay cuotas seleccionadas', () => {
       const result = component.getLineInstallmentValue({
-        productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
-        cantidad: 1, precio: 10000, subtotal: 10000, stockDisponible: 5,
-        unitIds: [], unitCodes: [], productIds: [], selectedUnitIds: [], rates: [], selectedInstallments: null,
+        productoId: 'p1',
+        nombre: 'Prod',
+        variantId: 'v1',
+        variantLabel: 'Std',
+        cantidad: 1,
+        precio: 10000,
+        subtotal: 10000,
+        stockDisponible: 5,
+        unitIds: [],
+        unitCodes: [],
+        productIds: [],
+        selectedUnitIds: [],
+        rates: [],
+        selectedInstallments: null,
       });
       expect(result).toBe(0);
     });
@@ -120,9 +151,20 @@ describe('StepConditionsComponent', () => {
     component.form.controls['operationType'].setValue('SALE');
     component.cartLines = [
       {
-        productoId: 'p1', nombre: 'Prod', variantId: 'v1', variantLabel: 'Std',
-        cantidad: 1, precio: 1000, subtotal: 1000, stockDisponible: 5,
-        unitIds: [], unitCodes: [], productIds: [], selectedUnitIds: [], rates: [], selectedInstallments: 4,
+        productoId: 'p1',
+        nombre: 'Prod',
+        variantId: 'v1',
+        variantLabel: 'Std',
+        cantidad: 1,
+        precio: 1000,
+        subtotal: 1000,
+        stockDisponible: 5,
+        unitIds: [],
+        unitCodes: [],
+        productIds: [],
+        selectedUnitIds: [],
+        rates: [],
+        selectedInstallments: 4,
       },
     ];
 
@@ -142,10 +184,13 @@ describe('StepConditionsComponent', () => {
     component.simulationResult = null;
     component.simulationLoading = false;
     component.ngOnChanges({
-      simulationResult: new SimpleChange({ installmentsCount: 4, installmentAmount: 1000 } as any, null, false),
+      simulationResult: new SimpleChange(
+        { installmentsCount: 4, installmentAmount: 1000 } as any,
+        null,
+        false,
+      ),
     });
 
     expect(component.simulationVisible).toBeFalse();
   });
-
 });

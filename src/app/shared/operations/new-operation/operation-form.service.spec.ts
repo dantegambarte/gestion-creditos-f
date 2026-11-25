@@ -29,7 +29,28 @@ describe('OperationFormService', () => {
         OperationCatalogService,
         MessageService,
         { provide: CreditsService, useValue: creditsServiceSpy },
-        { provide: CustomersService, useValue: { list: () => of([]), getWizardSummary: () => of({ phone: null, email: null, status: 'ACTIVE', address: null, collectorName: null, activeCredits: 0, delinquency: 'sin mora', paymentCapacity: 0, createdAt: '', paidInstallments: 0, pendingInstallments: 0, overdueInstallments: 0, credits: [] }) } },
+        {
+          provide: CustomersService,
+          useValue: {
+            list: () => of([]),
+            getWizardSummary: () =>
+              of({
+                phone: null,
+                email: null,
+                status: 'ACTIVE',
+                address: null,
+                collectorName: null,
+                activeCredits: 0,
+                delinquency: 'sin mora',
+                paymentCapacity: 0,
+                createdAt: '',
+                paidInstallments: 0,
+                pendingInstallments: 0,
+                overdueInstallments: 0,
+                credits: [],
+              }),
+          },
+        },
         { provide: ProductUnitsService, useValue: { getAll: () => of([]) } },
         { provide: InterestRatesService, useValue: { getAll: () => of([]) } },
         { provide: ProductRatesService, useValue: { getAll: () => of([]) } },
@@ -229,10 +250,7 @@ describe('OperationFormService', () => {
   it('calcula la primera cuota mensual por mes calendario desde aprobación — CR-25', () => {
     const approvalDate = new Date(2026, 0, 1);
 
-    const result = service.getFirstPaymentDateFromApprovalRule(
-      approvalDate,
-      'MONTHLY',
-    );
+    const result = service.getFirstPaymentDateFromApprovalRule(approvalDate, 'MONTHLY');
 
     // Mes calendario (mismo día del mes siguiente), igual que el backend.
     expect(service.toApiDate(result)).toBe('2026-02-01');
@@ -241,10 +259,7 @@ describe('OperationFormService', () => {
   it('calcula la primera cuota diaria un día después de la aprobación (días corridos)', () => {
     const approvalDate = new Date(2026, 0, 31);
 
-    const result = service.getFirstPaymentDateFromApprovalRule(
-      approvalDate,
-      'DAILY',
-    );
+    const result = service.getFirstPaymentDateFromApprovalRule(approvalDate, 'DAILY');
 
     // +1 día corrido, cruzando fin de mes.
     expect(service.toApiDate(result)).toBe('2026-02-01');

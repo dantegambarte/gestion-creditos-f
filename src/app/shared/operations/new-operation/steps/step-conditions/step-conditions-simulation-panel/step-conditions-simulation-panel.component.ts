@@ -28,11 +28,7 @@ export class StepConditionsSimulationPanelComponent {
    */
   getSelectedFrequencyLabel(): string {
     const frequency = this.form.controls['paymentFrequency']?.value as
-      | 'DAILY'
-      | 'WEEKLY'
-      | 'BIWEEKLY'
-      | 'MONTHLY'
-      | null;
+      'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null;
     if (frequency === 'DAILY') return 'Diaria';
     if (frequency === 'WEEKLY') return 'Semanal';
     if (frequency === 'BIWEEKLY') return 'Quincenal';
@@ -56,8 +52,7 @@ export class StepConditionsSimulationPanelComponent {
     if (this.simulationResult?.schedule?.length) {
       const adv = Math.max(0, this.advancedInstallmentsCount ?? 0);
       const isAdvanceMode =
-        this.form.controls['initialPaymentType']?.value ===
-        'ADVANCED_INSTALLMENTS';
+        this.form.controls['initialPaymentType']?.value === 'ADVANCED_INSTALLMENTS';
       const rows = this.simulationResult.schedule.map((row) => ({
         installment: row.installmentNumber,
         dueDate: this.parseLocalDate(row.dueDate),
@@ -82,15 +77,13 @@ export class StepConditionsSimulationPanelComponent {
       });
     }
 
-    const startDate = this.form.controls['firstPaymentDate']
-      ?.value as Date | null;
+    const startDate = this.form.controls['firstPaymentDate']?.value as Date | null;
     if (!startDate || this.selectedInstallmentsCount <= 0) return [];
 
     const totalRows = Math.min(this.selectedInstallmentsCount, 8);
     const adv = Math.max(0, this.advancedInstallmentsCount ?? 0);
     const isAdvanceMode =
-      this.form.controls['initialPaymentType']?.value ===
-      'ADVANCED_INSTALLMENTS';
+      this.form.controls['initialPaymentType']?.value === 'ADVANCED_INSTALLMENTS';
 
     return Array.from({ length: totalRows }).map((_, index) => {
       const installmentNumber = index + 1;
@@ -99,9 +92,7 @@ export class StepConditionsSimulationPanelComponent {
       // If advanced installments exist, remaining installments take the
       // dates of the advanced slots (shifted earlier). Example: 4 total,
       // 2 advanced -> installment 3 uses date of 1, installment 4 uses date of 2.
-      const effectiveIndex = isAdvanced
-        ? index
-        : Math.max(0, index - adv);
+      const effectiveIndex = isAdvanced ? index : Math.max(0, index - adv);
 
       const paidAmount = this.valorCuota * installmentNumber;
       return {
@@ -118,9 +109,7 @@ export class StepConditionsSimulationPanelComponent {
    * Indica si hay más cuotas que las filas visibles en el cronograma.
    */
   hasHiddenScheduleRows(): boolean {
-    return (
-      this.selectedInstallmentsCount > this.getSimulationScheduleRows().length
-    );
+    return this.selectedInstallmentsCount > this.getSimulationScheduleRows().length;
   }
 
   /**
@@ -181,10 +170,7 @@ export class StepConditionsSimulationPanelComponent {
    */
   private addFrequencyToDate(baseDate: Date, index: number): Date {
     const frequency = this.form.controls['paymentFrequency']?.value as
-      | 'WEEKLY'
-      | 'BIWEEKLY'
-      | 'MONTHLY'
-      | null;
+      'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null;
     const date = new Date(baseDate);
     if (frequency === 'WEEKLY') {
       date.setDate(date.getDate() + index * 7);

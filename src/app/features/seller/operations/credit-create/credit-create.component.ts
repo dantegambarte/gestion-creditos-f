@@ -1,11 +1,6 @@
 import { CommonModule, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { DedupMessageService } from '../../../../core/services/dedup-message.service';
@@ -140,10 +135,7 @@ export class CreditCreateComponent implements OnInit {
     this.buildForm();
     this.form.get('downPayment')?.valueChanges.subscribe(() => {
       this.clearSimulationState();
-      if (
-        this.unitsError ===
-        'El enganche no puede ser mayor al total de la venta.'
-      ) {
+      if (this.unitsError === 'El enganche no puede ser mayor al total de la venta.') {
         this.unitsError = null;
       }
     });
@@ -214,11 +206,7 @@ export class CreditCreateComponent implements OnInit {
     const count = this.form.get('installmentsCount');
     if (required) {
       freq?.setValidators([Validators.required]);
-      count?.setValidators([
-        Validators.required,
-        Validators.min(1),
-        Validators.max(120),
-      ]);
+      count?.setValidators([Validators.required, Validators.min(1), Validators.max(120)]);
     } else {
       freq?.clearValidators();
       count?.clearValidators();
@@ -327,8 +315,7 @@ export class CreditCreateComponent implements OnInit {
         const cash = Number(v.cashSaleCash) || 0;
         const transfer = Number(v.cashSaleTransfer) || 0;
         if (Math.round((cash + transfer) * 100) !== Math.round(total * 100)) {
-          this.unitsError =
-            'El efectivo y la transferencia deben sumar el total de la venta.';
+          this.unitsError = 'El efectivo y la transferencia deben sumar el total de la venta.';
           return;
         }
         cashPayload.paymentCash = cash;
@@ -355,12 +342,8 @@ export class CreditCreateComponent implements OnInit {
       if (v.downPayment > 0) {
         salePayload.downPayment = v.downPayment;
         salePayload.downPaymentMethod = v.downPaymentMethod;
-        if (
-          v.downPaymentMethod === 'TRANSFER' &&
-          v.downPaymentTransferReference
-        ) {
-          salePayload.downPaymentTransferReference =
-            v.downPaymentTransferReference;
+        if (v.downPaymentMethod === 'TRANSFER' && v.downPaymentTransferReference) {
+          salePayload.downPaymentTransferReference = v.downPaymentTransferReference;
         }
       }
       payload = salePayload;
@@ -387,10 +370,7 @@ export class CreditCreateComponent implements OnInit {
           summary: 'Operación registrada',
           detail: 'Pre-operación registrada. Pendiente de aprobación.',
         });
-        setTimeout(
-          () => this.router.navigate(['/seller/operations', result.id]),
-          1500,
-        );
+        setTimeout(() => this.router.navigate(['/seller/operations', result.id]), 1500);
       },
       error: (err: AppError) => {
         this.submitting = false;
@@ -439,10 +419,7 @@ export class CreditCreateComponent implements OnInit {
       paymentCondition: ['FINANCED'],
       customerId: ['', Validators.required],
       paymentFrequency: ['', Validators.required],
-      installmentsCount: [
-        1,
-        [Validators.required, Validators.min(1), Validators.max(120)],
-      ],
+      installmentsCount: [1, [Validators.required, Validators.min(1), Validators.max(120)]],
       notes: ['', Validators.maxLength(500)],
       totalAmount: [null],
       downPayment: [0, [Validators.min(0)]],

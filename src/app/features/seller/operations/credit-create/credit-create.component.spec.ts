@@ -51,10 +51,7 @@ describe('CreditCreateComponent', () => {
   let creditsServiceSpy: jasmine.SpyObj<CreditsService>;
 
   beforeEach(async () => {
-    creditsServiceSpy = jasmine.createSpyObj('CreditsService', [
-      'simulate',
-      'create',
-    ]);
+    creditsServiceSpy = jasmine.createSpyObj('CreditsService', ['simulate', 'create']);
     creditsServiceSpy.simulate.and.returnValue(
       of({
         type: 'SALE',
@@ -177,9 +174,7 @@ describe('CreditCreateComponent', () => {
     component.onSubmit();
 
     expect(creditsServiceSpy.create).not.toHaveBeenCalled();
-    expect(component.unitsError).toBe(
-      'El enganche no puede ser mayor al total de la venta.',
-    );
+    expect(component.unitsError).toBe('El enganche no puede ser mayor al total de la venta.');
   });
 
   /**
