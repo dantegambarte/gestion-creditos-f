@@ -65,4 +65,14 @@ describe('DelinquencyComponent', () => {
       jasmine.objectContaining({ summary: 'Estado de caja desconocido' }),
     );
   });
+
+  it('onNotify no simula éxito: avisa que el envío no está disponible', () => {
+    const msgSpy = spyOn((component as any).msg, 'add');
+    component.onNotify({ id: 'a', clientName: 'Ana' } as DelinquencyRow);
+    expect(msgSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({ severity: 'warn', summary: 'Aviso no enviado' }),
+    );
+    expect(msgSpy).not.toHaveBeenCalledWith(jasmine.objectContaining({ summary: 'Aviso enviado' }));
+    expect(component.processingId).toBeNull();
+  });
 });

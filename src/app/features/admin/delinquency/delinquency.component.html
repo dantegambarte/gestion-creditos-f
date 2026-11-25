@@ -253,6 +253,7 @@
                   size="small"
                   styleClass="dq-action-btn dq-action-btn--notify"
                   icon="pi pi-bell"
+                  data-cy="delinquency-notify-action"
                   (onClick)="onNotify(row)"
                   [loading]="processingId === row.id + '_notify'"
                 />
@@ -343,6 +344,7 @@
                 severity="info"
                 styleClass="w-full h-11 rounded-xl justify-center"
                 icon="pi pi-bell"
+                data-cy="delinquency-notify-action"
                 (onClick)="onNotify(row)"
                 [loading]="processingId === row.id + '_notify'"
               />
