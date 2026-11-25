@@ -160,43 +160,52 @@ function ensureCustomer(token: string): Cypress.Chainable<string> {
 }
 
 /**
- * Elige una unidad disponible de un producto con tasa activa para crear una
- * venta real. Parte de /product-units?status=AVAILABLE porque /products solo
- * informa available_count a nivel producto (no por variante).
- * @returns unidad y plan de la tasa, o null si no hay catálogo vendible
+ * Arma una venta real sin consumir el stock existente: elige un producto
+ * activo con tasa activa y crea una unidad nueva de su variante para el test
+ * (las ventas aprobadas no se pueden revertir, así que vender stock real lo
+ * agotaría corrida tras corrida).
+ * @returns unidad creada y plan de la tasa, o null si no hay catálogo vendible
  */
 function pickSaleFixture(token: string): Cypress.Chainable<SaleFixture | null> {
-  type UnitApi = { id: string; product_id: string };
+  type ProductApi = { id: string; status: string; variants?: Array<{ id: string; status: string }> };
   type RateApi = { active: boolean; installments_count: number; payment_frequency: string };
 
-  return cy
-    .apiRequest('GET', '/product-units?status=AVAILABLE', null, token)
-    .then((unitsRes) => {
-      expect(unitsRes.status, 'listar unidades disponibles').to.eq(200);
-      const units = (unitsRes.body as ApiData<UnitApi[]>).data ?? [];
-      const productIds = [...new Set(units.map((u) => u.product_id))];
+  return cy.apiRequest('GET', '/products', null, token).then((productsRes) => {
+    expect(productsRes.status, 'listar productos').to.eq(200);
+    const candidates = ((productsRes.body as ApiData<ProductApi[]>).data ?? [])
+      .filter((p) => p.status === 'ACTIVE')
+      .map((p) => ({ productId: p.id, variant: p.variants?.find((v) => v.status === 'ACTIVE') }))
+      .filter((c) => !!c.variant);
 
-      const tryProduct = (index: number): Cypress.Chainable<SaleFixture | null> => {
-        if (index >= productIds.length) return cy.wrap(null);
-        const productId = productIds[index];
-        return cy
-          .apiRequest('GET', `/product-rates?product_id=${productId}`, null, token)
-          .then((ratesRes) => {
-            expect(ratesRes.status, 'listar tasas de producto').to.eq(200);
-            const rates = (ratesRes.body as ApiData<RateApi[]>).data ?? [];
-            const rate = rates.find((r) => r.active);
-            if (!rate) return tryProduct(index + 1);
-            const unit = units.find((u) => u.product_id === productId)!;
-            return cy.wrap({
-              unitId: unit.id,
-              installmentsCount: rate.installments_count,
-              paymentFrequency: rate.payment_frequency,
+    const tryCandidate = (index: number): Cypress.Chainable<SaleFixture | null> => {
+      if (index >= candidates.length) return cy.wrap(null);
+      const { productId, variant } = candidates[index];
+      return cy
+        .apiRequest('GET', `/product-rates?product_id=${productId}`, null, token)
+        .then((ratesRes) => {
+          expect(ratesRes.status, 'listar tasas de producto').to.eq(200);
+          const rate = ((ratesRes.body as ApiData<RateApi[]>).data ?? []).find((r) => r.active);
+          if (!rate) return tryCandidate(index + 1);
+          return cy
+            .apiRequest(
+              'POST',
+              '/product-units',
+              { variant_id: variant!.id, unit_code: `E2E-${Date.now()}-${index}` },
+              token,
+            )
+            .then((unitRes) => {
+              expect(unitRes.status, `crear unidad de E2E — ${JSON.stringify(unitRes.body)}`).to.eq(201);
+              return {
+                unitId: String((unitRes.body as ApiData<{ id: string }>).data.id),
+                installmentsCount: rate.installments_count,
+                paymentFrequency: rate.payment_frequency,
+              };
             });
-          });
-      };
+        });
+    };
 
-      return tryProduct(0);
-    });
+    return tryCandidate(0);
+  });
 }
 
 /**
