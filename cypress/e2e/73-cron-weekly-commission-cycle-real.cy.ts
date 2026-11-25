@@ -194,9 +194,7 @@ describe('Cron weeklyCommissionCycle — cierre real del ciclo semanal', () => {
         .should('not.be.disabled')
         .click();
 
-      cy.contains('Configurar Plan de Pagos', { timeout: 15000 }).should(
-        'be.visible',
-      );
+      cy.get('[data-cy="ddl-installments"]', { timeout: 15000 }).first().should('be.visible');
       cy.get('[data-cy="btn-siguiente"] button')
         .should('not.be.disabled')
         .click();

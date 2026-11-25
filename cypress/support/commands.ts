@@ -1020,6 +1020,31 @@ Cypress.Commands.add(
 );
 
 /**
+ * Rechaza un crédito creado por un test para dejar la base como estaba:
+ * libera las unidades de producto (vuelven a AVAILABLE) y lo saca de
+ * pendientes. Tolera 409 (ya no estaba pendiente, por ejemplo si el test lo
+ * aprobó) para poder usarse siempre en `after`, pase o falle el test.
+ */
+Cypress.Commands.add(
+  'apiRejectCreditIfPending',
+  (creditId: string): Cypress.Chainable<number> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest(
+          'PATCH',
+          `/credits/${creditId}/reject`,
+          { rejection_reason: 'Limpieza automática de E2E' },
+          token,
+        )
+        .then((res) => {
+          expect(res.status, 'rechazar crédito de E2E').to.be.oneOf([200, 409]);
+          return res.status;
+        }),
+    );
+  },
+);
+
+/**
  * Fuerza el due_date de una cuota vía la ruta test-only del backend
  * (PATCH /api/test/installments/:id/force-due-date, requiere
  * ENABLE_TEST_ROUTES=true). Resetea last_penalty_applied_at para que el
@@ -1135,6 +1160,7 @@ declare global {
       }): Chainable<Record<string, unknown>>;
       apiUnlockUser(userId: string): Chainable<void>;
       apiApproveCredit(creditId: string): Chainable<Record<string, unknown>>;
+      apiRejectCreditIfPending(creditId: string): Chainable<number>;
       apiForceInstallmentDueDate(
         installmentId: string,
         dueDate: string,
