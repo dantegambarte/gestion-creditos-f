@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
 import { CashRegisterService } from '../../cash-register/cash-register.service';
+import { CashStatusService } from '../../cash-register/cash-status.service';
 import { ExpensesService } from '../expenses.service';
 import { ExpenseSidePanelComponent } from './expense-side-panel.component';
 
@@ -10,6 +11,13 @@ describe('ExpenseSidePanelComponent', () => {
   let fixture: ComponentFixture<ExpenseSidePanelComponent>;
   let cashRegisterSpy: jasmine.SpyObj<CashRegisterService>;
   let expensesSpy: jasmine.SpyObj<ExpensesService>;
+  let cashStatusSpy: jasmine.SpyObj<CashStatusService>;
+
+  /** Crea el mock del servicio de estado de caja con el bloqueo indicado. */
+  function mockCashStatus(block: unknown = null): void {
+    cashStatusSpy = jasmine.createSpyObj('CashStatusService', ['checkAction']);
+    cashStatusSpy.checkAction.and.returnValue(of(block as never));
+  }
 
   const mockSession = {
     id: 'sess-1',
@@ -51,19 +59,15 @@ describe('ExpenseSidePanelComponent', () => {
     created_at: '2026-06-15T00:00:00Z',
   };
 
-  function setup(hasActiveSession: boolean): void {
-    cashRegisterSpy = jasmine.createSpyObj<CashRegisterService>(
-      'CashRegisterService',
-      [
-        'getActiveSession',
-        'getSessionSnapshot',
-        'getCashAccounts',
-        'getDashboard',
-      ],
-    );
-    cashRegisterSpy.getActiveSession.and.returnValue(
-      of(hasActiveSession ? mockSession : null),
-    );
+  function setup(hasActiveSession: boolean, block: unknown = null): void {
+    mockCashStatus(block);
+    cashRegisterSpy = jasmine.createSpyObj<CashRegisterService>('CashRegisterService', [
+      'getActiveSession',
+      'getSessionSnapshot',
+      'getCashAccounts',
+      'getDashboard',
+    ]);
+    cashRegisterSpy.getActiveSession.and.returnValue(of(hasActiveSession ? mockSession : null));
     cashRegisterSpy.getSessionSnapshot.and.returnValue(of(mockSnapshot));
     cashRegisterSpy.getCashAccounts.and.returnValue(of([mockGeneralAccount]));
     cashRegisterSpy.getDashboard.and.returnValue(
@@ -93,6 +97,7 @@ describe('ExpenseSidePanelComponent', () => {
       imports: [ExpenseSidePanelComponent],
       providers: [
         { provide: CashRegisterService, useValue: cashRegisterSpy },
+        { provide: CashStatusService, useValue: cashStatusSpy },
         { provide: ExpensesService, useValue: expensesSpy },
         MessageService,
       ],
@@ -119,6 +124,42 @@ describe('ExpenseSidePanelComponent', () => {
       component.createSource = 'COMPANY';
       component.resetForm();
       expect(component.createSource).toBe('DAILY');
+    });
+  });
+
+  describe('con caja activa pero falla la consulta de estado', () => {
+    beforeEach(() =>
+      setup(true, {
+        severity: 'error',
+        summary: 'Estado de caja desconocido',
+        detail: 'x',
+        life: 6000,
+      }),
+    );
+
+    it('submitCreate DAILY bloquea y avisa', () => {
+      const addSpy = spyOn(TestBed.inject(MessageService), 'add');
+      component.createSource = 'DAILY';
+      component.createAmount = 500;
+      component.createDescription = 'Gasto del día';
+      component.submitCreate();
+      expect(expensesSpy.create).not.toHaveBeenCalled();
+      expect(component.saving).toBeFalse();
+      expect(addSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ summary: 'Estado de caja desconocido' }),
+      );
+    });
+
+    it('submitCreate COMPANY no depende de la caja diaria', () => {
+      expensesSpy.create.and.returnValue(of({ id: 'exp-2' }) as never);
+      component.createSource = 'COMPANY';
+      component.createAmount = 500;
+      component.createDescription = 'Gasto general';
+      component.submitCreate();
+      expect(cashStatusSpy.checkAction).not.toHaveBeenCalled();
+      expect(expensesSpy.create).toHaveBeenCalledWith(
+        jasmine.objectContaining({ source: 'COMPANY' }),
+      );
     });
   });
 
@@ -164,15 +205,13 @@ describe('ExpenseSidePanelComponent', () => {
 
   describe('con activeSessionOverride provisto por el padre (ej. cash-register page)', () => {
     function setupWithOverride(): void {
-      cashRegisterSpy = jasmine.createSpyObj<CashRegisterService>(
-        'CashRegisterService',
-        [
-          'getActiveSession',
-          'getSessionSnapshot',
-          'getCashAccounts',
-          'getDashboard',
-        ],
-      );
+      mockCashStatus();
+      cashRegisterSpy = jasmine.createSpyObj<CashRegisterService>('CashRegisterService', [
+        'getActiveSession',
+        'getSessionSnapshot',
+        'getCashAccounts',
+        'getDashboard',
+      ]);
       cashRegisterSpy.getActiveSession.and.returnValue(of(null));
       cashRegisterSpy.getSessionSnapshot.and.returnValue(of(mockSnapshot));
       cashRegisterSpy.getCashAccounts.and.returnValue(of([]));
@@ -203,6 +242,7 @@ describe('ExpenseSidePanelComponent', () => {
         imports: [ExpenseSidePanelComponent],
         providers: [
           { provide: CashRegisterService, useValue: cashRegisterSpy },
+          { provide: CashStatusService, useValue: cashStatusSpy },
           { provide: ExpensesService, useValue: expensesSpy },
           MessageService,
         ],

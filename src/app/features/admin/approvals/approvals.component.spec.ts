@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ApprovalsComponent } from './approvals.component';
 import { CashRegisterService } from '../cash-register/cash-register.service';
+import { CashStatusService } from '../cash-register/cash-status.service';
 import { CreditsService } from '../../seller/operations/credits.service';
 import { DateService } from '../../../core/services/date.service';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -58,14 +59,10 @@ describe('ApprovalsComponent', () => {
   let fixture: ComponentFixture<ApprovalsComponent>;
   let creditsSvc: jasmine.SpyObj<CreditsService>;
   let authSpy: jasmine.SpyObj<AuthServiceBase>;
+  let cashStatusSpy: jasmine.SpyObj<CashStatusService>;
 
   beforeEach(async () => {
-    creditsSvc = jasmine.createSpyObj('CreditsService', [
-      'list',
-      'getById',
-      'approve',
-      'reject',
-    ]);
+    creditsSvc = jasmine.createSpyObj('CreditsService', ['list', 'getById', 'approve', 'reject']);
     authSpy = jasmine.createSpyObj('AuthServiceBase', ['patchCurrentUser'], {
       snapshot: { pending_approvals_count: 2 },
     });
@@ -77,12 +74,21 @@ describe('ApprovalsComponent', () => {
     creditsSvc.approve.and.returnValue(of({} as any));
     creditsSvc.reject.and.returnValue(of(undefined as any));
     cashRegisterSpy.getDashboard.and.returnValue(of({ isClosed: false } as any));
+    cashStatusSpy = jasmine.createSpyObj('CashStatusService', ['resolve', 'unknownMessage']);
+    cashStatusSpy.resolve.and.returnValue(of('OPEN'));
+    cashStatusSpy.unknownMessage.and.callFake((action: string) => ({
+      severity: 'error',
+      summary: 'Estado de caja desconocido',
+      detail: `No se pudo verificar el estado de la caja. No puedes ${action}.`,
+      life: 6000,
+    }));
 
     await TestBed.configureTestingModule({
       imports: [ApprovalsComponent, RouterTestingModule, NoopAnimationsModule],
       providers: [
         { provide: CreditsService, useValue: creditsSvc },
         { provide: CashRegisterService, useValue: cashRegisterSpy },
+        { provide: CashStatusService, useValue: cashStatusSpy },
         { provide: AuthServiceBase, useValue: authSpy },
         MessageService,
         DateService,
@@ -154,6 +160,30 @@ describe('ApprovalsComponent', () => {
     component.confirmApprove();
     expect(creditsSvc.approve).toHaveBeenCalledWith('CR001', {});
     expect(component.approvals.find((a) => a.id === 'CR001')).toBeUndefined();
+  });
+
+  it('confirmApprove bloquea y avisa si falla la consulta de caja', () => {
+    const addSpy = spyOn(TestBed.inject(MessageService), 'add');
+    cashStatusSpy.resolve.and.returnValue(of('UNKNOWN'));
+    component.refresh();
+    component.approvingRow = MOCK_CREDITS[0];
+
+    component.confirmApprove();
+
+    expect(creditsSvc.approve).not.toHaveBeenCalled();
+    expect(addSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({ summary: 'Estado de caja desconocido' }),
+    );
+  });
+
+  it('confirmApprove bloquea si no hay caja operativa abierta', () => {
+    cashStatusSpy.resolve.and.returnValue(of('CLOSED'));
+    component.refresh();
+    component.approvingRow = MOCK_CREDITS[0];
+
+    component.confirmApprove();
+
+    expect(creditsSvc.approve).not.toHaveBeenCalled();
   });
 
   it('confirmApprove muestra toast de éxito al aprobar', () => {

@@ -1,11 +1,11 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { MessageService } from 'primeng/api';
-import { Subject, catchError, of } from 'rxjs';
+import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
-import { CashRegisterService } from '../cash-register/cash-register.service';
+import { CashStatusService } from '../cash-register/cash-status.service';
 import {
   Commission,
   LiquidatePayload,
@@ -24,7 +24,7 @@ export type CommissionsTab = 'resumen' | 'historial' | 'sueldos';
 export class CommissionsFacade {
   private readonly commissionsService = inject(CommissionsService);
   private readonly usersService = inject(UsersService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly cashStatusSvc = inject(CashStatusService);
   private readonly header = inject(HeaderService);
   private readonly msg = inject(MessageService);
   private readonly format = inject(FormatService);
@@ -70,9 +70,7 @@ export class CommissionsFacade {
 
   readonly salaryRows = computed(() =>
     this.collectors().map((collector) => {
-      const summary = this.employees().find(
-        (employee) => employee.userId === collector.id,
-      );
+      const summary = this.employees().find((employee) => employee.userId === collector.id);
       return {
         userId: collector.id,
         fullName: collector.fullName,
@@ -85,9 +83,7 @@ export class CommissionsFacade {
   readonly filteredSalaryRows = computed(() => {
     const term = this.salarySearchTerm().trim().toLowerCase();
     if (!term) return this.salaryRows();
-    return this.salaryRows().filter((row) =>
-      row.fullName.toLowerCase().includes(term),
-    );
+    return this.salaryRows().filter((row) => row.fullName.toLowerCase().includes(term));
   });
 
   readonly salaryStats = computed(() => {
@@ -104,11 +100,9 @@ export class CommissionsFacade {
   readonly historyRows = computed(() =>
     this.liquidations().filter((liq) => {
       const byEmployee =
-        this.historyEmployeeFilter() === 'ALL' ||
-        liq.userId === this.historyEmployeeFilter();
+        this.historyEmployeeFilter() === 'ALL' || liq.userId === this.historyEmployeeFilter();
       const byMethod =
-        this.historyMethodFilter() === 'ALL' ||
-        liq.paymentMethod === this.historyMethodFilter();
+        this.historyMethodFilter() === 'ALL' || liq.paymentMethod === this.historyMethodFilter();
       return byEmployee && byMethod;
     }),
   );
@@ -133,10 +127,7 @@ export class CommissionsFacade {
 
   readonly historyStats = computed(() => {
     const rows = this.historyRows();
-    const totalCommissions = rows.reduce(
-      (sum, liq) => sum + liq.commissionsTotal,
-      0,
-    );
+    const totalCommissions = rows.reduce((sum, liq) => sum + liq.commissionsTotal, 0);
     const totalSalary = rows.reduce((sum, liq) => sum + liq.salaryAmount, 0);
     const totalPaid = rows.reduce((sum, liq) => sum + liq.totalPaid, 0);
     return {
@@ -154,9 +145,7 @@ export class CommissionsFacade {
     return selected ?? null;
   });
 
-  readonly recentLiquidations = computed(() =>
-    this.liquidations().slice(0, 10),
-  );
+  readonly recentLiquidations = computed(() => this.liquidations().slice(0, 10));
 
   /**
    * Inicializa la pantalla cargando encabezado, resumen, historial y cobradores.
@@ -271,15 +260,12 @@ export class CommissionsFacade {
   }
 
   /**
-   * Verifica si la caja del día está cerrada para bloquear liquidaciones.
+   * Verifica si hay caja operativa abierta (V4); un error cuenta como no abierta.
    */
   private checkCashRegisterStatus(): void {
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        this.isCashClosed.set(dashboard?.isClosed ?? false);
-      });
+    this.cashStatusSvc.resolve().subscribe((status) => {
+      this.isCashClosed.set(status !== 'OPEN');
+    });
   }
 
   /**
@@ -362,32 +348,33 @@ export class CommissionsFacade {
   }
 
   /**
-   * Valida estado de caja y, si corresponde, ejecuta la liquidación.
+   * Valida estado de caja (falla cerrado ante error) y, si corresponde, liquida.
    */
   confirmLiquidate(): void {
     if (!this.selectedEmployee()) return;
     this.showConfirmDialog.set(false);
     this.liquidating.set(true);
 
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        this.isCashClosed.set(dashboard?.isClosed ?? false);
-        if (this.isCashClosed()) {
-          this.liquidating.set(false);
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail:
-              'No puedes liquidar comisiones. La caja del día está CERRADA.',
-            life: 5000,
-          });
-          return;
-        }
+    this.cashStatusSvc.resolve().subscribe((status) => {
+      this.isCashClosed.set(status !== 'OPEN');
+      if (status === 'UNKNOWN') {
+        this.liquidating.set(false);
+        this.msg.add(this.cashStatusSvc.unknownMessage('liquidar comisiones'));
+        return;
+      }
+      if (this.isCashClosed()) {
+        this.liquidating.set(false);
+        this.msg.add({
+          severity: 'error',
+          summary: 'Caja Cerrada',
+          detail: 'No puedes liquidar comisiones. La caja del día está CERRADA.',
+          life: 5000,
+        });
+        return;
+      }
 
-        this.processLiquidation();
-      });
+      this.processLiquidation();
+    });
   }
 
   /**
@@ -401,10 +388,7 @@ export class CommissionsFacade {
       userId: employee.userId,
       paymentMethod: this.liquidatePaymentMethod(),
     };
-    if (
-      this.liquidatePaymentMethod() === 'TRANSFER' &&
-      this.liquidateTransferReference().trim()
-    ) {
+    if (this.liquidatePaymentMethod() === 'TRANSFER' && this.liquidateTransferReference().trim()) {
       payload.transferReference = this.liquidateTransferReference().trim();
     }
 
@@ -574,9 +558,7 @@ export class CommissionsFacade {
    * @param liq
    */
   selectHistory(liq: Liquidation): void {
-    this.selectedHistoryId.set(
-      this.selectedHistoryId() === liq.id ? null : liq.id,
-    );
+    this.selectedHistoryId.set(this.selectedHistoryId() === liq.id ? null : liq.id);
   }
 
   /**

@@ -15,15 +15,11 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
-import { catchError, of } from 'rxjs';
 import { AppError } from '../../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
-import {
-  PaymentDetail,
-  PaymentStatus,
-} from '../../../collector/models/payment.model';
+import { PaymentDetail, PaymentStatus } from '../../../collector/models/payment.model';
 import { PaymentsService } from '../../../collector/payments.service';
-import { CashRegisterService } from '../../cash-register/cash-register.service';
+import { CashStatusService } from '../../cash-register/cash-status.service';
 
 @Component({
   selector: 'app-payment-detail-dialog',
@@ -67,7 +63,7 @@ export class PaymentDetailDialogComponent implements OnChanges {
   processingReverse = false;
 
   private readonly paymentsService = inject(PaymentsService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly cashStatusSvc = inject(CashStatusService);
   private readonly msg = inject(MessageService);
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -95,12 +91,9 @@ export class PaymentDetailDialogComponent implements OnChanges {
    * Devuelve la severidad del tag según el estado del cobro.
    * @param status estado del cobro
    */
-  statusSeverity(
-    status: PaymentStatus,
-  ): 'success' | 'warning' | 'danger' | 'secondary' {
-    return { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' }[
-      status
-    ] as 'success' | 'warning' | 'danger';
+  statusSeverity(status: PaymentStatus): 'success' | 'warning' | 'danger' | 'secondary' {
+    return { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' }[status] as
+      'success' | 'warning' | 'danger';
   }
 
   /**
@@ -152,18 +145,12 @@ export class PaymentDetailDialogComponent implements OnChanges {
     if (!this.selectedPayment) return;
     this.processingApprove = true;
 
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        if (dashboard?.isClosed) {
+    this.cashStatusSvc
+      .checkAction('aprobar cobros', 'No puedes aprobar cobros. La caja del día está CERRADA.')
+      .subscribe((block) => {
+        if (block) {
           this.processingApprove = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes aprobar cobros. La caja del día está CERRADA.',
-            life: 5000,
-          });
+          this.msg.add(block);
           return;
         }
         this.processApproval();
@@ -177,18 +164,12 @@ export class PaymentDetailDialogComponent implements OnChanges {
     if (!this.selectedPayment || this.rejectReason.length < 5) return;
     this.processingReject = true;
 
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        if (dashboard?.isClosed) {
+    this.cashStatusSvc
+      .checkAction('rechazar cobros', 'No puedes rechazar cobros. La caja del día está CERRADA.')
+      .subscribe((block) => {
+        if (block) {
           this.processingReject = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes rechazar cobros. La caja del día está CERRADA.',
-            life: 5000,
-          });
+          this.msg.add(block);
           return;
         }
         this.processReject();
@@ -269,32 +250,30 @@ export class PaymentDetailDialogComponent implements OnChanges {
   }
 
   private processReject(): void {
-    this.paymentsService
-      .reject(this.selectedPayment!.id, this.rejectReason)
-      .subscribe({
-        next: () => {
-          this.processingReject = false;
-          this.showRejectDialog = false;
-          this.visibleChange.emit(false);
-          this.msg.add({
-            severity: 'info',
-            summary: 'Cobro rechazado',
-            detail: 'El cobro fue rechazado.',
-            life: 4000,
-          });
-          this.statusChanged.emit({
-            id: this.selectedPayment!.id,
-            status: 'REJECTED',
-          });
-        },
-        error: (err: AppError) => {
-          this.processingReject = false;
-          this.msg.add({
-            severity: err.status === 409 ? 'warn' : 'error',
-            summary: err.status === 409 ? 'Advertencia' : 'Error',
-            detail: err.message ?? 'No se pudo rechazar.',
-          });
-        },
-      });
+    this.paymentsService.reject(this.selectedPayment!.id, this.rejectReason).subscribe({
+      next: () => {
+        this.processingReject = false;
+        this.showRejectDialog = false;
+        this.visibleChange.emit(false);
+        this.msg.add({
+          severity: 'info',
+          summary: 'Cobro rechazado',
+          detail: 'El cobro fue rechazado.',
+          life: 4000,
+        });
+        this.statusChanged.emit({
+          id: this.selectedPayment!.id,
+          status: 'REJECTED',
+        });
+      },
+      error: (err: AppError) => {
+        this.processingReject = false;
+        this.msg.add({
+          severity: err.status === 409 ? 'warn' : 'error',
+          summary: err.status === 409 ? 'Advertencia' : 'Error',
+          detail: err.message ?? 'No se pudo rechazar.',
+        });
+      },
+    });
   }
 }

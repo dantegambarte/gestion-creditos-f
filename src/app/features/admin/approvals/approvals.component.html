@@ -10,22 +10,24 @@
     />
   </div>
 }
+@if (isCashUnknown) {
+  <div class="p-4" data-cy="cash-status-unknown">
+    <p-message
+      severity="error"
+      text="No se pudo verificar el estado de la caja. Las aprobaciones quedan bloqueadas hasta confirmarlo. Recargá para reintentar."
+      styleClass="w-full"
+    />
+  </div>
+}
 
 <div class="p-6 admin-mobile-page" data-cy="admin-approvals-page">
-  <div
-    class="ff-list-header mb-6"
-    style="border-radius: 12px; border-bottom: none"
-  >
+  <div class="ff-list-header mb-6" style="border-radius: 12px; border-bottom: none">
     <div>
       <h1 class="ff-page-title">Aprobación de Operaciones</h1>
       <p class="ff-page-subtitle">Revisa y valida las solicitudes entrantes.</p>
     </div>
     @if (approvals.length > 0 && !loading) {
-      <p-badge
-        [value]="approvals.length"
-        severity="warning"
-        badgeSize="large"
-      />
+      <p-badge [value]="approvals.length" severity="warning" badgeSize="large" />
     }
   </div>
 
@@ -112,11 +114,7 @@
               </td>
               <td><p-skeleton width="70%" /></td>
               <td class="text-center flex justify-center">
-                <p-skeleton
-                  width="6rem"
-                  height="1.5rem"
-                  styleClass="rounded-full"
-                />
+                <p-skeleton width="6rem" height="1.5rem" styleClass="rounded-full" />
               </td>
               <td>
                 <div class="flex justify-center gap-2">
@@ -141,11 +139,7 @@
             <div class="flex items-start justify-between gap-3">
               <div class="flex flex-col gap-2 flex-1">
                 <p-skeleton height="1rem" width="70%" borderRadius="0.5rem" />
-                <p-skeleton
-                  height="0.875rem"
-                  width="45%"
-                  borderRadius="0.5rem"
-                />
+                <p-skeleton height="0.875rem" width="45%" borderRadius="0.5rem" />
               </div>
               <p-skeleton height="1.5rem" width="6rem" borderRadius="999px" />
             </div>
@@ -191,24 +185,19 @@
             </ng-template>
             <ng-template pTemplate="body" let-app>
               <tr>
-                <td>{{ app.createdAt | date: "dd/MM/yy" }}</td>
+                <td>{{ app.createdAt | date: 'dd/MM/yy' }}</td>
                 <td class="font-medium">
                   {{ app.customerName }}
-                  <span
-                    class="ff-mono text-xs ml-1"
-                    style="color: var(--ff-text-muted)"
-                    >{{ app.customerDni }}</span
-                  >
+                  <span class="ff-mono text-xs ml-1" style="color: var(--ff-text-muted)">{{
+                    app.customerDni
+                  }}</span>
                 </td>
-                <td>{{ app.type === "SALE" ? "Venta" : "Préstamo" }}</td>
-                <td
-                  class="text-right ff-mono font-bold"
-                  style="color: var(--ff-accent)"
-                >
+                <td>{{ app.type === 'SALE' ? 'Venta' : 'Préstamo' }}</td>
+                <td class="text-right ff-mono font-bold" style="color: var(--ff-accent)">
                   {{ app.totalAmount | currencyArs: 2 }}
                 </td>
                 <td style="color: var(--ff-text-secondary)">
-                  {{ app.createdByName ?? "—" }}
+                  {{ app.createdByName ?? '—' }}
                 </td>
                 <td class="text-center">
                   <span class="ff-badge ff-badge--pendiente">PENDIENTE</span>
@@ -251,32 +240,20 @@
         }
       </div>
 
-      <div
-        class="admin-mobile-card-list admin-mobile-only"
-        data-cy="admin-approvals-mobile-list"
-      >
+      <div class="admin-mobile-card-list admin-mobile-only" data-cy="admin-approvals-mobile-list">
         @for (app of filteredApprovals; track app.id) {
-          <article
-            class="admin-mobile-card"
-            data-cy="admin-approvals-mobile-card"
-          >
+          <article class="admin-mobile-card" data-cy="admin-approvals-mobile-card">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
                 <h2 class="admin-mobile-card__title">{{ app.customerName }}</h2>
-                <p class="admin-mobile-card__meta ff-mono">
-                  DNI {{ app.customerDni }}
-                </p>
+                <p class="admin-mobile-card__meta ff-mono">DNI {{ app.customerDni }}</p>
               </div>
-              <span class="ff-badge ff-badge--pendiente shrink-0"
-                >PENDIENTE</span
-              >
+              <span class="ff-badge ff-badge--pendiente shrink-0">PENDIENTE</span>
             </div>
             <div class="admin-mobile-kv-grid">
               <div>
                 <span>Operación</span>
-                <strong>{{
-                  app.type === "SALE" ? "Venta" : "Préstamo"
-                }}</strong>
+                <strong>{{ app.type === 'SALE' ? 'Venta' : 'Préstamo' }}</strong>
               </div>
               <div>
                 <span>Monto</span>
@@ -286,11 +263,11 @@
               </div>
               <div>
                 <span>Vendedor</span>
-                <strong>{{ app.createdByName ?? "—" }}</strong>
+                <strong>{{ app.createdByName ?? '—' }}</strong>
               </div>
               <div>
                 <span>Fecha</span>
-                <strong>{{ app.createdAt | date: "dd/MM/yy" }}</strong>
+                <strong>{{ app.createdAt | date: 'dd/MM/yy' }}</strong>
               </div>
             </div>
             <div class="admin-mobile-approval-actions">
@@ -350,21 +327,13 @@
     <!-- Vendedor asignado + cambio antes de aprobar -->
     <div
       class="rounded-lg p-3"
-      style="
-        background: var(--ff-secondary);
-        border: 1px solid var(--ff-border);
-      "
+      style="background: var(--ff-secondary); border: 1px solid var(--ff-border)"
     >
       @if (!showChangeSeller) {
         <div class="flex items-center justify-between gap-3">
           <div>
-            <p class="text-xs" style="color: var(--ff-text-muted)">
-              Vendedor asignado
-            </p>
-            <p
-              class="text-sm font-medium mt-0.5"
-              style="color: var(--ff-text-primary)"
-            >
+            <p class="text-xs" style="color: var(--ff-text-muted)">Vendedor asignado</p>
+            <p class="text-sm font-medium mt-0.5" style="color: var(--ff-text-primary)">
               👤 {{ currentSellerName }}
             </p>
           </div>
@@ -431,17 +400,13 @@
         {{ approvingRow?.installmentsCount }} cuota(s)
       </div>
       <p class="text-xs" style="color: var(--ff-text-muted)">
-        Se aprobará la operación con las cuotas ya definidas en la
-        pre-operación.
+        Se aprobará la operación con las cuotas ya definidas en la pre-operación.
       </p>
     </div>
 
-    <p
-      class="text-xs px-1"
-      style="color: var(--ff-text-muted); line-height: 1.4"
-    >
-      ⚠ Al aprobar quedan definitivos el <strong>vendedor</strong>, el cliente,
-      el importe, el enganche y las cuotas. No podrán modificarse después.
+    <p class="text-xs px-1" style="color: var(--ff-text-muted); line-height: 1.4">
+      ⚠ Al aprobar quedan definitivos el <strong>vendedor</strong>, el cliente, el importe, el
+      enganche y las cuotas. No podrán modificarse después.
     </p>
   </div>
   <ng-template pTemplate="footer">
@@ -460,8 +425,14 @@
         styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirmApprove()"
         [loading]="processingApprove"
-        [disabled]="isCashClosed || processingApprove || showChangeSeller"
-        [pTooltip]="isCashClosed ? 'La caja está cerrada' : ''"
+        [disabled]="isCashClosed || isCashUnknown || processingApprove || showChangeSeller"
+        [pTooltip]="
+          isCashClosed
+            ? 'La caja está cerrada'
+            : isCashUnknown
+              ? 'No se pudo verificar la caja'
+              : ''
+        "
         tooltipPosition="top"
       />
     </div>
@@ -497,9 +468,7 @@
     </div>
 
     <div class="flex flex-col gap-1">
-      <label class="auth-label"
-        >Motivo de rechazo (obligatorio, mín. 5 caracteres)</label
-      >
+      <label class="auth-label">Motivo de rechazo (obligatorio, mín. 5 caracteres)</label>
       <textarea
         pInputTextarea
         [(ngModel)]="rejectReason"
@@ -513,16 +482,9 @@
         "
         placeholder="Describe el motivo del rechazo..."
       ></textarea>
-      <div
-        class="flex justify-between text-xs mt-1"
-        style="color: var(--ff-text-muted)"
-      >
+      <div class="flex justify-between text-xs mt-1" style="color: var(--ff-text-muted)">
         <span
-          [style.color]="
-            rejectCharCount() < 5 && rejectCharCount() > 0
-              ? 'var(--ff-danger)'
-              : ''
-          "
+          [style.color]="rejectCharCount() < 5 && rejectCharCount() > 0 ? 'var(--ff-danger)' : ''"
         >
           Mínimo 5 caracteres
         </span>
