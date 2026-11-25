@@ -31,7 +31,7 @@ describe('CreditDetailComponent — estado de caja', () => {
           provide: HeaderService,
           useValue: jasmine.createSpyObj('HeaderService', ['set', 'reset']),
         },
-        { provide: AuthServiceBase, useValue: { hasRole: () => true } },
+        { provide: AuthServiceBase, useValue: { hasRole: () => true, hasAnyRole: () => false } },
         { provide: CashStatusService, useValue: { resolve: () => of(status) } },
       ],
     }).overrideComponent(CreditDetailComponent, { set: { template: '' } });
@@ -57,5 +57,90 @@ describe('CreditDetailComponent — estado de caja', () => {
   it('con caja abierta no bloquea', () => {
     const c = create('OPEN');
     expect(c.isApproveBlocked).toBeFalse();
+  });
+});
+
+describe('CreditDetailComponent — etiquetas y totales', () => {
+  let c: CreditDetailComponent;
+
+  beforeEach(() => {
+    const creditsSpy = jasmine.createSpyObj('CreditsService', ['getById']);
+    creditsSpy.getById.and.returnValue(NEVER);
+    TestBed.configureTestingModule({
+      imports: [CreditDetailComponent],
+      providers: [
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({})) } },
+        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
+        { provide: CreditsService, useValue: creditsSpy },
+        { provide: PaymentsService, useValue: {} },
+        { provide: HeaderService, useValue: jasmine.createSpyObj('HeaderService', ['set']) },
+        {
+          provide: AuthServiceBase,
+          useValue: { hasRole: () => true, hasAnyRole: () => true },
+        },
+        { provide: CashStatusService, useValue: { resolve: () => of('OPEN') } },
+      ],
+    }).overrideComponent(CreditDetailComponent, { set: { template: '' } });
+    c = TestBed.createComponent(CreditDetailComponent).componentInstance;
+  });
+
+  it('traduce estados, frecuencias y medios de pago', () => {
+    expect(c.statusLabel('ACTIVE')).toBe('Activo');
+    expect(c.statusSeverity('REJECTED')).toBe('danger');
+    expect(c.frequencyLabel('WEEKLY')).toBe('Semanal');
+    expect(c.frequencyLabel('OTHER')).toBe('OTHER');
+    expect(c.frequencyUnitLabel('MONTHLY')).toBe('mes');
+    expect(c.frequencyUnitLabel('OTHER')).toBe('');
+    expect(c.paymentMethodLabel('MIXED')).toBe('Efectivo + Transferencia');
+    expect(c.paymentMethodLabel(null)).toBe('Sin especificar');
+    expect(c.variantLabel({ color: 'Rojo', size: 'M' } as never)).toBe('Rojo / M');
+    expect(c.variantLabel({} as never)).toBe('—');
+  });
+
+  it('abre los diálogos de acción y actualiza cuotas en la lista', () => {
+    c.openApproveDialog();
+    c.openRejectDialog();
+    c.openRefinanceDialog();
+    c.openRenewDialog();
+    c.openPlanChangeDialog();
+    c.openWriteOffDialog();
+    expect(c.showApproveDialog && c.showRejectDialog && c.showRefinanceDialog).toBeTrue();
+    expect(c.showRenewDialog && c.showPlanChangeDialog && c.showWriteOffDialog).toBeTrue();
+
+    c.credit = { installments: [{ id: 'i1', status: 'PENDING' }] } as never;
+    c.updateInstallmentInList({ id: 'i1', status: 'PAID' } as never);
+    const after = c.credit as unknown as { installments: { status: string }[] };
+    expect(after.installments[0].status).toBe('PAID');
+    expect(c.planAlreadyChanged).toBeFalse();
+  });
+
+  it('sin crédito cargado los totales y la cadena quedan vacíos', () => {
+    expect(c.settlementTotalAmount).toBe(0);
+    expect(c.totalToReturn).toBe(0);
+    expect(c.totalInterest).toBe(0);
+    expect(c.effectiveRate).toBeNull();
+    expect(c.predecessorCreditId).toBeNull();
+    expect(c.successorCreditId).toBeNull();
+    expect(c.hasPendingPayments).toBeFalse();
+    expect(c.installmentAmount).toBeNull();
+  });
+
+  it('calcula totales e interés con cuotas vigentes', () => {
+    c.credit = {
+      status: 'ACTIVE',
+      financedAmount: 1000,
+      interestRate: 0.5,
+      installments: [
+        { status: 'PENDING', amountDue: 600, amountPaid: 100 },
+        { status: 'PAID', amountDue: 600, amountPaid: 600 },
+        { status: 'WRITTEN_OFF', amountDue: 600, amountPaid: 0 },
+      ],
+    } as never;
+    expect(c.totalToReturn).toBe(1200);
+    expect(c.totalInterest).toBe(200);
+    expect(c.settlementTotalAmount).toBe(500);
+    expect(c.effectiveRate).toBe(0.5);
+    expect(c.canActOnInstallments).toBeTrue();
+    expect(c.canScheduleVisits).toBeTrue();
   });
 });
