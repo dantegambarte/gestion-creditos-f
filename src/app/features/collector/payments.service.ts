@@ -27,12 +27,9 @@ function toPayment(raw: PaymentRaw): Payment {
     id: raw.id,
     installmentId: raw.installment_id,
     amountReceived: raw.amount_received,
-    amountCash:
-      raw.amount_cash ??
-      (raw.payment_method === 'CASH' ? raw.amount_received : 0),
+    amountCash: raw.amount_cash ?? (raw.payment_method === 'CASH' ? raw.amount_received : 0),
     amountTransfer:
-      raw.amount_transfer ??
-      (raw.payment_method === 'TRANSFER' ? raw.amount_received : 0),
+      raw.amount_transfer ?? (raw.payment_method === 'TRANSFER' ? raw.amount_received : 0),
     paymentMethod: raw.payment_method,
     transferReference: raw.transfer_reference,
     status: raw.status,
@@ -87,12 +84,9 @@ function toCreditPayment(raw: CreditPaymentRaw): CreditPayment {
     installmentId: raw.installment_id,
     collectorId: raw.collector_id,
     amountReceived: raw.amount_received,
-    amountCash:
-      raw.amount_cash ??
-      (raw.payment_method === 'CASH' ? raw.amount_received : 0),
+    amountCash: raw.amount_cash ?? (raw.payment_method === 'CASH' ? raw.amount_received : 0),
     amountTransfer:
-      raw.amount_transfer ??
-      (raw.payment_method === 'TRANSFER' ? raw.amount_received : 0),
+      raw.amount_transfer ?? (raw.payment_method === 'TRANSFER' ? raw.amount_received : 0),
     paymentMethod: raw.payment_method,
     transferReference: raw.transfer_reference,
     status: raw.status,
@@ -118,12 +112,9 @@ function toCreateResult(raw: PaymentCreateResultRaw): PaymentCreateResult {
     id: raw.id,
     installmentId: raw.installment_id,
     amountReceived: raw.amount_received,
-    amountCash:
-      raw.amount_cash ??
-      (raw.payment_method === 'CASH' ? raw.amount_received : 0),
+    amountCash: raw.amount_cash ?? (raw.payment_method === 'CASH' ? raw.amount_received : 0),
     amountTransfer:
-      raw.amount_transfer ??
-      (raw.payment_method === 'TRANSFER' ? raw.amount_received : 0),
+      raw.amount_transfer ?? (raw.payment_method === 'TRANSFER' ? raw.amount_received : 0),
     paymentMethod: raw.payment_method,
     status: raw.status,
     createdAt: raw.created_at,
@@ -145,8 +136,7 @@ export class PaymentsService {
     const params: Record<string, string> = {};
     if (filters?.status) params['status'] = filters.status;
     if (filters?.collectorId) params['collector_id'] = filters.collectorId;
-    if (filters?.installmentId)
-      params['installment_id'] = filters.installmentId;
+    if (filters?.installmentId) params['installment_id'] = filters.installmentId;
     if (filters?.dateFrom) params['date_from'] = filters.dateFrom;
     if (filters?.dateTo) params['date_to'] = filters.dateTo;
     return this.api
@@ -160,9 +150,7 @@ export class PaymentsService {
    * @returns
    */
   getById(id: string): Observable<PaymentDetail> {
-    return this.api
-      .get<PaymentDetailRaw>(`payments/${id}`)
-      .pipe(map(toPaymentDetail));
+    return this.api.get<PaymentDetailRaw>(`payments/${id}`).pipe(map(toPaymentDetail));
   }
 
   /**
@@ -175,25 +163,18 @@ export class PaymentsService {
     const body: Record<string, unknown> = {
       installment_id: payload.installmentId,
     };
-    if (
-      payload.amountCash !== undefined ||
-      payload.amountTransfer !== undefined
-    ) {
+    if (payload.amountCash !== undefined || payload.amountTransfer !== undefined) {
       body['amount_cash'] = payload.amountCash ?? 0;
       body['amount_transfer'] = payload.amountTransfer ?? 0;
     } else {
       body['amount_received'] = payload.amountReceived;
       body['payment_method'] = payload.paymentMethod;
     }
-    if (payload.transferReference)
-      body['transfer_reference'] = payload.transferReference;
+    if (payload.transferReference) body['transfer_reference'] = payload.transferReference;
     if (payload.notes) body['notes'] = payload.notes;
     if (payload.nextVisitDate) body['next_visit_date'] = payload.nextVisitDate;
-    if (payload.generationType)
-      body['generation_type'] = payload.generationType;
-    return this.api
-      .post<PaymentCreateResultRaw>('payments', body)
-      .pipe(map(toCreateResult));
+    if (payload.generationType) body['generation_type'] = payload.generationType;
+    return this.api.post<PaymentCreateResultRaw>('payments', body).pipe(map(toCreateResult));
   }
 
   /**
@@ -202,9 +183,7 @@ export class PaymentsService {
    * @returns
    */
   approve(id: string): Observable<PaymentDetail> {
-    return this.api
-      .patch<PaymentDetailRaw>(`payments/${id}/approve`)
-      .pipe(map(toPaymentDetail));
+    return this.api.patch<PaymentDetailRaw>(`payments/${id}/approve`).pipe(map(toPaymentDetail));
   }
 
   /**
@@ -228,18 +207,14 @@ export class PaymentsService {
     const body: Record<string, unknown> = {
       installment_id: payload.installmentId,
     };
-    if (
-      payload.amountCash !== undefined ||
-      payload.amountTransfer !== undefined
-    ) {
+    if (payload.amountCash !== undefined || payload.amountTransfer !== undefined) {
       body['amount_cash'] = payload.amountCash ?? 0;
       body['amount_transfer'] = payload.amountTransfer ?? 0;
     } else {
       body['amount_received'] = payload.amountReceived;
       body['payment_method'] = payload.paymentMethod;
     }
-    if (payload.transferReference)
-      body['transfer_reference'] = payload.transferReference;
+    if (payload.transferReference) body['transfer_reference'] = payload.transferReference;
     if (payload.notes) body['notes'] = payload.notes;
     if (payload.nextVisitDate) body['next_visit_date'] = payload.nextVisitDate;
     return this.api

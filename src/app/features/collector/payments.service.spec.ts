@@ -1,8 +1,5 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import { jwtInterceptor } from '../../core/interceptors/jwt.interceptor';
@@ -70,9 +67,7 @@ describe('PaymentsService', () => {
     it('sends installment_id as query param when filter provided', () => {
       service.list({ installmentId: 'inst-1' }).subscribe();
       const req = httpMock.expectOne(
-        (r) =>
-          r.url === `${BASE}/payments` &&
-          r.params.get('installment_id') === 'inst-1',
+        (r) => r.url === `${BASE}/payments` && r.params.get('installment_id') === 'inst-1',
       );
       expect(req.request.params.get('installment_id')).toBe('inst-1');
       req.flush({ ok: true, data: [mockPaymentRaw], message: '' });

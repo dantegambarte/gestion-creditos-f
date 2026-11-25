@@ -10,9 +10,7 @@
 >
   <div class="flex flex-col gap-4 py-2">
     @if (item) {
-      <div
-        class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3"
-      >
+      <div class="rounded-lg border border-[var(--ff-border-subtle)] bg-[var(--ff-panel)] p-3">
         <p class="text-sm font-semibold text-[var(--ff-text-primary)]">
           {{ item.customerName }}
         </p>
@@ -21,17 +19,13 @@
         </p>
         <p class="mt-1 text-sm text-[var(--ff-text-muted)]">
           Saldo disponible:
-          <span class="font-bold text-blue-600">{{
-            availableBalance(item) | currencyArs: 2
-          }}</span>
+          <span class="font-bold text-blue-600">{{ availableBalance(item) | currencyArs: 2 }}</span>
         </p>
       </div>
     }
 
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
-        >Método de pago</label
-      >
+      <label class="text-sm font-medium text-[var(--ff-text-secondary)]">Método de pago</label>
       <p-dropdown
         [options]="PAYMENT_METHOD_OPTIONS"
         [(ngModel)]="paymentMethod"
@@ -47,9 +41,7 @@
 
     @if (usesCash) {
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
-          >Monto en efectivo</label
-        >
+        <label class="text-sm font-medium text-[var(--ff-text-secondary)]">Monto en efectivo</label>
         <p-inputNumber
           appCurrencyAmountInput
           [(ngModel)]="paymentCashAmount"
@@ -110,8 +102,8 @@
         class="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900"
         data-cy="collector-payment-advances-hint"
       >
-        El monto supera la cuota actual: el excedente se aplicará a las cuotas
-        siguientes del crédito.
+        El monto supera la cuota actual: el excedente se aplicará a las cuotas siguientes del
+        crédito.
       </p>
     }
 
@@ -121,9 +113,8 @@
         data-cy="collector-payment-exceeds-hint"
       >
         <span>
-          El monto supera el saldo total del crédito ({{
-            maxAllowed(item) | currencyArs: 2
-          }}). Ese es el máximo que podés cobrar.
+          El monto supera el saldo total del crédito ({{ maxAllowed(item) | currencyArs: 2 }}). Ese
+          es el máximo que podés cobrar.
         </span>
         <button
           type="button"
@@ -136,9 +127,7 @@
     }
 
     @if (isPartialPayment()) {
-      <div
-        class="flex flex-col gap-1 p-3 bg-amber-50 border border-amber-200 rounded-lg"
-      >
+      <div class="flex flex-col gap-1 p-3 bg-amber-50 border border-amber-200 rounded-lg">
         <label class="text-sm font-semibold text-amber-900">
           Próxima visita <span class="text-red-600">*</span>
         </label>
@@ -160,9 +149,7 @@
     }
 
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-[var(--ff-text-secondary)]"
-        >Notas (opcional)</label
-      >
+      <label class="text-sm font-medium text-[var(--ff-text-secondary)]">Notas (opcional)</label>
       <textarea
         pInputTextarea
         [(ngModel)]="paymentNotes"

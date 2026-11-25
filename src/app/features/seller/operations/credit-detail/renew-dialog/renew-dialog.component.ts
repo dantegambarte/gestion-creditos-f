@@ -150,10 +150,8 @@ export class RenewDialogComponent implements OnChanges {
       error: (err: AppError) => {
         this.processing = false;
         this.msg.add({
-          severity:
-            err.status === 409 || err.status === 422 ? 'warn' : 'error',
-          summary:
-            err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
+          severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
+          summary: err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
           detail: err.message ?? 'No se pudo registrar la renovación.',
         });
       },

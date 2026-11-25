@@ -22,10 +22,7 @@ import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
 import * as overpayment from '../../../../shared/utils/overpayment.util';
 import { CollectionSheetItem } from '../../models/collection.model';
-import {
-  PaymentCreatePayload,
-  PaymentMethod,
-} from '../../models/payment.model';
+import { PaymentCreatePayload, PaymentMethod } from '../../models/payment.model';
 import { PaymentsService } from '../../payments.service';
 import { CollectionDialogSuccess } from '../sheet-dialog.model';
 
@@ -127,10 +124,7 @@ export class PaymentDialogComponent implements OnChanges {
   /** True cuando el monto ingresado supera el saldo total del crédito (tope máximo). */
   get exceedsCreditTotal(): boolean {
     if (!this.item) return false;
-    return overpayment.exceedsCreditBalance(
-      this.paymentAmount,
-      this.maxAllowed(this.item),
-    );
+    return overpayment.exceedsCreditBalance(this.paymentAmount, this.maxAllowed(this.item));
   }
 
   /**
@@ -168,9 +162,7 @@ export class PaymentDialogComponent implements OnChanges {
 
   /** Devuelve el total ingresado sumando los importes habilitados por medio. */
   get paymentAmount(): number {
-    return this.roundMoney(
-      (this.paymentCashAmount ?? 0) + (this.paymentTransferAmount ?? 0),
-    );
+    return this.roundMoney((this.paymentCashAmount ?? 0) + (this.paymentTransferAmount ?? 0));
   }
 
   /** Indica si el método seleccionado usa efectivo. */
@@ -195,10 +187,7 @@ export class PaymentDialogComponent implements OnChanges {
   /** True si el monto ingresado dejaría la cuota en estado parcial. */
   isPartialPayment(): boolean {
     if (!this.item) return false;
-    return overpayment.isPartialPayment(
-      this.paymentAmount,
-      this.availableBalance(this.item),
-    );
+    return overpayment.isPartialPayment(this.paymentAmount, this.availableBalance(this.item));
   }
 
   /** Ajusta los importes visibles al cambiar entre pago simple y mixto. */
@@ -304,11 +293,7 @@ export class PaymentDialogComponent implements OnChanges {
         this.msg.add({
           severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
           summary:
-            err.status === 422
-              ? 'Datos inválidos'
-              : err.status === 409
-                ? 'Advertencia'
-                : 'Error',
+            err.status === 422 ? 'Datos inválidos' : err.status === 409 ? 'Advertencia' : 'Error',
           detail: this.errorDetail(err),
         });
       },
