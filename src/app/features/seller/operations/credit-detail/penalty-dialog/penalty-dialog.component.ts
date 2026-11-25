@@ -1,14 +1,19 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { AppError } from '../../../../../core/models/app-error';
 import { CreditDetail } from '../../../models/credit.model';
-import {
-  ApplyPenaltyPayload,
-  Installment,
-} from '../../../models/installment.model';
+import { ApplyPenaltyPayload, Installment } from '../../../models/installment.model';
 import { InstallmentsService } from '../../installments.service';
 
 @Component({
@@ -17,7 +22,7 @@ import { InstallmentsService } from '../../installments.service';
   imports: [FormsModule, ButtonModule, DialogModule],
   templateUrl: './penalty-dialog.component.html',
 })
-export class PenaltyDialogComponent {
+export class PenaltyDialogComponent implements OnChanges {
   @Input() visible = false;
   @Output() visibleChange = new EventEmitter<boolean>();
   @Input() installment: CreditDetail['installments'][number] | null = null;
@@ -30,6 +35,17 @@ export class PenaltyDialogComponent {
 
   private readonly installmentsSvc = inject(InstallmentsService);
   private readonly msg = inject(MessageService);
+
+  /**
+   * Reinicia monto y motivo al abrir el diálogo o cambiar de cuota, para que
+   * no se precargue la mora de la cuota anterior.
+   */
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['visible']?.currentValue === true || changes['installment']) {
+      this.amount = null;
+      this.reason = '';
+    }
+  }
 
   close(): void {
     this.visibleChange.emit(false);

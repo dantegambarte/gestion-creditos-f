@@ -1,4 +1,13 @@
-import { Component, DestroyRef, EventEmitter, Input, Output, inject } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  inject,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -14,7 +23,7 @@ import { DelinquencyRow } from '../../models/interface/delinquency';
   imports: [FormsModule, ButtonModule, DialogModule],
   templateUrl: './delinquency-apply-dialog.component.html',
 })
-export class DelinquencyApplyDialogComponent {
+export class DelinquencyApplyDialogComponent implements OnChanges {
   @Input() visible = false;
   @Output() visibleChange = new EventEmitter<boolean>();
   @Input() row: DelinquencyRow | null = null;
@@ -28,6 +37,16 @@ export class DelinquencyApplyDialogComponent {
 
   applyAmount: number | null = null;
   loading = false;
+
+  /**
+   * Vacía el monto al abrir el diálogo o cambiar de fila, para que no se
+   * arrastre la mora cargada para otra cuota.
+   */
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['visible']?.currentValue === true || changes['row']) {
+      this.applyAmount = null;
+    }
+  }
 
   /**
    * Cierra el diálogo y emite el cambio de visibilidad.
@@ -78,7 +97,7 @@ export class DelinquencyApplyDialogComponent {
             amount: updated.penaltyAmount ?? this.applyAmount!,
           });
           this.msg.add({
-            severity: 'warning',
+            severity: 'warn',
             summary: 'Mora aplicada',
             detail: row.clientName,
             life: 3000,
