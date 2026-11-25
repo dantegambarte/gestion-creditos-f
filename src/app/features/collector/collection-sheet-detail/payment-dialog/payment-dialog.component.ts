@@ -21,11 +21,9 @@ import { DateService } from '../../../../core/services/date.service';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
 import * as overpayment from '../../../../shared/utils/overpayment.util';
+import { PaymentAttemptKeys } from '../../../../shared/utils/payment-attempt-key.util';
 import { CollectionSheetItem } from '../../models/collection.model';
-import {
-  PaymentCreatePayload,
-  PaymentMethod,
-} from '../../models/payment.model';
+import { PaymentCreatePayload, PaymentMethod } from '../../models/payment.model';
 import { PaymentsService } from '../../payments.service';
 import { CollectionDialogSuccess } from '../sheet-dialog.model';
 
@@ -69,12 +67,18 @@ export class PaymentDialogComponent implements OnChanges {
   private readonly paymentsService = inject(PaymentsService);
   private readonly msg = inject(MessageService);
   private readonly dateSvc = inject(DateService);
+  /**
+   * Claves de idempotencia (P08/P12), compartidas y por cuota+monto: cerrar y
+   * reabrir tras un timeout reusa la clave pendiente; solo un éxito la descarta.
+   */
+  private readonly attemptKeys = inject(PaymentAttemptKeys);
 
   readonly todayDate: Date = this.dateSvc.startOfToday();
   get todayIso(): string {
     return this.dateSvc.toLocalIso(new Date());
   }
 
+  /** Reinicia el formulario al abrir el diálogo. */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true && this.item) {
       this.paymentCashAmount = null;
@@ -127,10 +131,7 @@ export class PaymentDialogComponent implements OnChanges {
   /** True cuando el monto ingresado supera el saldo total del crédito (tope máximo). */
   get exceedsCreditTotal(): boolean {
     if (!this.item) return false;
-    return overpayment.exceedsCreditBalance(
-      this.paymentAmount,
-      this.maxAllowed(this.item),
-    );
+    return overpayment.exceedsCreditBalance(this.paymentAmount, this.maxAllowed(this.item));
   }
 
   /**
@@ -168,9 +169,7 @@ export class PaymentDialogComponent implements OnChanges {
 
   /** Devuelve el total ingresado sumando los importes habilitados por medio. */
   get paymentAmount(): number {
-    return this.roundMoney(
-      (this.paymentCashAmount ?? 0) + (this.paymentTransferAmount ?? 0),
-    );
+    return this.roundMoney((this.paymentCashAmount ?? 0) + (this.paymentTransferAmount ?? 0));
   }
 
   /** Indica si el método seleccionado usa efectivo. */
@@ -183,22 +182,23 @@ export class PaymentDialogComponent implements OnChanges {
     return this.paymentMethod === 'TRANSFER' || this.paymentMethod === 'MIXED';
   }
 
-  /** True cuando el formulario no tiene montos válidos o falta referencia bancaria. */
+  /**
+   * True cuando el formulario no tiene montos válidos, falta la próxima visita
+   * de un parcial, o un pago mixto no trae la referencia de la transferencia.
+   */
   get paymentFormInvalid(): boolean {
     return (
       this.paymentAmount <= 0 ||
       this.exceedsCreditTotal ||
-      (this.isPartialPayment() && !this.paymentNextVisitDate)
+      (this.isPartialPayment() && !this.paymentNextVisitDate) ||
+      (this.paymentMethod === 'MIXED' && !this.transferReference.trim())
     );
   }
 
   /** True si el monto ingresado dejaría la cuota en estado parcial. */
   isPartialPayment(): boolean {
     if (!this.item) return false;
-    return overpayment.isPartialPayment(
-      this.paymentAmount,
-      this.availableBalance(this.item),
-    );
+    return overpayment.isPartialPayment(this.paymentAmount, this.availableBalance(this.item));
   }
 
   /** Ajusta los importes visibles al cambiar entre pago simple y mixto. */
@@ -226,6 +226,7 @@ export class PaymentDialogComponent implements OnChanges {
 
   /**
    * Confirma el cobro. Valida monto y fecha de próxima visita antes de enviar.
+   * Envía `client_request_id`: un reintento del mismo cobro no lo duplica.
    */
   confirmPayment(): void {
     if (this.processingPayment) return;
@@ -272,6 +273,8 @@ export class PaymentDialogComponent implements OnChanges {
     }
     if (this.paymentNotes) payload.notes = this.paymentNotes;
     if (isPartial) payload.nextVisitDate = partialDateIso;
+    const attempt = { installmentId: payload.installmentId, amount: this.paymentAmount };
+    payload.clientRequestId = this.attemptKeys.keyFor(attempt);
 
     const itemId = this.item.installmentId;
     const itemNumber = this.item.installmentNumber;
@@ -279,6 +282,7 @@ export class PaymentDialogComponent implements OnChanges {
     this.paymentsService.create(payload).subscribe({
       next: (result) => {
         this.processingPayment = false;
+        this.attemptKeys.settle(attempt);
         this.close();
         const toast = result.warning
           ? {
@@ -304,11 +308,7 @@ export class PaymentDialogComponent implements OnChanges {
         this.msg.add({
           severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
           summary:
-            err.status === 422
-              ? 'Datos inválidos'
-              : err.status === 409
-                ? 'Advertencia'
-                : 'Error',
+            err.status === 422 ? 'Datos inválidos' : err.status === 409 ? 'Advertencia' : 'Error',
           detail: this.errorDetail(err),
         });
       },

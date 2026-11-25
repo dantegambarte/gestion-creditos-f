@@ -25,6 +25,18 @@ describe('SettlementDialogComponent', () => {
     msg = TestBed.inject(MessageService);
   });
 
+  it('MIXED sin referencia de transferencia no es válido', () => {
+    const c = TestBed.createComponent(SettlementDialogComponent).componentInstance;
+    c.settlementTotalAmount = 1000;
+    c.paymentMethod = 'MIXED';
+    c.amountCash = 400;
+    c.amountTransfer = 600;
+    c.transferRef = '';
+    expect(c.formValid).toBeFalse();
+    c.transferRef = 'OP-1';
+    expect(c.formValid).toBeTrue();
+  });
+
   it('bloquea la cancelación y avisa si falla la consulta de caja', () => {
     const addSpy = spyOn(msg, 'add');
     cashStatusSpy.checkAction.and.returnValue(

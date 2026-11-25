@@ -18,6 +18,7 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { AppError } from '../../../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../../shared/directives/currency-amount-input.directive';
+import { PaymentAttemptKeys } from '../../../../../shared/utils/payment-attempt-key.util';
 import { PaymentsService } from '../../../../collector/payments.service';
 import { PaymentCreatePayload } from '../../../../collector/models/payment.model';
 import { RenewPayload } from '../../../models/credit.model';
@@ -82,6 +83,8 @@ export class RenewDialogComponent implements OnChanges {
   private readonly creditsService = inject(CreditsService);
   private readonly paymentsSvc = inject(PaymentsService);
   private readonly msg = inject(MessageService);
+  /** Claves de idempotencia de pre-carga (P08/P12); sobreviven a reabrir el diálogo. */
+  private readonly attemptKeys = inject(PaymentAttemptKeys);
 
   /** Resetea el formulario cada vez que se abre el diálogo. */
   ngOnChanges(changes: SimpleChanges): void {
@@ -106,12 +109,14 @@ export class RenewDialogComponent implements OnChanges {
       : this.total;
   }
 
+  /** Valida el pago. En mixto exige ambos montos, que sumen el total y la referencia. */
   get formValid(): boolean {
     if (this.total <= 0) return false;
     if (this.method !== 'MIXED') return true;
     return (
       (this.amountCash ?? 0) > 0 &&
       (this.amountTransfer ?? 0) > 0 &&
+      !!this.transferRef.trim() &&
       Math.round(this.effectiveAmount * 100) === Math.round(this.total * 100)
     );
   }
@@ -123,7 +128,8 @@ export class RenewDialogComponent implements OnChanges {
   /**
    * Registra la renovación por la modalidad elegida. En ambas el cargo es el mismo
    * (interés + mora); cambia solo el camino de pago: directo (aprobado ya) o
-   * pre-carga (pendiente de aprobación).
+   * pre-carga (pendiente de aprobación). La pre-carga lleva `client_request_id`
+   * para que un reintento no la duplique.
    */
   confirm(): void {
     if (this.processing || !this.formValid) return;
@@ -132,9 +138,15 @@ export class RenewDialogComponent implements OnChanges {
     this.processing = true;
 
     const isMixed = this.method === 'MIXED';
+    const attempt = {
+      installmentId: this.installmentId ?? '',
+      amount: this.effectiveAmount,
+      generationType: 'RENEWAL' as const,
+    };
     const onSettled = {
       next: () => {
         this.processing = false;
+        if (this.registerMode === 'PRE_CARGA') this.attemptKeys.settle(attempt);
         this.close();
         this.msg.add({
           severity: 'success',
@@ -150,10 +162,8 @@ export class RenewDialogComponent implements OnChanges {
       error: (err: AppError) => {
         this.processing = false;
         this.msg.add({
-          severity:
-            err.status === 409 || err.status === 422 ? 'warn' : 'error',
-          summary:
-            err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
+          severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
+          summary: err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
           detail: err.message ?? 'No se pudo registrar la renovación.',
         });
       },
@@ -166,6 +176,8 @@ export class RenewDialogComponent implements OnChanges {
         payload.amountTransfer = this.amountTransfer ?? 0;
       }
       if (this.transferRef) payload.transferReference = this.transferRef;
+      // Sin client_request_id: POST /credits/:id/renew no soporta idempotencia
+      // en el backend; solo protege el guard `processing`.
       this.creditsService.renew(this.creditId!, payload).subscribe(onSettled);
     } else {
       const payload: PaymentCreatePayload = {
@@ -179,6 +191,7 @@ export class RenewDialogComponent implements OnChanges {
           : { amountReceived: this.total, paymentMethod: this.method }),
         ...(this.transferRef ? { transferReference: this.transferRef } : {}),
       };
+      payload.clientRequestId = this.attemptKeys.keyFor(attempt);
       this.paymentsSvc.create(payload).subscribe(onSettled);
     }
   }

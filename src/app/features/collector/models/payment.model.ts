@@ -71,6 +71,11 @@ export interface PaymentCreatePayload {
    * (pre-carga de renovación). Ausente = cobro normal.
    */
   generationType?: 'RENEWAL';
+  /**
+   * Clave de idempotencia (UUID) del intento de cobro. Se reusa en los
+   * reintentos del mismo cobro; el backend deduplica por cobrador.
+   */
+  clientRequestId?: string;
 }
 
 export interface PaymentCreateResult {
