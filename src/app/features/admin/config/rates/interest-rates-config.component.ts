@@ -59,10 +59,7 @@ export class InterestRatesConfigComponent implements OnInit {
   filterFrequency: PaymentFrequency | null = null;
   filterActive: 'all' | 'true' | 'false' = 'all';
 
-  readonly freqOptions = [
-    { label: 'Todas las frecuencias', value: null },
-    ...FREQUENCY_OPTIONS,
-  ];
+  readonly freqOptions = [{ label: 'Todas las frecuencias', value: null }, ...FREQUENCY_OPTIONS];
 
   readonly activeOptions = [
     { label: 'Todas', value: 'all' },
@@ -112,8 +109,7 @@ export class InterestRatesConfigComponent implements OnInit {
    */
   get groups(): RateGroup[] {
     const filtered = this.allRates.filter((r) => {
-      if (this.filterFrequency && r.paymentFrequency !== this.filterFrequency)
-        return false;
+      if (this.filterFrequency && r.paymentFrequency !== this.filterFrequency) return false;
       if (this.filterActive === 'true' && !r.active) return false;
       if (this.filterActive === 'false' && r.active) return false;
       return true;
@@ -165,7 +161,7 @@ export class InterestRatesConfigComponent implements OnInit {
 
   /**
    * Envía la solicitud para crear una nueva tasa de interés.
-   * @returns
+   * Si faltan datos obligatorios, muestra el error en el formulario en lugar de ignorar el clic.
    */
   submitCreate(): void {
     const f = this.createForm;
@@ -174,8 +170,10 @@ export class InterestRatesConfigComponent implements OnInit {
       f.installmentsCount == null ||
       f.minAmount == null ||
       f.ratePercent == null
-    )
+    ) {
+      this.createError = 'Completá frecuencia, cantidad de cuotas, monto mínimo y tasa (%).';
       return;
+    }
 
     const payload: InterestRateCreatePayload = {
       paymentFrequency: f.paymentFrequency,
@@ -230,28 +228,26 @@ export class InterestRatesConfigComponent implements OnInit {
   submitEdit(): void {
     if (!this.editingRate || this.editRatePercent == null) return;
     this.saving = true;
-    this.svc
-      .update(this.editingRate.id, { rate: this.editRatePercent / 100 })
-      .subscribe({
-        next: (updated) => {
-          this.saving = false;
-          this.showEditDialog = false;
-          this.replaceRate(updated);
-          this.msg.add({
-            severity: 'success',
-            summary: 'Tasa actualizada',
-            detail: 'La tasa fue actualizada.',
-          });
-        },
-        error: (err: AppError) => {
-          this.saving = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: err.message,
-          });
-        },
-      });
+    this.svc.update(this.editingRate.id, { rate: this.editRatePercent / 100 }).subscribe({
+      next: (updated) => {
+        this.saving = false;
+        this.showEditDialog = false;
+        this.replaceRate(updated);
+        this.msg.add({
+          severity: 'success',
+          summary: 'Tasa actualizada',
+          detail: 'La tasa fue actualizada.',
+        });
+      },
+      error: (err: AppError) => {
+        this.saving = false;
+        this.msg.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: err.message,
+        });
+      },
+    });
   }
 
   /**
@@ -329,9 +325,7 @@ export class InterestRatesConfigComponent implements OnInit {
    * @param updated
    */
   private replaceRate(updated: InterestRate): void {
-    this.allRates = this.allRates.map((r) =>
-      r.id === updated.id ? updated : r,
-    );
+    this.allRates = this.allRates.map((r) => (r.id === updated.id ? updated : r));
   }
 
   /**

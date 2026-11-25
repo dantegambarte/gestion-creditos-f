@@ -12,15 +12,12 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { ToastModule } from 'primeng/toast';
 import { AppError } from '../../../../core/models/app-error';
-import {
-  ParamMeta,
-  SystemConfigParam,
-} from '../models/interfaces/system-config.model';
+import { ParamMeta, SystemConfigParam } from '../models/interfaces/system-config.model';
 import { SystemConfigService } from '../services/system-config.service';
 
 const PARAM_META: Record<string, ParamMeta> = {
   commission_rate: {
-    label: 'Tasa de comisión (%)',
+    label: 'Tasa de comisión (fracción decimal)',
     range: '0 – 1',
     hint: 'Ej: 0.08 = 8%',
     min: 0,
@@ -34,14 +31,14 @@ const PARAM_META: Record<string, ParamMeta> = {
     max: 30,
   },
   penalty_rate_daily: {
-    label: 'Tasa diaria de mora (%)',
+    label: 'Tasa diaria de mora (fracción decimal)',
     range: '0 – 0.5',
     hint: 'Ej: 0.005 = 0.5% diario',
     min: 0,
     max: 0.5,
   },
   penalty_max_rate: {
-    label: 'Tope máximo de mora (%)',
+    label: 'Tope máximo de mora (fracción decimal)',
     range: '0 – 1',
     hint: 'Ej: 0.50 = 50% del monto original',
     min: 0,
@@ -150,10 +147,7 @@ export class SystemParamsConfigComponent implements OnInit {
     { label: 'Domingo', value: 7 },
   ];
 
-  readonly DAY_PARAMS = new Set([
-    'commission_week_close_day',
-    'commission_pay_day',
-  ]);
+  readonly DAY_PARAMS = new Set(['commission_week_close_day', 'commission_pay_day']);
 
   showConfirmDialog = false;
   confirmMessage = '';
@@ -194,16 +188,7 @@ export class SystemParamsConfigComponent implements OnInit {
    */
   formatValue(row: ParamRow): string {
     const v = parseFloat(row.value);
-    const DAYS = [
-      '',
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-      'Sábado',
-      'Domingo',
-    ];
+    const DAYS = ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     switch (row.key) {
       case 'commission_rate':
       case 'penalty_rate_daily':
@@ -248,24 +233,22 @@ export class SystemParamsConfigComponent implements OnInit {
     if (!this.editingRow || this.editValue == null) return;
     this.saving = true;
     this.editError = '';
-    this.svc
-      .update(this.editingRow.key, { value: String(this.editValue) })
-      .subscribe({
-        next: (updated) => {
-          this.saving = false;
-          this.showEditDialog = false;
-          this.replaceRow({ ...updated, meta: this.editingRow!.meta });
-          this.msg.add({
-            severity: 'success',
-            summary: 'Guardado',
-            detail: 'Parámetro actualizado.',
-          });
-        },
-        error: (err: AppError) => {
-          this.saving = false;
-          this.editError = err.message;
-        },
-      });
+    this.svc.update(this.editingRow.key, { value: String(this.editValue) }).subscribe({
+      next: (updated) => {
+        this.saving = false;
+        this.showEditDialog = false;
+        this.replaceRow({ ...updated, meta: this.editingRow!.meta });
+        this.msg.add({
+          severity: 'success',
+          summary: 'Guardado',
+          detail: 'Parámetro actualizado.',
+        });
+      },
+      error: (err: AppError) => {
+        this.saving = false;
+        this.editError = err.message;
+      },
+    });
   }
 
   /**

@@ -132,12 +132,7 @@ export class ProductRatesConfigComponent implements OnInit {
 
   submitCreate(): void {
     const f = this.createForm;
-    if (
-      !f.productId ||
-      !f.paymentFrequency ||
-      f.installmentsCount == null ||
-      f.ratePercent == null
-    )
+    if (!f.productId || !f.paymentFrequency || f.installmentsCount == null || f.ratePercent == null)
       return;
 
     const payload: ProductRateCreatePayload = {
@@ -184,28 +179,26 @@ export class ProductRatesConfigComponent implements OnInit {
   submitEdit(): void {
     if (!this.editingRate || this.editRatePercent == null) return;
     this.saving = true;
-    this.svc
-      .update(this.editingRate.id, { rate: this.editRatePercent / 100 })
-      .subscribe({
-        next: (updated) => {
-          this.saving = false;
-          this.showEditDialog = false;
-          this.replaceRate(updated);
-          this.msg.add({
-            severity: 'success',
-            summary: 'Tasa actualizada',
-            detail: 'La tasa fue actualizada.',
-          });
-        },
-        error: (err: AppError) => {
-          this.saving = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: err.message,
-          });
-        },
-      });
+    this.svc.update(this.editingRate.id, { rate: this.editRatePercent / 100 }).subscribe({
+      next: (updated) => {
+        this.saving = false;
+        this.showEditDialog = false;
+        this.replaceRate(updated);
+        this.msg.add({
+          severity: 'success',
+          summary: 'Tasa actualizada',
+          detail: 'La tasa fue actualizada.',
+        });
+      },
+      error: (err: AppError) => {
+        this.saving = false;
+        this.msg.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: err.message,
+        });
+      },
+    });
   }
 
   confirmToggle(rate: ProductRate): void {
@@ -225,7 +218,7 @@ export class ProductRatesConfigComponent implements OnInit {
           this.replaceRate(result as ProductRate);
         } else {
           this.allRates = this.allRates.map((r) =>
-            r.id === rate.id ? { ...r, active: false } : r,
+            r.id === rate.id ? { ...r, active: !rate.active } : r,
           );
         }
         const label = rate.active ? 'desactivada' : 'activada';
@@ -265,9 +258,7 @@ export class ProductRatesConfigComponent implements OnInit {
   }
 
   private replaceRate(updated: ProductRate): void {
-    this.allRates = this.allRates.map((r) =>
-      r.id === updated.id ? updated : r,
-    );
+    this.allRates = this.allRates.map((r) => (r.id === updated.id ? updated : r));
   }
 
   private load(): void {
