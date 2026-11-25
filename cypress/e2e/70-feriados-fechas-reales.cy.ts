@@ -84,7 +84,9 @@ describe('Feriados afectando fechas reales de vencimiento (real)', () => {
           )
           .then((holidayRes) => {
             expect(holidayRes.status, 'alta de feriado real (afecta vencimientos)').to.eq(201);
-            createdHolidayIds.push(String(holidayRes.body?.data?.holiday?.id ?? holidayRes.body?.data?.id));
+            const holidayId = holidayRes.body?.data?.holiday?.id ?? holidayRes.body?.data?.id;
+            expect(holidayId, 'id del feriado creado (para limpieza)').to.be.a('string').and.not.be.empty;
+            createdHolidayIds.push(String(holidayId));
 
             cy.apiRequest(
               'POST',
@@ -156,7 +158,9 @@ describe('Feriados afectando fechas reales de vencimiento (real)', () => {
           )
           .then((holidayRes) => {
             expect(holidayRes.status, 'alta de feriado real (NO afecta vencimientos)').to.eq(201);
-            createdHolidayIds.push(String(holidayRes.body?.data?.holiday?.id ?? holidayRes.body?.data?.id));
+            const holidayId = holidayRes.body?.data?.holiday?.id ?? holidayRes.body?.data?.id;
+            expect(holidayId, 'id del feriado creado (para limpieza)').to.be.a('string').and.not.be.empty;
+            createdHolidayIds.push(String(holidayId));
 
             cy.apiRequest(
               'POST',

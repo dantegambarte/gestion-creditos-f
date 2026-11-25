@@ -89,10 +89,10 @@ describe('Liquidación semanal de comisiones (real)', () => {
       cy.contains('p-table tbody tr', customer.dni, { timeout: 20000 })
         .should('be.visible')
         .within(() => {
-          cy.get('button').eq(1).click();
+          cy.get('button').filter(':has(.pi-check)').first().click({ force: true });
         });
-      cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', { timeout: 10000 }).should('be.visible');
-      cy.contains('.p-dialog button', 'Confirmar Aprobación').click();
+      cy.contains('.p-dialog .p-dialog-title', 'Aprobar Crédito', { timeout: 10000 }).should('be.visible');
+      cy.contains('.p-dialog:visible button', 'Confirmar').click();
 
       cy.wait('@approveCredit').then((interception) => {
         expect(interception.response?.statusCode, 'aprobación de venta').to.eq(200);

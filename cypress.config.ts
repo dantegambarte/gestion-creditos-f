@@ -2,7 +2,7 @@ import { defineConfig } from 'cypress';
 import { execSync } from 'child_process';
 import * as path from 'path';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { dbResetBlockReason, readEnvFile } = require('./cypress/scripts/db-reset-guard');
+const { dbResetBlockReason, readEnvFile, effectiveBackendEnv } = require('./cypress/scripts/db-reset-guard');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { findRealSpecs } = require('./cypress/scripts/real-spec-detector');
 
@@ -85,9 +85,11 @@ export default defineConfig({
         'db:reset:full'() {
           const blockReason = dbResetBlockReason(
             config.env,
-            readEnvFile(path.join(BACKEND_DIR, '.env')),
+            effectiveBackendEnv(readEnvFile(path.join(BACKEND_DIR, '.env')), process.env),
           );
-          if (blockReason) return { ok: false, error: blockReason };
+          // Fallar el test (no devolver ok:false): un spec que no revisa el
+          // resultado seguiría corriendo contra una base sin resetear.
+          if (blockReason) throw new Error(blockReason);
           try {
             execSync('npm run db:reset', {
               cwd: BACKEND_DIR,

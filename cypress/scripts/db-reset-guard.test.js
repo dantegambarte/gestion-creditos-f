@@ -27,3 +27,28 @@ test('never resets a remote database host', () => {
     /local/,
   );
 });
+
+test('treats a production NODE_ENV with spaces or inline comment as production', () => {
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+  const { readEnvFile } = require('./db-reset-guard');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'envfile-'));
+  const file = path.join(dir, '.env');
+  fs.writeFileSync(file, 'NODE_ENV=production   # prod box\nDB_HOST=localhost \n');
+  try {
+    const env = readEnvFile(file);
+    assert.equal(env.NODE_ENV, 'production');
+    assert.equal(env.DB_HOST, 'localhost');
+    assert.match(dbResetBlockReason({ allowDbReset: true }, env), /production/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('process environment overrides the .env file, like dotenv does', () => {
+  const { effectiveBackendEnv } = require('./db-reset-guard');
+  const env = effectiveBackendEnv({ DB_HOST: 'localhost', NODE_ENV: 'development' }, { DB_HOST: 'db.remote.io' });
+  assert.equal(env.DB_HOST, 'db.remote.io');
+  assert.match(dbResetBlockReason({ allowDbReset: true }, env), /local/);
+});
