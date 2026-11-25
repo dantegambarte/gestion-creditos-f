@@ -31,16 +31,23 @@ describe('Cobranzas — Collector Route (real)', () => {
   });
 
   it('si hay planillas permite navegar al detalle y volver', () => {
+    // Esperar a que la ruta termine de cargar antes de decidir el camino:
+    // o hay planillas (botón "Ver planilla") o el estado vacío.
+    cy.contains('h1', 'Mi Ruta', { timeout: 15000 }).should('be.visible');
+    cy.contains(/Ver planilla|No tenés una planilla generada\./, {
+      timeout: 15000,
+    }).should('be.visible');
+
     cy.get('body').then(($body) => {
       const hasSheetButton =
         $body.find('button:contains("Ver planilla")').length > 0;
 
       if (!hasSheetButton) {
-        cy.contains('Planillas asignadas').should('be.visible');
+        cy.contains('No tenés una planilla generada.').should('be.visible');
         return;
       }
 
-      cy.contains('button', 'Ver planilla').first().click();
+      cy.contains('button:visible', 'Ver planilla').first().click();
       cy.location('pathname', { timeout: 15000 }).should(
         'match',
         /\/collector\/route\/.+/,

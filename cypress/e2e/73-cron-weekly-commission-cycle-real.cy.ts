@@ -79,66 +79,63 @@ describe('Cron weeklyCommissionCycle — cierre real del ciclo semanal', () => {
         }),
     );
 
+  /**
+   * Escribe un parámetro de system_config por el endpoint real.
+   * @param token - token ADMIN
+   * @param key - clave de configuración
+   * @param value - nuevo valor
+   */
+  const putConfig = (token: string, key: string, value: string) =>
+    cy
+      .apiRequest('PUT', `/system-config/${key}`, { value }, token)
+      .then((res) => {
+        expect(res.status, `PUT ${key}=${value}`).to.eq(200);
+      });
+
   before(() => {
     expect(
       todayWeekday,
       'hoy no es domingo: ver limitación real documentada arriba',
     ).to.be.greaterThan(0);
-  });
 
-  it('setup — forzar el día de cierre real a hoy, y un SELLER origina una venta real (comisión PENDING)', () => {
+    // Fuerza el día de cierre a hoy en before() para que after() siempre
+    // tenga los originales que restaurar, falle o no el setup.
     cy.getAuthToken('ADMIN').then((token) => {
-      cy.apiRequest(
-        'GET',
-        '/system-config/commission_week_close_day',
-        null,
-        token,
-      ).then((res) => {
-        originalCloseDay = String(res.body?.data?.value ?? '6');
-      });
-      cy.apiRequest(
-        'GET',
-        '/system-config/commission_pay_day',
-        null,
-        token,
-      ).then((res) => {
+      cy.apiRequest('GET', '/system-config/commission_week_close_day', null, token).then(
+        (res) => {
+          originalCloseDay = String(res.body?.data?.value ?? '6');
+        },
+      );
+      cy.apiRequest('GET', '/system-config/commission_pay_day', null, token).then((res) => {
         originalPayDay = String(res.body?.data?.value ?? '1');
+      });
 
-        cy.then(() => {
-          const payDayNum = parseInt(originalPayDay);
-          if (payDayNum === todayWeekday) {
-            // Choque real: el guard cruzado de systemConfig.service.js no
-            // permite close_day === pay_day. Se mueve el pay_day a un valor
-            // temporal distinto antes de poder forzar el close_day a hoy.
-            const tempPayDay = todayWeekday === 7 ? 1 : todayWeekday + 1;
-            cy.apiRequest(
-              'PUT',
-              '/system-config/commission_pay_day',
-              { value: String(tempPayDay) },
-              token,
-            ).then((tempRes) => {
-              expect(
-                tempRes.status,
-                'pay_day temporal para evitar el choque real',
-              ).to.eq(200);
-            });
-          }
-
-          cy.apiRequest(
-            'PUT',
-            '/system-config/commission_week_close_day',
-            { value: String(todayWeekday) },
-            token,
-          ).then((closeRes) => {
-            expect(
-              closeRes.status,
-              'close_day forzado a hoy (config real)',
-            ).to.eq(200);
-          });
-        });
+      cy.then(() => {
+        if (parseInt(originalPayDay) === todayWeekday) {
+          // Guard real: close_day !== pay_day. Mover pay_day antes de forzar
+          // close_day, a un valor que no choque con hoy ni con el close_day vigente.
+          const tempPayDay = ['1', '2', '3', '4', '5', '6', '7'].find(
+            (d) => d !== String(todayWeekday) && d !== originalCloseDay,
+          ) as string;
+          putConfig(token, 'commission_pay_day', tempPayDay);
+        }
+        putConfig(token, 'commission_week_close_day', String(todayWeekday));
       });
     });
+  });
 
+  // Restaura la config original pase o falle la suite. Orden seguro para el
+  // guard close_day !== pay_day: el pay_day vigente (original o temporal)
+  // nunca es igual al close_day original, así que close_day va primero.
+  after(() => {
+    if (!originalCloseDay || !originalPayDay) return;
+    cy.getAuthToken('ADMIN').then((token) => {
+      putConfig(token, 'commission_week_close_day', originalCloseDay);
+      putConfig(token, 'commission_pay_day', originalPayDay);
+    });
+  });
+
+  it('setup — un SELLER origina una venta real (comisión PENDING) con el close_day forzado a hoy', () => {
     cy.viewport(1280, 720);
     cy.getAuthToken('SELLER').then((sellerToken) =>
       cy.apiRequest('GET', '/auth/me', null, sellerToken).then((meRes) => {
@@ -194,9 +191,7 @@ describe('Cron weeklyCommissionCycle — cierre real del ciclo semanal', () => {
         .should('not.be.disabled')
         .click();
 
-      cy.contains('Configurar Plan de Pagos', { timeout: 15000 }).should(
-        'be.visible',
-      );
+      cy.get('[data-cy="ddl-installments"]', { timeout: 15000 }).first().should('be.visible');
       cy.get('[data-cy="btn-siguiente"] button')
         .should('not.be.disabled')
         .click();
@@ -229,12 +224,12 @@ describe('Cron weeklyCommissionCycle — cierre real del ciclo semanal', () => {
       cy.contains('p-table tbody tr', customer.dni, { timeout: 20000 })
         .should('be.visible')
         .within(() => {
-          cy.get('button').eq(1).click();
+          cy.get('button').filter(':has(.pi-check)').first().click({ force: true });
         });
-      cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', {
+      cy.contains('.p-dialog .p-dialog-title', 'Aprobar Crédito', {
         timeout: 10000,
       }).should('be.visible');
-      cy.contains('.p-dialog button', 'Confirmar Aprobación').click();
+      cy.contains('.p-dialog:visible button', 'Confirmar').click();
 
       cy.wait('@approveCredit').then((interception) => {
         expect(interception.response?.statusCode, 'aprobación de venta').to.eq(
@@ -296,27 +291,6 @@ describe('Cron weeklyCommissionCycle — cierre real del ciclo semanal', () => {
         Number(metadata['total_pending']),
         'total real a liquidar > 0',
       ).to.be.greaterThan(0);
-    });
-  });
-
-  it('cleanup — restaura commission_week_close_day y commission_pay_day originales', () => {
-    cy.getAuthToken('ADMIN').then((token) => {
-      cy.apiRequest(
-        'PUT',
-        '/system-config/commission_week_close_day',
-        { value: originalCloseDay },
-        token,
-      ).then((res) => {
-        expect(res.status, 'restaurar close_day original').to.eq(200);
-      });
-      cy.apiRequest(
-        'PUT',
-        '/system-config/commission_pay_day',
-        { value: originalPayDay },
-        token,
-      ).then((res) => {
-        expect(res.status, 'restaurar pay_day original').to.eq(200);
-      });
     });
   });
 });

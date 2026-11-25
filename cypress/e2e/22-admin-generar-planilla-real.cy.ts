@@ -39,8 +39,9 @@ describe('Admin — Generar Planilla de Cobro', () => {
   });
 
   it('muestra bloque de impacto de generación', () => {
-    cy.contains('Se van a generar').should('be.visible');
-    cy.contains('Estado del día').should('be.visible');
+    // El bloque queda bajo el footer fijo del diálogo en 720px de alto: scrollear primero.
+    cy.contains('Se van a generar').scrollIntoView().should('be.visible');
+    cy.contains('Estado del día').scrollIntoView().should('be.visible');
   });
 
   it('tiene dropdown de cobrador', () => {

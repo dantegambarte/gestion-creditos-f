@@ -306,12 +306,11 @@ describe('Gestión de Clientes real — Admin', () => {
         });
     });
 
-    it('el dropdown de filtro tiene las opciones: Todos, Al día, Mora leve, Mora alta', () => {
+    it('el dropdown de filtro tiene las opciones: Todos los riesgos, Sin mora, Con mora', () => {
       cy.get('[data-cy="dropdown-filtro-clientes"]').click();
-      cy.contains('.p-dropdown-item', 'Todos').should('be.visible');
-      cy.contains('.p-dropdown-item', 'Al día').should('be.visible');
-      cy.contains('.p-dropdown-item', 'Mora leve').should('be.visible');
-      cy.contains('.p-dropdown-item', 'Mora alta').should('exist');
+      cy.contains('.p-dropdown-item', 'Todos los riesgos').should('be.visible');
+      cy.contains('.p-dropdown-item', 'Sin mora').should('be.visible');
+      cy.contains('.p-dropdown-item', 'Con mora').should('be.visible');
       cy.get('body').click(0, 0);
     });
 

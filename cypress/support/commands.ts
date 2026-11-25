@@ -987,6 +987,28 @@ Cypress.Commands.add(
  * ya existe una (backend responde 409 ACTIVE_SESSION_IN_BUSINESS_DAY).
  * Necesario desde que aprobar un LOAN exige caja activa para el desembolso.
  */
+/**
+ * Registra un ingreso manual en efectivo en la caja operativa activa, con el
+ * mismo monto con que ensureCashSessionOpen abre una caja nueva.
+ * @param token - token ADMIN
+ */
+function fundActiveCashSession(token: string): Cypress.Chainable<void> {
+  return cy.apiRequest('GET', '/cash-sessions/active', null, token).then((activeRes) => {
+    const sessionId = (activeRes.body?.data as { id?: string } | null)?.id;
+    expect(sessionId, 'caja operativa activa para fondear').to.be.a('string');
+    return cy
+      .apiRequest(
+        'POST',
+        `/cash-sessions/${sessionId}/manual-incomes`,
+        { amount: 100000000, payment_method: 'CASH', description: 'Fondeo automático de E2E' },
+        token,
+      )
+      .then((incomeRes) => {
+        expect(incomeRes.status, `fondear caja — ${JSON.stringify(incomeRes.body)}`).to.eq(201);
+      });
+  });
+}
+
 function ensureCashSessionOpen(token: string): Cypress.Chainable<void> {
   return cy
     .apiRequest('POST', '/cash-sessions', { opening_amount: 100000000 }, token)
@@ -1006,15 +1028,98 @@ function ensureCashSessionOpen(token: string): Cypress.Chainable<void> {
 Cypress.Commands.add(
   'apiApproveCredit',
   (creditId: string): Cypress.Chainable<Record<string, unknown>> => {
+    const approve = (token: string) =>
+      cy.apiRequest('PATCH', `/credits/${creditId}/approve`, null, token);
+
     return cy.getAuthToken('ADMIN').then((token) =>
       ensureCashSessionOpen(token).then(() =>
-        cy
-          .apiRequest('PATCH', `/credits/${creditId}/approve`, null, token)
-          .then((res) => {
-            expect(res.status, 'aprobar crédito').to.eq(200);
+        approve(token).then((res) => {
+          // La caja de hoy puede venir de otra suite con poco efectivo (409 de
+          // ensureCashSessionOpen la reutiliza): fondearla y reintentar una vez,
+          // para no depender del orden de las suites.
+          if (res.status !== 409 || res.body?.code !== 'INSUFFICIENT_CASH') {
+            expect(res.status, `aprobar crédito — ${JSON.stringify(res.body)}`).to.eq(200);
             return res.body.data as Record<string, unknown>;
-          }),
+          }
+          return fundActiveCashSession(token).then(() =>
+            approve(token).then((retry) => {
+              expect(retry.status, `aprobar crédito tras fondear caja — ${JSON.stringify(retry.body)}`).to.eq(200);
+              return retry.body.data as Record<string, unknown>;
+            }),
+          );
+        }),
       ),
+    );
+  },
+);
+
+/**
+ * Crea un usuario interno nuevo y lo deja operativo: cambia la contraseña
+ * temporal (la API bloquea usuarios con contraseña temporal) y vuelve a
+ * loguearse, porque el cambio invalida los tokens previos. Sirve para que
+ * cada test tenga datos propios (comisiones, liquidaciones) sin chocar con
+ * corridas anteriores sobre el mismo usuario sembrado.
+ * @returns id y token del usuario creado
+ */
+Cypress.Commands.add(
+  'apiCreateActiveUser',
+  (role: string): Cypress.Chainable<{ id: string; dni: string; token: string }> => {
+    const dni = `7${Date.now().toString().slice(-7)}`;
+    const newPassword = 'E2eUser12345';
+    return cy
+      .apiCreateUser({
+        full_name: `E2E ${role} ${dni}`,
+        dni,
+        email: `e2e-${dni}@test.com`,
+        address: 'Calle E2E 123',
+        role,
+      })
+      .then((created) => {
+        const user = (created as { user: { id: string } }).user;
+        const tempPassword = String((created as { tempPassword: string }).tempPassword);
+        return requestLoginWithRetry({ dni, password: tempPassword }).then((loginRes) => {
+          expect(loginRes.status, 'login con contraseña temporal').to.eq(200);
+          const tempToken = String(loginRes.body?.data?.token);
+          return cy
+            .apiRequest(
+              'PATCH',
+              '/users/me/change-password',
+              { current_password: tempPassword, new_password: newPassword },
+              tempToken,
+            )
+            .then((changeRes) => {
+              expect(changeRes.status, 'cambiar contraseña temporal').to.eq(200);
+              return requestLoginWithRetry({ dni, password: newPassword }).then((res) => {
+                expect(res.status, 'login con contraseña definitiva').to.eq(200);
+                return { id: user.id, dni, token: String(res.body?.data?.token) };
+              });
+            });
+        });
+      });
+  },
+);
+
+/**
+ * Rechaza un crédito creado por un test para dejar la base como estaba:
+ * libera las unidades de producto (vuelven a AVAILABLE) y lo saca de
+ * pendientes. Tolera 409 (ya no estaba pendiente, por ejemplo si el test lo
+ * aprobó) para poder usarse siempre en `after`, pase o falle el test.
+ */
+Cypress.Commands.add(
+  'apiRejectCreditIfPending',
+  (creditId: string): Cypress.Chainable<number> => {
+    return cy.getAuthToken('ADMIN').then((token) =>
+      cy
+        .apiRequest(
+          'PATCH',
+          `/credits/${creditId}/reject`,
+          { rejection_reason: 'Limpieza automática de E2E' },
+          token,
+        )
+        .then((res) => {
+          expect(res.status, 'rechazar crédito de E2E').to.be.oneOf([200, 409]);
+          return res.status;
+        }),
     );
   },
 );
@@ -1135,6 +1240,8 @@ declare global {
       }): Chainable<Record<string, unknown>>;
       apiUnlockUser(userId: string): Chainable<void>;
       apiApproveCredit(creditId: string): Chainable<Record<string, unknown>>;
+      apiRejectCreditIfPending(creditId: string): Chainable<number>;
+      apiCreateActiveUser(role: string): Chainable<{ id: string; dni: string; token: string }>;
       apiForceInstallmentDueDate(
         installmentId: string,
         dueDate: string,
