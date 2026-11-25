@@ -15,13 +15,10 @@ import { PasswordModule } from 'primeng/password';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AppError } from '../../../core/models/app-error';
-import { UserRoleEnum } from '../../../core/models/types/user-role';
+import { landingRouteForRoles } from '../../../core/auth/role-routes';
 import { PasswordTabSkipDirective } from '../../../shared/directives/password-tab-skip.directive';
-import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 
-function passwordMatchValidator(
-  control: AbstractControl,
-): ValidationErrors | null {
+function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const parent = control.parent;
   if (!parent) return null;
   const newPwd = parent.get('new_password')?.value;
@@ -108,15 +105,9 @@ export class ChangePasswordComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Vuelve a la ruta de aterrizaje absoluta del rol actual del usuario. */
   goBack(): void {
-    const roles = this.auth.snapshot?.roles ?? [];
-    if (roles.includes(UserRoleEnum.ADMIN))
-      return void this.router.navigate([AppRoutes.DASHBOARD]);
-    if (roles.includes(UserRoleEnum.SELLER))
-      return void this.router.navigate([AppRoutes.OPERATIONS]);
-    if (roles.includes(UserRoleEnum.COLLECTOR))
-      return void this.router.navigate([AppRoutes.ROUTE]);
-    this.router.navigate([AppRoutes.LOGIN]);
+    this.router.navigate([landingRouteForRoles(this.auth.snapshot?.roles)]);
   }
 
   ngOnDestroy(): void {

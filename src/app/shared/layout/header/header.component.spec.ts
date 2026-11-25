@@ -49,4 +49,57 @@ describe('HeaderComponent', () => {
 
     expect(stopSpy).toHaveBeenCalled();
   });
+
+  describe('deep links de notificaciones por rol', () => {
+    /** Devuelve la ruta calculada para una notificación con el rol indicado. */
+    const routeFor = (roles: string[], entity_type: string) => {
+      spyOnProperty(component.auth, 'snapshot', 'get').and.returnValue({ roles } as never);
+      return (
+        component as never as {
+          getNotificationRoute: (i: unknown) => string[] | null;
+        }
+      ).getNotificationRoute({ id: 'n1', entity_type, entity_id: 'x1' });
+    };
+
+    it('ADMIN conserva los deep links de /admin', () => {
+      expect(routeFor(['ADMIN'], 'credit')).toEqual(['/admin/operations', 'x1']);
+    });
+
+    it('ADMIN conserva links de clientes, aprobaciones y caja', () => {
+      spyOnProperty(component.auth, 'snapshot', 'get').and.returnValue({
+        roles: ['ADMIN'],
+      } as never);
+      const resolve = (entity_type: string) =>
+        (
+          component as never as {
+            getNotificationRoute: (i: unknown) => string[] | null;
+          }
+        ).getNotificationRoute({ id: 'n1', entity_type, entity_id: 'x1' });
+      expect(resolve('customer')).toEqual(['/admin/clients', 'x1']);
+      expect(resolve('payment')).toEqual(['/admin/approvals']);
+      expect(resolve('business_day')).toEqual(['/admin/cash-register']);
+    });
+
+    ['SELLER', 'COLLECTOR', 'SELLER_COLLECTOR'].forEach((role) => {
+      it(`${role} recibe links a su área y nunca a /admin`, () => {
+        spyOnProperty(component.auth, 'snapshot', 'get').and.returnValue({
+          roles: [role],
+        } as never);
+        const resolve = (entity_type: string) =>
+          (
+            component as never as {
+              getNotificationRoute: (i: unknown) => string[] | null;
+            }
+          ).getNotificationRoute({ id: 'n1', entity_type, entity_id: 'x1' });
+        expect(resolve('credit')).toEqual(['/seller/operations', 'x1']);
+        expect(resolve('customer')).toEqual(['/seller/clients', 'x1']);
+        expect(resolve('payment')).toBeNull();
+        expect(resolve('business_day')).toBeNull();
+      });
+    });
+
+    it('CASHIER no recibe deep links a áreas sin acceso', () => {
+      expect(routeFor(['CASHIER'], 'credit')).toBeNull();
+    });
+  });
 });

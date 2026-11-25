@@ -3,7 +3,7 @@ import { CanActivateFn, Router, ActivatedRouteSnapshot } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { AuthServiceBase } from './auth-service.base';
 import { UserRole } from '../models/types/user-role';
-import { AppRoutes } from '../../shared/models/enums/routes.enum';
+import { landingRouteForRoles } from './role-routes';
 
 export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   const auth = inject(AuthServiceBase);
@@ -22,14 +22,10 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 };
 
 /**
- * Resuelve una ruta segura de fallback según el rol actual del usuario.
+ * Resuelve una ruta segura y absoluta de fallback según el rol actual del
+ * usuario, delegando en el mapeo único rol→ruta.
  * @param roles - Roles del usuario autenticado, si están disponibles.
  */
 export function defaultRouteForUser(roles: UserRole[] | undefined): string {
-  if (roles?.includes('ADMIN')) return `/${AppRoutes.ADMIN}/${AppRoutes.DASHBOARD}`;
-  if (roles?.includes('SELLER') || roles?.includes('SELLER_COLLECTOR')) {
-    return `/${AppRoutes.SELLER}/${AppRoutes.OPERATIONS}`;
-  }
-  if (roles?.includes('COLLECTOR')) return AppRoutes.ROUTE;
-  return `/${AppRoutes.LOGIN}`;
+  return landingRouteForRoles(roles);
 }
