@@ -43,6 +43,10 @@ describe('PortalAuthService', () => {
     localStorage.clear();
   });
 
+  it('CI verification: intentionally broken', () => {
+    expect(true).toBe(false);
+  });
+
   it('login() stores token under portalTokenKey (NOT tokenKey)', () => {
     service.login({ dni: '12345678', password: 'pass' }).subscribe();
 
