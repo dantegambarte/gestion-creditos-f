@@ -1,35 +1,56 @@
+import { Injectable } from '@angular/core';
+
 /**
- * Clave de idempotencia por intento de cobro (`client_request_id`, contrato P08
- * del backend en POST /payments). Un reintento del mismo cobro (timeout, doble
- * toque) reusa la clave y el backend devuelve la pre-carga existente en vez de
- * crear otra. Si cambian los datos del cobro, o se llama a `reset()` tras un
- * cobro exitoso / al abrir un diálogo nuevo, se genera una clave nueva para no
- * chocar con `409 IDEMPOTENCY_KEY_REUSED`.
+ * Datos que identifican un intento de cobro. Son exactamente los que compara el
+ * backend (P08, `_resolveIdempotentReplay`) para aceptar un reintento: cuota,
+ * tipo de generación y monto total. Notas, medio y reparto efectivo/transferencia
+ * NO cuentan: si cambian tras un timeout, el backend devuelve la pre-carga
+ * original y no crea otra.
  */
-export class PaymentAttemptKey {
-  private key: string | null = null;
-  private fingerprint: string | null = null;
+export interface PaymentAttempt {
+  installmentId: string;
+  amount: number;
+  generationType?: 'RENEWAL';
+}
+
+/**
+ * Claves de idempotencia por intento de cobro (`client_request_id`, POST
+ * /payments). Es un servicio root para que la clave pendiente sobreviva al
+ * cierre y reapertura del diálogo: un cobro sin respuesta confirmada (timeout,
+ * 5xx, red) reusa su clave en cualquier reintento hasta que se confirma con
+ * `settle()`. Vive en memoria: una recarga de página la pierde.
+ */
+@Injectable({ providedIn: 'root' })
+export class PaymentAttemptKeys {
+  private readonly pending = new Map<string, string>();
 
   /**
-   * Devuelve la clave del intento actual, generando una nueva si no hay o si los
-   * datos del cobro cambiaron respecto del último intento.
-   * @param attempt - Datos del cobro que identifican el intento (cuota, montos, medio).
+   * Devuelve la clave pendiente del intento o genera una nueva.
+   * @param attempt - Cuota, monto total y tipo del cobro.
    * @returns UUID v4 a enviar como `client_request_id`.
    */
-  forAttempt(attempt: unknown): string {
-    const fp = JSON.stringify(attempt);
-    if (!this.key || fp !== this.fingerprint) {
-      this.key = generateUuidV4();
-      this.fingerprint = fp;
+  keyFor(attempt: PaymentAttempt): string {
+    const fp = fingerprint(attempt);
+    let key = this.pending.get(fp);
+    if (!key) {
+      key = generateUuidV4();
+      this.pending.set(fp, key);
     }
-    return this.key;
+    return key;
   }
 
-  /** Descarta la clave actual: el próximo intento es un cobro nuevo. */
-  reset(): void {
-    this.key = null;
-    this.fingerprint = null;
+  /**
+   * Descarta la clave del intento tras un cobro confirmado por el backend: el
+   * próximo cobro de la misma cuota y monto es un cobro nuevo.
+   */
+  settle(attempt: PaymentAttempt): void {
+    this.pending.delete(fingerprint(attempt));
   }
+}
+
+/** Huella estable del intento: monto a centavos, como redondea el backend. */
+function fingerprint(a: PaymentAttempt): string {
+  return `${a.installmentId.toLowerCase()}|${a.generationType ?? 'COLLECTION'}|${Math.round(a.amount * 100)}`;
 }
 
 /**

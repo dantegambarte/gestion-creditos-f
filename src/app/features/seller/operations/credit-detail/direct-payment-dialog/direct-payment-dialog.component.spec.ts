@@ -108,6 +108,43 @@ describe('DirectPaymentDialogComponent', () => {
     expect(third).not.toBe(first);
   });
 
+  it('tras un timeout, editar notas o reabrir sobre la misma cuota conserva el client_request_id', () => {
+    const paymentsSpy = TestBed.inject(PaymentsService) as jasmine.SpyObj<PaymentsService>;
+    paymentsSpy.create.and.returnValue(throwError(() => ({ status: 504 })));
+    const c = createReal();
+    c.confirm();
+    const first = paymentsSpy.create.calls.mostRecent().args[0].clientRequestId;
+
+    c.notes = 'Pagó en la puerta';
+    c.confirm();
+    expect(paymentsSpy.create.calls.mostRecent().args[0].clientRequestId).toBe(first);
+
+    // Otro input cambia (p. ej. creditPendingBalance) → ngOnChanges no debe rotar la clave.
+    c.creditPendingBalance = 5000;
+    c.ngOnChanges();
+    c.confirm();
+    expect(paymentsSpy.create.calls.mostRecent().args[0].clientRequestId).toBe(first);
+
+    // Un diálogo nuevo para la misma cuota (cerrar y volver a abrir) también la conserva.
+    const reopened = createReal();
+    reopened.confirm();
+    expect(paymentsSpy.create.calls.mostRecent().args[0].clientRequestId).toBe(first);
+  });
+
+  it('el cobro directo (admin-direct) no envía client_request_id: el backend no lo soporta', () => {
+    const paymentsSpy = TestBed.inject(PaymentsService) as jasmine.SpyObj<PaymentsService>;
+    (paymentsSpy as unknown as { adminDirect: jasmine.Spy }).adminDirect = jasmine
+      .createSpy('adminDirect')
+      .and.returnValue(of({}));
+    const c = createReal();
+    c.registerMode = 'DIRECT';
+    (c as unknown as { processPayment: () => void }).processPayment();
+    const args = (
+      paymentsSpy as unknown as { adminDirect: jasmine.Spy }
+    ).adminDirect.calls.mostRecent().args[0];
+    expect('clientRequestId' in args).toBeFalse();
+  });
+
   it('la pre-carga no consulta caja', () => {
     const { c, processSpy } = create();
     c.registerMode = 'PRE_CARGA';

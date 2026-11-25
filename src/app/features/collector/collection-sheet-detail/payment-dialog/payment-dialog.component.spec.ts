@@ -76,4 +76,19 @@ describe('PaymentDialogComponent (cobrador)', () => {
     c.confirmPayment();
     expect(paymentsSpy.create.calls.mostRecent().args[0].clientRequestId).not.toBe(a);
   });
+
+  it('cerrar y reabrir tras un timeout conserva el client_request_id del cobro pendiente', () => {
+    paymentsSpy.create.and.returnValue(throwError(() => ({ status: 504 })));
+    const c = create();
+    c.paymentNotes = 'primera nota';
+    c.confirmPayment();
+    const first = paymentsSpy.create.calls.mostRecent().args[0].clientRequestId;
+
+    c.close();
+    open(c);
+    c.paymentCashAmount = 1000;
+    c.paymentNotes = 'otra nota';
+    c.confirmPayment();
+    expect(paymentsSpy.create.calls.mostRecent().args[0].clientRequestId).toBe(first);
+  });
 });

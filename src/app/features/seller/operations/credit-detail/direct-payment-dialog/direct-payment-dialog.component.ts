@@ -17,7 +17,7 @@ import { CashStatusService } from '../../../../admin/cash-register/cash-status.s
 import { PaymentsService } from '../../../../collector/payments.service';
 import { CreditDetail } from '../../../models/credit.model';
 import * as overpayment from '../../../../../shared/utils/overpayment.util';
-import { PaymentAttemptKey } from '../../../../../shared/utils/payment-attempt-key.util';
+import { PaymentAttemptKeys } from '../../../../../shared/utils/payment-attempt-key.util';
 
 @Component({
   selector: 'app-direct-payment-dialog',
@@ -76,13 +76,16 @@ export class DirectPaymentDialogComponent implements OnChanges {
   private readonly cashStatusSvc = inject(CashStatusService);
   private readonly msg = inject(MessageService);
 
-  /** Clave de idempotencia del intento de pre-carga en curso (P08/P12). */
-  private readonly attemptKey = new PaymentAttemptKey();
+  /**
+   * Claves de idempotencia de pre-carga (P08/P12). Compartidas (root) y por
+   * cuota+monto: reabrir el diálogo o cambiar otros inputs no rota la clave de
+   * un cobro sin confirmar; solo se descarta tras un éxito.
+   */
+  private readonly attemptKeys = inject(PaymentAttemptKeys);
 
-  /** Precarga el monto máximo cada vez que cambia la cuota seleccionada y arranca un cobro nuevo. */
+  /** Precarga el monto máximo cada vez que cambia la cuota seleccionada. */
   ngOnChanges(): void {
     if (this.installment) {
-      this.attemptKey.reset();
       this.installmentBalance = this.installment.amountDue - this.installment.amountPaid;
       // El monto inicial es el de la cuota; el admin decide si cobra un excedente.
       this.amount = this.installmentBalance;
@@ -228,11 +231,12 @@ export class DirectPaymentDialogComponent implements OnChanges {
         ? { nextVisitDate: this.nextVisitDate }
         : {}),
     };
+    const attempt = { installmentId: payload.installmentId, amount: payload.amountReceived };
 
     const onSettled = {
       next: () => {
         this.processing = false;
-        this.attemptKey.reset();
+        if (this.registerMode === 'PRE_CARGA') this.attemptKeys.settle(attempt);
         this.close();
         this.msg.add({
           severity: 'success',
@@ -256,10 +260,13 @@ export class DirectPaymentDialogComponent implements OnChanges {
     };
 
     if (this.registerMode === 'DIRECT') {
+      // Sin client_request_id: POST /payments/admin-direct no soporta
+      // idempotencia en el backend (P08 solo cubre POST /payments). La única
+      // protección contra el doble envío es el guard `processing` de confirm().
       this.paymentsSvc.adminDirect(payload).subscribe(onSettled);
     } else {
       this.paymentsSvc
-        .create({ ...payload, clientRequestId: this.attemptKey.forAttempt(payload) })
+        .create({ ...payload, clientRequestId: this.attemptKeys.keyFor(attempt) })
         .subscribe(onSettled);
     }
   }

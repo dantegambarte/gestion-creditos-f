@@ -18,7 +18,7 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { AppError } from '../../../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../../shared/directives/currency-amount-input.directive';
-import { PaymentAttemptKey } from '../../../../../shared/utils/payment-attempt-key.util';
+import { PaymentAttemptKeys } from '../../../../../shared/utils/payment-attempt-key.util';
 import { PaymentsService } from '../../../../collector/payments.service';
 import { PaymentCreatePayload } from '../../../../collector/models/payment.model';
 import { RenewPayload } from '../../../models/credit.model';
@@ -83,13 +83,12 @@ export class RenewDialogComponent implements OnChanges {
   private readonly creditsService = inject(CreditsService);
   private readonly paymentsSvc = inject(PaymentsService);
   private readonly msg = inject(MessageService);
-  /** Clave de idempotencia de la pre-carga de renovación en curso (P08/P12). */
-  private readonly attemptKey = new PaymentAttemptKey();
+  /** Claves de idempotencia de pre-carga (P08/P12); sobreviven a reabrir el diálogo. */
+  private readonly attemptKeys = inject(PaymentAttemptKeys);
 
-  /** Resetea el formulario (y la clave de idempotencia) cada vez que se abre el diálogo. */
+  /** Resetea el formulario cada vez que se abre el diálogo. */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true) {
-      this.attemptKey.reset();
       this.registerMode = 'PRE_CARGA';
       this.method = 'CASH';
       this.amountCash = null;
@@ -139,10 +138,15 @@ export class RenewDialogComponent implements OnChanges {
     this.processing = true;
 
     const isMixed = this.method === 'MIXED';
+    const attempt = {
+      installmentId: this.installmentId ?? '',
+      amount: this.effectiveAmount,
+      generationType: 'RENEWAL' as const,
+    };
     const onSettled = {
       next: () => {
         this.processing = false;
-        this.attemptKey.reset();
+        if (this.registerMode === 'PRE_CARGA') this.attemptKeys.settle(attempt);
         this.close();
         this.msg.add({
           severity: 'success',
@@ -172,6 +176,8 @@ export class RenewDialogComponent implements OnChanges {
         payload.amountTransfer = this.amountTransfer ?? 0;
       }
       if (this.transferRef) payload.transferReference = this.transferRef;
+      // Sin client_request_id: POST /credits/:id/renew no soporta idempotencia
+      // en el backend; solo protege el guard `processing`.
       this.creditsService.renew(this.creditId!, payload).subscribe(onSettled);
     } else {
       const payload: PaymentCreatePayload = {
@@ -185,7 +191,7 @@ export class RenewDialogComponent implements OnChanges {
           : { amountReceived: this.total, paymentMethod: this.method }),
         ...(this.transferRef ? { transferReference: this.transferRef } : {}),
       };
-      payload.clientRequestId = this.attemptKey.forAttempt(payload);
+      payload.clientRequestId = this.attemptKeys.keyFor(attempt);
       this.paymentsSvc.create(payload).subscribe(onSettled);
     }
   }
