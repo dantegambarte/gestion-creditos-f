@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../../shared/utils/escape-html.util';
 import { CommonModule, Location } from '@angular/common';
 import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
@@ -169,7 +170,7 @@ export class ProductVariantsComponent implements OnInit {
   confirmDeactivate(variant: ProductVariant): void {
     this.confirmationService.confirm({
       header: 'Desactivar variante',
-      message: `¿Desactivar variante <strong>${variant.color ?? ''} ${variant.size ?? ''} ${variant.capacity ?? ''}</strong>?`,
+      message: `¿Desactivar variante <strong>${escapeHtml(variant.color ?? '')} ${escapeHtml(variant.size ?? '')} ${escapeHtml(variant.capacity ?? '')}</strong>?`,
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger p-button-outlined h-11 px-5 rounded-xl',

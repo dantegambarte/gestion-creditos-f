@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../../shared/utils/escape-html.util';
 import { CommonModule, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -26,10 +27,7 @@ import { ClientPortalPanelComponent } from './client-portal-panel/client-portal-
 @Component({
   selector: 'app-client-detail',
   standalone: true,
-  providers: [
-    { provide: MessageService, useClass: DedupMessageService },
-    ConfirmationService,
-  ],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [
     CommonModule,
     ButtonModule,
@@ -88,10 +86,7 @@ export class ClientDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.header.set([
-      { label: 'Clientes', route: this.clientsBaseRoute },
-      { label: 'Detalle' },
-    ]);
+    this.header.set([{ label: 'Clientes', route: this.clientsBaseRoute }, { label: 'Detalle' }]);
     this.load();
   }
 
@@ -193,10 +188,7 @@ export class ClientDetailComponent implements OnInit {
    * @param creditId ID del crédito a visualizar.
    */
   openCreditDetail(creditId: string): void {
-    this.router.navigate([
-      this.clientsBaseRoute.replace('/clients', '/operations'),
-      creditId,
-    ]);
+    this.router.navigate([this.clientsBaseRoute.replace('/clients', '/operations'), creditId]);
   }
 
   /**
@@ -205,13 +197,12 @@ export class ClientDetailComponent implements OnInit {
   confirmDeactivate(): void {
     this.confirmationService.confirm({
       header: 'Desactivar cliente',
-      message: `¿Desactivar a <strong>${this.customer?.fullName}</strong>? El cliente no puede tener créditos activos o pendientes de aprobación.`,
+      message: `¿Desactivar a <strong>${escapeHtml(this.customer?.fullName)}</strong>? El cliente no puede tener créditos activos o pendientes de aprobación.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.deactivate(this.customerId).subscribe({
           next: () => {
@@ -233,13 +224,12 @@ export class ClientDetailComponent implements OnInit {
   confirmActivate(): void {
     this.confirmationService.confirm({
       header: 'Activar cliente',
-      message: `¿Activar a <strong>${this.customer?.fullName}</strong>?`,
+      message: `¿Activar a <strong>${escapeHtml(this.customer?.fullName)}</strong>?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Activar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.activate(this.customerId).subscribe({
           next: () => {

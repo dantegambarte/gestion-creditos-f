@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
+import { LOGIN_ROUTE, isAdminRole, landingRouteForRoles } from '../../../core/auth/role-routes';
 import { HeaderService } from '../../../core/services/header.service';
 import {
   NotificationItem,
@@ -13,13 +14,7 @@ import {
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    AsyncPipe,
-    ButtonModule,
-    OverlayPanelModule,
-  ],
+  imports: [CommonModule, RouterLink, AsyncPipe, ButtonModule, OverlayPanelModule],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })
@@ -89,8 +84,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.notifSvc.deleteAll().subscribe();
   }
 
-  /** Resuelve el deep-link soportado por cada tipo de entidad notificada. */
+  /**
+   * Resuelve el deep-link de la entidad notificada dentro del área a la que el
+   * rol actual tiene acceso; devuelve null si el rol no puede verla.
+   */
   private getNotificationRoute(item: NotificationItem): string[] | null {
+    const roles = this.auth.snapshot?.roles;
+    if (!isAdminRole(roles)) {
+      if (landingRouteForRoles(roles) === LOGIN_ROUTE || !item.entity_id) return null;
+      if (item.entity_type === 'credit') return ['/seller/operations', item.entity_id];
+      if (item.entity_type === 'customer') return ['/seller/clients', item.entity_id];
+      return null;
+    }
     if (item.entity_type === 'credit' && item.entity_id) {
       return ['/admin/operations', item.entity_id];
     }

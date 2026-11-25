@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../../shared/utils/escape-html.util';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
@@ -34,10 +35,7 @@ import { ProductBrandsService } from '../services/product-brands.service';
     TagModule,
     ToastModule,
   ],
-  providers: [
-    { provide: MessageService, useClass: DedupMessageService },
-    ConfirmationService,
-  ],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   templateUrl: './product-brands-config.component.html',
 })
 export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
@@ -195,7 +193,7 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
   toggle(brand: ProductBrand): void {
     const action = brand.active ? 'desactivar' : 'activar';
     this.confirm.confirm({
-      message: `¿Confirmás que querés ${action} la marca "${brand.name}"?`,
+      message: `¿Confirmás que querés ${action} la marca "${escapeHtml(brand.name)}"?`,
       header: brand.active ? 'Desactivar marca' : 'Activar marca',
       icon: brand.active ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
       acceptLabel: brand.active ? 'Desactivar' : 'Activar',
@@ -203,8 +201,7 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
       acceptButtonStyleClass: brand.active
         ? 'p-button-danger h-11 px-5 rounded-xl'
         : 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () => this.executeToggle(brand),
     });
   }
@@ -214,9 +211,7 @@ export class ProductBrandsConfigComponent implements OnInit, OnDestroy {
    * @param {ProductBrand} brand - Marca a activar o desactivar.
    */
   private executeToggle(brand: ProductBrand): void {
-    const call = brand.active
-      ? this.svc.deactivate(brand.id)
-      : this.svc.activate(brand.id);
+    const call = brand.active ? this.svc.deactivate(brand.id) : this.svc.activate(brand.id);
     call.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         brand.active = !brand.active;

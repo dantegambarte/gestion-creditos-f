@@ -1,10 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  OnDestroy,
-  ViewChild,
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -31,7 +25,7 @@ import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AuthUser } from '../../../core/models/interface/auth-user';
 import { PasswordTabSkipDirective } from '../../../shared/directives/password-tab-skip.directive';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
-import { UserRoleEnum } from './../../../core/models/types/user-role';
+import { landingRouteForRoles } from '../../../core/auth/role-routes';
 
 @Component({
   selector: 'app-login',
@@ -138,27 +132,13 @@ export class LoginComponent implements OnDestroy, AfterViewInit {
     this.onSubmit();
   }
 
+  /** Redirige al cambio de contraseña o a la ruta de aterrizaje del rol. */
   private redirectByRole(user: AuthUser): void {
     this.loading = false;
 
-    if (user.is_temp_password)
-      return void this.router.navigate([AppRoutes.CHANGE_PASSWORD]);
+    if (user.is_temp_password) return void this.router.navigate([AppRoutes.CHANGE_PASSWORD]);
 
-    if (user.roles.includes(UserRoleEnum.ADMIN))
-      return void this.router.navigate([AppRoutes.ADMIN, AppRoutes.DASHBOARD]);
-    if (user.roles.includes(UserRoleEnum.SELLER))
-      return void this.router.navigate([
-        AppRoutes.SELLER,
-        AppRoutes.OPERATIONS,
-      ]);
-    if (user.roles.includes(UserRoleEnum.COLLECTOR))
-      return void this.router.navigate([AppRoutes.ROUTE]);
-    // El cobrador mixto (SELLER_COLLECTOR) también arranca en Mi Ruta: su tarea
-    // principal es la cobranza. Desde ahí puede navegar a Operaciones si vende.
-    if (user.roles.includes(UserRoleEnum.SELLER_COLLECTOR))
-      return void this.router.navigate([AppRoutes.ROUTE]);
-
-    this.router.navigate([AppRoutes.LOGIN]);
+    this.router.navigate([landingRouteForRoles(user.roles)]);
   }
 
   ngOnDestroy(): void {
@@ -190,9 +170,7 @@ export class LoginComponent implements OnDestroy, AfterViewInit {
     }
 
     const rememberMe = localStorage.getItem(this.REMEMBER_ME_KEY) === 'true';
-    const dni = rememberMe
-      ? (localStorage.getItem(this.REMEMBERED_DNI_KEY) ?? '')
-      : '';
+    const dni = rememberMe ? (localStorage.getItem(this.REMEMBERED_DNI_KEY) ?? '') : '';
     return { rememberMe, dni };
   }
 

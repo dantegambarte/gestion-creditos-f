@@ -1,26 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  BehaviorSubject,
-  Observable,
-  catchError,
-  map,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { ApiHttpService } from '../http/api-http.service';
 import { AuthUser } from '../models/interface/auth-user';
-import { UserRole, UserRoleEnum } from '../models/types/user-role';
+import { UserRole } from '../models/types/user-role';
+import { landingRouteForRoles } from './role-routes';
 import { environment } from '../../../environments/environment';
 import { AuthServiceBase } from './auth-service.base';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
 import { MessageService } from 'primeng/api';
-import {
-  LoginCredentials,
-  LoginResponseData,
-  MeResponseData,
-} from '../models/interface/login';
+import { LoginCredentials, LoginResponseData, MeResponseData } from '../models/interface/login';
 
 const isBrowser = typeof localStorage !== 'undefined';
 
@@ -139,10 +128,7 @@ export class AuthService extends AuthServiceBase {
    * @param newPassword
    * @returns
    */
-  changePassword(
-    currentPassword: string,
-    newPassword: string,
-  ): Observable<void> {
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
     return this.api
       .patch<void>('users/me/change-password', {
         current_password: currentPassword,
@@ -160,21 +146,11 @@ export class AuthService extends AuthServiceBase {
   }
 
   /**
-   * Redirige al usuario según su rol.
-   * @param roles
-   * @returns
+   * Redirige al usuario a la ruta de aterrizaje absoluta de su rol.
+   * @param roles - Roles del usuario recién actualizado.
    */
   private redirectByRole(roles: UserRole[]): void {
-    if (roles.includes(UserRoleEnum.ADMIN))
-      return void this.router.navigate([AppRoutes.DASHBOARD]);
-    if (roles.includes(UserRoleEnum.SELLER))
-      return void this.router.navigate([AppRoutes.OPERATIONS]);
-    if (roles.includes(UserRoleEnum.COLLECTOR))
-      return void this.router.navigate([AppRoutes.ROUTE]);
-    // SELLER_COLLECTOR arranca en Mi Ruta (cobranza como tarea principal).
-    if (roles.includes(UserRoleEnum.SELLER_COLLECTOR))
-      return void this.router.navigate([AppRoutes.ROUTE]);
-    this.router.navigate([AppRoutes.LOGIN]);
+    this.router.navigate([landingRouteForRoles(roles)]);
   }
 
   /**
