@@ -22,13 +22,11 @@ import {
   CollectionSheet,
   CollectionSheetDetail,
 } from '../../collector/models/collection.model';
-import {
-  GeneratedPlanillaResult,
-  PlanillaEntry,
-} from '../models/interface/sheet';
+import { GeneratedPlanillaResult, PlanillaEntry } from '../models/interface/sheet';
 import { UsersService } from '../users/users.service';
 import { SheetHistoryComponent } from './sheet-history/sheet-history.component';
 import { SheetReviewDialogComponent } from './sheet-review-dialog/sheet-review-dialog.component';
+import { buildBatchFailureMessages } from '../collections/batch-failure-messages';
 
 @Component({
   selector: 'app-sheet',
@@ -126,8 +124,7 @@ export class SheetComponent implements OnInit, OnDestroy {
    * Genera una planilla para el cobrador seleccionado.
    */
   generatePlanilla(): void {
-    if (!this.selectedCollectorId || this.generating || this.generatingAll)
-      return;
+    if (!this.selectedCollectorId || this.generating || this.generatingAll) return;
     this.generating = true;
     this.collectionsService
       .generate({
@@ -154,8 +151,7 @@ export class SheetComponent implements OnInit, OnDestroy {
             this.msg.add({
               severity: 'warn',
               summary: 'Sin cuotas',
-              detail:
-                err.message ?? 'No hay cuotas para ese cobrador y filtro.',
+              detail: err.message ?? 'No hay cuotas para ese cobrador y filtro.',
               life: 5000,
             });
           } else {
@@ -195,9 +191,7 @@ export class SheetComponent implements OnInit, OnDestroy {
               .pipe(
                 map((generated) => ({
                   success: true as const,
-                  result: this.mapDetailToResult(
-                    (generated as CollectionGenerateResult).sheet,
-                  ),
+                  result: this.mapDetailToResult((generated as CollectionGenerateResult).sheet),
                   collectorName: c.fullName,
                 })),
                 catchError((err: AppError) =>
@@ -230,19 +224,19 @@ export class SheetComponent implements OnInit, OnDestroy {
                 this.results = [...newResults, ...this.results];
                 this.loadHistorial();
               }
-              if (failures.length > 0) {
-                const names = failures.map((f) => f.collectorName).join(', ');
-                this.msg.add({
-                  severity: 'warn',
-                  summary: 'Sin cuotas',
-                  detail: `Sin cuotas para: ${names}`,
-                  life: 8000,
-                });
-              }
+              buildBatchFailureMessages(
+                failures as Array<{ collectorName: string; error: AppError }>,
+              ).forEach((m) => this.msg.add(m));
             });
         },
         error: () => {
           this.generatingAll = false;
+          this.msg.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se pudo cargar la lista de cobradores. Reintentá en unos minutos.',
+            life: 6000,
+          });
         },
       });
   }
@@ -270,23 +264,13 @@ export class SheetComponent implements OnInit, OnDestroy {
     });
     y += 6;
     doc.text(`Cuotas: ${result.clientCount}`, startX, y);
-    doc.text(
-      `Total: ${this.formatCurrency(result.totalAmount)}`,
-      pageWidth - 14,
-      y,
-      { align: 'right' },
-    );
+    doc.text(`Total: ${this.formatCurrency(result.totalAmount)}`, pageWidth - 14, y, {
+      align: 'right',
+    });
     y += 8;
 
     const colWidths = [55, 20, 18, 20, 28, 32];
-    const headers = [
-      'Cliente',
-      'Tipo',
-      'N° Cuota',
-      'Estado',
-      'Vencimiento',
-      'Monto',
-    ];
+    const headers = ['Cliente', 'Tipo', 'N° Cuota', 'Estado', 'Vencimiento', 'Monto'];
     const tableWidth = colWidths.reduce((a, b) => a + b, 0);
 
     doc.setFillColor(41, 98, 255);
@@ -328,9 +312,7 @@ export class SheetComponent implements OnInit, OnDestroy {
       y += 6;
     });
 
-    doc.save(
-      `planilla-${result.collectorName.replace(/\s+/g, '-')}-${result.fecha}.pdf`,
-    );
+    doc.save(`planilla-${result.collectorName.replace(/\s+/g, '-')}-${result.fecha}.pdf`);
   }
 
   /**
@@ -371,8 +353,7 @@ export class SheetComponent implements OnInit, OnDestroy {
           this.msg.add({
             severity: err.status === 409 ? 'warn' : 'error',
             summary: err.status === 409 ? 'Aviso' : 'Error',
-            detail:
-              err.message ?? 'No se pudo marcar la planilla como enviada.',
+            detail: err.message ?? 'No se pudo marcar la planilla como enviada.',
           });
         },
       });

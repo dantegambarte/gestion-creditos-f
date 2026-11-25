@@ -1,8 +1,6 @@
+import { toBatchOutcome } from './collections.service';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import { jwtInterceptor } from '../../core/interceptors/jwt.interceptor';
@@ -122,9 +120,7 @@ describe('CollectionsService', () => {
 
   describe('generate', () => {
     it('sends correct snake_case body', () => {
-      service
-        .generate({ collectorId: 'coll-1', date: '2026-04-24', filter: 'TODAY' })
-        .subscribe();
+      service.generate({ collectorId: 'coll-1', date: '2026-04-24', filter: 'TODAY' }).subscribe();
       const req = httpMock.expectOne(`${BASE}/collections`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({
@@ -134,7 +130,10 @@ describe('CollectionsService', () => {
       });
       req.flush({
         ok: true,
-        data: { sheet: mockDetailRaw, alerts: { overdue_next_visits: [], unassigned_customers: [] } },
+        data: {
+          sheet: mockDetailRaw,
+          alerts: { overdue_next_visits: [], unassigned_customers: [] },
+        },
         message: '',
       });
     });
@@ -147,7 +146,10 @@ describe('CollectionsService', () => {
       const req = httpMock.expectOne(`${BASE}/collections`);
       req.flush({
         ok: true,
-        data: { sheet: mockDetailRaw, alerts: { overdue_next_visits: [], unassigned_customers: [] } },
+        data: {
+          sheet: mockDetailRaw,
+          alerts: { overdue_next_visits: [], unassigned_customers: [] },
+        },
         message: '',
       });
       expect(result.sheet.collectorId).toBe('coll-1');
@@ -167,5 +169,12 @@ describe('CollectionsService', () => {
       );
       expect(error).toBeTruthy();
     });
+  });
+
+  it('toBatchOutcome convierte un resultado incompleto en error en vez de asumir datos', () => {
+    const generated = toBatchOutcome({ collector_id: 'c1' } as any);
+    expect(generated.kind).toBe('error');
+    const skipped = toBatchOutcome({ collector_id: 'c2', skipped: true } as any);
+    expect(skipped.kind).toBe('error');
   });
 });
