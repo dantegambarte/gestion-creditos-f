@@ -208,6 +208,15 @@
                   />
                 </div>
               }
+
+              @if (loanRateMissing) {
+                <div class="mt-3" data-cy="msg-loan-rate-missing">
+                  <p-message
+                    severity="warn"
+                    text="No hay una tasa activa configurada para este monto, cuotas y frecuencia. La cuota estimada no incluye interés."
+                  />
+                </div>
+              }
             </div>
           }
 

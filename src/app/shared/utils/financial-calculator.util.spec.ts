@@ -105,10 +105,9 @@ describe('calculateInstallmentValue', () => {
     const result = calculateInstallmentValue(capital, rate, installments);
 
     // Assert
-    // 50000 * 1.1 = 55000.00000000001 (imprecisión binaria de punto flotante, no 55000 exacto),
-    // por eso Math.ceil empuja al millar siguiente: 56000. Si esta función "arregla" el float,
-    // este test debe fallar para que se revise el cambio.
-    expect(result).toBe(56000);
+    // 50000 * 1.1 = 55000.00000000001 en punto flotante; el backend redondea a centavos
+    // antes del ceil, así que la cuota correcta es 55000 (no 56000).
+    expect(result).toBe(55000);
   });
 
   it('debe devolver 0 cuando la cantidad de cuotas es 0 (edge case)', () => {
@@ -332,7 +331,7 @@ describe('findLoanInterestRate', () => {
     expect(monthly).toBe(0.1);
   });
 
-  it('debe devolver 0 cuando no hay tasa para la frecuencia indicada aunque coincidan cuota y monto', () => {
+  it('debe devolver null cuando no hay tasa para la frecuencia indicada aunque coincidan cuota y monto', () => {
     // Arrange
     const rates: InterestRate[] = [
       buildInterestRate({
@@ -348,10 +347,10 @@ describe('findLoanInterestRate', () => {
     const result = findLoanInterestRate(rates, 12, 100000, 'WEEKLY');
 
     // Assert
-    expect(result).toBe(0);
+    expect(result).toBeNull();
   });
 
-  it('debe devolver 0 cuando no existe ninguna tasa para esas cuotas (edge case)', () => {
+  it('debe devolver null cuando no existe ninguna tasa para esas cuotas (edge case)', () => {
     // Arrange
     const rates: InterestRate[] = [
       buildInterestRate({
@@ -366,10 +365,10 @@ describe('findLoanInterestRate', () => {
     const result = findLoanInterestRate(rates, 24, 30000);
 
     // Assert
-    expect(result).toBe(0);
+    expect(result).toBeNull();
   });
 
-  it('debe devolver 0 cuando el monto está fuera de todos los rangos disponibles (edge case)', () => {
+  it('debe devolver null cuando el monto está fuera de todos los rangos disponibles (edge case)', () => {
     // Arrange
     const rates: InterestRate[] = [
       buildInterestRate({
@@ -384,7 +383,7 @@ describe('findLoanInterestRate', () => {
     const result = findLoanInterestRate(rates, 12, 200000);
 
     // Assert
-    expect(result).toBe(0);
+    expect(result).toBeNull();
   });
 
   it('debe incluir el monto cuando es exactamente igual al límite inferior (minAmount inclusive)', () => {
@@ -420,7 +419,7 @@ describe('findLoanInterestRate', () => {
     const result = findLoanInterestRate(rates, 12, 49999);
 
     // Assert
-    expect(result).toBe(0);
+    expect(result).toBeNull();
   });
 
   it('debe incluir el monto cuando es exactamente igual al límite superior (maxAmount inclusive)', () => {
@@ -456,7 +455,7 @@ describe('findLoanInterestRate', () => {
     const result = findLoanInterestRate(rates, 12, 100001);
 
     // Assert
-    expect(result).toBe(0);
+    expect(result).toBeNull();
   });
 
   it('debe tratar maxAmount null como "sin tope superior" (edge case)', () => {
@@ -477,7 +476,7 @@ describe('findLoanInterestRate', () => {
     expect(result).toBe(0.2);
   });
 
-  it('debe devolver 0 cuando la lista de tasas está vacía (edge case)', () => {
+  it('debe devolver null cuando la lista de tasas está vacía (edge case)', () => {
     // Arrange
     const rates: InterestRate[] = [];
 
@@ -485,7 +484,62 @@ describe('findLoanInterestRate', () => {
     const result = findLoanInterestRate(rates, 12, 100000);
 
     // Assert
-    expect(result).toBe(0);
+    expect(result).toBeNull();
+  });
+
+  it('debe ignorar una tasa inactiva y devolver null si no hay otra aplicable', () => {
+    const rates: InterestRate[] = [buildInterestRate({ active: false, rate: 0.3 })];
+    expect(findLoanInterestRate(rates, 12, 100000, 'MONTHLY')).toBeNull();
+  });
+
+  it('debe elegir la tasa activa aunque haya una inactiva antes para la misma combinación', () => {
+    const rates: InterestRate[] = [
+      buildInterestRate({ id: 'old', active: false, rate: 0.3 }),
+      buildInterestRate({ id: 'new', active: true, rate: 0.12 }),
+    ];
+    expect(findLoanInterestRate(rates, 12, 100000, 'MONTHLY')).toBe(0.12);
+  });
+
+  it('debe devolver 0 (no null) cuando la tasa activa configurada es realmente 0%', () => {
+    const rates: InterestRate[] = [buildInterestRate({ rate: 0 })];
+    expect(findLoanInterestRate(rates, 12, 100000, 'MONTHLY')).toBe(0);
+  });
+});
+
+/**
+ * Réplica literal de getInstallmentAmount del backend (src/utils/creditCalculator.js),
+ * usada como oráculo para comparar el cálculo del frontend caso por caso.
+ * @param {number} amount - Capital financiado.
+ * @param {number} coef - Tasa decimal.
+ * @param {number} count - Cantidad de cuotas.
+ * @returns {number} Cuota según el backend.
+ */
+function backendInstallmentAmount(amount: number, coef: number, count: number): number {
+  const totalWithInterest = amount * (1 + coef);
+  const rawInstallment = Math.round((totalWithInterest / count) * 100) / 100;
+  return Math.ceil(rawInstallment / 1000) * 1000;
+}
+
+describe('calculateInstallmentValue vs backend (getInstallmentAmount)', () => {
+  const cases: [number, number, number, number][] = [
+    // [capital, tasa, cuotas, cuota esperada]
+    [50000, 0.1, 1, 55000],
+    [90000, 0.1, 3, 33000],
+    [100000, 0.1, 2, 55000],
+    [180000, 0.1, 6, 33000],
+    [110000, 0.1, 1, 121000],
+    [100000, 0.15, 12, 10000],
+    [100001, 0, 1, 101000],
+    [250000, 0.35, 10, 34000],
+    [73333, 0.137, 7, 12000],
+    [200000, 0.07, 2, 107000],
+  ];
+
+  cases.forEach(([capital, rate, installments, expected]) => {
+    it(`${capital} al ${rate * 100}% en ${installments} cuotas coincide con el backend (${expected})`, () => {
+      expect(backendInstallmentAmount(capital, rate, installments)).toBe(expected);
+      expect(calculateInstallmentValue(capital, rate, installments)).toBe(expected);
+    });
   });
 });
 
