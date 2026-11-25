@@ -8,8 +8,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { EMPTY, concat, of } from 'rxjs';
+import { switchMap, toArray } from 'rxjs/operators';
 
 import { MessageService } from 'primeng/api';
 import { DedupMessageService } from '../../core/services/dedup-message.service';
@@ -48,6 +48,20 @@ function toProduct(p: ApiProduct): Product {
     iconColor: '#6366f1',
   };
 }
+
+/** Etapa del alta de producto en curso y los ids ya creados, usada para compensar fallos parciales. */
+interface CreatedProductParts {
+  stage: 'producto' | 'variante' | 'unidades';
+  productId: string | null;
+  variantId: string | null;
+}
+
+/** Texto legible de cada etapa del alta para los mensajes de error. */
+const STAGE_LABELS: Record<CreatedProductParts['stage'], string> = {
+  producto: 'el producto',
+  variante: 'la variante (precio)',
+  unidades: 'las unidades de stock',
+};
 
 @Component({
   selector: 'app-products',
@@ -96,6 +110,8 @@ export class ProductsComponent implements OnInit {
   searchTerm = '';
   showCreateModal = false;
   submitted = false;
+  /** Bloquea el alta mientras las requests de producto, variante y unidades están en curso. */
+  saving = false;
   form: FormGroup;
 
   constructor(
@@ -147,9 +163,7 @@ export class ProductsComponent implements OnInit {
     if (!this.searchTerm) return this.products;
     const term = this.searchTerm.toLowerCase();
     return this.products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(term) ||
-        p.category.toLowerCase().includes(term),
+      (p) => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term),
     );
   }
 
@@ -186,10 +200,10 @@ export class ProductsComponent implements OnInit {
 
   /**
    * Indica si la acción de guardar debe permanecer deshabilitada según el estado actual del formulario.
-   * @returns {boolean} `true` cuando faltan campos requeridos o contienen valores inválidos.
+   * @returns {boolean} `true` cuando faltan campos requeridos, hay valores inválidos o un alta en curso.
    */
   get isCreateDisabled(): boolean {
-    return this.form.invalid;
+    return this.form.invalid || this.saving;
   }
 
   /**
@@ -206,31 +220,29 @@ export class ProductsComponent implements OnInit {
    * @param {string} productId - Identificador del producto a editar.
    */
   navigateToEdit(productId: string): void {
-    this.router.navigate([
-      AppRoutes.SELLER_PRODUCTS_EDIT.replace(':id', productId),
-    ]);
+    this.router.navigate([AppRoutes.SELLER_PRODUCTS_EDIT.replace(':id', productId)]);
   }
 
   /**
-   * Crea un producto nuevo usando los campos válidos del modal y refresca el listado al confirmar.
+   * Crea producto, variante y unidades iniciales (tres requests no atómicas) y refresca el listado al confirmar.
+   * Si una etapa posterior al producto falla, revierte lo creado con las bajas lógicas existentes.
    */
   saveProduct(): void {
     this.submitted = true;
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.saving) return;
+    this.saving = true;
 
-    const {
-      codigo,
-      categoria,
-      descripcion,
-      marca,
-      modelo,
-      precioVenta,
-      stockInicial,
-    } = this.form.value;
+    const { codigo, categoria, descripcion, marca, modelo, precioVenta, stockInicial } =
+      this.form.value;
     const nameParts = [codigo, marca, modelo].filter(Boolean);
     const name = nameParts.join(' ') || descripcion || codigo;
     const description = descripcion || name;
     const initialUnits = this.buildInitialUnits(codigo, stockInicial);
+    const created: CreatedProductParts = {
+      stage: 'producto',
+      productId: null,
+      variantId: null,
+    };
 
     this.productsService
       .create({
@@ -239,26 +251,28 @@ export class ProductsComponent implements OnInit {
         categoryId: categoria ?? undefined,
       })
       .pipe(
-        switchMap((product) =>
-          this.productVariantsService
-            .create({
-              productId: product.id,
-              currentPrice: Number(precioVenta),
-            })
-            .pipe(
-              switchMap((variant) =>
-                initialUnits.length > 0
-                  ? this.productUnitsService.createBulk({
-                      variantId: variant.id,
-                      units: initialUnits,
-                    })
-                  : of(null),
-              ),
-            ),
-        ),
+        switchMap((product) => {
+          created.productId = product.id;
+          created.stage = 'variante';
+          return this.productVariantsService.create({
+            productId: product.id,
+            currentPrice: Number(precioVenta),
+          });
+        }),
+        switchMap((variant) => {
+          created.variantId = variant.id;
+          created.stage = 'unidades';
+          return initialUnits.length > 0
+            ? this.productUnitsService.createBulk({
+                variantId: variant.id,
+                units: initialUnits,
+              })
+            : of(null);
+        }),
       )
       .subscribe({
         next: () => {
+          this.saving = false;
           this.showCreateModal = false;
           this.submitted = false;
           this.form = this.buildForm();
@@ -269,10 +283,65 @@ export class ProductsComponent implements OnInit {
           });
           this.loadProducts();
         },
-        error: (err) => {
-          console.error('Error al crear producto', err);
-        },
+        error: (err: { message?: string }) => this.handleCreateFailure(name, created, err),
       });
+  }
+
+  /**
+   * Informa el fallo del alta y, si el producto llegó a crearse, desactiva variante y producto para no dejar huérfanos.
+   * Si la reversión también falla, el mensaje indica exactamente qué quedó creado y activo.
+   * @param {string} name - Título del producto que se intentó crear.
+   * @param {CreatedProductParts} created - Etapa que falló e ids ya creados.
+   * @param {{ message?: string }} err - Error devuelto por la request que falló.
+   */
+  private handleCreateFailure(
+    name: string,
+    created: CreatedProductParts,
+    err: { message?: string },
+  ): void {
+    const reason = err?.message || 'error desconocido';
+    const { productId, variantId } = created;
+
+    if (!productId) {
+      this.saving = false;
+      this.showError(`No se pudo crear el producto: ${reason}`);
+      return;
+    }
+
+    const failed = `Falló el alta de ${STAGE_LABELS[created.stage]} (${reason}).`;
+    const rollback$ = concat(
+      variantId ? this.productVariantsService.deactivate(variantId) : EMPTY,
+      this.productsService.deactivate(productId),
+    );
+
+    rollback$.pipe(toArray()).subscribe({
+      next: () => {
+        this.saving = false;
+        this.showError(`${failed} Se revirtió el alta: el producto "${name}" quedó desactivado.`);
+        this.loadProducts();
+      },
+      error: () => {
+        this.saving = false;
+        const parts = variantId ? 'con su variante' : 'sin variante';
+        this.showError(
+          `${failed} No se pudo revertir: quedó creado el producto "${name}" ${parts}. Desactivalo desde el listado.`,
+        );
+        this.loadProducts();
+      },
+    });
+  }
+
+  /**
+   * Muestra un toast de error persistente para fallos del alta de producto.
+   * @param {string} detail - Mensaje a mostrar.
+   */
+  private showError(detail: string): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error al crear producto',
+      detail,
+      life: 8000,
+    });
   }
 
   /**
@@ -281,10 +350,7 @@ export class ProductsComponent implements OnInit {
    * @param {number} stockInicial - Cantidad inicial de unidades a crear.
    * @returns {Array<{ unitCode: string }>} Unidades listas para enviar al alta masiva.
    */
-  private buildInitialUnits(
-    codigoBase: string,
-    stockInicial: number,
-  ): Array<{ unitCode: string }> {
+  private buildInitialUnits(codigoBase: string, stockInicial: number): Array<{ unitCode: string }> {
     const total = Number(stockInicial ?? 0);
     if (!Number.isFinite(total) || total <= 0) return [];
 

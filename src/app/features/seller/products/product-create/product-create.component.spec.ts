@@ -1,8 +1,8 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HeaderService } from '../../../../core/services/header.service';
 import { ProductBrandsService } from '../../../admin/config/services/product-brands.service';
 import { ProductCategoriesService } from '../../../admin/config/services/product-categories.service';
@@ -65,5 +65,52 @@ describe('ProductCreateComponent — validadores de formulario', () => {
     component.form.get('model')!.setValue('m'.repeat(100));
 
     expect(component.form.valid).toBeTrue();
+  });
+});
+
+describe('ProductCreateComponent — envío (P16)', () => {
+  let component: ProductCreateComponent;
+  let create: jasmine.Spy;
+  let navigate: jasmine.Spy;
+
+  beforeEach(async () => {
+    create = jasmine.createSpy('create');
+    await TestBed.configureTestingModule({
+      imports: [ProductCreateComponent],
+      providers: [
+        provideRouter([]),
+        { provide: ProductsService, useValue: { create } },
+        { provide: ProductCategoriesService, useValue: { getAll: () => of([]) } },
+        { provide: ProductBrandsService, useValue: { getAll: () => of([]) } },
+        { provide: HeaderService, useValue: { set: jasmine.createSpy() } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(ProductCreateComponent);
+    component = fixture.componentInstance;
+    navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    fixture.detectChanges();
+    component.form.patchValue({ title: 'Producto nuevo' });
+  });
+
+  it('mantiene submitting hasta navegar y no permite un segundo alta', fakeAsync(() => {
+    create.and.returnValue(of({ id: 'p-1' }));
+
+    component.onSubmit();
+    expect(component.submitting).toBeTrue();
+
+    component.onSubmit();
+    expect(create).toHaveBeenCalledTimes(1);
+
+    tick(1500);
+    expect(navigate).toHaveBeenCalledWith(['/seller/products', 'p-1']);
+  }));
+
+  it('libera submitting si el alta falla', () => {
+    create.and.returnValue(throwError(() => ({ status: 500, message: 'x' })));
+
+    component.onSubmit();
+
+    expect(component.submitting).toBeFalse();
   });
 });

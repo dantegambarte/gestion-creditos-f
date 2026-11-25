@@ -1,9 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { FormatService } from '../../core/services/format.service';
 import { provideAuthTesting } from '../../core/auth/testing/auth-testing';
@@ -21,6 +21,7 @@ describe('ProductsComponent', () => {
   const productsServiceMock = {
     list: jasmine.createSpy('list'),
     create: jasmine.createSpy('create'),
+    deactivate: jasmine.createSpy('deactivate'),
   };
 
   const formatServiceMock = {
@@ -30,6 +31,7 @@ describe('ProductsComponent', () => {
 
   const productVariantsServiceMock = {
     create: jasmine.createSpy('create'),
+    deactivate: jasmine.createSpy('deactivate'),
   };
 
   const productUnitsServiceMock = {
@@ -76,20 +78,53 @@ describe('ProductsComponent', () => {
 
   beforeEach(async () => {
     productsServiceMock.list.and.returnValue(of([]));
-    productsServiceMock.create.and.returnValue(of({
-      id: 'prod-1', title: 'Producto', description: 'Desc', model: null,
-      status: 'ACTIVE', createdAt: '', updatedAt: '', categoryId: null,
-      categoryName: null, brandId: null, brandName: null,
-      availableCount: 0, reservedCount: 0, soldCount: 0, variants: [],
-    }));
-    productVariantsServiceMock.create.and.returnValue(of({
-      id: 'var-1', color: null, size: null, capacity: null,
-      currentPrice: 1500, status: 'ACTIVE', createdAt: '', updatedAt: '',
-      productId: 'prod-1', productName: 'Producto', title: 'Producto',
-      model: null, productStatus: 'ACTIVE', brandId: null, brandName: null,
-    }));
+    productsServiceMock.create.and.returnValue(
+      of({
+        id: 'prod-1',
+        title: 'Producto',
+        description: 'Desc',
+        model: null,
+        status: 'ACTIVE',
+        createdAt: '',
+        updatedAt: '',
+        categoryId: null,
+        categoryName: null,
+        brandId: null,
+        brandName: null,
+        availableCount: 0,
+        reservedCount: 0,
+        soldCount: 0,
+        variants: [],
+      }),
+    );
+    productVariantsServiceMock.create.and.returnValue(
+      of({
+        id: 'var-1',
+        color: null,
+        size: null,
+        capacity: null,
+        currentPrice: 1500,
+        status: 'ACTIVE',
+        createdAt: '',
+        updatedAt: '',
+        productId: 'prod-1',
+        productName: 'Producto',
+        title: 'Producto',
+        model: null,
+        productStatus: 'ACTIVE',
+        brandId: null,
+        brandName: null,
+      }),
+    );
     productUnitsServiceMock.createBulk.and.returnValue(of({ created: 3, units: [] }));
     messageServiceMock.add.calls.reset();
+    productsServiceMock.create.calls.reset();
+    productsServiceMock.deactivate.calls.reset();
+    productsServiceMock.deactivate.and.returnValue(of(undefined));
+    productVariantsServiceMock.create.calls.reset();
+    productVariantsServiceMock.deactivate.calls.reset();
+    productVariantsServiceMock.deactivate.and.returnValue(of(undefined));
+    productUnitsServiceMock.createBulk.calls.reset();
     productCategoriesServiceMock.getAll.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
@@ -200,5 +235,104 @@ describe('ProductsComponent', () => {
     component.navigateToEdit('prod-123');
 
     expect(navigateSpy).toHaveBeenCalledWith(['seller/products/prod-123/edit']);
+  });
+
+  describe('alta no atómica (P16)', () => {
+    /** Completa el formulario del modal con datos válidos y stock inicial. */
+    function fillValidForm(): void {
+      component.form.patchValue({
+        codigo: 'PRD-001',
+        categoria: 'cat-1',
+        precioCompra: 1000,
+        precioVenta: 1500,
+        stockInicial: 2,
+        estado: 'activo',
+      });
+    }
+
+    let addSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      // El componente provee su propio MessageService (dedup), por eso se espía el del injector del componente
+      addSpy = spyOn(fixture.debugElement.injector.get(MessageService), 'add');
+    });
+
+    /** Devuelve el detalle del último toast de error emitido. */
+    function lastErrorDetail(): string {
+      const errors = addSpy.calls
+        .allArgs()
+        .map((a) => a[0])
+        .filter((m: { severity: string }) => m.severity === 'error');
+      return errors.length ? errors[errors.length - 1].detail : '';
+    }
+
+    it('si falla la variante, desactiva el producto creado e informa el fallo', () => {
+      productVariantsServiceMock.create.and.returnValue(
+        throwError(() => ({ status: 500, message: 'boom' })),
+      );
+      fillValidForm();
+
+      component.saveProduct();
+
+      expect(productsServiceMock.deactivate).toHaveBeenCalledWith('prod-1');
+      expect(productUnitsServiceMock.createBulk).not.toHaveBeenCalled();
+      expect(lastErrorDetail()).toContain('variante');
+      expect(lastErrorDetail()).toContain('revirtió');
+      expect(component.showCreateModal).toBeTrue();
+      expect(component.saving).toBeFalse();
+    });
+
+    it('si fallan las unidades, desactiva variante y producto en ese orden', () => {
+      productUnitsServiceMock.createBulk.and.returnValue(
+        throwError(() => ({ status: 409, message: 'duplicado' })),
+      );
+      fillValidForm();
+
+      component.saveProduct();
+
+      expect(productVariantsServiceMock.deactivate).toHaveBeenCalledWith('var-1');
+      expect(productsServiceMock.deactivate).toHaveBeenCalledWith('prod-1');
+      expect(lastErrorDetail()).toContain('unidades');
+      expect(component.showCreateModal).toBeTrue();
+    });
+
+    it('si la compensación falla, informa exactamente qué quedó creado', () => {
+      productVariantsServiceMock.create.and.returnValue(
+        throwError(() => ({ status: 500, message: 'boom' })),
+      );
+      productsServiceMock.deactivate.and.returnValue(
+        throwError(() => ({ status: 500, message: 'down' })),
+      );
+      fillValidForm();
+
+      component.saveProduct();
+
+      expect(lastErrorDetail()).toContain('quedó creado');
+      expect(lastErrorDetail()).toContain('PRD-001');
+    });
+
+    it('si falla el alta del producto, no intenta compensar', () => {
+      productsServiceMock.create.and.returnValue(
+        throwError(() => ({ status: 500, message: 'boom' })),
+      );
+      fillValidForm();
+
+      component.saveProduct();
+
+      expect(productsServiceMock.deactivate).not.toHaveBeenCalled();
+      expect(lastErrorDetail()).toContain('boom');
+    });
+
+    it('bloquea un segundo envío mientras el alta está en curso', () => {
+      const pending = new Subject<never>();
+      productsServiceMock.create.and.returnValue(pending.asObservable());
+      fillValidForm();
+
+      component.saveProduct();
+      component.saveProduct();
+
+      expect(productsServiceMock.create).toHaveBeenCalledTimes(1);
+      expect(component.isCreateDisabled).toBeTrue();
+    });
   });
 });

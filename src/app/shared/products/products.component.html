@@ -48,104 +48,90 @@
       [tableStyle]="{ 'min-width': '50rem' }"
     >
       <ng-template pTemplate="header">
-      <tr>
-        <th class="text-xs font-semibold ff-text-muted uppercase">Código</th>
-        <th class="text-xs font-semibold ff-text-muted uppercase">Producto</th>
-        <th class="text-xs font-semibold ff-text-muted uppercase">Precio</th>
-        <th class="text-xs font-semibold ff-text-muted uppercase">Stock</th>
-        <th class="text-xs font-semibold ff-text-muted uppercase">Categoría</th>
-        <th class="text-xs font-semibold ff-text-muted uppercase">Estado</th>
-        <th class="text-xs font-semibold ff-text-muted uppercase">Acciones</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-product>
-      <tr
-        class="border-b"
-        style="border-color: var(--ff-border-subtle)"
-        [ngClass]="getRowClass(product.stock)"
-      >
-        <td class="text-sm font-mono ff-text-muted">{{ product.code }}</td>
-        <td>
-          <div class="flex items-center gap-3">
+        <tr>
+          <th class="text-xs font-semibold ff-text-muted uppercase">Código</th>
+          <th class="text-xs font-semibold ff-text-muted uppercase">Producto</th>
+          <th class="text-xs font-semibold ff-text-muted uppercase">Precio</th>
+          <th class="text-xs font-semibold ff-text-muted uppercase">Stock</th>
+          <th class="text-xs font-semibold ff-text-muted uppercase">Categoría</th>
+          <th class="text-xs font-semibold ff-text-muted uppercase">Estado</th>
+          <th class="text-xs font-semibold ff-text-muted uppercase">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-product>
+        <tr
+          class="border-b"
+          style="border-color: var(--ff-border-subtle)"
+          [ngClass]="getRowClass(product.stock)"
+        >
+          <td class="text-sm font-mono ff-text-muted">{{ product.code }}</td>
+          <td>
+            <div class="flex items-center gap-3">
+              <span
+                class="inline-flex items-center justify-center w-9 h-9 rounded-lg"
+                [style.background-color]="product.iconColor + '22'"
+              >
+                <i class="pi {{ product.icon }} text-base" [style.color]="product.iconColor"></i>
+              </span>
+              <span class="text-sm font-medium ff-text-primary">{{ product.name }}</span>
+            </div>
+          </td>
+          <td class="text-sm font-semibold ff-text-primary">
+            {{ formatPrice(product.price) }}
+          </td>
+          <td>
             <span
-              class="inline-flex items-center justify-center w-9 h-9 rounded-lg"
-              [style.background-color]="product.iconColor + '22'"
+              class="text-sm font-medium"
+              [ngClass]="{
+                'text-red-600': product.stock === 0,
+                'text-amber-600': product.stock > 0 && product.stock <= 3,
+                'ff-text-secondary': product.stock > 3,
+              }"
             >
-              <i
-                class="pi {{ product.icon }} text-base"
-                [style.color]="product.iconColor"
-              ></i>
+              {{ product.stock }} uds.
             </span>
-            <span class="text-sm font-medium ff-text-primary">{{
-              product.name
-            }}</span>
-          </div>
-        </td>
-        <td class="text-sm font-semibold ff-text-primary">
-          {{ formatPrice(product.price) }}
-        </td>
-        <td>
-          <span
-            class="text-sm font-medium"
-            [ngClass]="{
-              'text-red-600': product.stock === 0,
-              'text-amber-600': product.stock > 0 && product.stock <= 3,
-              'ff-text-secondary': product.stock > 3,
-            }"
-          >
-            {{ product.stock }} uds.
-          </span>
-        </td>
-        <td class="text-sm ff-text-secondary">{{ product.category }}</td>
-        <td>
-          @switch (getStockStatus(product.stock)) {
-            @case ("activo") {
-              <span
-                class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full"
-                style="
-                  color: var(--ff-success);
-                  background: rgba(52, 211, 153, 0.12);
-                "
-              >
-                <i class="pi pi-check text-xs"></i> Activo
-              </span>
+          </td>
+          <td class="text-sm ff-text-secondary">{{ product.category }}</td>
+          <td>
+            @switch (getStockStatus(product.stock)) {
+              @case ('activo') {
+                <span
+                  class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full"
+                  style="color: var(--ff-success); background: rgba(52, 211, 153, 0.12)"
+                >
+                  <i class="pi pi-check text-xs"></i> Activo
+                </span>
+              }
+              @case ('stock-bajo') {
+                <span
+                  class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full"
+                  style="color: var(--ff-warning); background: rgba(251, 176, 64, 0.12)"
+                >
+                  <i class="pi pi-exclamation-triangle text-xs"></i> Stock Bajo
+                </span>
+              }
+              @case ('sin-stock') {
+                <span
+                  class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full"
+                  style="color: var(--ff-danger); background: rgba(248, 113, 113, 0.12)"
+                >
+                  <i class="pi pi-times text-xs"></i> Sin Stock
+                </span>
+              }
             }
-            @case ("stock-bajo") {
-              <span
-                class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full"
-                style="
-                  color: var(--ff-warning);
-                  background: rgba(251, 176, 64, 0.12);
-                "
-              >
-                <i class="pi pi-exclamation-triangle text-xs"></i> Stock Bajo
-              </span>
-            }
-            @case ("sin-stock") {
-              <span
-                class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full"
-                style="
-                  color: var(--ff-danger);
-                  background: rgba(248, 113, 113, 0.12);
-                "
-              >
-                <i class="pi pi-times text-xs"></i> Sin Stock
-              </span>
-            }
-          }
-        </td>
-        <td>
-          <p-button
-            label="Editar"
-            icon="pi pi-pencil"
-            severity="secondary"
-            [outlined]="true"
-            styleClass="h-10 px-4 rounded-xl"
-            (onClick)="navigateToEdit(product.id)"
-          />
-        </td>
-      </tr>
-    </ng-template>
+          </td>
+          <td>
+            <p-button
+              label="Editar"
+              icon="pi pi-pencil"
+              severity="secondary"
+              [outlined]="true"
+              styleClass="h-10 px-4 rounded-xl"
+              (onClick)="navigateToEdit(product.id)"
+            />
+          </td>
+        </tr>
+      </ng-template>
     </p-table>
   }
 </div>
@@ -160,12 +146,8 @@
 >
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
-      <span class="font-semibold ff-text-primary text-base"
-        >Nuevo Producto</span
-      >
-      <span class="text-sm ff-text-muted font-normal"
-        >Registra un producto en el inventario</span
-      >
+      <span class="font-semibold ff-text-primary text-base">Nuevo Producto</span>
+      <span class="text-sm ff-text-muted font-normal">Registra un producto en el inventario</span>
     </div>
   </ng-template>
 
@@ -175,10 +157,7 @@
         <label class="auth-label">Código de Producto</label>
         <div
           class="flex items-center gap-2 border rounded-xl h-14 px-3"
-          style="
-            border-color: var(--ff-border);
-            background: var(--ff-secondary);
-          "
+          style="border-color: var(--ff-border); background: var(--ff-secondary)"
         >
           <i class="pi pi-hashtag ff-muted-icon text-sm flex-shrink-0"></i>
           <input
@@ -221,10 +200,7 @@
         <label class="auth-label">Marca</label>
         <div
           class="border rounded-xl h-14 px-3 flex items-center"
-          style="
-            border-color: var(--ff-border);
-            background: var(--ff-secondary);
-          "
+          style="border-color: var(--ff-border); background: var(--ff-secondary)"
         >
           <input
             formControlName="marca"
@@ -237,10 +213,7 @@
         <label class="auth-label">Modelo</label>
         <div
           class="border rounded-xl h-14 px-3 flex items-center"
-          style="
-            border-color: var(--ff-border);
-            background: var(--ff-secondary);
-          "
+          style="border-color: var(--ff-border); background: var(--ff-secondary)"
         >
           <input
             formControlName="modelo"
@@ -285,10 +258,7 @@
         <label class="auth-label">Stock Inicial</label>
         <div
           class="flex items-center gap-2 border rounded-xl h-14 px-3"
-          style="
-            border-color: var(--ff-border);
-            background: var(--ff-secondary);
-          "
+          style="border-color: var(--ff-border); background: var(--ff-secondary)"
         >
           <i class="pi pi-box ff-muted-icon text-sm flex-shrink-0"></i>
           <input
@@ -309,8 +279,6 @@
           optionValue="value"
           [filter]="estadoOptions.length > 10"
           filterBy="label"
-
-
           appendTo="body"
           styleClass="w-full h-14 rounded-xl flex items-center"
         >
@@ -341,6 +309,7 @@
         severity="primary"
         styleClass="h-11 px-5 rounded-xl"
         [disabled]="isCreateDisabled"
+        [loading]="saving"
         (onClick)="saveProduct()"
       />
     </div>

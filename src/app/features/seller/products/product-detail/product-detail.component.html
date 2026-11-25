@@ -4,11 +4,7 @@
 <div class="p-4">
   <!-- Back + breadcrumb -->
   <div class="flex items-center gap-3 mb-5">
-    <a
-      class="prod-action-link flex items-center gap-1"
-      (click)="goBack()"
-      style="cursor: pointer"
-    >
+    <a class="prod-action-link flex items-center gap-1" (click)="goBack()" style="cursor: pointer">
       <i class="pi pi-arrow-left text-sm"></i> Productos
     </a>
     @if (product) {
@@ -93,10 +89,7 @@
             @if (product.categoryName) {
               <span
                 class="ff-badge"
-                style="
-                  background: rgba(79, 110, 247, 0.12);
-                  color: var(--ff-accent);
-                "
+                style="background: rgba(79, 110, 247, 0.12); color: var(--ff-accent)"
               >
                 {{ product.categoryName }}
               </span>
@@ -104,10 +97,7 @@
             @if (product.brandName) {
               <span
                 class="ff-badge"
-                style="
-                  background: rgba(100, 116, 139, 0.15);
-                  color: var(--ff-text-secondary);
-                "
+                style="background: rgba(100, 116, 139, 0.15); color: var(--ff-text-secondary)"
               >
                 {{ product.brandName }}
               </span>
@@ -131,10 +121,7 @@
                 style="color: var(--ff-text-muted)"
                 >Modelo</span
               >
-              <p
-                class="ff-mono text-sm mt-0.5"
-                style="color: var(--ff-text-secondary)"
-              >
+              <p class="ff-mono text-sm mt-0.5" style="color: var(--ff-text-secondary)">
                 {{ product.model }}
               </p>
             </div>
@@ -145,10 +132,10 @@
               class="ff-badge"
               [class.ff-badge--activo]="product.status === 'ACTIVE'"
               [class.ff-badge--inactivo]="product.status !== 'ACTIVE'"
-              >{{ product.status === "ACTIVE" ? "Activo" : "Inactivo" }}</span
+              >{{ product.status === 'ACTIVE' ? 'Activo' : 'Inactivo' }}</span
             >
             <span class="text-xs" style="color: var(--ff-text-muted)">
-              Alta: {{ product.createdAt | date: "dd/MM/yyyy HH:mm" }}
+              Alta: {{ product.createdAt | date: 'dd/MM/yyyy HH:mm' }}
             </span>
           </div>
         </div>
@@ -168,11 +155,9 @@
                 style="color: var(--ff-text-muted)"
                 >Disponibles</span
               >
-              <span
-                class="text-3xl font-black ff-mono"
-                style="color: var(--ff-success)"
-                >{{ product.availableCount }}</span
-              >
+              <span class="text-3xl font-black ff-mono" style="color: var(--ff-success)">{{
+                product.availableCount
+              }}</span>
             </div>
             <div class="flex flex-col">
               <span
@@ -180,11 +165,9 @@
                 style="color: var(--ff-text-muted)"
                 >Reservadas</span
               >
-              <span
-                class="text-3xl font-black ff-mono"
-                style="color: var(--ff-warning)"
-                >{{ product.reservedCount }}</span
-              >
+              <span class="text-3xl font-black ff-mono" style="color: var(--ff-warning)">{{
+                product.reservedCount
+              }}</span>
             </div>
             <div class="flex flex-col">
               <span
@@ -192,17 +175,12 @@
                 style="color: var(--ff-text-muted)"
                 >Vendidas</span
               >
-              <span
-                class="text-3xl font-black ff-mono"
-                style="color: var(--ff-text-muted)"
-                >{{ product.soldCount }}</span
-              >
+              <span class="text-3xl font-black ff-mono" style="color: var(--ff-text-muted)">{{
+                product.soldCount
+              }}</span>
             </div>
           </div>
-          @if (
-            product.availableCount + product.reservedCount + product.soldCount >
-            0
-          ) {
+          @if (product.availableCount + product.reservedCount + product.soldCount > 0) {
             <div
               class="flex gap-0.5 h-2 rounded-full overflow-hidden"
               style="background: var(--ff-secondary)"
@@ -236,25 +214,16 @@
               <i class="pi pi-pencil"></i> Editar producto
             </button>
           }
-          <button
-            class="prod-action-btn prod-action-btn--accent"
-            (click)="navigateToVariants()"
-          >
+          <button class="prod-action-btn prod-action-btn--accent" (click)="navigateToVariants()">
             <i class="pi pi-sitemap"></i> Ver variantes →
           </button>
           @if (isAdmin) {
-            @if (product.status === "ACTIVE") {
-              <button
-                class="prod-action-btn prod-action-btn--danger"
-                (click)="confirmDeactivate()"
-              >
+            @if (product.status === 'ACTIVE') {
+              <button class="prod-action-btn prod-action-btn--danger" (click)="confirmDeactivate()">
                 <i class="pi pi-ban"></i> Desactivar producto
               </button>
             } @else {
-              <button
-                class="prod-action-btn prod-action-btn--success"
-                (click)="confirmActivate()"
-              >
+              <button class="prod-action-btn prod-action-btn--success" (click)="confirmActivate()">
                 <i class="pi pi-check-circle"></i> Activar producto
               </button>
             }
@@ -267,16 +236,11 @@
         <div class="ff-panel overflow-hidden">
           <div class="flex items-center justify-between px-5 pt-5 pb-3">
             <div class="flex items-center gap-3">
-              <span class="font-bold" style="color: var(--ff-text-primary)"
-                >Variantes</span
-              >
+              <span class="font-bold" style="color: var(--ff-text-primary)">Variantes</span>
               @if (product.variants.length > 0) {
                 <span
                   class="ff-badge"
-                  style="
-                    background: rgba(79, 110, 247, 0.18);
-                    color: var(--ff-accent);
-                  "
+                  style="background: rgba(79, 110, 247, 0.18); color: var(--ff-accent)"
                 >
                   {{ product.variants.length }} VARIANTES
                 </span>
@@ -294,7 +258,11 @@
           </div>
 
           @if (product.variants.length > 0) {
-            <p-table [value]="product.variants" styleClass="hidden md:block p-datatable-sm" data-cy="product-detail-variants-table">
+            <p-table
+              [value]="product.variants"
+              styleClass="hidden md:block p-datatable-sm"
+              data-cy="product-detail-variants-table"
+            >
               <ng-template pTemplate="header">
                 <tr>
                   <th>COLOR</th>
@@ -310,38 +278,29 @@
               <ng-template pTemplate="body" let-v>
                 <tr>
                   <td class="font-medium" style="color: var(--ff-text-primary)">
-                    {{ v.color ?? "—" }}
+                    {{ v.color ?? '—' }}
                   </td>
                   <td style="color: var(--ff-text-secondary)">
-                    {{ v.size ?? "—" }}
+                    {{ v.size ?? '—' }}
                   </td>
                   <td style="color: var(--ff-text-secondary)">
-                    {{ v.capacity ?? "—" }}
+                    {{ v.capacity ?? '—' }}
                   </td>
-                  <td
-                    class="text-right ff-mono font-bold"
-                    style="color: var(--ff-accent)"
-                  >
+                  <td class="text-right ff-mono font-bold" style="color: var(--ff-accent)">
                     {{ v.currentPrice | currencyArs: 2 }}
                   </td>
-                  <td
-                    class="text-center font-bold ff-mono"
-                    style="color: var(--ff-success)"
-                  >
-                    {{ v.availableCount ?? "—" }}
+                  <td class="text-center font-bold ff-mono" style="color: var(--ff-success)">
+                    {{ v.availableCount ?? '—' }}
                   </td>
-                  <td
-                    class="text-center ff-mono"
-                    style="color: var(--ff-text-muted)"
-                  >
-                    {{ v.reservedCount ?? "—" }}
+                  <td class="text-center ff-mono" style="color: var(--ff-text-muted)">
+                    {{ v.reservedCount ?? '—' }}
                   </td>
                   <td class="text-center">
                     <span
                       class="ff-badge"
                       [class.ff-badge--activo]="v.status === 'ACTIVE'"
                       [class.ff-badge--inactivo]="v.status !== 'ACTIVE'"
-                      >{{ v.status === "ACTIVE" ? "Activa" : "Inactiva" }}</span
+                      >{{ v.status === 'ACTIVE' ? 'Activa' : 'Inactiva' }}</span
                     >
                   </td>
                   <td>
@@ -357,7 +316,10 @@
               </ng-template>
             </p-table>
 
-            <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="product-detail-variants-mobile-list">
+            <div
+              class="flex flex-col gap-3 p-3 md:hidden"
+              data-cy="product-detail-variants-mobile-list"
+            >
               @for (v of product.variants; track v.id) {
                 <article
                   class="rounded-2xl border p-4"
@@ -366,7 +328,7 @@
                 >
                   <div class="flex items-start justify-between gap-3">
                     <p class="font-medium" style="color: var(--ff-text-primary)">
-                      {{ v.color ?? "—" }}
+                      {{ v.color ?? '—' }}
                       @if (v.size) {
                         · {{ v.size }}
                       }
@@ -378,7 +340,7 @@
                       class="ff-badge shrink-0"
                       [class.ff-badge--activo]="v.status === 'ACTIVE'"
                       [class.ff-badge--inactivo]="v.status !== 'ACTIVE'"
-                      >{{ v.status === "ACTIVE" ? "Activa" : "Inactiva" }}</span
+                      >{{ v.status === 'ACTIVE' ? 'Activa' : 'Inactiva' }}</span
                     >
                   </div>
                   <p class="mt-1 ff-mono font-bold" style="color: var(--ff-accent)">
@@ -386,12 +348,20 @@
                   </p>
                   <div class="mt-3 grid grid-cols-2 gap-2 text-center text-sm">
                     <div class="rounded-xl border p-2" style="border-color: var(--ff-stroke)">
-                      <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Disponibles</p>
-                      <p class="font-bold ff-mono" style="color: var(--ff-success)">{{ v.availableCount }}</p>
+                      <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">
+                        Disponibles
+                      </p>
+                      <p class="font-bold ff-mono" style="color: var(--ff-success)">
+                        {{ v.availableCount }}
+                      </p>
                     </div>
                     <div class="rounded-xl border p-2" style="border-color: var(--ff-stroke)">
-                      <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Reservadas</p>
-                      <p class="font-bold ff-mono" style="color: var(--ff-text-muted)">{{ v.reservedCount }}</p>
+                      <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">
+                        Reservadas
+                      </p>
+                      <p class="font-bold ff-mono" style="color: var(--ff-text-muted)">
+                        {{ v.reservedCount }}
+                      </p>
                     </div>
                   </div>
                   <a
@@ -405,34 +375,28 @@
               }
             </div>
             @if (product.variants.length > 0) {
-              <div
-                class="px-5 py-3"
-                style="border-top: 1px solid var(--ff-border)"
-              >
-                <span
-                  class="text-xs ff-mono"
-                  style="color: var(--ff-text-muted)"
-                >
+              <div class="px-5 py-3" style="border-top: 1px solid var(--ff-border)">
+                <span class="text-xs ff-mono" style="color: var(--ff-text-muted)">
                   Rango de precio:&nbsp;
-                  <span style="color: var(--ff-accent)">
-                    {{ product.variants[0].currentPrice | currencyArs: 2 }}
-                    @if (product.variants.length > 1) {
-                      —
-                      {{
-                        product.variants[product.variants.length - 1]
-                          .currentPrice | currencyArs: 2
-                      }}
-                    }
-                  </span>
+                  @if (priceRange; as range) {
+                    <span data-cy="product-price-range" style="color: var(--ff-accent)">
+                      {{ range.min | currencyArs: 2 }}
+                      @if (range.max !== range.min) {
+                        —
+                        {{ range.max | currencyArs: 2 }}
+                      }
+                    </span>
+                  }
                 </span>
               </div>
             }
-            <ff-back-top-fab [itemCount]="product.variants.length" dataCy="product-detail-back-top-action" />
+            <ff-back-top-fab
+              [itemCount]="product.variants.length"
+              dataCy="product-detail-back-top-action"
+            />
           } @else {
             <div class="p-8 text-center">
-              <p class="text-sm" style="color: var(--ff-text-muted)">
-                Sin variantes registradas.
-              </p>
+              <p class="text-sm" style="color: var(--ff-text-muted)">Sin variantes registradas.</p>
             </div>
           }
         </div>
