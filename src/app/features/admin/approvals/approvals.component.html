@@ -151,6 +151,14 @@
           </div>
         }
       </div>
+    } @else if (loadError) {
+      <div data-cy="admin-approvals-error">
+        <app-error-state
+          message="No se pudieron cargar las aprobaciones pendientes."
+          [showRetry]="true"
+          (retry)="refresh()"
+        />
+      </div>
     } @else {
       <div class="admin-desktop-only">
         @if (filteredApprovals.length === 0) {

@@ -1,22 +1,16 @@
-import {
-  Component,
-  Input,
-  OnChanges,
-  OnDestroy,
-  SimpleChanges,
-  inject,
-} from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
 import { Subject } from 'rxjs';
-import { catchError, combineLatest, of, takeUntil } from 'rxjs';
+import { combineLatest, takeUntil } from 'rxjs';
+import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { ReportsService } from '../../reports/reports.service';
 import { DashboardChartsService } from '../services/dashboard-charts.service';
 
 @Component({
   selector: 'app-dashboard-charts',
   standalone: true,
-  imports: [ChartModule, SkeletonModule],
+  imports: [ChartModule, SkeletonModule, ErrorStateComponent],
   templateUrl: './dashboard-charts.component.html',
 })
 export class DashboardChartsComponent implements OnChanges, OnDestroy {
@@ -27,12 +21,14 @@ export class DashboardChartsComponent implements OnChanges, OnDestroy {
   @Input() monthlyDailyData: { day: string; total: number }[] | null = null;
 
   loadingCharts = true;
-  chartWeeklyData: any;
-  chartWeeklyOptions: any;
-  chartCollectorsData: any = { labels: [], datasets: [] };
-  chartCollectorsOptions: any;
-  chartSellersData: any = { labels: [], datasets: [] };
-  chartSellersOptions: any;
+  /** True cuando falló la carga de reportes: se muestra error con reintento en vez de gráficos vacíos. */
+  errorCharts = false;
+  chartWeeklyData?: object;
+  chartWeeklyOptions?: object;
+  chartCollectorsData: object = { labels: [], datasets: [] };
+  chartCollectorsOptions?: object;
+  chartSellersData: object = { labels: [], datasets: [] };
+  chartSellersOptions?: object;
 
   private readonly reportsSvc = inject(ReportsService);
   private readonly chartsSvc = inject(DashboardChartsService);
@@ -51,37 +47,37 @@ export class DashboardChartsComponent implements OnChanges, OnDestroy {
 
   /**
    * Carga los datos de cobradores y vendedores y construye los tres gráficos.
+   * Si algún reporte falla, muestra el estado de error con reintento en lugar de gráficos vacíos.
    */
-  private loadCharts(): void {
+  loadCharts(): void {
     this.loadingCharts = true;
+    this.errorCharts = false;
 
     const toLocalDateString = (date: Date): string => {
-      const localDate = new Date(
-        date.getTime() - date.getTimezoneOffset() * 60000,
-      );
+      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
       return localDate.toISOString().split('T')[0];
     };
 
     const today = new Date();
     const todayDate = toLocalDateString(today);
-    const firstOfMonth = toLocalDateString(
-      new Date(today.getFullYear(), today.getMonth(), 1),
-    );
+    const firstOfMonth = toLocalDateString(new Date(today.getFullYear(), today.getMonth(), 1));
 
     combineLatest([
-      this.reportsSvc
-        .getCollectorsReport({ dateFrom: todayDate, dateTo: todayDate }, true)
-        .pipe(catchError(() => of([]))),
-      this.reportsSvc
-        .getSellersReport({ dateFrom: firstOfMonth, dateTo: todayDate }, true)
-        .pipe(catchError(() => of([]))),
+      this.reportsSvc.getCollectorsReport({ dateFrom: todayDate, dateTo: todayDate }, true),
+      this.reportsSvc.getSellersReport({ dateFrom: firstOfMonth, dateTo: todayDate }, true),
     ])
       .pipe(takeUntil(this.destroy$))
-      .subscribe(([collectors, sellers]) => {
-        this.buildWeeklyChart(this.monthlyDailyData ?? []);
-        this.buildCollectorsChart(Array.isArray(collectors) ? collectors : []);
-        this.buildSellersChart(Array.isArray(sellers) ? sellers : []);
-        this.loadingCharts = false;
+      .subscribe({
+        next: ([collectors, sellers]) => {
+          this.buildWeeklyChart(this.monthlyDailyData ?? []);
+          this.buildCollectorsChart(Array.isArray(collectors) ? collectors : []);
+          this.buildSellersChart(Array.isArray(sellers) ? sellers : []);
+          this.loadingCharts = false;
+        },
+        error: () => {
+          this.errorCharts = true;
+          this.loadingCharts = false;
+        },
       });
   }
 
@@ -99,9 +95,7 @@ export class DashboardChartsComponent implements OnChanges, OnDestroy {
     this.chartCollectorsOptions = config.options;
   }
 
-  private buildSellersChart(
-    sellers: { sellerName: string; totalAmount: number }[],
-  ): void {
+  private buildSellersChart(sellers: { sellerName: string; totalAmount: number }[]): void {
     const config = this.chartsSvc.buildSellersChart(sellers);
     this.chartSellersData = config.data;
     this.chartSellersOptions = config.options;

@@ -19,4 +19,19 @@ describe('ErrorStateComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('no muestra Reintentar por defecto', () => {
+    expect(fixture.nativeElement.querySelector('[data-cy="error-state-retry"]')).toBeNull();
+  });
+
+  it('emite retry al pulsar Reintentar', () => {
+    fixture.componentRef.setInput('showRetry', true);
+    fixture.detectChanges();
+    const spy = spyOn(component.retry, 'emit');
+    const btn = fixture.nativeElement.querySelector(
+      '[data-cy="error-state-retry"] button',
+    ) as HTMLButtonElement;
+    btn.click();
+    expect(spy).toHaveBeenCalled();
+  });
 });

@@ -1,4 +1,13 @@
-<div class="db-analysis-row">
+@if (errorCharts) {
+  <div class="db-chart-panel" data-cy="dashboard-charts-error">
+    <app-error-state
+      message="No se pudieron cargar los gráficos. Los datos pueden no estar actualizados."
+      [showRetry]="true"
+      (retry)="loadCharts()"
+    />
+  </div>
+}
+<div class="db-analysis-row" [class.hidden]="errorCharts">
   <!-- Weekly collection -->
   <div class="db-chart-panel">
     <div class="db-panel__header">

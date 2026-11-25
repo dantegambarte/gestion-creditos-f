@@ -1,11 +1,4 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -20,7 +13,7 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { Subject, interval, of } from 'rxjs';
-import { catchError, finalize, switchMap, takeUntil } from 'rxjs/operators';
+import { finalize, switchMap, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
@@ -123,9 +116,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   /** Destino del ingreso: caja operativa de la jornada o Caja General directa. */
   readonly manualIncomeCriteria = signal<'DAILY' | 'COMPANY'>('DAILY');
   readonly manualIncomeAmount = signal<number | null>(null);
-  readonly manualIncomePaymentMethod = signal<'CASH' | 'TRANSFER' | 'MIXED'>(
-    'CASH',
-  );
+  readonly manualIncomePaymentMethod = signal<'CASH' | 'TRANSFER' | 'MIXED'>('CASH');
   readonly manualIncomeCashAmount = signal<number | null>(null);
   readonly manualIncomeTransferAmount = signal<number | null>(null);
   readonly manualIncomeDescription = signal('');
@@ -182,46 +173,37 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   });
 
   /** Total de cobros (pagos + enganches + ingresos manuales), separado por método. */
-  readonly dailyIncomeTotals = computed<{ cash: number; transfer: number }>(
-    () => {
-      const snap = this.sessionSnapshot();
-      if (!snap) return { cash: 0, transfer: 0 };
-      const c = snap.collections;
-      return {
-        cash: c.payments.cash + c.down_payments.cash + c.manual_incomes.cash,
-        transfer:
-          c.payments.transfer +
-          c.down_payments.transfer +
-          c.manual_incomes.transfer,
-      };
-    },
-  );
+  readonly dailyIncomeTotals = computed<{ cash: number; transfer: number }>(() => {
+    const snap = this.sessionSnapshot();
+    if (!snap) return { cash: 0, transfer: 0 };
+    const c = snap.collections;
+    return {
+      cash: c.payments.cash + c.down_payments.cash + c.manual_incomes.cash,
+      transfer: c.payments.transfer + c.down_payments.transfer + c.manual_incomes.transfer,
+    };
+  });
 
   /** Total de egresos (gastos + comisiones), separado por método. */
-  readonly dailyOutflowTotals = computed<{ cash: number; transfer: number }>(
-    () => {
-      const snap = this.sessionSnapshot();
-      if (!snap) return { cash: 0, transfer: 0 };
-      const o = snap.outflows;
-      return {
-        cash: o.expenses.cash + o.commissions.cash,
-        transfer: o.expenses.transfer + o.commissions.transfer,
-      };
-    },
-  );
+  readonly dailyOutflowTotals = computed<{ cash: number; transfer: number }>(() => {
+    const snap = this.sessionSnapshot();
+    if (!snap) return { cash: 0, transfer: 0 };
+    const o = snap.outflows;
+    return {
+      cash: o.expenses.cash + o.commissions.cash,
+      transfer: o.expenses.transfer + o.commissions.transfer,
+    };
+  });
 
   /** Delta neto de conversiones internas efectivo↔transferencia de la jornada. */
-  readonly dailyConversions = computed<{ cash: number; transfer: number }>(
-    () => {
-      const snap = this.sessionSnapshot();
-      return snap
-        ? {
-            cash: snap.conversions.cash_delta,
-            transfer: snap.conversions.transfer_delta,
-          }
-        : { cash: 0, transfer: 0 };
-    },
-  );
+  readonly dailyConversions = computed<{ cash: number; transfer: number }>(() => {
+    const snap = this.sessionSnapshot();
+    return snap
+      ? {
+          cash: snap.conversions.cash_delta,
+          transfer: snap.conversions.transfer_delta,
+        }
+      : { cash: 0, transfer: 0 };
+  });
 
   readonly estimatedBalance = computed(() => {
     const e = this.dailyExpected();
@@ -232,9 +214,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * Dinero contado en el último arqueo de cierre de la caja activa.
    * Null si la caja sigue OPEN sin arquear todavía.
    */
-  readonly cashCounted = computed<number | null>(
-    () => this.activeSession()?.cash_counted ?? null,
-  );
+  readonly cashCounted = computed<number | null>(() => this.activeSession()?.cash_counted ?? null);
 
   /**
    * Diferencia entre lo contado y el saldo estimado. Null si no hay arqueo
@@ -247,9 +227,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   });
 
   /** Tono visual de la diferencia: cuadrada (success), falta (danger), sobra (warning) o sin arqueo (neutral). */
-  readonly differenceTone = computed<
-    'neutral' | 'success' | 'danger' | 'warning'
-  >(() => {
+  readonly differenceTone = computed<'neutral' | 'success' | 'danger' | 'warning'>(() => {
     const diff = this.currentDifference();
     if (diff === null) return 'neutral';
     if (diff === 0) return 'success';
@@ -299,9 +277,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       return this.generalCashBalance() ?? 0;
     }
     const expected = this.dailyExpected();
-    return this.conversionSourceMethod() === 'CASH'
-      ? expected.cash
-      : expected.transfer;
+    return this.conversionSourceMethod() === 'CASH' ? expected.cash : expected.transfer;
   });
 
   /** True si el monto ingresado supera el disponible del origen seleccionado. */
@@ -327,8 +303,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     const method = this.movementMethodFilter();
     return this.movements().filter((movement) => {
       const matchesType = type === 'TODOS' || movement.tipo === type;
-      const matchesMethod =
-        method === 'TODOS' || movement.metodoPago.includes(method);
+      const matchesMethod = method === 'TODOS' || movement.metodoPago.includes(method);
       return matchesType && matchesMethod;
     });
   });
@@ -344,17 +319,11 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   });
 
   /** True si la jornada quedó lista para el cierre formal (sin cajas OPEN/PENDING). */
-  private isBusinessDayReadyToClose(
-    businessDay: ActiveBusinessDay | null,
-  ): boolean {
+  private isBusinessDayReadyToClose(businessDay: ActiveBusinessDay | null): boolean {
     if (!businessDay) return false;
     if (businessDay.status !== 'READY_TO_CLOSE') return false;
     const counts = businessDay.session_counts;
-    return (
-      counts.open_count === 0 &&
-      counts.pending_count === 0 &&
-      counts.total_count > 0
-    );
+    return counts.open_count === 0 && counts.pending_count === 0 && counts.total_count > 0;
   }
 
   ngOnInit(): void {
@@ -474,9 +443,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * Avanza una página en la vista expandida sin exceder el total disponible.
    */
   nextMovementPage(): void {
-    this.movementPage.set(
-      Math.min(this.movementPage() + 1, this.movementTotalPages()),
-    );
+    this.movementPage.set(Math.min(this.movementPage() + 1, this.movementTotalPages()));
   }
 
   /**
@@ -499,8 +466,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           this.msg.add({
             severity: 'error',
             summary: 'No se pudieron cargar categorías',
-            detail:
-              err.message || 'Intentá nuevamente antes de registrar un gasto.',
+            detail: err.message || 'Intentá nuevamente antes de registrar un gasto.',
           });
         },
       });
@@ -534,9 +500,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     const amountTransfer = this.manualIncomeTransferAmount() ?? 0;
     const description = this.manualIncomeDescription().trim();
     if (criteria === 'DAILY' && !session) {
-      this.manualIncomeValidationError.set(
-        'No hay una caja abierta para imputar el ingreso.',
-      );
+      this.manualIncomeValidationError.set('No hay una caja abierta para imputar el ingreso.');
       return;
     }
     if (!amount || amount <= 0) {
@@ -547,8 +511,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       this.manualIncomePaymentMethod() === 'MIXED' &&
       (amountCash <= 0 ||
         amountTransfer <= 0 ||
-        Math.round((amountCash + amountTransfer) * 100) !==
-          Math.round(amount * 100))
+        Math.round((amountCash + amountTransfer) * 100) !== Math.round(amount * 100))
     ) {
       this.manualIncomeValidationError.set(
         'El efectivo y la transferencia deben ser mayores a 0 y sumar el monto total.',
@@ -556,9 +519,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       return;
     }
     if (description.length < 3) {
-      this.manualIncomeValidationError.set(
-        'Ingresá un concepto de al menos 3 caracteres.',
-      );
+      this.manualIncomeValidationError.set('Ingresá un concepto de al menos 3 caracteres.');
       return;
     }
 
@@ -583,9 +544,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           })
         : this.service.createManualIncome(session!.id, {
             amount,
-            ...(paymentMethod === 'MIXED'
-              ? { amountCash, amountTransfer }
-              : { paymentMethod }),
+            ...(paymentMethod === 'MIXED' ? { amountCash, amountTransfer } : { paymentMethod }),
             description,
             receiptReference: this.manualIncomeReference().trim() || undefined,
           });
@@ -612,8 +571,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           this.msg.add({
             severity: 'error',
             summary: 'No se pudo registrar',
-            detail:
-              err.message || 'Ocurrió un error al registrar el ingreso manual.',
+            detail: err.message || 'Ocurrió un error al registrar el ingreso manual.',
           });
         },
       });
@@ -651,17 +609,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     this.conversionNotes.set('');
     this.conversionValidationError.set('');
     this.showConversionDialog.set(true);
-
-    this.service
-      .getCashAccounts()
-      .pipe(
-        catchError(() => of([])),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((accounts) => {
-        const general = accounts.find((a) => a.type === 'GENERAL_CASH');
-        this.generalCashBalance.set(general?.current_balance ?? null);
-      });
+    this.loadGeneralCashBalance();
   }
 
   /**
@@ -683,9 +631,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       return;
     }
     if (amount > this.conversionSourceAvailable()) {
-      this.conversionValidationError.set(
-        'El monto supera el disponible del método seleccionado.',
-      );
+      this.conversionValidationError.set('El monto supera el disponible del método seleccionado.');
       return;
     }
     if (!this.canSubmitConversion()) return;
@@ -719,8 +665,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
           this.msg.add({
             severity: 'error',
             summary: 'No se pudo convertir',
-            detail:
-              err.message || 'Ocurrió un error al registrar la conversión.',
+            detail: err.message || 'Ocurrió un error al registrar la conversión.',
           });
         },
       });
@@ -731,10 +676,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * @param tipo - Tipo unificado devuelto por el backend.
    */
   movementTypeClass(tipo: CashRegisterMovementType): string {
-    if (tipo === 'INGRESO')
-      return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300';
-    if (tipo === 'EGRESO')
-      return 'border-red-400/30 bg-red-500/10 text-red-300';
+    if (tipo === 'INGRESO') return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300';
+    if (tipo === 'EGRESO') return 'border-red-400/30 bg-red-500/10 text-red-300';
     return 'border-blue-400/30 bg-blue-500/10 text-blue-300';
   }
 
@@ -843,17 +786,28 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
       });
   }
 
-  /** Carga el saldo actual de Caja General (tesorería consolidada). */
+  /**
+   * Carga el saldo actual de Caja General (tesorería consolidada).
+   * Si falla, deja el saldo como desconocido (null, nunca 0) y avisa con un toast.
+   */
   loadGeneralCashBalance(): void {
     this.service
       .getCashAccounts()
-      .pipe(
-        catchError(() => of([])),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((accounts) => {
-        const general = accounts.find((a) => a.type === 'GENERAL_CASH');
-        this.generalCashBalance.set(general?.current_balance ?? null);
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (accounts) => {
+          const general = accounts.find((a) => a.type === 'GENERAL_CASH');
+          this.generalCashBalance.set(general?.current_balance ?? null);
+        },
+        error: () => {
+          this.generalCashBalance.set(null);
+          this.msg.add({
+            severity: 'warn',
+            summary: 'Saldo no disponible',
+            detail: 'No se pudo cargar el saldo de Caja General. Reintentá en unos segundos.',
+            life: 5000,
+          });
+        },
       });
   }
 

@@ -29,6 +29,7 @@ import { DateService } from '../../../core/services/date.service';
 import { Credit, CreditType } from '../../seller/models/credit.model';
 import { CreditsService } from '../../seller/operations/credits.service';
 import { CashStatus, CashStatusService } from '../cash-register/cash-status.service';
+import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { UsersService } from '../users/users.service';
 
@@ -55,6 +56,7 @@ import { UsersService } from '../users/users.service';
     CheckboxModule,
     MessageModule,
     FfBackTopFabComponent,
+    ErrorStateComponent,
   ],
   providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './approvals.component.html',
@@ -71,6 +73,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 
   approvals: Credit[] = [];
   loading = true;
+  /** True cuando falló la carga de pendientes: evita mostrar "no hay aprobaciones" ante un error. */
+  loadError = false;
   processingId: string | null = null;
   cashStatus: CashStatus = 'OPEN';
 
@@ -158,10 +162,12 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga las aprobaciones pendientes desde el servicio. Mientras se cargan, se muestra un indicador de carga. Si ocurre un error, se oculta el indicador y se mantiene la lista anterior (si la hay).
+   * Carga las aprobaciones pendientes desde el servicio. Si falla, muestra el estado de error con reintento
+   * en lugar de una lista vacía.
    */
   private loadApprovals(): void {
     this.loading = true;
+    this.loadError = false;
     this.credits
       .list({ status: 'PENDING_APPROVAL' })
       .pipe(takeUntil(this.destroy$))
@@ -172,6 +178,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
           this.loading = false;
         },
         error: () => {
+          this.approvals = [];
+          this.loadError = true;
           this.loading = false;
         },
       });

@@ -273,4 +273,19 @@ describe('ApprovalsComponent', () => {
     fixture.destroy();
     expect(spy).toHaveBeenCalled();
   });
+
+  it('con 500 muestra estado de error con reintento y con 200 vuelve a la lista', () => {
+    creditsSvc.list.and.returnValue(throwError(() => ({ status: 500 })));
+    const f = TestBed.createComponent(ApprovalsComponent);
+    f.detectChanges();
+    expect(f.componentInstance.loadError).toBeTrue();
+    const el: HTMLElement = f.nativeElement;
+    expect(el.querySelector('[data-cy="admin-approvals-error"]')).not.toBeNull();
+    creditsSvc.list.and.returnValue(of([...MOCK_CREDITS]));
+    (el.querySelector('[data-cy="error-state-retry"] button') as HTMLButtonElement).click();
+    f.detectChanges();
+    expect(f.componentInstance.loadError).toBeFalse();
+    expect(f.componentInstance.approvals.length).toBe(2);
+    expect(el.querySelector('[data-cy="admin-approvals-error"]')).toBeNull();
+  });
 });
