@@ -12,7 +12,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { Subject, catchError, of, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { AppError } from '../../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
@@ -20,14 +20,10 @@ import { HeaderService } from '../../../../core/services/header.service';
 import { BackButtonComponent } from '../../../../shared/components/back-button/back-button.component';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
-import { CashRegisterService } from '../../../admin/cash-register/cash-register.service';
+import { CashStatusService } from '../../../admin/cash-register/cash-status.service';
 import { CreditPayment } from '../../../collector/models/payment.model';
 import { PaymentsService } from '../../../collector/payments.service';
-import {
-  CreditDetail,
-  CreditStatus,
-  CreditUnit,
-} from '../../models/credit.model';
+import { CreditDetail, CreditStatus, CreditUnit } from '../../models/credit.model';
 import { Installment } from '../../models/installment.model';
 import { CreditsService } from '../credits.service';
 import { ApproveDialogComponent } from './approve-dialog/approve-dialog.component';
@@ -78,7 +74,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   private readonly paymentsService = inject(PaymentsService);
   private readonly location = inject(Location);
   private readonly header = inject(HeaderService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly cashStatusSvc = inject(CashStatusService);
   readonly auth = inject(AuthServiceBase);
   private readonly msg = inject(MessageService);
 
@@ -88,6 +84,13 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   loading = false;
   error: AppError | null = null;
   isCashClosed = false;
+  /** No se pudo verificar el estado de caja (falla cerrado, distinto de cerrada). */
+  isCashUnknown = false;
+
+  /** Indica si la aprobación queda bloqueada por caja cerrada o desconocida. */
+  get isApproveBlocked(): boolean {
+    return this.isCashClosed || this.isCashUnknown;
+  }
 
   // ── Settlement dialog ─────────────────────────────────────────
   showSettlementDialog = false;
@@ -151,10 +154,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
    * @returns {string} Etiqueta visible para el bloque financiero.
    */
   get initialPaymentLabel(): string {
-    if (
-      this.credit?.prepaidInstallments &&
-      this.credit.prepaidInstallments > 0
-    ) {
+    if (this.credit?.prepaidInstallments && this.credit.prepaidInstallments > 0) {
       return 'Cuotas adelantadas';
     }
     return 'Enganche';
@@ -233,11 +233,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   get totalToReturn(): number {
     if (!this.credit?.installments) return 0;
     return this.credit.installments
-      .filter(
-        (inst) =>
-          inst.status !== 'PLAN_CHANGE_CANCELLED' &&
-          inst.status !== 'WRITTEN_OFF',
-      )
+      .filter((inst) => inst.status !== 'PLAN_CHANGE_CANCELLED' && inst.status !== 'WRITTEN_OFF')
       .reduce((sum, inst) => sum + inst.amountDue, 0);
   }
 
@@ -272,9 +268,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   /** Un crédito REFINANCED o SETTLED no acepta más acciones sobre sus cuotas. */
   get canActOnInstallments(): boolean {
     return (
-      this.isAdmin &&
-      this.credit?.status !== 'REFINANCED' &&
-      this.credit?.status !== 'SETTLED'
+      this.isAdmin && this.credit?.status !== 'REFINANCED' && this.credit?.status !== 'SETTLED'
     );
   }
 
@@ -308,10 +302,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.header.set([
-      { label: 'Operaciones', route: '/seller/operations' },
-      { label: 'Detalle' },
-    ]);
+    this.header.set([{ label: 'Operaciones', route: '/seller/operations' }, { label: 'Detalle' }]);
     this.checkCashRegisterStatus();
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.credit = null;
@@ -326,18 +317,16 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Verifica el estado de cierre de caja del día actual. Solo ADMIN puede
-   * consultar el dashboard de caja (403 para el resto), y `isCashClosed` solo
-   * afecta acciones de admin, así que se omite la llamada para otros roles.
+   * Verifica si hay caja operativa abierta (V4). Solo ADMIN puede consultar
+   * cajas, y `isCashClosed` solo afecta acciones de admin, así que se omite
+   * para otros roles. Un error de consulta bloquea igual que caja cerrada.
    */
   private checkCashRegisterStatus(): void {
     if (!this.isAdmin) return;
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
-      });
+    this.cashStatusSvc.resolve().subscribe((status) => {
+      this.isCashClosed = status === 'CLOSED';
+      this.isCashUnknown = status === 'UNKNOWN';
+    });
   }
 
   /**
@@ -350,10 +339,8 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     const reportTab = this.route.snapshot.queryParamMap.get('tab');
     const dateFrom = this.route.snapshot.queryParamMap.get('dateFrom');
     const dateTo = this.route.snapshot.queryParamMap.get('dateTo');
-    const businessDayId =
-      this.route.snapshot.queryParamMap.get('businessDayId');
-    const cashSessionId =
-      this.route.snapshot.queryParamMap.get('cashSessionId');
+    const businessDayId = this.route.snapshot.queryParamMap.get('businessDayId');
+    const cashSessionId = this.route.snapshot.queryParamMap.get('cashSessionId');
     if (returnTo === 'admin-collections') {
       this.router.navigate(['/admin/collections'], {
         queryParams: {
@@ -537,9 +524,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
    * menos una). Solo se permite un cambio de plan por crédito.
    */
   get planAlreadyChanged(): boolean {
-    return !!this.credit?.installments.some(
-      (i) => i.status === 'PLAN_CHANGE_CANCELLED',
-    );
+    return !!this.credit?.installments.some((i) => i.status === 'PLAN_CHANGE_CANCELLED');
   }
 
   /** Abre el diálogo de cambio de plan (simula al abrir). */

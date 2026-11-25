@@ -25,10 +25,8 @@ import { AppError } from '../../../../core/models/app-error';
 import { DateService } from '../../../../core/services/date.service';
 import { FormatService } from '../../../../core/services/format.service';
 import { CashRegisterService } from '../../cash-register/cash-register.service';
-import {
-  CashSession,
-  CashSessionSnapshot,
-} from '../../models/cash-session.model';
+import { CashStatusService } from '../../cash-register/cash-status.service';
+import { CashSession, CashSessionSnapshot } from '../../models/cash-session.model';
 import { ExpenseCategory } from '../../models/interface/expenses';
 import { ExpenseCategoryManagerComponent } from '../expense-category-manager/expense-category-manager.component';
 import { Expense, ExpenseCreatePayload } from '../expense.model';
@@ -54,6 +52,7 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();
   private readonly svc = inject(ExpensesService);
   private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly cashStatusSvc = inject(CashStatusService);
   private readonly msg = inject(MessageService);
   readonly fmt = inject(FormatService);
   private readonly dateSvc = inject(DateService);
@@ -171,10 +170,7 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
         this.resetForm();
       }
     }
-    if (
-      changes['activeSessionOverride'] ||
-      changes['sessionSnapshotOverride']
-    ) {
+    if (changes['activeSessionOverride'] || changes['sessionSnapshotOverride']) {
       this.applySessionOverride();
     }
     if (changes['generalCashBalanceOverride']) {
@@ -240,46 +236,44 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
 
   /**
    * Envía el formulario: crea o actualiza según el modo activo.
-   * Verifica que la caja esté abierta antes de proceder.
+   * Crear o editar un gasto de la caja del día exige caja operativa abierta
+   * (falla cerrado ante error); Caja General (COMPANY) no la consulta.
    */
   submitCreate(): void {
-    if (
-      !this.createAmount ||
-      this.createAmount <= 0 ||
-      !this.createDescription.trim()
-    )
-      return;
+    if (!this.createAmount || this.createAmount <= 0 || !this.createDescription.trim()) return;
 
     this.saving = true;
     this.createError = '';
 
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((dashboard) => {
-        const isCashClosed = dashboard?.isClosed ?? false;
+    // Caja General (COMPANY) no depende de la caja operativa del día.
+    if (this.createSource === 'COMPANY') {
+      this.processSubmit();
+      return;
+    }
 
-        if (isCashClosed) {
+    const action = this.isEditMode ? 'editar gastos' : 'crear gastos';
+    this.cashStatusSvc
+      .checkAction(action, `No puedes ${action} de la caja del día. No hay caja operativa abierta.`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((block) => {
+        if (block) {
           this.saving = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes crear gastos. La caja del día está CERRADA.',
-            life: 5000,
-          });
+          this.msg.add(block);
           return;
         }
-
-        if (this.isEditMode) {
-          this.processUpdateExpense();
-          return;
-        }
-
-        this.processCreateExpense();
+        this.processSubmit();
       });
+  }
+
+  /**
+   * Ejecuta la actualización o la creación según el modo activo.
+   */
+  private processSubmit(): void {
+    if (this.isEditMode) {
+      this.processUpdateExpense();
+      return;
+    }
+    this.processCreateExpense();
   }
 
   /**
@@ -331,10 +325,7 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
       paymentMethod: this.createPaymentMethod,
       expenseDate: this.createExpenseDate || undefined,
     };
-    if (
-      this.createPaymentMethod === 'TRANSFER' &&
-      this.createTransferRef.trim()
-    ) {
+    if (this.createPaymentMethod === 'TRANSFER' && this.createTransferRef.trim()) {
       payload.transferReference = this.createTransferRef.trim();
     }
     if (this.createCategoryId) {
@@ -386,10 +377,7 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
       paymentMethod: this.createPaymentMethod,
       expenseDate: this.createExpenseDate || undefined,
     };
-    if (
-      this.createPaymentMethod === 'TRANSFER' &&
-      this.createTransferRef.trim()
-    ) {
+    if (this.createPaymentMethod === 'TRANSFER' && this.createTransferRef.trim()) {
       payload.transferReference = this.createTransferRef.trim();
     }
     if (this.createCategoryId) {
@@ -425,8 +413,7 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
     this.createPaymentMethod = expense.paymentMethod;
     this.createTransferRef = expense.transferReference ?? '';
     this.createCategoryId = expense.categoryId;
-    this.createExpenseDate =
-      (expense.expenseDate || '').split('T')[0] || this.todayIso();
+    this.createExpenseDate = (expense.expenseDate || '').split('T')[0] || this.todayIso();
     this.createSource = expense.source;
     this.createError = '';
   }
@@ -447,9 +434,7 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
         switchMap((session) => {
           this.hasActiveSession = !!session;
           if (!session) this.createSource = 'COMPANY';
-          return session
-            ? this.cashRegisterSvc.getSessionSnapshot(session.id)
-            : of(null);
+          return session ? this.cashRegisterSvc.getSessionSnapshot(session.id) : of(null);
         }),
         catchError(() => of(null)),
         takeUntil(this.destroy$),

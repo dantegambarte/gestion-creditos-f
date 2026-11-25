@@ -156,6 +156,11 @@ function stubCreditDetail(
   cy.intercept('GET', '**/api/cash-register/dashboard*', dashboard).as(
     'getDashboard',
   );
+  // V4: el bloqueo de caja se decide con la caja operativa activa.
+  cy.intercept('GET', '**/api/cash-sessions/active', {
+    ok: true,
+    data: dashboard.data.is_closed ? null : { id: 'sess-ui', status: 'OPEN' },
+  }).as('getActiveSession');
   cy.intercept('GET', '**/api/credits/cred-mixed-ui', {
     ok: true,
     data: CREDIT_DETAIL,
@@ -313,9 +318,34 @@ describe('Cronograma de cuotas — toggle pre-carga / cobro directo (admin)', ()
 
     cy.get('[data-cy="seller-direct-mode-direct"]').click();
     cy.get('[data-cy="seller-direct-submit"] button').click();
-    cy.wait('@getDashboard');
+    cy.wait('@getActiveSession');
 
     cy.contains('Caja Cerrada').should('be.visible');
+    cy.then(() => expect(adminDirectCalled).to.eq(false));
+  });
+
+  it('en modo cobro directo, si falla la consulta de caja no se registra el cobro', () => {
+    stubCreditDetail();
+    cy.intercept('GET', '**/api/cash-sessions/active', {
+      statusCode: 500,
+      body: { ok: false, message: 'boom' },
+    }).as('getActiveSessionError');
+    let adminDirectCalled = false;
+    cy.intercept('POST', '**/api/payments/admin-direct', () => {
+      adminDirectCalled = true;
+    });
+
+    visitWithAdminSession('/seller/operations/cred-mixed-ui');
+    cy.wait('@getCredit');
+    cy.get('[data-cy="installment-direct-payment"]')
+      .first()
+      .find('button')
+      .click({ force: true });
+
+    cy.get('[data-cy="seller-direct-mode-direct"]').click();
+    cy.get('[data-cy="seller-direct-submit"] button').click();
+
+    cy.contains('Estado de caja desconocido').should('be.visible');
     cy.then(() => expect(adminDirectCalled).to.eq(false));
   });
 

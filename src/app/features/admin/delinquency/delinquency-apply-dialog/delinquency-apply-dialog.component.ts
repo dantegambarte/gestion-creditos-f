@@ -1,19 +1,11 @@
-import {
-  Component,
-  DestroyRef,
-  EventEmitter,
-  Input,
-  Output,
-  inject,
-} from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, Output, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { catchError, of } from 'rxjs';
 import { InstallmentsService } from '../../../../features/seller/operations/installments.service';
-import { CashRegisterService } from '../../cash-register/cash-register.service';
+import { CashStatusService } from '../../cash-register/cash-status.service';
 import { DelinquencyRow } from '../../models/interface/delinquency';
 
 @Component({
@@ -30,7 +22,7 @@ export class DelinquencyApplyDialogComponent {
   @Output() penaltyApplied = new EventEmitter<{ id: string; amount: number }>();
 
   private readonly installmentsService = inject(InstallmentsService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly cashStatusSvc = inject(CashStatusService);
   private readonly msg = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -53,23 +45,13 @@ export class DelinquencyApplyDialogComponent {
 
     this.loading = true;
 
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((dashboard) => {
-        const isCashClosed = dashboard?.isClosed ?? false;
-
-        if (isCashClosed) {
+    this.cashStatusSvc
+      .checkAction('aplicar mora', 'No puedes aplicar mora. La caja del día está CERRADA.')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((block) => {
+        if (block) {
           this.loading = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes aplicar mora. La caja del día está CERRADA.',
-            life: 5000,
-          });
+          this.msg.add(block);
           return;
         }
 

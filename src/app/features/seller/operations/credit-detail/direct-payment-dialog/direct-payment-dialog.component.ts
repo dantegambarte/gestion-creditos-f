@@ -1,11 +1,4 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  inject,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -16,12 +9,11 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { catchError, of } from 'rxjs';
 import { AppError } from '../../../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { DateService } from '../../../../../core/services/date.service';
 import { CurrencyAmountInputDirective } from '../../../../../shared/directives/currency-amount-input.directive';
-import { CashRegisterService } from '../../../../admin/cash-register/cash-register.service';
+import { CashStatusService } from '../../../../admin/cash-register/cash-status.service';
 import { PaymentsService } from '../../../../collector/payments.service';
 import { CreditDetail } from '../../../models/credit.model';
 import * as overpayment from '../../../../../shared/utils/overpayment.util';
@@ -80,14 +72,13 @@ export class DirectPaymentDialogComponent implements OnChanges {
   ];
 
   private readonly paymentsSvc = inject(PaymentsService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly cashStatusSvc = inject(CashStatusService);
   private readonly msg = inject(MessageService);
 
   /** Precarga el monto máximo cada vez que cambia la cuota seleccionada. */
   ngOnChanges(): void {
     if (this.installment) {
-      this.installmentBalance =
-        this.installment.amountDue - this.installment.amountPaid;
+      this.installmentBalance = this.installment.amountDue - this.installment.amountPaid;
       // El monto inicial es el de la cuota; el admin decide si cobra un excedente.
       this.amount = this.installmentBalance;
       this.registerMode = 'PRE_CARGA';
@@ -105,9 +96,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
    * cae al saldo de la cuota (comportamiento anterior).
    */
   get maxAllowed(): number {
-    return this.creditPendingBalance > 0
-      ? this.creditPendingBalance
-      : this.installmentBalance;
+    return this.creditPendingBalance > 0 ? this.creditPendingBalance : this.installmentBalance;
   }
 
   /**
@@ -123,10 +112,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
 
   /** Un cobro parcial (no cubre el saldo de la cuota) exige próxima visita en pre-carga. */
   get isPartial(): boolean {
-    return overpayment.isPartialPayment(
-      this.effectiveAmount,
-      this.installmentBalance,
-    );
+    return overpayment.isPartialPayment(this.effectiveAmount, this.installmentBalance);
   }
 
   /** El monto supera la cuota y el excedente se aplicará a las cuotas siguientes. */
@@ -140,10 +126,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
 
   /** El monto supera el saldo total del crédito (tope máximo). */
   get exceedsCreditBalance(): boolean {
-    return overpayment.exceedsCreditBalance(
-      this.effectiveAmount,
-      this.maxAllowed,
-    );
+    return overpayment.exceedsCreditBalance(this.effectiveAmount, this.maxAllowed);
   }
 
   /**
@@ -180,11 +163,8 @@ export class DirectPaymentDialogComponent implements OnChanges {
       !!this.installment &&
       this.effectiveAmount > 0 &&
       this.effectiveAmount <= this.maxAllowed &&
-      (this.registerMode !== 'PRE_CARGA' ||
-        !this.isPartial ||
-        !!this.nextVisitDate) &&
-      (this.method !== 'MIXED' ||
-        ((this.amountCash ?? 0) > 0 && (this.amountTransfer ?? 0) > 0))
+      (this.registerMode !== 'PRE_CARGA' || !this.isPartial || !!this.nextVisitDate) &&
+      (this.method !== 'MIXED' || ((this.amountCash ?? 0) > 0 && (this.amountTransfer ?? 0) > 0))
     );
   }
 
@@ -206,18 +186,12 @@ export class DirectPaymentDialogComponent implements OnChanges {
       return;
     }
 
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        if (dashboard?.isClosed) {
+    this.cashStatusSvc
+      .checkAction('crear cobros', 'No puedes crear cobros. La caja del día está CERRADA.')
+      .subscribe((block) => {
+        if (block) {
           this.processing = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes crear cobros. La caja del día está CERRADA.',
-            life: 5000,
-          });
+          this.msg.add(block);
           return;
         }
         this.processPayment();
@@ -259,12 +233,8 @@ export class DirectPaymentDialogComponent implements OnChanges {
       error: (err: AppError) => {
         this.processing = false;
         this.msg.add({
-          severity:
-            err.status === 409 || err.status === 422 ? 'warn' : 'error',
-          summary:
-            err.status === 409 || err.status === 422
-              ? 'Advertencia'
-              : 'Error',
+          severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
+          summary: err.status === 409 || err.status === 422 ? 'Advertencia' : 'Error',
           detail: this.errorDetail(err),
         });
       },
