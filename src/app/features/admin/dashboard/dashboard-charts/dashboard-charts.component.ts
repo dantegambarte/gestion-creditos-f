@@ -1,17 +1,10 @@
-import {
-  Component,
-  Input,
-  OnChanges,
-  OnDestroy,
-  SimpleChanges,
-  inject,
-} from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
 import { Subject } from 'rxjs';
 import { catchError, combineLatest, of, takeUntil } from 'rxjs';
 import { ReportsService } from '../../reports/reports.service';
-import { DashboardChartsService } from '../services/dashboard-charts.service';
+import { ChartConfig, DashboardChartsService } from '../services/dashboard-charts.service';
 
 @Component({
   selector: 'app-dashboard-charts',
@@ -27,12 +20,12 @@ export class DashboardChartsComponent implements OnChanges, OnDestroy {
   @Input() monthlyDailyData: { day: string; total: number }[] | null = null;
 
   loadingCharts = true;
-  chartWeeklyData: any;
-  chartWeeklyOptions: any;
-  chartCollectorsData: any = { labels: [], datasets: [] };
-  chartCollectorsOptions: any;
-  chartSellersData: any = { labels: [], datasets: [] };
-  chartSellersOptions: any;
+  chartWeeklyData?: ChartConfig['data'];
+  chartWeeklyOptions?: ChartConfig['options'];
+  chartCollectorsData: ChartConfig['data'] = { labels: [], datasets: [] };
+  chartCollectorsOptions?: ChartConfig['options'];
+  chartSellersData: ChartConfig['data'] = { labels: [], datasets: [] };
+  chartSellersOptions?: ChartConfig['options'];
 
   private readonly reportsSvc = inject(ReportsService);
   private readonly chartsSvc = inject(DashboardChartsService);
@@ -56,17 +49,13 @@ export class DashboardChartsComponent implements OnChanges, OnDestroy {
     this.loadingCharts = true;
 
     const toLocalDateString = (date: Date): string => {
-      const localDate = new Date(
-        date.getTime() - date.getTimezoneOffset() * 60000,
-      );
+      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
       return localDate.toISOString().split('T')[0];
     };
 
     const today = new Date();
     const todayDate = toLocalDateString(today);
-    const firstOfMonth = toLocalDateString(
-      new Date(today.getFullYear(), today.getMonth(), 1),
-    );
+    const firstOfMonth = toLocalDateString(new Date(today.getFullYear(), today.getMonth(), 1));
 
     combineLatest([
       this.reportsSvc
@@ -99,9 +88,7 @@ export class DashboardChartsComponent implements OnChanges, OnDestroy {
     this.chartCollectorsOptions = config.options;
   }
 
-  private buildSellersChart(
-    sellers: { sellerName: string; totalAmount: number }[],
-  ): void {
+  private buildSellersChart(sellers: { sellerName: string; totalAmount: number }[]): void {
     const config = this.chartsSvc.buildSellersChart(sellers);
     this.chartSellersData = config.data;
     this.chartSellersOptions = config.options;
