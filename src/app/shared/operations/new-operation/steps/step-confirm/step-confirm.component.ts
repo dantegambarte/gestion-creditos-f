@@ -8,17 +8,18 @@ import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { SimulateResult } from '../../../../../features/seller/models/credit.model';
 import { ClientOperation } from '../../../../models/interface/client';
 import { CartLine } from '../../operation-form.service';
+import {
+  buildSchedulePreview,
+  getCartTotal,
+  getLineInstallmentValue,
+  getPlanInstallmentsCount,
+  paymentMethodLabel,
+} from '../../operation-preview.helper';
 
 @Component({
   selector: 'app-step-confirm',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    CheckboxModule,
-    MessageModule,
-    TooltipModule,
-    CurrencyArsPipe,
-  ],
+  imports: [ReactiveFormsModule, CheckboxModule, MessageModule, TooltipModule, CurrencyArsPipe],
   templateUrl: './step-confirm.component.html',
 })
 export class StepConfirmComponent {
@@ -49,9 +50,7 @@ export class StepConfirmComponent {
    * @returns {'SALE' | 'LOAN'} Tipo de operación normalizado.
    */
   get operationType(): 'SALE' | 'LOAN' {
-    return this.form?.controls['operationType']?.value === 'SALE'
-      ? 'SALE'
-      : 'LOAN';
+    return this.form?.controls['operationType']?.value === 'SALE' ? 'SALE' : 'LOAN';
   }
 
   /**
@@ -65,22 +64,18 @@ export class StepConfirmComponent {
   /** Indica si la operación es una venta de contado (sin financiación). */
   get isCashSale(): boolean {
     return (
-      this.operationType === 'SALE' &&
-      this.form?.controls['paymentCondition']?.value === 'CASH'
+      this.operationType === 'SALE' && this.form?.controls['paymentCondition']?.value === 'CASH'
     );
   }
 
-  /** Total cobrado en una venta de contado (suma del carrito). */
+  /** Total cobrado en una venta de contado (mismo total que se envía al backend). */
   get cashSaleTotal(): number {
-    return this.subtotalProductos;
+    return getCartTotal(this.cartLines);
   }
 
   /** Etiqueta del método de pago elegido para la venta de contado. */
   get cashSaleMethodLabel(): string {
-    const method = this.form?.controls['cashSaleMethod']?.value;
-    if (method === 'TRANSFER') return 'Transferencia';
-    if (method === 'MIXED') return 'Efectivo + Transferencia';
-    return 'Efectivo';
+    return paymentMethodLabel(this.form?.controls['cashSaleMethod']?.value);
   }
 
   /**
@@ -105,10 +100,7 @@ export class StepConfirmComponent {
    * @returns {number} Suma total de subtotales del carrito.
    */
   get subtotalProductos(): number {
-    return this.cartLines.reduce(
-      (acc, line) => acc + Number(line.subtotal ?? 0),
-      0,
-    );
+    return this.cartLines.reduce((acc, line) => acc + Number(line.subtotal ?? 0), 0);
   }
 
   /**
@@ -116,10 +108,7 @@ export class StepConfirmComponent {
    * @returns {number} Cantidad consolidada de unidades del carrito.
    */
   get totalUnitsCount(): number {
-    return this.cartLines.reduce(
-      (acc, line) => acc + Number(line.cantidad ?? 0),
-      0,
-    );
+    return this.cartLines.reduce((acc, line) => acc + Number(line.cantidad ?? 0), 0);
   }
 
   /**
@@ -181,9 +170,7 @@ export class StepConfirmComponent {
     }
 
     if (type === 'ADVANCED_INSTALLMENTS') {
-      const count = Number(
-        this.form?.controls['advancedInstallmentsCount']?.value ?? 0,
-      );
+      const count = Number(this.form?.controls['advancedInstallmentsCount']?.value ?? 0);
       return `${count} cuota(s) · ${this.paymentMethodLabel(this.form?.controls['advancedInstallmentsMethod']?.value)}`;
     }
 
@@ -209,8 +196,7 @@ export class StepConfirmComponent {
   get initialPaymentLabel(): string {
     if (this.operationType !== 'SALE') return 'Detalle';
     if (this.initialPaymentType === 'DOWN_PAYMENT') return 'Anticipo';
-    if (this.initialPaymentType === 'ADVANCED_INSTALLMENTS')
-      return 'Cuotas adelantadas';
+    if (this.initialPaymentType === 'ADVANCED_INSTALLMENTS') return 'Cuotas adelantadas';
     return 'Sin pago inicial';
   }
 
@@ -224,9 +210,7 @@ export class StepConfirmComponent {
       return Math.max(0, this.validatedDownPayment);
     }
     if (this.initialPaymentType === 'ADVANCED_INSTALLMENTS') {
-      const count = Number(
-        this.form?.controls['advancedInstallmentsCount']?.value ?? 0,
-      );
+      const count = Number(this.form?.controls['advancedInstallmentsCount']?.value ?? 0);
       return Math.max(0, count) * Math.max(0, this.valorCuota);
     }
     return 0;
@@ -237,13 +221,11 @@ export class StepConfirmComponent {
    * @returns {number} Número de cuotas globales del plan.
    */
   get summaryInstallmentsCount(): number {
-    if (this.operationType === 'LOAN') {
-      return Number(this.installmentsCount ?? 0);
-    }
-
-    return Math.max(
-      0,
-      ...this.cartLines.map((line) => Number(line.selectedInstallments ?? 0)),
+    return getPlanInstallmentsCount(
+      this.operationType,
+      this.cartLines,
+      this.installmentsCount,
+      this.simulationResult,
     );
   }
 
@@ -252,52 +234,29 @@ export class StepConfirmComponent {
    * la simulacion del paso 4, la usamos: las fechas ya tienen aplicada
    * la regla de dia habil (fines de semana + feriados) y son las mismas
    * que se persistiran al aprobar. Si no hay simulacion (caso raro),
-   * fallback al calculo local — sin day-shift, pero al menos no rompe.
+   * fallback al calculo local. Delega en el helper compartido: solo en modo
+   * cuotas adelantadas corre fechas, y respeta la frecuencia DAILY.
    * @returns {{ label: string; dueDate: string; amount: number }[]} Primeras filas visibles del plan.
    */
   get schedulePreview(): { label: string; dueDate: string; amount: number; isAdvanced: boolean }[] {
-    const limit = StepConfirmComponent.SCHEDULE_PREVIEW_LIMIT;
-    const adv = Number(this.form?.controls['advancedInstallmentsCount']?.value ?? 0);
-    const isAdvanceMode = this.initialPaymentType === 'ADVANCED_INSTALLMENTS';
-
-    const backendSchedule = this.simulationResult?.schedule ?? [];
-    if (backendSchedule.length > 0) {
-      return backendSchedule.slice(0, limit).map((row, index) => {
-        const isAdvanced = isAdvanceMode && row.installmentNumber <= adv;
-        const fallbackDate = backendSchedule[Math.max(0, index - adv)]?.dueDate;
-        const dueDate = isAdvanced
-          ? row.dueDate
-          : fallbackDate ?? row.dueDate;
-
-        return {
-          label: `Cuota ${row.installmentNumber}`,
-          dueDate: this.formatDate(this.parseLocalDate(dueDate)),
-          amount: row.amount,
-          isAdvanced,
-        };
-      });
-    }
-
-    const firstPaymentDate = this.form?.controls['firstPaymentDate']
-      ?.value as Date | null;
-    const installments = this.summaryInstallmentsCount;
-    if (!firstPaymentDate || installments <= 0 || this.valorCuota <= 0)
-      return [];
-
-    const rows = Math.min(installments, limit);
-    return Array.from({ length: rows }).map((_, index) => {
-      const installmentNumber = index + 1;
-      const isAdvanced = isAdvanceMode && installmentNumber <= adv;
-      const effectiveIndex = isAdvanced ? index : Math.max(0, index - adv);
-      return {
-        label: `Cuota ${installmentNumber}`,
-        dueDate: this.formatDate(
-          this.addFrequencyToDate(firstPaymentDate, effectiveIndex),
-        ),
-        amount: this.valorCuota,
-        isAdvanced,
-      };
-    });
+    const approvalDate = new Date();
+    approvalDate.setHours(0, 0, 0, 0);
+    return buildSchedulePreview({
+      simulation: this.simulationResult,
+      firstPaymentDate: this.form?.controls['firstPaymentDate']?.value ?? null,
+      frequency: this.form?.controls['paymentFrequency']?.value ?? null,
+      installmentsCount: this.summaryInstallmentsCount,
+      installmentValue: this.valorCuota,
+      advancedCount: Number(this.form?.controls['advancedInstallmentsCount']?.value ?? 0),
+      isAdvanceMode: this.initialPaymentType === 'ADVANCED_INSTALLMENTS',
+      approvalDate,
+      limit: StepConfirmComponent.SCHEDULE_PREVIEW_LIMIT,
+    }).map((row) => ({
+      label: `Cuota ${row.installmentNumber}`,
+      dueDate: this.formatDate(row.dueDate),
+      amount: row.amount,
+      isAdvanced: row.isAdvanced,
+    }));
   }
 
   /**
@@ -317,10 +276,7 @@ export class StepConfirmComponent {
    * @returns {number} Cantidad restante luego de las primeras filas.
    */
   get hiddenInstallmentsCount(): number {
-    return Math.max(
-      this.summaryInstallmentsCount - this.schedulePreview.length,
-      0,
-    );
+    return Math.max(this.summaryInstallmentsCount - this.schedulePreview.length, 0);
   }
 
   /**
@@ -333,8 +289,7 @@ export class StepConfirmComponent {
     const selectedInstallments = Number(line.selectedInstallments ?? 0);
     const selectedRate = line.rates.find(
       (rate) =>
-        rate.installmentsCount === selectedInstallments &&
-        rate.paymentFrequency === frequency,
+        rate.installmentsCount === selectedInstallments && rate.paymentFrequency === frequency,
     );
 
     return selectedRate ? Number((selectedRate.rate * 100).toFixed(1)) : 0;
@@ -370,16 +325,19 @@ export class StepConfirmComponent {
   }
 
   /**
-   * Resuelve el monto de cuota por línea usando valores disponibles de forma segura.
+   * Cuota aportada por una línea con la misma fórmula del backend (tasa y
+   * anticipo prorrateado incluidos).
    * @param {CartLine} line - Línea del carrito a resumir.
-   * @returns {number} Valor de cuota estimado para mostrar en la UI.
+   * @returns {number} Valor de cuota de la línea.
    */
   getCuotaPorLinea(line: CartLine): number {
-    const cuotas = Number(line.selectedInstallments ?? 0);
-    if (cuotas > 0 && line.subtotal > 0) {
-      return line.subtotal / cuotas;
-    }
-    return 0;
+    const downPayment = this.initialPaymentType === 'DOWN_PAYMENT' ? this.validatedDownPayment : 0;
+    return getLineInstallmentValue(
+      line,
+      this.form?.controls['paymentFrequency']?.value ?? null,
+      downPayment,
+      getCartTotal(this.cartLines),
+    );
   }
 
   /**
@@ -396,25 +354,12 @@ export class StepConfirmComponent {
   }
 
   /**
-   * Traduce el método de pago a una etiqueta visible.
+   * Traduce el método de pago a una etiqueta visible (incluye MIXED) vía el helper compartido.
    * @param {string | null | undefined} value - Código interno del método.
    * @returns {string} Nombre comercial para la UI.
    */
   private paymentMethodLabel(value: string | null | undefined): string {
-    return value === 'TRANSFER' ? 'Transferencia' : 'Efectivo';
-  }
-
-  /**
-   * Parsea un string 'YYYY-MM-DD' como fecha local sin sesgo UTC.
-   * new Date('YYYY-MM-DD') lo interpreta como medianoche UTC y en zonas
-   * horarias negativas (AR GMT-3) muestra el dia anterior. Reconstruir
-   * con componentes locales evita el drift.
-   */
-  private parseLocalDate(value: string): Date {
-    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
-    if (!match) return new Date(value);
-    const [, year, month, day] = match;
-    return new Date(Number(year), Number(month) - 1, Number(day));
+    return paymentMethodLabel(value);
   }
 
   /**
@@ -430,33 +375,12 @@ export class StepConfirmComponent {
     }).format(value);
   }
 
-  /**
-   * Avanza una fecha según la frecuencia de pago activa para construir el cronograma.
-   * @param {Date} baseDate - Fecha de arranque del plan.
-   * @param {number} index - Desplazamiento de cuota a calcular.
-   * @returns {Date} Fecha resultante para la cuota indicada.
-   */
-  private addFrequencyToDate(baseDate: Date, index: number): Date {
-    const frequency = this.form?.controls['paymentFrequency']?.value;
-    const date = new Date(baseDate);
-
-    if (frequency === 'WEEKLY') {
-      date.setDate(date.getDate() + index * 7);
-      return date;
-    }
-
-    if (frequency === 'BIWEEKLY') {
-      date.setDate(date.getDate() + index * 14);
-      return date;
-    }
-
-    date.setMonth(date.getMonth() + index);
-    return date;
-  }
-
   /** Nombres de los checks de declaraciones (orden de aparicion en la UI). */
   private static readonly DECLARATION_FIELDS = [
-    'chkIdentity', 'chkConditions', 'chkDisbursement', 'chkCapacity',
+    'chkIdentity',
+    'chkConditions',
+    'chkDisbursement',
+    'chkCapacity',
   ];
 
   /**
@@ -465,9 +389,7 @@ export class StepConfirmComponent {
    */
   get allDeclarationsChecked(): boolean {
     if (!this.form) return false;
-    return StepConfirmComponent.DECLARATION_FIELDS.every(
-      (n) => !!this.form.controls[n]?.value,
-    );
+    return StepConfirmComponent.DECLARATION_FIELDS.every((n) => !!this.form.controls[n]?.value);
   }
 
   /**

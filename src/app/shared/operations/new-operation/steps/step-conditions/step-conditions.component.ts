@@ -30,6 +30,11 @@ import {
   FirstPaymentDateMode,
   SaleInstallmentOption,
 } from '../../operation-form.service';
+import {
+  getCartTotal,
+  getLineInstallmentValue,
+  getPlanInstallmentsCount,
+} from '../../operation-preview.helper';
 import { StepConditionsSimulationPanelComponent } from './step-conditions-simulation-panel/step-conditions-simulation-panel.component';
 
 @Component({
@@ -124,7 +129,7 @@ export class StepConditionsComponent implements OnChanges {
 
   /** Total a cobrar en una venta de contado (suma del carrito). */
   get cashSaleTotal(): number {
-    return this.cartLines.reduce((acc, line) => acc + line.precio * line.cantidad, 0);
+    return getCartTotal(this.cartLines);
   }
 
   /**
@@ -197,13 +202,12 @@ export class StepConditionsComponent implements OnChanges {
    * @returns {number} Número de cuotas activas en la simulación.
    */
   getSelectedInstallmentsCount(): number {
-    if (this.simulationResult?.installmentsCount) {
-      return this.simulationResult.installmentsCount;
-    }
-    if (this.form.controls['operationType'].value === 'SALE') {
-      return this.cartLines.reduce((acc, line) => acc + (line.selectedInstallments ?? 0), 0);
-    }
-    return this.form.controls['installmentsCount']?.value ?? 0;
+    return getPlanInstallmentsCount(
+      this.form.controls['operationType'].value,
+      this.cartLines,
+      this.form.controls['installmentsCount']?.value ?? null,
+      this.simulationResult,
+    );
   }
 
   /**
@@ -216,8 +220,8 @@ export class StepConditionsComponent implements OnChanges {
       return 'Cuota consolidada';
     }
 
-    const frequency = this.form.controls['paymentFrequency']?.value as
-      'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | null;
+    const frequency = this.form.controls['paymentFrequency']?.value as PaymentFrequency | null;
+    if (frequency === 'DAILY') return 'Cuota diaria';
     if (frequency === 'WEEKLY') return 'Cuota semanal';
     if (frequency === 'BIWEEKLY') return 'Cuota quincenal';
     return 'Cuota mensual';
@@ -332,25 +336,18 @@ export class StepConditionsComponent implements OnChanges {
     );
   }
 
-  private getLineDownPayment(line: CartLine): number {
-    const totalCarrito = this.cartLines.reduce((acc, l) => acc + l.precio * l.cantidad, 0);
-    if (this.validatedDownPayment <= 0 || totalCarrito <= 0) return 0;
-    return (line.subtotal / totalCarrito) * this.validatedDownPayment;
-  }
-
-  private getLineFinancedCapital(line: CartLine): number {
-    return Math.max(0, line.subtotal - this.getLineDownPayment(line));
-  }
-
   /**
-   * Valor de cuota de una línea con la fórmula oficial (redondeado al millar).
+   * Valor de cuota de una línea con la fórmula oficial (redondeado al millar),
+   * calculado por el helper compartido con el paso de confirmación.
    * @param {CartLine} line - Línea del carrito a calcular.
    */
   getLineInstallmentValue(line: CartLine): number {
-    const installments = line.selectedInstallments ?? 0;
-    const rate = this.getSelectedRateForLine(line)?.rate ?? 0;
-    if (installments <= 0) return 0;
-    return Math.ceil((this.getLineFinancedCapital(line) * (1 + rate)) / installments / 1000) * 1000;
+    return getLineInstallmentValue(
+      line,
+      this.form.controls['paymentFrequency']?.value ?? null,
+      this.validatedDownPayment,
+      getCartTotal(this.cartLines),
+    );
   }
 
   /**

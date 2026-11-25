@@ -3,7 +3,7 @@ declare const expect: any;
 declare const spyOn: any;
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
 import { OperationFormService } from './operation-form.service';
 import { OperationCatalogService } from './operation-catalog.service';
@@ -29,7 +29,28 @@ describe('OperationFormService', () => {
         OperationCatalogService,
         MessageService,
         { provide: CreditsService, useValue: creditsServiceSpy },
-        { provide: CustomersService, useValue: { list: () => of([]), getWizardSummary: () => of({ phone: null, email: null, status: 'ACTIVE', address: null, collectorName: null, activeCredits: 0, delinquency: 'sin mora', paymentCapacity: 0, createdAt: '', paidInstallments: 0, pendingInstallments: 0, overdueInstallments: 0, credits: [] }) } },
+        {
+          provide: CustomersService,
+          useValue: {
+            list: () => of([]),
+            getWizardSummary: () =>
+              of({
+                phone: null,
+                email: null,
+                status: 'ACTIVE',
+                address: null,
+                collectorName: null,
+                activeCredits: 0,
+                delinquency: 'sin mora',
+                paymentCapacity: 0,
+                createdAt: '',
+                paidInstallments: 0,
+                pendingInstallments: 0,
+                overdueInstallments: 0,
+                credits: [],
+              }),
+          },
+        },
         { provide: ProductUnitsService, useValue: { getAll: () => of([]) } },
         { provide: InterestRatesService, useValue: { getAll: () => of([]) } },
         { provide: ProductRatesService, useValue: { getAll: () => of([]) } },
@@ -229,10 +250,7 @@ describe('OperationFormService', () => {
   it('calcula la primera cuota mensual por mes calendario desde aprobación — CR-25', () => {
     const approvalDate = new Date(2026, 0, 1);
 
-    const result = service.getFirstPaymentDateFromApprovalRule(
-      approvalDate,
-      'MONTHLY',
-    );
+    const result = service.getFirstPaymentDateFromApprovalRule(approvalDate, 'MONTHLY');
 
     // Mes calendario (mismo día del mes siguiente), igual que el backend.
     expect(service.toApiDate(result)).toBe('2026-02-01');
@@ -241,12 +259,91 @@ describe('OperationFormService', () => {
   it('calcula la primera cuota diaria un día después de la aprobación (días corridos)', () => {
     const approvalDate = new Date(2026, 0, 31);
 
-    const result = service.getFirstPaymentDateFromApprovalRule(
-      approvalDate,
-      'DAILY',
-    );
+    const result = service.getFirstPaymentDateFromApprovalRule(approvalDate, 'DAILY');
 
     // +1 día corrido, cruzando fin de mes.
     expect(service.toApiDate(result)).toBe('2026-02-01');
+  });
+
+  describe('cambio rápido de cliente (#46)', () => {
+    /**
+     * Construye un cliente mínimo para los tests de selección.
+     * @param {string} id - id del cliente
+     */
+    function buildClient(id: string): any {
+      return {
+        id,
+        name: `Cliente ${id}`,
+        dni: id,
+        phone: '',
+        email: '',
+        status: 'ACTIVE',
+        previousCredits: 0,
+        delinquency: 'sin mora',
+        paymentCapacity: 0,
+      };
+    }
+
+    /**
+     * Arma un resumen de wizard con el teléfono indicado para distinguir respuestas.
+     * @param {string} phone - teléfono marcador
+     */
+    function buildSummary(phone: string): any {
+      return {
+        phone,
+        email: null,
+        status: 'ACTIVE',
+        address: null,
+        collectorName: null,
+        activeCredits: 0,
+        delinquency: 'sin mora',
+        paymentCapacity: 0,
+        createdAt: '',
+        paidInstallments: 0,
+        pendingInstallments: 0,
+        overdueInstallments: 0,
+        credits: [],
+      };
+    }
+
+    it('descarta la respuesta tardía del cliente deseleccionado y envía el cliente visible', () => {
+      const customers = TestBed.inject(CustomersService);
+      const summaryA = new Subject<any>();
+      const summaryB = new Subject<any>();
+      spyOn(customers, 'getWizardSummary').and.callFake((id: string) =>
+        (id === 'A' ? summaryA : summaryB).asObservable(),
+      );
+
+      service.selectClient(buildClient('A'));
+      service.selectClient(buildClient('B'));
+      summaryB.next(buildSummary('phone-B'));
+      summaryB.complete();
+      summaryA.next(buildSummary('phone-A'));
+      summaryA.complete();
+
+      expect(service.selectedClient()?.id).toBe('B');
+      expect(service.selectedClient()?.phone).toBe('phone-B');
+      expect(service.operationForm.controls.customerId.value).toBe('B');
+      expect(service.loadingSelectedClientSummary()).toBeFalse();
+
+      service.operationForm.controls.operationType.setValue('LOAN');
+      service.submit().subscribe();
+
+      expect(creditsServiceSpy.create).toHaveBeenCalledWith(
+        jasmine.objectContaining({ customerId: 'B' }),
+      );
+    });
+
+    it('submit usa el customerId del formulario aunque selectedClient quede desfasado', () => {
+      service.selectClient(buildClient('A'));
+      service.operationForm.controls.customerId.setValue('B');
+      service.operationForm.controls.operationType.setValue('LOAN');
+
+      service.submit().subscribe();
+
+      expect(creditsServiceSpy.create).toHaveBeenCalledWith(
+        jasmine.objectContaining({ customerId: 'B' }),
+      );
+    });
   });
 });

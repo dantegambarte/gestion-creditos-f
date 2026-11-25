@@ -206,4 +206,35 @@ describe('StepConditionsComponent', () => {
 
     expect(component.simulationVisible).toBeFalse();
   });
+
+  it('usa la mayor cantidad de cuotas del carrito, como la simulación y el resumen (#50)', () => {
+    component.form.controls['operationType'].setValue('SALE');
+    const base: any = {
+      productoId: 'p1',
+      nombre: 'Prod',
+      variantId: 'v1',
+      variantLabel: 'Std',
+      cantidad: 1,
+      precio: 1000,
+      subtotal: 1000,
+      stockDisponible: 5,
+      unitIds: [],
+      unitCodes: [],
+      productIds: [],
+      selectedUnitIds: [],
+      rates: [],
+    };
+    component.cartLines = [
+      { ...base, selectedInstallments: 3 },
+      { ...base, productoId: 'p2', selectedInstallments: 6 },
+    ];
+
+    expect(component.getSelectedInstallmentsCount()).toBe(6);
+  });
+
+  it('muestra la etiqueta de cuota diaria para préstamos DAILY (#50)', () => {
+    component.form.controls['operationType'].setValue('LOAN');
+    component.form.controls['paymentFrequency'].setValue('DAILY');
+    expect(component.getInstallmentLabel()).toBe('Cuota diaria');
+  });
 });

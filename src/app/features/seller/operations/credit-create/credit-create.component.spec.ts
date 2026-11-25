@@ -51,10 +51,7 @@ describe('CreditCreateComponent', () => {
   let creditsServiceSpy: jasmine.SpyObj<CreditsService>;
 
   beforeEach(async () => {
-    creditsServiceSpy = jasmine.createSpyObj('CreditsService', [
-      'simulate',
-      'create',
-    ]);
+    creditsServiceSpy = jasmine.createSpyObj('CreditsService', ['simulate', 'create']);
     creditsServiceSpy.simulate.and.returnValue(
       of({
         type: 'SALE',
@@ -177,9 +174,7 @@ describe('CreditCreateComponent', () => {
     component.onSubmit();
 
     expect(creditsServiceSpy.create).not.toHaveBeenCalled();
-    expect(component.unitsError).toBe(
-      'El enganche no puede ser mayor al total de la venta.',
-    );
+    expect(component.unitsError).toBe('El enganche no puede ser mayor al total de la venta.');
   });
 
   /**
@@ -233,5 +228,18 @@ describe('CreditCreateComponent', () => {
     expect(component.unitsError).toBe(
       'El efectivo y la transferencia deben sumar el total de la venta.',
     );
+  });
+
+  it('limpia el carrito del padre al cambiar SALE→LOAN→SALE (#46)', () => {
+    completeCommonSaleForm();
+
+    component.form.patchValue({ type: 'LOAN' });
+    component.onTypeChange('LOAN');
+    component.form.patchValue({ type: 'SALE' });
+    component.onTypeChange('SALE');
+
+    expect(component.cart).toEqual([]);
+    component.onSubmit();
+    expect(creditsServiceSpy.create).not.toHaveBeenCalled();
   });
 });
