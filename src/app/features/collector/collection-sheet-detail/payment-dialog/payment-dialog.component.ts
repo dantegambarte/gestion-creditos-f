@@ -21,6 +21,7 @@ import { DateService } from '../../../../core/services/date.service';
 import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../shared/directives/currency-amount-input.directive';
 import * as overpayment from '../../../../shared/utils/overpayment.util';
+import { PaymentAttemptKey } from '../../../../shared/utils/payment-attempt-key.util';
 import { CollectionSheetItem } from '../../models/collection.model';
 import { PaymentCreatePayload, PaymentMethod } from '../../models/payment.model';
 import { PaymentsService } from '../../payments.service';
@@ -66,14 +67,18 @@ export class PaymentDialogComponent implements OnChanges {
   private readonly paymentsService = inject(PaymentsService);
   private readonly msg = inject(MessageService);
   private readonly dateSvc = inject(DateService);
+  /** Clave de idempotencia del cobro en curso (P08/P12); se reusa en reintentos. */
+  private readonly attemptKey = new PaymentAttemptKey();
 
   readonly todayDate: Date = this.dateSvc.startOfToday();
   get todayIso(): string {
     return this.dateSvc.toLocalIso(new Date());
   }
 
+  /** Reinicia el formulario y la clave de idempotencia al abrir un cobro nuevo. */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true && this.item) {
+      this.attemptKey.reset();
       this.paymentCashAmount = null;
       this.paymentTransferAmount = null;
       this.paymentMethod = 'CASH';
@@ -175,12 +180,16 @@ export class PaymentDialogComponent implements OnChanges {
     return this.paymentMethod === 'TRANSFER' || this.paymentMethod === 'MIXED';
   }
 
-  /** True cuando el formulario no tiene montos válidos o falta referencia bancaria. */
+  /**
+   * True cuando el formulario no tiene montos válidos, falta la próxima visita
+   * de un parcial, o un pago mixto no trae la referencia de la transferencia.
+   */
   get paymentFormInvalid(): boolean {
     return (
       this.paymentAmount <= 0 ||
       this.exceedsCreditTotal ||
-      (this.isPartialPayment() && !this.paymentNextVisitDate)
+      (this.isPartialPayment() && !this.paymentNextVisitDate) ||
+      (this.paymentMethod === 'MIXED' && !this.transferReference.trim())
     );
   }
 
@@ -215,6 +224,7 @@ export class PaymentDialogComponent implements OnChanges {
 
   /**
    * Confirma el cobro. Valida monto y fecha de próxima visita antes de enviar.
+   * Envía `client_request_id`: un reintento del mismo cobro no lo duplica.
    */
   confirmPayment(): void {
     if (this.processingPayment) return;
@@ -261,6 +271,7 @@ export class PaymentDialogComponent implements OnChanges {
     }
     if (this.paymentNotes) payload.notes = this.paymentNotes;
     if (isPartial) payload.nextVisitDate = partialDateIso;
+    payload.clientRequestId = this.attemptKey.forAttempt(payload);
 
     const itemId = this.item.installmentId;
     const itemNumber = this.item.installmentNumber;
@@ -268,6 +279,7 @@ export class PaymentDialogComponent implements OnChanges {
     this.paymentsService.create(payload).subscribe({
       next: (result) => {
         this.processingPayment = false;
+        this.attemptKey.reset();
         this.close();
         const toast = result.warning
           ? {

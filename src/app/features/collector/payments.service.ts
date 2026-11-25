@@ -155,7 +155,8 @@ export class PaymentsService {
 
   /**
    * Crea un nuevo pago. Si el cobro queda parcial, `nextVisitDate` es obligatorio
-   * (validado en cliente y backend).
+   * (validado en cliente y backend). Si trae `clientRequestId`, se envía como
+   * `client_request_id` para que un reintento no duplique la pre-carga (P08).
    * @param payload
    * @returns
    */
@@ -174,6 +175,7 @@ export class PaymentsService {
     if (payload.notes) body['notes'] = payload.notes;
     if (payload.nextVisitDate) body['next_visit_date'] = payload.nextVisitDate;
     if (payload.generationType) body['generation_type'] = payload.generationType;
+    if (payload.clientRequestId) body['client_request_id'] = payload.clientRequestId;
     return this.api.post<PaymentCreateResultRaw>('payments', body).pipe(map(toCreateResult));
   }
 

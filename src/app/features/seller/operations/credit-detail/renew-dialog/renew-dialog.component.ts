@@ -18,6 +18,7 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { AppError } from '../../../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../../shared/directives/currency-amount-input.directive';
+import { PaymentAttemptKey } from '../../../../../shared/utils/payment-attempt-key.util';
 import { PaymentsService } from '../../../../collector/payments.service';
 import { PaymentCreatePayload } from '../../../../collector/models/payment.model';
 import { RenewPayload } from '../../../models/credit.model';
@@ -82,10 +83,13 @@ export class RenewDialogComponent implements OnChanges {
   private readonly creditsService = inject(CreditsService);
   private readonly paymentsSvc = inject(PaymentsService);
   private readonly msg = inject(MessageService);
+  /** Clave de idempotencia de la pre-carga de renovación en curso (P08/P12). */
+  private readonly attemptKey = new PaymentAttemptKey();
 
-  /** Resetea el formulario cada vez que se abre el diálogo. */
+  /** Resetea el formulario (y la clave de idempotencia) cada vez que se abre el diálogo. */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true) {
+      this.attemptKey.reset();
       this.registerMode = 'PRE_CARGA';
       this.method = 'CASH';
       this.amountCash = null;
@@ -106,12 +110,14 @@ export class RenewDialogComponent implements OnChanges {
       : this.total;
   }
 
+  /** Valida el pago. En mixto exige ambos montos, que sumen el total y la referencia. */
   get formValid(): boolean {
     if (this.total <= 0) return false;
     if (this.method !== 'MIXED') return true;
     return (
       (this.amountCash ?? 0) > 0 &&
       (this.amountTransfer ?? 0) > 0 &&
+      !!this.transferRef.trim() &&
       Math.round(this.effectiveAmount * 100) === Math.round(this.total * 100)
     );
   }
@@ -123,7 +129,8 @@ export class RenewDialogComponent implements OnChanges {
   /**
    * Registra la renovación por la modalidad elegida. En ambas el cargo es el mismo
    * (interés + mora); cambia solo el camino de pago: directo (aprobado ya) o
-   * pre-carga (pendiente de aprobación).
+   * pre-carga (pendiente de aprobación). La pre-carga lleva `client_request_id`
+   * para que un reintento no la duplique.
    */
   confirm(): void {
     if (this.processing || !this.formValid) return;
@@ -135,6 +142,7 @@ export class RenewDialogComponent implements OnChanges {
     const onSettled = {
       next: () => {
         this.processing = false;
+        this.attemptKey.reset();
         this.close();
         this.msg.add({
           severity: 'success',
@@ -177,6 +185,7 @@ export class RenewDialogComponent implements OnChanges {
           : { amountReceived: this.total, paymentMethod: this.method }),
         ...(this.transferRef ? { transferReference: this.transferRef } : {}),
       };
+      payload.clientRequestId = this.attemptKey.forAttempt(payload);
       this.paymentsSvc.create(payload).subscribe(onSettled);
     }
   }

@@ -68,6 +68,10 @@ export class SettlementDialogComponent implements OnChanges {
     this.visibleChange.emit(false);
   }
 
+  /**
+   * Valida el pago. En mixto los montos deben sumar el total y la referencia de
+   * transferencia es obligatoria (como indica el texto del formulario).
+   */
   get formValid(): boolean {
     if (this.paymentMethod !== 'MIXED') return true;
     const cash = this.amountCash ?? 0;
@@ -75,7 +79,8 @@ export class SettlementDialogComponent implements OnChanges {
     return (
       Math.round((cash + transfer) * 100) === Math.round(this.settlementTotalAmount * 100) &&
       cash > 0 &&
-      transfer > 0
+      transfer > 0 &&
+      !!this.transferRef.trim()
     );
   }
 

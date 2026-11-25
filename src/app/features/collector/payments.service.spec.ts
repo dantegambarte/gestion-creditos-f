@@ -85,6 +85,29 @@ describe('PaymentsService', () => {
   });
 
   describe('create', () => {
+    it('envía client_request_id cuando el intento trae clave de idempotencia', () => {
+      service
+        .create({
+          installmentId: 'inst-1',
+          amountReceived: 500,
+          paymentMethod: 'CASH',
+          clientRequestId: '11111111-1111-4111-8111-111111111111',
+        })
+        .subscribe();
+      const req = httpMock.expectOne(`${BASE}/payments`);
+      expect(req.request.body.client_request_id).toBe('11111111-1111-4111-8111-111111111111');
+      req.flush({ ok: true, data: { id: 'p', installment_id: 'inst-1' }, message: '' });
+    });
+
+    it('no envía client_request_id cuando no hay clave', () => {
+      service
+        .create({ installmentId: 'inst-1', amountReceived: 500, paymentMethod: 'CASH' })
+        .subscribe();
+      const req = httpMock.expectOne(`${BASE}/payments`);
+      expect('client_request_id' in req.request.body).toBeFalse();
+      req.flush({ ok: true, data: { id: 'p', installment_id: 'inst-1' }, message: '' });
+    });
+
     it('maps warning field when present in response', () => {
       let result: any;
       service

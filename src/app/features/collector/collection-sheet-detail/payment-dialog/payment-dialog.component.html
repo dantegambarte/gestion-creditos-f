@@ -86,10 +86,16 @@
           type="text"
           pInputText
           [(ngModel)]="transferReference"
+          data-cy="collector-transfer-reference"
           maxlength="100"
           class="w-full h-11 px-3"
           placeholder="Número de operación..."
         />
+        @if (paymentMethod === 'MIXED' && !transferReference.trim()) {
+          <small class="text-xs text-amber-600" data-cy="mixed-reference-required">
+            En un pago mixto la referencia de la transferencia es obligatoria.
+          </small>
+        }
       </div>
     }
 

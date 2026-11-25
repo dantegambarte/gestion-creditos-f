@@ -168,6 +168,11 @@
           class="w-full h-11 px-3"
           maxlength="100"
         />
+        @if (!transferRef.trim()) {
+          <small class="text-xs text-amber-600" data-cy="mixed-reference-required">
+            En un pago mixto la referencia de la transferencia es obligatoria.
+          </small>
+        }
       </div>
       <p class="text-xs" style="color: var(--ff-text-secondary)">
         Ingresado: <strong>{{ effectiveAmount | currencyArs: 2 }}</strong> — debe sumar el total a

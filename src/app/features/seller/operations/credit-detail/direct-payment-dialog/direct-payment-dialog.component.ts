@@ -17,6 +17,7 @@ import { CashStatusService } from '../../../../admin/cash-register/cash-status.s
 import { PaymentsService } from '../../../../collector/payments.service';
 import { CreditDetail } from '../../../models/credit.model';
 import * as overpayment from '../../../../../shared/utils/overpayment.util';
+import { PaymentAttemptKey } from '../../../../../shared/utils/payment-attempt-key.util';
 
 @Component({
   selector: 'app-direct-payment-dialog',
@@ -75,9 +76,13 @@ export class DirectPaymentDialogComponent implements OnChanges {
   private readonly cashStatusSvc = inject(CashStatusService);
   private readonly msg = inject(MessageService);
 
-  /** Precarga el monto máximo cada vez que cambia la cuota seleccionada. */
+  /** Clave de idempotencia del intento de pre-carga en curso (P08/P12). */
+  private readonly attemptKey = new PaymentAttemptKey();
+
+  /** Precarga el monto máximo cada vez que cambia la cuota seleccionada y arranca un cobro nuevo. */
   ngOnChanges(): void {
     if (this.installment) {
+      this.attemptKey.reset();
       this.installmentBalance = this.installment.amountDue - this.installment.amountPaid;
       // El monto inicial es el de la cuota; el admin decide si cobra un excedente.
       this.amount = this.installmentBalance;
@@ -158,13 +163,18 @@ export class DirectPaymentDialogComponent implements OnChanges {
     }
   }
 
+  /**
+   * Valida el formulario. En mixto exige ambos montos y la referencia de la
+   * transferencia (sin ella el pago no se puede conciliar).
+   */
   get formValid(): boolean {
     return (
       !!this.installment &&
       this.effectiveAmount > 0 &&
       this.effectiveAmount <= this.maxAllowed &&
       (this.registerMode !== 'PRE_CARGA' || !this.isPartial || !!this.nextVisitDate) &&
-      (this.method !== 'MIXED' || ((this.amountCash ?? 0) > 0 && (this.amountTransfer ?? 0) > 0))
+      (this.method !== 'MIXED' ||
+        ((this.amountCash ?? 0) > 0 && (this.amountTransfer ?? 0) > 0 && !!this.transferRef.trim()))
     );
   }
 
@@ -198,6 +208,10 @@ export class DirectPaymentDialogComponent implements OnChanges {
       });
   }
 
+  /**
+   * Envía el cobro. La pre-carga lleva `client_request_id`: un reintento del
+   * mismo cobro (timeout, red) reusa la clave y el backend no la duplica.
+   */
   private processPayment(): void {
     const payload = {
       installmentId: this.installment!.id,
@@ -218,6 +232,7 @@ export class DirectPaymentDialogComponent implements OnChanges {
     const onSettled = {
       next: () => {
         this.processing = false;
+        this.attemptKey.reset();
         this.close();
         this.msg.add({
           severity: 'success',
@@ -243,7 +258,9 @@ export class DirectPaymentDialogComponent implements OnChanges {
     if (this.registerMode === 'DIRECT') {
       this.paymentsSvc.adminDirect(payload).subscribe(onSettled);
     } else {
-      this.paymentsSvc.create(payload).subscribe(onSettled);
+      this.paymentsSvc
+        .create({ ...payload, clientRequestId: this.attemptKey.forAttempt(payload) })
+        .subscribe(onSettled);
     }
   }
 
