@@ -196,8 +196,8 @@ Suite Cypress con más de 80 archivos de spec cubriendo:
 ## Desarrollo
 
 ```bash
-# Instalar dependencias
-npm install
+# Instalar dependencias (respeta package-lock.json; también instala los hooks de git)
+npm ci
 
 # Servidor de desarrollo
 npm start
@@ -208,6 +208,15 @@ npm run start:e2e
 
 # Tests unitarios (Karma)
 ng test
+
+# Tests unitarios como en CI (headless, con umbral de cobertura)
+npm run test:ci
+
+# Specs de una sola feature
+npx ng test --watch=false --include=src/app/features/<feature>
+
+# Lint de archivos puntuales (sin warnings permitidos)
+npm run lint -- src/app/features/<feature>/<archivo>.ts
 
 # Tests E2E — modo interactivo
 npm run e2e
@@ -227,6 +236,28 @@ npm run e2e:all
 # Servir build SSR
 npm run serve:ssr:gestion-creditos-f
 ```
+
+---
+
+## Calidad y CI
+
+**Hooks de git** (Husky, se instalan con `npm ci`):
+- `pre-commit`: ESLint (`--max-warnings 0`) y Prettier (`--write`) solo sobre los archivos staged.
+- `pre-push`: tests del script de alcance y suite unitaria completa (`npm run test:ci`).
+
+**Lint incremental:** no se reformatea el repo de una vez. Cada archivo que tocás tiene que quedar limpio. Reglas: sin `any` (salvo en specs), sin `console.log` (se permiten `console.warn` y `console.error`).
+
+**Workflow `.github/workflows/ci.yml`** corre solo lo que el PR tocó. El alcance lo decide `scripts/ci-scope.mjs`:
+
+| Qué se tocó | Qué corre |
+|---|---|
+| Solo docs (`*.md`, `docs/`), E2E (`cypress/`) o `.husky/` | Nada de tests unitarios |
+| Una feature (`src/app/features/<x>`) | Lint de los cambiados + specs de esa feature (si la carpeta ya no tiene specs, se omite) |
+| Código compartido (`src/app/core/`, `src/app/shared/`, `src/environments/`, `angular.json`, `package*.json`, `tsconfig*`, `karma.conf.js`, `eslint.config.js`, `scripts/`, `.github/`) o cualquier otro archivo no listado | Suite completa con umbral de cobertura |
+
+- La suite completa también corre al mergear a `main`, todas las noches (si falla, abre o actualiza un issue con la etiqueta `ci:nightly`) y en un PR con la etiqueta `ci:full`.
+- El umbral de cobertura está en `karma.conf.js` (50% de líneas, base del 2026-11-24). Subilo cuando la cobertura crezca; nunca lo bajes.
+- `environment.ts` no está versionado: en CI se genera copiando `environment.development.ts`.
 
 ---
 
