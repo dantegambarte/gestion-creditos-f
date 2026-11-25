@@ -70,9 +70,7 @@
       >
         @for (step of steps; track step.label; let i = $index) {
           @if (i > 0) {
-            <div
-              class="h-[1px] w-8 shrink-0 bg-[var(--ff-border-subtle)]"
-            ></div>
+            <div class="h-[1px] w-8 shrink-0 bg-[var(--ff-border-subtle)]"></div>
           }
           <div
             class="flex shrink-0 items-center gap-2"
@@ -96,14 +94,14 @@
             >
               {{
                 i === 0
-                  ? "Tipo"
+                  ? 'Tipo'
                   : i === 1
-                    ? "Cliente"
+                    ? 'Cliente'
                     : i === 2
-                      ? "Producto"
+                      ? 'Producto'
                       : i === 3
-                        ? "Condiciones"
-                        : "Confirmación"
+                        ? 'Condiciones'
+                        : 'Confirmación'
               }}
             </span>
           </div>
@@ -165,26 +163,12 @@
                 [prestamoTotal]="state.prestamoTotal"
                 [loadingLoanData]="state.loadingLoanData()"
                 [loadingSaleData]="state.loadingSaleData"
-                [loadingProductRatesByCatalogId]="
-                  state.loadingProductRatesByCatalogId
-                "
+                [loadingProductRatesByCatalogId]="state.loadingProductRatesByCatalogId"
                 (productAdded)="state.addProduct($event)"
-                (productVariantAdded)="
-                  state.addProductVariant($event.product, $event.variantId)
-                "
-                (unitAdded)="
-                  state.addProductUnit(
-                    $event.product,
-                    $event.variantId,
-                    $event.unitId
-                  )
-                "
+                (productVariantAdded)="state.addProductVariant($event.product, $event.variantId)"
+                (unitAdded)="state.addProductUnit($event.product, $event.variantId, $event.unitId)"
                 (unitRemoved)="
-                  state.removeProductUnit(
-                    $event.productoId,
-                    $event.variantId,
-                    $event.unitId
-                  )
+                  state.removeProductUnit($event.productoId, $event.variantId, $event.unitId)
                 "
                 (productRemoved)="state.removeFromCart($event)"
                 (quantityIncreased)="state.increaseQuantity($event)"
@@ -203,6 +187,7 @@
               [capitalBase]="state.capitalBase"
               [capitalAFinanciar]="state.capitalAFinanciar"
               [interestRate]="state.interestRate"
+              [loanRateMissing]="state.loanRateMissing()"
               [valorCuota]="state.valorCuota"
               [totalADevolver]="state.totalADevolver"
               [todayDate]="state.todayDate"
@@ -213,10 +198,7 @@
               [simulationError]="state.simulationError()"
               [canContinueWithPlan]="canGoNext()"
               (saleInstallmentsChanged)="
-                state.onSaleInstallmentsChange(
-                  $event.productoId,
-                  $event.installments
-                )
+                state.onSaleInstallmentsChange($event.productoId, $event.installments)
               "
               (simulationRequested)="state.requestFinancialSimulation()"
               (continueFromSimulationRequested)="canGoNext() && nextStep()"
@@ -232,9 +214,7 @@
               [valorCuota]="state.valorCuota"
               [totalADevolver]="state.totalADevolver"
               [validatedDownPayment]="state.getValidatedDownPayment()"
-              [installmentsCount]="
-                state.operationForm.controls.installmentsCount.value
-              "
+              [installmentsCount]="state.operationForm.controls.installmentsCount.value"
               [simulationResult]="state.simulationResult()"
             />
           }
@@ -253,19 +233,13 @@
       class="hidden shrink-0 border-t border-[var(--ff-border-subtle)] bg-[var(--ff-bg)] px-4 py-3 md:block md:px-8 md:py-4"
       data-cy="new-operation-footer"
     >
-      <div
-        class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-      >
-        <span
-          class="text-xs text-[#8EA5FF] md:text-sm md:text-[var(--ff-text-muted)]"
-        >
+      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <span class="text-xs text-[#8EA5FF] md:text-sm md:text-[var(--ff-text-muted)]">
           Paso {{ activeIndex + 1 }} de {{ steps.length }} ·
           {{ steps[activeIndex].label }}
         </span>
 
-        <div
-          class="grid w-full grid-cols-2 items-center gap-3 md:flex md:w-auto"
-        >
+        <div class="grid w-full grid-cols-2 items-center gap-3 md:flex md:w-auto">
           @if (activeIndex === 0) {
             <p-button
               label="Cancelar"
@@ -327,13 +301,13 @@
       <i class="pi pi-spinner pi-spin text-3xl text-[var(--ff-success)]"></i>
       <div>
         <p class="text-base font-semibold text-[var(--ff-text-primary)]">
-          {{ openingCreatedOperation ? "Abriendo operación" : "Enviando para aprobación" }}
+          {{ openingCreatedOperation ? 'Abriendo operación' : 'Enviando para aprobación' }}
         </p>
         <p class="mt-1 text-sm text-[var(--ff-text-secondary)]">
           {{
             openingCreatedOperation
-              ? "La operación ya fue creada. Estamos cargando el detalle..."
-              : "Estamos registrando la pre-operación. Esperá un instante..."
+              ? 'La operación ya fue creada. Estamos cargando el detalle...'
+              : 'Estamos registrando la pre-operación. Esperá un instante...'
           }}
         </p>
       </div>
