@@ -1,6 +1,8 @@
 import { defineConfig } from 'cypress';
 import { execSync } from 'child_process';
 import * as path from 'path';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { dbResetBlockReason, readEnvFile } = require('./cypress/scripts/db-reset-guard');
 
 const BACKEND_DIR = path.resolve(
   __dirname,
@@ -50,7 +52,7 @@ export default defineConfig({
       json: true,
     },
 
-    setupNodeEvents(on) {
+    setupNodeEvents(on, config) {
       on('task', {
         /**
          * Ejecuta la semilla 05 de E2E contra la BD local.
@@ -71,9 +73,15 @@ export default defineConfig({
 
         /**
          * Ejecuta db:reset completo + todas las semillas.
-         * ⚠️ DESTRUCTIVO — solo usar en entornos de CI o desarrollo limpio.
+         * ⚠️ DESTRUCTIVO — bloqueado salvo opt-in explícito
+         * (CYPRESS_allowDbReset=true) y backend local que no sea producción.
          */
         'db:reset:full'() {
+          const blockReason = dbResetBlockReason(
+            config.env,
+            readEnvFile(path.join(BACKEND_DIR, '.env')),
+          );
+          if (blockReason) return { ok: false, error: blockReason };
           try {
             execSync('npm run db:reset', {
               cwd: BACKEND_DIR,
