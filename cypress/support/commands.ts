@@ -1204,6 +1204,102 @@ Cypress.Commands.add(
   },
 );
 
+/**
+ * Prepara una venta real sin consumir el stock existente: elige un producto
+ * activo con variante activa y tasa activa, y crea una unidad nueva para el
+ * test (las ventas aprobadas no se revierten; vender stock real lo agotaría
+ * corrida tras corrida). Falla si no hay catálogo vendible.
+ * @returns producto, variante, unidad creada (id y código) y plan de la tasa
+ */
+Cypress.Commands.add('apiCreateSaleUnit', (): Cypress.Chainable<SaleUnitFixture> => {
+  type ProductApi = { id: string; status: string; variants?: Array<{ id: string; status: string }> };
+  type RateApi = { active: boolean; installments_count: number; payment_frequency: string };
+  return cy.getAuthToken('ADMIN').then((token) =>
+    cy.apiRequest('GET', '/products', null, token).then((productsRes) => {
+      expect(productsRes.status, 'listar productos').to.eq(200);
+      const candidates = ((productsRes.body?.data ?? []) as ProductApi[])
+        .filter((p) => p.status === 'ACTIVE')
+        .map((p) => ({ productId: p.id, variant: p.variants?.find((v) => v.status === 'ACTIVE') }))
+        .filter((c) => !!c.variant);
+
+      const tryCandidate = (index: number): Cypress.Chainable<SaleUnitFixture> => {
+        expect(index, 'catálogo vendible (producto activo con tasa activa)').to.be.lessThan(
+          candidates.length,
+        );
+        const { productId, variant } = candidates[index];
+        return cy
+          .apiRequest('GET', `/product-rates?product_id=${productId}`, null, token)
+          .then((ratesRes) => {
+            expect(ratesRes.status, 'listar tasas de producto').to.eq(200);
+            const rate = ((ratesRes.body?.data ?? []) as RateApi[]).find((r) => r.active);
+            if (!rate) return tryCandidate(index + 1);
+            const unitCode = `E2E-${Date.now()}-${index}`;
+            return cy
+              .apiRequest('POST', '/product-units', { variant_id: variant!.id, unit_code: unitCode }, token)
+              .then((unitRes) => {
+                expect(unitRes.status, `crear unidad de E2E — ${JSON.stringify(unitRes.body)}`).to.eq(201);
+                return {
+                  productId,
+                  variantId: variant!.id,
+                  unitId: String(unitRes.body?.data?.id),
+                  unitCode,
+                  installmentsCount: rate.installments_count,
+                  paymentFrequency: rate.payment_frequency,
+                };
+              });
+          });
+      };
+      return tryCandidate(0);
+    }),
+  );
+});
+
+/**
+ * Elige en el paso de productos de "Nueva operación" la unidad exacta creada
+ * por apiCreateSaleUnit, en lugar de la primera unidad disponible del catálogo.
+ * @param fixture - unidad de E2E a agregar a la venta
+ */
+Cypress.Commands.add('selectSaleUnit', (fixture: SaleUnitFixture): void => {
+  cy.get(`[data-cy="sale-product-${fixture.productId}"]`, { timeout: 20000 }).scrollIntoView().click();
+  cy.get(`[data-cy="sale-variant-${fixture.variantId}"]`, { timeout: 15000 }).scrollIntoView().click();
+  cy.contains('span', fixture.unitCode, { timeout: 20000 })
+    .parent()
+    .find('[data-cy="sale-add-unit"]')
+    .scrollIntoView()
+    .click();
+  cy.contains('span', fixture.unitCode).parent().find('[data-cy="sale-remove-unit"]').should('exist');
+});
+
+/**
+ * Desactiva las unidades de E2E (código "E2E-") que quedaron disponibles sin
+ * venderse, por ejemplo porque el test falló antes de aprobar la venta. Así
+ * una corrida fallida tampoco cambia el stock disponible del catálogo.
+ */
+Cypress.Commands.add('apiDeactivateLeftoverSaleUnits', (): void => {
+  cy.getAuthToken('ADMIN').then((token) =>
+    cy.apiRequest('GET', '/product-units?status=AVAILABLE', null, token).then((res) => {
+      expect(res.status, 'listar unidades disponibles').to.eq(200);
+      const leftovers = ((res.body?.data ?? []) as Array<{ id: string; unit_code: string }>).filter((u) =>
+        String(u.unit_code).startsWith('E2E-'),
+      );
+      leftovers.forEach((unit) => {
+        cy.apiRequest('PATCH', `/product-units/${unit.id}/deactivate`, null, token).then((deactivateRes) => {
+          expect(deactivateRes.status, `desactivar unidad de E2E ${unit.unit_code}`).to.eq(200);
+        });
+      });
+    }),
+  );
+});
+
+type SaleUnitFixture = {
+  productId: string;
+  variantId: string;
+  unitId: string;
+  unitCode: string;
+  installmentsCount: number;
+  paymentFrequency: string;
+};
+
 declare global {
   namespace Cypress {
     interface Chainable {
@@ -1242,6 +1338,9 @@ declare global {
       apiApproveCredit(creditId: string): Chainable<Record<string, unknown>>;
       apiRejectCreditIfPending(creditId: string): Chainable<number>;
       apiCreateActiveUser(role: string): Chainable<{ id: string; dni: string; token: string }>;
+      apiCreateSaleUnit(): Chainable<SaleUnitFixture>;
+      selectSaleUnit(fixture: SaleUnitFixture): Chainable<void>;
+      apiDeactivateLeftoverSaleUnits(): Chainable<void>;
       apiForceInstallmentDueDate(
         installmentId: string,
         dueDate: string,

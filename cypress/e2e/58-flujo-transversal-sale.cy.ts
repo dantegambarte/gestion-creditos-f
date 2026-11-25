@@ -41,6 +41,27 @@ function localIsoToday(): string {
   return `${year}-${month}-${day}`;
 }
 
+/**
+ * Abre el diálogo "Registrar Cobro" de una cuota en la planilla del cobrador
+ * (desktop) con la acción de su fila. La planilla trae todas las cuotas
+ * pendientes, así que la fila puede quedar fuera de la vista.
+ * @param installmentId - cuota a cobrar
+ * @param tab - pestaña donde está la cuota: una cuota con intento de cobro hoy
+ *   (por ejemplo, una pre-carga rechazada) pasa a "Gestionadas"
+ */
+function openPaymentDialog(installmentId: string, tab = 'Por gestionar'): void {
+  cy.contains('button.sheet-tab', tab, { timeout: 15000 }).click();
+  cy.get(`[data-cy="sheet-detail-table-row"][data-installment-id="${installmentId}"]`, {
+    timeout: 15000,
+  })
+    .scrollIntoView()
+    .within(() => {
+      cy.contains('button', 'Registrar cobro').should('be.visible').click();
+    });
+}
+
+type SaleUnit = Parameters<Cypress.Chainable['selectSaleUnit']>[0];
+
 describe('El Viaje de la Venta — SALE Multi-Rol (real)', () => {
   const stamp = Date.now().toString().slice(-6);
   const customer = {
@@ -57,6 +78,11 @@ describe('El Viaje de la Venta — SALE Multi-Rol (real)', () => {
   let firstPaymentId: string;
   let secondPaymentId: string;
   let portalTempPassword: string;
+
+  // Una corrida fallida puede dejar su unidad de E2E sin vender.
+  after(() => {
+    cy.apiDeactivateLeftoverSaleUnits();
+  });
 
   it('paso a — SELLER origina una venta real con producto, variante, unidad y enganche', () => {
     cy.viewport(1280, 720);
@@ -82,6 +108,9 @@ describe('El Viaje de la Venta — SALE Multi-Rol (real)', () => {
     });
 
     cy.intercept('POST', '/api/credits').as('createCredit');
+    // Unidad propia del test, creada antes de cargar el catálogo: no consume
+    // el stock real (las ventas aprobadas no se revierten).
+    cy.apiCreateSaleUnit().as('saleUnit');
     cy.visit('/seller/operations/new');
     cy.get('[data-cy="btn-type-sale"]', { timeout: 20000 })
       .should('be.visible')
@@ -98,15 +127,7 @@ describe('El Viaje de la Venta — SALE Multi-Rol (real)', () => {
       .click();
 
     cy.contains('h3', 'Catálogo', { timeout: 20000 }).should('be.visible');
-    cy.get('[data-cy^="sale-product-"]', { timeout: 20000 })
-      .first()
-      .click({ force: true });
-    cy.get('[data-cy^="sale-variant-"]', { timeout: 15000 })
-      .first()
-      .click({ force: true });
-    cy.get('[data-cy="sale-add-unit"]', { timeout: 20000 })
-      .first()
-      .click({ force: true });
+    cy.get<SaleUnit>('@saleUnit').then((fixture) => cy.selectSaleUnit(fixture));
     cy.get('[data-cy="btn-siguiente"] button', { timeout: 15000 })
       .should('not.be.disabled')
       .click();
@@ -163,7 +184,7 @@ describe('El Viaje de la Venta — SALE Multi-Rol (real)', () => {
     cy.contains('p-table tbody tr', customer.dni, { timeout: 20000 })
       .should('be.visible')
       .within(() => {
-        cy.get('button').filter(':has(.pi-check)').first().click({ force: true });
+        cy.get('button:visible').filter(':has(.pi-check)').first().click();
       });
     cy.contains('.p-dialog .p-dialog-title', 'Aprobar Crédito', {
       timeout: 10000,
@@ -255,6 +276,8 @@ describe('El Viaje de la Venta — SALE Multi-Rol (real)', () => {
         expect(rows, 'al menos una cuota generada').to.have.length.greaterThan(
           0,
         );
+        // El API no garantiza orden: la planilla ofrece la próxima cuota impaga.
+        rows.sort((x, y) => Number(x['installment_number']) - Number(y['installment_number']));
         installments = rows.map((r) => ({
           id: String(r['id']),
           amount_due: Number(r['amount_due']),
@@ -284,11 +307,7 @@ describe('El Viaje de la Venta — SALE Multi-Rol (real)', () => {
     cy.contains('h1', 'Planilla', { timeout: 15000 }).should('be.visible');
 
     cy.intercept('POST', '/api/payments').as('createPayment');
-    cy.contains(customer.fullName, { timeout: 15000 })
-      .closest('tr')
-      .within(() => {
-        cy.contains('button', 'Cobrar').click({ force: true });
-      });
+    openPaymentDialog(installments[0].id);
     cy.contains('.p-dialog', 'Registrar Cobro', { timeout: 10000 }).should(
       'be.visible',
     );
@@ -349,14 +368,11 @@ describe('El Viaje de la Venta — SALE Multi-Rol (real)', () => {
     );
 
     // Regla documentada en collections.queries.js: una pre-carga rechazada
-    // libera la cuota — vuelve a aparecer en la planilla para re-cobrarla.
+    // libera la cuota para re-cobrarla. Sigue en la planilla, en "Gestionadas"
+    // porque ya tuvo un intento de cobro hoy.
     cy.loginReal('COLLECTOR', `/collector/route/${sheetId}`);
     cy.intercept('POST', '/api/payments').as('createPaymentRetry');
-    cy.contains(customer.fullName, { timeout: 15000 })
-      .closest('tr')
-      .within(() => {
-        cy.contains('button', 'Cobrar').click({ force: true });
-      });
+    openPaymentDialog(installments[0].id, 'Gestionadas');
     cy.contains('.p-dialog', 'Registrar Cobro', { timeout: 10000 }).should(
       'be.visible',
     );
