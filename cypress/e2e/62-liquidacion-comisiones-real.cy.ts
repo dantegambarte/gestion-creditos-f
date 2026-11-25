@@ -20,6 +20,8 @@ function digitsToLetters(stamp: string): string {
     .join('');
 }
 
+type SaleUnit = Parameters<Cypress.Chainable['selectSaleUnit']>[0];
+
 describe('Liquidación semanal de comisiones (real)', () => {
   const stamp = Date.now().toString().slice(-6);
   const customer = {
@@ -30,6 +32,11 @@ describe('Liquidación semanal de comisiones (real)', () => {
 
   let sellerFullName: string;
   let creditId: string;
+
+  // Una corrida fallida puede dejar su unidad de E2E sin vender.
+  after(() => {
+    cy.apiDeactivateLeftoverSaleUnits();
+  });
 
   it('setup — SELLER origina venta real y ADMIN la aprueba (comisión PENDING real)', () => {
     cy.viewport(1280, 720);
@@ -53,6 +60,9 @@ describe('Liquidación semanal de comisiones (real)', () => {
       );
 
       cy.intercept('POST', '/api/credits').as('createCredit');
+      // Unidad propia del test, creada antes de cargar el catálogo: no consume
+      // el stock real (las ventas aprobadas no se revierten).
+      cy.apiCreateSaleUnit().as('saleUnit');
       cy.visit('/seller/operations/new');
       cy.get('[data-cy="btn-type-sale"]', { timeout: 20000 }).should('be.visible').click();
 
@@ -61,9 +71,7 @@ describe('Liquidación semanal de comisiones (real)', () => {
       cy.contains('button', 'Continuar con este cliente', { timeout: 15000 }).should('be.enabled').click();
 
       cy.contains('h3', 'Catálogo', { timeout: 20000 }).should('be.visible');
-      cy.get('[data-cy^="sale-product-"]', { timeout: 20000 }).first().click({ force: true });
-      cy.get('[data-cy^="sale-variant-"]', { timeout: 15000 }).first().click({ force: true });
-      cy.get('[data-cy="sale-add-unit"]', { timeout: 20000 }).first().click({ force: true });
+      cy.get<SaleUnit>('@saleUnit').then((fixture) => cy.selectSaleUnit(fixture));
       cy.get('[data-cy="btn-siguiente"] button', { timeout: 15000 }).should('not.be.disabled').click();
 
       cy.get('[data-cy="ddl-installments"]', { timeout: 15000 }).first().should('be.visible');
@@ -89,7 +97,7 @@ describe('Liquidación semanal de comisiones (real)', () => {
       cy.contains('p-table tbody tr', customer.dni, { timeout: 20000 })
         .should('be.visible')
         .within(() => {
-          cy.get('button').filter(':has(.pi-check)').first().click({ force: true });
+          cy.get('button:visible').filter(':has(.pi-check)').first().click();
         });
       cy.contains('.p-dialog .p-dialog-title', 'Aprobar Crédito', { timeout: 10000 }).should('be.visible');
       cy.contains('.p-dialog:visible button', 'Confirmar').click();

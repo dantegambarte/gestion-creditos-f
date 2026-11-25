@@ -202,6 +202,7 @@ Las suites que usan `cy.loginReal`, `cy.getAuthToken`, `cy.apiRequest` o `cy.api
   - Cada test crea los datos que necesita: no depende de otro test ni de lo que haya en la base. Para usuarios nuevos y operativos, usar `cy.apiCreateActiveUser(role)`.
   - Lo que se modifica se restaura en `after()`/`afterEach()`, que corren pase o falle el test. Por ejemplo, créditos con `cy.apiRejectCreditIfPending`, feriados desactivados, `system_config` y saldos de caja devueltos a su valor original.
   - Clientes y usuarios no tienen DELETE en la API: usar DNIs únicos por corrida.
+  - Las ventas aprobadas no se revierten, así que nunca vender stock existente. `cy.apiCreateSaleUnit()` crea una unidad propia (código `E2E-…`) y `cy.selectSaleUnit(unidad)` la elige en el catálogo de "Nueva operación". Crear la unidad antes de `cy.visit`, porque el catálogo se carga al entrar. En `after()`, `cy.apiDeactivateLeftoverSaleUnits()` desactiva las unidades de E2E que quedaron sin vender.
   - No encadenar un `cy.visit` justo después de `cy.loginReal(rol, destino)`: aborta el `GET /auth/me` en vuelo y la app limpia la sesión.
   - Si falta un dato de catálogo, el test tiene que fallar, no pasar en verde salteando las aserciones.
 

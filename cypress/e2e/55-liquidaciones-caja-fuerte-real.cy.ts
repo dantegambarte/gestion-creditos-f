@@ -160,55 +160,6 @@ function ensureCustomer(token: string): Cypress.Chainable<string> {
 }
 
 /**
- * Arma una venta real sin consumir el stock existente: elige un producto
- * activo con tasa activa y crea una unidad nueva de su variante para el test
- * (las ventas aprobadas no se pueden revertir, así que vender stock real lo
- * agotaría corrida tras corrida).
- * @returns unidad creada y plan de la tasa, o null si no hay catálogo vendible
- */
-function pickSaleFixture(token: string): Cypress.Chainable<SaleFixture | null> {
-  type ProductApi = { id: string; status: string; variants?: Array<{ id: string; status: string }> };
-  type RateApi = { active: boolean; installments_count: number; payment_frequency: string };
-
-  return cy.apiRequest('GET', '/products', null, token).then((productsRes) => {
-    expect(productsRes.status, 'listar productos').to.eq(200);
-    const candidates = ((productsRes.body as ApiData<ProductApi[]>).data ?? [])
-      .filter((p) => p.status === 'ACTIVE')
-      .map((p) => ({ productId: p.id, variant: p.variants?.find((v) => v.status === 'ACTIVE') }))
-      .filter((c) => !!c.variant);
-
-    const tryCandidate = (index: number): Cypress.Chainable<SaleFixture | null> => {
-      if (index >= candidates.length) return cy.wrap(null);
-      const { productId, variant } = candidates[index];
-      return cy
-        .apiRequest('GET', `/product-rates?product_id=${productId}`, null, token)
-        .then((ratesRes) => {
-          expect(ratesRes.status, 'listar tasas de producto').to.eq(200);
-          const rate = ((ratesRes.body as ApiData<RateApi[]>).data ?? []).find((r) => r.active);
-          if (!rate) return tryCandidate(index + 1);
-          return cy
-            .apiRequest(
-              'POST',
-              '/product-units',
-              { variant_id: variant!.id, unit_code: `E2E-${Date.now()}-${index}` },
-              token,
-            )
-            .then((unitRes) => {
-              expect(unitRes.status, `crear unidad de E2E — ${JSON.stringify(unitRes.body)}`).to.eq(201);
-              return {
-                unitId: String((unitRes.body as ApiData<{ id: string }>).data.id),
-                installmentsCount: rate.installments_count,
-                paymentFrequency: rate.payment_frequency,
-              };
-            });
-        });
-    };
-
-    return tryCandidate(0);
-  });
-}
-
-/**
  * Crea una venta (SALE) como SELLER y la aprueba como ADMIN, generando una
  * comisión PENDING para el seller (`credit.created_by`). Sin enganche ni
  * cuotas adelantadas → no requiere caja operativa abierta para aprobarse.
@@ -279,12 +230,9 @@ function ensurePendingCommission(
 ): Cypress.Chainable<number> {
   // Sin catálogo vendible el caso no prueba nada: fallar en vez de pasar en
   // verde salteando las aserciones (antes ocultaba que el fixture nunca servía).
-  return pickSaleFixture(adminTok)
-    .then((fixture) => {
-      expect(fixture, 'catálogo vendible (unidad disponible + tasa activa)').to.not
-        .be.null;
-      return createApprovedSaleCommission(adminTok, sellerTok, fixture as SaleFixture);
-    })
+  return cy
+    .apiCreateSaleUnit()
+    .then((fixture) => createApprovedSaleCommission(adminTok, sellerTok, fixture))
     .then(() => pendingCommissionsTotal(adminTok, sellerUserId))
     .then((total) => {
       expect(total, 'comisión PENDING generada por la venta del test').to.be.greaterThan(0);
@@ -309,6 +257,11 @@ describe('Liquidaciones × Caja Fuerte Central — escenarios límite (real)', (
 
   // Devuelve Caja General al saldo previo a la suite (CASO 2 la vacía y los
   // ajustes IN de cada caso la mueven), pase o falle cada test.
+  // Una corrida fallida puede dejar su unidad de E2E sin vender.
+  after(() => {
+    cy.apiDeactivateLeftoverSaleUnits();
+  });
+
   after(() => {
     if (initialGeneralBalance === null) return;
     const target = initialGeneralBalance;
