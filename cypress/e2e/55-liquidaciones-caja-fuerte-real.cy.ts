@@ -43,10 +43,6 @@ function adminToken(): Cypress.Chainable<string> {
   return cy.getAuthToken('ADMIN');
 }
 
-function sellerToken(): Cypress.Chainable<string> {
-  return cy.getAuthToken('SELLER');
-}
-
 /** Devuelve el id del usuario autenticado (vía /auth/me). */
 function meId(token: string): Cypress.Chainable<string> {
   return cy.apiRequest('GET', '/auth/me', null, token).then((res) => {
@@ -164,69 +160,43 @@ function ensureCustomer(token: string): Cypress.Chainable<string> {
 }
 
 /**
- * Busca un producto con stock AVAILABLE y tasa activa configurada, para poder
- * dar de alta una venta (SALE) aprobable sin tocar seeds manualmente.
+ * Elige una unidad disponible de un producto con tasa activa para crear una
+ * venta real. Parte de /product-units?status=AVAILABLE porque /products solo
+ * informa available_count a nivel producto (no por variante).
+ * @returns unidad y plan de la tasa, o null si no hay catálogo vendible
  */
 function pickSaleFixture(token: string): Cypress.Chainable<SaleFixture | null> {
-  return cy.apiRequest('GET', '/products', null, token).then((productsRes) => {
-    expect(productsRes.status, 'listar productos').to.eq(200);
-    type ProductApi = {
-      id: string;
-      status: string;
-      variants: Array<{ id: string; status: string; available_count: number }>;
-    };
-    const products = (productsRes.body as ApiData<ProductApi[]>).data ?? [];
+  type UnitApi = { id: string; product_id: string };
+  type RateApi = { active: boolean; installments_count: number; payment_frequency: string };
 
-    const candidate = products.find(
-      (p) =>
-        p.status === 'ACTIVE' &&
-        p.variants?.some((v) => v.status === 'ACTIVE' && v.available_count > 0),
-    );
-    if (!candidate) return null;
+  return cy
+    .apiRequest('GET', '/product-units?status=AVAILABLE', null, token)
+    .then((unitsRes) => {
+      expect(unitsRes.status, 'listar unidades disponibles').to.eq(200);
+      const units = (unitsRes.body as ApiData<UnitApi[]>).data ?? [];
+      const productIds = [...new Set(units.map((u) => u.product_id))];
 
-    const variant = candidate.variants.find(
-      (v) => v.status === 'ACTIVE' && v.available_count > 0,
-    )!;
-
-    return cy
-      .apiRequest(
-        'GET',
-        `/product-rates?product_id=${candidate.id}`,
-        null,
-        token,
-      )
-      .then((ratesRes) => {
-        expect(ratesRes.status, 'listar tasas de producto').to.eq(200);
-        type RateApi = {
-          active: boolean;
-          installments_count: number;
-          payment_frequency: string;
-        };
-        const rates = (ratesRes.body as ApiData<RateApi[]>).data ?? [];
-        const rate = rates.find((r) => r.active);
-        if (!rate) return null;
-
+      const tryProduct = (index: number): Cypress.Chainable<SaleFixture | null> => {
+        if (index >= productIds.length) return cy.wrap(null);
+        const productId = productIds[index];
         return cy
-          .apiRequest(
-            'GET',
-            `/product-units?variant_id=${variant.id}&status=AVAILABLE`,
-            null,
-            token,
-          )
-          .then((unitsRes) => {
-            expect(unitsRes.status, 'listar unidades disponibles').to.eq(200);
-            type UnitApi = { id: string };
-            const units = (unitsRes.body as ApiData<UnitApi[]>).data ?? [];
-            if (!units.length) return null;
-
-            return {
-              unitId: units[0].id,
+          .apiRequest('GET', `/product-rates?product_id=${productId}`, null, token)
+          .then((ratesRes) => {
+            expect(ratesRes.status, 'listar tasas de producto').to.eq(200);
+            const rates = (ratesRes.body as ApiData<RateApi[]>).data ?? [];
+            const rate = rates.find((r) => r.active);
+            if (!rate) return tryProduct(index + 1);
+            const unit = units.find((u) => u.product_id === productId)!;
+            return cy.wrap({
+              unitId: unit.id,
               installmentsCount: rate.installments_count,
               paymentFrequency: rate.payment_frequency,
-            };
+            });
           });
-      });
-  });
+      };
+
+      return tryProduct(0);
+    });
 }
 
 /**
@@ -288,19 +258,6 @@ function pendingCommissionsTotal(
     });
 }
 
-/** Pone el sueldo fijo del usuario en $0 para que totalNet = solo comisiones. */
-function zeroOutSalary(
-  adminTok: string,
-  userId: string,
-): Cypress.Chainable<unknown> {
-  return cy.apiRequest(
-    'PUT',
-    `/commissions/salary/${userId}`,
-    { weekly_amount: 0 },
-    adminTok,
-  );
-}
-
 /**
  * Asegura al menos una comisión PENDING > 0 para el seller, creando una venta
  * aprobada si no hay stock/tasa disponible para generar una nueva (en cuyo
@@ -311,30 +268,60 @@ function ensurePendingCommission(
   sellerTok: string,
   sellerUserId: string,
 ): Cypress.Chainable<number> {
+  // Sin catálogo vendible el caso no prueba nada: fallar en vez de pasar en
+  // verde salteando las aserciones (antes ocultaba que el fixture nunca servía).
   return pickSaleFixture(adminTok)
     .then((fixture) => {
-      if (!fixture) return cy.wrap(null);
-      return createApprovedSaleCommission(adminTok, sellerTok, fixture);
+      expect(fixture, 'catálogo vendible (unidad disponible + tasa activa)').to.not
+        .be.null;
+      return createApprovedSaleCommission(adminTok, sellerTok, fixture as SaleFixture);
     })
-    .then(() => pendingCommissionsTotal(adminTok, sellerUserId));
+    .then(() => pendingCommissionsTotal(adminTok, sellerUserId))
+    .then((total) => {
+      expect(total, 'comisión PENDING generada por la venta del test').to.be.greaterThan(0);
+      return total;
+    });
 }
 
 describe('Liquidaciones × Caja Fuerte Central — escenarios límite (real)', () => {
   let adminTok = '';
   let sellerTok = '';
   let sellerId = '';
+  let initialGeneralBalance: number | null = null;
 
+  before(function () {
+    if (!Cypress.env('realAuthEnabled')) this.skip();
+    adminToken().then((t) =>
+      getGeneralCashAccount(t).then((account) => {
+        initialGeneralBalance = account.current_balance;
+      }),
+    );
+  });
+
+  // Devuelve Caja General al saldo previo a la suite (CASO 2 la vacía y los
+  // ajustes IN de cada caso la mueven), pase o falle cada test.
+  after(() => {
+    if (initialGeneralBalance === null) return;
+    const target = initialGeneralBalance;
+    adminToken().then((t) =>
+      getGeneralCashAccount(t).then((account) => {
+        const diff = target - account.current_balance;
+        adjustGeneralCash(t, account.id, diff > 0 ? 'IN' : 'OUT', Math.abs(diff));
+      }),
+    );
+  });
+
+  // Cada test usa un vendedor nuevo: sus comisiones y liquidaciones no chocan
+  // con corridas previas (UNIQUE user_id + week_start) ni con otros casos.
+  // Un usuario nuevo no tiene sueldo fijo, así que totalNet = solo comisiones.
   beforeEach(function () {
     if (!Cypress.env('realAuthEnabled')) this.skip();
 
     adminToken().then((t) => {
       adminTok = t;
-      sellerToken().then((st) => {
-        sellerTok = st;
-        meId(sellerTok).then((id) => {
-          sellerId = id;
-          zeroOutSalary(adminTok, sellerId);
-        });
+      cy.apiCreateActiveUser('SELLER').then((seller) => {
+        sellerTok = seller.token;
+        sellerId = seller.id;
       });
     });
   });
@@ -442,27 +429,27 @@ describe('Liquidaciones × Caja Fuerte Central — escenarios límite (real)', (
   });
 
   it('CASO 3 — jornada CERRADA (sin caja operativa): la liquidación de todos modos sucede en 201 porque imputa a Caja General, no a la caja operativa', () => {
-    // Resetea y NO abre caja: no existe business_day ni cash_session hoy.
-    resetToday(adminTok);
-
     ensurePendingCommission(adminTok, sellerTok, sellerId).then(
       (pendingTotal) => {
-        if (pendingTotal <= 0) {
-          cy.log(
-            'Sin catálogo vendible (producto+tasa+stock) — saltando CASO 3',
-          );
-          return;
-        }
+        // Resetea DESPUÉS de generar la comisión (aprobar la venta abre caja
+        // operativa) y NO abre caja: no queda business_day ni cash_session hoy.
+        resetToday(adminTok);
 
         // Confirma la precondición: no hay caja operativa activa.
         cy.apiRequest('GET', '/cash-sessions/active', null, adminTok).then(
           (activeRes) => {
-            const activeSession = (activeRes.body as ApiData<unknown | null>)
-              ?.data;
-            expect(
-              activeSession,
-              'no debe haber caja operativa activa',
-            ).to.be.oneOf([null, undefined]);
+            const activeSession = (
+              activeRes.body as ApiData<{ opened_at: string } | null>
+            )?.data;
+            // La base compartida puede tener una caja vieja olvidada abierta;
+            // lo que importa es que la jornada de HOY no tenga caja operativa.
+            const openedToday =
+              !!activeSession &&
+              new Date(activeSession.opened_at).toDateString() ===
+                new Date().toDateString();
+            expect(openedToday, 'no debe haber caja operativa abierta hoy').to.eq(
+              false,
+            );
           },
         );
 
@@ -698,9 +685,11 @@ describe('Liquidaciones × Caja Fuerte Central — escenarios límite (real)', (
                   0.01,
                 );
 
+                // Se sumó expectedTotal (ajuste IN) y la liquidación lo
+                // descontó: el saldo vuelve al valor leído antes del ajuste.
                 getGeneralCashAccount(adminTok).then((after) => {
                   expect(after.current_balance).to.be.closeTo(
-                    before.current_balance - expectedTotal,
+                    before.current_balance,
                     0.01,
                   );
                 });

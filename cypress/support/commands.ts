@@ -1020,6 +1020,52 @@ Cypress.Commands.add(
 );
 
 /**
+ * Crea un usuario interno nuevo y lo deja operativo: cambia la contraseña
+ * temporal (la API bloquea usuarios con contraseña temporal) y vuelve a
+ * loguearse, porque el cambio invalida los tokens previos. Sirve para que
+ * cada test tenga datos propios (comisiones, liquidaciones) sin chocar con
+ * corridas anteriores sobre el mismo usuario sembrado.
+ * @returns id y token del usuario creado
+ */
+Cypress.Commands.add(
+  'apiCreateActiveUser',
+  (role: string): Cypress.Chainable<{ id: string; dni: string; token: string }> => {
+    const dni = `7${Date.now().toString().slice(-7)}`;
+    const newPassword = 'E2eUser12345';
+    return cy
+      .apiCreateUser({
+        full_name: `E2E ${role} ${dni}`,
+        dni,
+        email: `e2e-${dni}@test.com`,
+        address: 'Calle E2E 123',
+        role,
+      })
+      .then((created) => {
+        const user = (created as { user: { id: string } }).user;
+        const tempPassword = String((created as { tempPassword: string }).tempPassword);
+        return requestLoginWithRetry({ dni, password: tempPassword }).then((loginRes) => {
+          expect(loginRes.status, 'login con contraseña temporal').to.eq(200);
+          const tempToken = String(loginRes.body?.data?.token);
+          return cy
+            .apiRequest(
+              'PATCH',
+              '/users/me/change-password',
+              { current_password: tempPassword, new_password: newPassword },
+              tempToken,
+            )
+            .then((changeRes) => {
+              expect(changeRes.status, 'cambiar contraseña temporal').to.eq(200);
+              return requestLoginWithRetry({ dni, password: newPassword }).then((res) => {
+                expect(res.status, 'login con contraseña definitiva').to.eq(200);
+                return { id: user.id, dni, token: String(res.body?.data?.token) };
+              });
+            });
+        });
+      });
+  },
+);
+
+/**
  * Rechaza un crédito creado por un test para dejar la base como estaba:
  * libera las unidades de producto (vuelven a AVAILABLE) y lo saca de
  * pendientes. Tolera 409 (ya no estaba pendiente, por ejemplo si el test lo
@@ -1161,6 +1207,7 @@ declare global {
       apiUnlockUser(userId: string): Chainable<void>;
       apiApproveCredit(creditId: string): Chainable<Record<string, unknown>>;
       apiRejectCreditIfPending(creditId: string): Chainable<number>;
+      apiCreateActiveUser(role: string): Chainable<{ id: string; dni: string; token: string }>;
       apiForceInstallmentDueDate(
         installmentId: string,
         dueDate: string,
