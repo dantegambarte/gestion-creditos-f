@@ -11,7 +11,9 @@
   (onHide)="close()"
 >
   <section class="flex max-h-[88vh] flex-col overflow-hidden" data-cy="delinquency-apply-dialog">
-    <header class="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--ff-border-subtle)] px-6 py-5">
+    <header
+      class="flex shrink-0 items-center justify-between gap-4 border-b border-[var(--ff-border-subtle)] px-6 py-5"
+    >
       <h2 class="text-lg font-bold" style="color: var(--ff-text-primary)">Aplicar mora</h2>
       <button
         type="button"
@@ -26,14 +28,13 @@
     <div class="flex-1 overflow-y-auto px-6 py-5" data-cy="delinquency-apply-dialog-body">
       <div class="flex flex-col gap-4">
         <p class="text-sm" style="color: var(--ff-text-primary)">
-          Cliente: <strong>{{ row?.clientName }}</strong> · Cuota #{{
-            row?.installmentNumber
-          }}
+          Cliente: <strong>{{ row?.clientName }}</strong> · Cuota #{{ row?.installmentNumber }}
         </p>
         <div class="flex flex-col gap-1">
           <label class="auth-label">Monto de mora</label>
           <input
             type="number"
+            data-cy="delinquency-apply-dialog-amount"
             [(ngModel)]="applyAmount"
             min="0.01"
             step="0.01"

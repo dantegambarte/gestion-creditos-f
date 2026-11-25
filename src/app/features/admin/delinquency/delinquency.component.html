@@ -4,9 +4,7 @@
   <div class="ff-page-header mb-0">
     <div>
       <h1 class="ff-page-title">Mora y Cancelaciones</h1>
-      <p class="ff-page-subtitle">
-        Seguimiento de cuotas en mora y acciones de cobranza.
-      </p>
+      <p class="ff-page-subtitle">Seguimiento de cuotas en mora y acciones de cobranza.</p>
     </div>
   </div>
 
@@ -31,21 +29,13 @@
             class="rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0"
             style="background: rgba(248, 113, 113, 0.12)"
           >
-            <i
-              class="pi pi-exclamation-triangle text-2xl"
-              style="color: var(--ff-danger)"
-            ></i>
+            <i class="pi pi-exclamation-triangle text-2xl" style="color: var(--ff-danger)"></i>
           </div>
           <div>
-            <p
-              class="text-4xl font-black leading-none ff-mono"
-              style="color: var(--ff-danger)"
-            >
+            <p class="text-4xl font-black leading-none ff-mono" style="color: var(--ff-danger)">
               {{ stats.enMoraCount }}
             </p>
-            <span class="text-sm block mt-1" style="color: var(--ff-text-muted)"
-              >En Mora</span
-            >
+            <span class="text-sm block mt-1" style="color: var(--ff-text-muted)">En Mora</span>
           </div>
         </div>
       </p-card>
@@ -56,21 +46,13 @@
             class="rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0"
             style="background: rgba(251, 176, 64, 0.12)"
           >
-            <i
-              class="pi pi-clock text-2xl"
-              style="color: var(--ff-warning)"
-            ></i>
+            <i class="pi pi-clock text-2xl" style="color: var(--ff-warning)"></i>
           </div>
           <div>
-            <p
-              class="text-3xl font-black leading-none ff-mono"
-              style="color: var(--ff-warning)"
-            >
+            <p class="text-3xl font-black leading-none ff-mono" style="color: var(--ff-warning)">
               {{ stats.sinAplicar | currencyArs }}
             </p>
-            <span class="text-sm block mt-1" style="color: var(--ff-text-muted)"
-              >Sin Aplicar</span
-            >
+            <span class="text-sm block mt-1" style="color: var(--ff-text-muted)">Sin Aplicar</span>
           </div>
         </div>
       </p-card>
@@ -81,10 +63,7 @@
             class="rounded-full w-14 h-14 flex items-center justify-center flex-shrink-0"
             style="background: rgba(251, 176, 64, 0.08)"
           >
-            <i
-              class="pi pi-exclamation-circle text-2xl"
-              style="color: var(--ff-warning)"
-            ></i>
+            <i class="pi pi-exclamation-circle text-2xl" style="color: var(--ff-warning)"></i>
           </div>
           <div>
             <p
@@ -93,9 +72,7 @@
             >
               {{ stats.aplicada | currencyArs }}
             </p>
-            <span class="text-sm block mt-1" style="color: var(--ff-text-muted)"
-              >Aplicado</span
-            >
+            <span class="text-sm block mt-1" style="color: var(--ff-text-muted)">Aplicado</span>
           </div>
         </div>
       </p-card>
@@ -154,27 +131,18 @@
     </div>
 
     <!-- Chip filters -->
-    <div
-      class="flex gap-2 px-4 py-3 flex-wrap"
-      style="border-bottom: 1px solid var(--ff-border)"
-    >
+    <div class="flex gap-2 px-4 py-3 flex-wrap" style="border-bottom: 1px solid var(--ff-border)">
       @for (chip of statusChips; track chip.value) {
         <button
           class="px-4 py-1.5 rounded-full text-sm font-medium border transition-colors"
           [style.background]="
-            activeStatusFilter === chip.value
-              ? 'rgba(79,110,247,0.15)'
-              : 'transparent'
+            activeStatusFilter === chip.value ? 'rgba(79,110,247,0.15)' : 'transparent'
           "
           [style.color]="
-            activeStatusFilter === chip.value
-              ? 'var(--ff-accent)'
-              : 'var(--ff-text-secondary)'
+            activeStatusFilter === chip.value ? 'var(--ff-accent)' : 'var(--ff-text-secondary)'
           "
           [style.borderColor]="
-            activeStatusFilter === chip.value
-              ? 'var(--ff-accent)'
-              : 'var(--ff-border)'
+            activeStatusFilter === chip.value ? 'var(--ff-accent)' : 'var(--ff-border)'
           "
           (click)="setStatusFilter(chip.value)"
         >
@@ -206,24 +174,12 @@
             <td><p-skeleton width="50%" /></td>
             <td><p-skeleton width="50%" /></td>
             <td class="flex justify-center">
-              <p-skeleton
-                width="5rem"
-                height="1.5rem"
-                styleClass="rounded-full"
-              />
+              <p-skeleton width="5rem" height="1.5rem" styleClass="rounded-full" />
             </td>
             <td>
               <div class="flex gap-2">
-                <p-skeleton
-                  width="5rem"
-                  height="2rem"
-                  styleClass="rounded-md"
-                />
-                <p-skeleton
-                  width="5rem"
-                  height="2rem"
-                  styleClass="rounded-md"
-                />
+                <p-skeleton width="5rem" height="2rem" styleClass="rounded-md" />
+                <p-skeleton width="5rem" height="2rem" styleClass="rounded-md" />
               </div>
             </td>
           </tr>
@@ -233,9 +189,7 @@
       <div class="ff-empty-state">
         <i class="pi pi-inbox"></i>
         <p class="text-lg font-medium">No hay clientes en mora</p>
-        <p class="text-sm">
-          Todos están al día. ¡Excelente trabajo del equipo!
-        </p>
+        <p class="text-sm">Todos están al día. ¡Excelente trabajo del equipo!</p>
       </div>
     } @else {
       <p-table
@@ -280,9 +234,7 @@
             </td>
             <td
               class="text-right ff-mono font-bold"
-              [style.color]="
-                row.daysOverdue > 15 ? 'var(--ff-danger)' : 'var(--ff-warning)'
-              "
+              [style.color]="row.daysOverdue > 15 ? 'var(--ff-danger)' : 'var(--ff-warning)'"
             >
               {{ row.delinquencyAmount | currencyArs }}
             </td>
@@ -305,9 +257,7 @@
                   [loading]="processingId === row.id + '_notify'"
                 />
                 <p-button
-                  [label]="
-                    row.status === 'EN_MORA' ? 'Condonar' : 'Aplicar mora'
-                  "
+                  [label]="row.status === 'EN_MORA' ? 'Condonar' : 'Aplicar mora'"
                   [severity]="row.status === 'EN_MORA' ? 'danger' : 'warning'"
                   size="small"
                   [styleClass]="
@@ -315,15 +265,10 @@
                       ? 'dq-action-btn dq-action-btn--condone'
                       : 'dq-action-btn dq-action-btn--apply'
                   "
-                  [icon]="
-                    row.status === 'EN_MORA' ? 'pi pi-heart' : 'pi pi-bolt'
-                  "
-                  (onClick)="
-                    row.status === 'EN_MORA' ? onCondone(row) : onApply(row)
-                  "
+                  [icon]="row.status === 'EN_MORA' ? 'pi pi-heart' : 'pi pi-bolt'"
+                  (onClick)="row.status === 'EN_MORA' ? onCondone(row) : onApply(row)"
                   [loading]="
-                    processingId === row.id + '_condone' ||
-                    processingId === row.id + '_apply'
+                    processingId === row.id + '_condone' || processingId === row.id + '_apply'
                   "
                 />
               </div>
@@ -332,12 +277,8 @@
         </ng-template>
         <ng-template pTemplate="footer">
           <tr>
-            <td
-              colspan="8"
-              style="color: var(--ff-text-muted); font-size: 13px"
-            >
-              Mostrando {{ filteredClients.length }} de
-              {{ stats.enMoraCount }} cuotas en mora
+            <td colspan="8" style="color: var(--ff-text-muted); font-size: 13px">
+              Mostrando {{ filteredClients.length }} de {{ clients.length }} cuotas vencidas
             </td>
           </tr>
         </ng-template>
@@ -368,15 +309,24 @@
             </div>
 
             <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <div class="rounded-xl border p-3" style="border-color: var(--ff-border-subtle); background: var(--ff-bg)">
+              <div
+                class="rounded-xl border p-3"
+                style="border-color: var(--ff-border-subtle); background: var(--ff-bg)"
+              >
                 <dt class="text-xs" style="color: var(--ff-text-muted)">Monto</dt>
                 <dd class="mt-1 font-mono font-semibold">{{ row.amount | currencyArs }}</dd>
               </div>
-              <div class="rounded-xl border p-3" style="border-color: var(--ff-border-subtle); background: var(--ff-bg)">
+              <div
+                class="rounded-xl border p-3"
+                style="border-color: var(--ff-border-subtle); background: var(--ff-bg)"
+              >
                 <dt class="text-xs" style="color: var(--ff-text-muted)">Días en mora</dt>
                 <dd class="mt-1 font-semibold">{{ row.daysOverdue }} días</dd>
               </div>
-              <div class="rounded-xl border p-3 col-span-2" style="border-color: var(--ff-border-subtle); background: var(--ff-bg)">
+              <div
+                class="rounded-xl border p-3 col-span-2"
+                style="border-color: var(--ff-border-subtle); background: var(--ff-bg)"
+              >
                 <dt class="text-xs" style="color: var(--ff-text-muted)">Mora $</dt>
                 <dd
                   class="mt-1 font-mono text-lg font-bold"
@@ -404,8 +354,7 @@
                 data-cy="delinquency-mobile-apply-action"
                 (onClick)="row.status === 'EN_MORA' ? onCondone(row) : onApply(row)"
                 [loading]="
-                  processingId === row.id + '_condone' ||
-                  processingId === row.id + '_apply'
+                  processingId === row.id + '_condone' || processingId === row.id + '_apply'
                 "
               />
             </div>

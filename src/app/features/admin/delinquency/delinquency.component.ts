@@ -314,7 +314,7 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
    */
   private calcStats(rows: DelinquencyRow[]): DelinquencyStats {
     return {
-      enMoraCount: rows.length,
+      enMoraCount: rows.filter((r) => r.status === 'EN_MORA').length,
       sinAplicar: rows.filter((r) => r.delinquencyAmount === 0).reduce((s, r) => s + r.amount, 0),
       aplicada: rows
         .filter((r) => r.delinquencyAmount > 0)

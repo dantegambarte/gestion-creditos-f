@@ -1,3 +1,4 @@
+import { SimpleChange } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
@@ -53,6 +54,22 @@ describe('DelinquencyApplyDialogComponent', () => {
     expect(addSpy).toHaveBeenCalledWith(
       jasmine.objectContaining({ summary: 'Estado de caja desconocido' }),
     );
+  });
+
+  it('no arrastra el monto al abrir el diálogo para otra cuota', () => {
+    const c = create();
+    c.ngOnChanges({ visible: new SimpleChange(false, true, false) });
+    c.applyAmount = 250;
+    c.row = { id: 'i2', clientName: 'Beto' } as DelinquencyRow;
+    c.ngOnChanges({ row: new SimpleChange({ id: 'i1' }, c.row, false) });
+    expect(c.applyAmount).toBeNull();
+  });
+
+  it('usa una severidad de toast válida al aplicar mora', () => {
+    const addSpy = spyOn(msg, 'add');
+    cashStatusSpy.checkAction.and.returnValue(of(null));
+    create().confirmApply();
+    expect(addSpy).toHaveBeenCalledWith(jasmine.objectContaining({ severity: 'warn' }));
   });
 
   it('aplica mora con caja abierta', () => {

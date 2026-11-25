@@ -32,6 +32,17 @@ describe('DelinquencyComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('enMoraCount cuenta solo cuotas con mora aplicada', () => {
+    const rows = [
+      { id: 'a', amount: 100, delinquencyAmount: 50, status: 'EN_MORA' },
+      { id: 'b', amount: 200, delinquencyAmount: 0, status: 'SIN_APLICAR' },
+    ] as DelinquencyRow[];
+    const stats = (component as any).calcStats(rows);
+    expect(stats.enMoraCount).toBe(1);
+    expect(stats.aplicada).toBe(50);
+    expect(stats.sinAplicar).toBe(200);
+  });
+
   it('onCondone bloquea y avisa si falla la consulta de caja', () => {
     const installments = TestBed.inject(InstallmentsService);
     const waiveSpy = spyOn(installments, 'waivePenalty');

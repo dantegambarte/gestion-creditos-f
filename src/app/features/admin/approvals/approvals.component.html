@@ -219,6 +219,7 @@
                       severity="success"
                       [rounded]="true"
                       styleClass="approval-action-button"
+                      data-cy="admin-approvals-approve-action"
                       (onClick)="onApprove(app)"
                       pTooltip="Aprobar"
                       tooltipPosition="top"
@@ -228,6 +229,7 @@
                       severity="danger"
                       [rounded]="true"
                       styleClass="approval-action-button ff-reject-action"
+                      data-cy="admin-approvals-reject-action"
                       (onClick)="onReject(app)"
                       pTooltip="Rechazar"
                       tooltipPosition="top"
@@ -292,6 +294,7 @@
                 label="Rechazar"
                 severity="danger"
                 styleClass="ff-reject-action w-full h-11 rounded-xl justify-center"
+                data-cy="admin-approvals-mobile-reject-action"
                 (onClick)="onReject(app)"
               />
             </div>
@@ -423,6 +426,7 @@
         label="Confirmar"
         severity="primary"
         styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        data-cy="admin-approvals-confirm-approve"
         (onClick)="confirmApprove()"
         [loading]="processingApprove"
         [disabled]="isCashClosed || isCashUnknown || processingApprove || showChangeSeller"
@@ -471,6 +475,7 @@
       <label class="auth-label">Motivo de rechazo (obligatorio, mín. 5 caracteres)</label>
       <textarea
         pInputTextarea
+        data-cy="admin-approvals-reject-reason"
         [(ngModel)]="rejectReason"
         rows="4"
         maxlength="500"
@@ -507,6 +512,7 @@
         severity="danger"
         [outlined]="true"
         styleClass="w-full h-11 px-5 rounded-xl justify-center"
+        data-cy="admin-approvals-confirm-reject"
         (onClick)="confirmReject()"
         [loading]="processingReject"
         [disabled]="rejectCharCount() < 5"
