@@ -987,6 +987,28 @@ Cypress.Commands.add(
  * ya existe una (backend responde 409 ACTIVE_SESSION_IN_BUSINESS_DAY).
  * Necesario desde que aprobar un LOAN exige caja activa para el desembolso.
  */
+/**
+ * Registra un ingreso manual en efectivo en la caja operativa activa, con el
+ * mismo monto con que ensureCashSessionOpen abre una caja nueva.
+ * @param token - token ADMIN
+ */
+function fundActiveCashSession(token: string): Cypress.Chainable<void> {
+  return cy.apiRequest('GET', '/cash-sessions/active', null, token).then((activeRes) => {
+    const sessionId = (activeRes.body?.data as { id?: string } | null)?.id;
+    expect(sessionId, 'caja operativa activa para fondear').to.be.a('string');
+    return cy
+      .apiRequest(
+        'POST',
+        `/cash-sessions/${sessionId}/manual-incomes`,
+        { amount: 100000000, payment_method: 'CASH', description: 'Fondeo automático de E2E' },
+        token,
+      )
+      .then((incomeRes) => {
+        expect(incomeRes.status, `fondear caja — ${JSON.stringify(incomeRes.body)}`).to.eq(201);
+      });
+  });
+}
+
 function ensureCashSessionOpen(token: string): Cypress.Chainable<void> {
   return cy
     .apiRequest('POST', '/cash-sessions', { opening_amount: 100000000 }, token)
@@ -1006,14 +1028,26 @@ function ensureCashSessionOpen(token: string): Cypress.Chainable<void> {
 Cypress.Commands.add(
   'apiApproveCredit',
   (creditId: string): Cypress.Chainable<Record<string, unknown>> => {
+    const approve = (token: string) =>
+      cy.apiRequest('PATCH', `/credits/${creditId}/approve`, null, token);
+
     return cy.getAuthToken('ADMIN').then((token) =>
       ensureCashSessionOpen(token).then(() =>
-        cy
-          .apiRequest('PATCH', `/credits/${creditId}/approve`, null, token)
-          .then((res) => {
-            expect(res.status, 'aprobar crédito').to.eq(200);
+        approve(token).then((res) => {
+          // La caja de hoy puede venir de otra suite con poco efectivo (409 de
+          // ensureCashSessionOpen la reutiliza): fondearla y reintentar una vez,
+          // para no depender del orden de las suites.
+          if (res.status !== 409 || res.body?.code !== 'INSUFFICIENT_CASH') {
+            expect(res.status, `aprobar crédito — ${JSON.stringify(res.body)}`).to.eq(200);
             return res.body.data as Record<string, unknown>;
-          }),
+          }
+          return fundActiveCashSession(token).then(() =>
+            approve(token).then((retry) => {
+              expect(retry.status, `aprobar crédito tras fondear caja — ${JSON.stringify(retry.body)}`).to.eq(200);
+              return retry.body.data as Record<string, unknown>;
+            }),
+          );
+        }),
       ),
     );
   },

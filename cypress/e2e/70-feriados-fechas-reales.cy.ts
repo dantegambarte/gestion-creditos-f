@@ -42,6 +42,22 @@ describe('Feriados afectando fechas reales de vencimiento (real)', () => {
     new Date(holidayThatMoves.getTime() + 24 * 60 * 60 * 1000),
   );
 
+  // Feriados creados por la suite. Se desactivan en after() (pase o falle):
+  // un feriado activo con affects_due_dates=true correría vencimientos reales
+  // de cualquier crédito que caiga en esa fecha. No hay DELETE en la API.
+  const createdHolidayIds: string[] = [];
+
+  after(() => {
+    if (!createdHolidayIds.length) return;
+    cy.getAuthToken('ADMIN').then((token) => {
+      createdHolidayIds.forEach((id) => {
+        cy.apiRequest('PUT', `/holidays/${id}`, { active: false }, token).then((res) => {
+          expect(res.status, `desactivar feriado de E2E ${id}`).to.eq(200);
+        });
+      });
+    });
+  });
+
   it('feriado con affects_due_dates=true corre el vencimiento real al próximo día hábil', () => {
     cy.apiCreateCustomer({
       full_name: `Feriado Mueve QA ${stamp}`,
@@ -68,6 +84,7 @@ describe('Feriados afectando fechas reales de vencimiento (real)', () => {
           )
           .then((holidayRes) => {
             expect(holidayRes.status, 'alta de feriado real (afecta vencimientos)').to.eq(201);
+            createdHolidayIds.push(String(holidayRes.body?.data?.holiday?.id ?? holidayRes.body?.data?.id));
 
             cy.apiRequest(
               'POST',
@@ -139,6 +156,7 @@ describe('Feriados afectando fechas reales de vencimiento (real)', () => {
           )
           .then((holidayRes) => {
             expect(holidayRes.status, 'alta de feriado real (NO afecta vencimientos)').to.eq(201);
+            createdHolidayIds.push(String(holidayRes.body?.data?.holiday?.id ?? holidayRes.body?.data?.id));
 
             cy.apiRequest(
               'POST',
