@@ -57,6 +57,16 @@ export class ProductDetailComponent implements OnInit {
     return this.auth.hasRole(UserRoleEnum.ADMIN);
   }
 
+  /**
+   * Calcula el rango de precio real del producto con el mínimo y máximo de sus variantes (no la primera y la última).
+   * @returns {{ min: number; max: number } | null} Rango de precios, o null si no hay variantes.
+   */
+  get priceRange(): { min: number; max: number } | null {
+    const prices = (this.product?.variants ?? []).map((v) => v.currentPrice);
+    if (prices.length === 0) return null;
+    return { min: Math.min(...prices), max: Math.max(...prices) };
+  }
+
   private get productId(): string {
     return this.route.snapshot.paramMap.get('id')!;
   }

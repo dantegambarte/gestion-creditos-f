@@ -378,15 +378,15 @@
               <div class="px-5 py-3" style="border-top: 1px solid var(--ff-border)">
                 <span class="text-xs ff-mono" style="color: var(--ff-text-muted)">
                   Rango de precio:&nbsp;
-                  <span style="color: var(--ff-accent)">
-                    {{ product.variants[0].currentPrice | currencyArs: 2 }}
-                    @if (product.variants.length > 1) {
-                      —
-                      {{
-                        product.variants[product.variants.length - 1].currentPrice | currencyArs: 2
-                      }}
-                    }
-                  </span>
+                  @if (priceRange; as range) {
+                    <span data-cy="product-price-range" style="color: var(--ff-accent)">
+                      {{ range.min | currencyArs: 2 }}
+                      @if (range.max !== range.min) {
+                        —
+                        {{ range.max | currencyArs: 2 }}
+                      }
+                    </span>
+                  }
                 </span>
               </div>
             }
