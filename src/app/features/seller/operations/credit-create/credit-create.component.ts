@@ -151,6 +151,7 @@ export class CreditCreateComponent implements OnInit {
     this.submitError = null;
     this.unitsError = null;
     this.showExtraSection = false;
+    this.cart = [];
     // La condición de pago solo aplica a ventas: al cambiar de tipo se vuelve a
     // FINANCED y se restauran las validaciones de cuotas/frecuencia.
     this.form.patchValue({

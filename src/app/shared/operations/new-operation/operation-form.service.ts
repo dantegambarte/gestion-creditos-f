@@ -7,7 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { Observable, finalize, map } from 'rxjs';
+import { Observable, Subscription, finalize, map } from 'rxjs';
 import { InterestRate } from '../../../features/admin/config/models/interfaces/interest-rate.model';
 import { ProductRate } from '../../../features/admin/config/models/interfaces/product';
 import { InterestRatesService } from '../../../features/admin/config/services/interest-rates.service';
@@ -156,6 +156,7 @@ export class OperationFormService {
 
   // Cache de resúmenes por cliente dentro del wizard — se destruye con el servicio
   private readonly summaryCache = new Map<string, ClientOperation>();
+  private summarySubscription: Subscription | null = null;
 
   // ── Operation type options ────────────────────────────────────────────────
   readonly operationTypeOptions = [
@@ -1328,30 +1329,39 @@ export class OperationFormService {
   // ── Client helpers ────────────────────────────────────────────────────────
 
   /**
-   * Selecciona cliente y sincroniza el control del formulario.
+   * Selecciona cliente y sincroniza el control del formulario. Cancela el
+   * resumen pendiente del cliente anterior y descarta respuestas de un cliente
+   * que ya no es el elegido, para que una respuesta tardía no pise la selección.
    * @param {ClientOperation} client - Cliente elegido en el paso 1.
    */
   selectClient(client: ClientOperation): void {
     this.showQuickClientForm.set(false);
     this.operationForm.controls.customerId.setValue(client.id);
+    this.summarySubscription?.unsubscribe();
+    this.summarySubscription = null;
 
     const cached = this.summaryCache.get(client.id);
     if (cached) {
+      this.loadingSelectedClientSummary.set(false);
       this.selectedClient.set(cached);
       return;
     }
 
     this.selectedClient.set(client);
     this.loadingSelectedClientSummary.set(true);
-    this.customersService
+    const isStillSelected = () => this.operationForm.controls.customerId.value === client.id;
+    this.summarySubscription = this.customersService
       .getWizardSummary(client.id)
       .pipe(
         finalize(() => {
-          this.loadingSelectedClientSummary.set(false);
+          if (isStillSelected()) {
+            this.loadingSelectedClientSummary.set(false);
+          }
         }),
       )
       .subscribe({
         next: (summary) => {
+          if (!isStillSelected()) return;
           const enrichedClient: ClientOperation = {
             ...client,
             phone: summary.phone ?? client.phone,
@@ -1376,6 +1386,7 @@ export class OperationFormService {
           );
         },
         error: () => {
+          if (!isStillSelected()) return;
           this.selectedClient.set(client);
         },
       });
@@ -1673,11 +1684,12 @@ export class OperationFormService {
   // ── Submit ────────────────────────────────────────────────────────────────
 
   /**
-   * Construye el payload y lo envía al backend para aprobación.
+   * Construye el payload y lo envía al backend para aprobación. El cliente sale
+   * del control customerId (el que muestra el formulario), no de selectedClient.
    * @returns {Observable<{ id: string; status: CreditStatus }>} crédito creado.
    */
   submit(): Observable<{ id: string; status: CreditStatus }> {
-    const client = this.selectedClient();
+    const customerId = this.operationForm.controls.customerId.value as string;
     const type = this.operationForm.controls.operationType.value;
     const installmentsCount = this.operationForm.controls.installmentsCount.value;
     const firstPaymentDate = this.operationForm.controls.firstPaymentDate.value;
@@ -1710,7 +1722,7 @@ export class OperationFormService {
     const cashSalePayload =
       type === 'SALE' && this.isCashSale
         ? {
-            customerId: client!.id,
+            customerId,
             type,
             paymentCondition: 'CASH' as const,
             units: selectedUnits.map((p) => ({ unitId: p.id })),
@@ -1735,7 +1747,7 @@ export class OperationFormService {
       cashSalePayload ??
       (type === 'SALE'
         ? {
-            customerId: client!.id,
+            customerId,
             type,
             items: this.cartLines().map((line) => ({
               productId: line.productIds[0] ?? line.productoId,
@@ -1794,7 +1806,7 @@ export class OperationFormService {
             paymentFrequency: freq,
           }
         : {
-            customerId: client!.id,
+            customerId,
             type,
             totalAmount: this.prestamoTotal,
             downPayment: 0,

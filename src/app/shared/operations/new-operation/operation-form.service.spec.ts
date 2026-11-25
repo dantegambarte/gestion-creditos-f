@@ -3,7 +3,7 @@ declare const expect: any;
 declare const spyOn: any;
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
 import { OperationFormService } from './operation-form.service';
 import { OperationCatalogService } from './operation-catalog.service';
@@ -263,5 +263,87 @@ describe('OperationFormService', () => {
 
     // +1 día corrido, cruzando fin de mes.
     expect(service.toApiDate(result)).toBe('2026-02-01');
+  });
+
+  describe('cambio rápido de cliente (#46)', () => {
+    /**
+     * Construye un cliente mínimo para los tests de selección.
+     * @param {string} id - id del cliente
+     */
+    function buildClient(id: string): any {
+      return {
+        id,
+        name: `Cliente ${id}`,
+        dni: id,
+        phone: '',
+        email: '',
+        status: 'ACTIVE',
+        previousCredits: 0,
+        delinquency: 'sin mora',
+        paymentCapacity: 0,
+      };
+    }
+
+    /**
+     * Arma un resumen de wizard con el teléfono indicado para distinguir respuestas.
+     * @param {string} phone - teléfono marcador
+     */
+    function buildSummary(phone: string): any {
+      return {
+        phone,
+        email: null,
+        status: 'ACTIVE',
+        address: null,
+        collectorName: null,
+        activeCredits: 0,
+        delinquency: 'sin mora',
+        paymentCapacity: 0,
+        createdAt: '',
+        paidInstallments: 0,
+        pendingInstallments: 0,
+        overdueInstallments: 0,
+        credits: [],
+      };
+    }
+
+    it('descarta la respuesta tardía del cliente deseleccionado y envía el cliente visible', () => {
+      const customers = TestBed.inject(CustomersService);
+      const summaryA = new Subject<any>();
+      const summaryB = new Subject<any>();
+      spyOn(customers, 'getWizardSummary').and.callFake((id: string) =>
+        (id === 'A' ? summaryA : summaryB).asObservable(),
+      );
+
+      service.selectClient(buildClient('A'));
+      service.selectClient(buildClient('B'));
+      summaryB.next(buildSummary('phone-B'));
+      summaryB.complete();
+      summaryA.next(buildSummary('phone-A'));
+      summaryA.complete();
+
+      expect(service.selectedClient()?.id).toBe('B');
+      expect(service.selectedClient()?.phone).toBe('phone-B');
+      expect(service.operationForm.controls.customerId.value).toBe('B');
+      expect(service.loadingSelectedClientSummary()).toBeFalse();
+
+      service.operationForm.controls.operationType.setValue('LOAN');
+      service.submit().subscribe();
+
+      expect(creditsServiceSpy.create).toHaveBeenCalledWith(
+        jasmine.objectContaining({ customerId: 'B' }),
+      );
+    });
+
+    it('submit usa el customerId del formulario aunque selectedClient quede desfasado', () => {
+      service.selectClient(buildClient('A'));
+      service.operationForm.controls.customerId.setValue('B');
+      service.operationForm.controls.operationType.setValue('LOAN');
+
+      service.submit().subscribe();
+
+      expect(creditsServiceSpy.create).toHaveBeenCalledWith(
+        jasmine.objectContaining({ customerId: 'B' }),
+      );
+    });
   });
 });

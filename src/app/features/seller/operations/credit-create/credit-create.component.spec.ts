@@ -229,4 +229,17 @@ describe('CreditCreateComponent', () => {
       'El efectivo y la transferencia deben sumar el total de la venta.',
     );
   });
+
+  it('limpia el carrito del padre al cambiar SALE→LOAN→SALE (#46)', () => {
+    completeCommonSaleForm();
+
+    component.form.patchValue({ type: 'LOAN' });
+    component.onTypeChange('LOAN');
+    component.form.patchValue({ type: 'SALE' });
+    component.onTypeChange('SALE');
+
+    expect(component.cart).toEqual([]);
+    component.onSubmit();
+    expect(creditsServiceSpy.create).not.toHaveBeenCalled();
+  });
 });
