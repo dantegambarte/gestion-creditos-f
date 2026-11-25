@@ -52,3 +52,20 @@ test('process environment overrides the .env file, like dotenv does', () => {
   assert.equal(env.DB_HOST, 'db.remote.io');
   assert.match(dbResetBlockReason({ allowDbReset: true }, env), /local/);
 });
+
+test('keeps a quoted value intact when an inline comment follows it', () => {
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+  const { readEnvFile } = require('./db-reset-guard');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'envfile-'));
+  const file = path.join(dir, '.env');
+  fs.writeFileSync(file, 'NODE_ENV="production" # prod\nDB_NAME=\'with # hash\'\n');
+  try {
+    const env = readEnvFile(file);
+    assert.equal(env.NODE_ENV, 'production');
+    assert.equal(env.DB_NAME, 'with # hash');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

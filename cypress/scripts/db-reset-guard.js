@@ -37,9 +37,10 @@ function readEnvFile(filePath) {
     const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
     if (!match) continue;
     const raw = match[2].trim();
-    const quote = raw[0];
-    const isQuoted = (quote === '"' || quote === "'") && raw.length > 1 && raw.endsWith(quote);
-    env[match[1]] = isQuoted ? raw.slice(1, -1) : raw.replace(/\s+#.*$/, '').trim();
+    // Valor entre comillas (opcionalmente seguido de "# comentario"): se toma
+    // literal lo de adentro, incluso si contiene "#".
+    const quoted = /^(["'])(.*?)\1(?:\s+#.*)?$/.exec(raw);
+    env[match[1]] = quoted ? quoted[2] : raw.replace(/\s+#.*$/, '').trim();
   }
   return env;
 }
