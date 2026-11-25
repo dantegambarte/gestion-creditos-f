@@ -101,5 +101,27 @@ describe('HeaderComponent', () => {
     it('CASHIER no recibe deep links a áreas sin acceso', () => {
       expect(routeFor(['CASHIER'], 'credit')).toBeNull();
     });
+
+    it('un rol no admin no recibe link si la notificación no trae entity_id', () => {
+      spyOnProperty(component.auth, 'snapshot', 'get').and.returnValue({
+        roles: ['SELLER'],
+      } as never);
+      const route = (
+        component as never as {
+          getNotificationRoute: (i: unknown) => string[] | null;
+        }
+      ).getNotificationRoute({ id: 'n1', entity_type: 'credit' });
+      expect(route).toBeNull();
+    });
+
+    it('sin sesión no se generan deep links', () => {
+      spyOnProperty(component.auth, 'snapshot', 'get').and.returnValue(null as never);
+      const route = (
+        component as never as {
+          getNotificationRoute: (i: unknown) => string[] | null;
+        }
+      ).getNotificationRoute({ id: 'n1', entity_type: 'credit', entity_id: 'x1' });
+      expect(route).toBeNull();
+    });
   });
 });
