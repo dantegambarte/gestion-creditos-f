@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { CashRegisterService } from '../cash-register/cash-register.service';
+import { CashStatusService } from '../cash-register/cash-status.service';
 import { UsersService } from '../users/users.service';
 import { CommissionsComponent } from './commissions.component';
 import { CommissionsService } from './commissions.service';
@@ -48,6 +49,7 @@ describe('CommissionsComponent', () => {
   let cashRegisterSpy: jasmine.SpyObj<CashRegisterService>;
   let formatSpy: jasmine.SpyObj<FormatService>;
   let messageService: MessageService;
+  let cashStatusSpy: jasmine.SpyObj<CashStatusService>;
 
   beforeEach(async () => {
     commissionsSpy = jasmine.createSpyObj('CommissionsService', [
@@ -59,9 +61,7 @@ describe('CommissionsComponent', () => {
     ]);
     usersSpy = jasmine.createSpyObj('UsersService', ['listCollectors']);
     headerSpy = jasmine.createSpyObj('HeaderService', ['set', 'reset']);
-    cashRegisterSpy = jasmine.createSpyObj('CashRegisterService', [
-      'getDashboard',
-    ]);
+    cashRegisterSpy = jasmine.createSpyObj('CashRegisterService', ['getDashboard']);
     formatSpy = jasmine.createSpyObj('FormatService', ['currency']);
 
     commissionsSpy.getWeeklySummary.and.returnValue(of(mockSummary));
@@ -84,6 +84,14 @@ describe('CommissionsComponent', () => {
       }),
     );
     formatSpy.currency.and.callFake((value: number) => `$${value}`);
+    cashStatusSpy = jasmine.createSpyObj('CashStatusService', ['resolve', 'unknownMessage']);
+    cashStatusSpy.resolve.and.returnValue(of('OPEN'));
+    cashStatusSpy.unknownMessage.and.returnValue({
+      severity: 'error',
+      summary: 'Estado de caja desconocido',
+      detail: 'No se pudo verificar el estado de la caja.',
+      life: 6000,
+    });
 
     await TestBed.configureTestingModule({
       imports: [CommissionsComponent],
@@ -93,6 +101,7 @@ describe('CommissionsComponent', () => {
         { provide: UsersService, useValue: usersSpy },
         { provide: HeaderService, useValue: headerSpy },
         { provide: CashRegisterService, useValue: cashRegisterSpy },
+        { provide: CashStatusService, useValue: cashStatusSpy },
         { provide: FormatService, useValue: formatSpy },
       ],
     }).compileComponents();
@@ -125,6 +134,25 @@ describe('CommissionsComponent', () => {
     expect(component.vm.liquidations()[0].id).toBe('liq1');
   });
 
+  it('confirmLiquidate blocks and warns when the cash status query fails', () => {
+    const msgSpy = spyOn(messageService, 'add');
+    cashStatusSpy.resolve.and.returnValue(of('UNKNOWN'));
+    component.vm.selectedEmployee.set(mockSummary.employees[0]);
+    component.vm.confirmLiquidate();
+    expect(commissionsSpy.liquidate).not.toHaveBeenCalled();
+    expect(component.vm.liquidating()).toBeFalse();
+    expect(msgSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({ summary: 'Estado de caja desconocido' }),
+    );
+  });
+
+  it('confirmLiquidate blocks when there is no open cash session', () => {
+    cashStatusSpy.resolve.and.returnValue(of('CLOSED'));
+    component.vm.selectedEmployee.set(mockSummary.employees[0]);
+    component.vm.confirmLiquidate();
+    expect(commissionsSpy.liquidate).not.toHaveBeenCalled();
+  });
+
   it('confirmLiquidate shows warn on 409', () => {
     const msgSpy = spyOn(messageService, 'add');
     commissionsSpy.liquidate.and.returnValue(
@@ -132,8 +160,6 @@ describe('CommissionsComponent', () => {
     );
     component.vm.selectedEmployee.set(mockSummary.employees[0]);
     component.vm.confirmLiquidate();
-    expect(msgSpy).toHaveBeenCalledWith(
-      jasmine.objectContaining({ severity: 'warn' }),
-    );
+    expect(msgSpy).toHaveBeenCalledWith(jasmine.objectContaining({ severity: 'warn' }));
   });
 });

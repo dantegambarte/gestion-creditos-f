@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../../shared/utils/escape-html.util';
 import { CommonModule } from '@angular/common';
 import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
@@ -23,10 +24,7 @@ import { ProductsService } from '../products.service';
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  providers: [
-    { provide: MessageService, useClass: DedupMessageService },
-    ConfirmationService,
-  ],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [
     FfBackTopFabComponent,
     CurrencyArsPipe,
@@ -80,18 +78,12 @@ export class ProductDetailComponent implements OnInit {
 
   /** Navega a la pantalla de edición del producto actual. */
   navigateToEdit(): void {
-    this.router.navigate([
-      `/${this.routePrefix}/products/${this.productId}/edit`,
-    ]);
+    this.router.navigate([`/${this.routePrefix}/products/${this.productId}/edit`]);
   }
 
   /** Navega al listado de variantes del producto actual. */
   navigateToVariants(): void {
-    this.router.navigate([
-      `/${this.routePrefix}/products`,
-      this.productId,
-      'variants',
-    ]);
+    this.router.navigate([`/${this.routePrefix}/products`, this.productId, 'variants']);
   }
 
   /** Navega al listado de unidades de la variante indicada. */
@@ -113,14 +105,12 @@ export class ProductDetailComponent implements OnInit {
   confirmDeactivate(): void {
     this.confirmationService.confirm({
       header: 'Desactivar producto',
-      message: `¿Desactivar <strong>${this.product?.title}</strong>? Si el producto tiene unidades vendidas o reservadas se desactivará igualmente.`,
+      message: `¿Desactivar <strong>${escapeHtml(this.product?.title)}</strong>? Si el producto tiene unidades vendidas o reservadas se desactivará igualmente.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass:
-        'p-button-danger p-button-outlined h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      acceptButtonStyleClass: 'p-button-danger p-button-outlined h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.productsService.deactivate(this.productId, true).subscribe({
           next: () => {
@@ -140,13 +130,12 @@ export class ProductDetailComponent implements OnInit {
   confirmActivate(): void {
     this.confirmationService.confirm({
       header: 'Activar producto',
-      message: `¿Activar <strong>${this.product?.title}</strong>?`,
+      message: `¿Activar <strong>${escapeHtml(this.product?.title)}</strong>?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Activar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.productsService.activate(this.productId).subscribe({
           next: () => {

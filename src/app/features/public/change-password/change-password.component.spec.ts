@@ -5,7 +5,6 @@ import { ChangePasswordComponent } from './change-password.component';
 import { MockAuthService } from '../../../core/auth/mock-auth.service';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AppError } from '../../../core/models/app-error';
-import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -24,7 +23,7 @@ const MOCK_USER = {
 describe('ChangePasswordComponent', () => {
   let fixture: ComponentFixture<ChangePasswordComponent>;
   let component: ChangePasswordComponent;
-  let authSpy: jasmine.SpyObj<MockAuthService>;
+  let authSpy: jasmine.SpyObj<AuthServiceBase>;
   let routerSpy: jasmine.SpyObj<Router>;
 
   beforeEach(async () => {
@@ -34,11 +33,7 @@ describe('ChangePasswordComponent', () => {
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [
-        ChangePasswordComponent,
-        ReactiveFormsModule,
-        NoopAnimationsModule,
-      ],
+      imports: [ChangePasswordComponent, ReactiveFormsModule, NoopAnimationsModule],
       providers: [
         { provide: MockAuthService, useValue: authSpy },
         { provide: AuthServiceBase, useExisting: MockAuthService },
@@ -61,6 +56,24 @@ describe('ChangePasswordComponent', () => {
     expect(cancelBtn).toBeNull();
   });
 
+  const goBackCases: Array<[string, string]> = [
+    ['ADMIN', '/admin/dashboard'],
+    ['SELLER', '/seller/operations'],
+    ['COLLECTOR', '/collector/route'],
+    ['SELLER_COLLECTOR', '/collector/route'],
+    ['CASHIER', '/login'],
+  ];
+  goBackCases.forEach(([role, expected]) => {
+    it(`goBack con ${role} navega a ${expected}`, () => {
+      (Object.getOwnPropertyDescriptor(authSpy, 'snapshot')!.get as jasmine.Spy).and.returnValue({
+        ...MOCK_USER,
+        roles: [role],
+      });
+      component.goBack();
+      expect(routerSpy.navigate).toHaveBeenCalledWith([expected]);
+    });
+  });
+
   it('changePassword success: calls service and clears loading', () => {
     authSpy.changePassword.and.returnValue(of(undefined));
     component.form.setValue({
@@ -69,10 +82,7 @@ describe('ChangePasswordComponent', () => {
       confirm_password: 'NewPass1!',
     });
     component.onSubmit();
-    expect(authSpy.changePassword).toHaveBeenCalledWith(
-      'OldPass1!',
-      'NewPass1!',
-    );
+    expect(authSpy.changePassword).toHaveBeenCalledWith('OldPass1!', 'NewPass1!');
     expect(component.loading).toBeFalse();
   });
 
@@ -88,9 +98,7 @@ describe('ChangePasswordComponent', () => {
       confirm_password: 'NewPass1!',
     });
     component.onSubmit();
-    expect(component.currentPasswordError).toBe(
-      'La contraseña actual es incorrecta.',
-    );
+    expect(component.currentPasswordError).toBe('La contraseña actual es incorrecta.');
     expect(component.newPasswordError).toBe('');
   });
 
@@ -106,9 +114,7 @@ describe('ChangePasswordComponent', () => {
       confirm_password: 'SamePass1!',
     });
     component.onSubmit();
-    expect(component.newPasswordError).toBe(
-      'La nueva contraseña no puede ser igual a la actual.',
-    );
+    expect(component.newPasswordError).toBe('La nueva contraseña no puede ser igual a la actual.');
     expect(component.currentPasswordError).toBe('');
   });
 });
@@ -124,11 +130,9 @@ describe('MockAuthService.changePassword', () => {
   });
 
   it('updates is_temp_password to false and navigates to dashboard', (done) => {
-    service.changePassword('old', 'new').subscribe(() => {
+    service.changePassword().subscribe(() => {
       expect(service.snapshot?.is_temp_password).toBeFalse();
-      expect(routerSpy.navigate).toHaveBeenCalledWith([
-        AppRoutes.DASHBOARD,
-      ]);
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/admin/dashboard']);
       done();
     });
   });

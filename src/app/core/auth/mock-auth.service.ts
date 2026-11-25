@@ -7,7 +7,8 @@ import { AppRoutes } from '../../shared/models/enums/routes.enum';
 import { AuthUser } from '../models/interface/auth-user';
 import { AuthError } from '../models/interface/auth.error';
 import { LoginCredentials } from '../models/interface/login';
-import { UserRole, UserRoleEnum } from '../models/types/user-role';
+import { UserRole } from '../models/types/user-role';
+import { landingRouteForRoles } from './role-routes';
 import { AuthServiceBase } from './auth-service.base';
 
 const isBrowser = typeof localStorage !== 'undefined';
@@ -93,13 +94,10 @@ export class MockAuthService extends AuthServiceBase {
     const match = MOCK_USERS.find((u) => u.dni === credentials.dni);
 
     if (!match || credentials.password !== MOCK_PASSWORD) {
-      return throwError(
-        (): AuthError => ({
-          status: 401,
-          message:
-            'Credenciales incorrectas. Verificá tus datos e intentá nuevamente.',
-        }),
-      ).pipe(delay(this.NETWORK_LATENCY_MS));
+      return throwError((): AuthError => ({
+        status: 401,
+        message: 'Credenciales incorrectas. Verificá tus datos e intentá nuevamente.',
+      })).pipe(delay(this.NETWORK_LATENCY_MS));
     }
 
     return of(match).pipe(
@@ -157,10 +155,11 @@ export class MockAuthService extends AuthServiceBase {
     this.persist(patchedUser);
   }
 
-  changePassword(
-    _currentPassword: string,
-    _newPassword: string,
-  ): Observable<void> {
+  /**
+   * Simula el cambio de contraseña: el mock no valida credenciales, sólo
+   * apaga la marca de contraseña temporal y redirige según el rol.
+   */
+  changePassword(): Observable<void> {
     const user = this._user$.value;
     if (!user) return of(undefined);
 
@@ -173,16 +172,9 @@ export class MockAuthService extends AuthServiceBase {
     );
   }
 
+  /** Redirige a la ruta de aterrizaje absoluta definida para los roles. */
   private redirectByRole(roles: UserRole[]): void {
-    if (roles.includes(UserRoleEnum.ADMIN))
-      return void this.router.navigate([AppRoutes.DASHBOARD]);
-    if (roles.includes(UserRoleEnum.SELLER))
-      return void this.router.navigate([AppRoutes.OPERATIONS]);
-    if (roles.includes(UserRoleEnum.COLLECTOR))
-      return void this.router.navigate([AppRoutes.ROUTE]);
-    if (roles.includes(UserRoleEnum.SELLER_COLLECTOR))
-      return void this.router.navigate([AppRoutes.OPERATIONS]);
-    this.router.navigate([AppRoutes.LOGIN]);
+    this.router.navigate([landingRouteForRoles(roles)]);
   }
 
   private persist(user: AuthUser): void {

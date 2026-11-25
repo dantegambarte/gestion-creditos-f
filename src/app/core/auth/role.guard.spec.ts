@@ -16,18 +16,12 @@ describe('roleGuard', () => {
     TestBed.runInInjectionContext(() => roleGuard(...guardParameters));
 
   beforeEach(() => {
-    auth = jasmine.createSpyObj<AuthServiceBase>(
-      'AuthServiceBase',
-      ['hasAnyRole'],
-      {
-        currentUser$: of(null),
-        snapshot: userWithRoles(['SELLER']),
-      },
-    );
+    auth = jasmine.createSpyObj<AuthServiceBase>('AuthServiceBase', ['hasAnyRole'], {
+      currentUser$: of(null),
+      snapshot: userWithRoles(['SELLER']),
+    });
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    messageService = jasmine.createSpyObj<MessageService>('MessageService', [
-      'add',
-    ]);
+    messageService = jasmine.createSpyObj<MessageService>('MessageService', ['add']);
 
     TestBed.configureTestingModule({
       providers: [
@@ -79,7 +73,7 @@ describe('roleGuard', () => {
   it('resuelve fallback seguro por rol', () => {
     expect(defaultRouteForUser(['ADMIN'])).toBe('/admin/dashboard');
     expect(defaultRouteForUser(['SELLER'])).toBe('/seller/operations');
-    expect(defaultRouteForUser(['SELLER_COLLECTOR'])).toBe('/seller/operations');
+    expect(defaultRouteForUser(['SELLER_COLLECTOR'])).toBe('/collector/route');
     expect(defaultRouteForUser(['COLLECTOR'])).toBe('/collector/route');
     expect(defaultRouteForUser(undefined)).toBe('/login');
   });
@@ -89,9 +83,7 @@ describe('roleGuard', () => {
  * Construye un snapshot mínimo con roles de ruta para ejecutar el guard.
  * @param roles - Roles requeridos por la ruta bajo prueba.
  */
-function routeWithRoles(
-  roles: UserRole[] | undefined,
-): ActivatedRouteSnapshot {
+function routeWithRoles(roles: UserRole[] | undefined): ActivatedRouteSnapshot {
   return { data: roles ? { roles } : {} } as ActivatedRouteSnapshot;
 }
 

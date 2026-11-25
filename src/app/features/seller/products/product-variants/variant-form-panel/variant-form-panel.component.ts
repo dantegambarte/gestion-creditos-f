@@ -7,12 +7,7 @@ import {
   SimpleChanges,
   inject,
 } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -65,8 +60,14 @@ export class VariantFormPanelComponent implements OnChanges {
     return this.variant !== null;
   }
 
+  /**
+   * Re-carga el formulario al abrir el panel o al cambiar la variante con el
+   * panel abierto, para no enviar los valores de otra variante.
+   */
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['visible']?.currentValue === true) {
+    const opened = changes['visible']?.currentValue === true;
+    const variantChanged = !!changes['variant'] && this.visible;
+    if (opened || variantChanged) {
       this.entryMode = 'individual';
       this.errorMessage = null;
       this.buildForm();

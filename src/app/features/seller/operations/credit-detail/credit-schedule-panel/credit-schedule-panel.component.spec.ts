@@ -8,6 +8,7 @@ import { of } from 'rxjs';
 import { PaymentsService } from '../../../../collector/payments.service';
 import { CreditDetail } from '../../../models/credit.model';
 import { CreditSchedulePanelComponent } from './credit-schedule-panel.component';
+import { CashStatusService } from '../../../../admin/cash-register/cash-status.service';
 
 describe('CreditSchedulePanelComponent', () => {
   let fixture: ComponentFixture<CreditSchedulePanelComponent>;
@@ -72,6 +73,10 @@ describe('CreditSchedulePanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [CreditSchedulePanelComponent, NoopAnimationsModule],
       providers: [
+        {
+          provide: CashStatusService,
+          useValue: { checkAction: () => of(null), resolve: () => of('OPEN') },
+        },
         provideHttpClient(),
         provideHttpClientTesting(),
         MessageService,
@@ -88,10 +93,9 @@ describe('CreditSchedulePanelComponent', () => {
   });
 
   it('muestra el botón calendario en la card mobile de una cuota programable', () => {
-    const scheduleButtons: NodeListOf<HTMLElement> =
-      fixture.nativeElement.querySelectorAll(
-        '[data-cy="installment-schedule-visit"]',
-      );
+    const scheduleButtons: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll(
+      '[data-cy="installment-schedule-visit"]',
+    );
 
     expect(scheduleButtons.length).toBeGreaterThan(0);
   });
@@ -132,13 +136,9 @@ describe('CreditSchedulePanelComponent', () => {
     );
     const text = mobileCard.textContent ?? '';
 
-    expect(
-      mobileCard.querySelector('[data-cy="installment-schedule-visit"]'),
-    ).toBeTruthy();
+    expect(mobileCard.querySelector('[data-cy="installment-schedule-visit"]')).toBeTruthy();
     expect(text).toContain('Visita');
     expect(text).not.toContain('Cobrar');
-    expect(
-      mobileCard.querySelector('[data-cy="installment-direct-payment"]'),
-    ).toBeNull();
+    expect(mobileCard.querySelector('[data-cy="installment-direct-payment"]')).toBeNull();
   });
 });

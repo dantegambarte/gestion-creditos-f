@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../../../shared/utils/escape-html.util';
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DedupMessageService } from '../../../../../core/services/dedup-message.service';
@@ -12,16 +13,8 @@ import { CustomersService } from '../../customers.service';
 @Component({
   selector: 'app-client-portal-panel',
   standalone: true,
-  providers: [
-    { provide: MessageService, useClass: DedupMessageService },
-    ConfirmationService,
-  ],
-  imports: [
-    ButtonModule,
-    ConfirmDialogModule,
-    ToastModule,
-    TempPasswordDialogComponent,
-  ],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
+  imports: [ButtonModule, ConfirmDialogModule, ToastModule, TempPasswordDialogComponent],
   templateUrl: './client-portal-panel.component.html',
 })
 export class ClientPortalPanelComponent {
@@ -51,13 +44,12 @@ export class ClientPortalPanelComponent {
   confirmEnablePortal(): void {
     this.confirmationService.confirm({
       header: 'Habilitar portal',
-      message: `¿Habilitar acceso al portal para <strong>${this.customer.fullName}</strong>? Se generará una contraseña temporal.`,
+      message: `¿Habilitar acceso al portal para <strong>${escapeHtml(this.customer.fullName)}</strong>? Se generará una contraseña temporal.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Habilitar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.enablePortal(this.customer.id).subscribe({
           next: ({ tempPassword }) => {
@@ -75,13 +67,12 @@ export class ClientPortalPanelComponent {
   confirmDisablePortal(): void {
     this.confirmationService.confirm({
       header: 'Deshabilitar portal',
-      message: `¿Deshabilitar el acceso al portal de <strong>${this.customer.fullName}</strong>?`,
+      message: `¿Deshabilitar el acceso al portal de <strong>${escapeHtml(this.customer.fullName)}</strong>?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Deshabilitar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.disablePortal(this.customer.id).subscribe({
           next: () => {
@@ -103,13 +94,12 @@ export class ClientPortalPanelComponent {
   confirmResetPortalPassword(): void {
     this.confirmationService.confirm({
       header: 'Resetear contraseña del portal',
-      message: `¿Resetear la contraseña del portal de <strong>${this.customer.fullName}</strong>?`,
+      message: `¿Resetear la contraseña del portal de <strong>${escapeHtml(this.customer.fullName)}</strong>?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Resetear',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.resetPortalPassword(this.customer.id).subscribe({
           next: ({ tempPassword }) => {
@@ -127,13 +117,12 @@ export class ClientPortalPanelComponent {
   confirmUnlockPortal(): void {
     this.confirmationService.confirm({
       header: 'Desbloquear portal',
-      message: `¿Desbloquear el portal de <strong>${this.customer.fullName}</strong>?`,
+      message: `¿Desbloquear el portal de <strong>${escapeHtml(this.customer.fullName)}</strong>?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desbloquear',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.customersService.unlockPortal(this.customer.id).subscribe({
           next: () => {

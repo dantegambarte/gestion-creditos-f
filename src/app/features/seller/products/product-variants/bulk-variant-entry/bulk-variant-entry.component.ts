@@ -1,11 +1,4 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  inject,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -24,12 +17,7 @@ type BulkRow = {
   currentPrice: number | null;
   initialUnits: number | null;
 };
-type BulkFieldKey =
-  | 'color'
-  | 'size'
-  | 'capacity'
-  | 'currentPrice'
-  | 'attributes';
+type BulkFieldKey = 'color' | 'size' | 'capacity' | 'currentPrice' | 'attributes';
 type BulkRowErrors = Record<number, Partial<Record<BulkFieldKey, string>>>;
 
 @Component({
@@ -187,8 +175,7 @@ export class BulkVariantEntryComponent implements OnInit {
       initialUnits: row.initialUnits ?? 1,
     }));
 
-    const localErrorsByFilteredIndex =
-      this.buildLocalBulkErrors(rowsToValidate);
+    const localErrorsByFilteredIndex = this.buildLocalBulkErrors(rowsToValidate);
     const mappedErrors: BulkRowErrors = {};
     Object.entries(localErrorsByFilteredIndex).forEach(([key, value]) => {
       const originalIndex = filledEntries[Number(key)]?.originalIndex;
@@ -204,8 +191,7 @@ export class BulkVariantEntryComponent implements OnInit {
     this.bulkSubmitting = true;
 
     const successOriginalIndexes: number[] = [];
-    const apiErrors: Array<{ row: number; field: string; message: string }> =
-      [];
+    const apiErrors: Array<{ row: number; field: string; message: string }> = [];
 
     for (let i = 0; i < rowsToValidate.length; i += 1) {
       const row = rowsToValidate[i];
@@ -235,16 +221,20 @@ export class BulkVariantEntryComponent implements OnInit {
     this.bulkSubmitting = false;
 
     if (successOriginalIndexes.length > 0) {
-      this.bulkRows = this.bulkRows.filter(
-        (_, index) => !successOriginalIndexes.includes(index),
-      );
+      this.bulkRows = this.bulkRows.filter((_, index) => !successOriginalIndexes.includes(index));
       this.reindexBulkErrorsByRemovedIndexes(successOriginalIndexes);
       this.variantsCreated.emit();
     }
 
     if (apiErrors.length > 0) {
       this.bulkRowErrors = {};
-      this.mapBulkErrors(apiErrors);
+      // Las filas creadas ya se quitaron: corremos cada índice original a su
+      // posición actual para marcar la fila que realmente falló.
+      const shiftedErrors = apiErrors.map((e) => ({
+        ...e,
+        row: e.row - successOriginalIndexes.filter((idx) => idx < e.row).length,
+      }));
+      this.mapBulkErrors(shiftedErrors);
       this.bulkError =
         successOriginalIndexes.length > 0
           ? `${successOriginalIndexes.length} variante(s) creada(s). Corregí las filas con error.`
@@ -377,39 +367,25 @@ export class BulkVariantEntryComponent implements OnInit {
    * @param rawErrors - Estructura libre devuelta por la API.
    * @param {number[]} originalIndexMap - Mapa de índice-filtrado → índice-original en UI.
    */
-  private mapBulkErrors(
-    rawErrors: unknown,
-    originalIndexMap: number[] = [],
-  ): void {
+  private mapBulkErrors(rawErrors: unknown, originalIndexMap: number[] = []): void {
     if (!Array.isArray(rawErrors)) return;
 
     for (const entry of rawErrors) {
       if (!entry || typeof entry !== 'object') continue;
       const filteredRow = Number((entry as { row?: unknown }).row);
-      const field = String(
-        (entry as { field?: unknown }).field || 'attributes',
-      );
-      const message = String(
-        (entry as { message?: unknown }).message || 'Dato inválido.',
-      );
+      const field = String((entry as { field?: unknown }).field || 'attributes');
+      const message = String((entry as { message?: unknown }).message || 'Dato inválido.');
 
       if (!Number.isInteger(filteredRow) || filteredRow < 0) continue;
 
       const row =
-        originalIndexMap.length > 0
-          ? (originalIndexMap[filteredRow] ?? filteredRow)
-          : filteredRow;
+        originalIndexMap.length > 0 ? (originalIndexMap[filteredRow] ?? filteredRow) : filteredRow;
 
       this.bulkRowErrors[row] = this.bulkRowErrors[row] || {};
       if (field === 'current_price') {
         this.bulkRowErrors[row].currentPrice = message;
-      } else if (
-        field === 'color' ||
-        field === 'size' ||
-        field === 'capacity'
-      ) {
-        this.bulkRowErrors[row][field as 'color' | 'size' | 'capacity'] =
-          message;
+      } else if (field === 'color' || field === 'size' || field === 'capacity') {
+        this.bulkRowErrors[row][field as 'color' | 'size' | 'capacity'] = message;
       } else {
         this.bulkRowErrors[row].attributes = message;
       }

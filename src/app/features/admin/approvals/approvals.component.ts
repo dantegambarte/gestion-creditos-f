@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { catchError, of, takeUntil } from 'rxjs';
+import { takeUntil } from 'rxjs';
 
 import { MessageService } from 'primeng/api';
 import { DedupMessageService } from '../../../core/services/dedup-message.service';
@@ -28,7 +28,7 @@ import { MessageModule } from 'primeng/message';
 import { DateService } from '../../../core/services/date.service';
 import { Credit, CreditType } from '../../seller/models/credit.model';
 import { CreditsService } from '../../seller/operations/credits.service';
-import { CashRegisterService } from '../cash-register/cash-register.service';
+import { CashStatus, CashStatusService } from '../cash-register/cash-status.service';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { UsersService } from '../users/users.service';
 
@@ -64,7 +64,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   private readonly credits = inject(CreditsService);
   private readonly usersSvc = inject(UsersService);
   private readonly msg = inject(MessageService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly cashStatusSvc = inject(CashStatusService);
   private readonly auth = inject(AuthServiceBase);
   private readonly router = inject(Router);
   readonly dateService = inject(DateService);
@@ -72,7 +72,17 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   approvals: Credit[] = [];
   loading = true;
   processingId: string | null = null;
-  isCashClosed = false;
+  cashStatus: CashStatus = 'OPEN';
+
+  /** Indica que no hay caja operativa abierta en la jornada. */
+  get isCashClosed(): boolean {
+    return this.cashStatus === 'CLOSED';
+  }
+
+  /** Indica que no se pudo verificar el estado de caja (falla cerrado). */
+  get isCashUnknown(): boolean {
+    return this.cashStatus === 'UNKNOWN';
+  }
 
   showApproveDialog = false;
   approvingRow: Credit | null = null;
@@ -121,9 +131,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
    * Retorna el monto del enganche del crédito aprobado.
    */
   get approvingRowDownPayment(): number {
-    return (
-      this.approvingDetail?.downPayment ?? this.approvingRow?.downPayment ?? 0
-    );
+    return this.approvingDetail?.downPayment ?? this.approvingRow?.downPayment ?? 0;
   }
 
   /**
@@ -169,17 +177,15 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Verifica el estado de cierre de caja del día actual.
+   * Verifica si hay caja operativa abierta (V4). Ante error de consulta el
+   * estado queda UNKNOWN y la aprobación se bloquea.
    */
   private checkCashRegisterStatus(): void {
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
+    this.cashStatusSvc
+      .resolve()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((status) => {
+        this.cashStatus = status;
       });
   }
 
@@ -244,23 +250,43 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Confirma la aprobación de la fila seleccionada. Valida que la caja no esté cerrada.
-   * @returns
+   * Confirma la aprobación de la fila seleccionada. Revalida la caja en vivo
+   * (así un backend recuperado desbloquea sin recargar) y actualiza el banner.
    */
   confirmApprove(): void {
     if (!this.approvingRow) return;
 
-    if (this.isCashClosed) {
-      this.msg.add({
-        severity: 'error',
-        summary: 'Caja Cerrada',
-        detail:
-          'No puedes aprobar créditos. La caja del día está CERRADA. El crédito y sus pagos iniciales se aprobarán juntos cuando se abra una nueva caja.',
-        life: 5000,
-      });
-      return;
-    }
+    this.cashStatusSvc
+      .resolve()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((status) => {
+        this.cashStatus = status;
 
+        if (this.isCashUnknown) {
+          this.msg.add(this.cashStatusSvc.unknownMessage('aprobar créditos'));
+          return;
+        }
+
+        if (this.isCashClosed) {
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail:
+              'No puedes aprobar créditos. La caja del día está CERRADA. El crédito y sus pagos iniciales se aprobarán juntos cuando se abra una nueva caja.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processApprove();
+      });
+  }
+
+  /**
+   * Envía la aprobación de la fila seleccionada al backend y actualiza la lista.
+   */
+  private processApprove(): void {
+    if (!this.approvingRow) return;
     this.processingApprove = true;
     const row = this.approvingRow;
 
@@ -296,20 +322,12 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 
   /** Nombre del vendedor actual de la operación en aprobación. */
   get currentSellerName(): string {
-    return (
-      this.approvingDetail?.createdByName ??
-      this.approvingRow?.createdByName ??
-      '—'
-    );
+    return this.approvingDetail?.createdByName ?? this.approvingRow?.createdByName ?? '—';
   }
 
   /** ID del vendedor actual (para preseleccionar y detectar "mismo vendedor"). */
   get currentSellerId(): string | null {
-    return (
-      this.approvingDetail?.createdById ??
-      this.approvingRow?.createdById ??
-      null
-    );
+    return this.approvingDetail?.createdById ?? this.approvingRow?.createdById ?? null;
   }
 
   /**

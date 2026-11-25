@@ -89,6 +89,7 @@ export class StepConditionsComponent implements OnChanges {
   @Input() capitalBase = 0;
   @Input() capitalAFinanciar = 0;
   @Input() interestRate = 0;
+  @Input() loanRateMissing = false;
   @Input() valorCuota = 0;
   @Input() totalADevolver = 0;
   @Input() todayDate!: Date;

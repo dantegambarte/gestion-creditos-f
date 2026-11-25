@@ -147,6 +147,19 @@ describe('StepConditionsComponent', () => {
     expect(component.getInstallmentLabel()).toBe('Cuota mensual');
   });
 
+  it('informa cuando el préstamo no tiene tasa activa configurada (#51)', () => {
+    component.form.controls['operationType'].setValue('LOAN');
+    const el: HTMLElement = fixture.nativeElement;
+
+    component.loanRateMissing = false;
+    fixture.detectChanges();
+    expect(el.querySelector('[data-cy="msg-loan-rate-missing"]')).toBeNull();
+
+    component.loanRateMissing = true;
+    fixture.detectChanges();
+    expect(el.querySelector('[data-cy="msg-loan-rate-missing"]')).not.toBeNull();
+  });
+
   it('limita el adelanto de cuotas a una menos que el plan seleccionado — CR-29', () => {
     component.form.controls['operationType'].setValue('SALE');
     component.cartLines = [

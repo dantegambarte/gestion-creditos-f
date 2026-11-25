@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import { ClientDetailComponent } from './client-detail.component';
+import { ClientDetailComponent, toUiCredit } from './client-detail.component';
+import { Credit as ApiCredit } from '../../../features/seller/models/credit.model';
 import { HeaderService } from '../../../core/services/header.service';
 import { CreditsService } from '../../../features/seller/operations/credits.service';
 import { CustomersService } from '../../../features/seller/clients/customers.service';
@@ -45,7 +46,9 @@ describe('ClientDetailComponent (shared/clients)', () => {
       breadcrumbs: { set: jasmine.createSpy() },
       actions: { set: jasmine.createSpy() },
     });
-    const routerSpy = jasmine.createSpyObj('Router', ['navigate'], { url: '/admin/clients/uuid-001' });
+    const routerSpy = jasmine.createSpyObj('Router', ['navigate'], {
+      url: '/admin/clients/uuid-001',
+    });
     customersServiceSpy = jasmine.createSpyObj('CustomersService', ['getById']);
     customersServiceSpy.getById.and.returnValue(customerResponse);
     const creditsServiceSpy = jasmine.createSpyObj('CreditsService', ['list']);
@@ -106,5 +109,22 @@ describe('ClientDetailComponent (shared/clients)', () => {
     expect(customersServiceSpy.getById).not.toHaveBeenCalled();
     expect(component.client).toBeNull();
     expect(component.notFound).toBeTrue();
+  });
+
+  describe('toUiCredit', () => {
+    const base = {
+      id: 'cr1',
+      type: 'SALE',
+      customerName: 'X',
+      totalAmount: 1000,
+    } as unknown as ApiCredit;
+
+    it('descarta créditos REJECTED', () => {
+      expect(toUiCredit({ ...base, status: 'REJECTED' } as ApiCredit)).toBeNull();
+    });
+
+    it('mantiene ACTIVE como activo', () => {
+      expect(toUiCredit({ ...base, status: 'ACTIVE' } as ApiCredit)?.status).toBe('ACTIVE');
+    });
   });
 });

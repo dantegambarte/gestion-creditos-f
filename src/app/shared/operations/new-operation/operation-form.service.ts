@@ -147,6 +147,8 @@ export class OperationFormService {
   readonly simulationError = signal<string | null>(null);
   todayDate = this.getTodayStart();
   readonly dynamicRate = signal(0);
+  /** Indica que el préstamo elegido no tiene una tasa activa configurada (no se simula al 0%). */
+  readonly loanRateMissing = signal(false);
   private loanRatesLoaded = false;
   readonly simulationResult = signal<SimulateResult | null>(null);
 
@@ -1612,16 +1614,24 @@ export class OperationFormService {
 
   /**
    * Calcula la tasa dinámica según tipo de operación, monto y cuotas elegidas.
+   * En préstamos, si no existe tasa activa aplicable marca `loanRateMissing`
+   * para que la UI lo informe, en lugar de simular silenciosamente al 0%.
    */
   calculateDynamicRate(): void {
     const type = this.operationForm.controls.operationType.value;
+    this.loanRateMissing.set(false);
 
     if (type === 'LOAN') {
       const installments = this.operationForm.controls.installmentsCount.value ?? 0;
       const frequency = this.operationForm.controls.paymentFrequency.value ?? undefined;
-      this.dynamicRate.set(
-        findLoanInterestRate(this.interestRates(), installments, this.prestamoTotal, frequency),
+      const rate = findLoanInterestRate(
+        this.interestRates(),
+        installments,
+        this.prestamoTotal,
+        frequency,
       );
+      this.dynamicRate.set(rate ?? 0);
+      this.loanRateMissing.set(rate === null && installments > 0 && this.prestamoTotal > 0);
       return;
     }
 

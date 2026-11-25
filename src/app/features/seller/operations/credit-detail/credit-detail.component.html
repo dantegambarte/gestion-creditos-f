@@ -10,6 +10,15 @@
     />
   </div>
 }
+@if (isCashUnknown) {
+  <div class="p-4" data-cy="cash-status-unknown">
+    <p-message
+      severity="error"
+      text="Estado de caja desconocido: no se pudo verificar la caja. La aprobación queda bloqueada hasta confirmarlo. Recargá para reintentar."
+      styleClass="w-full"
+    />
+  </div>
+}
 
 @if (loading) {
   <div class="credit-detail-skeleton" data-cy="credit-detail-skeleton">
@@ -49,11 +58,14 @@
 } @else if (error) {
   <app-error-state />
 } @else if (credit) {
-
   @if (credit.rejectionReason) {
     <div
       class="auth-warning-banner mx-6 mt-4"
-      style="border-color: rgba(248, 113, 113, 0.3); background: rgba(248, 113, 113, 0.08); color: var(--ff-danger)"
+      style="
+        border-color: rgba(248, 113, 113, 0.3);
+        background: rgba(248, 113, 113, 0.08);
+        color: var(--ff-danger);
+      "
     >
       <i class="pi pi-times-circle shrink-0"></i>
       <p class="text-sm"><strong>Motivo de rechazo:</strong> {{ credit.rejectionReason }}</p>
@@ -64,7 +76,11 @@
   @if (predecessorCreditId) {
     <div
       class="auth-warning-banner mx-6 mt-4 cursor-pointer"
-      style="border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); color: #a78bfa"
+      style="
+        border-color: rgba(139, 92, 246, 0.3);
+        background: rgba(139, 92, 246, 0.08);
+        color: #a78bfa;
+      "
       (click)="navigateToChainCredit(predecessorCreditId)"
     >
       <i class="pi pi-link shrink-0"></i>
@@ -78,7 +94,11 @@
   @if (successorCreditId) {
     <div
       class="auth-warning-banner mx-6 mt-4 cursor-pointer"
-      style="border-color: rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.08); color: #a78bfa"
+      style="
+        border-color: rgba(139, 92, 246, 0.3);
+        background: rgba(139, 92, 246, 0.08);
+        color: #a78bfa;
+      "
       (click)="navigateToChainCredit(successorCreditId)"
     >
       <i class="pi pi-arrow-right-arrow-left shrink-0"></i>
@@ -91,10 +111,7 @@
   }
 
   <!-- Header bar -->
-  <div
-    class="px-6 pt-6 pb-4 border-b space-y-4"
-    style="border-color: var(--ff-border)"
-  >
+  <div class="px-6 pt-6 pb-4 border-b space-y-4" style="border-color: var(--ff-border)">
     <app-back-button (back)="goBack()" />
 
     <div class="flex flex-wrap items-center gap-4 xl:gap-6">
@@ -113,11 +130,7 @@
         <div>
           <div class="ud-label text-xs">Monto total a devolver</div>
           <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
-            {{
-              credit.installments.length > 0
-                ? (totalToReturn | currencyArs: 0)
-                : "—"
-            }}
+            {{ credit.installments.length > 0 ? (totalToReturn | currencyArs: 0) : '—' }}
           </div>
         </div>
         @if (!isCashSale) {
@@ -132,7 +145,8 @@
           <div>
             <div class="ud-label text-xs">Cuota</div>
             <div class="ff-mono font-semibold" style="color: var(--ff-text-primary)">
-              {{ installmentAmount | currencyArs: 0 }} / {{ frequencyUnitLabel(credit.paymentFrequency) }}
+              {{ installmentAmount | currencyArs: 0 }} /
+              {{ frequencyUnitLabel(credit.paymentFrequency) }}
             </div>
           </div>
         }
@@ -169,8 +183,14 @@
             severity="success"
             size="small"
             (onClick)="openApproveDialog()"
-            [disabled]="isCashClosed"
-            [pTooltip]="isCashClosed ? 'La caja está cerrada' : ''"
+            [disabled]="isApproveBlocked"
+            [pTooltip]="
+              isCashClosed
+                ? 'La caja está cerrada'
+                : isCashUnknown
+                  ? 'Estado de caja desconocido'
+                  : ''
+            "
             tooltipPosition="top"
             styleClass="h-11 px-5 rounded-xl shadow-sm"
           />
@@ -250,16 +270,16 @@
 
   <!-- Two-column layout -->
   <div class="flex flex-col lg:flex-row" style="min-height: 0">
-
     <!-- Left: financial details + units -->
     <div
       class="flex flex-col gap-4 p-4 w-full border-b lg:w-[420px] lg:min-w-[420px] lg:border-b-0 lg:border-r"
       style="border-color: var(--ff-border)"
     >
-
       <!-- Detalles financieros -->
       <div class="ff-panel p-4">
-        <h3 class="font-semibold mb-4" style="color: var(--ff-text-primary)">Detalles financieros</h3>
+        <h3 class="font-semibold mb-4" style="color: var(--ff-text-primary)">
+          Detalles financieros
+        </h3>
         <div class="grid grid-cols-2 gap-4">
           @if (isCashSale) {
             <div>
@@ -303,7 +323,7 @@
               <div>
                 <div class="ud-label">Tasa de interés</div>
                 <div class="ud-value">
-                  @if (effectiveRate != null) {
+                  @if (effectiveRate !== null && effectiveRate !== undefined) {
                     {{ (effectiveRate * 100).toFixed(2) }}%
                   } @else if (credit.type === 'SALE' && credit.status === 'PENDING_APPROVAL') {
                     Se definirá al aprobar
@@ -339,8 +359,7 @@
             </div>
           }
           @if (
-            credit.type === 'SALE' &&
-            (credit.downPayment > 0 || credit.prepaidInstallments > 0)
+            credit.type === 'SALE' && (credit.downPayment > 0 || credit.prepaidInstallments > 0)
           ) {
             @if (credit.prepaidInstallments > 0) {
               <div>
@@ -353,7 +372,9 @@
               </div>
               <div>
                 <div class="ud-label">Método adelanto</div>
-                <div class="ud-value">{{ paymentMethodLabel(credit.prepaidInstallmentsMethod) }}</div>
+                <div class="ud-value">
+                  {{ paymentMethodLabel(credit.prepaidInstallmentsMethod) }}
+                </div>
               </div>
             } @else {
               <div>
@@ -390,7 +411,11 @@
           <div class="ff-list-header">
             <span class="ff-list-header__title">Unidades incluidas</span>
           </div>
-          <p-table [value]="credit.units" styleClass="hidden md:block p-datatable-sm" data-cy="credit-detail-units-table">
+          <p-table
+            [value]="credit.units"
+            styleClass="hidden md:block p-datatable-sm"
+            data-cy="credit-detail-units-table"
+          >
             <ng-template pTemplate="header">
               <tr>
                 <th>Producto</th>
@@ -429,13 +454,17 @@
                 data-cy="credit-detail-units-mobile-card"
               >
                 <p class="font-medium" style="color: var(--ff-text-primary)">{{ u.productName }}</p>
-                <p class="mt-0.5 text-sm" style="color: var(--ff-text-secondary)">{{ variantLabel(u) }}</p>
+                <p class="mt-0.5 text-sm" style="color: var(--ff-text-secondary)">
+                  {{ variantLabel(u) }}
+                </p>
                 <p class="mt-1 ff-mono font-semibold text-xs" style="color: var(--ff-text-muted)">
                   Código: {{ u.unitCode }}
                 </p>
                 <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
                   <div class="rounded-xl border p-2" style="border-color: var(--ff-border-subtle)">
-                    <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Precio hist.</p>
+                    <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">
+                      Precio hist.
+                    </p>
                     <p class="font-bold ff-mono">{{ u.historicalPrice | currencyArs: 0 }}</p>
                   </div>
                   <div class="rounded-xl border p-2" style="border-color: var(--ff-border-subtle)">
@@ -450,7 +479,10 @@
               </article>
             }
           </div>
-          <ff-back-top-fab [itemCount]="credit.units.length" dataCy="credit-detail-back-top-action" />
+          <ff-back-top-fab
+            [itemCount]="credit.units.length"
+            dataCy="credit-detail-back-top-action"
+          />
         </div>
       }
 
@@ -460,7 +492,9 @@
           class="ff-panel p-4"
           style="background: rgba(52, 211, 153, 0.06); border-color: rgba(52, 211, 153, 0.2)"
         >
-          <h3 class="font-semibold mb-3" style="color: var(--ff-success)">Cancelación anticipada</h3>
+          <h3 class="font-semibold mb-3" style="color: var(--ff-success)">
+            Cancelación anticipada
+          </h3>
           <div class="grid grid-cols-2 gap-4">
             <div>
               <div class="ud-label" style="color: var(--ff-success)">Fecha</div>
@@ -494,16 +528,12 @@
 <app-approve-dialog
   [(visible)]="showApproveDialog"
   [credit]="credit"
-  [isCashClosed]="isCashClosed"
+  [isCashClosed]="isApproveBlocked"
   (approved)="onApproved($event)"
   (sellerChanged)="onApproved($event)"
 />
 
-<app-reject-dialog
-  [(visible)]="showRejectDialog"
-  [credit]="credit"
-  (rejected)="load()"
-/>
+<app-reject-dialog [(visible)]="showRejectDialog" [credit]="credit" (rejected)="load()" />
 
 <app-settlement-dialog
   [(visible)]="showSettlementDialog"

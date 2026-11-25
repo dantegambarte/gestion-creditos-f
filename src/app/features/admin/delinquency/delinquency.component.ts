@@ -11,15 +11,12 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { Subject, catchError, of, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { Installment } from '../../../features/seller/models/installment.model';
 import { InstallmentsService } from '../../../features/seller/operations/installments.service';
-import { CashRegisterService } from '../cash-register/cash-register.service';
-import {
-  DelinquencyRow,
-  DelinquencyStats,
-} from '../models/interface/delinquency';
+import { CashStatusService } from '../cash-register/cash-status.service';
+import { DelinquencyRow, DelinquencyStats } from '../models/interface/delinquency';
 import { DelinquencyApplyDialogComponent } from './delinquency-apply-dialog/delinquency-apply-dialog.component';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
@@ -48,7 +45,7 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
 export class DelinquencyComponent implements OnInit, OnDestroy {
   private readonly installmentsService = inject(InstallmentsService);
   private readonly msg = inject(MessageService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly cashStatusSvc = inject(CashStatusService);
 
   stats: DelinquencyStats = { enMoraCount: 0, sinAplicar: 0, aplicada: 0 };
   clients: DelinquencyRow[] = [];
@@ -92,17 +89,14 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Verifica el estado de cierre de caja del día actual.
+   * Verifica si hay caja operativa abierta (V4); un error cuenta como no abierta.
    */
   private checkCashRegisterStatus(): void {
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
+    this.cashStatusSvc
+      .resolve()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((status) => {
+        this.isCashClosed = status !== 'OPEN';
       });
   }
 
@@ -129,8 +123,7 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
     const term = this.searchTerm.toLowerCase().trim();
     if (term) {
       result = result.filter(
-        (c) =>
-          c.clientName.toLowerCase().includes(term) || c.dni.includes(term),
+        (c) => c.clientName.toLowerCase().includes(term) || c.dni.includes(term),
       );
     }
 
@@ -141,10 +134,8 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
 
     if (this.filterDias) {
       result = result.filter((c) => {
-        if (this.filterDias === '1-15')
-          return c.daysOverdue >= 1 && c.daysOverdue <= 15;
-        if (this.filterDias === '16-30')
-          return c.daysOverdue >= 16 && c.daysOverdue <= 30;
+        if (this.filterDias === '1-15') return c.daysOverdue >= 1 && c.daysOverdue <= 15;
+        if (this.filterDias === '16-30') return c.daysOverdue >= 16 && c.daysOverdue <= 30;
         if (this.filterDias === '30+') return c.daysOverdue > 30;
         return true;
       });
@@ -190,7 +181,7 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Condona la mora de un cliente tras verificar que la caja esté abierta.
+   * Condona la mora tras verificar caja abierta; ante error de consulta bloquea.
    * @param row Fila del cliente a condonar.
    */
   onCondone(row: DelinquencyRow): void {
@@ -198,23 +189,15 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
 
     this.processingId = `${row.id}_condone`;
 
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(
-        catchError(() => of(null)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe((dashboard) => {
-        this.isCashClosed = dashboard?.isClosed ?? false;
+    this.cashStatusSvc
+      .checkAction('condonar mora', 'No puedes condonar mora. La caja del día está CERRADA.')
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((block) => {
+        this.isCashClosed = !!block;
 
-        if (this.isCashClosed) {
+        if (block) {
           this.processingId = null;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail: 'No puedes condonar mora. La caja del día está CERRADA.',
-            life: 5000,
-          });
+          this.msg.add(block);
           return;
         }
 
@@ -270,14 +253,7 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
    */
   statusSeverity(
     status: string,
-  ):
-    | 'success'
-    | 'info'
-    | 'warning'
-    | 'danger'
-    | 'secondary'
-    | 'contrast'
-    | undefined {
+  ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast' | undefined {
     const map: Record<
       string,
       'success' | 'info' | 'warning' | 'danger' | 'secondary' | 'contrast'
@@ -339,9 +315,7 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   private calcStats(rows: DelinquencyRow[]): DelinquencyStats {
     return {
       enMoraCount: rows.length,
-      sinAplicar: rows
-        .filter((r) => r.delinquencyAmount === 0)
-        .reduce((s, r) => s + r.amount, 0),
+      sinAplicar: rows.filter((r) => r.delinquencyAmount === 0).reduce((s, r) => s + r.amount, 0),
       aplicada: rows
         .filter((r) => r.delinquencyAmount > 0)
         .reduce((s, r) => s + r.delinquencyAmount, 0),

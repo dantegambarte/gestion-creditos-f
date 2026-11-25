@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 
 import { CashRegisterComponent } from './cash-register.component';
 import { CashRegisterService } from './cash-register.service';
+import { CashStatusService } from './cash-status.service';
 import { ExpenseCategoriesService } from '../expenses/expense-categories.service';
 
 describe('CashRegisterComponent', () => {
@@ -12,20 +13,17 @@ describe('CashRegisterComponent', () => {
   let cashRegisterServiceSpy: jasmine.SpyObj<CashRegisterService>;
 
   beforeEach(async () => {
-    cashRegisterServiceSpy = jasmine.createSpyObj<CashRegisterService>(
-      'CashRegisterService',
-      [
-        'getDashboard',
-        'refreshJornadaState',
-        'getCashAccounts',
-        'createConversion',
-        'getSessionMovements',
-        'getActiveSession',
-        'getSessionSnapshot',
-        'createManualIncome',
-        'createManualIncomeCompany',
-      ],
-    );
+    cashRegisterServiceSpy = jasmine.createSpyObj<CashRegisterService>('CashRegisterService', [
+      'getDashboard',
+      'refreshJornadaState',
+      'getCashAccounts',
+      'createConversion',
+      'getSessionMovements',
+      'getActiveSession',
+      'getSessionSnapshot',
+      'createManualIncome',
+      'createManualIncomeCompany',
+    ]);
     const activeSession = {
       id: 'sess-1',
       business_day_id: 'bd-1',
@@ -101,6 +99,10 @@ describe('CashRegisterComponent', () => {
     await TestBed.configureTestingModule({
       imports: [CashRegisterComponent],
       providers: [
+        {
+          provide: CashStatusService,
+          useValue: { checkAction: () => of(null), resolve: () => of('OPEN') },
+        },
         provideHttpClient(),
         { provide: CashRegisterService, useValue: cashRegisterServiceSpy },
         { provide: ExpenseCategoriesService, useValue: expenseCategoriesSpy },
@@ -214,9 +216,7 @@ describe('CashRegisterComponent', () => {
 
       component.submitManualIncome();
 
-      expect(
-        cashRegisterServiceSpy.createManualIncomeCompany,
-      ).toHaveBeenCalledWith(
+      expect(cashRegisterServiceSpy.createManualIncomeCompany).toHaveBeenCalledWith(
         jasmine.objectContaining({
           amount: 1000,
           description: 'Aporte de capital',
@@ -235,9 +235,7 @@ describe('CashRegisterComponent', () => {
 
       expect(component.manualIncomeValidationError()).toBeTruthy();
       expect(cashRegisterServiceSpy.createManualIncome).not.toHaveBeenCalled();
-      expect(
-        cashRegisterServiceSpy.createManualIncomeCompany,
-      ).not.toHaveBeenCalled();
+      expect(cashRegisterServiceSpy.createManualIncomeCompany).not.toHaveBeenCalled();
     });
   });
 });

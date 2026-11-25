@@ -1,17 +1,5 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  inject,
-} from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
@@ -55,9 +43,7 @@ export class UserEditFormComponent implements OnInit {
    * Indica si el rol fue modificado respecto al valor original.
    */
   get roleChanged(): boolean {
-    return (
-      !!this.editForm && this.editForm.get('role')?.value !== this.originalRole
-    );
+    return !!this.editForm && this.editForm.get('role')?.value !== this.originalRole;
   }
 
   /**
@@ -67,9 +53,7 @@ export class UserEditFormComponent implements OnInit {
   get formHasChanges(): boolean {
     if (!this.editForm) return false;
     const current = this.editForm.getRawValue();
-    return Object.keys(current).some(
-      (k) => current[k] !== this.originalFormSnapshot[k],
-    );
+    return Object.keys(current).some((k) => current[k] !== this.originalFormSnapshot[k]);
   }
 
   ngOnInit(): void {
@@ -84,10 +68,7 @@ export class UserEditFormComponent implements OnInit {
           Validators.pattern(/^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s'-]+$/),
         ],
       ],
-      dni: [
-        this.user.dni,
-        [Validators.required, Validators.pattern(/^\d{7,9}$/)],
-      ],
+      dni: [this.user.dni, [Validators.required, Validators.pattern(/^\d{7,9}$/)]],
       email: [this.user.email ?? '', [Validators.email]],
       address: [this.user.address ?? '', [Validators.maxLength(255)]],
       role: [this.user.role, [Validators.required]],
@@ -97,6 +78,7 @@ export class UserEditFormComponent implements OnInit {
 
   /**
    * Envía el formulario. Maneja conflictos 409 con errores de campo; en éxito emite saved.
+   * Email y dirección vaciados se envían como '' para que el backend los limpie.
    * @returns
    */
   onSubmit(): void {
@@ -110,8 +92,8 @@ export class UserEditFormComponent implements OnInit {
     const payload: UserUpdatePayload = {
       fullName: raw.fullName,
       dni: raw.dni,
-      email: raw.email || undefined,
-      address: raw.address || undefined,
+      email: raw.email ?? '',
+      address: raw.address ?? '',
       role: raw.role,
     };
 
@@ -172,8 +154,7 @@ export class UserEditFormComponent implements OnInit {
       return `Máximo ${camp.errors['maxlength'].requiredLength} caracteres.`;
     if (camp.errors['email']) return 'Formato de email inválido.';
     if (camp.errors['pattern']) {
-      if (field === 'dni')
-        return 'El DNI debe contener entre 7 y 9 dígitos numéricos.';
+      if (field === 'dni') return 'El DNI debe contener entre 7 y 9 dígitos numéricos.';
       return 'Solo se permiten letras y espacios.';
     }
     return 'Campo inválido.';

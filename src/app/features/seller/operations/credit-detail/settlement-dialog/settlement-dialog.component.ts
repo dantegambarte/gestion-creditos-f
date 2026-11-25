@@ -1,11 +1,4 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  inject,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -14,15 +7,11 @@ import { DropdownModule } from 'primeng/dropdown';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
-import { catchError, of } from 'rxjs';
 import { AppError } from '../../../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../../shared/directives/currency-amount-input.directive';
-import { CashRegisterService } from '../../../../admin/cash-register/cash-register.service';
-import {
-  CreditDetail,
-  EarlySettlementResult,
-} from '../../../models/credit.model';
+import { CashStatusService } from '../../../../admin/cash-register/cash-status.service';
+import { CreditDetail, EarlySettlementResult } from '../../../models/credit.model';
 import { CreditsService } from '../../credits.service';
 
 @Component({
@@ -63,7 +52,7 @@ export class SettlementDialogComponent implements OnChanges {
   ];
 
   private readonly creditsSvc = inject(CreditsService);
-  private readonly cashRegisterSvc = inject(CashRegisterService);
+  private readonly cashStatusSvc = inject(CashStatusService);
   private readonly msg = inject(MessageService);
 
   /** Reinicia los campos de pago cuando se abre una cancelación nueva. */
@@ -84,8 +73,7 @@ export class SettlementDialogComponent implements OnChanges {
     const cash = this.amountCash ?? 0;
     const transfer = this.amountTransfer ?? 0;
     return (
-      Math.round((cash + transfer) * 100) ===
-        Math.round(this.settlementTotalAmount * 100) &&
+      Math.round((cash + transfer) * 100) === Math.round(this.settlementTotalAmount * 100) &&
       cash > 0 &&
       transfer > 0
     );
@@ -101,27 +89,22 @@ export class SettlementDialogComponent implements OnChanges {
       this.msg.add({
         severity: 'error',
         summary: 'Pagos Pendientes',
-        detail:
-          'Este crédito tiene pagos pendientes de aprobación. Resuelvalos antes de cancelar.',
+        detail: 'Este crédito tiene pagos pendientes de aprobación. Resuelvalos antes de cancelar.',
         life: 5000,
       });
       return;
     }
 
     this.processing = true;
-    this.cashRegisterSvc
-      .getDashboard()
-      .pipe(catchError(() => of(null)))
-      .subscribe((dashboard) => {
-        if (dashboard?.isClosed) {
+    this.cashStatusSvc
+      .checkAction(
+        'cancelar créditos',
+        'No puedes cancelar créditos. La caja del día está CERRADA.',
+      )
+      .subscribe((block) => {
+        if (block) {
           this.processing = false;
-          this.msg.add({
-            severity: 'error',
-            summary: 'Caja Cerrada',
-            detail:
-              'No puedes cancelar créditos. La caja del día está CERRADA.',
-            life: 5000,
-          });
+          this.msg.add(block);
           return;
         }
         this.processSettlement();
@@ -137,9 +120,7 @@ export class SettlementDialogComponent implements OnChanges {
             amountTransfer: this.amountTransfer ?? 0,
           }
         : { paymentMethod: this.paymentMethod }),
-      ...((this.paymentMethod === 'TRANSFER' ||
-        this.paymentMethod === 'MIXED') &&
-      this.transferRef
+      ...((this.paymentMethod === 'TRANSFER' || this.paymentMethod === 'MIXED') && this.transferRef
         ? { transferReference: this.transferRef }
         : {}),
     };
