@@ -1,11 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { DedupMessageService } from '../../../../core/services/dedup-message.service';
@@ -61,14 +56,7 @@ export class ProductCreateComponent implements OnInit {
     ]);
 
     this.form = this.fb.group({
-      title: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(2),
-          Validators.maxLength(150),
-        ],
-      ],
+      title: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
       description: ['', [Validators.maxLength(500)]],
       model: ['', [Validators.maxLength(100)]],
       brandId: [null],
@@ -128,17 +116,17 @@ export class ProductCreateComponent implements OnInit {
     if (!c?.errors) return '';
     if (c.errors['serverError']) return c.errors['serverError'];
     if (c.errors['required']) return 'Este campo es requerido.';
-    if (c.errors['minlength'])
-      return `Mínimo ${c.errors['minlength'].requiredLength} caracteres.`;
-    if (c.errors['maxlength'])
-      return `Máximo ${c.errors['maxlength'].requiredLength} caracteres.`;
+    if (c.errors['minlength']) return `Mínimo ${c.errors['minlength'].requiredLength} caracteres.`;
+    if (c.errors['maxlength']) return `Máximo ${c.errors['maxlength'].requiredLength} caracteres.`;
     return 'Campo inválido.';
   }
 
   /**
    * Maneja el envío del formulario: valida, llama al servicio y gestiona la respuesta.
+   * Mantiene el envío bloqueado desde el alta hasta la navegación (o el error) para impedir altas duplicadas.
    */
   onSubmit(): void {
+    if (this.submitting) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -158,7 +146,7 @@ export class ProductCreateComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (product) => {
-          this.submitting = false;
+          // submitting queda en true hasta navegar: evita un segundo alta durante el delay del toast
           this.messageService.add({
             severity: 'success',
             summary: 'Éxito',
@@ -166,11 +154,7 @@ export class ProductCreateComponent implements OnInit {
           });
           // Espera 1.5 s para que el usuario vea el toast antes de redirigir
           setTimeout(
-            () =>
-              this.router.navigate([
-                `/${this.routePrefix}/products`,
-                product.id,
-              ]),
+            () => this.router.navigate([`/${this.routePrefix}/products`, product.id]),
             1500,
           );
         },
@@ -189,9 +173,7 @@ export class ProductCreateComponent implements OnInit {
             this.messageService.add({
               severity: 'warn',
               summary: 'Datos inválidos',
-              detail:
-                err.message ||
-                'La categoría o marca seleccionada no es válida.',
+              detail: err.message || 'La categoría o marca seleccionada no es válida.',
             });
             return;
           }
