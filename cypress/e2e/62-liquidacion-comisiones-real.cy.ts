@@ -66,7 +66,7 @@ describe('Liquidación semanal de comisiones (real)', () => {
       cy.get('[data-cy="sale-add-unit"]', { timeout: 20000 }).first().click({ force: true });
       cy.get('[data-cy="btn-siguiente"] button', { timeout: 15000 }).should('not.be.disabled').click();
 
-      cy.contains('Configurar Plan de Pagos', { timeout: 15000 }).should('be.visible');
+      cy.get('[data-cy="ddl-installments"]', { timeout: 15000 }).first().should('be.visible');
       cy.get('[data-cy="btn-siguiente"] button').should('not.be.disabled').click();
 
       cy.contains('Declaraciones y Autorizaciones', { timeout: 15000 }).scrollIntoView().should('be.visible');
@@ -89,10 +89,10 @@ describe('Liquidación semanal de comisiones (real)', () => {
       cy.contains('p-table tbody tr', customer.dni, { timeout: 20000 })
         .should('be.visible')
         .within(() => {
-          cy.get('button').eq(1).click();
+          cy.get('button').filter(':has(.pi-check)').first().click({ force: true });
         });
-      cy.contains('.p-dialog .p-dialog-title', 'Aprobar Operación', { timeout: 10000 }).should('be.visible');
-      cy.contains('.p-dialog button', 'Confirmar Aprobación').click();
+      cy.contains('.p-dialog .p-dialog-title', 'Aprobar Crédito', { timeout: 10000 }).should('be.visible');
+      cy.contains('.p-dialog:visible button', 'Confirmar').click();
 
       cy.wait('@approveCredit').then((interception) => {
         expect(interception.response?.statusCode, 'aprobación de venta').to.eq(200);

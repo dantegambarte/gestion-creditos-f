@@ -1,6 +1,10 @@
 import { defineConfig } from 'cypress';
 import { execSync } from 'child_process';
 import * as path from 'path';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { dbResetBlockReason, readEnvFile, effectiveBackendEnv } = require('./cypress/scripts/db-reset-guard');
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { findRealSpecs } = require('./cypress/scripts/real-spec-detector');
 
 const BACKEND_DIR = path.resolve(
   __dirname,
@@ -50,7 +54,11 @@ export default defineConfig({
       json: true,
     },
 
-    setupNodeEvents(on) {
+    setupNodeEvents(on, config) {
+      // Specs que usan el backend real: cypress/support/e2e.ts los saltea
+      // cuando realAuthEnabled es false, en vez de fallar en cy.loginReal.
+      config.env.realSpecs = findRealSpecs(__dirname);
+
       on('task', {
         /**
          * Ejecuta la semilla 05 de E2E contra la BD local.
@@ -71,9 +79,17 @@ export default defineConfig({
 
         /**
          * Ejecuta db:reset completo + todas las semillas.
-         * ⚠️ DESTRUCTIVO — solo usar en entornos de CI o desarrollo limpio.
+         * ⚠️ DESTRUCTIVO — bloqueado salvo opt-in explícito
+         * (CYPRESS_allowDbReset=true) y backend local que no sea producción.
          */
         'db:reset:full'() {
+          const blockReason = dbResetBlockReason(
+            config.env,
+            effectiveBackendEnv(readEnvFile(path.join(BACKEND_DIR, '.env')), process.env),
+          );
+          // Fallar el test (no devolver ok:false): un spec que no revisa el
+          // resultado seguiría corriendo contra una base sin resetear.
+          if (blockReason) throw new Error(blockReason);
           try {
             execSync('npm run db:reset', {
               cwd: BACKEND_DIR,
@@ -122,6 +138,8 @@ export default defineConfig({
           }
         },
       });
+
+      return config;
     },
   },
 });

@@ -191,6 +191,20 @@ Suite Cypress con más de 80 archivos de spec cubriendo:
 - PWA e instalabilidad
 - Negative cases y guards
 
+### Suites reales (backend real)
+
+Las suites que usan `cy.loginReal`, `cy.getAuthToken`, `cy.apiRequest` o `cy.api*` le pegan al backend local (`http://localhost:3000/api`) y escriben en su base. Necesitan el backend corriendo en modo E2E (`npm run dev:e2e` en el backend) y el frontend en `npm run start:e2e`.
+
+- **Nunca contra producción.** Usan la base que tenga configurada el `.env` del backend.
+- **Guard de modo real:** con `CYPRESS_realAuthEnabled=false` se saltean solas. `cypress.config.ts` las detecta al arrancar (`cypress/scripts/real-spec-detector.js`).
+- **Reset destructivo bloqueado:** la task `db:reset:full` solo corre con `CYPRESS_allowDbReset=true`, y nunca si el backend apunta a `NODE_ENV=production` o a un host que no sea local.
+- **Reglas para escribir una suite real:**
+  - Cada test crea los datos que necesita: no depende de otro test ni de lo que haya en la base. Para usuarios nuevos y operativos, usar `cy.apiCreateActiveUser(role)`.
+  - Lo que se modifica se restaura en `after()`/`afterEach()`, que corren pase o falle el test. Por ejemplo, créditos con `cy.apiRejectCreditIfPending`, feriados desactivados, `system_config` y saldos de caja devueltos a su valor original.
+  - Clientes y usuarios no tienen DELETE en la API: usar DNIs únicos por corrida.
+  - No encadenar un `cy.visit` justo después de `cy.loginReal(rol, destino)`: aborta el `GET /auth/me` en vuelo y la app limpia la sesión.
+  - Si falta un dato de catálogo, el test tiene que fallar, no pasar en verde salteando las aserciones.
+
 ---
 
 ## Desarrollo

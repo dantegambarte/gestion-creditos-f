@@ -14,6 +14,19 @@
  * de depender de la fecha de aprobación + frecuencia.
  */
 
+/**
+ * Primer lunes a jueves desde la fecha dada. El feriado nunca cae viernes: el
+ * backend trata el sábado como hábil, así que el "próximo día hábil" de un
+ * viernes sería el sábado y el lunes esperado por el test no coincidiría.
+ * @param date - fecha de partida
+ * @returns fecha entre lunes y jueves
+ */
+function nextMondayToThursday(date: Date): Date {
+  const d = new Date(date);
+  while (d.getDay() === 0 || d.getDay() >= 5) d.setDate(d.getDate() + 1);
+  return d;
+}
+
 function nextWeekday(date: Date): Date {
   const d = new Date(date);
   while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() + 1);
@@ -34,13 +47,29 @@ describe('Feriados afectando fechas reales de vencimiento (real)', () => {
   // día siguiente también hábil, para que el resultado no dependa de qué
   // día caiga el fin de semana.
   const dayOffset = 100 + (Date.now() % 2000);
-  const holidayThatMoves = nextWeekday(new Date(Date.now() + dayOffset * 24 * 60 * 60 * 1000));
-  const holidayThatDoesNotMove = nextWeekday(
+  const holidayThatMoves = nextMondayToThursday(new Date(Date.now() + dayOffset * 24 * 60 * 60 * 1000));
+  const holidayThatDoesNotMove = nextMondayToThursday(
     new Date(Date.now() + (dayOffset + 20) * 24 * 60 * 60 * 1000),
   );
   const dayAfterMoves = nextWeekday(
     new Date(holidayThatMoves.getTime() + 24 * 60 * 60 * 1000),
   );
+
+  // Feriados creados por la suite. Se desactivan en after() (pase o falle):
+  // un feriado activo con affects_due_dates=true correría vencimientos reales
+  // de cualquier crédito que caiga en esa fecha. No hay DELETE en la API.
+  const createdHolidayIds: string[] = [];
+
+  after(() => {
+    if (!createdHolidayIds.length) return;
+    cy.getAuthToken('ADMIN').then((token) => {
+      createdHolidayIds.forEach((id) => {
+        cy.apiRequest('PUT', `/holidays/${id}`, { active: false }, token).then((res) => {
+          expect(res.status, `desactivar feriado de E2E ${id}`).to.eq(200);
+        });
+      });
+    });
+  });
 
   it('feriado con affects_due_dates=true corre el vencimiento real al próximo día hábil', () => {
     cy.apiCreateCustomer({
@@ -68,6 +97,9 @@ describe('Feriados afectando fechas reales de vencimiento (real)', () => {
           )
           .then((holidayRes) => {
             expect(holidayRes.status, 'alta de feriado real (afecta vencimientos)').to.eq(201);
+            const holidayId = holidayRes.body?.data?.holiday?.id ?? holidayRes.body?.data?.id;
+            expect(holidayId, 'id del feriado creado (para limpieza)').to.be.a('string').and.not.be.empty;
+            createdHolidayIds.push(String(holidayId));
 
             cy.apiRequest(
               'POST',
@@ -139,6 +171,9 @@ describe('Feriados afectando fechas reales de vencimiento (real)', () => {
           )
           .then((holidayRes) => {
             expect(holidayRes.status, 'alta de feriado real (NO afecta vencimientos)').to.eq(201);
+            const holidayId = holidayRes.body?.data?.holiday?.id ?? holidayRes.body?.data?.id;
+            expect(holidayId, 'id del feriado creado (para limpieza)').to.be.a('string').and.not.be.empty;
+            createdHolidayIds.push(String(holidayId));
 
             cy.apiRequest(
               'POST',
