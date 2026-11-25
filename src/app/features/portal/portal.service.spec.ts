@@ -1,9 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PortalService } from './portal.service';
 import { environment } from '../../../environments/environment';
 
@@ -13,11 +10,7 @@ describe('PortalService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        PortalService,
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [PortalService, provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(PortalService);
     http = TestBed.inject(HttpTestingController);
@@ -26,15 +19,13 @@ describe('PortalService', () => {
   afterEach(() => http.verify());
 
   it('getAccountSummary() maps upcoming_installments with camelCase', () => {
-    let result: ReturnType<
-      typeof service.getAccountSummary
-    > extends import('rxjs').Observable<infer T>
+    let result: ReturnType<typeof service.getAccountSummary> extends import('rxjs').Observable<
+      infer T
+    >
       ? T
       : never;
 
-    service
-      .getAccountSummary()
-      .subscribe((data) => (result = data as typeof result));
+    service.getAccountSummary().subscribe((data) => (result = data as typeof result));
 
     const req = http.expectOne(`${environment.apiBaseUrl}/portal/me`);
     req.flush({
@@ -72,19 +63,13 @@ describe('PortalService', () => {
   });
 
   it('getCreditById() maps installments with camelCase', () => {
-    let result: ReturnType<
-      typeof service.getCreditById
-    > extends import('rxjs').Observable<infer T>
+    let result: ReturnType<typeof service.getCreditById> extends import('rxjs').Observable<infer T>
       ? T
       : never;
 
-    service
-      .getCreditById('cred-1')
-      .subscribe((data) => (result = data as typeof result));
+    service.getCreditById('cred-1').subscribe((data) => (result = data as typeof result));
 
-    const req = http.expectOne(
-      `${environment.apiBaseUrl}/portal/credits/cred-1`,
-    );
+    const req = http.expectOne(`${environment.apiBaseUrl}/portal/credits/cred-1`);
     req.flush({
       ok: true,
       message: '',
@@ -132,5 +117,13 @@ describe('PortalService', () => {
     expect(result!.installments[0].amountPaid).toBe(10000);
     expect(result!.installments[1].penaltyAmount).toBe(300);
     expect(result!.installments[1].status).toBe('OVERDUE');
+  });
+
+  it('getCreditById() codifica el id para que no altere la URL de la API', () => {
+    service.getCreditById('../admin?x=1#y').subscribe({ error: () => undefined });
+
+    const req = http.expectOne(`${environment.apiBaseUrl}/portal/credits/..%2Fadmin%3Fx%3D1%23y`);
+    expect(req.request.method).toBe('GET');
+    req.flush(null, { status: 404, statusText: 'Not Found' });
   });
 });

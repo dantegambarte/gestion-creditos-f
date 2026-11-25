@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../../shared/utils/escape-html.util';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
@@ -34,10 +35,7 @@ import { ProductCategoriesService } from '../services/product-categories.service
     TagModule,
     ToastModule,
   ],
-  providers: [
-    { provide: MessageService, useClass: DedupMessageService },
-    ConfirmationService,
-  ],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   templateUrl: './product-categories-config.component.html',
 })
 export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
@@ -195,7 +193,7 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
   toggle(cat: ProductCategory): void {
     const action = cat.active ? 'desactivar' : 'activar';
     this.confirm.confirm({
-      message: `¿Confirmás que querés ${action} la categoría "${cat.name}"?`,
+      message: `¿Confirmás que querés ${action} la categoría "${escapeHtml(cat.name)}"?`,
       header: cat.active ? 'Desactivar categoría' : 'Activar categoría',
       icon: cat.active ? 'pi pi-exclamation-triangle' : 'pi pi-check-circle',
       acceptLabel: cat.active ? 'Desactivar' : 'Activar',
@@ -203,8 +201,7 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
       acceptButtonStyleClass: cat.active
         ? 'p-button-danger h-11 px-5 rounded-xl'
         : 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () => this.executeToggle(cat),
     });
   }
@@ -214,9 +211,7 @@ export class ProductCategoriesConfigComponent implements OnInit, OnDestroy {
    * @param {ProductCategory} cat - Categoría a activar o desactivar.
    */
   private executeToggle(cat: ProductCategory): void {
-    const call = cat.active
-      ? this.svc.deactivate(cat.id)
-      : this.svc.activate(cat.id);
+    const call = cat.active ? this.svc.deactivate(cat.id) : this.svc.activate(cat.id);
     call.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         cat.active = !cat.active;

@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../../shared/utils/escape-html.util';
 import { CommonModule, Location } from '@angular/common';
 import { FfBackTopFabComponent } from './../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Component, OnInit, inject } from '@angular/core';
@@ -15,10 +16,7 @@ import { AppError } from '../../../../core/models/app-error';
 import { UserRoleEnum } from '../../../../core/models/types/user-role';
 import { HeaderService } from '../../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
-import {
-  ProductUnit,
-  ProductUnitStatus,
-} from '../../models/product-unit.model';
+import { ProductUnit, ProductUnitStatus } from '../../models/product-unit.model';
 import { ProductUnitsService } from '../product-units.service';
 import { ProductVariantsService } from '../product-variants.service';
 import { ProductsService } from '../products.service';
@@ -28,10 +26,7 @@ import { UnitSingleFormComponent } from './unit-single-form/unit-single-form.com
 @Component({
   selector: 'app-product-units',
   standalone: true,
-  providers: [
-    { provide: MessageService, useClass: DedupMessageService },
-    ConfirmationService,
-  ],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [
     FfBackTopFabComponent,
     CommonModule,
@@ -130,9 +125,7 @@ export class ProductUnitsComponent implements OnInit {
   }
 
   /** Mapea el estado de la unidad a la severidad del tag visual de PrimeNG. */
-  statusSeverity(
-    status: ProductUnitStatus,
-  ): 'success' | 'warning' | 'secondary' | 'danger' {
+  statusSeverity(status: ProductUnitStatus): 'success' | 'warning' | 'secondary' | 'danger' {
     switch (status) {
       case 'AVAILABLE':
         return 'success';
@@ -163,13 +156,11 @@ export class ProductUnitsComponent implements OnInit {
   confirmDeactivate(unit: ProductUnit): void {
     this.confirmationService.confirm({
       header: 'Dar de baja unidad',
-      message: `¿Dar de baja la unidad <strong>${unit.unitCode}</strong>?`,
+      message: `¿Dar de baja la unidad <strong>${escapeHtml(unit.unitCode)}</strong>?`,
       acceptLabel: 'Dar de baja',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass:
-        'p-button-danger p-button-outlined h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      acceptButtonStyleClass: 'p-button-danger p-button-outlined h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.unitsService.deactivate(unit.id).subscribe({
           next: () => {

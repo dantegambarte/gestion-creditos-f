@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../../shared/utils/escape-html.util';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -37,10 +38,7 @@ const ROLE_SEVERITY: Record<string, string> = {
 @Component({
   selector: 'app-user-detail',
   standalone: true,
-  providers: [
-    { provide: MessageService, useClass: DedupMessageService },
-    ConfirmationService,
-  ],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [
     CommonModule,
     ButtonModule,
@@ -78,15 +76,9 @@ export class UserDetailComponent implements OnInit {
     return ROLE_LABEL[role] ?? role;
   }
 
-  roleSeverity(
-    role: string,
-  ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
+  roleSeverity(role: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
     return (ROLE_SEVERITY[role] ?? 'secondary') as
-      | 'success'
-      | 'info'
-      | 'warning'
-      | 'danger'
-      | 'secondary';
+      'success' | 'info' | 'warning' | 'danger' | 'secondary';
   }
 
   /**
@@ -127,10 +119,7 @@ export class UserDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.header.set([
-      { label: 'Usuarios', route: '/admin/users' },
-      { label: 'Detalle' },
-    ]);
+    this.header.set([{ label: 'Usuarios', route: '/admin/users' }, { label: 'Detalle' }]);
     this.load();
   }
 
@@ -153,10 +142,7 @@ export class UserDetailComponent implements OnInit {
     this.usersService.getById(this.userId).subscribe({
       next: (data) => {
         this.user = data;
-        this.header.set([
-          { label: 'Usuarios', route: '/admin/users' },
-          { label: data.fullName },
-        ]);
+        this.header.set([{ label: 'Usuarios', route: '/admin/users' }, { label: data.fullName }]);
         this.loading = false;
       },
       error: (err: AppError) => {
@@ -173,10 +159,7 @@ export class UserDetailComponent implements OnInit {
     this.usersService.getById(this.userId).subscribe({
       next: (data) => {
         this.user = data;
-        this.header.set([
-          { label: 'Usuarios', route: '/admin/users' },
-          { label: data.fullName },
-        ]);
+        this.header.set([{ label: 'Usuarios', route: '/admin/users' }, { label: data.fullName }]);
       },
       error: () => {},
     });
@@ -202,10 +185,7 @@ export class UserDetailComponent implements OnInit {
       ? 'Usuario actualizado. Su sesión activa fue invalidada.'
       : 'Usuario actualizado correctamente.';
     this.messageService.add({ severity: 'success', summary: 'Éxito', detail });
-    this.header.set([
-      { label: 'Usuarios', route: '/admin/users' },
-      { label: updated.fullName },
-    ]);
+    this.header.set([{ label: 'Usuarios', route: '/admin/users' }, { label: updated.fullName }]);
   }
 
   /**
@@ -214,13 +194,12 @@ export class UserDetailComponent implements OnInit {
   confirmDeactivate(): void {
     this.confirmationService.confirm({
       header: 'Desactivar usuario',
-      message: `¿Desactivar a <strong>${this.user?.fullName}</strong>? No podrá desactivarlo si es el único Admin activo o tiene clientes asignados.`,
+      message: `¿Desactivar a <strong>${escapeHtml(this.user?.fullName)}</strong>? No podrá desactivarlo si es el único Admin activo o tiene clientes asignados.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-danger h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.usersService.deactivate(this.userId).subscribe({
           next: () => {
@@ -242,13 +221,12 @@ export class UserDetailComponent implements OnInit {
   confirmActivate(): void {
     this.confirmationService.confirm({
       header: 'Activar usuario',
-      message: `¿Activar a <strong>${this.user?.fullName}</strong>?`,
+      message: `¿Activar a <strong>${escapeHtml(this.user?.fullName)}</strong>?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Activar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.usersService.activate(this.userId).subscribe({
           next: () => {
@@ -270,13 +248,12 @@ export class UserDetailComponent implements OnInit {
   confirmResetPassword(): void {
     this.confirmationService.confirm({
       header: 'Resetear contraseña',
-      message: `¿Resetear la contraseña de <strong>${this.user?.fullName}</strong>? Se generará una contraseña temporal que deberás comunicar al usuario.`,
+      message: `¿Resetear la contraseña de <strong>${escapeHtml(this.user?.fullName)}</strong>? Se generará una contraseña temporal que deberás comunicar al usuario.`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Resetear',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.usersService.resetPassword(this.userId).subscribe({
           next: ({ tempPassword }) => {
@@ -294,13 +271,12 @@ export class UserDetailComponent implements OnInit {
   confirmUnlock(): void {
     this.confirmationService.confirm({
       header: 'Desbloquear usuario',
-      message: `¿Desbloquear a <strong>${this.user?.fullName}</strong>?`,
+      message: `¿Desbloquear a <strong>${escapeHtml(this.user?.fullName)}</strong>?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Desbloquear',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.usersService.unlock(this.userId).subscribe({
           next: () => {
