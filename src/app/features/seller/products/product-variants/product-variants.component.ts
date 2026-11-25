@@ -24,10 +24,7 @@ import { VariantFormPanelComponent } from './variant-form-panel/variant-form-pan
 @Component({
   selector: 'app-product-variants',
   standalone: true,
-  providers: [
-    { provide: MessageService, useClass: DedupMessageService },
-    ConfirmationService,
-  ],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [
     FfBackTopFabComponent,
     CommonModule,
@@ -156,9 +153,7 @@ export class ProductVariantsComponent implements OnInit {
    */
   areAllVariantsExpanded(): boolean {
     if (this.variants.length === 0) return false;
-    return this.variants.every((variant) =>
-      this.expandedVariantIds.has(variant.id),
-    );
+    return this.variants.every((variant) => this.expandedVariantIds.has(variant.id));
   }
 
   /** Expande o colapsa todas las variantes de la tabla. */
@@ -167,9 +162,7 @@ export class ProductVariantsComponent implements OnInit {
       this.expandedVariantIds.clear();
       return;
     }
-    this.expandedVariantIds = new Set(
-      this.variants.map((variant) => variant.id),
-    );
+    this.expandedVariantIds = new Set(this.variants.map((variant) => variant.id));
   }
 
   /** Solicita confirmación antes de desactivar la variante indicada. */
@@ -179,10 +172,8 @@ export class ProductVariantsComponent implements OnInit {
       message: `¿Desactivar variante <strong>${variant.color ?? ''} ${variant.size ?? ''} ${variant.capacity ?? ''}</strong>?`,
       acceptLabel: 'Desactivar',
       rejectLabel: 'Cancelar',
-      acceptButtonStyleClass:
-        'p-button-danger p-button-outlined h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      acceptButtonStyleClass: 'p-button-danger p-button-outlined h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.variantsService.deactivate(variant.id).subscribe({
           next: () => {
@@ -205,8 +196,7 @@ export class ProductVariantsComponent implements OnInit {
       acceptLabel: 'Activar',
       rejectLabel: 'Cancelar',
       acceptButtonStyleClass: 'p-button-primary h-11 px-5 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
+      rejectButtonStyleClass: 'p-button-outlined p-button-secondary h-11 px-5 rounded-xl',
       accept: () =>
         this.variantsService.activate(variant.id).subscribe({
           next: () => {
@@ -232,14 +222,20 @@ export class ProductVariantsComponent implements OnInit {
     ]);
   }
 
-  /** Recarga variantes cuando el panel hijo notifica una creación o edición exitosa. */
+  /**
+   * Recarga variantes cuando el panel hijo notifica una creación o edición exitosa.
+   * Sin skeleton: el skeleton destruye el panel y se perderían las filas con error.
+   */
   onVariantSaved(): void {
-    this.loadVariants();
+    this.loadVariants(false);
   }
 
-  /** Carga todas las variantes del producto actual desde el backend. */
-  loadVariants(): void {
-    this.loading = true;
+  /**
+   * Carga todas las variantes del producto actual desde el backend.
+   * @param showSkeleton - false para refrescar sin desmontar el panel abierto
+   */
+  loadVariants(showSkeleton = true): void {
+    this.loading = showSkeleton;
     this.error = null;
     this.variantsService.getAll({ productId: this.productId }).subscribe({
       next: (data) => {

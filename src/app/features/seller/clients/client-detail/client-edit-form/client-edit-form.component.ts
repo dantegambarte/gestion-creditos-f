@@ -1,17 +1,5 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  inject,
-} from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
@@ -19,22 +7,13 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../../../core/models/app-error';
 import { UsersService } from '../../../../admin/users/users.service';
-import {
-  CustomerDetail,
-  CustomerUpdatePayload,
-} from '../../../models/customer.model';
+import { CustomerDetail, CustomerUpdatePayload } from '../../../models/customer.model';
 import { CustomersService } from '../../customers.service';
 
 @Component({
   selector: 'app-client-edit-form',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    DropdownModule,
-    InputTextModule,
-    TooltipModule,
-  ],
+  imports: [ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TooltipModule],
   templateUrl: './client-edit-form.component.html',
 })
 export class ClientEditFormComponent implements OnInit {
@@ -88,10 +67,8 @@ export class ClientEditFormComponent implements OnInit {
     if (!c?.errors) return '';
     if (c.errors['serverError']) return c.errors['serverError'];
     if (c.errors['required']) return 'Este campo es requerido.';
-    if (c.errors['minlength'])
-      return `Mínimo ${c.errors['minlength'].requiredLength} caracteres.`;
-    if (c.errors['maxlength'])
-      return `Máximo ${c.errors['maxlength'].requiredLength} caracteres.`;
+    if (c.errors['minlength']) return `Mínimo ${c.errors['minlength'].requiredLength} caracteres.`;
+    if (c.errors['maxlength']) return `Máximo ${c.errors['maxlength'].requiredLength} caracteres.`;
     if (c.errors['email']) return 'Formato de email inválido.';
     if (c.errors['pattern']) return 'El DNI solo puede contener números.';
     return 'Campo inválido.';
@@ -99,6 +76,8 @@ export class ClientEditFormComponent implements OnInit {
 
   /**
    * Envía el formulario y emite el cliente actualizado al padre.
+   * Los campos opcionales vaciados se envían como '' (el backend usa COALESCE y
+   * solo ignora null/undefined) y el cobrador desasignado como null.
    */
   onSubmit(): void {
     if (this.editForm.invalid) {
@@ -110,10 +89,10 @@ export class ClientEditFormComponent implements OnInit {
     const raw = this.editForm.getRawValue();
     const payload: CustomerUpdatePayload = {
       fullName: raw.fullName,
-      address: raw.address || undefined,
-      phone: raw.phone || undefined,
-      email: raw.email || undefined,
-      assignedCollectorId: raw.assignedCollectorId || undefined,
+      address: raw.address ?? '',
+      phone: raw.phone ?? '',
+      email: raw.email ?? '',
+      assignedCollectorId: raw.assignedCollectorId || null,
       // Solo se envía el DNI si cambió (evita writes y validaciones innecesarias).
       ...(raw.dni !== this.customer.dni ? { dni: raw.dni } : {}),
     };
@@ -131,9 +110,7 @@ export class ClientEditFormComponent implements OnInit {
       error: (err: AppError) => {
         this.saving = false;
         if (err.status === 404) {
-          this.editForm
-            .get('assignedCollectorId')!
-            .setErrors({ serverError: err.message });
+          this.editForm.get('assignedCollectorId')!.setErrors({ serverError: err.message });
           this.editForm.get('assignedCollectorId')!.markAsDirty();
         } else if (err.status === 409) {
           // En el update, el 409 es DNI duplicado: lo marcamos en el campo.
@@ -159,11 +136,7 @@ export class ClientEditFormComponent implements OnInit {
     this.editForm = this.fb.group({
       fullName: [
         this.customer.fullName,
-        [
-          Validators.required,
-          Validators.minLength(3),
-          Validators.maxLength(150),
-        ],
+        [Validators.required, Validators.minLength(3), Validators.maxLength(150)],
       ],
       // DNI editable solo por Admin (esta pantalla ya es admin). Mismas reglas
       // que el alta: 7-9 dígitos numéricos.

@@ -15,10 +15,7 @@ describe('ClientCreateDialogComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [ClientCreateDialogComponent, NoopAnimationsModule],
-      providers: [
-        MessageService,
-        { provide: CustomersService, useValue: customersServiceSpy },
-      ],
+      providers: [MessageService, { provide: CustomersService, useValue: customersServiceSpy }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ClientCreateDialogComponent);
@@ -44,12 +41,15 @@ describe('ClientCreateDialogComponent', () => {
     });
 
     expect(component.form.valid).toBeFalse();
-    expect(
-      component.form.get('assignedCollectorId')?.hasError('required'),
-    ).toBeTrue();
+    expect(component.form.get('assignedCollectorId')?.hasError('required')).toBeTrue();
 
     component.createClient();
 
     expect(customersServiceSpy.create).not.toHaveBeenCalled();
+  });
+
+  it('no ofrece teléfono alterno porque el backend no lo persiste', () => {
+    expect(component.form.get('telefonoAlterno')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Teléfono Alterno');
   });
 });

@@ -41,9 +41,7 @@ const AVATAR_COLORS = [
  */
 function toClientDetail(customer: CustomerApiDetail): ClientDetail {
   const parts = customer.fullName.trim().split(/\s+/);
-  const initials = (
-    (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')
-  ).toUpperCase();
+  const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
   const colorIdx = customer.fullName.charCodeAt(0) % AVATAR_COLORS.length;
 
   return {
@@ -66,16 +64,18 @@ function toClientDetail(customer: CustomerApiDetail): ClientDetail {
 
 /**
  * Convierte un crédito de la API al modelo visual simplificado para la pestaña de créditos del cliente.
+ * Devuelve null para créditos REJECTED, que no deben mostrarse ni sumar en la ficha.
  * @param c - Crédito de la API
  */
-function toUiCredit(c: ApiCredit): Credit | null {
+export function toUiCredit(c: ApiCredit): Credit | null {
   const statusMap: Record<string, Credit['status'] | null> = {
     ACTIVE: 'ACTIVE',
     PENDING_APPROVAL: 'ACTIVE',
     SETTLED: 'PAID',
     REJECTED: null,
   };
-  const status = statusMap[c.status] ?? 'ACTIVE';
+  // `in` distingue REJECTED (null explícito) de un estado desconocido (ACTIVE).
+  const status = c.status in statusMap ? statusMap[c.status] : 'ACTIVE';
   if (status === null) return null;
   return {
     id: c.id,
@@ -95,8 +95,7 @@ function toUiCredit(c: ApiCredit): Credit | null {
       ? `Cuota ${FREQUENCY_LABELS[c.paymentFrequency]}`
       : 'Cuota',
     nextDueDate: c.approvedAt ?? c.createdAt,
-    rate:
-      c.interestRate != null ? `${(c.interestRate * 100).toFixed(2)}%` : 'N/A',
+    rate: c.interestRate != null ? `${(c.interestRate * 100).toFixed(2)}%` : 'N/A',
     status,
     progress: status === 'PAID' ? 100 : 0,
   };
@@ -157,16 +156,13 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
 
   get activeCredits(): number {
     return (
-      this.client?.credits.filter(
-        (c) => c.status === 'ACTIVE' || c.status === 'OVERDUE',
-      ).length ?? 0
+      this.client?.credits.filter((c) => c.status === 'ACTIVE' || c.status === 'OVERDUE').length ??
+      0
     );
   }
 
   get totalPortfolio(): number {
-    return (
-      this.client?.credits.reduce((sum, c) => sum + c.originalAmount, 0) ?? 0
-    );
+    return this.client?.credits.reduce((sum, c) => sum + c.originalAmount, 0) ?? 0;
   }
 
   get totalOutstandingBalance(): number {
@@ -208,8 +204,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
           if (error?.status === 404) {
             this.notFound = true;
           } else {
-            this.errorMessage =
-              error?.message ?? 'Ocurrió un error al cargar el cliente.';
+            this.errorMessage = error?.message ?? 'Ocurrió un error al cargar el cliente.';
           }
           this.updateBreadcrumbs();
         },
@@ -226,9 +221,7 @@ export class ClientDetailComponent implements OnInit, OnDestroy {
         if (this.client) {
           this.client = {
             ...this.client,
-            credits: credits
-              .map(toUiCredit)
-              .filter((c): c is Credit => c !== null),
+            credits: credits.map(toUiCredit).filter((c): c is Credit => c !== null),
           };
         }
       },
