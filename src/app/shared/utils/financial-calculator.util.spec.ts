@@ -9,9 +9,7 @@ import {
   rateToPercent,
 } from './financial-calculator.util';
 
-function buildInterestRate(
-  overrides: Partial<InterestRate> = {},
-): InterestRate {
+function buildInterestRate(overrides: Partial<InterestRate> = {}): InterestRate {
   return {
     id: 'rate-1',
     paymentFrequency: 'MONTHLY',
