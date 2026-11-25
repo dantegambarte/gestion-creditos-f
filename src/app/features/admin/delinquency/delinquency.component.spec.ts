@@ -65,4 +65,77 @@ describe('DelinquencyComponent', () => {
       jasmine.objectContaining({ summary: 'Estado de caja desconocido' }),
     );
   });
+
+  describe('reglas de mora sobre cuotas vencidas', () => {
+    const NOW = new Date(2026, 2, 15, 12, 0, 0);
+    const daysAgo = (n: number) => new Date(NOW.getTime() - n * 86_400_000);
+    const inst = (id: string, dueDate: Date, penaltyAmount: number, amountDue: number) =>
+      ({
+        id,
+        dueDate: dueDate.toISOString(),
+        penaltyAmount,
+        amountDue,
+        customerName: 'Cliente ' + id,
+        customerDni: '30' + id,
+        installmentNumber: 1,
+        collectorName: 'Cobrador',
+      }) as any;
+
+    beforeEach(() => {
+      jasmine.clock().install();
+      jasmine.clock().mockDate(NOW);
+      const installments = TestBed.inject(InstallmentsService);
+      spyOn(installments, 'list').and.returnValue(
+        of([
+          inst('a', daysAgo(1), 0, 1000),
+          inst('b', daysAgo(15), 300, 2000),
+          inst('c', daysAgo(16), 0, 4000),
+          inst('d', daysAgo(30), 500, 8000),
+          inst('e', daysAgo(31), 0, 16000),
+        ]),
+      );
+      component.ngOnInit();
+    });
+
+    afterEach(() => jasmine.clock().uninstall());
+
+    it('calcula los días de atraso desde el vencimiento y el estado según la mora aplicada', () => {
+      const byId = Object.fromEntries(component.clients.map((c) => [c.id, c]));
+      expect(byId['a'].daysOverdue).toBe(1);
+      expect(byId['e'].daysOverdue).toBe(31);
+      expect(byId['a'].status).toBe('SIN_APLICAR');
+      expect(byId['b'].status).toBe('EN_MORA');
+    });
+
+    it('resume la mora aplicada y el monto sin aplicar', () => {
+      expect(component.stats.enMoraCount).toBe(2);
+      expect(component.stats.aplicada).toBe(800);
+      expect(component.stats.sinAplicar).toBe(1000 + 4000 + 16000);
+    });
+
+    it('filtra por tramos de días con límites inclusivos 1-15, 16-30 y más de 30', () => {
+      const ids = () => component.filteredClients.map((c) => c.id);
+      component.filterDias = '1-15';
+      component.applyFilters();
+      expect(ids()).toEqual(['a', 'b']);
+      component.filterDias = '16-30';
+      component.applyFilters();
+      expect(ids()).toEqual(['c', 'd']);
+      component.filterDias = '30+';
+      component.applyFilters();
+      expect(ids()).toEqual(['e']);
+    });
+
+    it('al aplicar o condonar mora recalcula el estado y los totales', () => {
+      component.onPenaltyApplied({ id: 'a', amount: 200 });
+      expect(component.clients.find((c) => c.id === 'a')!.status).toBe('EN_MORA');
+      expect(component.stats.aplicada).toBe(1000);
+      expect(component.stats.sinAplicar).toBe(20000);
+
+      component.onPenaltyApplied({ id: 'b', amount: 0 });
+      expect(component.clients.find((c) => c.id === 'b')!.status).toBe('SIN_APLICAR');
+      expect(component.stats.enMoraCount).toBe(2);
+      expect(component.stats.sinAplicar).toBe(22000);
+    });
+  });
 });
