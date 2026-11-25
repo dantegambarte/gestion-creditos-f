@@ -10,24 +10,16 @@
     <div class="flex items-center gap-1">
       <button
         class="px-4 py-2 text-sm font-semibold border-b-2 transition-colors"
-        [style.borderColor]="
-          mainTab === 'installments' ? 'var(--ff-accent)' : 'transparent'
-        "
-        [style.color]="
-          mainTab === 'installments' ? 'var(--ff-accent)' : 'var(--ff-text-muted)'
-        "
+        [style.borderColor]="mainTab === 'installments' ? 'var(--ff-accent)' : 'transparent'"
+        [style.color]="mainTab === 'installments' ? 'var(--ff-accent)' : 'var(--ff-text-muted)'"
         (click)="mainTab = 'installments'"
       >
         Cronograma
       </button>
       <button
         class="px-4 py-2 text-sm font-semibold border-b-2 transition-colors"
-        [style.borderColor]="
-          mainTab === 'payments' ? 'var(--ff-accent)' : 'transparent'
-        "
-        [style.color]="
-          mainTab === 'payments' ? 'var(--ff-accent)' : 'var(--ff-text-muted)'
-        "
+        [style.borderColor]="mainTab === 'payments' ? 'var(--ff-accent)' : 'transparent'"
+        [style.color]="mainTab === 'payments' ? 'var(--ff-accent)' : 'var(--ff-text-muted)'"
         (click)="switchToPayments()"
       >
         Cobros
@@ -44,12 +36,16 @@
       >
         <span class="whitespace-nowrap">
           <span style="color: var(--ff-text-muted)">Cliente: </span>
-          <span class="font-semibold" style="color: var(--ff-accent)">{{ credit.customerName }}</span>
+          <span class="font-semibold" style="color: var(--ff-accent)">{{
+            credit.customerName
+          }}</span>
         </span>
         @if (credit.createdByName) {
           <span class="whitespace-nowrap">
             <span style="color: var(--ff-text-muted)">Vendedor: </span>
-            <span class="font-semibold" style="color: var(--ff-text-secondary)">{{ credit.createdByName }}</span>
+            <span class="font-semibold" style="color: var(--ff-text-secondary)">{{
+              credit.createdByName
+            }}</span>
           </span>
         }
         <span
@@ -65,7 +61,7 @@
   </div>
 
   <!-- Sub-tabs for installments view -->
-  @if (mainTab === "installments") {
+  @if (mainTab === 'installments') {
     <div
       class="flex items-center gap-3 px-4 pt-3 pb-3 flex-shrink-0 border-b"
       style="border-color: var(--ff-border)"
@@ -75,7 +71,7 @@
           class="px-3 py-1 text-xs font-semibold rounded-full transition-opacity"
           [style.opacity]="activeTab !== 'paid' ? '0.5' : '1'"
           style="background: rgba(52, 211, 153, 0.15); color: var(--ff-success)"
-          (click)="activeTab = 'paid'"
+          (click)="toggleTab('paid')"
         >
           {{ paidCount }} PAGADAS
         </button>
@@ -83,7 +79,7 @@
           class="px-3 py-1 text-xs font-semibold rounded-full transition-opacity"
           [style.opacity]="activeTab !== 'pending' ? '0.5' : '1'"
           style="background: rgba(79, 110, 247, 0.15); color: var(--ff-accent)"
-          (click)="activeTab = 'pending'"
+          (click)="toggleTab('pending')"
         >
           {{ pendingCount }} PENDIENTES
         </button>
@@ -91,7 +87,7 @@
           class="px-3 py-1 text-xs font-semibold rounded-full transition-opacity"
           [style.opacity]="activeTab !== 'overdue' ? '0.5' : '1'"
           style="background: rgba(248, 113, 113, 0.12); color: var(--ff-danger)"
-          (click)="activeTab = 'overdue'"
+          (click)="toggleTab('overdue')"
         >
           {{ overdueCount }} VENCIDAS
         </button>
@@ -100,7 +96,7 @@
   }
 
   <!-- Cobros panel -->
-  @if (mainTab === "payments") {
+  @if (mainTab === 'payments') {
     <div class="flex-1 overflow-y-auto p-4">
       @if (loadingPayments) {
         <div class="py-10 text-center text-sm text-[var(--ff-text-secondary)]">
@@ -133,12 +129,9 @@
               <td class="ff-mono">Cuota {{ p.installmentNumber }}</td>
               <td
                 class="text-right ff-mono"
-                [style.color]="
-                  p.isReversal ? 'var(--ff-danger)' : 'var(--ff-success)'
-                "
+                [style.color]="p.isReversal ? 'var(--ff-danger)' : 'var(--ff-success)'"
               >
-                {{ p.isReversal ? "−" : ""
-                }}{{ p.amountReceived | currencyArs: 2 }}
+                {{ p.isReversal ? '−' : '' }}{{ p.amountReceived | currencyArs: 2 }}
               </td>
               <td>{{ paymentMethodLabel(p.paymentMethod) }}</td>
               <td>
@@ -153,13 +146,13 @@
                 }
               </td>
               <td class="text-sm text-[var(--ff-text-secondary)]">
-                {{ p.collectorName ?? "—" }}
+                {{ p.collectorName ?? '—' }}
               </td>
               <td class="text-sm text-[var(--ff-text-secondary)]">
-                {{ p.approverName ?? "—" }}
+                {{ p.approverName ?? '—' }}
               </td>
               <td class="ff-mono text-sm text-[var(--ff-text-muted)]">
-                {{ p.approvedAt | date: "dd/MM/yyyy" }}
+                {{ p.approvedAt | date: 'dd/MM/yyyy' }}
               </td>
             </tr>
           </ng-template>
@@ -191,13 +184,13 @@
                 class="mt-1 ff-mono font-bold"
                 [style.color]="p.isReversal ? 'var(--ff-danger)' : 'var(--ff-success)'"
               >
-                {{ p.isReversal ? "−" : "" }}{{ p.amountReceived | currencyArs: 2 }}
+                {{ p.isReversal ? '−' : '' }}{{ p.amountReceived | currencyArs: 2 }}
               </p>
               <p class="mt-1 text-xs" style="color: var(--ff-text-secondary)">
                 {{ paymentMethodLabel(p.paymentMethod) }}
               </p>
               <p class="mt-1 text-xs" style="color: var(--ff-text-muted)">
-                {{ p.approverName ?? "—" }} · {{ p.approvedAt | date: "dd/MM/yyyy" }}
+                {{ p.approverName ?? '—' }} · {{ p.approvedAt | date: 'dd/MM/yyyy' }}
               </p>
             </article>
           }
@@ -207,11 +200,15 @@
   }
 
   <!-- Table + side panel row -->
-  @if (mainTab === "installments" && credit) {
+  @if (mainTab === 'installments' && credit) {
     <div class="flex flex-col lg:flex-row flex-1 overflow-hidden">
       <!-- Table -->
       <div class="flex-1 overflow-y-auto">
-        <p-table [value]="credit.installments" styleClass="hidden md:block p-datatable-sm" data-cy="credit-schedule-table">
+        <p-table
+          [value]="visibleInstallments"
+          styleClass="hidden md:block p-datatable-sm"
+          data-cy="credit-schedule-table"
+        >
           <ng-template pTemplate="header">
             <tr>
               <th>Nº</th>
@@ -231,15 +228,11 @@
               class="cursor-pointer"
               [class.inst-overdue]="inst.status === 'OVERDUE'"
               [class.inst-paid]="inst.status === 'PAID'"
-              [style.background]="
-                selectedInstallment?.id === inst.id
-                  ? 'rgba(79,110,247,0.1)'
-                  : ''
-              "
+              [style.background]="selectedInstallment?.id === inst.id ? 'rgba(79,110,247,0.1)' : ''"
               (click)="selectInstallment(inst)"
             >
               <td class="ff-mono">{{ inst.installmentNumber }}</td>
-              <td class="ff-mono">{{ inst.dueDate | date: "dd/MM/yyyy" }}</td>
+              <td class="ff-mono">{{ inst.dueDate | date: 'dd/MM/yyyy' }}</td>
               <td class="ff-mono">
                 @if (inst.nextVisitDate) {
                   <div>{{ formatIsoDate(inst.nextVisitDate) }}</div>
@@ -262,19 +255,13 @@
                 class="text-right ff-mono"
                 [style.color]="inst.amountPaid > 0 ? 'var(--ff-success)' : ''"
               >
-                {{
-                  inst.amountPaid > 0 ? (inst.amountPaid | currencyArs: 0) : "—"
-                }}
+                {{ inst.amountPaid > 0 ? (inst.amountPaid | currencyArs: 0) : '—' }}
               </td>
               <td
                 class="text-right ff-mono"
                 [style.color]="inst.penaltyAmount > 0 ? 'var(--ff-danger)' : ''"
               >
-                {{
-                  inst.penaltyAmount > 0
-                    ? (inst.penaltyAmount | currencyArs: 0)
-                    : "—"
-                }}
+                {{ inst.penaltyAmount > 0 ? (inst.penaltyAmount | currencyArs: 0) : '—' }}
               </td>
               <td>
                 <div class="flex flex-col items-start gap-1">
@@ -287,9 +274,11 @@
                       "
                       [class.ff-badge--vencido]="inst.status === 'OVERDUE'"
                       [class.ff-badge--liquidado]="
-                        inst.status === 'WAIVED' || inst.status === 'SETTLED' || inst.status === 'WRITTEN_OFF'
+                        inst.status === 'WAIVED' ||
+                        inst.status === 'SETTLED' ||
+                        inst.status === 'WRITTEN_OFF'
                       "
-                      >{{ inst.status === "PAID" ? "✓ " : ""
+                      >{{ inst.status === 'PAID' ? '✓ ' : ''
                       }}{{ installmentLabel(inst.status) }}</span
                     >
                     @if (isPrepaidOnApproval(inst)) {
@@ -300,9 +289,9 @@
                       ></i>
                     }
                   </div>
-                  @if (inst.status === "PAID" && inst.paidAt) {
+                  @if (inst.status === 'PAID' && inst.paidAt) {
                     <span class="ff-mono text-[11px] text-[var(--ff-text-muted)]">
-                      {{ inst.paidAt | date: "dd/MM/yyyy" }}
+                      {{ inst.paidAt | date: 'dd/MM/yyyy' }}
                     </span>
                   }
                 </div>
@@ -310,7 +299,7 @@
               @if (canActOnInstallments || canScheduleVisits) {
                 <td class="text-center">
                   <div class="flex justify-center gap-1">
-                    @if (canActOnInstallments && inst.status === "OVERDUE") {
+                    @if (canActOnInstallments && inst.status === 'OVERDUE') {
                       <p-button
                         icon="pi pi-exclamation-circle"
                         severity="danger"
@@ -319,9 +308,7 @@
                         pTooltip="Aplicar mora"
                         tooltipStyleClass="ff-action-tooltip"
                         tooltipPosition="top"
-                        (onClick)="
-                          $event.stopPropagation(); openPenaltyDialog(inst)
-                        "
+                        (onClick)="$event.stopPropagation(); openPenaltyDialog(inst)"
                       />
                       @if (inst.penaltyAmount > 0) {
                         <p-button
@@ -332,15 +319,13 @@
                           pTooltip="Condonar mora"
                           tooltipStyleClass="ff-action-tooltip"
                           tooltipPosition="top"
-                          (onClick)="
-                            $event.stopPropagation(); openWaiveDialog(inst)
-                          "
+                          (onClick)="$event.stopPropagation(); openWaiveDialog(inst)"
                         />
                       }
                     }
                     @if (
                       canActOnInstallments &&
-                      (inst.status === "PENDING" || inst.status === "OVERDUE")
+                      (inst.status === 'PENDING' || inst.status === 'OVERDUE')
                     ) {
                       <p-button
                         data-cy="installment-direct-payment"
@@ -351,12 +336,10 @@
                         pTooltip="Cobrar cuota"
                         tooltipStyleClass="ff-action-tooltip"
                         tooltipPosition="top"
-                        (onClick)="
-                          $event.stopPropagation(); openDirectDialog(inst)
-                        "
+                        (onClick)="$event.stopPropagation(); openDirectDialog(inst)"
                       />
                     }
-                    @if (canActOnInstallments && inst.status === "PARTIAL") {
+                    @if (canActOnInstallments && inst.status === 'PARTIAL') {
                       <p-button
                         data-cy="installment-direct-payment"
                         icon="pi pi-credit-card"
@@ -366,9 +349,7 @@
                         pTooltip="Cobrar saldo restante"
                         tooltipStyleClass="ff-action-tooltip"
                         tooltipPosition="top"
-                        (onClick)="
-                          $event.stopPropagation(); openDirectDialog(inst)
-                        "
+                        (onClick)="$event.stopPropagation(); openDirectDialog(inst)"
                       />
                     }
                     @if (canScheduleVisits && canScheduleVisit(inst)) {
@@ -381,9 +362,7 @@
                         pTooltip="Programar visita"
                         tooltipStyleClass="ff-action-tooltip"
                         tooltipPosition="top"
-                        (onClick)="
-                          $event.stopPropagation(); openScheduleVisitDialog(inst)
-                        "
+                        (onClick)="$event.stopPropagation(); openScheduleVisitDialog(inst)"
                       />
                     }
                   </div>
@@ -394,13 +373,11 @@
         </p-table>
 
         <div class="flex flex-col gap-3 p-3 md:hidden" data-cy="credit-schedule-mobile-list">
-          @for (inst of credit.installments; track inst.id) {
+          @for (inst of visibleInstallments; track inst.id) {
             <article
               class="rounded-2xl border p-4"
               style="border-color: var(--ff-border)"
-              [style.background]="
-                selectedInstallment?.id === inst.id ? 'rgba(79,110,247,0.1)' : ''
-              "
+              [style.background]="selectedInstallment?.id === inst.id ? 'rgba(79,110,247,0.1)' : ''"
               data-cy="credit-schedule-mobile-card"
               (click)="selectInstallment(inst)"
             >
@@ -410,15 +387,21 @@
                     Cuota {{ inst.installmentNumber }}
                   </p>
                   <p class="mt-0.5 ff-mono text-xs" style="color: var(--ff-text-muted)">
-                    Vence {{ inst.dueDate | date: "dd/MM/yyyy" }}
+                    Vence {{ inst.dueDate | date: 'dd/MM/yyyy' }}
                   </p>
                 </div>
                 <span
                   class="ff-badge shrink-0"
                   [class.ff-badge--pagado]="inst.status === 'PAID'"
-                  [class.ff-badge--pendiente]="inst.status === 'PENDING' || inst.status === 'PARTIAL'"
+                  [class.ff-badge--pendiente]="
+                    inst.status === 'PENDING' || inst.status === 'PARTIAL'
+                  "
                   [class.ff-badge--vencido]="inst.status === 'OVERDUE'"
-                  [class.ff-badge--liquidado]="inst.status === 'WRITTEN_OFF' || inst.status === 'WAIVED' || inst.status === 'SETTLED'"
+                  [class.ff-badge--liquidado]="
+                    inst.status === 'WRITTEN_OFF' ||
+                    inst.status === 'WAIVED' ||
+                    inst.status === 'SETTLED'
+                  "
                   >{{ installmentLabel(inst.status) }}</span
                 >
               </div>
@@ -432,21 +415,30 @@
                 </div>
                 <div class="min-w-0 rounded-xl border p-2" style="border-color: var(--ff-border)">
                   <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Pagado</p>
-                  <p class="break-words text-xs font-bold leading-tight ff-mono" [style.color]="inst.amountPaid > 0 ? 'var(--ff-success)' : ''">
-                    {{ inst.amountPaid > 0 ? (inst.amountPaid | currencyArs: 0) : "—" }}
+                  <p
+                    class="break-words text-xs font-bold leading-tight ff-mono"
+                    [style.color]="inst.amountPaid > 0 ? 'var(--ff-success)' : ''"
+                  >
+                    {{ inst.amountPaid > 0 ? (inst.amountPaid | currencyArs: 0) : '—' }}
                   </p>
                 </div>
-                <div class="col-span-2 min-w-0 rounded-xl border p-2" style="border-color: var(--ff-border)">
+                <div
+                  class="col-span-2 min-w-0 rounded-xl border p-2"
+                  style="border-color: var(--ff-border)"
+                >
                   <p class="text-[10px] uppercase" style="color: var(--ff-text-muted)">Mora</p>
-                  <p class="break-words text-xs font-bold leading-tight ff-mono" [style.color]="inst.penaltyAmount > 0 ? 'var(--ff-danger)' : ''">
-                    {{ inst.penaltyAmount > 0 ? (inst.penaltyAmount | currencyArs: 0) : "—" }}
+                  <p
+                    class="break-words text-xs font-bold leading-tight ff-mono"
+                    [style.color]="inst.penaltyAmount > 0 ? 'var(--ff-danger)' : ''"
+                  >
+                    {{ inst.penaltyAmount > 0 ? (inst.penaltyAmount | currencyArs: 0) : '—' }}
                   </p>
                 </div>
               </div>
 
               @if (canActOnInstallments || canScheduleVisits) {
                 <div class="mt-3 grid grid-cols-2 gap-2">
-                  @if (canActOnInstallments && inst.status === "OVERDUE") {
+                  @if (canActOnInstallments && inst.status === 'OVERDUE') {
                     <p-button
                       icon="pi pi-exclamation-circle"
                       severity="danger"
@@ -464,7 +456,12 @@
                       />
                     }
                   }
-                  @if (canActOnInstallments && (inst.status === "PENDING" || inst.status === "OVERDUE" || inst.status === "PARTIAL")) {
+                  @if (
+                    canActOnInstallments &&
+                    (inst.status === 'PENDING' ||
+                      inst.status === 'OVERDUE' ||
+                      inst.status === 'PARTIAL')
+                  ) {
                     <button
                       type="button"
                       data-cy="installment-direct-payment"
@@ -491,32 +488,29 @@
             </article>
           }
         </div>
-        <ff-back-top-fab [itemCount]="credit.installments.length" dataCy="credit-schedule-back-top-action" />
+        <ff-back-top-fab
+          [itemCount]="credit.installments.length"
+          dataCy="credit-schedule-back-top-action"
+        />
       </div>
 
       <!-- Cuota side panel -->
       @if (selectedInstallment) {
         <div
           class="flex flex-col flex-shrink-0 border-t lg:border-t-0 lg:border-l w-full lg:w-[220px]"
-          style="
-            border-color: var(--ff-border);
-            background: var(--ff-secondary);
-          "
+          style="border-color: var(--ff-border); background: var(--ff-secondary)"
         >
           <div
             class="flex items-start justify-between px-4 pt-4 pb-3 border-b"
             style="border-color: var(--ff-border)"
           >
             <div>
-              <div
-                class="text-sm font-semibold"
-                style="color: var(--ff-text-primary)"
-              >
+              <div class="text-sm font-semibold" style="color: var(--ff-text-primary)">
                 Cuota {{ selectedInstallment.installmentNumber }} de
                 {{ credit.installmentsCount }}
               </div>
               <div class="text-xs mt-0.5" style="color: var(--ff-text-muted)">
-                Vence {{ selectedInstallment.dueDate | date: "dd/MM/yyyy" }}
+                Vence {{ selectedInstallment.dueDate | date: 'dd/MM/yyyy' }}
               </div>
             </div>
             <button
@@ -534,31 +528,21 @@
           >
             <div>
               <div class="ud-label text-xs">Vencimiento</div>
-              <div
-                class="text-sm ff-mono"
-                style="color: var(--ff-text-primary)"
-              >
-                {{ selectedInstallment.dueDate | date: "dd/MM/yyyy" }}
+              <div class="text-sm ff-mono" style="color: var(--ff-text-primary)">
+                {{ selectedInstallment.dueDate | date: 'dd/MM/yyyy' }}
               </div>
             </div>
             <div>
               <div class="ud-label text-xs">Monto</div>
-              <div
-                class="text-sm ff-mono font-semibold"
-                style="color: var(--ff-text-primary)"
-              >
+              <div class="text-sm ff-mono font-semibold" style="color: var(--ff-text-primary)">
                 {{ selectedInstallment.amountDue | currencyArs: 0 }}
               </div>
             </div>
             <div>
               <div class="ud-label text-xs">Saldo pendiente</div>
-              <div
-                class="text-sm ff-mono"
-                style="color: var(--ff-text-primary)"
-              >
+              <div class="text-sm ff-mono" style="color: var(--ff-text-primary)">
                 {{
-                  selectedInstallment.amountDue - selectedInstallment.amountPaid
-                    | currencyArs: 0
+                  selectedInstallment.amountDue - selectedInstallment.amountPaid | currencyArs: 0
                 }}
               </div>
             </div>
@@ -572,28 +556,20 @@
                   selectedInstallment.status === 'PENDING' ||
                   selectedInstallment.status === 'PARTIAL'
                 "
-                [class.ff-badge--vencido]="
-                  selectedInstallment.status === 'OVERDUE'
-                "
-                >{{ selectedInstallment.status === "PAID" ? "✓ " : ""
+                [class.ff-badge--vencido]="selectedInstallment.status === 'OVERDUE'"
+                >{{ selectedInstallment.status === 'PAID' ? '✓ ' : ''
                 }}{{ installmentLabel(selectedInstallment.status) }}</span
               >
             </div>
           </div>
 
-          @if (selectedInstallment.status === "PAID") {
-            <div
-              class="space-y-2 border-b px-4 py-3"
-              style="border-color: var(--ff-border)"
-            >
+          @if (selectedInstallment.status === 'PAID') {
+            <div class="space-y-2 border-b px-4 py-3" style="border-color: var(--ff-border)">
               @if (selectedInstallment.paidAt) {
                 <div class="flex items-center justify-between">
                   <span class="ud-label text-xs">Cobrada el</span>
-                  <span
-                    class="text-sm ff-mono"
-                    style="color: var(--ff-text-primary)"
-                  >
-                    {{ selectedInstallment.paidAt | date: "dd/MM/yyyy" }}
+                  <span class="text-sm ff-mono" style="color: var(--ff-text-primary)">
+                    {{ selectedInstallment.paidAt | date: 'dd/MM/yyyy' }}
                   </span>
                 </div>
               }
@@ -637,22 +613,13 @@
           }
 
           @if (selectedInstallment.nextVisitDate) {
-            <div
-              class="space-y-0.5 border-b px-4 py-3"
-              style="border-color: var(--ff-border)"
-            >
+            <div class="space-y-0.5 border-b px-4 py-3" style="border-color: var(--ff-border)">
               <div class="ud-label text-xs">Próxima visita</div>
-              <div
-                class="text-sm ff-mono"
-                style="color: var(--ff-text-primary)"
-              >
+              <div class="text-sm ff-mono" style="color: var(--ff-text-primary)">
                 {{ formatIsoDate(selectedInstallment.nextVisitDate) }}
               </div>
               @if (selectedInstallment.nextVisitScheduledByName) {
-                <div
-                  class="text-[11px] leading-tight"
-                  style="color: var(--ff-text-secondary)"
-                >
+                <div class="text-[11px] leading-tight" style="color: var(--ff-text-secondary)">
                   Programada por: {{ selectedInstallment.nextVisitScheduledByName }}
                 </div>
               }
@@ -661,7 +628,7 @@
 
           @if (canActOnInstallments || canScheduleVisits) {
             <div class="flex flex-col gap-2 px-4 py-3">
-              @if (canActOnInstallments && selectedInstallment.status === "OVERDUE") {
+              @if (canActOnInstallments && selectedInstallment.status === 'OVERDUE') {
                 <p-button
                   label="Aplicar mora"
                   severity="warning"
