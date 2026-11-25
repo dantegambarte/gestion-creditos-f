@@ -460,6 +460,7 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
 
   /**
    * Carga los pagos actualizados antes de abrir el diálogo de cancelación anticipada.
+   * Si la carga falla no lo abre y avisa (no se puede verificar pagos pendientes).
    */
   openSettlementDialog(): void {
     if (!this.credit) return;
@@ -468,9 +469,17 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
         this.settlementPayments = data;
         this.showSettlementDialog = true;
       },
+      // Falla cerrado: sin la lista no se puede saber si hay pagos pendientes
+      // que bloquean la cancelación, así que no se abre el diálogo.
       error: () => {
         this.settlementPayments = [];
-        this.showSettlementDialog = true;
+        this.msg.add({
+          severity: 'error',
+          summary: 'No se pudo verificar',
+          detail:
+            'No pudimos cargar los pagos del crédito. Reintentá la cancelación anticipada en unos segundos.',
+          life: 6000,
+        });
       },
     });
   }

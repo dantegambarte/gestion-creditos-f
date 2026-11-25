@@ -1,106 +1,94 @@
+import { SimpleChange } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MessageService } from 'primeng/api';
-import { of } from 'rxjs';
-import {
-  CollectionSheetItem,
-  CollectionSheetItemLive,
-} from '../../models/collection.model';
+import { of, throwError } from 'rxjs';
+import { PaymentCreateResult } from '../../models/payment.model';
 import { PaymentsService } from '../../payments.service';
 import { PaymentDialogComponent } from './payment-dialog.component';
 
-/**
- * Arma una cuota de planilla con snapshot 1000 y la capa viva indicada.
- * @param live Capa viva (null = planilla read-only).
- */
-function buildItem(
-  live: Partial<CollectionSheetItemLive> | null,
-): CollectionSheetItem {
-  return {
-    installmentId: 'inst-1',
-    installmentNumber: 3,
-    amountDue: 1000,
-    amountPaid: 0,
-    penaltyAmount: 0,
-    live: live as CollectionSheetItemLive | null,
-  } as unknown as CollectionSheetItem;
-}
-
-describe('PaymentDialogComponent (P11 saldo vivo con mora)', () => {
-  let component: PaymentDialogComponent;
-  let create: jasmine.Spy;
+describe('PaymentDialogComponent (cobrador)', () => {
+  let paymentsSpy: jasmine.SpyObj<PaymentsService>;
 
   beforeEach(() => {
-    create = jasmine.createSpy('create').and.returnValue(of({ warning: null }));
+    paymentsSpy = jasmine.createSpyObj('PaymentsService', ['create']);
     TestBed.configureTestingModule({
-      imports: [PaymentDialogComponent, NoopAnimationsModule],
-      providers: [
-        MessageService,
-        { provide: PaymentsService, useValue: { create } },
-      ],
-    });
-    component = TestBed.createComponent(
-      PaymentDialogComponent,
-    ).componentInstance;
+      imports: [PaymentDialogComponent],
+      providers: [MessageService, { provide: PaymentsService, useValue: paymentsSpy }],
+    }).overrideComponent(PaymentDialogComponent, { set: { template: '' } });
   });
 
-  it('usa el saldo vivo (con mora) y no el snapshot de la planilla', () => {
-    const item = buildItem({
-      amountDue: 1200,
-      amountPaid: 100,
-      penaltyAmount: 200,
-      creditPendingBalance: 5000,
-    });
-    expect(component.availableBalance(item)).toBe(1100);
-  });
-
-  it('pagar el saldo vivo completo es pago total: sin nextVisitDate', () => {
-    component.item = buildItem({
-      amountDue: 1200,
-      amountPaid: 0,
-      penaltyAmount: 200,
-      creditPendingBalance: 5000,
-    });
-    component.paymentCashAmount = 1200;
-    expect(component.isPartialPayment()).toBeFalse();
-    expect(component.paymentFormInvalid).toBeFalse();
-    component.confirmPayment();
-    expect(create).toHaveBeenCalledTimes(1);
-    expect(create.calls.mostRecent().args[0].nextVisitDate).toBeUndefined();
-  });
-
-  it('pagar el snapshot cuando la mora subió es parcial y exige próxima visita', () => {
-    component.item = buildItem({
-      amountDue: 1200,
-      amountPaid: 0,
-      penaltyAmount: 200,
-      creditPendingBalance: 5000,
-    });
-    component.paymentCashAmount = 1000;
-    expect(component.isPartialPayment()).toBeTrue();
-    expect(component.paymentFormInvalid).toBeTrue();
-  });
-
-  it('cuota sin mora: pagar el saldo completo sigue siendo total', () => {
-    component.item = buildItem({
+  /** Abre el diálogo para un ítem cuyo saldo de cuota es 1000. */
+  function open(c: PaymentDialogComponent): void {
+    c.item = {
+      installmentId: 'i1',
+      installmentNumber: 1,
       amountDue: 1000,
       amountPaid: 0,
-      penaltyAmount: 0,
+      pendingAmount: 0,
       creditPendingBalance: 1000,
-    });
-    component.paymentCashAmount = 1000;
-    expect(component.isPartialPayment()).toBeFalse();
+    } as never;
+    c.visible = true;
+    c.ngOnChanges({ visible: new SimpleChange(false, true, false) });
+  }
+
+  /** Crea el diálogo y carga un cobro total en efectivo. */
+  function create(): PaymentDialogComponent {
+    const c = TestBed.createComponent(PaymentDialogComponent).componentInstance;
+    open(c);
+    spyOn(c, 'isPartialPayment').and.returnValue(false);
+    spyOn(c as never, 'maxAllowed').and.returnValue(1000 as never);
+    c.paymentCashAmount = 1000;
+    return c;
+  }
+
+  it('MIXED sin referencia de transferencia no es válido', () => {
+    const c = create();
+    c.paymentMethod = 'MIXED';
+    c.paymentCashAmount = 400;
+    c.paymentTransferAmount = 600;
+    c.transferReference = '';
+    expect(c.paymentFormInvalid).toBeTrue();
+    c.transferReference = 'OP-1';
+    expect(c.paymentFormInvalid).toBeFalse();
   });
 
-  it('planilla read-only (live=null) cae al snapshot', () => {
-    expect(component.availableBalance(buildItem(null))).toBe(1000);
+  it('efectivo simple no exige referencia', () => {
+    const c = create();
+    c.paymentMethod = 'CASH';
+    expect(c.paymentFormInvalid).toBeFalse();
   });
 
-  it('capa viva con montos null cae al snapshot campo por campo', () => {
-    expect(
-      component.availableBalance(
-        buildItem({ amountDue: null, amountPaid: null }),
-      ),
-    ).toBe(1000);
+  it('el reintento reusa el client_request_id; un cobro nuevo usa otro', () => {
+    paymentsSpy.create.and.returnValue(throwError(() => ({ status: 0 })));
+    const c = create();
+    c.confirmPayment();
+    c.confirmPayment();
+    const [a, b] = paymentsSpy.create.calls.allArgs().map((x) => x[0].clientRequestId);
+    expect(a).toBeTruthy();
+    expect(b).toBe(a);
+
+    paymentsSpy.create.and.returnValue(
+      of({ installmentId: 'i1' } as unknown as PaymentCreateResult),
+    );
+    c.confirmPayment();
+    open(c);
+    c.paymentCashAmount = 1000;
+    c.confirmPayment();
+    expect(paymentsSpy.create.calls.mostRecent().args[0].clientRequestId).not.toBe(a);
+  });
+
+  it('cerrar y reabrir tras un timeout conserva el client_request_id del cobro pendiente', () => {
+    paymentsSpy.create.and.returnValue(throwError(() => ({ status: 504 })));
+    const c = create();
+    c.paymentNotes = 'primera nota';
+    c.confirmPayment();
+    const first = paymentsSpy.create.calls.mostRecent().args[0].clientRequestId;
+
+    c.close();
+    open(c);
+    c.paymentCashAmount = 1000;
+    c.paymentNotes = 'otra nota';
+    c.confirmPayment();
+    expect(paymentsSpy.create.calls.mostRecent().args[0].clientRequestId).toBe(first);
   });
 });

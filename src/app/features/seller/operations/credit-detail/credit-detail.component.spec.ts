@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { NEVER, of } from 'rxjs';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { HeaderService } from '../../../../core/services/header.service';
 import { CashStatus, CashStatusService } from '../../../admin/cash-register/cash-status.service';
@@ -142,5 +142,40 @@ describe('CreditDetailComponent — etiquetas y totales', () => {
     expect(c.effectiveRate).toBe(0.5);
     expect(c.canActOnInstallments).toBeTrue();
     expect(c.canScheduleVisits).toBeTrue();
+  });
+});
+
+describe('CreditDetailComponent — cancelación anticipada', () => {
+  /** Crea el componente con la lista de pagos respondiendo según `list$`. */
+  function create(list$: Observable<unknown>): CreditDetailComponent {
+    const creditsSpy = jasmine.createSpyObj('CreditsService', ['getById']);
+    creditsSpy.getById.and.returnValue(NEVER);
+    TestBed.configureTestingModule({
+      imports: [CreditDetailComponent],
+      providers: [
+        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({})) } },
+        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
+        { provide: CreditsService, useValue: creditsSpy },
+        { provide: PaymentsService, useValue: { listByCredit: () => list$ } },
+        { provide: HeaderService, useValue: jasmine.createSpyObj('HeaderService', ['set']) },
+        { provide: AuthServiceBase, useValue: { hasRole: () => true, hasAnyRole: () => true } },
+        { provide: CashStatusService, useValue: { resolve: () => of('OPEN') } },
+      ],
+    }).overrideComponent(CreditDetailComponent, { set: { template: '' } });
+    const c = TestBed.createComponent(CreditDetailComponent).componentInstance;
+    c.credit = { id: 'c1' } as never;
+    return c;
+  }
+
+  it('no abre el diálogo si no se pudieron cargar los pagos', () => {
+    const c = create(throwError(() => new Error('500')));
+    c.openSettlementDialog();
+    expect(c.showSettlementDialog).toBeFalse();
+  });
+
+  it('abre el diálogo cuando los pagos cargan', () => {
+    const c = create(of([]));
+    c.openSettlementDialog();
+    expect(c.showSettlementDialog).toBeTrue();
   });
 });
