@@ -44,6 +44,31 @@ test('unknown source paths fall back to the full suite', () => {
   assert.equal(resolveScope(['src/app/app.routes.ts']).mode, 'full');
 });
 
+test('unknown root files fall back to the full suite', () => {
+  for (const file of ['server.ts', 'tailwind.config.js', 'ngsw-config.json', 'tsconfig.spec.json']) {
+    assert.equal(resolveScope([file]).mode, 'full', file);
+  }
+});
+
+test('e2e-only and tooling-local changes run no unit tests', () => {
+  assert.equal(resolveScope(['cypress/e2e/01-auth.cy.ts', '.husky/pre-commit']).mode, 'none');
+});
+
+test('features without specs on disk are dropped from the includes', () => {
+  const hasSpecs = (dir) => dir === 'src/app/features/admin';
+  const scope = resolveScope(
+    ['src/app/features/admin/a.ts', 'src/app/features/removed/b.ts'],
+    { hasSpecs },
+  );
+  assert.equal(scope.mode, 'affected');
+  assert.deepEqual(scope.includes, ['src/app/features/admin']);
+});
+
+test('no remaining specs means no unit tests', () => {
+  const scope = resolveScope(['src/app/features/removed/b.ts'], { hasSpecs: () => false });
+  assert.equal(scope.mode, 'none');
+});
+
 test('lint targets only changed ts and html files under src', () => {
   const scope = resolveScope([
     'src/app/features/admin/a.ts',

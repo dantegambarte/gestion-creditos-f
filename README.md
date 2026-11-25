@@ -251,9 +251,9 @@ npm run serve:ssr:gestion-creditos-f
 
 | Qué se tocó | Qué corre |
 |---|---|
-| Solo docs (`*.md`, `docs/`) | Nada de tests |
-| Una feature (`src/app/features/<x>`) | Lint de los cambiados + specs de esa feature |
-| Código compartido: `src/app/core/`, `src/app/shared/`, `src/environments/`, `angular.json`, `package*.json`, `tsconfig*`, `karma.conf.js`, `eslint.config.js`, `scripts/`, `.github/`, o cualquier otro archivo bajo `src/` | Suite completa con umbral de cobertura |
+| Solo docs (`*.md`, `docs/`), E2E (`cypress/`) o `.husky/` | Nada de tests unitarios |
+| Una feature (`src/app/features/<x>`) | Lint de los cambiados + specs de esa feature (si la carpeta ya no tiene specs, se omite) |
+| Código compartido (`src/app/core/`, `src/app/shared/`, `src/environments/`, `angular.json`, `package*.json`, `tsconfig*`, `karma.conf.js`, `eslint.config.js`, `scripts/`, `.github/`) o cualquier otro archivo no listado | Suite completa con umbral de cobertura |
 
 - La suite completa también corre al mergear a `main`, todas las noches (si falla, abre o actualiza un issue con la etiqueta `ci:nightly`) y en un PR con la etiqueta `ci:full`.
 - El umbral de cobertura está en `karma.conf.js` (50% de líneas, base del 2026-11-24). Subilo cuando la cobertura crezca; nunca lo bajes.
