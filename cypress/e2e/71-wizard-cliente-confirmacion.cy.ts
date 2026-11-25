@@ -140,7 +140,9 @@ VIEWPORTS.forEach(({ name, width, height }) => {
       goToConfirm();
       cy.contains(CLIENT_B.full_name).should('exist');
       cy.get('[data-cy="btn-mark-all"]').click({ force: true });
-      cy.get('[data-cy="btn-enviar-aprobacion"] button').should('not.be.disabled').click({ force: true });
+      cy.get('[data-cy="btn-enviar-aprobacion"] button')
+        .should('not.be.disabled')
+        .click({ force: true });
       cy.wait('@createCredit')
         .its('request.body')
         .then((body: Record<string, unknown>) => {
@@ -188,7 +190,9 @@ VIEWPORTS.forEach(({ name, width, height }) => {
       cy.get('[data-cy="sale-down-payment-transfer"] input').clear().type('600');
       cy.get('[data-cy="sale-down-payment-transfer-reference"]').type('P13-MIX');
 
-      cy.contains('button', /simulaci/i).scrollIntoView().click({ force: true });
+      cy.contains('button', /simulaci/i)
+        .scrollIntoView()
+        .click({ force: true });
       cy.wait('@simulate');
       goToConfirm();
 
