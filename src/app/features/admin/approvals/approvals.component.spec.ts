@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ApprovalsComponent } from './approvals.component';
 import { CashRegisterService } from '../cash-register/cash-register.service';
@@ -222,6 +222,50 @@ describe('ApprovalsComponent', () => {
     component.rejectReason = 'abc';
     component.confirmReject();
     expect(creditsSvc.reject).not.toHaveBeenCalled();
+  });
+
+  it('doble confirmApprove dispara una sola aprobación mientras está en curso', () => {
+    const pending = new Subject<any>();
+    creditsSvc.approve.and.returnValue(pending.asObservable());
+    component.approvingRow = MOCK_CREDITS[0];
+    component.confirmApprove();
+    component.confirmApprove();
+    expect(creditsSvc.approve).toHaveBeenCalledTimes(1);
+    expect(component.processingId).toBe('CR001');
+    pending.next({});
+    pending.complete();
+    expect(component.processingId).toBeNull();
+  });
+
+  it('libera processingId si la aprobación falla', () => {
+    creditsSvc.approve.and.returnValue(throwError(() => ({ status: 500 })));
+    component.approvingRow = MOCK_CREDITS[0];
+    component.confirmApprove();
+    expect(component.processingId).toBeNull();
+  });
+
+  it('confirmReject bloquea un motivo de solo espacios', () => {
+    component.rejectingRow = MOCK_CREDITS[1];
+    component.rejectReason = '     ';
+    component.confirmReject();
+    expect(creditsSvc.reject).not.toHaveBeenCalled();
+    expect(component.rejectCharCount()).toBe(0);
+  });
+
+  it('doble confirmReject dispara un solo rechazo y envía el motivo recortado', () => {
+    const pending = new Subject<any>();
+    creditsSvc.reject.and.returnValue(pending.asObservable());
+    component.rejectingRow = MOCK_CREDITS[1];
+    component.rejectReason = '  Falta documentación  ';
+    component.confirmReject();
+    component.confirmReject();
+    expect(creditsSvc.reject).toHaveBeenCalledTimes(1);
+    expect(creditsSvc.reject).toHaveBeenCalledWith('CR002', {
+      rejectionReason: 'Falta documentación',
+    });
+    pending.next(undefined);
+    pending.complete();
+    expect(component.processingId).toBeNull();
   });
 
   it('desuscribe en ngOnDestroy', () => {

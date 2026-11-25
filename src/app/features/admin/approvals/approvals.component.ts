@@ -87,9 +87,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   showApproveDialog = false;
   approvingRow: Credit | null = null;
   approvingDetail: Credit | null = null;
-  approveCheckDoc = false;
-  approveCheckClient = false;
-  approveNote = '';
   processingApprove = false;
 
   // Cambio de vendedor antes de aprobar (solo dentro del diálogo de aprobación).
@@ -125,43 +122,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
       const matchType = !this.filterType || a.type === this.filterType;
       return matchSearch && matchType;
     });
-  }
-
-  /**
-   * Retorna el monto del enganche del crédito aprobado.
-   */
-  get approvingRowDownPayment(): number {
-    return this.approvingDetail?.downPayment ?? this.approvingRow?.downPayment ?? 0;
-  }
-
-  /**
-   * Cantidad de cuotas adelantadas de la operación en aprobación.
-   * @returns {number} Adelanto persistido o cero si no existe.
-   */
-  get approvingRowPrepaidInstallments(): number {
-    return this.approvingDetail?.prepaidInstallments ?? 0;
-  }
-
-  /**
-   * Método asociado al pago inicial o al adelanto según corresponda.
-   * @returns {string | null} Método persistido para mostrar en el modal.
-   */
-  get approvingRowPaymentMethod(): string | null {
-    if (this.approvingRowPrepaidInstallments > 0) {
-      return this.approvingDetail?.prepaidInstallmentsMethod ?? null;
-    }
-    return this.approvingDetail?.downPaymentMethod ?? null;
-  }
-
-  /**
-   * Traduce el método de pago persistido a una etiqueta legible.
-   * @param {string | null} method - Código interno del método.
-   * @returns {string} Texto visible en la UI.
-   */
-  paymentMethodLabel(method: string | null): string {
-    if (method === 'TRANSFER') return 'Transferencia';
-    if (method === 'CASH') return 'Efectivo';
-    return 'Sin especificar';
   }
 
   private destroy$ = new Subject<void>();
@@ -230,9 +190,6 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
     if (this.processingId) return;
     this.approvingRow = row;
     this.approvingDetail = null;
-    this.approveCheckDoc = false;
-    this.approveCheckClient = false;
-    this.approveNote = '';
     this.showChangeSeller = false;
     this.selectedSellerId = null;
     this.showApproveDialog = true;
@@ -252,9 +209,11 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   /**
    * Confirma la aprobación de la fila seleccionada. Revalida la caja en vivo
    * (así un backend recuperado desbloquea sin recargar) y actualiza el banner.
+   * Toma processingId al empezar para que un doble clic no dispare dos aprobaciones.
    */
   confirmApprove(): void {
-    if (!this.approvingRow) return;
+    if (!this.approvingRow || this.processingId) return;
+    this.processingId = this.approvingRow.id;
 
     this.cashStatusSvc
       .resolve()
@@ -263,11 +222,13 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
         this.cashStatus = status;
 
         if (this.isCashUnknown) {
+          this.processingId = null;
           this.msg.add(this.cashStatusSvc.unknownMessage('aprobar créditos'));
           return;
         }
 
         if (this.isCashClosed) {
+          this.processingId = null;
           this.msg.add({
             severity: 'error',
             summary: 'Caja Cerrada',
@@ -284,9 +245,13 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
 
   /**
    * Envía la aprobación de la fila seleccionada al backend y actualiza la lista.
+   * Libera processingId al terminar, con éxito o error.
    */
   private processApprove(): void {
-    if (!this.approvingRow) return;
+    if (!this.approvingRow) {
+      this.processingId = null;
+      return;
+    }
     this.processingApprove = true;
     const row = this.approvingRow;
 
@@ -297,6 +262,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
         next: () => {
           this.approvals = this.approvals.filter((a) => a.id !== row.id);
           this.processingApprove = false;
+          this.processingId = null;
           this.showApproveDialog = false;
           this.approvingRow = null;
           this.approvingDetail = null;
@@ -310,12 +276,8 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
         },
         error: (err: { status?: number; message?: string }) => {
           this.processingApprove = false;
-          const is409 = err?.status === 409;
-          this.msg.add({
-            severity: is409 ? 'warn' : 'error',
-            summary: is409 ? 'Advertencia' : 'Error',
-            detail: err?.message ?? 'No se pudo aprobar. Intentá nuevamente.',
-          });
+          this.processingId = null;
+          this.showRequestError(err, 'No se pudo aprobar. Intentá nuevamente.');
         },
       });
   }
@@ -395,12 +357,7 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
         },
         error: (err: { status?: number; message?: string }) => {
           this.processingSeller = false;
-          const is409 = err?.status === 409;
-          this.msg.add({
-            severity: is409 ? 'warn' : 'error',
-            summary: is409 ? 'Advertencia' : 'Error',
-            detail: err?.message ?? 'No se pudo cambiar el vendedor.',
-          });
+          this.showRequestError(err, 'No se pudo cambiar el vendedor.');
         },
       });
   }
@@ -418,15 +375,17 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Confirma el rechazo de la fila seleccionada.
-   * @returns
+   * Confirma el rechazo de la fila seleccionada con el motivo recortado.
+   * Exige al menos 5 caracteres reales y bloquea reentradas vía processingId.
    */
   confirmReject(): void {
-    if (this.rejectReason.length < 5 || !this.rejectingRow) return;
+    const reason = this.rejectReason.trim();
+    if (reason.length < 5 || !this.rejectingRow || this.processingId) return;
     this.processingReject = true;
+    this.processingId = this.rejectingRow.id;
 
     this.credits
-      .reject(this.rejectingRow.id, { rejectionReason: this.rejectReason })
+      .reject(this.rejectingRow.id, { rejectionReason: reason })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -434,26 +393,37 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
             (approval) => approval.id !== this.rejectingRow!.id,
           );
           this.processingReject = false;
+          this.processingId = null;
           this.showRejectDialog = false;
           this.decrementPendingApprovalsCount();
           this.msg.add({
             severity: 'info',
             summary: 'Rechazado',
-            detail: `${this.rejectingRow!.customerName} — ${this.rejectReason}`,
+            detail: `${this.rejectingRow!.customerName} — ${reason}`,
             life: 4000,
           });
           this.rejectingRow = null;
         },
         error: (err: { status?: number; message?: string }) => {
           this.processingReject = false;
-          const is409 = err?.status === 409;
-          this.msg.add({
-            severity: is409 ? 'warn' : 'error',
-            summary: is409 ? 'Advertencia' : 'Error',
-            detail: err?.message ?? 'No se pudo rechazar.',
-          });
+          this.processingId = null;
+          this.showRequestError(err, 'No se pudo rechazar.');
         },
       });
+  }
+
+  /**
+   * Muestra el toast de error de una request: advertencia si es conflicto (409), error en otro caso.
+   * @param err - error devuelto por el backend
+   * @param fallback - mensaje a usar si el backend no envía uno
+   */
+  private showRequestError(err: { status?: number; message?: string }, fallback: string): void {
+    const is409 = err?.status === 409;
+    this.msg.add({
+      severity: is409 ? 'warn' : 'error',
+      summary: is409 ? 'Advertencia' : 'Error',
+      detail: err?.message ?? fallback,
+    });
   }
 
   private decrementPendingApprovalsCount(): void {
@@ -465,11 +435,10 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Devuelve el número de caracteres en el motivo de rechazo.
-   * @returns
+   * Devuelve los caracteres reales del motivo de rechazo (sin espacios en los extremos).
    */
   rejectCharCount(): number {
-    return this.rejectReason.length;
+    return this.rejectReason.trim().length;
   }
 
   /**
