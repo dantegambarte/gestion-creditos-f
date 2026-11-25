@@ -161,6 +161,32 @@ describe('ExpenseSidePanelComponent', () => {
         jasmine.objectContaining({ source: 'COMPANY' }),
       );
     });
+
+    it('editar un gasto DAILY bloquea y avisa', () => {
+      const addSpy = spyOn(TestBed.inject(MessageService), 'add');
+      component.editingExpenseId = 'exp-9';
+      component.createSource = 'DAILY';
+      component.createAmount = 500;
+      component.createDescription = 'Gasto del día editado';
+      component.submitCreate();
+      expect(cashStatusSpy.checkAction).toHaveBeenCalled();
+      expect(expensesSpy.update).not.toHaveBeenCalled();
+      expect(component.saving).toBeFalse();
+      expect(addSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ summary: 'Estado de caja desconocido' }),
+      );
+    });
+
+    it('editar un gasto COMPANY no consulta la caja diaria', () => {
+      expensesSpy.update.and.returnValue(of({ id: 'exp-9' }) as never);
+      component.editingExpenseId = 'exp-9';
+      component.createSource = 'COMPANY';
+      component.createAmount = 500;
+      component.createDescription = 'Gasto general editado';
+      component.submitCreate();
+      expect(cashStatusSpy.checkAction).not.toHaveBeenCalled();
+      expect(expensesSpy.update).toHaveBeenCalled();
+    });
   });
 
   describe('sin caja activa (jornada cerrada)', () => {

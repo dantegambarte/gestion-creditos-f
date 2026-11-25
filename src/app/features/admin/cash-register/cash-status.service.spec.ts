@@ -41,8 +41,13 @@ describe('CashStatusService', () => {
 
   it('fails closed with UNKNOWN when the query errors', (done) => {
     cashSpy.getActiveSession.and.returnValue(throwError(() => ({ status: 500 })));
+    const warnSpy = spyOn(console, 'warn');
     service.resolve().subscribe((s) => {
       expect(s).toBe('UNKNOWN');
+      expect(warnSpy).toHaveBeenCalledWith(
+        jasmine.stringContaining('[CashStatusService]'),
+        jasmine.objectContaining({ status: 500 }),
+      );
       done();
     });
   });

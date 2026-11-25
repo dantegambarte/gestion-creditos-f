@@ -84,6 +84,13 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   loading = false;
   error: AppError | null = null;
   isCashClosed = false;
+  /** No se pudo verificar el estado de caja (falla cerrado, distinto de cerrada). */
+  isCashUnknown = false;
+
+  /** Indica si la aprobación queda bloqueada por caja cerrada o desconocida. */
+  get isApproveBlocked(): boolean {
+    return this.isCashClosed || this.isCashUnknown;
+  }
 
   // ── Settlement dialog ─────────────────────────────────────────
   showSettlementDialog = false;
@@ -317,7 +324,8 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   private checkCashRegisterStatus(): void {
     if (!this.isAdmin) return;
     this.cashStatusSvc.resolve().subscribe((status) => {
-      this.isCashClosed = status !== 'OPEN';
+      this.isCashClosed = status === 'CLOSED';
+      this.isCashUnknown = status === 'UNKNOWN';
     });
   }
 

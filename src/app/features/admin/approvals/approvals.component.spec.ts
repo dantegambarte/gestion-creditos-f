@@ -177,6 +177,7 @@ describe('ApprovalsComponent', () => {
   });
 
   it('confirmApprove bloquea si no hay caja operativa abierta', () => {
+    const addSpy = spyOn(TestBed.inject(MessageService), 'add');
     cashStatusSpy.resolve.and.returnValue(of('CLOSED'));
     component.refresh();
     component.approvingRow = MOCK_CREDITS[0];
@@ -184,6 +185,22 @@ describe('ApprovalsComponent', () => {
     component.confirmApprove();
 
     expect(creditsSvc.approve).not.toHaveBeenCalled();
+    expect(addSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({ severity: 'error', summary: 'Caja Cerrada' }),
+    );
+  });
+
+  it('confirmApprove revalida en vivo: si el backend se recupera, aprueba sin recargar', () => {
+    cashStatusSpy.resolve.and.returnValue(of('UNKNOWN'));
+    component.refresh();
+    expect(component.isCashUnknown).toBeTrue();
+
+    cashStatusSpy.resolve.and.returnValue(of('OPEN'));
+    component.approvingRow = MOCK_CREDITS[0];
+    component.confirmApprove();
+
+    expect(component.isCashUnknown).toBeFalse();
+    expect(creditsSvc.approve).toHaveBeenCalledWith('CR001', {});
   });
 
   it('confirmApprove muestra toast de éxito al aprobar', () => {

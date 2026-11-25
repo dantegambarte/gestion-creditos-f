@@ -236,8 +236,8 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
 
   /**
    * Envía el formulario: crea o actualiza según el modo activo.
-   * Un gasto nuevo de la caja del día exige caja operativa abierta (falla
-   * cerrado ante error); Caja General y ediciones las valida el backend.
+   * Crear o editar un gasto de la caja del día exige caja operativa abierta
+   * (falla cerrado ante error); Caja General (COMPANY) no la consulta.
    */
   submitCreate(): void {
     if (!this.createAmount || this.createAmount <= 0 || !this.createDescription.trim()) return;
@@ -245,22 +245,15 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
     this.saving = true;
     this.createError = '';
 
-    if (this.isEditMode) {
-      this.processUpdateExpense();
-      return;
-    }
-
     // Caja General (COMPANY) no depende de la caja operativa del día.
     if (this.createSource === 'COMPANY') {
-      this.processCreateExpense();
+      this.processSubmit();
       return;
     }
 
+    const action = this.isEditMode ? 'editar gastos' : 'crear gastos';
     this.cashStatusSvc
-      .checkAction(
-        'crear gastos',
-        'No puedes crear gastos de la caja del día. No hay caja operativa abierta.',
-      )
+      .checkAction(action, `No puedes ${action} de la caja del día. No hay caja operativa abierta.`)
       .pipe(takeUntil(this.destroy$))
       .subscribe((block) => {
         if (block) {
@@ -268,8 +261,19 @@ export class ExpenseSidePanelComponent implements OnInit, OnChanges, OnDestroy {
           this.msg.add(block);
           return;
         }
-        this.processCreateExpense();
+        this.processSubmit();
       });
+  }
+
+  /**
+   * Ejecuta la actualización o la creación según el modo activo.
+   */
+  private processSubmit(): void {
+    if (this.isEditMode) {
+      this.processUpdateExpense();
+      return;
+    }
+    this.processCreateExpense();
   }
 
   /**

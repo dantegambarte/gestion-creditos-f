@@ -35,7 +35,13 @@ export class CashStatusService {
     if (!this.auth.hasRole('ADMIN')) return of<CashStatus>('OPEN');
     return this.cashRegisterSvc.getActiveSession().pipe(
       map((session): CashStatus => (session ? 'OPEN' : 'CLOSED')),
-      catchError(() => of<CashStatus>('UNKNOWN')),
+      catchError((err: unknown) => {
+        console.warn(
+          '[CashStatusService] No se pudo consultar la caja activa; se bloquea (UNKNOWN).',
+          err,
+        );
+        return of<CashStatus>('UNKNOWN');
+      }),
     );
   }
 

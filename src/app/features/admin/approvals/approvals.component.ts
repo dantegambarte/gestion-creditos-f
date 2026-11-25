@@ -250,28 +250,43 @@ export class ApprovalsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Confirma la aprobación de la fila seleccionada. Valida que la caja no esté cerrada.
-   * @returns
+   * Confirma la aprobación de la fila seleccionada. Revalida la caja en vivo
+   * (así un backend recuperado desbloquea sin recargar) y actualiza el banner.
    */
   confirmApprove(): void {
     if (!this.approvingRow) return;
 
-    if (this.isCashUnknown) {
-      this.msg.add(this.cashStatusSvc.unknownMessage('aprobar créditos'));
-      return;
-    }
+    this.cashStatusSvc
+      .resolve()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((status) => {
+        this.cashStatus = status;
 
-    if (this.isCashClosed) {
-      this.msg.add({
-        severity: 'error',
-        summary: 'Caja Cerrada',
-        detail:
-          'No puedes aprobar créditos. La caja del día está CERRADA. El crédito y sus pagos iniciales se aprobarán juntos cuando se abra una nueva caja.',
-        life: 5000,
+        if (this.isCashUnknown) {
+          this.msg.add(this.cashStatusSvc.unknownMessage('aprobar créditos'));
+          return;
+        }
+
+        if (this.isCashClosed) {
+          this.msg.add({
+            severity: 'error',
+            summary: 'Caja Cerrada',
+            detail:
+              'No puedes aprobar créditos. La caja del día está CERRADA. El crédito y sus pagos iniciales se aprobarán juntos cuando se abra una nueva caja.',
+            life: 5000,
+          });
+          return;
+        }
+
+        this.processApprove();
       });
-      return;
-    }
+  }
 
+  /**
+   * Envía la aprobación de la fila seleccionada al backend y actualiza la lista.
+   */
+  private processApprove(): void {
+    if (!this.approvingRow) return;
     this.processingApprove = true;
     const row = this.approvingRow;
 
