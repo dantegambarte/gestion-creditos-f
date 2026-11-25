@@ -67,7 +67,8 @@ export interface CustomerUpdatePayload {
   address?: string;
   phone?: string;
   email?: string;
-  assignedCollectorId?: string;
+  /** null indica desasignar el cobrador. */
+  assignedCollectorId?: string | null;
 }
 
 export interface CustomerRaw {

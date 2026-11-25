@@ -7,12 +7,7 @@ import {
   SimpleChanges,
   inject,
 } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -23,13 +18,7 @@ import { CustomersService } from '../../../features/seller/clients/customers.ser
 @Component({
   selector: 'app-client-create-dialog',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    DialogModule,
-    DropdownModule,
-    InputTextModule,
-  ],
+  imports: [ReactiveFormsModule, ButtonModule, DialogModule, DropdownModule, InputTextModule],
   templateUrl: './client-create-dialog.component.html',
   styleUrl: './client-create-dialog.component.scss',
 })
@@ -73,11 +62,7 @@ export class ClientCreateDialogComponent implements OnChanges {
 
   isDniInvalid(): boolean {
     const control = this.form.get('dni');
-    return (
-      !!control &&
-      control.invalid &&
-      (control.dirty || control.touched || this.submitted)
-    );
+    return !!control && control.invalid && (control.dirty || control.touched || this.submitted);
   }
 
   getError(field: string): string {
@@ -110,15 +95,8 @@ export class ClientCreateDialogComponent implements OnChanges {
     if (this.form.invalid || this.creatingClient) return;
 
     this.creatingClient = true;
-    const {
-      nombres,
-      apellidos,
-      dni,
-      telefonoPrincipal,
-      email,
-      direccion,
-      assignedCollectorId,
-    } = this.form.value;
+    const { nombres, apellidos, dni, telefonoPrincipal, email, direccion, assignedCollectorId } =
+      this.form.value;
     const cleanPhone = String(telefonoPrincipal).replace(/[^0-9]/g, '');
 
     this.customersService
@@ -149,8 +127,7 @@ export class ClientCreateDialogComponent implements OnChanges {
           const detail =
             err?.status === 409
               ? 'Ya existe un cliente con ese DNI.'
-              : err?.message ||
-                'No se pudo guardar el cliente. Intentá nuevamente.';
+              : err?.message || 'No se pudo guardar el cliente. Intentá nuevamente.';
           this.msg.add({
             severity: 'error',
             summary: 'No se pudo crear el cliente',
@@ -223,17 +200,10 @@ export class ClientCreateDialogComponent implements OnChanges {
         ],
       ],
       dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
-      telefonoPrincipal: [
-        '',
-        [Validators.required, Validators.pattern(/^[\d\s\+\-]+$/)],
-      ],
-      telefonoAlterno: ['', [Validators.pattern(/^[\d\s\+\-]*$/)]],
+      telefonoPrincipal: ['', [Validators.required, Validators.pattern(/^[\d\s\+\-]+$/)]],
       email: ['', [Validators.email]],
       direccion: ['', [Validators.required]],
-      assignedCollectorId: [
-        { value: '', disabled: this.collectorsLoading },
-        [Validators.required],
-      ],
+      assignedCollectorId: [{ value: '', disabled: this.collectorsLoading }, [Validators.required]],
     });
 
     return form;
