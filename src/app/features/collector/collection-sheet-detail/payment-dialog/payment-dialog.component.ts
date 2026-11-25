@@ -91,11 +91,17 @@ export class PaymentDialogComponent implements OnChanges {
   }
 
   /**
-   * Devuelve el saldo pendiente de la cuota (monto - pagado).
+   * Devuelve el saldo pendiente VIVO de la cuota (monto con mora - pagado).
+   * Usa la capa viva para que la mora generada después de armar la planilla
+   * cuente: si no, pagar el saldo mostrado se trataría como pago total y el
+   * backend lo rechazaría con 422 por parcial. Cae al snapshot sólo cuando no hay
+   * capa viva (planilla read-only), campo por campo.
    * @param item Cuota a evaluar.
    */
   availableBalance(item: CollectionSheetItem): number {
-    return Math.max(0, item.amountDue - item.amountPaid);
+    const amountDue = item.live?.amountDue ?? item.amountDue;
+    const amountPaid = item.live?.amountPaid ?? item.amountPaid;
+    return Math.max(0, amountDue - amountPaid);
   }
 
   /**
