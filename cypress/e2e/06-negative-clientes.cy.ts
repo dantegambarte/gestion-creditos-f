@@ -58,11 +58,9 @@ describe('Gestión de Clientes real — Unhappy Paths', () => {
     getVisibleDialog().find('input[formControlName="dni"]').click().blur();
 
     getVisibleDialog().contains('span', /obligatorio|requerido/i).should('exist');
-    getVisibleDialog().find('p-button[label="Crear Cliente"]').should(
-      'have.attr',
-      'ng-reflect-disabled',
-      'true',
-    );
+    getVisibleDialog()
+      .find('p-button[label="Crear Cliente"] button')
+      .should('be.disabled');
   });
 
   // ── Crear: DNI con caracteres inválidos ──────────────────────────────────────

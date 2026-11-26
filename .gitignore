@@ -59,3 +59,4 @@ e2e-run-monitor.log
 
 # Local Netlify folder
 .netlify
+cypress.env.json

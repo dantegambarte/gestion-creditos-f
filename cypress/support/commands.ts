@@ -335,7 +335,7 @@ function requestLoginWithRetry(
 
       const cappedWaitMs = Math.min(
         waitMs,
-        Number(Cypress.env('realAuth429MaxWaitMs') ?? 3000),
+        Number(Cypress.env('realAuth429MaxWaitMs') ?? 60000),
       );
 
       cy.wait(cappedWaitMs);
@@ -419,12 +419,44 @@ function fetchFreshInternalSession(
 }
 
 /**
+ * Reutiliza el token que dejó cy.session en localStorage; sólo pide login nuevo si no hay sesión cacheada.
+ * Evita un POST /auth/login por test (rate limit) sin perder la sesión validada.
+ * @param role Rol interno a autenticar.
+ * @param creds Credenciales reales del rol (para el fallback de login fresco).
+ * @returns Token y usuario serializado listos para sembrar en localStorage.
+ */
+function reuseInternalSession(
+  role: InternalRole,
+  creds: RealCredentials,
+): Cypress.Chainable<{ token: string; userRaw: string | null }> {
+  return cy.getAllLocalStorage().then((byOrigin) => {
+    const storage = Object.values(byOrigin).find(
+      (entries) => typeof entries[INTERNAL_TOKEN_KEY] === 'string',
+    );
+    const cachedToken = storage?.[INTERNAL_TOKEN_KEY];
+    if (typeof cachedToken === 'string' && cachedToken) {
+      const cachedUser = storage?.[INTERNAL_USER_KEY];
+      return cy.wrap({
+        token: cachedToken,
+        userRaw: typeof cachedUser === 'string' ? cachedUser : null,
+      });
+    }
+    return fetchFreshInternalSession(role, creds).then(({ token, user }) => ({
+      token,
+      userRaw: user
+        ? JSON.stringify(normalizeRealInternalUser(user, token))
+        : null,
+    }));
+  });
+}
+
+/**
  * Obtiene credenciales reales de portal desde Cypress.env.
  * @returns Credenciales DNI/password del cliente portal.
  */
 function getPortalRealCredentials(): PortalRealCredentials {
-  const dni = String(Cypress.env('realPortalDni') ?? '40567890').trim();
-  const password = String(Cypress.env('realPortalPassword') ?? '1234').trim();
+  const dni = String(Cypress.env('realPortalDni') ?? '').trim();
+  const password = String(Cypress.env('realPortalPassword') ?? '').trim();
 
   if (!dni || !password) {
     throw new Error(
@@ -475,7 +507,7 @@ function requestPortalLoginWithRetry(
 
       const cappedWaitMs = Math.min(
         waitMs,
-        Number(Cypress.env('realAuth429MaxWaitMs') ?? 3000),
+        Number(Cypress.env('realAuth429MaxWaitMs') ?? 60000),
       );
 
       cy.wait(cappedWaitMs);
@@ -602,8 +634,8 @@ Cypress.Commands.add(
 
     const targetPath = normalizedDestination ?? roleHome;
 
-    fetchFreshInternalSession(role, { dni, password }).then(
-      ({ token, user }) => {
+    reuseInternalSession(role, { dni, password }).then(
+      ({ token, userRaw }) => {
         cy.request({
           method: 'GET',
           url: `${String(Cypress.env('apiBaseUrl'))}/auth/me`,
@@ -619,7 +651,10 @@ Cypress.Commands.add(
 
         cy.visit(targetPath, {
           onBeforeLoad(win) {
-            seedRealInternalSession(win, token, user);
+            win.localStorage.setItem(INTERNAL_TOKEN_KEY, token);
+            if (userRaw) {
+              win.localStorage.setItem(INTERNAL_USER_KEY, userRaw);
+            }
           },
         });
       },
@@ -854,6 +889,7 @@ Cypress.Commands.add('logout', () => {
   delete AUTH_TOKEN_CACHE.ADMIN;
   delete AUTH_TOKEN_CACHE.SELLER;
   delete AUTH_TOKEN_CACHE.COLLECTOR;
+  delete AUTH_TOKEN_CACHE.SELLER_COLLECTOR;
   PORTAL_SESSION_CACHE = null;
   cy.clearAllLocalStorage();
   cy.visit('/login');
