@@ -30,6 +30,7 @@ import {
   CollectionSheet,
 } from '../../../collector/models/collection.model';
 import { User } from '../../users/user.model';
+import { buildBatchFailureMessages } from '../batch-failure-messages';
 
 @Component({
   selector: 'app-generate-collection-dialog',
@@ -69,8 +70,7 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
    */
   get dialogStyle(): Record<string, string> {
     const isMobile =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(max-width: 640px)').matches;
+      typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
 
     if (isMobile) {
       return {
@@ -98,24 +98,28 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
    */
   filterOptions: { label: string; value: CollectionFilter; description: string }[] = [
     {
-      label:       'Trabajo Diario (recomendado)',
-      value:       'TODAY_AND_OVERDUE',
-      description: 'Todo lo que hay que gestionar hoy: mora + cuotas que vencen hoy + visitas agendadas para hoy + visitas vencidas. Es la planilla para generar todos los dias.',
+      label: 'Trabajo Diario (recomendado)',
+      value: 'TODAY_AND_OVERDUE',
+      description:
+        'Todo lo que hay que gestionar hoy: mora + cuotas que vencen hoy + visitas agendadas para hoy + visitas vencidas. Es la planilla para generar todos los dias.',
     },
     {
-      label:       'Solo hoy',
-      value:       'TODAY',
-      description: 'Cuotas que vencen hoy + visitas agendadas para hoy. NO incluye mora vieja (usar Trabajo Diario para no dejar mora sin trabajar).',
+      label: 'Solo hoy',
+      value: 'TODAY',
+      description:
+        'Cuotas que vencen hoy + visitas agendadas para hoy. NO incluye mora vieja (usar Trabajo Diario para no dejar mora sin trabajar).',
     },
     {
-      label:       'Vencidas sin agenda',
-      value:       'OVERDUE',
-      description: 'Solo mora: cuotas vencidas cuya proxima visita ya paso o nunca se agendo. No incluye vencidas con visita hoy.',
+      label: 'Vencidas sin agenda',
+      value: 'OVERDUE',
+      description:
+        'Solo mora: cuotas vencidas cuya proxima visita ya paso o nunca se agendo. No incluye vencidas con visita hoy.',
     },
     {
-      label:       'Todas las pendientes',
-      value:       'ALL_PENDING',
-      description: 'Panorama completo: todas las cuotas del cobrador con saldo > 0, sin filtrar por fecha ni agenda (incluye las que tienen visita a futuro).',
+      label: 'Todas las pendientes',
+      value: 'ALL_PENDING',
+      description:
+        'Panorama completo: todas las cuotas del cobrador con saldo > 0, sin filtrar por fecha ni agenda (incluye las que tienen visita a futuro).',
     },
   ];
 
@@ -177,10 +181,7 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   /** Nombre del cobrador seleccionado en single mode, o '' en batch. */
   get selectedCollectorName(): string {
     if (this.isBatchMode) return '';
-    return (
-      this.collectors.find((c) => c.id === this.selectedCollectorId)
-        ?.fullName ?? ''
-    );
+    return this.collectors.find((c) => c.id === this.selectedCollectorId)?.fullName ?? '';
   }
 
   /**
@@ -191,8 +192,7 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
     if (this.isBatchMode) return null;
     return (
       this.dialogSheets.find(
-        (s) =>
-          s.collectorId === this.selectedCollectorId && s.status === 'ACTIVE',
+        (s) => s.collectorId === this.selectedCollectorId && s.status === 'ACTIVE',
       ) ?? null
     );
   }
@@ -205,9 +205,7 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   /** Cobradores SIN planilla ACTIVE para selectedDate. */
   get batchMissingCount(): number {
     const activeIds = new Set(
-      this.dialogSheets
-        .filter((s) => s.status === 'ACTIVE')
-        .map((s) => s.collectorId),
+      this.dialogSheets.filter((s) => s.status === 'ACTIVE').map((s) => s.collectorId),
     );
     return this.collectors.filter((c) => !activeIds.has(c.id)).length;
   }
@@ -224,13 +222,9 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   /** Lista de nombres de cobradores sin planilla ACTIVE. */
   get batchMissingCollectorNames(): string[] {
     const activeIds = new Set(
-      this.dialogSheets
-        .filter((s) => s.status === 'ACTIVE')
-        .map((s) => s.collectorId),
+      this.dialogSheets.filter((s) => s.status === 'ACTIVE').map((s) => s.collectorId),
     );
-    return this.collectors
-      .filter((c) => !activeIds.has(c.id))
-      .map((c) => c.fullName);
+    return this.collectors.filter((c) => !activeIds.has(c.id)).map((c) => c.fullName);
   }
 
   /**
@@ -241,13 +235,11 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
       const missing = this.batchMissingCount;
       const existing = this.batchExistingCount;
       if (this.regenerateExisting) {
-        if (existing > 0 && missing > 0)
-          return `Regenerar ${existing} y generar ${missing}`;
+        if (existing > 0 && missing > 0) return `Regenerar ${existing} y generar ${missing}`;
         if (existing > 0) return `Regenerar ${existing}`;
         return `Generar ${missing}`;
       }
-      if (missing > 0)
-        return `Generar ${missing} planilla${missing === 1 ? '' : 's'}`;
+      if (missing > 0) return `Generar ${missing} planilla${missing === 1 ? '' : 's'}`;
       return 'Sin pendientes';
     }
     return this.conflictingSheet ? 'Regenerar planilla' : 'Generar planilla';
@@ -256,17 +248,14 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
   /** Severity del botón principal: warning si va a regenerar. */
   get submitSeverity(): 'primary' | 'warning' {
     if (this.isBatchMode) {
-      return this.regenerateExisting && this.batchExistingCount > 0
-        ? 'warning'
-        : 'primary';
+      return this.regenerateExisting && this.batchExistingCount > 0 ? 'warning' : 'primary';
     }
     return this.conflictingSheet ? 'warning' : 'primary';
   }
 
   /** Deshabilita el botón cuando no hay acción válida. */
   get submitDisabled(): boolean {
-    if (this.generating || this.generatingAll || this.loadingDialogSheets)
-      return true;
+    if (this.generating || this.generatingAll || this.loadingDialogSheets) return true;
     if (this.isBatchMode) {
       return this.regenerateExisting
         ? this.batchExistingCount + this.batchMissingCount === 0
@@ -373,8 +362,7 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
    * Muestra toast de resultado y emite batchCompleted para que el padre recargue.
    */
   private generateForAll(): void {
-    if (this.generatingAll || this.generating || this.loadingDialogSheets)
-      return;
+    if (this.generatingAll || this.generating || this.loadingDialogSheets) return;
     if (this.isDateInPast()) return;
     const nothingToDo = this.regenerateExisting
       ? this.batchExistingCount + this.batchMissingCount === 0
@@ -382,9 +370,7 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
     if (nothingToDo) return;
 
     const preExistingCollectorIds = new Set(
-      this.dialogSheets
-        .filter((s) => s.status === 'ACTIVE')
-        .map((s) => s.collectorId),
+      this.dialogSheets.filter((s) => s.status === 'ACTIVE').map((s) => s.collectorId),
     );
     const skipIfExists = !this.regenerateExisting;
     const collectors = this.collectors;
@@ -403,9 +389,16 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
         takeUntil(this.destroy$),
         finalize(() => (this.generatingAll = false)),
       )
-      .subscribe((outcomes) =>
-        this.handleBatchOutcomes(outcomes, preExistingCollectorIds),
-      );
+      .subscribe({
+        next: (outcomes) => this.handleBatchOutcomes(outcomes, preExistingCollectorIds),
+        error: () =>
+          this.msg.add({
+            severity: 'error',
+            summary: 'Error al generar planillas',
+            detail: 'No se pudieron generar las planillas. Reintentá en unos minutos.',
+            life: 8000,
+          }),
+      });
   }
 
   /**
@@ -450,22 +443,16 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
     }
 
     const summaryParts: string[] = [];
-    if (generated > 0)
-      summaryParts.push(`${generated} generada${generated === 1 ? '' : 's'}`);
+    if (generated > 0) summaryParts.push(`${generated} generada${generated === 1 ? '' : 's'}`);
     if (regenerated > 0)
-      summaryParts.push(
-        `${regenerated} regenerada${regenerated === 1 ? '' : 's'}`,
-      );
-    if (skipped > 0)
-      summaryParts.push(`${skipped} omitida${skipped === 1 ? '' : 's'}`);
+      summaryParts.push(`${regenerated} regenerada${regenerated === 1 ? '' : 's'}`);
+    if (skipped > 0) summaryParts.push(`${skipped} omitida${skipped === 1 ? '' : 's'}`);
     const summary = summaryParts.join(' · ') || 'Sin cambios';
 
     const totalSuccess = generated + regenerated;
     if (totalSuccess > 0 || skipped > 0) {
       const alertsNote =
-        withAlerts > 0
-          ? ` ${withAlerts} con alertas operativas — abrilas para revisarlas.`
-          : '';
+        withAlerts > 0 ? ` ${withAlerts} con alertas operativas — abrilas para revisarlas.` : '';
       this.msg.add({
         severity: 'success',
         summary: 'Planillas procesadas',
@@ -475,15 +462,7 @@ export class GenerateCollectionDialogComponent implements OnChanges, OnDestroy {
       this.close();
       this.batchCompleted.emit();
     }
-    if (failures.length > 0) {
-      const names = failures.map((f) => f.collectorName).join(', ');
-      this.msg.add({
-        severity: 'warn',
-        summary: 'Sin cuotas',
-        detail: `Sin cuotas para: ${names}`,
-        life: 8000,
-      });
-    }
+    buildBatchFailureMessages(failures).forEach((m) => this.msg.add(m));
   }
 
   /**

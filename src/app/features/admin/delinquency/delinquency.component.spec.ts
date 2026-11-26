@@ -66,6 +66,16 @@ describe('DelinquencyComponent', () => {
     );
   });
 
+  it('onNotify no simula éxito: avisa que el envío no está disponible', () => {
+    const msgSpy = spyOn((component as any).msg, 'add');
+    component.onNotify({ id: 'a', clientName: 'Ana' } as DelinquencyRow);
+    expect(msgSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({ severity: 'warn', summary: 'Aviso no enviado' }),
+    );
+    expect(msgSpy).not.toHaveBeenCalledWith(jasmine.objectContaining({ summary: 'Aviso enviado' }));
+    expect(component.processingId).toBeNull();
+  });
+
   describe('reglas de mora sobre cuotas vencidas', () => {
     const NOW = new Date(2026, 2, 15, 12, 0, 0);
     const daysAgo = (n: number) => new Date(NOW.getTime() - n * 86_400_000);

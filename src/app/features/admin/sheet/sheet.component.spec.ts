@@ -6,7 +6,13 @@ import { UsersService } from '../users/users.service';
 import { CollectionsService } from '../../collector/collections.service';
 import { SheetComponent } from './sheet.component';
 
-const mockCollector = { id: 'c1', fullName: 'Luis Cobrador', role: 'COLLECTOR', status: 'ACTIVE', email: 'luis@test.com' };
+const mockCollector = {
+  id: 'c1',
+  fullName: 'Luis Cobrador',
+  role: 'COLLECTOR',
+  status: 'ACTIVE',
+  email: 'luis@test.com',
+};
 
 const mockDetail = {
   id: 'sheet1',
@@ -113,7 +119,9 @@ describe('SheetComponent (planillas)', () => {
 
   it('generatePlanilla with 409 error shows toast warn', () => {
     const msgSpy = spyOn((component as any).msg, 'add');
-    collectionsSpy.generate.and.returnValue(throwError(() => ({ status: 409, message: 'Sin cuotas' })));
+    collectionsSpy.generate.and.returnValue(
+      throwError(() => ({ status: 409, message: 'Sin cuotas' })),
+    );
     component.selectedCollectorId = 'c1';
     component.generatePlanilla();
     expect(msgSpy).toHaveBeenCalledWith(jasmine.objectContaining({ severity: 'warn' }));
@@ -136,5 +144,22 @@ describe('SheetComponent (planillas)', () => {
     component.generateForAll();
 
     expect(usersSpy.listCollectors).toHaveBeenCalledTimes(1);
+  });
+
+  it('generateForAll con 500 informa error y no "Sin cuotas"', () => {
+    const msgSpy = spyOn((component as any).msg, 'add');
+    collectionsSpy.generate.and.returnValue(throwError(() => ({ status: 500, message: 'boom' })));
+    component.generateForAll();
+    expect(msgSpy).toHaveBeenCalledWith(jasmine.objectContaining({ severity: 'error' }));
+    expect(msgSpy).not.toHaveBeenCalledWith(jasmine.objectContaining({ summary: 'Sin cuotas' }));
+  });
+
+  it('generateForAll con 409 sigue informando "Sin cuotas"', () => {
+    const msgSpy = spyOn((component as any).msg, 'add');
+    collectionsSpy.generate.and.returnValue(throwError(() => ({ status: 409, message: 'x' })));
+    component.generateForAll();
+    expect(msgSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({ severity: 'warn', summary: 'Sin cuotas' }),
+    );
   });
 });

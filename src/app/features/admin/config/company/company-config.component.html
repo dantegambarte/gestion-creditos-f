@@ -1,19 +1,24 @@
 <div class="space-y-6">
+  @if (!persistenceAvailable) {
+    <div
+      class="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800"
+      role="status"
+      data-cy="company-config-unavailable"
+    >
+      <i class="pi pi-info-circle shrink-0 mt-0.5"></i>
+      <span>
+        Esta sección es solo de lectura: los cambios todavía no se pueden guardar en el servidor.
+      </span>
+    </div>
+  }
   <!-- Card: Datos de la Empresa -->
   <div class="ff-panel border p-6 space-y-6">
-    <div
-      class="flex items-center gap-3 pb-4 border-b"
-      style="border-color: var(--ff-border)"
-    >
-      <div
-        class="w-9 h-9 rounded-xl bg-blue-600/20 flex items-center justify-center"
-      >
+    <div class="flex items-center gap-3 pb-4 border-b" style="border-color: var(--ff-border)">
+      <div class="w-9 h-9 rounded-xl bg-blue-600/20 flex items-center justify-center">
         <i class="pi pi-building text-blue-400 text-base"></i>
       </div>
       <div>
-        <h2 class="text-base font-semibold ff-text-primary">
-          Datos de la Empresa
-        </h2>
+        <h2 class="text-base font-semibold ff-text-primary">Datos de la Empresa</h2>
         <p class="text-xs ff-text-muted">Información general del sistema</p>
       </div>
     </div>
@@ -25,11 +30,7 @@
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Email de contacto</label>
-        <input
-          pInputText
-          [(ngModel)]="contactEmail"
-          class="w-full h-11 px-3.5"
-        />
+        <input pInputText [(ngModel)]="contactEmail" class="w-full h-11 px-3.5" />
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Teléfono</label>
@@ -44,22 +45,13 @@
 
   <!-- Card: Tasas de Interés -->
   <div class="ff-panel border p-6 space-y-6">
-    <div
-      class="flex items-center gap-3 pb-4 border-b"
-      style="border-color: var(--ff-border)"
-    >
-      <div
-        class="w-9 h-9 rounded-xl bg-emerald-600/20 flex items-center justify-center"
-      >
+    <div class="flex items-center gap-3 pb-4 border-b" style="border-color: var(--ff-border)">
+      <div class="w-9 h-9 rounded-xl bg-emerald-600/20 flex items-center justify-center">
         <i class="pi pi-percentage text-emerald-400 text-base"></i>
       </div>
       <div>
-        <h2 class="text-base font-semibold ff-text-primary">
-          Tasas de Interés
-        </h2>
-        <p class="text-xs ff-text-muted">
-          Tasas y comisiones aplicadas a las operaciones
-        </p>
+        <h2 class="text-base font-semibold ff-text-primary">Tasas de Interés</h2>
+        <p class="text-xs ff-text-muted">Tasas y comisiones aplicadas a las operaciones</p>
       </div>
     </div>
 
@@ -110,18 +102,14 @@
       class="flex flex-wrap items-center gap-3 pt-2 border-t"
       style="border-color: var(--ff-border)"
     >
-      <label class="text-sm ff-text-secondary whitespace-nowrap"
-        >Período de gracia:</label
-      >
+      <label class="text-sm ff-text-secondary whitespace-nowrap">Período de gracia:</label>
       <p-inputNumber
         [(ngModel)]="gracePeriod"
         [min]="0"
         [max]="90"
         inputStyleClass="w-24 h-11 text-center"
       />
-      <span class="min-w-0 text-sm ff-text-muted"
-        >días. Recordatorio a 30d, alerta a 45d.</span
-      >
+      <span class="min-w-0 text-sm ff-text-muted">días. Recordatorio a 30d, alerta a 45d.</span>
     </div>
   </div>
 
@@ -132,6 +120,8 @@
       icon="pi pi-save"
       iconPos="left"
       styleClass="h-11 px-5 rounded-xl shadow-sm"
+      data-cy="company-config-save"
+      [disabled]="!persistenceAvailable"
       (onClick)="save()"
     />
   </div>

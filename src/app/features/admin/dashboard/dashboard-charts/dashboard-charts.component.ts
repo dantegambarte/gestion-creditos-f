@@ -2,14 +2,15 @@ import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@
 import { ChartModule } from 'primeng/chart';
 import { SkeletonModule } from 'primeng/skeleton';
 import { Subject } from 'rxjs';
-import { catchError, combineLatest, of, takeUntil } from 'rxjs';
+import { combineLatest, takeUntil } from 'rxjs';
+import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { ReportsService } from '../../reports/reports.service';
 import { ChartConfig, DashboardChartsService } from '../services/dashboard-charts.service';
 
 @Component({
   selector: 'app-dashboard-charts',
   standalone: true,
-  imports: [ChartModule, SkeletonModule],
+  imports: [ChartModule, SkeletonModule, ErrorStateComponent],
   templateUrl: './dashboard-charts.component.html',
 })
 export class DashboardChartsComponent implements OnChanges, OnDestroy {
@@ -20,6 +21,8 @@ export class DashboardChartsComponent implements OnChanges, OnDestroy {
   @Input() monthlyDailyData: { day: string; total: number }[] | null = null;
 
   loadingCharts = true;
+  /** True cuando falló la carga de reportes: se muestra error con reintento en vez de gráficos vacíos. */
+  errorCharts = false;
   chartWeeklyData?: ChartConfig['data'];
   chartWeeklyOptions?: ChartConfig['options'];
   chartCollectorsData: ChartConfig['data'] = { labels: [], datasets: [] };
@@ -44,9 +47,11 @@ export class DashboardChartsComponent implements OnChanges, OnDestroy {
 
   /**
    * Carga los datos de cobradores y vendedores y construye los tres gráficos.
+   * Si algún reporte falla, muestra el estado de error con reintento en lugar de gráficos vacíos.
    */
-  private loadCharts(): void {
+  loadCharts(): void {
     this.loadingCharts = true;
+    this.errorCharts = false;
 
     const toLocalDateString = (date: Date): string => {
       const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
@@ -58,19 +63,21 @@ export class DashboardChartsComponent implements OnChanges, OnDestroy {
     const firstOfMonth = toLocalDateString(new Date(today.getFullYear(), today.getMonth(), 1));
 
     combineLatest([
-      this.reportsSvc
-        .getCollectorsReport({ dateFrom: todayDate, dateTo: todayDate }, true)
-        .pipe(catchError(() => of([]))),
-      this.reportsSvc
-        .getSellersReport({ dateFrom: firstOfMonth, dateTo: todayDate }, true)
-        .pipe(catchError(() => of([]))),
+      this.reportsSvc.getCollectorsReport({ dateFrom: todayDate, dateTo: todayDate }, true),
+      this.reportsSvc.getSellersReport({ dateFrom: firstOfMonth, dateTo: todayDate }, true),
     ])
       .pipe(takeUntil(this.destroy$))
-      .subscribe(([collectors, sellers]) => {
-        this.buildWeeklyChart(this.monthlyDailyData ?? []);
-        this.buildCollectorsChart(Array.isArray(collectors) ? collectors : []);
-        this.buildSellersChart(Array.isArray(sellers) ? sellers : []);
-        this.loadingCharts = false;
+      .subscribe({
+        next: ([collectors, sellers]) => {
+          this.buildWeeklyChart(this.monthlyDailyData ?? []);
+          this.buildCollectorsChart(Array.isArray(collectors) ? collectors : []);
+          this.buildSellersChart(Array.isArray(sellers) ? sellers : []);
+          this.loadingCharts = false;
+        },
+        error: () => {
+          this.errorCharts = true;
+          this.loadingCharts = false;
+        },
       });
   }
 
