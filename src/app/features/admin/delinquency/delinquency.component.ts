@@ -22,7 +22,6 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
 
 @Component({
   selector: 'app-delinquency',
-  standalone: true,
   imports: [
     CurrencyArsPipe,
     FormsModule,

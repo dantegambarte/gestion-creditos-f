@@ -30,7 +30,6 @@ import { CreditDetail } from '../../../models/credit.model';
  */
 @Component({
   selector: 'app-schedule-visit-dialog',
-  standalone: true,
   imports: [
     DatePipe,
     CurrencyArsPipe,
@@ -112,8 +111,7 @@ export class ScheduleVisitDialogComponent implements OnChanges {
         error: (err: AppError) => {
           this.processing = false;
           this.msg.add({
-            severity:
-              err.status === 409 || err.status === 422 ? 'warn' : 'error',
+            severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
             summary:
               err.status === 403
                 ? 'Sin acceso'

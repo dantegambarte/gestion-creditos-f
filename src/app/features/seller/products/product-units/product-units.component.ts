@@ -25,7 +25,6 @@ import { UnitSingleFormComponent } from './unit-single-form/unit-single-form.com
 
 @Component({
   selector: 'app-product-units',
-  standalone: true,
   providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [
     FfBackTopFabComponent,

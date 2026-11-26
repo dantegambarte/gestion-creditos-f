@@ -43,7 +43,6 @@ import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-admin-collections',
-  standalone: true,
   imports: [
     DatePipe,
     FormsModule,
@@ -124,13 +123,9 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.header.set([{ label: 'Planillas de cobro' }]);
-    this.pendingOpenSheetId =
-      this.route.snapshot.queryParamMap.get('openSheetId');
+    this.pendingOpenSheetId = this.route.snapshot.queryParamMap.get('openSheetId');
     const tabParam = this.route.snapshot.queryParamMap.get('openTab');
-    if (
-      tabParam &&
-      ['ALL', 'PENDING', 'OVERDUE', 'PARTIAL', 'PAID'].includes(tabParam)
-    ) {
+    if (tabParam && ['ALL', 'PENDING', 'OVERDUE', 'PARTIAL', 'PAID'].includes(tabParam)) {
       this.pendingOpenTab = tabParam as DetailTab;
     }
     this.usersService
@@ -149,8 +144,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
             date?: string;
             includeRegenerated?: boolean;
           } = {};
-          if (this.filterCollectorId)
-            filters.collectorId = this.filterCollectorId;
+          if (this.filterCollectorId) filters.collectorId = this.filterCollectorId;
           if (this.filterDate) filters.date = this.filterDate;
           if (this.filterIncludeRegenerated) filters.includeRegenerated = true;
           return this.collectionsService.list(filters);
@@ -162,9 +156,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
           this.sheets = data;
           this.loading = false;
           if (this.pendingOpenSheetId) {
-            const sheetToOpen = data.find(
-              (s) => s.id === this.pendingOpenSheetId,
-            );
+            const sheetToOpen = data.find((s) => s.id === this.pendingOpenSheetId);
             this.pendingOpenSheetId = null;
             this.router.navigate([], {
               relativeTo: this.route,
@@ -192,8 +184,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
    * Abre automáticamente el diálogo de generación si llegamos con ?openGenerate=true.
    */
   private maybeAutoOpenGenerate(): void {
-    if (this.route.snapshot.queryParamMap.get('openGenerate') !== 'true')
-      return;
+    if (this.route.snapshot.queryParamMap.get('openGenerate') !== 'true') return;
     this.openGenerateDialog();
     this.router.navigate([], {
       relativeTo: this.route,
@@ -259,9 +250,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
    */
   private resetShellScroll(): void {
     requestAnimationFrame(() => {
-      document
-        .querySelector<HTMLElement>('.ff-shell__main')
-        ?.scrollTo({ top: 0 });
+      document.querySelector<HTMLElement>('.ff-shell__main')?.scrollTo({ top: 0 });
       window.scrollTo({ top: 0 });
     });
   }

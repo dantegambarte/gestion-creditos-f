@@ -42,8 +42,7 @@ function toResult(raw: Record<string, unknown>): SimulateResult {
     totalAmount: raw['total_amount'] as number,
     installmentAmount: raw['installment_amount'] as number,
     totalToReturn: raw['total_to_return'] as number,
-    financedAmount:
-      (raw['financed_amount'] as number) ?? (raw['total_amount'] as number),
+    financedAmount: (raw['financed_amount'] as number) ?? (raw['total_amount'] as number),
     downPayment: (raw['down_payment'] as number) ?? 0,
     note: (raw['note'] as string) ?? '',
     rate: raw['rate'] as number | undefined,
@@ -89,7 +88,6 @@ export interface FrequencyGroup {
 
 @Component({
   selector: 'app-simulator',
-  standalone: true,
   imports: [
     FormsModule,
     LowerCasePipe,
@@ -155,9 +153,9 @@ export class SimulatorComponent implements OnInit, OnDestroy {
         distinctUntilChanged(),
         switchMap((q) =>
           this.api
-            .get<
-              Record<string, unknown>[]
-            >(`credits/simulate/products?search=${encodeURIComponent(q)}&limit=10`)
+            .get<Record<string, unknown>[]>(
+              `credits/simulate/products?search=${encodeURIComponent(q)}&limit=10`,
+            )
             .pipe(catchError(() => of([]))),
         ),
         takeUntil(this.destroy$),
@@ -174,18 +172,16 @@ export class SimulatorComponent implements OnInit, OnDestroy {
 
   // ── Opciones de cuotas ───────────────────────────────────────
   private loadOptions(): void {
-    this.api
-      .get<Record<string, number[]>>('credits/simulate/options')
-      .subscribe({
-        next: (data) => {
-          this.optionsByFrequency = data;
-          this.loadingOptions = false;
-        },
-        error: () => {
-          this.optionsError = 'No se pudieron cargar las opciones de cuotas.';
-          this.loadingOptions = false;
-        },
-      });
+    this.api.get<Record<string, number[]>>('credits/simulate/options').subscribe({
+      next: (data) => {
+        this.optionsByFrequency = data;
+        this.loadingOptions = false;
+      },
+      error: () => {
+        this.optionsError = 'No se pudieron cargar las opciones de cuotas.';
+        this.loadingOptions = false;
+      },
+    });
   }
 
   get hasOptions(): boolean {
@@ -229,16 +225,12 @@ export class SimulatorComponent implements OnInit, OnDestroy {
     return {
       id: p['id'] as string,
       title: p['title'] as string,
-      variants: ((p['variants'] ?? []) as Record<string, unknown>[]).map((v) =>
-        this.mapVariant(v),
-      ),
+      variants: ((p['variants'] ?? []) as Record<string, unknown>[]).map((v) => this.mapVariant(v)),
     };
   }
 
   private mapVariant(v: Record<string, unknown>): SimulateProductVariant {
-    const parts = [v['color'], v['size'], v['capacity']].filter(
-      Boolean,
-    ) as string[];
+    const parts = [v['color'], v['size'], v['capacity']].filter(Boolean) as string[];
     return {
       id: v['id'] as string,
       color: v['color'] as string | null,
@@ -282,15 +274,13 @@ export class SimulatorComponent implements OnInit, OnDestroy {
             products: [{ variant_id: this.selectedVariant!.id, quantity: 1 }],
           };
 
-    this.api
-      .post<Record<string, unknown>[]>('credits/simulate/all', payload)
-      .subscribe({
-        next: (results) => this.buildGroups(results),
-        error: () => {
-          this.noResults = true;
-          this.calculating = false;
-        },
-      });
+    this.api.post<Record<string, unknown>[]>('credits/simulate/all', payload).subscribe({
+      next: (results) => this.buildGroups(results),
+      error: () => {
+        this.noResults = true;
+        this.calculating = false;
+      },
+    });
   }
 
   private buildGroups(results: Record<string, unknown>[]): void {
@@ -319,9 +309,7 @@ export class SimulatorComponent implements OnInit, OnDestroy {
     }
 
     this.groups = Object.values(grouped).sort(
-      (a, b) =>
-        (FREQUENCY_ORDER[a.frequency] ?? 99) -
-        (FREQUENCY_ORDER[b.frequency] ?? 99),
+      (a, b) => (FREQUENCY_ORDER[a.frequency] ?? 99) - (FREQUENCY_ORDER[b.frequency] ?? 99),
     );
     for (const g of this.groups) {
       this.visibleCounts[g.frequency] = 3;

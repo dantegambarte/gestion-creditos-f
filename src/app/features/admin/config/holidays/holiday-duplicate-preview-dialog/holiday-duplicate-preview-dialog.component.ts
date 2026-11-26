@@ -12,7 +12,6 @@ import { HolidaysService } from '../../services/holidays.service';
 
 @Component({
   selector: 'app-holiday-duplicate-preview-dialog',
-  standalone: true,
   imports: [DatePipe, ButtonModule, DialogModule],
   templateUrl: './holiday-duplicate-preview-dialog.component.html',
 })
@@ -43,24 +42,22 @@ export class HolidayDuplicatePreviewDialogComponent {
     if (!this.preview) return;
 
     this.duplicating = true;
-    this.holidaysService
-      .duplicateToNextYear({ sourceYear: this.preview.sourceYear })
-      .subscribe({
-        next: (result) => {
-          this.duplicating = false;
-          this.close();
-          this.showDuplicateSuccessToast(result);
-          this.duplicated.emit();
-        },
-        error: (error: AppError) => {
-          this.duplicating = false;
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error al duplicar',
-            detail: error.message || 'No se pudo duplicar el año de feriados.',
-          });
-        },
-      });
+    this.holidaysService.duplicateToNextYear({ sourceYear: this.preview.sourceYear }).subscribe({
+      next: (result) => {
+        this.duplicating = false;
+        this.close();
+        this.showDuplicateSuccessToast(result);
+        this.duplicated.emit();
+      },
+      error: (error: AppError) => {
+        this.duplicating = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al duplicar',
+          detail: error.message || 'No se pudo duplicar el año de feriados.',
+        });
+      },
+    });
   }
 
   /**
@@ -68,12 +65,10 @@ export class HolidayDuplicatePreviewDialogComponent {
    * @param reason Código de omisión retornado por backend.
    */
   skippedReasonLabel(reason?: string): string {
-    if (reason === 'not_recurring_annual')
-      return 'No marcado como anual repetible';
+    if (reason === 'not_recurring_annual') return 'No marcado como anual repetible';
     if (reason === 'duplicate_in_target') return 'Ya existe en año destino';
     if (reason === 'conflict_on_insert') return 'Conflicto al insertar';
-    if (reason === 'invalid_target_date')
-      return 'Fecha inválida en año destino';
+    if (reason === 'invalid_target_date') return 'Fecha inválida en año destino';
     return 'Omitido';
   }
 

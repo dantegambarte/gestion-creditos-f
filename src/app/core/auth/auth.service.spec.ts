@@ -6,6 +6,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
+import { AccessTokenStore } from './access-token.store';
 import { AuthUser } from '../models/interface/auth-user';
 import { Roles } from '../../shared/models/enums/roles.enum';
 import { environment } from '../../../environments/environment';
@@ -210,6 +211,26 @@ describe('AuthService', () => {
 
     expect(emitted).toBeNull();
     expect(localStorage.getItem('sgcf_user')).toBeNull();
+  }));
+
+  it('restoreSession: un 401 del refresh interno no borra la sesión del portal (cookie compartida)', fakeAsync(() => {
+    reloadWithStoredUser();
+    const portalCustomer = JSON.stringify({ id: 'c-1', fullName: 'Ana' });
+    localStorage.setItem('sgcf_portal_customer', portalCustomer);
+    TestBed.inject(AccessTokenStore).set(true, 'portal.token');
+
+    service.restoreSession().subscribe();
+    http
+      .expectOne(`${API}/auth/refresh`)
+      .flush(
+        { ok: false, code: 'SESSION_REVOKED', message: 'x' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+    tick();
+
+    expect(service.isAuthenticated()).toBeFalse();
+    expect(localStorage.getItem('sgcf_portal_customer')).toBe(portalCustomer);
+    expect(TestBed.inject(AccessTokenStore).get(true)).toBe('portal.token');
   }));
 
   // ── restoreSession sin red: no expulsa al usuario ─────────────────────────

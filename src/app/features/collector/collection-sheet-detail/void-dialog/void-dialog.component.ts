@@ -13,7 +13,6 @@ import { CollectionDialogSuccess } from '../sheet-dialog.model';
 
 @Component({
   selector: 'app-collection-void-dialog',
-  standalone: true,
   imports: [ButtonModule, DialogModule],
   templateUrl: './void-dialog.component.html',
 })

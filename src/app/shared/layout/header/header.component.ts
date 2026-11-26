@@ -13,7 +13,6 @@ import {
 
 @Component({
   selector: 'app-header',
-  standalone: true,
   imports: [CommonModule, RouterLink, AsyncPipe, ButtonModule, OverlayPanelModule],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',

@@ -12,26 +12,22 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SkeletonModule } from 'primeng/skeleton';
-import {
-  PortalCreditDetail,
-  PortalInstallment,
-} from '../../models/portal.models';
+import { PortalCreditDetail, PortalInstallment } from '../../models/portal.models';
 import { PortalService } from '../../portal.service';
 
 @Component({
   selector: 'app-portal-credit-detail',
-  standalone: true,
-  imports: [FfBackTopFabComponent,CommonModule, CurrencyPipe, DatePipe, SkeletonModule],
+  imports: [FfBackTopFabComponent, CommonModule, CurrencyPipe, DatePipe, SkeletonModule],
   templateUrl: './portal-credit-detail.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PortalCreditDetailComponent implements OnInit {
   private readonly portalService = inject(PortalService);
-  private readonly route         = inject(ActivatedRoute);
-  private readonly location      = inject(Location);
-  private readonly platformId    = inject(PLATFORM_ID);
-  private readonly destroyRef    = inject(DestroyRef);
-  private readonly cdr           = inject(ChangeDetectorRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly location = inject(Location);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   credit: PortalCreditDetail | null = null;
   loading = true;
@@ -78,11 +74,16 @@ export class PortalCreditDetailComponent implements OnInit {
    */
   get frequencyLabel(): string {
     switch (this.credit?.paymentFrequency) {
-      case 'DAILY':     return 'Diaria';
-      case 'WEEKLY':    return 'Semanal';
-      case 'BIWEEKLY':  return 'Quincenal';
-      case 'MONTHLY':   return 'Mensual';
-      default:          return this.credit?.paymentFrequency ?? '';
+      case 'DAILY':
+        return 'Diaria';
+      case 'WEEKLY':
+        return 'Semanal';
+      case 'BIWEEKLY':
+        return 'Quincenal';
+      case 'MONTHLY':
+        return 'Mensual';
+      default:
+        return this.credit?.paymentFrequency ?? '';
     }
   }
 
@@ -123,9 +124,7 @@ export class PortalCreditDetailComponent implements OnInit {
    * Cantidad de cuotas pagadas.
    */
   get paidCount(): number {
-    return (this.credit?.installments ?? []).filter(
-      (i) => i.status === 'PAID',
-    ).length;
+    return (this.credit?.installments ?? []).filter((i) => i.status === 'PAID').length;
   }
 
   /**
@@ -141,19 +140,14 @@ export class PortalCreditDetailComponent implements OnInit {
    * Cantidad de cuotas vencidas.
    */
   get overdueCount(): number {
-    return (this.credit?.installments ?? []).filter(
-      (i) => i.status === 'OVERDUE',
-    ).length;
+    return (this.credit?.installments ?? []).filter((i) => i.status === 'OVERDUE').length;
   }
 
   /**
    * Calcula el total ya pagado sumando los montos pagados de cada cuota.
    */
   get totalPaid(): number {
-    return (this.credit?.installments ?? []).reduce(
-      (sum, i) => sum + i.amountPaid,
-      0,
-    );
+    return (this.credit?.installments ?? []).reduce((sum, i) => sum + i.amountPaid, 0);
   }
 
   /**
@@ -170,10 +164,7 @@ export class PortalCreditDetailComponent implements OnInit {
    * Calcula el total de mora acumulada en todas las cuotas.
    */
   get totalPenalty(): number {
-    return (this.credit?.installments ?? []).reduce(
-      (sum, i) => sum + i.penaltyAmount,
-      0,
-    );
+    return (this.credit?.installments ?? []).reduce((sum, i) => sum + i.penaltyAmount, 0);
   }
 
   /**
@@ -183,10 +174,14 @@ export class PortalCreditDetailComponent implements OnInit {
    */
   installmentLabel(status: PortalInstallment['status']): string {
     switch (status) {
-      case 'PENDING': return 'PENDIENTE';
-      case 'OVERDUE': return 'VENCIDA';
-      case 'PARTIAL': return 'PARCIAL';
-      case 'PAID':    return 'PAGADO';
+      case 'PENDING':
+        return 'PENDIENTE';
+      case 'OVERDUE':
+        return 'VENCIDA';
+      case 'PARTIAL':
+        return 'PARCIAL';
+      case 'PAID':
+        return 'PAGADO';
     }
   }
 

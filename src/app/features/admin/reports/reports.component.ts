@@ -16,7 +16,6 @@ import { UpcomingReportComponent } from './tabs/upcoming-report/upcoming-report.
 
 @Component({
   selector: 'app-reports',
-  standalone: true,
   imports: [
     SummaryReportComponent,
     CollectionReportComponent,
@@ -82,7 +81,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
    * @param event - CustomEvent con el ReportTab destino
    */
   private onTabChange = (event: Event): void => {
-    this.activeTab = (event as CustomEvent<ReportTab>).detail;
+    const tab = (event as CustomEvent<ReportTab>).detail;
+    // Ignora valores que no son pestañas válidas para no dejar la vista en blanco.
+    if (this.TABS.some((t) => t.id === tab)) {
+      this.activeTab = tab;
+    }
   };
 
   /**
@@ -90,9 +93,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
    */
   private syncTabFromQueryParams(): void {
     this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
-    const tab = this.route.snapshot.queryParamMap.get(
-      'tab',
-    ) as ReportTab | null;
+    const tab = this.route.snapshot.queryParamMap.get('tab') as ReportTab | null;
     if (!tab) return;
     if (this.TABS.some((t) => t.id === tab)) {
       this.activeTab = tab;

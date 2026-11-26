@@ -16,9 +16,11 @@ import { LoadingStateComponent } from '../../../../../shared/states/loading-stat
 import { ProductReportRow } from '../../report.models';
 import { ReportsService } from '../../reports.service';
 
+/** Umbral de stock bajo cuando el admin no carga uno. Valor de negocio a confirmar (#62). */
+export const DEFAULT_LOW_STOCK_THRESHOLD = 5;
+
 @Component({
   selector: 'app-products-report',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     FormsModule,
@@ -42,6 +44,7 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
   loading = false;
   error: AppError | null = null;
   stockThreshold: number | null = null;
+  readonly defaultLowStockThreshold = DEFAULT_LOW_STOCK_THRESHOLD;
   onlyWithSales = false;
   searchText = '';
   stockMode: 'ALL' | 'LOW' | 'OUT' | 'AVAILABLE' = 'ALL';
@@ -68,16 +71,13 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
     const term = this.searchText.trim().toLowerCase();
     return this.productRows.filter((row) => {
       if (this.onlyWithSales && row.timesSold <= 0) return false;
-      if (
-        term &&
-        !`${row.title} ${row.description}`.toLowerCase().includes(term)
-      ) {
+      if (term && !`${row.title} ${row.description}`.toLowerCase().includes(term)) {
         return false;
       }
       if (this.stockMode === 'OUT') return row.availableCount === 0;
       if (this.stockMode === 'AVAILABLE') return row.availableCount > 0;
       if (this.stockMode === 'LOW') {
-        const threshold = this.stockThreshold ?? 5;
+        const threshold = this.stockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
         return row.availableCount > 0 && row.availableCount <= threshold;
       }
       return true;
@@ -99,9 +99,7 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
     const threshold =
-      this.stockThreshold != null && this.stockThreshold >= 0
-        ? this.stockThreshold
-        : undefined;
+      this.stockThreshold != null && this.stockThreshold >= 0 ? this.stockThreshold : undefined;
     this.service
       .getProductsReport(threshold)
       .pipe(

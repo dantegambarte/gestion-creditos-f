@@ -1,10 +1,5 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextareaModule } from 'primeng/inputtextarea';
@@ -13,7 +8,6 @@ import { ProductUnitsService } from '../../product-units.service';
 
 @Component({
   selector: 'app-unit-bulk-form',
-  standalone: true,
   imports: [ReactiveFormsModule, ButtonModule, InputTextareaModule],
   templateUrl: './unit-bulk-form.component.html',
 })

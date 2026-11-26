@@ -10,7 +10,6 @@ import { Credit, CreditStatus } from '../../../models/credit.model';
 
 @Component({
   selector: 'app-client-credits-history-panel',
-  standalone: true,
   imports: [
     CommonModule,
     ButtonModule,
@@ -52,10 +51,7 @@ export class ClientCreditsHistoryPanelComponent {
   creditStatusSeverity(
     status: CreditStatus,
   ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
-    const map: Record<
-      CreditStatus,
-      'success' | 'info' | 'warning' | 'danger' | 'secondary'
-    > = {
+    const map: Record<CreditStatus, 'success' | 'info' | 'warning' | 'danger' | 'secondary'> = {
       PENDING_APPROVAL: 'warning',
       ACTIVE: 'success',
       SETTLED: 'secondary',

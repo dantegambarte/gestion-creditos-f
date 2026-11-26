@@ -108,7 +108,6 @@ export interface ParamRow extends SystemConfigParam {
 
 @Component({
   selector: 'app-system-params-config',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     DatePipe,

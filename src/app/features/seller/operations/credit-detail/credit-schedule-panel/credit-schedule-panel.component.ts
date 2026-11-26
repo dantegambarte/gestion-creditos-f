@@ -24,10 +24,10 @@ import { PenaltyDialogComponent } from '../penalty-dialog/penalty-dialog.compone
 import { WaiveDialogComponent } from '../waive-dialog/waive-dialog.component';
 import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { ScheduleVisitDialogComponent } from '../schedule-visit-dialog/schedule-visit-dialog.component';
+import { paymentMethodLabel } from '../../../../../shared/models/payment-method-labels';
 
 @Component({
   selector: 'app-credit-schedule-panel',
-  standalone: true,
   imports: [
     DatePipe,
     CurrencyArsPipe,
@@ -256,10 +256,7 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
    * @param method Método de pago
    */
   paymentMethodLabel(method: string | null): string {
-    if (method === 'CASH') return 'Efectivo';
-    if (method === 'TRANSFER') return 'Transferencia';
-    if (method === 'MIXED') return 'Mixto';
-    return '—';
+    return paymentMethodLabel(method);
   }
 
   /**

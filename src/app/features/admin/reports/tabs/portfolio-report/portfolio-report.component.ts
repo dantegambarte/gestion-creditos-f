@@ -13,8 +13,13 @@ import { ReportsService } from '../../reports.service';
 
 @Component({
   selector: 'app-portfolio-report',
-  standalone: true,
-  imports: [FfBackTopFabComponent,DecimalPipe, LoadingStateComponent, ErrorStateComponent, SkeletonModule],
+  imports: [
+    FfBackTopFabComponent,
+    DecimalPipe,
+    LoadingStateComponent,
+    ErrorStateComponent,
+    SkeletonModule,
+  ],
   templateUrl: './portfolio-report.component.html',
 })
 export class PortfolioReportComponent implements OnInit, OnDestroy {
@@ -34,6 +39,9 @@ export class PortfolioReportComponent implements OnInit, OnDestroy {
   };
 
   readonly STATUS_ORDER = ['ACTIVE', 'SETTLED', 'PENDING_APPROVAL', 'REJECTED'];
+
+  /** Estados que no forman parte de la cartera viva (no suman al total de porcentajes). */
+  private readonly CLOSED_STATUSES = ['SETTLED', 'REJECTED'];
 
   readonly STATUS_COLORS: Record<string, string> = {
     ACTIVE: '#22c55e',
@@ -66,21 +74,24 @@ export class PortfolioReportComponent implements OnInit, OnDestroy {
       if (!map.has(row.status)) map.set(row.status, []);
       map.get(row.status)!.push(row);
     }
-    return this.STATUS_ORDER.filter((s) => map.has(s)).map((s) => ({
+    // Estados no listados en STATUS_ORDER se muestran al final en vez de descartarse.
+    const known = this.STATUS_ORDER.filter((s) => map.has(s));
+    const unknown = [...map.keys()].filter((s) => !this.STATUS_ORDER.includes(s));
+    return [...known, ...unknown].map((s) => ({
       status: s,
       rows: map.get(s)!,
     }));
   }
 
   /**
-   * Suma de todos los montos en el reporte de cartera para calcular porcentajes.
+   * Monto de la cartera viva (excluye créditos liquidados y rechazados), base de
+   * los porcentajes: un crédito cerrado o rechazado no forma parte de la cartera.
    */
   get portfolioGrandTotal(): number {
     return (
-      this.portfolioReport?.byStatusType.reduce(
-        (acc, r) => acc + r.totalAmount,
-        0,
-      ) ?? 0
+      this.portfolioReport?.byStatusType
+        .filter((r) => !this.CLOSED_STATUSES.includes(r.status))
+        .reduce((acc, r) => acc + r.totalAmount, 0) ?? 0
     );
   }
 

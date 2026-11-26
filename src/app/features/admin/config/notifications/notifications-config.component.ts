@@ -59,7 +59,6 @@ const isKnownNotificationType = (type: string): type is NotificationType => type
 
 @Component({
   selector: 'app-notifications-config',
-  standalone: true,
   imports: [CommonModule, FormsModule, ButtonModule, InputSwitchModule, SkeletonModule],
   templateUrl: './notifications-config.component.html',
 })

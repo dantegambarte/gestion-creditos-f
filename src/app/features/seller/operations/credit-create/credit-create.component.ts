@@ -34,7 +34,6 @@ import { BackButtonComponent } from '../../../../shared/components/back-button/b
 
 @Component({
   selector: 'app-credit-create',
-  standalone: true,
   providers: [{ provide: MessageService, useClass: DedupMessageService }],
   imports: [
     CommonModule,
@@ -139,11 +138,11 @@ export class CreditCreateComponent implements OnInit {
       .get('downPayment')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-      this.clearSimulationState();
-      if (this.unitsError === 'El enganche no puede ser mayor al total de la venta.') {
-        this.unitsError = null;
-      }
-    });
+        this.clearSimulationState();
+        if (this.unitsError === 'El enganche no puede ser mayor al total de la venta.') {
+          this.unitsError = null;
+        }
+      });
     this.loadCustomers();
   }
 

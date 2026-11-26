@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { ApiHttpService } from '../../../core/http/api-http.service';
 import {
   Expense,
@@ -11,6 +11,9 @@ import {
   ExpensePagedResponse,
   ExpenseRaw,
 } from './expense.model';
+
+/** Tope de `limit` que acepta GET /expenses (paginationRules del backend). */
+const EXPENSES_MAX_PAGE_SIZE = 100;
 
 /**
  * Convierte un objeto de tipo ExpenseRaw a un objeto de tipo Expense.
@@ -52,6 +55,27 @@ export class ExpensesService {
     return this.api
       .get<ExpensePagedRaw>('expenses', params)
       .pipe(map((r) => ({ rows: r.rows.map(toExpense), total: r.total })));
+  }
+
+  /**
+   * Trae todos los gastos que cumplen los filtros (todas las páginas), para que
+   * los KPIs del período usen el dataset completo y no sólo la página visible.
+   * El backend no devuelve sumas, sólo el conteo, y limita `limit` a 100.
+   * @param filters filtros de fecha/categoría (page y limit se ignoran)
+   * @returns todas las filas del período filtrado
+   */
+  getAllRows(filters?: ExpenseListFilters): Observable<Expense[]> {
+    const base = { ...filters, limit: EXPENSES_MAX_PAGE_SIZE };
+    return this.getAll({ ...base, page: 1 }).pipe(
+      switchMap((first) => {
+        const pages = Math.ceil(first.total / EXPENSES_MAX_PAGE_SIZE);
+        if (pages <= 1) return of(first.rows);
+        const rest = Array.from({ length: pages - 1 }, (_, i) =>
+          this.getAll({ ...base, page: i + 2 }).pipe(map((r) => r.rows)),
+        );
+        return forkJoin(rest).pipe(map((chunks) => first.rows.concat(...chunks)));
+      }),
+    );
   }
 
   /**
@@ -104,9 +128,7 @@ export class ExpensesService {
       category_id: payload.categoryId || null,
       transfer_reference: payload.transferReference || null,
     };
-    return this.api
-      .put<ExpenseRaw>(`expenses/${id}`, body)
-      .pipe(map(toExpense));
+    return this.api.put<ExpenseRaw>(`expenses/${id}`, body).pipe(map(toExpense));
   }
 
   /**

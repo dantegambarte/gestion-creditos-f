@@ -21,7 +21,6 @@ import { PaymentAttemptKeys } from '../../../../../shared/utils/payment-attempt-
 
 @Component({
   selector: 'app-direct-payment-dialog',
-  standalone: true,
   imports: [
     FormsModule,
     CurrencyArsPipe,

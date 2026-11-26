@@ -1,11 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { DedupMessageService } from '../../../../core/services/dedup-message.service';
@@ -17,7 +12,6 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { AppError } from '../../../../core/models/app-error';
 import { HeaderService } from '../../../../core/services/header.service';
-import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { ProductBrandsService } from '../../../admin/config/services/product-brands.service';
 import { ProductCategoriesService } from '../../../admin/config/services/product-categories.service';
@@ -26,7 +20,6 @@ import { ProductsService } from '../products.service';
 
 @Component({
   selector: 'app-product-edit',
-  standalone: true,
   providers: [{ provide: MessageService, useClass: DedupMessageService }],
   imports: [
     CommonModule,
@@ -151,11 +144,7 @@ export class ProductEditComponent implements OnInit {
             detail: 'Producto actualizado correctamente.',
           });
           setTimeout(
-            () =>
-              this.router.navigate([
-                `/${this.routePrefix}/products`,
-                this.productId,
-              ]),
+            () => this.router.navigate([`/${this.routePrefix}/products`, this.productId]),
             1000,
           );
         },
@@ -201,11 +190,7 @@ export class ProductEditComponent implements OnInit {
         this.form = this.fb.group({
           title: [
             data.title,
-            [
-              Validators.required,
-              Validators.minLength(2),
-              Validators.maxLength(150),
-            ],
+            [Validators.required, Validators.minLength(2), Validators.maxLength(150)],
           ],
           description: [data.description ?? '', [Validators.maxLength(500)]],
           model: [data.model ?? '', [Validators.maxLength(100)]],

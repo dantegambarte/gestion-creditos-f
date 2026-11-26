@@ -23,16 +23,11 @@ import {
   FREQUENCY_OPTIONS,
   PaymentFrequency,
 } from '../../../../../shared/models/payment-frequency';
-import {
-  CreditDetail,
-  RefinanceResult,
-  SimulateResult,
-} from '../../../models/credit.model';
+import { CreditDetail, RefinanceResult, SimulateResult } from '../../../models/credit.model';
 import { CreditsService } from '../../credits.service';
 
 @Component({
   selector: 'app-refinance-dialog',
-  standalone: true,
   imports: [
     DatePipe,
     FormsModule,
@@ -105,10 +100,7 @@ export class RefinanceDialogComponent implements OnChanges {
   /** Total trasladado: saldo + cargos adicionales opcionales. */
   get refinanceTotalTransferred(): number {
     return (
-      Math.round(
-        (this.refinancePendingBalance + (this.refinanceExtraCharges ?? 0)) *
-          100,
-      ) / 100
+      Math.round((this.refinancePendingBalance + (this.refinanceExtraCharges ?? 0)) * 100) / 100
     );
   }
 
@@ -144,8 +136,7 @@ export class RefinanceDialogComponent implements OnChanges {
           this.msg.add({
             severity: err.status === 409 ? 'warn' : 'error',
             summary: err.status === 409 ? 'Sin tasa' : 'Error',
-            detail:
-              err.message ?? 'No se pudo simular con los parámetros indicados.',
+            detail: err.message ?? 'No se pudo simular con los parámetros indicados.',
           });
         },
       });

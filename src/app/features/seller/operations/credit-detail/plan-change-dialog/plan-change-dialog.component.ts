@@ -31,7 +31,6 @@ import { CreditsService } from '../../credits.service';
  */
 @Component({
   selector: 'app-plan-change-dialog',
-  standalone: true,
   imports: [FormsModule, ButtonModule, DialogModule, InputTextareaModule, CurrencyArsPipe],
   templateUrl: './plan-change-dialog.component.html',
 })

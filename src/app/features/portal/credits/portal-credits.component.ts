@@ -17,7 +17,6 @@ import { PortalCredit } from '../models/portal.models';
 
 @Component({
   selector: 'app-portal-credits',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     CommonModule,

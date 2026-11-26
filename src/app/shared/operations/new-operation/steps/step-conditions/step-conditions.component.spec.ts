@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+import { Calendar } from 'primeng/calendar';
 import { SimpleChange } from '@angular/core';
 import { AuthServiceBase } from '../../../../../core/auth/auth-service.base';
 import { provideAuthTesting } from '../../../../../core/auth/testing/auth-testing';
@@ -62,7 +64,9 @@ describe('StepConditionsComponent', () => {
     expect(calendar.getAttribute('iconDisplay')).toBeNull();
     expect(calendar.getAttribute('styleClass')).toContain('op-calendar');
     expect(calendar.getAttribute('appendTo')).toBe('body');
-    expect(calendar.getAttribute('ng-reflect-auto-z-index')).not.toBeNull();
+    const calendarCmp = fixture.debugElement.query(By.directive(Calendar))
+      .componentInstance as Calendar;
+    expect(calendarCmp.autoZIndex).toBeTrue();
   });
 
   describe('getInstallmentsOptionsForLine', () => {

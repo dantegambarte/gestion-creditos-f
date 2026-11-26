@@ -13,7 +13,6 @@ import { AppError } from '../../../core/models/app-error';
 
 @Component({
   selector: 'app-portal-login',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,

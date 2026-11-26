@@ -10,7 +10,6 @@ import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fa
 
 @Component({
   selector: 'app-commissions-history-tab',
-  standalone: true,
   imports: [
     FormsModule,
     CardModule,
@@ -46,9 +45,7 @@ export class CommissionsHistoryTabComponent {
   @Input() paymentMethodLabel!: (pm: PaymentMethod) => string;
 
   @Output() historyEmployeeFilterChange = new EventEmitter<string>();
-  @Output() historyMethodFilterChange = new EventEmitter<
-    'ALL' | PaymentMethod
-  >();
+  @Output() historyMethodFilterChange = new EventEmitter<'ALL' | PaymentMethod>();
   @Output() historySelected = new EventEmitter<Liquidation>();
   @Output() historyCleared = new EventEmitter<void>();
 

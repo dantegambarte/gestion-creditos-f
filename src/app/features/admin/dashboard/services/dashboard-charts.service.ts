@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { FormatService } from '../../../../core/services/format.service';
+import { DateService } from '../../../../core/services/date.service';
 
 export interface ChartConfig {
   data: object;
@@ -12,29 +13,33 @@ export interface ChartConfig {
 @Injectable({ providedIn: 'root' })
 export class DashboardChartsService {
   private readonly fmt = inject(FormatService);
+  private readonly dateSvc = inject(DateService);
 
   private readonly TEXT_COLOR = '#9aa6c7';
   private readonly GRID_COLOR = 'rgba(148, 163, 184, 0.12)';
 
   /**
-   * Gráfico de barras de recaudación de la semana actual.
+   * Gráfico de barras de recaudación de la semana actual (lunes a hoy, domingo
+   * incluido). Agrupa por fecha local, no por etiqueta, así un mismo día de la
+   * semana de otra semana del mes no pisa al de la semana actual.
    * @param daily Array de { day: string, total: number } del reporte mensual
+   * @param today fecha de referencia (inyectable para tests)
    */
-  buildWeeklyChart(daily: { day: string; total: number }[]): ChartConfig {
+  buildWeeklyChart(daily: { day: string; total: number }[], today: Date = new Date()): ChartConfig {
     const dayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-    const daysMap = new Map<string, number>();
-
+    const totalsByDate = new Map<string, number>();
     (daily ?? []).forEach((d) => {
-      const [year, month, day] = d.day.split('-').map(Number);
-      const date = new Date(year, month - 1, day);
-      const label = dayLabels[date.getDay() === 0 ? 6 : date.getDay() - 1];
-      daysMap.set(label, d.total);
+      const key = d.day.slice(0, 10);
+      totalsByDate.set(key, (totalsByDate.get(key) ?? 0) + Number(d.total ?? 0));
     });
 
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const daysToShow = dayOfWeek === 0 ? 6 : dayOfWeek;
-    const labels = dayLabels.slice(0, daysToShow);
+    // Lunes=0 … Domingo=6; el domingo cierra la semana y muestra los 7 días.
+    const weekIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
+    const weekDates = Array.from({ length: weekIndex + 1 }, (_, i) => {
+      const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - weekIndex + i);
+      return this.dateSvc.toLocalIso(date);
+    });
+    const labels = dayLabels.slice(0, weekDates.length);
 
     return {
       data: {
@@ -42,7 +47,7 @@ export class DashboardChartsService {
         datasets: [
           {
             label: 'Recaudado',
-            data: labels.map((d) => daysMap.get(d) ?? 0),
+            data: weekDates.map((key) => totalsByDate.get(key) ?? 0),
             backgroundColor: 'rgba(95, 122, 246, 0.58)',
             borderColor: 'rgb(95, 122, 246)',
             borderWidth: 1,
@@ -65,9 +70,7 @@ export class DashboardChartsService {
     const top5 = (collectors ?? []).slice(0, 5);
     return {
       data: {
-        labels: top5.map(
-          (c) => (c.collectorName || 'Sin asignar').split(' ')[0],
-        ),
+        labels: top5.map((c) => (c.collectorName || 'Sin asignar').split(' ')[0]),
         datasets: [
           {
             label: 'Monto cobrado',
@@ -88,9 +91,7 @@ export class DashboardChartsService {
    * Gráfico de barras con el top 5 de vendedores por monto creado.
    * @param sellers Array del reporte de vendedores
    */
-  buildSellersChart(
-    sellers: { sellerName: string; totalAmount: number }[],
-  ): ChartConfig {
+  buildSellersChart(sellers: { sellerName: string; totalAmount: number }[]): ChartConfig {
     const top5 = (sellers ?? []).slice(0, 5);
     return {
       data: {
@@ -122,8 +123,7 @@ export class DashboardChartsService {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (ctx: { parsed: { y: number } }) =>
-              tooltipLabel(ctx.parsed.y),
+            label: (ctx: { parsed: { y: number } }) => tooltipLabel(ctx.parsed.y),
           },
         },
       },

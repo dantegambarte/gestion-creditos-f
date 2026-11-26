@@ -7,19 +7,12 @@ import { RippleModule } from 'primeng/ripple';
 import { filter, map } from 'rxjs/operators';
 import { AuthServiceBase } from '../../../core/auth/auth-service.base';
 import { AuthUser } from '../../../core/models/interface/auth-user';
-import { NavItem, ResolvedNavItem } from '../../models/interface/nav-item';
+import { ResolvedNavItem } from '../../models/interface/nav-item';
 import { NAV_CONFIG } from '../../utils/nav-config';
 
 @Component({
   selector: 'sidebar',
-  standalone: true,
-  imports: [
-    RouterLink,
-    RouterLinkActive,
-    BadgeModule,
-    AvatarModule,
-    RippleModule,
-  ],
+  imports: [RouterLink, RouterLinkActive, BadgeModule, AvatarModule, RippleModule],
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent {
@@ -38,9 +31,7 @@ export class SidebarComponent {
   );
 
   mobilePrimaryItems = computed(() =>
-    this.visibleItems
-      .filter((item) => !item.isGroupLabel && !!item.route)
-      .slice(0, 4),
+    this.visibleItems.filter((item) => !item.isGroupLabel && !!item.route).slice(0, 4),
   );
 
   /**
@@ -63,14 +54,11 @@ export class SidebarComponent {
 
     return NAV_CONFIG.filter(
       (item) =>
-        item.requiredRoles.length === 0 ||
-        item.requiredRoles.some((r) => user.roles.includes(r)),
+        item.requiredRoles.length === 0 || item.requiredRoles.some((r) => user.roles.includes(r)),
     ).map((item) => ({
       ...item,
-      route:
-        typeof item.route === 'function' ? item.route(userRole) : item.route,
-      badge:
-        typeof item.badge === 'function' ? item.badge(user) : item.badge,
+      route: typeof item.route === 'function' ? item.route(userRole) : item.route,
+      badge: typeof item.badge === 'function' ? item.badge(user) : item.badge,
     }));
   }
 

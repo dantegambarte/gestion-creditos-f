@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { Table } from 'primeng/table';
 import { of } from 'rxjs';
 
 import { AuthServiceBase } from '../../core/auth/auth-service.base';
@@ -38,18 +40,12 @@ describe('ClientsComponent', () => {
     routerSpy = jasmine.createSpyObj('Router', ['navigate'], {
       url: '/admin/clients',
     });
-    customersServiceSpy = jasmine.createSpyObj('CustomersService', [
-      'list',
-      'create',
-      'update',
-    ]);
+    customersServiceSpy = jasmine.createSpyObj('CustomersService', ['list', 'create', 'update']);
     authSpy = jasmine.createSpyObj('MockAuthService', ['hasRole']);
     headerSpy = jasmine.createSpyObj('HeaderService', ['set', 'reset']);
     customersServiceSpy.list.and.returnValue(of(MOCK_CUSTOMERS));
     authSpy.hasRole.and.returnValue(true);
-    const usersServiceSpy = jasmine.createSpyObj('UsersService', [
-      'listCollectors',
-    ]);
+    const usersServiceSpy = jasmine.createSpyObj('UsersService', ['listCollectors']);
     usersServiceSpy.listCollectors.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
@@ -183,9 +179,9 @@ describe('ClientsComponent', () => {
 
   describe('paginación (CL-08)', () => {
     it('la tabla tiene paginator=true con 10 filas por página', () => {
-      const table = fixture.nativeElement.querySelector('p-table');
-      expect(table.getAttribute('ng-reflect-paginator')).toBe('true');
-      expect(table.getAttribute('ng-reflect-rows')).toBe('10');
+      const table = fixture.debugElement.query(By.directive(Table)).componentInstance as Table;
+      expect(table.paginator).toBeTrue();
+      expect(table.rows).toBe(10);
     });
   });
 

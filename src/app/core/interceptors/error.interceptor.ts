@@ -2,7 +2,8 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { throwError, switchMap, filter, take, catchError } from 'rxjs';
+import { throwError, switchMap, catchError } from 'rxjs';
+import { PortalAuthService } from '../../features/portal/auth/portal-auth.service';
 import { environment } from '../../../environments/environment';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
 import { AuthServiceBase } from '../auth/auth-service.base';
@@ -19,6 +20,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const messageService = inject(MessageService);
   const notifSvc = inject(NotificationsService);
   const tokens = inject(AccessTokenStore);
+  const portalAuth = inject(PortalAuthService);
 
   return next(req).pipe(
     catchError((err) => {
@@ -35,17 +37,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       // Token expirado → refresh automático + reintento de la request original
       if (isTokenExpired && !isRefreshUrl) {
-        if (!refreshState.isRefreshing) {
-          refreshState.isRefreshing = true;
-          refreshState.tokenSubject.next(null);
+        const state = refreshState.forSession(isPortal);
+        if (!state.isRefreshing) {
+          state.start();
 
           const refresh$ = isPortal ? tokenRefresh.refreshPortal() : tokenRefresh.refreshInternal();
 
           return refresh$.pipe(
             switchMap((newToken) => {
-              refreshState.isRefreshing = false;
-              refreshState.tokenSubject.next(newToken);
               tokens.set(isPortal, newToken);
+              state.succeed(newToken);
               return next(
                 req.clone({
                   setHeaders: { Authorization: `Bearer ${newToken}` },
@@ -53,21 +54,19 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
               );
             }),
             catchError((refreshErr) => {
-              refreshState.isRefreshing = false;
-              refreshState.tokenSubject.next(null);
+              state.fail(refreshErr);
               _showGlobalHttpError(messageService, refreshErr);
               // Un corte de red o un 5xx no cierra la sesión: sólo el rechazo del backend.
               if (isSessionRejected(refreshErr)) {
-                _redirectToLogin(router, auth, notifSvc, isPortal, tokens);
+                _redirectToLogin(router, auth, notifSvc, isPortal, tokens, portalAuth);
               }
               return throwError(() => refreshErr);
             }),
           );
         } else {
-          // Refresh en curso — encolar y reintentar con el nuevo token cuando llegue
-          return refreshState.tokenSubject.pipe(
-            filter((t): t is string => t !== null),
-            take(1),
+          // Refresh en curso — encolar y reintentar con el nuevo token; si el
+          // refresh falla, la request encolada falla con el mismo error.
+          return state.waitForToken().pipe(
             switchMap((newToken) =>
               next(
                 req.clone({
@@ -85,7 +84,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         !_isInternalSessionAlreadyClosed(isPortal, auth.isAuthenticated())
       ) {
         _showGlobalHttpError(messageService, err);
-        _redirectToLogin(router, auth, notifSvc, isPortal, tokens);
+        _redirectToLogin(router, auth, notifSvc, isPortal, tokens, portalAuth);
       }
 
       if (err?.status !== 401) {
@@ -194,9 +193,13 @@ export function _redirectToLogin(
   notifSvc: NotificationsService,
   isPortal: boolean,
   tokens?: AccessTokenStore,
+  portalAuth?: PortalAuthService,
 ): void {
   if (isPortal) {
     tokens?.set(true, null);
+    // Sin esto el guard del login del portal sigue viendo al cliente y lo
+    // devuelve al dashboard, que vuelve a fallar: bucle de redirecciones.
+    portalAuth?.clearSession();
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(environment.portalTokenKey);
       localStorage.removeItem('sgcf_portal_customer');

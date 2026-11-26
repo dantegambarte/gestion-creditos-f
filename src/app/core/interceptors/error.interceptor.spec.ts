@@ -1,4 +1,17 @@
-import { Router } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  ActivatedRouteSnapshot,
+  Router,
+  RouterStateSnapshot,
+  provideRouter,
+} from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { environment } from '../../../environments/environment';
+import { provideAuthTesting } from '../auth/testing/auth-testing';
+import { PortalAuthService } from '../../features/portal/auth/portal-auth.service';
+import { portalLoginGuard } from '../../features/portal/auth/portal-login.guard';
 import { AuthServiceBase } from '../auth/auth-service.base';
 import { NotificationsService } from '../services/notifications.service';
 import {
@@ -8,6 +21,7 @@ import {
   _needsTokenRefresh,
   _redirectToLogin,
   _shouldRedirectToChangePassword,
+  errorInterceptor,
 } from './error.interceptor';
 
 describe('errorInterceptor helpers', () => {
@@ -108,11 +122,93 @@ describe('_redirectToLogin', () => {
     expect(router.navigate).toHaveBeenCalledWith(['login']);
   });
 
+  it('en el flujo portal limpia la sesión del cliente en PortalAuthService', () => {
+    const portalAuth = jasmine.createSpyObj<PortalAuthService>('PortalAuthService', [
+      'clearSession',
+    ]);
+
+    _redirectToLogin(router, auth, notifSvc, true, undefined, portalAuth);
+
+    expect(portalAuth.clearSession).toHaveBeenCalled();
+  });
+
   it('no toca el polling ni clearSession en el flujo portal (token distinto)', () => {
     _redirectToLogin(router, auth, notifSvc, true);
 
     expect(notifSvc.stopPolling).not.toHaveBeenCalled();
     expect(auth.clearSession).not.toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/portal/login']);
+  });
+});
+
+describe('errorInterceptor — sesión del portal rechazada (#39)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem(
+      'sgcf_portal_customer',
+      JSON.stringify({ id: 'c-1', fullName: 'Ana', dni: '12345678', portalIsTempPassword: false }),
+    );
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([errorInterceptor])),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        MessageService,
+        ...provideAuthTesting(null),
+        { provide: NotificationsService, useValue: { stopPolling: () => undefined } },
+      ],
+    });
+    spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
+  });
+
+  afterEach(() => localStorage.clear());
+
+  const unauthorized = { status: 401, statusText: 'Unauthorized' };
+
+  it('si el refresh del portal es rechazado, limpia al cliente y el guard de login no lo devuelve al dashboard (sin bucle)', () => {
+    const http = TestBed.inject(HttpClient);
+    const ctrl = TestBed.inject(HttpTestingController);
+    const portalAuth = TestBed.inject(PortalAuthService);
+    expect(portalAuth.isAuthenticated()).toBeTrue();
+
+    http.get(`${environment.apiBaseUrl}/portal/me`).subscribe({ error: () => undefined });
+    ctrl
+      .expectOne(`${environment.apiBaseUrl}/portal/me`)
+      .flush({ ok: false, message: 'x' }, unauthorized);
+    ctrl
+      .expectOne(`${environment.apiBaseUrl}/auth/portal/refresh`)
+      .flush({ ok: false, code: 'SESSION_REVOKED', message: 'x' }, unauthorized);
+
+    expect(portalAuth.isAuthenticated()).toBeFalse();
+    const guardResult = TestBed.runInInjectionContext(() =>
+      portalLoginGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    );
+    expect(guardResult).toBeTrue();
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/portal/login']);
+    ctrl.verify();
+  });
+
+  it('las requests encoladas fallan (no quedan colgadas) si el refresh falla', () => {
+    const http = TestBed.inject(HttpClient);
+    const ctrl = TestBed.inject(HttpTestingController);
+    const errors: unknown[] = [];
+
+    http.get(`${environment.apiBaseUrl}/portal/me`).subscribe({ error: (e) => errors.push(e) });
+    http
+      .get(`${environment.apiBaseUrl}/portal/credits`)
+      .subscribe({ error: (e) => errors.push(e) });
+
+    ctrl
+      .expectOne(`${environment.apiBaseUrl}/portal/me`)
+      .flush({ ok: false, message: 'x' }, unauthorized);
+    ctrl
+      .expectOne(`${environment.apiBaseUrl}/portal/credits`)
+      .flush({ ok: false, message: 'x' }, unauthorized);
+    ctrl
+      .expectOne(`${environment.apiBaseUrl}/auth/portal/refresh`)
+      .flush({ ok: false, code: 'SESSION_REVOKED', message: 'x' }, unauthorized);
+
+    expect(errors.length).toBe(2);
+    ctrl.verify();
   });
 });

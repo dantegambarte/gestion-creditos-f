@@ -27,7 +27,6 @@ import { CollectionDialogSuccess } from '../sheet-dialog.model';
 
 @Component({
   selector: 'app-collection-attempt-dialog',
-  standalone: true,
   imports: [
     DatePipe,
     FormsModule,
@@ -57,7 +56,9 @@ export class AttemptDialogComponent implements OnChanges {
   private readonly dateSvc = inject(DateService);
 
   readonly todayDate: Date = this.dateSvc.startOfToday();
-  get todayIso(): string { return this.dateSvc.toLocalIso(new Date()); }
+  get todayIso(): string {
+    return this.dateSvc.toLocalIso(new Date());
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true) {
@@ -73,9 +74,7 @@ export class AttemptDialogComponent implements OnChanges {
 
   /** Título dinámico del dialog según el tipo de intento. */
   attemptTitle(): string {
-    return this.attemptType === 'NO_PAYMENT'
-      ? 'Cliente no pagó'
-      : 'Cliente no encontrado';
+    return this.attemptType === 'NO_PAYMENT' ? 'Cliente no pagó' : 'Cliente no encontrado';
   }
 
   /**
@@ -85,8 +84,7 @@ export class AttemptDialogComponent implements OnChanges {
     if (this.processingAttempt) return;
     if (!this.item) return;
 
-    const attemptDateIso =
-      this.attemptType === 'NO_PAYMENT' ? this.attemptNextVisitDate : '';
+    const attemptDateIso = this.attemptType === 'NO_PAYMENT' ? this.attemptNextVisitDate : '';
 
     if (this.attemptType === 'NO_PAYMENT') {
       if (!this.attemptReason.trim()) {
@@ -152,11 +150,7 @@ export class AttemptDialogComponent implements OnChanges {
         this.msg.add({
           severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
           summary:
-            err.status === 403
-              ? 'Sin acceso'
-              : err.status === 422
-                ? 'Datos inválidos'
-                : 'Error',
+            err.status === 403 ? 'Sin acceso' : err.status === 422 ? 'Datos inválidos' : 'Error',
           detail: err.message ?? 'No se pudo registrar el intento.',
         });
       },

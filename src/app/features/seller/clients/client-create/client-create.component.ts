@@ -1,11 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { DedupMessageService } from '../../../../core/services/dedup-message.service';
@@ -19,15 +14,8 @@ import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
 
 @Component({
   selector: 'app-client-create',
-  standalone: true,
   providers: [{ provide: MessageService, useClass: DedupMessageService }],
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    ButtonModule,
-    InputTextModule,
-    ToastModule,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, ButtonModule, InputTextModule, ToastModule],
   templateUrl: './client-create.component.html',
 })
 export class ClientCreateComponent implements OnInit {
@@ -41,10 +29,7 @@ export class ClientCreateComponent implements OnInit {
   submitting = false;
 
   ngOnInit(): void {
-    this.header.set([
-      { label: 'Clientes', route: '/seller/clients' },
-      { label: 'Nuevo cliente' },
-    ]);
+    this.header.set([{ label: 'Clientes', route: '/seller/clients' }, { label: 'Nuevo cliente' }]);
 
     this.form = this.fb.group({
       fullName: [
@@ -125,11 +110,7 @@ export class ClientCreateComponent implements OnInit {
             summary: 'Éxito',
             detail: 'Cliente registrado correctamente.',
           });
-          setTimeout(
-            () =>
-              this.router.navigate(['/seller', AppRoutes.CLIENTS, customer.id]),
-            2000,
-          );
+          setTimeout(() => this.router.navigate(['/seller', AppRoutes.CLIENTS, customer.id]), 2000);
         },
         error: (err: AppError) => {
           this.submitting = false;

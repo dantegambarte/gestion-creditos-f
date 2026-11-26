@@ -19,7 +19,6 @@ import { DelinquencyRow } from '../../models/interface/delinquency';
 
 @Component({
   selector: 'app-delinquency-apply-dialog',
-  standalone: true,
   imports: [FormsModule, ButtonModule, DialogModule],
   templateUrl: './delinquency-apply-dialog.component.html',
 })

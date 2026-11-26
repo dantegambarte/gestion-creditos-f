@@ -17,7 +17,6 @@ import { PortalService } from '../portal.service';
 
 @Component({
   selector: 'app-portal-dashboard',
-  standalone: true,
   imports: [CommonModule, CurrencyPipe, DatePipe, RouterLink, SkeletonModule],
   templateUrl: './portal-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

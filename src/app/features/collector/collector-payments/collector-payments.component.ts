@@ -22,7 +22,6 @@ import { PAYMENT_METHOD_LABELS } from '../../../shared/models/payment-method-lab
 
 @Component({
   selector: 'app-collector-payments',
-  standalone: true,
   imports: [
     CurrencyArsPipe,
     DatePipe,
@@ -69,14 +68,11 @@ export class CollectorPaymentsComponent implements OnInit {
    */
   get filteredPayments(): Payment[] {
     const query = this.searchTerm.trim().toLowerCase();
-    const dateIso = this.filterDate
-      ? this.dateSvc.toLocalIso(this.filterDate)
-      : null;
+    const dateIso = this.filterDate ? this.dateSvc.toLocalIso(this.filterDate) : null;
     return this.payments.filter((p) => {
       const matchesStatus = !this.filterStatus || p.status === this.filterStatus;
       const matchesSearch = !query || this.paymentMatchesSearch(p, query);
-      const matchesDate =
-        !dateIso || this.dateSvc.toLocalIso(new Date(p.createdAt)) === dateIso;
+      const matchesDate = !dateIso || this.dateSvc.toLocalIso(new Date(p.createdAt)) === dateIso;
       return matchesStatus && matchesSearch && matchesDate;
     });
   }
@@ -96,13 +92,8 @@ export class CollectorPaymentsComponent implements OnInit {
    * @param status
    * @returns
    */
-  statusSeverity(
-    status: PaymentStatus,
-  ): 'success' | 'warning' | 'danger' | 'secondary' {
-    const map: Record<
-      PaymentStatus,
-      'success' | 'warning' | 'danger' | 'secondary'
-    > = {
+  statusSeverity(status: PaymentStatus): 'success' | 'warning' | 'danger' | 'secondary' {
+    const map: Record<PaymentStatus, 'success' | 'warning' | 'danger' | 'secondary'> = {
       PENDING: 'warning',
       APPROVED: 'success',
       REJECTED: 'danger',

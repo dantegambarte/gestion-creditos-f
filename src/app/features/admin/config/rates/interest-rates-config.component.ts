@@ -30,7 +30,6 @@ import {
 
 @Component({
   selector: 'app-interest-rates-config',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     NgClass,

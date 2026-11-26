@@ -112,6 +112,14 @@ export class PortalAuthService {
   }
 
   /**
+   * Cierra la sesión local del portal sin llamar al backend (sesión ya rechazada):
+   * descarta el token, el perfil guardado y el cliente en memoria.
+   */
+  clearSession(): void {
+    this._clearSession();
+  }
+
+  /**
    * Marca la contraseña del cliente como permanente en memoria y localStorage.
    */
   private _markPasswordChanged(): void {

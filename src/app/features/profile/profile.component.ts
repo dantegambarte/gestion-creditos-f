@@ -43,19 +43,14 @@ interface UserProfile {
   updated_at: string | null;
 }
 
-function passwordMatchValidator(
-  control: AbstractControl,
-): ValidationErrors | null {
+function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
   const parent = control.parent;
   if (!parent) return null;
-  return control.value === parent.get('newPassword')?.value
-    ? null
-    : { mismatch: true };
+  return control.value === parent.get('newPassword')?.value ? null : { mismatch: true };
 }
 
 @Component({
   selector: 'app-profile',
-  standalone: true,
   imports: [
     ReactiveFormsModule,
     AvatarModule,

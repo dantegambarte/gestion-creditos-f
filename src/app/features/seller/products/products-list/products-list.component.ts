@@ -22,17 +22,12 @@ import { EmptyStateComponent } from '../../../../shared/states/empty-state/empty
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { ProductCategory } from '../../../admin/config/models/interfaces/product';
 import { ProductCategoriesService } from '../../../admin/config/services/product-categories.service';
-import {
-  Product,
-  ProductListFilters,
-  ProductStatus,
-} from '../../models/product.model';
+import { Product, ProductListFilters, ProductStatus } from '../../models/product.model';
 import { ProductsService } from '../products.service';
 import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-products-list',
-  standalone: true,
   imports: [
     CurrencyArsPipe,
     CommonModule,

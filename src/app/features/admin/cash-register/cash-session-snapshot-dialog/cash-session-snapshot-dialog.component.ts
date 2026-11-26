@@ -14,6 +14,7 @@ import { finalize } from 'rxjs/operators';
 import { FormatService } from '../../../../core/services/format.service';
 import { CashSessionSnapshot } from '../../models/cash-session.model';
 import { CashRegisterService } from '../cash-register.service';
+import { paymentMethodLabel } from '../../../../shared/models/payment-method-labels';
 
 /**
  * V4: dialog read-only que muestra el snapshot vivo (X report) de una caja
@@ -22,7 +23,6 @@ import { CashRegisterService } from '../cash-register.service';
  */
 @Component({
   selector: 'app-cash-session-snapshot-dialog',
-  standalone: true,
   imports: [ButtonModule, DialogModule, SkeletonModule],
   templateUrl: './cash-session-snapshot-dialog.component.html',
 })
@@ -57,6 +57,15 @@ export class CashSessionSnapshotDialogComponent implements OnChanges {
         next: (snap) => (this.snapshot = snap),
         error: (err) => (this.errorMessage = err?.message || 'No se pudo cargar el snapshot.'),
       });
+  }
+
+  /**
+   * Etiqueta visible del método de un drop, desde el mapa compartido.
+   * @param {string | null | undefined} method - método persistido del drop
+   * @returns {string} etiqueta legible
+   */
+  methodLabel(method: string | null | undefined): string {
+    return paymentMethodLabel(method);
   }
 
   close(): void {

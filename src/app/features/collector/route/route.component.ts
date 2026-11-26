@@ -21,10 +21,13 @@ import {
 import { Payment } from '../models/payment.model';
 import { PaymentsService } from '../payments.service';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import {
+  PAYMENT_METHOD_LABELS,
+  paymentMethodLabel,
+} from '../../../shared/models/payment-method-labels';
 
 @Component({
   selector: 'app-route',
-  standalone: true,
   imports: [
     CurrencyArsPipe,
     DatePipe,
@@ -111,9 +114,7 @@ export class RouteComponent implements OnInit {
   get windowPayments(): Payment[] {
     const start = this.collectionWindowStart;
     if (start === null) return [];
-    return this.recentPayments.filter(
-      (p) => new Date(p.createdAt).getTime() >= start,
-    );
+    return this.recentPayments.filter((p) => new Date(p.createdAt).getTime() >= start);
   }
 
   /**
@@ -168,9 +169,7 @@ export class RouteComponent implements OnInit {
    * @returns Texto corto para mostrar en UI.
    */
   paymentMethodLabel(method: Payment['paymentMethod']): string {
-    if (method === 'CASH') return 'Efectivo';
-    if (method === 'TRANSFER') return 'Transferencia';
-    return 'Mixto';
+    return paymentMethodLabel(method, PAYMENT_METHOD_LABELS.MIXED);
   }
 
   /**

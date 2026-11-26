@@ -4,22 +4,11 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
-import {
-  Commission,
-  PaymentMethod,
-  WeeklySummaryEmployee,
-} from '../../models/commission.model';
+import { Commission, PaymentMethod, WeeklySummaryEmployee } from '../../models/commission.model';
 
 @Component({
   selector: 'app-commissions-liquidation-dialogs',
-  standalone: true,
-  imports: [
-    FormsModule,
-    ButtonModule,
-    DialogModule,
-    DropdownModule,
-    TableModule,
-  ],
+  imports: [FormsModule, ButtonModule, DialogModule, DropdownModule, TableModule],
   templateUrl: './commissions-liquidation-dialogs.component.html',
 })
 export class CommissionsLiquidationDialogsComponent {

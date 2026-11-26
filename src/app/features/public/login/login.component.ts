@@ -29,7 +29,6 @@ import { landingRouteForRoles } from '../../../core/auth/role-routes';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
   imports: [
     ReactiveFormsModule,
     FormsModule,

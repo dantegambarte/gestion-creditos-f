@@ -46,7 +46,6 @@ export type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
 
 @Component({
   selector: 'app-collection-sheet-detail-panel',
-  standalone: true,
   imports: [
     DatePipe,
     FormsModule,
@@ -63,9 +62,7 @@ export type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
   templateUrl: './collection-sheet-detail-panel.component.html',
   styleUrl: './collection-sheet-detail-panel.component.scss',
 })
-export class CollectionSheetDetailPanelComponent
-  implements OnChanges, OnDestroy
-{
+export class CollectionSheetDetailPanelComponent implements OnChanges, OnDestroy {
   @Input() sheetMeta: CollectionSheet | null = null;
   /** Two-way binding para el estado colapsado del panel izquierdo. */
   @Input() collapsed = false;
@@ -111,9 +108,7 @@ export class CollectionSheetDetailPanelComponent
     const byTab =
       this.activeTab === 'ALL'
         ? this.selectedSheet.items
-        : this.selectedSheet.items.filter(
-            (i) => i.installmentStatus === this.activeTab,
-          );
+        : this.selectedSheet.items.filter((i) => i.installmentStatus === this.activeTab);
     const term = this.normalizeText(this.searchTerm);
 
     if (!term) return byTab;
@@ -258,9 +253,7 @@ export class CollectionSheetDetailPanelComponent
    */
   countByStatus(status: string): number {
     if (!this.selectedSheet) return 0;
-    return this.selectedSheet.items.filter(
-      (i) => i.installmentStatus === status,
-    ).length;
+    return this.selectedSheet.items.filter((i) => i.installmentStatus === status).length;
   }
 
   /**
@@ -282,9 +275,7 @@ export class CollectionSheetDetailPanelComponent
    */
   customerCuotasCount(customerName: string): number {
     if (!this.selectedSheet) return 0;
-    return this.selectedSheet.items.filter(
-      (i) => i.customerName === customerName,
-    ).length;
+    return this.selectedSheet.items.filter((i) => i.customerName === customerName).length;
   }
 
   /**
@@ -299,13 +290,8 @@ export class CollectionSheetDetailPanelComponent
     return MANAGEMENT_EVENT_LABELS[type];
   }
 
-  eventSeverity(
-    type: ManagementEventType,
-  ): 'success' | 'warning' | 'secondary' {
-    const map: Record<
-      ManagementEventType,
-      'success' | 'warning' | 'secondary'
-    > = {
+  eventSeverity(type: ManagementEventType): 'success' | 'warning' | 'secondary' {
+    const map: Record<ManagementEventType, 'success' | 'warning' | 'secondary'> = {
       PAYMENT: 'success',
       NO_PAYMENT: 'warning',
       NOT_FOUND: 'secondary',
@@ -318,13 +304,8 @@ export class CollectionSheetDetailPanelComponent
    * Severidad de color según el estado de la cuota.
    * @param status Estado de la cuota
    */
-  installmentSeverity(
-    status: string,
-  ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
-    const map: Record<
-      string,
-      'success' | 'info' | 'warning' | 'danger' | 'secondary'
-    > = {
+  installmentSeverity(status: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
+    const map: Record<string, 'success' | 'info' | 'warning' | 'danger' | 'secondary'> = {
       PENDING: 'info',
       OVERDUE: 'danger',
       PAID: 'success',

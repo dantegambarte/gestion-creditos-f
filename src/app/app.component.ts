@@ -1,5 +1,5 @@
-import { AsyncPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { Component, DestroyRef, PLATFORM_ID, inject } from '@angular/core';
+import { AsyncPipe, isPlatformBrowser } from '@angular/common';
+import { Component, DestroyRef, PLATFORM_ID, inject, DOCUMENT } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { Message, MessageService, PrimeNGConfig } from 'primeng/api';
@@ -13,14 +13,7 @@ import { SidebarComponent } from './shared/layout/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
-  imports: [
-    RouterOutlet,
-    SidebarComponent,
-    HeaderComponent,
-    AsyncPipe,
-    ToastModule,
-  ],
+  imports: [RouterOutlet, SidebarComponent, HeaderComponent, AsyncPipe, ToastModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
@@ -55,8 +48,7 @@ export class AppComponent {
 
   /** Ejecuta acciones declaradas por toasts globales, como aplicar una actualización PWA. */
   runToastAction(message: Message): void {
-    const action = (message.data as { action?: () => void } | undefined)
-      ?.action;
+    const action = (message.data as { action?: () => void } | undefined)?.action;
     action?.();
   }
 
@@ -65,15 +57,7 @@ export class AppComponent {
    */
   private configurePrimeNgLocale(): void {
     this.primengConfig.setTranslation({
-      dayNames: [
-        'domingo',
-        'lunes',
-        'martes',
-        'miércoles',
-        'jueves',
-        'viernes',
-        'sábado',
-      ],
+      dayNames: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'],
       dayNamesShort: ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'],
       dayNamesMin: ['do', 'lu', 'ma', 'mi', 'ju', 'vi', 'sa'],
       monthNames: [
@@ -140,15 +124,13 @@ export class AppComponent {
    * Publica los toasts globales en una región aria-live para lectores de pantalla.
    */
   private announceGlobalToasts(): void {
-    const subscription = this.messageService.messageObserver.subscribe(
-      (message) => {
-        const messages = Array.isArray(message) ? message : [message];
-        this.liveAnnouncement = messages
-          .map((item) => this.toAnnouncementText(item))
-          .filter(Boolean)
-          .join('. ');
-      },
-    );
+    const subscription = this.messageService.messageObserver.subscribe((message) => {
+      const messages = Array.isArray(message) ? message : [message];
+      this.liveAnnouncement = messages
+        .map((item) => this.toAnnouncementText(item))
+        .filter(Boolean)
+        .join('. ');
+    });
 
     this.destroyRef.onDestroy(() => subscription.unsubscribe());
   }

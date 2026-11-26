@@ -37,7 +37,6 @@ import { SettlementDialogComponent } from './settlement-dialog/settlement-dialog
 
 @Component({
   selector: 'app-credit-detail',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     CurrencyArsPipe,

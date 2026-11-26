@@ -11,7 +11,6 @@ import { CommissionsSummaryTabComponent } from './summary-tab/commissions-summar
 
 @Component({
   selector: 'app-commissions',
-  standalone: true,
   imports: [
     ToastModule,
     CommissionsSummaryTabComponent,
@@ -20,10 +19,7 @@ import { CommissionsSummaryTabComponent } from './summary-tab/commissions-summar
     CommissionsLiquidationDialogsComponent,
     ActiveTabScrollerDirective,
   ],
-  providers: [
-    { provide: MessageService, useClass: DedupMessageService },
-    CommissionsFacade,
-  ],
+  providers: [{ provide: MessageService, useClass: DedupMessageService }, CommissionsFacade],
   templateUrl: './commissions.component.html',
 })
 export class CommissionsComponent implements OnInit, OnDestroy {
