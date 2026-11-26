@@ -18,6 +18,7 @@ import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
 import { CommissionsService } from './commissions.service';
 import { formatIsoDate } from '../../../shared/utils/date-format.util';
+import { paymentMethodLabel } from '../../../shared/models/payment-method-labels';
 
 export type CommissionsTab = 'resumen' | 'historial' | 'sueldos';
 
@@ -551,7 +552,7 @@ export class CommissionsFacade {
    * @param pm
    */
   paymentMethodLabel(pm: PaymentMethod): string {
-    return pm === 'CASH' ? 'Efectivo' : 'Transferencia';
+    return paymentMethodLabel(pm);
   }
 
   /**
