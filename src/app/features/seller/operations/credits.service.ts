@@ -21,6 +21,7 @@ import {
   EarlySettlementResult,
   PlanChangeSimulation,
   PlanChangeResult,
+  ExcessDisposition,
   RejectPayload,
   RefinancePayload,
   RenewPayload,
@@ -160,23 +161,19 @@ function toCreditDetail(raw: CreditDetailRaw): CreditDetail {
     units: raw.units?.map(toCreditUnit),
     installments: raw.installments.map(toInstallment),
     downPayment,
-    financedAmount:
-      raw.financed_amount ?? Math.max(raw.total_amount - downPayment, 0),
+    financedAmount: raw.financed_amount ?? Math.max(raw.total_amount - downPayment, 0),
     downPaymentMethod: raw.down_payment_method,
     downPaymentTransferReference: raw.down_payment_transfer_reference,
     prepaidInstallments: raw.prepaid_installments ?? 0,
     prepaidInstallmentsMethod: raw.prepaid_installments_method,
     prepaidInstallmentsCash: raw.prepaid_installments_cash ?? 0,
     prepaidInstallmentsTransfer: raw.prepaid_installments_transfer ?? 0,
-    prepaidInstallmentsTransferReference:
-      raw.prepaid_installments_transfer_reference,
+    prepaidInstallmentsTransferReference: raw.prepaid_installments_transfer_reference,
     settledAt: raw.settled_at,
     settlementAmount: raw.settlement_amount,
     settlementType: raw.settlement_type,
     refinancedFromCreditId: raw.refinanced_from_credit_id ?? null,
-    refinancingChain: raw.refinancing_chain
-      ? toRefinancingChain(raw.refinancing_chain)
-      : null,
+    refinancingChain: raw.refinancing_chain ? toRefinancingChain(raw.refinancing_chain) : null,
   };
 }
 
@@ -213,9 +210,7 @@ function toSimulateBody(p: SimulatePayload): Record<string, unknown> {
  * @param raw
  * @returns
  */
-function toSimulateScheduleRow(
-  raw: Record<string, unknown>,
-): SimulateScheduleRow {
+function toSimulateScheduleRow(raw: Record<string, unknown>): SimulateScheduleRow {
   return {
     installmentNumber: raw['installment_number'] as number,
     dueDate: raw['due_date'] as string,
@@ -255,19 +250,17 @@ function toSimulateResult(raw: Record<string, unknown>): SimulateResult {
     note: (raw['note'] as string) ?? '',
   };
   if (Array.isArray(raw['items'])) {
-    result.items = (raw['items'] as Record<string, unknown>[]).map(
-      (item): SimulateResultItem => ({
-        productId: item['product_id'] as string,
-        productName: item['product_name'] as string,
-        variantId: item['variant_id'] as string | undefined,
-        quantity: item['quantity'] as number,
-        unitPrice: item['unit_price'] as number,
-        lineTotal: item['line_total'] as number,
-        rate: item['rate'] as number,
-        installmentContribution: item['installment_contribution'] as number,
-        installmentsCount: item['installments_count'] as number | undefined,
-      }),
-    );
+    result.items = (raw['items'] as Record<string, unknown>[]).map((item): SimulateResultItem => ({
+      productId: item['product_id'] as string,
+      productName: item['product_name'] as string,
+      variantId: item['variant_id'] as string | undefined,
+      quantity: item['quantity'] as number,
+      unitPrice: item['unit_price'] as number,
+      lineTotal: item['line_total'] as number,
+      rate: item['rate'] as number,
+      installmentContribution: item['installment_contribution'] as number,
+      installmentsCount: item['installments_count'] as number | undefined,
+    }));
   }
   if (raw['down_payment'] !== undefined) {
     result.downPayment = raw['down_payment'] as number;
@@ -275,23 +268,16 @@ function toSimulateResult(raw: Record<string, unknown>): SimulateResult {
   if (raw['financed_amount'] !== undefined) {
     result.financedAmount = raw['financed_amount'] as number;
   } else if (result.downPayment !== undefined) {
-    result.financedAmount = Math.max(
-      result.totalAmount - result.downPayment,
-      0,
-    );
+    result.financedAmount = Math.max(result.totalAmount - result.downPayment, 0);
   }
   if (raw['interest_amount'] !== undefined) {
     result.interestAmount = raw['interest_amount'] as number;
   }
   if (Array.isArray(raw['schedule'])) {
-    result.schedule = (raw['schedule'] as Record<string, unknown>[]).map(
-      toSimulateScheduleRow,
-    );
+    result.schedule = (raw['schedule'] as Record<string, unknown>[]).map(toSimulateScheduleRow);
   }
   if (raw['summary'] && typeof raw['summary'] === 'object') {
-    result.summary = toSimulateSummary(
-      raw['summary'] as Record<string, unknown>,
-    );
+    result.summary = toSimulateSummary(raw['summary'] as Record<string, unknown>);
   }
   return result;
 }
@@ -330,8 +316,7 @@ function toCreateBody(p: CreditCreatePayload): Record<string, unknown> {
 
     const hasDownPayment = p.downPayment !== undefined && p.downPayment > 0;
     const hasAdvancedInstallments =
-      p.advancedInstallmentsCount !== undefined &&
-      p.advancedInstallmentsCount > 0;
+      p.advancedInstallmentsCount !== undefined && p.advancedInstallmentsCount > 0;
 
     if (hasDownPayment || hasAdvancedInstallments) {
       body['down_payment'] = p.downPayment ?? 0;
@@ -345,26 +330,20 @@ function toCreateBody(p: CreditCreatePayload): Record<string, unknown> {
         body['down_payment_method'] = p.downPaymentMethod;
       }
       if (p.downPaymentTransferReference) {
-        body['down_payment_transfer_reference'] =
-          p.downPaymentTransferReference;
+        body['down_payment_transfer_reference'] = p.downPaymentTransferReference;
       }
     }
 
-    if (
-      p.advancedInstallmentsCount !== undefined &&
-      p.advancedInstallmentsCount > 0
-    ) {
+    if (p.advancedInstallmentsCount !== undefined && p.advancedInstallmentsCount > 0) {
       body['prepaid_installments'] = p.advancedInstallmentsCount;
       if (p.advancedInstallmentsMethod === 'MIXED') {
         body['prepaid_installments_cash'] = p.advancedInstallmentsCash ?? 0;
-        body['prepaid_installments_transfer'] =
-          p.advancedInstallmentsTransfer ?? 0;
+        body['prepaid_installments_transfer'] = p.advancedInstallmentsTransfer ?? 0;
       } else if (p.advancedInstallmentsMethod) {
         body['prepaid_installments_method'] = p.advancedInstallmentsMethod;
       }
       if (p.advancedInstallmentsTransferReference) {
-        body['prepaid_installments_transfer_reference'] =
-          p.advancedInstallmentsTransferReference;
+        body['prepaid_installments_transfer_reference'] = p.advancedInstallmentsTransferReference;
       }
     }
   } else {
@@ -384,9 +363,7 @@ export class CreditsService {
    */
   simulate(payload: SimulatePayload): Observable<SimulateResult> {
     return this.api
-      .post<
-        Record<string, unknown>
-      >('credits/simulate', toSimulateBody(payload))
+      .post<Record<string, unknown>>('credits/simulate', toSimulateBody(payload))
       .pipe(map(toSimulateResult));
   }
 
@@ -400,9 +377,7 @@ export class CreditsService {
     if (filters?.status) params['status'] = filters.status;
     if (filters?.type) params['type'] = filters.type;
     if (filters?.customerId) params['customer_id'] = filters.customerId;
-    return this.api
-      .get<CreditRaw[]>('credits', params)
-      .pipe(map((items) => items.map(toCredit)));
+    return this.api.get<CreditRaw[]>('credits', params).pipe(map((items) => items.map(toCredit)));
   }
 
   /**
@@ -411,9 +386,7 @@ export class CreditsService {
    * @returns
    */
   getById(id: string): Observable<CreditDetail> {
-    return this.api
-      .get<CreditDetailRaw>(`credits/${id}`)
-      .pipe(map(toCreditDetail));
+    return this.api.get<CreditDetailRaw>(`credits/${id}`).pipe(map(toCreditDetail));
   }
 
   /**
@@ -421,13 +394,8 @@ export class CreditsService {
    * @param payload
    * @returns
    */
-  create(
-    payload: CreditCreatePayload,
-  ): Observable<{ id: string; status: CreditStatus }> {
-    return this.api.post<{ id: string; status: CreditStatus }>(
-      'credits',
-      toCreateBody(payload),
-    );
+  create(payload: CreditCreatePayload): Observable<{ id: string; status: CreditStatus }> {
+    return this.api.post<{ id: string; status: CreditStatus }>('credits', toCreateBody(payload));
   }
 
   /**
@@ -441,9 +409,7 @@ export class CreditsService {
     if (payload.installmentsCount !== undefined) {
       body['installments_count'] = payload.installmentsCount;
     }
-    return this.api
-      .patch<CreditDetailRaw>(`credits/${id}/approve`, body)
-      .pipe(map(toCreditDetail));
+    return this.api.patch<CreditDetailRaw>(`credits/${id}/approve`, body).pipe(map(toCreditDetail));
   }
 
   /**
@@ -477,10 +443,7 @@ export class CreditsService {
    * @param payload - Parámetros de la refinanciación.
    * @returns Resultado con el nuevo crédito y el snapshot financiero.
    */
-  refinance(
-    id: string,
-    payload: RefinancePayload,
-  ): Observable<RefinanceResult> {
+  refinance(id: string, payload: RefinancePayload): Observable<RefinanceResult> {
     const body: Record<string, unknown> = {
       installments_count: payload.installmentsCount,
       payment_frequency: payload.paymentFrequency,
@@ -489,29 +452,25 @@ export class CreditsService {
     if (payload.extraCharges !== undefined && payload.extraCharges > 0)
       body['extra_charges'] = payload.extraCharges;
     if (payload.notes) body['notes'] = payload.notes;
-    return this.api
-      .post<RefinanceResultRaw>(`credits/${id}/refinance`, body)
-      .pipe(
-        map(
-          (raw): RefinanceResult => ({
-            originalCreditId: raw.original_credit_id,
-            newCredit: {
-              id: raw.new_credit.id,
-              type: raw.new_credit.type,
-              totalAmount: raw.new_credit.total_amount,
-              installmentsCount: raw.new_credit.installments_count,
-              paymentFrequency: raw.new_credit.payment_frequency,
-              status: raw.new_credit.status,
-              refinancedFromCreditId: raw.new_credit.refinanced_from_credit_id,
-              createdAt: raw.new_credit.created_at,
-            },
-            pendingBalance: raw.pending_balance,
-            extraCharges: raw.extra_charges,
-            totalTransferred: raw.total_transferred,
-            message: raw.message,
-          }),
-        ),
-      );
+    return this.api.post<RefinanceResultRaw>(`credits/${id}/refinance`, body).pipe(
+      map((raw): RefinanceResult => ({
+        originalCreditId: raw.original_credit_id,
+        newCredit: {
+          id: raw.new_credit.id,
+          type: raw.new_credit.type,
+          totalAmount: raw.new_credit.total_amount,
+          installmentsCount: raw.new_credit.installments_count,
+          paymentFrequency: raw.new_credit.payment_frequency,
+          status: raw.new_credit.status,
+          refinancedFromCreditId: raw.new_credit.refinanced_from_credit_id,
+          createdAt: raw.new_credit.created_at,
+        },
+        pendingBalance: raw.pending_balance,
+        extraCharges: raw.extra_charges,
+        totalTransferred: raw.total_transferred,
+        message: raw.message,
+      })),
+    );
   }
 
   /**
@@ -524,13 +483,9 @@ export class CreditsService {
       payment_method: payload.paymentMethod,
     };
     if (payload.amountCash != null) body['amount_cash'] = payload.amountCash;
-    if (payload.amountTransfer != null)
-      body['amount_transfer'] = payload.amountTransfer;
-    if (payload.transferReference)
-      body['transfer_reference'] = payload.transferReference;
-    return this.api
-      .post<unknown>(`credits/${id}/renew`, body)
-      .pipe(map(() => undefined));
+    if (payload.amountTransfer != null) body['amount_transfer'] = payload.amountTransfer;
+    if (payload.transferReference) body['transfer_reference'] = payload.transferReference;
+    return this.api.post<unknown>(`credits/${id}/renew`, body).pipe(map(() => undefined));
   }
 
   /**
@@ -549,44 +504,41 @@ export class CreditsService {
    * @returns Simulación con saldo recalculado y cuotas afectadas.
    */
   simulatePlanChange(id: string): Observable<PlanChangeSimulation> {
-    return this.api.get<PlanChangeSimulation>(
-      `credits/${id}/plan-change/simulate`,
-    );
+    return this.api.get<PlanChangeSimulation>(`credits/${id}/plan-change/simulate`);
   }
 
   /**
    * Ejecuta el cambio de plan (admin-only, sin doble aprobación). Definitivo.
    * @param id - ID del crédito ACTIVE.
-   * @param payload - Motivo opcional.
+   * @param payload - Motivo opcional y destino del excedente (obligatorio
+   *   solo si la simulación indica requiresExcessDisposition).
    * @returns Resultado del cambio + id de auditoría.
    */
   changePlan(
     id: string,
-    payload: { reason?: string } = {},
+    payload: { reason?: string; excess_disposition?: ExcessDisposition } = {},
   ): Observable<PlanChangeResult> {
     const body: Record<string, unknown> = {};
     if (payload.reason) body['reason'] = payload.reason;
-    return this.api
-      .post<Record<string, unknown>>(`credits/${id}/plan-change`, body)
-      .pipe(
-        map(
-          (raw): PlanChangeResult => ({
-            currentPlan: raw['currentPlan'] as PlanChangeResult['currentPlan'],
-            newPlan: raw['newPlan'] as PlanChangeResult['newPlan'],
-            totalPaid: raw['totalPaid'] as number,
-            newCreditTotal: raw['newCreditTotal'] as number,
-            newBalance: raw['newBalance'] as number,
-            survivingInstallmentId:
-              (raw['survivingInstallmentId'] as string | null) ?? null,
-            cancelledInstallments:
-              (raw['cancelledInstallments'] as number[]) ?? [],
-            creditWillBeSettled: raw['creditWillBeSettled'] as boolean,
-            planChangeId: raw['plan_change_id'] as string,
-            executedAt: raw['executed_at'] as string,
-            message: raw['message'] as string,
-          }),
-        ),
-      );
+    if (payload.excess_disposition) body['excess_disposition'] = payload.excess_disposition;
+    return this.api.post<Record<string, unknown>>(`credits/${id}/plan-change`, body).pipe(
+      map((raw): PlanChangeResult => ({
+        currentPlan: raw['currentPlan'] as PlanChangeResult['currentPlan'],
+        newPlan: raw['newPlan'] as PlanChangeResult['newPlan'],
+        totalPaid: raw['totalPaid'] as number,
+        newCreditTotal: raw['newCreditTotal'] as number,
+        newBalance: raw['newBalance'] as number,
+        survivingInstallmentId: (raw['survivingInstallmentId'] as string | null) ?? null,
+        cancelledInstallments: (raw['cancelledInstallments'] as number[]) ?? [],
+        creditWillBeSettled: raw['creditWillBeSettled'] as boolean,
+        excessAmount: (raw['excessAmount'] as number) ?? 0,
+        requiresExcessDisposition: (raw['requiresExcessDisposition'] as boolean) ?? false,
+        excessDisposition: (raw['excessDisposition'] as ExcessDisposition | null) ?? null,
+        planChangeId: raw['plan_change_id'] as string,
+        executedAt: raw['executed_at'] as string,
+        message: raw['message'] as string,
+      })),
+    );
   }
 
   /**
@@ -602,19 +554,15 @@ export class CreditsService {
   ): Observable<WriteOffResult> {
     const body: Record<string, unknown> = { reason: payload.reason };
     if (payload.observations) body['observations'] = payload.observations;
-    return this.api
-      .post<Record<string, unknown>>(`credits/${id}/write-off`, body)
-      .pipe(
-        map(
-          (raw): WriteOffResult => ({
-            creditId: raw['credit_id'] as string,
-            writtenOffBalance: raw['written_off_balance'] as number,
-            writeOffId: raw['write_off_id'] as string,
-            executedAt: raw['executed_at'] as string,
-            message: raw['message'] as string,
-          }),
-        ),
-      );
+    return this.api.post<Record<string, unknown>>(`credits/${id}/write-off`, body).pipe(
+      map((raw): WriteOffResult => ({
+        creditId: raw['credit_id'] as string,
+        writtenOffBalance: raw['written_off_balance'] as number,
+        writeOffId: raw['write_off_id'] as string,
+        executedAt: raw['executed_at'] as string,
+        message: raw['message'] as string,
+      })),
+    );
   }
 
   /**
@@ -623,15 +571,9 @@ export class CreditsService {
    * @param payload
    * @returns
    */
-  earlySettlement(
-    id: string,
-    payload: EarlySettlementPayload,
-  ): Observable<EarlySettlementResult> {
+  earlySettlement(id: string, payload: EarlySettlementPayload): Observable<EarlySettlementResult> {
     const body: Record<string, unknown> = {};
-    if (
-      payload.amountCash !== undefined ||
-      payload.amountTransfer !== undefined
-    ) {
+    if (payload.amountCash !== undefined || payload.amountTransfer !== undefined) {
       body['amount_cash'] = payload.amountCash ?? 0;
       body['amount_transfer'] = payload.amountTransfer ?? 0;
     } else if (payload.paymentMethod) {
