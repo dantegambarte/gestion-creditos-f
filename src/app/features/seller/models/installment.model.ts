@@ -26,6 +26,8 @@ export interface InstallmentDetail extends Installment {
 export interface InstallmentListFilters {
   creditId?: string;
   status?: InstallmentStatus;
+  /** Vencidas por fecha (due_date < hoy) con saldo, sin depender del status persistido. */
+  overdue?: boolean;
 }
 
 export interface ApplyPenaltyPayload {

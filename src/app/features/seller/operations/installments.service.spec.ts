@@ -1,8 +1,5 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
 import { jwtInterceptor } from '../../../core/interceptors/jwt.interceptor';
@@ -61,9 +58,18 @@ describe('InstallmentsService', () => {
     it('sends credit_id as query param when filter provided', () => {
       service.list({ creditId: 'credit-1' }).subscribe();
       const req = httpMock.expectOne(
+        (r) => r.url === `${BASE}/installments` && r.params.get('credit_id') === 'credit-1',
+      );
+      req.flush({ ok: true, data: [mockInstallmentRaw], message: '' });
+    });
+
+    it('sends overdue=true without status when overdue filter provided', () => {
+      service.list({ overdue: true }).subscribe();
+      const req = httpMock.expectOne(
         (r) =>
           r.url === `${BASE}/installments` &&
-          r.params.get('credit_id') === 'credit-1',
+          r.params.get('overdue') === 'true' &&
+          !r.params.has('status'),
       );
       req.flush({ ok: true, data: [mockInstallmentRaw], message: '' });
     });
@@ -81,12 +87,8 @@ describe('InstallmentsService', () => {
 
   describe('applyPenalty', () => {
     it('sends penalty_amount and reason in body', () => {
-      service
-        .applyPenalty('inst-1', { penaltyAmount: 200, reason: 'Mora' })
-        .subscribe();
-      const req = httpMock.expectOne(
-        `${BASE}/installments/inst-1/apply-penalty`,
-      );
+      service.applyPenalty('inst-1', { penaltyAmount: 200, reason: 'Mora' }).subscribe();
+      const req = httpMock.expectOne(`${BASE}/installments/inst-1/apply-penalty`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body['penalty_amount']).toBe(200);
       expect(req.request.body['reason']).toBe('Mora');
@@ -106,9 +108,7 @@ describe('InstallmentsService', () => {
   describe('waivePenalty', () => {
     it('sends PATCH with no body', () => {
       service.waivePenalty('inst-1').subscribe();
-      const req = httpMock.expectOne(
-        `${BASE}/installments/inst-1/waive-penalty`,
-      );
+      const req = httpMock.expectOne(`${BASE}/installments/inst-1/waive-penalty`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toBeNull();
       req.flush({

@@ -122,6 +122,11 @@ describe('DelinquencyComponent', () => {
       expect(byId['b'].status).toBe('EN_MORA');
     });
 
+    it('pide las cuotas vencidas por fecha, no por status OVERDUE persistido', () => {
+      const installments = TestBed.inject(InstallmentsService);
+      expect(installments.list).toHaveBeenCalledWith({ overdue: true });
+    });
+
     it('resume la mora aplicada y el monto sin aplicar', () => {
       expect(component.stats.enMoraCount).toBe(2);
       expect(component.stats.aplicada).toBe(800);
