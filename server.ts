@@ -25,6 +25,13 @@ export function app(): express.Express {
     express.static(browserDistFolder, {
       maxAge: '1y',
       index: 'index.html',
+      // HTML y archivos del service worker nunca se cachean: si no, un deploy
+      // nuevo no llega a los usuarios hasta que vence el año de caché.
+      setHeaders: (res, filePath) => {
+        if (/\.html$|ngsw\.json$|ngsw-worker\.js$/.test(filePath)) {
+          res.setHeader('Cache-Control', 'no-cache');
+        }
+      },
     }),
   );
 
@@ -42,8 +49,11 @@ export function app(): express.Express {
       '/seller/*',
       '/collector',
       '/collector/*',
+      '/portal',
+      '/portal/*',
     ],
     (req, res) => {
+      res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(join(browserDistFolder, 'index.csr.html'));
     },
   );
@@ -73,6 +83,7 @@ function run(): void {
   // Start up the Node server
   const server = app();
   server.listen(port, () => {
+    // eslint-disable-next-line no-console -- startup log of the SSR server
     console.log(`Node Express server listening on http://localhost:${port}`);
   });
 }

@@ -75,11 +75,6 @@ jobs:
             echo "No lintable files changed."
           fi
 
-      - name: Prepare environment file
-        if: steps.scope.outputs.mode != 'none'
-        # environment.ts is not versioned; tests use the development values.
-        run: cp src/environments/environment.development.ts src/environments/environment.ts
-
       - name: Unit tests (full, with coverage threshold)
         if: steps.scope.outputs.mode == 'full'
         run: npm run test:ci
