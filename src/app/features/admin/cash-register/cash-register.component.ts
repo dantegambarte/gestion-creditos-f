@@ -16,6 +16,7 @@ import { Subject, interval, of } from 'rxjs';
 import { finalize, switchMap, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
+import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { CurrencyAmountInputDirective } from '../../../shared/directives/currency-amount-input.directive';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
@@ -75,6 +76,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   private readonly msg = inject(MessageService);
   private readonly router = inject(Router);
   readonly format = inject(FormatService);
+  private readonly dateSvc = inject(DateService);
   private destroy$ = new Subject<void>();
 
   readonly dashboard = signal<CashRegisterDashboard | null>(null);
@@ -159,11 +161,15 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   readonly operationsDisabled = computed(() => !this.activeBusinessDay());
 
-  /** True cuando el dashboard muestra una jornada de un día anterior a hoy (post-medianoche). */
+  /**
+   * True cuando el dashboard muestra una jornada de un día anterior a hoy (post-medianoche).
+   * Compara contra la fecha local: con toISOString() (UTC) en UTC-3 después de las 21hs
+   * "hoy" pasaba a ser mañana y la jornada actual se marcaba como anterior.
+   */
   readonly isPostMidnightJornada = computed(() => {
     const d = this.dashboard();
     if (!d) return false;
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.dateSvc.toLocalIso(new Date());
     return d.date < today;
   });
 

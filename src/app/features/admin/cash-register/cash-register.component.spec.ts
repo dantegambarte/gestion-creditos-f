@@ -240,4 +240,30 @@ describe('CashRegisterComponent', () => {
       expect(cashRegisterServiceSpy.createManualIncomeCompany).not.toHaveBeenCalled();
     });
   });
+
+  describe('badge de jornada post-medianoche', () => {
+    afterEach(() => jasmine.clock().uninstall());
+
+    /**
+     * Fija el reloj a una hora local y carga un dashboard con la fecha dada.
+     * @param {Date} now - instante local simulado
+     * @param {string} date - fecha YYYY-MM-DD del dashboard
+     */
+    function setNowAndDashboard(now: Date, date: string): void {
+      jasmine.clock().install();
+      jasmine.clock().mockDate(now);
+      component.dashboard.set({ date } as never);
+    }
+
+    it('no marca post-medianoche la jornada de hoy a las 22:30 hora local', () => {
+      // A las 22:30 en UTC-3, toISOString() ya devuelve el día siguiente.
+      setNowAndDashboard(new Date(2026, 10, 26, 22, 30), '2026-11-26');
+      expect(component.isPostMidnightJornada()).toBeFalse();
+    });
+
+    it('marca post-medianoche una jornada de ayer', () => {
+      setNowAndDashboard(new Date(2026, 10, 27, 0, 30), '2026-11-26');
+      expect(component.isPostMidnightJornada()).toBeTrue();
+    });
+  });
 });
