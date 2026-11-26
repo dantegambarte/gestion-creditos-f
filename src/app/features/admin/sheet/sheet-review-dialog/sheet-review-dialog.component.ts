@@ -14,6 +14,7 @@ import { TableModule } from 'primeng/table';
 import { FormatService } from '../../../../core/services/format.service';
 import { CollectionsService } from '../../../collector/collections.service';
 import { CollectionSheetDetail } from '../../../collector/models/collection.model';
+import { formatIsoDate } from '../../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-sheet-review-dialog',
@@ -59,9 +60,7 @@ export class SheetReviewDialogComponent implements OnChanges {
    * @param iso fecha en formato ISO
    */
   formatDate(iso: string): string {
-    if (!iso) return '—';
-    const [y, m, d] = iso.split('T')[0].split('-');
-    return `${d}/${m}/${y}`;
+    return formatIsoDate(iso);
   }
 
   /**

@@ -27,6 +27,7 @@ import { UsersService } from '../users/users.service';
 import { SheetHistoryComponent } from './sheet-history/sheet-history.component';
 import { SheetReviewDialogComponent } from './sheet-review-dialog/sheet-review-dialog.component';
 import { buildBatchFailureMessages } from '../collections/batch-failure-messages';
+import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-sheet',
@@ -372,9 +373,7 @@ export class SheetComponent implements OnInit, OnDestroy {
    * @param iso fecha en formato ISO
    */
   formatDate(iso: string): string {
-    if (!iso) return '—';
-    const [y, m, d] = iso.split('T')[0].split('-');
-    return `${d}/${m}/${y}`;
+    return formatIsoDate(iso);
   }
 
   formatCurrency(value: number): string {

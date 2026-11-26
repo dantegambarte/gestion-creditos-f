@@ -17,6 +17,7 @@ import {
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
 import { CommissionsService } from './commissions.service';
+import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 export type CommissionsTab = 'resumen' | 'historial' | 'sueldos';
 
@@ -592,8 +593,6 @@ export class CommissionsFacade {
    * @param iso
    */
   formatDate(iso: string): string {
-    if (!iso) return '—';
-    const [year, month, day] = iso.split('T')[0].split('-');
-    return `${day}/${month}/${year}`;
+    return formatIsoDate(iso);
   }
 }

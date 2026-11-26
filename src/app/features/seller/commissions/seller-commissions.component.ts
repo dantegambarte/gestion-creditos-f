@@ -22,6 +22,7 @@ import {
   CommissionStatus,
   Liquidation,
 } from '../../admin/models/commission.model';
+import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-seller-commissions',
@@ -176,8 +177,6 @@ export class SellerCommissionsComponent implements OnInit, OnDestroy {
    * @returns
    */
   formatDate(iso: string): string {
-    if (!iso) return '—';
-    const d = iso.split('T')[0].split('-');
-    return `${d[2]}/${d[1]}/${d[0]}`;
+    return formatIsoDate(iso);
   }
 }

@@ -22,6 +22,7 @@ import { ExpenseSidePanelComponent } from './expense-side-panel/expense-side-pan
 import { Expense } from './expense.model';
 import { ExpensesService } from './expenses.service';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-expenses',
@@ -261,8 +262,6 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   }
 
   formatDate(iso: string): string {
-    if (!iso) return '—';
-    const d = iso.split('T')[0].split('-');
-    return `${d[2]}/${d[1]}/${d[0]}`;
+    return formatIsoDate(iso);
   }
 }
