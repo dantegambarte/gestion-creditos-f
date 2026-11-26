@@ -4,8 +4,10 @@
  * Cubre: CR-10, CL-05
  *
  * CR-10: p-calendar en step-conditions — panel del calendario debe adjuntarse a body.
- * CL-05: p-calendar en client-historial — sin appendTo="body", el panel era
- *   clipado por .tab-content { overflow-y: auto }. Fix: appendTo="body" + baseZIndex.
+ * CL-05: sólo se verifica que el detalle de cliente cargue. Los casos de calendarios
+ *   del tab Historial se quitaron (P39, #67): /admin/clients/:dni usa hoy el detalle
+ *   de seller, sin tabs ni filtros de período; el componente con tabs ya no está ruteado
+ *   y esos tests pasaban en vacío.
  *
  * Nota técnica: PrimeNG calendar usa document.body.appendChild() directamente
  * cuando appendTo="body", por lo que el selector body > .p-datepicker es correcto.
@@ -54,22 +56,6 @@ const CLIENT_STUB = {
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',
 };
-
-function openHistorialTabIfPresent() {
-  cy.get('body').then(($body) => {
-    const hasTabBtn = $body.find('button.tab-btn').length > 0;
-    const hasPrimeTab = $body.find('[role="tab"]').length > 0;
-
-    if (hasTabBtn) {
-      cy.contains('button.tab-btn', 'Historial').click({ force: true });
-      return;
-    }
-
-    if (hasPrimeTab) {
-      cy.contains('[role="tab"]', 'Historial').click({ force: true });
-    }
-  });
-}
 
 // ── CR-10 — Calendario primer pago en nueva operación ─────────────────────────
 describe('CR-10 — Calendario primer pago: panel adjunto a body', () => {
@@ -137,84 +123,5 @@ describe('CL-05 — Calendarios de período en historial de cliente (Admin)', ()
   it('la página de detalle de cliente carga correctamente', () => {
     cy.url().should('include', '/admin/clients/11223344');
     cy.contains('Ana García').should('be.visible');
-  });
-
-  it('panel de calendario Desde se adjunta a body — no clipado por tab-content', () => {
-    openHistorialTabIfPresent();
-
-    cy.get('body').then(($body) => {
-      if ($body.find('p-calendar').length === 0) {
-        cy.url().should('include', '/admin/clients/11223344');
-        return;
-      }
-
-      // Abrir el primer calendario (Período Desde)
-      cy.get('p-calendar').first().find('button').click({ force: true });
-
-      // Panel debe estar en body
-      cy.get('body > .p-datepicker').should('be.visible');
-    });
-  });
-
-  it('panel de calendario Hasta se adjunta a body', () => {
-    openHistorialTabIfPresent();
-
-    cy.get('body').then(($body) => {
-      const calendars = $body.find('p-calendar');
-      if (calendars.length === 0) {
-        cy.url().should('include', '/admin/clients/11223344');
-        return;
-      }
-
-      // Abrir el segundo calendario (Período Hasta)
-      const index = calendars.length > 1 ? 1 : 0;
-      cy.get('p-calendar').eq(index).find('button').click({ force: true });
-
-      cy.get('body > .p-datepicker').should('be.visible');
-    });
-  });
-
-  it('dropdown de tipo de evento se adjunta a body', () => {
-    openHistorialTabIfPresent();
-
-    cy.get('body').then(($body) => {
-      const hasEventFilter =
-        $body.find('.hist-filter-bar p-dropdown, .hist-filter-bar p-select')
-          .length > 0;
-      if (!hasEventFilter) {
-        cy.url().should('include', '/admin/clients/11223344');
-        return;
-      }
-
-      cy.get('.hist-filter-bar p-dropdown, .hist-filter-bar p-select')
-        .first()
-        .click();
-      cy.get(
-        'body > .p-overlay .p-dropdown-panel, body > .p-overlay .p-select-overlay',
-      ).should('be.visible');
-    });
-  });
-
-  it('historial mobile usa cards en vez de tabla', () => {
-    cy.viewport(375, 667);
-    openHistorialTabIfPresent();
-
-    cy.get('body').then(($body) => {
-      if ($body.find('.hist-table').length === 0) {
-        cy.url().should('include', '/admin/clients/11223344');
-        return;
-      }
-
-      cy.get('.hist-table').should('not.be.visible');
-      cy.get('[data-cy="client-historial-mobile-card"]').should(
-        'have.length.at.least',
-        1,
-      );
-      cy.window().then((win) => {
-        expect(win.document.documentElement.scrollWidth).to.be.lte(
-          win.innerWidth,
-        );
-      });
-    });
   });
 });

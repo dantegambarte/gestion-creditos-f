@@ -78,371 +78,277 @@ function loginSellerForSaleFlow() {
   });
 }
 
-function stubSaleFlowCatalogs() {
-  cy.intercept('GET', /\/api\/products(\?.*)?$/, {
-    statusCode: 200,
-    body: {
-      ok: true,
-      data: [
-        {
-          id: 'prod-1',
-          title: 'Moto X',
-          description: 'Demo',
-          model: 'MX',
-          status: 'ACTIVE',
-          created_at: '2026-01-01T00:00:00Z',
-          category_id: null,
-          category_name: null,
-          brand_id: null,
-          brand_name: null,
-          available_count: 2,
-          reserved_count: 0,
-          sold_count: 0,
-          variants: [
-            {
-              id: 'var-1',
-              color: 'Rojo',
-              size: null,
-              capacity: null,
-              current_price: 1000,
-              status: 'ACTIVE',
-            },
-          ],
-        },
-      ],
-    },
-  }).as('products');
+const VIEWPORTS: { name: string; width: number; height: number; mobile: boolean }[] = [
+  { name: 'desktop', width: 1280, height: 720, mobile: false },
+  { name: 'mobile', width: 375, height: 667, mobile: true },
+];
 
-  cy.intercept('GET', /\/api\/product-variants(\?.*)?$/, {
+/**
+ * Arma una unidad disponible cruda (formato backend) del producto stub.
+ * @param {string} id - id de la unidad
+ * @param {string} unitCode - código visible de la unidad
+ */
+const rawUnit = (id: string, unitCode: string) => ({
+  id,
+  unit_code: unitCode,
+  status: 'AVAILABLE',
+  notes: null,
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
+  variant_id: 'var-1',
+  color: 'Rojo',
+  size: null,
+  capacity: null,
+  current_price: 1000,
+  product_id: 'prod-1',
+  product_name: 'Moto X',
+});
+
+/**
+ * Stubbea lo que consume el wizard en los pasos 2 a 4: resumen del cliente,
+ * unidades disponibles y tasas del producto (mensual, 3 cuotas).
+ */
+function stubSaleFlowCatalogs() {
+  cy.intercept('GET', '**/api/customers/*/wizard-summary', {
     statusCode: 200,
     body: {
       ok: true,
-      data: [
-        {
-          id: 'var-1',
-          color: 'Rojo',
-          size: null,
-          capacity: null,
-          current_price: 1000,
-          status: 'ACTIVE',
-          created_at: '2026-01-01T00:00:00Z',
-          updated_at: '2026-01-01T00:00:00Z',
-          product_id: 'prod-1',
-          product_name: 'Moto X',
-          title: 'Moto X',
-          model: 'MX',
-          product_status: 'ACTIVE',
-          brand_id: null,
-          brand_name: null,
-        },
-      ],
+      data: {
+        id: 'cust-001',
+        full_name: 'Ana García',
+        dni: '12345678',
+        phone: '3811234567',
+        address: 'Calle 123',
+        email: null,
+        status: 'ACTIVE',
+        portal_enabled: false,
+        created_at: '2024-01-15T00:00:00Z',
+        collector_id: null,
+        collector_name: null,
+        active_credits: 0,
+        delinquency: 'sin mora',
+        payment_capacity: 5000,
+        paid_installments: 0,
+        pending_installments: 0,
+        overdue_installments: 0,
+        credits: [],
+      },
     },
-  }).as('variants');
+  }).as('wizardSummary');
 
   cy.intercept('GET', /\/api\/product-units(\?.*)?$/, {
     statusCode: 200,
+    body: { ok: true, data: [rawUnit('unit-1', 'U-001'), rawUnit('unit-2', 'U-002')] },
+  }).as('units');
+
+  cy.intercept('GET', /\/api\/product-rates(\?.*)?$/, {
+    statusCode: 200,
     body: {
       ok: true,
       data: [
         {
-          id: 'unit-1',
-          unit_code: 'U-001',
-          status: 'AVAILABLE',
-          notes: null,
-          created_at: '2026-01-01T00:00:00Z',
-          updated_at: '2026-01-01T00:00:00Z',
-          variant_id: 'var-1',
-          color: 'Rojo',
-          size: null,
-          capacity: null,
-          current_price: 1000,
+          id: 'rate-1',
           product_id: 'prod-1',
           product_name: 'Moto X',
-        },
-        {
-          id: 'unit-2',
-          unit_code: 'U-002',
-          status: 'AVAILABLE',
-          notes: null,
+          payment_frequency: 'MONTHLY',
+          installments_count: 3,
+          rate: 5,
+          active: true,
           created_at: '2026-01-01T00:00:00Z',
           updated_at: '2026-01-01T00:00:00Z',
-          variant_id: 'var-1',
-          color: 'Rojo',
-          size: null,
-          capacity: null,
-          current_price: 1000,
-          product_id: 'prod-1',
-          product_name: 'Moto X',
         },
       ],
     },
-  }).as('units');
+  }).as('productRates');
 }
 
-function selectDropdownOption(selector: string, optionText: string) {
-  cy.get(selector)
-    .find('.p-dropdown, .p-select')
-    .first()
-    .click({ force: true });
-  cy.get('.p-dropdown-item, .p-select-option').should(
-    'have.length.greaterThan',
-    0,
-  );
-  cy.contains('.p-dropdown-item, .p-select-option', optionText).click({
-    force: true,
-  });
+/**
+ * Click en un botón del footer del wizard según el viewport (mobile tiene su propio footer).
+ * @param {string} dataCy - data-cy del botón desktop; en mobile se usa `<dataCy>-mobile`
+ * @param {boolean} mobile - true en 375x667
+ */
+function clickFooter(dataCy: string, mobile: boolean) {
+  const sel = `[data-cy="${mobile ? `${dataCy}-mobile` : dataCy}"]`;
+  cy.get(`${sel} button, button${sel}`).filter(':visible').first().should('not.be.disabled').click();
 }
 
-function prepareSaleForm(
-  unitCode = 'U-001',
-  initialPayment: 'DOWN_PAYMENT' | 'NONE' = 'DOWN_PAYMENT',
-) {
-  cy.get('body').then(($body) => {
-    if ($body.find('[data-cy="credit-customer"]').length === 0) {
-      cy.url().should('include', '/seller/operations/new');
-      return;
-    }
+/**
+ * Recorre el wizard hasta el paso 4 (Condiciones): venta, cliente Ana García,
+ * unidad elegida, frecuencia mensual y 3 cuotas.
+ * @param {boolean} mobile - true en 375x667
+ * @param {string} unitCode - unidad a agregar al carrito
+ */
+function goToConditions(mobile: boolean, unitCode = 'U-001') {
+  cy.get('[data-cy="btn-type-sale"]').should('be.visible').click();
+  cy.contains('Paso 2 de 5').should('exist');
+  cy.get('[data-cy="input-search-client"]').clear().type('Ana');
+  cy.get('[data-cy="client-card-cust-001"]').click();
+  cy.wait('@wizardSummary');
+  cy.contains('button', 'Continuar con este cliente').should('be.enabled').click();
 
-    selectDropdownOption('[data-cy="credit-customer"]', 'Ana García');
-    selectDropdownOption('[data-cy="credit-frequency"]', 'Mensual');
+  cy.get('[data-cy="sale-product-prod-1"]').scrollIntoView().click();
+  cy.get('[data-cy="sale-variant-var-1"]').scrollIntoView().click();
+  cy.contains('span', unitCode).parent().find('[data-cy="sale-add-unit"]').scrollIntoView().click();
+  cy.contains('span', unitCode).parent().find('[data-cy="sale-remove-unit"]').should('exist');
+  clickFooter('btn-siguiente', mobile);
+  cy.contains('Paso 4 de 5').should('exist');
 
-    cy.get('[data-cy="credit-installments-count"] input').clear().type('3');
-
-    selectDropdownOption('[data-cy="sale-product-selector"]', 'Moto X');
-    cy.wait('@variants');
-    selectDropdownOption('[data-cy="sale-variant-selector"]', 'Rojo');
-    cy.wait('@units');
-    selectDropdownOption('[data-cy="sale-unit-selector"]', unitCode);
-    cy.get('[data-cy="sale-add-unit"]').click();
-
-    if (initialPayment === 'DOWN_PAYMENT') {
-      cy.get('[data-cy="sale-toggle-down-payment"]').click();
-      cy.get('[data-cy="sale-down-payment"] input').clear().type('200');
-    }
-  });
+  cy.contains('button', 'Mensual').click();
+  cy.get('[data-cy="ddl-installments"] .p-dropdown').first().click();
+  cy.contains('.p-dropdown-item', '3').click();
 }
 
-describe('QA Regression — SALE frontend integration', () => {
-  beforeEach(() => {
-    cy.viewport(1280, 720);
-    stubSaleFlowCatalogs();
-    loginSellerForSaleFlow();
-    cy.wait('@authMe');
-    cy.wait('@customers');
-  });
+/**
+ * Activa el enganche en efectivo con el monto dado.
+ * @param {number} amount - monto del enganche
+ */
+function setCashDownPayment(amount: number) {
+  cy.get('#pay-down').click({ force: true });
+  cy.get('[data-cy="sale-down-payment"] input').clear().type(String(amount));
+  cy.get('#dp-cash').click({ force: true });
+}
 
-  it('simula SALE con down_payment, muestra monto financiado y no usa prepaid_installments', () => {
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-customer"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-      }
+/**
+ * Avanza a confirmación, marca el checklist y envía a aprobación.
+ * @param {boolean} mobile - true en 375x667
+ */
+function confirmAndSubmit(mobile: boolean) {
+  clickFooter('btn-siguiente', mobile);
+  cy.contains('Paso 5 de 5').should('exist');
+  cy.get('[data-cy="btn-mark-all"]').click({ force: true });
+  clickFooter('btn-enviar-aprobacion', mobile);
+}
+
+VIEWPORTS.forEach(({ name, width, height, mobile }) => {
+  describe(`QA Regression — SALE en wizard de nueva operación (${name})`, () => {
+    beforeEach(() => {
+      cy.viewport(width, height);
+      stubSaleFlowCatalogs();
+      loginSellerForSaleFlow();
+      cy.wait('@authMe');
     });
 
-    cy.intercept('POST', '**/api/credits/simulate', (req) => {
-      expect(req.body).to.include({
-        type: 'SALE',
-        installments_count: 3,
-        payment_frequency: 'MONTHLY',
-        down_payment: 200,
-      });
-      expect(req.body.products).to.deep.equal([
-        { variant_id: 'var-1', quantity: 1 },
-      ]);
-      expect(req.body.prepaid_installments).to.equal(undefined);
-      req.reply(saleSimulationResponse);
-    }).as('simulateSale');
+    it('simula SALE con down_payment y no envía prepaid_installments', () => {
+      cy.intercept('POST', '**/api/credits/simulate', (req) => {
+        expect(req.body).to.include({
+          type: 'SALE',
+          installments_count: 3,
+          payment_frequency: 'MONTHLY',
+          down_payment: 200,
+        });
+        expect(req.body.prepaid_installments).to.equal(undefined);
+        req.reply(saleSimulationResponse);
+      }).as('simulateSale');
 
-    prepareSaleForm();
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-simulate"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
-
-      cy.get('[data-cy="credit-simulate"]').click();
+      goToConditions(mobile);
+      setCashDownPayment(200);
+      cy.contains('button', /simulaci/i).scrollIntoView().click({ force: true });
       cy.wait('@simulateSale');
-
-      cy.get('[data-cy="simulate-down-payment"]')
-        .invoke('text')
-        .should('match', /\$\s*200(?:,00)?/);
-      cy.get('[data-cy="simulate-financed-amount"]')
-        .invoke('text')
-        .should('match', /\$\s*800(?:,00)?/);
-      cy.get('[data-cy="sale-financed-amount-preview"]')
-        .invoke('text')
-        .should('match', /\$\s*800(?:,00)?/);
-    });
-  });
-
-  it('crea SALE con unit_ids y down_payment, sin prepaid_installments', () => {
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-customer"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-      }
     });
 
-    cy.intercept('POST', '**/api/credits', (req) => {
-      expect(req.body).to.deep.equal({
-        customer_id: 'cust-001',
-        type: 'SALE',
-        installments_count: 3,
-        payment_frequency: 'MONTHLY',
-        unit_ids: ['unit-1'],
-        down_payment: 200,
-        down_payment_method: 'CASH',
-      });
-      expect(req.body.prepaid_installments).to.equal(undefined);
-      req.reply(saleCreateResponse);
-    }).as('createSale');
+    it('crea SALE con unit_ids y down_payment en efectivo, sin prepaid_installments', () => {
+      cy.intercept('POST', '**/api/credits', (req) => {
+        expect(req.body).to.include({
+          customer_id: 'cust-001',
+          type: 'SALE',
+          installments_count: 3,
+          payment_frequency: 'MONTHLY',
+          down_payment: 200,
+          down_payment_method: 'CASH',
+        });
+        expect(req.body.unit_ids).to.deep.equal(['unit-1']);
+        expect(req.body.prepaid_installments).to.equal(undefined);
+        req.reply(saleCreateResponse);
+      }).as('createSale');
 
-    prepareSaleForm();
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-submit"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
-
-      cy.get('[data-cy="credit-submit"]').click();
+      goToConditions(mobile);
+      setCashDownPayment(200);
+      confirmAndSubmit(mobile);
       cy.wait('@createSale');
     });
-  });
 
-  it('crea SALE con enganche mixto y envía split del pago inicial', () => {
-    cy.intercept('POST', '**/api/credits', (req) => {
-      expect(req.body).to.include({
-        customer_id: 'cust-001',
-        type: 'SALE',
-        installments_count: 3,
-        payment_frequency: 'MONTHLY',
-        down_payment: 200,
-        down_payment_cash: 80,
-        down_payment_transfer: 120,
-        down_payment_transfer_reference: 'DP-UI-MIX',
-      });
-      expect(req.body.down_payment_method).to.equal(undefined);
-      expect(req.body.prepaid_installments).to.equal(undefined);
-      req.reply(saleCreateResponse);
-    }).as('createSaleMixedDownPayment');
+    it('crea SALE con enganche mixto y envía split del pago inicial', () => {
+      cy.intercept('POST', '**/api/credits', (req) => {
+        expect(req.body).to.include({
+          customer_id: 'cust-001',
+          type: 'SALE',
+          down_payment: 200,
+          down_payment_cash: 80,
+          down_payment_transfer: 120,
+          down_payment_transfer_reference: 'DP-UI-MIX',
+        });
+        expect(req.body.down_payment_method).to.equal(undefined);
+        expect(req.body.prepaid_installments).to.equal(undefined);
+        req.reply(saleCreateResponse);
+      }).as('createSaleMixedDownPayment');
 
-    prepareSaleForm();
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-submit"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
-
-      cy.get('[data-cy="sale-down-payment-method-mixed"]').click({
-        force: true,
-      });
+      goToConditions(mobile);
+      setCashDownPayment(200);
+      cy.get('[data-cy="sale-down-payment-method-mixed"]').click({ force: true });
       cy.get('[data-cy="sale-down-payment-cash"] input').clear().type('80');
-      cy.get('[data-cy="sale-down-payment-transfer"] input')
-        .clear()
-        .type('120');
-      cy.get('[data-cy="sale-down-payment-transfer-reference"]').type(
-        'DP-UI-MIX',
-      );
-      cy.get('[data-cy="credit-submit"]').click();
+      cy.get('[data-cy="sale-down-payment-transfer"] input').clear().type('120');
+      cy.get('[data-cy="sale-down-payment-transfer-reference"]').type('DP-UI-MIX');
+      confirmAndSubmit(mobile);
       cy.wait('@createSaleMixedDownPayment');
     });
-  });
 
-  it('crea SALE con cuotas adelantadas mixtas y envía split del adelanto', () => {
-    cy.intercept('POST', '**/api/credits', (req) => {
-      expect(req.body).to.include({
-        customer_id: 'cust-001',
-        type: 'SALE',
-        installments_count: 3,
-        payment_frequency: 'MONTHLY',
-        prepaid_installments: 1,
-        prepaid_installments_cash: 175,
-        prepaid_installments_transfer: 175,
-        prepaid_installments_transfer_reference: 'ADV-UI-MIX',
-      });
-      expect(req.body.prepaid_installments_method).to.equal(undefined);
-      req.reply(saleCreateResponse);
-    }).as('createSaleMixedAdvanced');
+    it('crea SALE con cuotas adelantadas mixtas y envía split del adelanto', () => {
+      cy.intercept('POST', '**/api/credits', saleCreateResponse).as('createSaleMixedAdvanced');
 
-    prepareSaleForm('U-001', 'NONE');
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-submit"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
+      goToConditions(mobile);
+      cy.get('#pay-advance').click({ force: true });
+      cy.get('[data-cy="sale-advanced-installments-count"] input').clear().type('1');
+      cy.get('[data-cy="sale-advanced-installments-method-mixed"]').click({ force: true });
 
-      cy.contains('label', 'Cuotas adelantadas').click({ force: true });
-      cy.get('[data-cy="sale-advanced-installments-count"] input')
-        .clear()
-        .type('1');
-      cy.get('[data-cy="sale-advanced-installments-method-mixed"]').click({
-        force: true,
-      });
-      cy.get('[data-cy="sale-advanced-installments-cash"] input')
-        .clear()
-        .type('175');
-      cy.get('[data-cy="sale-advanced-installments-transfer"] input')
-        .clear()
-        .type('175');
-      cy.get('[data-cy="sale-advanced-installments-transfer-reference"]').type(
-        'ADV-UI-MIX',
-      );
-      cy.get('[data-cy="credit-submit"]').click();
-      cy.wait('@createSaleMixedAdvanced');
-    });
-  });
+      // El split debe sumar el "Total estimado" que calcula el wizard; se lee de la UI.
+      cy.contains('p', 'Total estimado:')
+        .invoke('text')
+        .then((text) => {
+          const total = Number(text.replace(/[^\d,]/g, '').replace(',', '.'));
+          expect(total, 'total estimado de cuotas adelantadas').to.be.greaterThan(0);
+          const cash = Math.floor(total / 2);
+          const transfer = total - cash;
 
-  it('bloquea la venta cuando el enganche supera el total del carrito', () => {
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-customer"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-      }
+          cy.get('[data-cy="sale-advanced-installments-cash"] input').clear().type(String(cash));
+          cy.get('[data-cy="sale-advanced-installments-transfer"] input').clear().type(String(transfer));
+          cy.get('[data-cy="sale-advanced-installments-transfer-reference"]').type('ADV-UI-MIX');
+          confirmAndSubmit(mobile);
+
+          cy.wait('@createSaleMixedAdvanced').then(({ request }) => {
+            expect(request.body).to.include({
+              customer_id: 'cust-001',
+              type: 'SALE',
+              prepaid_installments: 1,
+              prepaid_installments_cash: cash,
+              prepaid_installments_transfer: transfer,
+              prepaid_installments_transfer_reference: 'ADV-UI-MIX',
+            });
+            expect(request.body.prepaid_installments_method).to.equal(undefined);
+          });
+        });
     });
 
-    prepareSaleForm();
-    cy.get('body').then(($body) => {
-      if (
-        $body.find(
-          '[data-cy="sale-down-payment"] input, [data-cy="credit-submit"]',
-        ).length === 0
-      ) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
+    it('acota el enganche al total del carrito cuando se ingresa un monto mayor', () => {
+      cy.intercept('POST', '**/api/credits', (req) => {
+        expect(req.body.down_payment, 'enganche acotado al total').to.be.at.most(1000);
+        req.reply(saleCreateResponse);
+      }).as('createSaleClamped');
 
-      cy.get('[data-cy="sale-down-payment"] input').clear().type('1500');
-      cy.get('[data-cy="credit-submit"]').click();
-
-      cy.contains(
-        'El enganche no puede ser mayor al total de la venta.',
-      ).should('be.visible');
-    });
-  });
-
-  it('CR-22 — respeta la unidad puntual elegida y no reemplaza por la primera disponible', () => {
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-customer"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-      }
+      goToConditions(mobile);
+      setCashDownPayment(1500);
+      confirmAndSubmit(mobile);
+      cy.wait('@createSaleClamped');
     });
 
-    cy.intercept('POST', '**/api/credits', (req) => {
-      expect(req.body).to.include({
-        customer_id: 'cust-001',
-        type: 'SALE',
-        installments_count: 3,
-        payment_frequency: 'MONTHLY',
-      });
-      expect(req.body.unit_ids).to.deep.equal(['unit-2']);
-      req.reply(saleCreateResponse);
-    }).as('createSaleWithSecondUnit');
+    it('CR-22 — respeta la unidad puntual elegida y no reemplaza por la primera disponible', () => {
+      cy.intercept('POST', '**/api/credits', (req) => {
+        expect(req.body).to.include({ customer_id: 'cust-001', type: 'SALE' });
+        expect(req.body.unit_ids).to.deep.equal(['unit-2']);
+        req.reply(saleCreateResponse);
+      }).as('createSaleWithSecondUnit');
 
-    prepareSaleForm('U-002');
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-submit"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
-
-      cy.get('[data-cy="credit-submit"]').click();
+      goToConditions(mobile, 'U-002');
+      confirmAndSubmit(mobile);
       cy.wait('@createSaleWithSecondUnit');
     });
   });

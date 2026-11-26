@@ -293,6 +293,6 @@
 - `cypress/e2e/40-contrast-color-regression.cy.ts` → CL-02b, CR-13, PR-09 (Grupo C)
 - `cypress/e2e/41-pagination-regression.cy.ts` → CR-17, CL-08 (Grupo D)
 - `cypress/e2e/42-group-e-regression.cy.ts` → CL-10, PR-07, PR-08, CR-09 (Grupo E)
-- `cypress/e2e/43-session-changes-regression.cy.ts` → CO-02, CO-03, CO-04, PR-11, PR-13 (Sesión 5)
-- `cypress/e2e/45-liquidaciones-regression.cy.ts` → LI-01, LI-02, LI-03 (Sesión 7) — 4 tests
+- `cypress/e2e/43b-session-changes-regression.cy.ts` → CO-02, CO-03, CO-04, PR-11, PR-13 (Sesión 5)
+- `cypress/e2e/45b-liquidaciones-regression.cy.ts` → LI-01, LI-02, LI-03 (Sesión 7) — 4 tests
 - `cypress/e2e/46-cobros-regression.cy.ts` → CO-01a, CO-01b (Sesión 8) — 4 tests
