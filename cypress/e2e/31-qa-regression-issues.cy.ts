@@ -197,12 +197,7 @@ function prepareSaleForm(
   unitCode = 'U-001',
   initialPayment: 'DOWN_PAYMENT' | 'NONE' = 'DOWN_PAYMENT',
 ) {
-  cy.get('body').then(($body) => {
-    if ($body.find('[data-cy="credit-customer"]').length === 0) {
-      cy.url().should('include', '/seller/operations/new');
-      return;
-    }
-
+  cy.get('[data-cy="credit-customer"]').should('exist').then(() => {
     selectDropdownOption('[data-cy="credit-customer"]', 'Ana García');
     selectDropdownOption('[data-cy="credit-frequency"]', 'Mensual');
 
@@ -232,11 +227,6 @@ describe('QA Regression — SALE frontend integration', () => {
   });
 
   it('simula SALE con down_payment, muestra monto financiado y no usa prepaid_installments', () => {
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-customer"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-      }
-    });
 
     cy.intercept('POST', '**/api/credits/simulate', (req) => {
       expect(req.body).to.include({
@@ -253,12 +243,7 @@ describe('QA Regression — SALE frontend integration', () => {
     }).as('simulateSale');
 
     prepareSaleForm();
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-simulate"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
-
+    cy.get('[data-cy="credit-simulate"]').should('exist').then(() => {
       cy.get('[data-cy="credit-simulate"]').click();
       cy.wait('@simulateSale');
 
@@ -275,11 +260,6 @@ describe('QA Regression — SALE frontend integration', () => {
   });
 
   it('crea SALE con unit_ids y down_payment, sin prepaid_installments', () => {
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-customer"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-      }
-    });
 
     cy.intercept('POST', '**/api/credits', (req) => {
       expect(req.body).to.deep.equal({
@@ -296,12 +276,7 @@ describe('QA Regression — SALE frontend integration', () => {
     }).as('createSale');
 
     prepareSaleForm();
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-submit"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
-
+    cy.get('[data-cy="credit-submit"]').should('exist').then(() => {
       cy.get('[data-cy="credit-submit"]').click();
       cy.wait('@createSale');
     });
@@ -325,12 +300,7 @@ describe('QA Regression — SALE frontend integration', () => {
     }).as('createSaleMixedDownPayment');
 
     prepareSaleForm();
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-submit"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
-
+    cy.get('[data-cy="credit-submit"]').should('exist').then(() => {
       cy.get('[data-cy="sale-down-payment-method-mixed"]').click({
         force: true,
       });
@@ -363,12 +333,7 @@ describe('QA Regression — SALE frontend integration', () => {
     }).as('createSaleMixedAdvanced');
 
     prepareSaleForm('U-001', 'NONE');
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-submit"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
-
+    cy.get('[data-cy="credit-submit"]').should('exist').then(() => {
       cy.contains('label', 'Cuotas adelantadas').click({ force: true });
       cy.get('[data-cy="sale-advanced-installments-count"] input')
         .clear()
@@ -391,23 +356,9 @@ describe('QA Regression — SALE frontend integration', () => {
   });
 
   it('bloquea la venta cuando el enganche supera el total del carrito', () => {
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-customer"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-      }
-    });
 
     prepareSaleForm();
-    cy.get('body').then(($body) => {
-      if (
-        $body.find(
-          '[data-cy="sale-down-payment"] input, [data-cy="credit-submit"]',
-        ).length === 0
-      ) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
-
+    cy.get('[data-cy="credit-submit"]').should('exist').then(() => {
       cy.get('[data-cy="sale-down-payment"] input').clear().type('1500');
       cy.get('[data-cy="credit-submit"]').click();
 
@@ -418,11 +369,6 @@ describe('QA Regression — SALE frontend integration', () => {
   });
 
   it('CR-22 — respeta la unidad puntual elegida y no reemplaza por la primera disponible', () => {
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-customer"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-      }
-    });
 
     cy.intercept('POST', '**/api/credits', (req) => {
       expect(req.body).to.include({
@@ -436,12 +382,7 @@ describe('QA Regression — SALE frontend integration', () => {
     }).as('createSaleWithSecondUnit');
 
     prepareSaleForm('U-002');
-    cy.get('body').then(($body) => {
-      if ($body.find('[data-cy="credit-submit"]').length === 0) {
-        cy.url().should('include', '/seller/operations/new');
-        return;
-      }
-
+    cy.get('[data-cy="credit-submit"]').should('exist').then(() => {
       cy.get('[data-cy="credit-submit"]').click();
       cy.wait('@createSaleWithSecondUnit');
     });

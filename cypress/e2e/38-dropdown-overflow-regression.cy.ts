@@ -118,28 +118,19 @@ describe('Regresión — Dropdowns con appendTo="body" (US-01, US-02, CL-09, CR-
     it('dropdown de filtro se adjunta a body y no queda cortado', () => {
       const filterSelector = '[data-cy="dropdown-filtro-clientes"], .clients-filters p-dropdown, .clients-filters p-select';
 
-      cy.get('body').then(($body) => {
-        if ($body.find(filterSelector).length === 0) {
-          cy.url().should('include', '/admin/clients');
-          return;
-        }
+      const panelSelector = '.p-dropdown-panel:visible, .p-select-overlay:visible, .p-multiselect-panel:visible';
 
-        cy.get(filterSelector).first().click({ force: true });
+      cy.get(filterSelector).should('exist').first().click({ force: true });
 
-        cy.get('body').then(($afterClickBody) => {
-          const visiblePanels = $afterClickBody.find(
-            '.p-overlay .p-dropdown-panel:visible, .p-dropdown-panel:visible, .p-overlay .p-select-overlay:visible, .p-select-overlay:visible, .p-overlay .p-multiselect-panel:visible, .p-multiselect-panel:visible',
-          );
-
-          if (visiblePanels.length === 0) {
-            cy.url().should('include', '/admin/clients');
-            return;
-          }
-
-          cy.get('.p-overlay .p-dropdown-panel .p-dropdown-item:visible, .p-dropdown-panel .p-dropdown-item:visible, .p-overlay .p-select-overlay .p-select-option:visible, .p-select-overlay .p-select-option:visible').first().click();
-          cy.get('.p-overlay .p-dropdown-panel:visible, .p-dropdown-panel:visible, .p-overlay .p-select-overlay:visible, .p-select-overlay:visible').should('not.exist');
+      cy.get(panelSelector)
+        .should('have.length.greaterThan', 0)
+        .first()
+        .then(($panel) => {
+          expect($panel.closest('.clients-filters').length, 'panel fuera del contenedor de filtros').to.eq(0);
         });
-      });
+
+      cy.get('.p-dropdown-panel .p-dropdown-item:visible, .p-select-overlay .p-select-option:visible').first().click();
+      cy.get(panelSelector).should('not.exist');
     });
   });
 

@@ -150,7 +150,7 @@ describe('CA-05 real — gasto creado hoy queda en la jornada activa (register_d
     if (!Cypress.env('realAuthEnabled')) this.skip();
   });
 
-  it('CA-05 — gasto POST retorna 201 y el pre-cierre refleja el egreso en la jornada activa', () => {
+  it('CA-05 — gasto POST retorna 201 y el pre-cierre refleja el egreso en la jornada activa', function () {
     cy.getAuthToken('ADMIN').then((token) => {
       // Resetear jornada y abrir caja con opening_amount > GASTO_AMOUNT para que
       // el gasto en efectivo nunca dispare el chequeo de efectivo disponible (409 INSUFFICIENT_CASH).
@@ -175,8 +175,8 @@ describe('CA-05 real — gasto creado hoy queda en la jornada activa (register_d
           expect(catRes.status).to.eq(200);
           const categories: { id: string }[] = catRes.body.data ?? [];
           if (categories.length === 0) {
-            cy.log('Sin categorías — saltando test CA-05');
-            return;
+            // Precondición de datos reales: sin categorías de gasto no se puede crear el gasto.
+            this.skip();
           }
           const categoryId = categories[0].id;
 

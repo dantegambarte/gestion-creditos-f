@@ -87,7 +87,7 @@ describe('Admin — Reportes — Movimientos de caja', () => {
     });
   });
 
-  it('si hay una jornada disponible, muestra el resumen de movimientos o el estado vacío de la caja', () => {
+  it('si hay una jornada disponible, muestra el resumen de movimientos o el estado vacío de la caja', function () {
     cy.get('app-cash-movements-report')
       .find('button')
       .contains('Buscar jornadas')
@@ -95,10 +95,8 @@ describe('Admin — Reportes — Movimientos de caja', () => {
 
     cy.get('app-cash-movements-report').then(($el) => {
       if ($el.find('p-dropdown').length === 0) {
-        cy.log(
-          'Sin jornadas en el período por defecto, se omite la verificación del reporte.',
-        );
-        return;
+        // Precondición de datos reales: sin jornadas no hay nada que verificar; se marca skip visible.
+        this.skip();
       }
 
       cy.get('app-cash-movements-report').find('.p-dropdown').click();

@@ -835,7 +835,7 @@ Módulo Planilla
 **ID de Prueba:** [PL-02]
 **Título / Descripción:** [Botones]
 ### 1. Contexto de la Prueba
-* **Resultado Obtenido (Actual):** [Corregido. Las acciones de generar planilla se reordenaron y unificaron en el bloque inferior del formulario usando el patrón visual del proyecto para botones secundarios/primarios. Validado con Cypress `22-admin-generar-planilla.cy.ts`.]
+* **Resultado Obtenido (Actual):** [Corregido. Las acciones de generar planilla se reordenaron y unificaron en el bloque inferior del formulario usando el patrón visual del proyecto para botones secundarios/primarios. Validado con Cypress `22b-admin-generar-planilla.cy.ts`.]
 
 ---
 
@@ -1245,7 +1245,7 @@ Módulo Liquidaciones
 - `cypress/e2e/34-product-list-regression.cy.ts` → passing
 - `cypress/e2e/35-product-success-toast-regression.cy.ts` → passing
 - `cypress/e2e/36-product-edit-category-regression.cy.ts` → passing
-- `cypress/e2e/22-admin-generar-planilla.cy.ts` → passing
+- `cypress/e2e/22b-admin-generar-planilla.cy.ts` → passing
 
 ### Tests Cypress (sesión 2)
 - `cypress/e2e/38-dropdown-overflow-regression.cy.ts` → Grupo A: US-01, US-02, CL-09, CR-14
@@ -1269,7 +1269,7 @@ Módulo Liquidaciones
 - **LI-01** → Corregido / validado — `saveSalary()` llama `loadSummary()` tras el PUT; tabla se actualiza sin refresh manual
 - **LI-02** → Corregido / validado — signals `selectedCollectorId`, `currentSalary`, `newWeeklyAmount` reseteados a `null` tras save; editor queda limpio
 - **LI-03** → Corregido / validado — `openLiquidateDialog()` carga comisiones PENDING vía `getCommissions`; dialog muestra tabla "Ventas incluidas" con Cliente / Venta / Comisión
-- Tests Cypress → `cypress/e2e/45-liquidaciones-regression.cy.ts` — 4 tests automatizados (LI-01, LI-02, LI-03 ×2)
+- Tests Cypress → `cypress/e2e/45b-liquidaciones-regression.cy.ts` — 4 tests automatizados (LI-01, LI-02, LI-03 ×2)
 
 ### Sesión 8 (CO-01)
 - **CO-01** → Corregido / validado — backend `restoreInstallmentFromReversal` actualiza `installment.status` a PENDING/OVERDUE/PARTIAL tras reversión; UI muestra "Revertido" en lista de cobros y "Pendiente" en planilla
@@ -1282,7 +1282,7 @@ Módulo Liquidaciones
   - Backend: `approve` y `adminDirect` en payments.service.js usan `getActiveJornadaDate()` para `_validateCajaOpen` y `registerDate` del movimiento de caja
   - Backend: `reverse` simplificado — valida y registra contra `movement.register_date` (la jornada del cobro original)
   - Frontend: getter `isPostMidnightJornada` y badge de advertencia `[data-cy="jornada-post-midnight-badge"]` en el panel de caja
-- Tests Cypress → `cypress/e2e/47-jornada-regression.cy.ts` — 8 tests automatizados (CA-02a: badge jornada, CA-02b: cierre post-medianoche, CA-02c: aprobación post-medianoche, CA-02d: reversión post-medianoche)
+- Tests Cypress → `cypress/e2e/47b-jornada-regression.cy.ts` — 8 tests automatizados (CA-02a: badge jornada, CA-02b: cierre post-medianoche, CA-02c: aprobación post-medianoche, CA-02d: reversión post-medianoche)
 - **CA-04** → Corregido / validado — enganches post-medianoche se imputan a `register_date` de la jornada activa; cubierto por `credits.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts`
 - **CA-05** → Corregido / validado — gastos post-medianoche se imputan a `register_date` de la jornada activa; cubierto por `expenses.service.test.js` y Cypress `49-ca04-ca05-register-date.cy.ts`
 

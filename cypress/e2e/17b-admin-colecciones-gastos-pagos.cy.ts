@@ -4,7 +4,7 @@
  * Alcance:
  *  - Mantiene en este spec solo Gastos + Cobros.
  *  - Cobertura de Colecciones se migra por separado en specs dedicados:
- *    `22-admin-generar-planilla.cy.ts` y `29-admin-collection-detail.cy.ts`.
+ *    `22b-admin-generar-planilla.cy.ts` y `29-admin-collection-detail.cy.ts`.
  */
 
 describe('Admin — Gastos (real)', () => {

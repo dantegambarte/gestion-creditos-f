@@ -142,12 +142,7 @@ describe('CL-05 — Calendarios de período en historial de cliente (Admin)', ()
   it('panel de calendario Desde se adjunta a body — no clipado por tab-content', () => {
     openHistorialTabIfPresent();
 
-    cy.get('body').then(($body) => {
-      if ($body.find('p-calendar').length === 0) {
-        cy.url().should('include', '/admin/clients/11223344');
-        return;
-      }
-
+    cy.get('p-calendar').should('exist').then(() => {
       // Abrir el primer calendario (Período Desde)
       cy.get('p-calendar').first().find('button').click({ force: true });
 
@@ -159,12 +154,7 @@ describe('CL-05 — Calendarios de período en historial de cliente (Admin)', ()
   it('panel de calendario Hasta se adjunta a body', () => {
     openHistorialTabIfPresent();
 
-    cy.get('body').then(($body) => {
-      const calendars = $body.find('p-calendar');
-      if (calendars.length === 0) {
-        cy.url().should('include', '/admin/clients/11223344');
-        return;
-      }
+    cy.get('p-calendar').should('exist').then((calendars) => {
 
       // Abrir el segundo calendario (Período Hasta)
       const index = calendars.length > 1 ? 1 : 0;
@@ -177,15 +167,7 @@ describe('CL-05 — Calendarios de período en historial de cliente (Admin)', ()
   it('dropdown de tipo de evento se adjunta a body', () => {
     openHistorialTabIfPresent();
 
-    cy.get('body').then(($body) => {
-      const hasEventFilter =
-        $body.find('.hist-filter-bar p-dropdown, .hist-filter-bar p-select')
-          .length > 0;
-      if (!hasEventFilter) {
-        cy.url().should('include', '/admin/clients/11223344');
-        return;
-      }
-
+    cy.get('.hist-filter-bar p-dropdown, .hist-filter-bar p-select').should('exist').then(() => {
       cy.get('.hist-filter-bar p-dropdown, .hist-filter-bar p-select')
         .first()
         .click();
@@ -199,12 +181,7 @@ describe('CL-05 — Calendarios de período en historial de cliente (Admin)', ()
     cy.viewport(375, 667);
     openHistorialTabIfPresent();
 
-    cy.get('body').then(($body) => {
-      if ($body.find('.hist-table').length === 0) {
-        cy.url().should('include', '/admin/clients/11223344');
-        return;
-      }
-
+    cy.get('.hist-table').should('exist').then(() => {
       cy.get('.hist-table').should('not.be.visible');
       cy.get('[data-cy="client-historial-mobile-card"]').should(
         'have.length.at.least',
