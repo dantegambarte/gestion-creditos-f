@@ -192,10 +192,6 @@
   vertical-align: middle;
 }
 
-:host ::ng-deep .operations-table .p-datatable-tbody > tr.operations-row--highlight {
-  background: rgba(251, 176, 64, 0.08);
-}
-
 .operations-client {
   display: flex;
   flex-direction: column;

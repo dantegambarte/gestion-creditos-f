@@ -56,3 +56,6 @@ e2e-run-monitor.log
 
 # Local Netlify folder
 .netlify
+
+# Logs
+*.log

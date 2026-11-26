@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 import { combineLatest, takeUntil } from 'rxjs';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { ReportsService } from '../../reports/reports.service';
-import { DashboardChartsService } from '../services/dashboard-charts.service';
+import { ChartConfig, DashboardChartsService } from '../services/dashboard-charts.service';
 
 @Component({
   selector: 'app-dashboard-charts',
@@ -23,12 +23,12 @@ export class DashboardChartsComponent implements OnChanges, OnDestroy {
   loadingCharts = true;
   /** True cuando falló la carga de reportes: se muestra error con reintento en vez de gráficos vacíos. */
   errorCharts = false;
-  chartWeeklyData?: object;
-  chartWeeklyOptions?: object;
-  chartCollectorsData: object = { labels: [], datasets: [] };
-  chartCollectorsOptions?: object;
-  chartSellersData: object = { labels: [], datasets: [] };
-  chartSellersOptions?: object;
+  chartWeeklyData?: ChartConfig['data'];
+  chartWeeklyOptions?: ChartConfig['options'];
+  chartCollectorsData: ChartConfig['data'] = { labels: [], datasets: [] };
+  chartCollectorsOptions?: ChartConfig['options'];
+  chartSellersData: ChartConfig['data'] = { labels: [], datasets: [] };
+  chartSellersOptions?: ChartConfig['options'];
 
   private readonly reportsSvc = inject(ReportsService);
   private readonly chartsSvc = inject(DashboardChartsService);
