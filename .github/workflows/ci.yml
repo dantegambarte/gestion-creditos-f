@@ -49,19 +49,23 @@ jobs:
           cat scope.json
           echo "mode=$(node -p "require('./scope.json').mode")" >> "$GITHUB_OUTPUT"
 
+      # Version comes from packageManager in package.json.
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        if: steps.scope.outputs.mode != 'none'
+
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.scope.outputs.mode != 'none'
         with:
-          node-version: 22
-          cache: npm
+          node-version-file: .nvmrc
+          cache: pnpm
 
       - name: Install
         if: steps.scope.outputs.mode != 'none'
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Scope script tests
         if: steps.scope.outputs.mode != 'none'
-        run: npm run test:scope
+        run: pnpm test:scope
 
       - name: Lint changed files
         if: steps.scope.outputs.mode != 'none'
@@ -70,20 +74,20 @@ jobs:
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "Lint runs only on PR diffs (incremental adoption)."
           elif [ -n "$FILES" ]; then
-            npx eslint --max-warnings 0 $FILES
+            pnpm exec eslint --max-warnings 0 $FILES
           else
             echo "No lintable files changed."
           fi
 
       - name: Unit tests (full, with coverage threshold)
         if: steps.scope.outputs.mode == 'full'
-        run: npm run test:ci
+        run: pnpm test:ci
 
       - name: Unit tests (affected features)
         if: steps.scope.outputs.mode == 'affected'
         run: |
           ARGS=$(node -p "require('./scope.json').includes.map(i => '--include=' + i).join(' ')")
-          npx ng test --watch=false --browsers=ChromeHeadlessCI $ARGS
+          pnpm exec ng test --watch=false --browsers=ChromeHeadlessCI $ARGS
 
   nightly-report:
     name: Report nightly failure
