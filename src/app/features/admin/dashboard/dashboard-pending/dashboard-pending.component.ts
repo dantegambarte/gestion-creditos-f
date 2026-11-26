@@ -20,21 +20,13 @@ import { CurrencyArsPipe } from '../../../../core/pipes/currency-ars.pipe';
 import { PaymentsService } from '../../../collector/payments.service';
 import { Credit } from '../../../seller/models/credit.model';
 import { CreditsService } from '../../../seller/operations/credits.service';
-import {
-  Payment,
-  PendingCreditGroup,
-  PendingPaymentGroup,
-} from '../../models/interface/dashboard';
+import { Payment, PendingCreditGroup, PendingPaymentGroup } from '../../models/interface/dashboard';
 import { DashboardApprovePaymentDialogComponent } from '../dashboard-approve-payment-dialog/dashboard-approve-payment-dialog.component';
 
 @Component({
   selector: 'app-dashboard-pending',
   standalone: true,
-  imports: [
-    CurrencyArsPipe,
-    SkeletonModule,
-    DashboardApprovePaymentDialogComponent,
-  ],
+  imports: [CurrencyArsPipe, SkeletonModule, DashboardApprovePaymentDialogComponent],
   templateUrl: './dashboard-pending.component.html',
 })
 export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
@@ -70,12 +62,18 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
     this.loadPending();
   }
 
+  /**
+   * Al cambiar el estado de caja recalcula la alerta de pendientes +48h con los
+   * últimos cobros cargados, en vez de borrarla (antes desaparecía al llegar el estado de caja).
+   */
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['isCashClosed']) {
-      // Limpiar alerta de caja si el estado cambia
-      this.alertUpdated.emit({ show: false, message: '' });
+    if (changes['isCashClosed'] && this.lastPendingPayments) {
+      this.checkPendingAlerts(this.lastPendingPayments);
     }
   }
+
+  /** Últimos cobros pendientes cargados; permiten recalcular la alerta +48h. */
+  private lastPendingPayments: { createdAt: string }[] | null = null;
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -90,18 +88,15 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
     this.loadingPending = true;
 
     combineLatest([
-      this.creditsSvc
-        .list({ status: 'PENDING_APPROVAL' })
-        .pipe(catchError(() => of([]))),
-      this.paymentsSvc
-        .list({ status: 'PENDING' })
-        .pipe(catchError(() => of([]))),
+      this.creditsSvc.list({ status: 'PENDING_APPROVAL' }).pipe(catchError(() => of([]))),
+      this.paymentsSvc.list({ status: 'PENDING' }).pipe(catchError(() => of([]))),
     ])
       .pipe(takeUntil(this.destroy$))
       .subscribe(([credits, payments]) => {
         this.pendingCredits = this.groupCreditsBySeller(credits);
         this.pendingPayments = this.groupPaymentsByCollector(payments);
         this.syncExpandedGroups();
+        this.lastPendingPayments = payments;
         this.checkPendingAlerts(payments);
         this.loadingPending = false;
       });
@@ -186,8 +181,7 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
     if (this.isCashClosed) {
       this.alertUpdated.emit({
         show: true,
-        message:
-          'No hay una caja operativa abierta. Abrí una caja para aprobar créditos.',
+        message: 'No hay una caja operativa abierta. Abrí una caja para aprobar créditos.',
       });
       return;
     }
@@ -203,8 +197,7 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
     if (this.isCashClosed) {
       this.alertUpdated.emit({
         show: true,
-        message:
-          'No hay una caja operativa abierta. Abrí una caja para aprobar cobros.',
+        message: 'No hay una caja operativa abierta. Abrí una caja para aprobar cobros.',
       });
       return;
     }
@@ -264,10 +257,8 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
           // pagada, etc.): mostramos el mensaje del backend, no uno genérico.
           this.messageService.add({
             severity: err.status === 409 ? 'warn' : 'error',
-            summary:
-              err.status === 409 ? 'No se pudo aprobar el cobro' : 'Error',
-            detail:
-              err.message ?? 'Error al aprobar el cobro. Intenta nuevamente.',
+            summary: err.status === 409 ? 'No se pudo aprobar el cobro' : 'Error',
+            detail: err.message ?? 'Error al aprobar el cobro. Intenta nuevamente.',
             life: 6000,
           });
         },
@@ -278,9 +269,7 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
     const now = new Date();
     const overdue48h = payments.filter((payment) => {
       if (!payment.createdAt) return false;
-      const diffHours =
-        (now.getTime() - new Date(payment.createdAt).getTime()) /
-        (1000 * 60 * 60);
+      const diffHours = (now.getTime() - new Date(payment.createdAt).getTime()) / (1000 * 60 * 60);
       return diffHours > 48;
     });
 
@@ -338,16 +327,14 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
 
     return Array.from(grouped.entries()).map(([sellerName, items]) => {
       const sortedItems = items.sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
       return {
         sellerName,
         count: sortedItems.length,
         totalAmount: sortedItems.reduce((sum, c) => sum + c.totalAmount, 0),
         oldestDate: sortedItems.reduce(
-          (oldest, c) =>
-            new Date(c.createdAt) < new Date(oldest) ? c.createdAt : oldest,
+          (oldest, c) => (new Date(c.createdAt) < new Date(oldest) ? c.createdAt : oldest),
           sortedItems[0].createdAt,
         ),
         credits: sortedItems,
@@ -366,16 +353,14 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
 
     return Array.from(grouped.entries()).map(([collectorName, items]) => {
       const sortedItems = items.sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
       return {
         collectorName,
         count: sortedItems.length,
         totalAmount: sortedItems.reduce((sum, p) => sum + p.amountReceived, 0),
         oldestDate: sortedItems.reduce(
-          (oldest, p) =>
-            new Date(p.createdAt) < new Date(oldest) ? p.createdAt : oldest,
+          (oldest, p) => (new Date(p.createdAt) < new Date(oldest) ? p.createdAt : oldest),
           sortedItems[0].createdAt,
         ),
         payments: sortedItems,
