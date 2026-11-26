@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { MessageService } from 'primeng/api';
-import { Subject } from 'rxjs';
-import { finalize, takeUntil } from 'rxjs/operators';
+import { Subject, forkJoin, of } from 'rxjs';
+import { catchError, finalize, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
@@ -50,6 +50,8 @@ export class CommissionsFacade {
   readonly employeeCommissions = signal<Commission[]>([]);
   readonly loadingCommissions = signal(false);
   readonly collectors = signal<User[]>([]);
+  /** Sueldo semanal configurado por cobrador (userId → monto), desde el endpoint de sueldos. */
+  readonly configuredSalaries = signal<Map<string, number>>(new Map());
   readonly selectedCollectorId = signal<string | null>(null);
   readonly currentSalary = signal<Salary | null>(null);
   readonly loadingSalary = signal(false);
@@ -70,15 +72,13 @@ export class CommissionsFacade {
   );
 
   readonly salaryRows = computed(() =>
-    this.collectors().map((collector) => {
-      const summary = this.employees().find((employee) => employee.userId === collector.id);
-      return {
-        userId: collector.id,
-        fullName: collector.fullName,
-        role: collector.role,
-        weeklyAmount: summary?.salaryAmount ?? 0,
-      };
-    }),
+    this.collectors().map((collector) => ({
+      userId: collector.id,
+      fullName: collector.fullName,
+      role: collector.role,
+      // El sueldo sale del endpoint de sueldos, no del resumen semanal (que liquida montos del período).
+      weeklyAmount: this.configuredSalaries().get(collector.id) ?? 0,
+    })),
   );
 
   readonly filteredSalaryRows = computed(() => {
@@ -161,6 +161,33 @@ export class CommissionsFacade {
       .pipe(takeUntil(this.destroy$))
       .subscribe((collectors) => {
         this.collectors.set(collectors);
+        this.loadConfiguredSalaries();
+      });
+  }
+
+  /**
+   * Carga el sueldo semanal configurado de cada cobrador desde el endpoint de
+   * sueldos (GET commissions/salary/:userId), que es su fuente de verdad. Un
+   * cobrador sin sueldo configurado (404 u otro error) queda fuera del mapa.
+   */
+  loadConfiguredSalaries(): void {
+    const collectors = this.collectors();
+    if (!collectors.length) {
+      this.configuredSalaries.set(new Map());
+      return;
+    }
+    forkJoin(
+      collectors.map((collector) =>
+        this.commissionsService.getSalary(collector.id).pipe(catchError(() => of(null))),
+      ),
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((salaries) => {
+        const map = new Map<string, number>();
+        salaries.forEach((salary) => {
+          if (salary && salary.active !== false) map.set(salary.userId, salary.weeklyAmount);
+        });
+        this.configuredSalaries.set(map);
       });
   }
 
@@ -490,6 +517,9 @@ export class CommissionsFacade {
           });
           // LI-01: refresca la tabla y el Resumen Semanal
           this.loadSummary();
+          this.configuredSalaries.update((current) =>
+            new Map(current).set(salary.userId, salary.weeklyAmount),
+          );
           // LI-02: limpia el editor después de guardar
           this.selectedCollectorId.set(null);
           this.currentSalary.set(null);
