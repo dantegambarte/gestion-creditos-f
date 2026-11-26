@@ -17,12 +17,9 @@ import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
 import { CommissionsService } from '../../admin/commissions/commissions.service';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
-import {
-  Commission,
-  CommissionStatus,
-  Liquidation,
-} from '../../admin/models/commission.model';
+import { Commission, CommissionStatus, Liquidation } from '../../admin/models/commission.model';
 import { formatIsoDate } from '../../../shared/utils/date-format.util';
+import { paymentMethodLabel } from '../../../shared/models/payment-method-labels';
 
 @Component({
   selector: 'app-seller-commissions',
@@ -80,9 +77,7 @@ export class SellerCommissionsComponent implements OnInit, OnDestroy {
   loadCommissions(): void {
     this.loading = true;
     this.error = null;
-    const filters = this.filterStatus
-      ? { status: this.filterStatus }
-      : undefined;
+    const filters = this.filterStatus ? { status: this.filterStatus } : undefined;
     this.service
       .getCommissions(filters)
       .pipe(
@@ -164,7 +159,7 @@ export class SellerCommissionsComponent implements OnInit, OnDestroy {
    * @returns
    */
   paymentMethodLabel(pm: string): string {
-    return pm === 'CASH' ? 'Efectivo' : 'Transferencia';
+    return paymentMethodLabel(pm);
   }
 
   formatCurrency(value: number): string {

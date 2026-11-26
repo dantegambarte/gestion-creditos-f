@@ -15,14 +15,11 @@ import { AppError } from '../../../core/models/app-error';
 import { FormatService } from '../../../core/services/format.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import {
-  Commission,
-  CommissionStatus,
-  Liquidation,
-} from '../../admin/models/commission.model';
+import { Commission, CommissionStatus, Liquidation } from '../../admin/models/commission.model';
 import { CommissionsService } from '../../admin/commissions/commissions.service';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { formatIsoDate } from '../../../shared/utils/date-format.util';
+import { paymentMethodLabel } from '../../../shared/models/payment-method-labels';
 
 @Component({
   selector: 'app-collector-commissions',
@@ -80,9 +77,7 @@ export class CollectorCommissionsComponent implements OnInit, OnDestroy {
   loadCommissions(): void {
     this.loading = true;
     this.error = null;
-    const filters = this.filterStatus
-      ? { status: this.filterStatus }
-      : undefined;
+    const filters = this.filterStatus ? { status: this.filterStatus } : undefined;
     this.service
       .getCommissions(filters)
       .pipe(
@@ -164,7 +159,7 @@ export class CollectorCommissionsComponent implements OnInit, OnDestroy {
    * @returns
    */
   paymentMethodLabel(pm: string): string {
-    return pm === 'CASH' ? 'Efectivo' : 'Transferencia';
+    return paymentMethodLabel(pm);
   }
 
   formatCurrency(value: number): string {

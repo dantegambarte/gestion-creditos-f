@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { CashRegisterComponent } from './cash-register.component';
 import { CashRegisterService } from './cash-register.service';
 import { CashStatusService } from './cash-status.service';
+import { CashSessionManualIncome } from '../models/cash-register.model';
 import { ExpenseCategoriesService } from '../expenses/expense-categories.service';
 
 describe('CashRegisterComponent', () => {
@@ -225,6 +226,32 @@ describe('CashRegisterComponent', () => {
         }),
       );
       expect(cashRegisterServiceSpy.createManualIncome).not.toHaveBeenCalled();
+    });
+
+    it('submitManualIncome DAILY y COMPANY envían el mismo split por método', () => {
+      cashRegisterServiceSpy.createManualIncome.and.returnValue(of({} as CashSessionManualIncome));
+      cashRegisterServiceSpy.createManualIncomeCompany.and.returnValue(of({}));
+      component.activeSession.set({ id: 'S1' } as never);
+
+      component.openManualIncomeDialog();
+      component.manualIncomeCriteria.set('DAILY');
+      component.manualIncomeAmount.set(500);
+      component.manualIncomePaymentMethod.set('TRANSFER');
+      component.manualIncomeReference.set('REF-1');
+      component.manualIncomeDescription.set('Ingreso día');
+      component.submitManualIncome();
+
+      component.openManualIncomeDialog();
+      component.manualIncomeCriteria.set('COMPANY');
+      component.manualIncomeAmount.set(500);
+      component.manualIncomePaymentMethod.set('TRANSFER');
+      component.manualIncomeReference.set('REF-1');
+      component.manualIncomeDescription.set('Ingreso general');
+      component.submitManualIncome();
+
+      const split = jasmine.objectContaining({ amountCash: 0, amountTransfer: 500 });
+      expect(cashRegisterServiceSpy.createManualIncome).toHaveBeenCalledWith('S1', split);
+      expect(cashRegisterServiceSpy.createManualIncomeCompany).toHaveBeenCalledWith(split);
     });
 
     it('submitManualIncome con criteria DAILY y sin caja activa muestra error de validación', () => {

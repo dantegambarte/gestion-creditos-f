@@ -38,6 +38,10 @@ import { CashSessionOpenDialogComponent } from './cash-session-open-dialog/cash-
 import { CashSessionSnapshotDialogComponent } from './cash-session-snapshot-dialog/cash-session-snapshot-dialog.component';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { formatIsoDate } from '../../../shared/utils/date-format.util';
+import {
+  paymentMethodLabel,
+  splitAmountByMethod,
+} from '../../../shared/models/payment-method-labels';
 
 type MovementTypeFilter = 'TODOS' | CashRegisterMovementType;
 type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
@@ -531,27 +535,20 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
     }
 
     const paymentMethod = this.manualIncomePaymentMethod();
-    const splitByMethod: Record<
-      'CASH' | 'TRANSFER' | 'MIXED',
-      { amountCash: number; amountTransfer: number }
-    > = {
-      CASH: { amountCash: amount, amountTransfer: 0 },
-      TRANSFER: { amountCash: 0, amountTransfer: amount },
-      MIXED: { amountCash, amountTransfer },
-    };
+    const split = splitAmountByMethod(paymentMethod, amount, amountCash, amountTransfer);
 
     this.manualIncomeSubmitting.set(true);
     const request$ =
       criteria === 'COMPANY'
         ? this.service.createManualIncomeCompany({
             amount,
-            ...splitByMethod[paymentMethod],
+            ...split,
             description,
             receiptReference: this.manualIncomeReference().trim() || undefined,
           })
         : this.service.createManualIncome(session!.id, {
             amount,
-            ...(paymentMethod === 'MIXED' ? { amountCash, amountTransfer } : { paymentMethod }),
+            ...split,
             description,
             receiptReference: this.manualIncomeReference().trim() || undefined,
           });
@@ -624,7 +621,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * @param method - Método CASH o TRANSFER.
    */
   paymentMethodLabel(method: 'CASH' | 'TRANSFER'): string {
-    return method === 'CASH' ? 'Efectivo' : 'Transferencia';
+    return paymentMethodLabel(method);
   }
 
   /**
