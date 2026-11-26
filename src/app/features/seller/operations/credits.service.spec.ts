@@ -1,8 +1,5 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
 import { jwtInterceptor } from '../../../core/interceptors/jwt.interceptor';
@@ -260,9 +257,7 @@ describe('CreditsService', () => {
     });
 
     it('maps snake_case to camelCase', () => {
-      let result: ReturnType<
-        typeof service.list
-      > extends import('rxjs').Observable<infer T>
+      let result: ReturnType<typeof service.list> extends import('rxjs').Observable<infer T>
         ? T
         : never = [];
       service.list().subscribe((data) => (result = data));
@@ -290,6 +285,60 @@ describe('CreditsService', () => {
       expect(detail.products![0].productName).toBe('Prod A');
       expect(detail.customerPhone).toBe('1122334455');
       expect(detail.financedAmount).toBe(10000);
+    });
+  });
+
+  describe('changePlan (excedente #95)', () => {
+    it('envía excess_disposition cuando se indica y mapea la respuesta', () => {
+      let result: unknown;
+      service
+        .changePlan('credit-1', { excess_disposition: 'REFUND' })
+        .subscribe((r) => (result = r));
+      const req = httpMock.expectOne(`${BASE}/credits/credit-1/plan-change`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ excess_disposition: 'REFUND' });
+      req.flush({
+        ok: true,
+        data: {
+          newBalance: 0,
+          cancelledInstallments: [3],
+          creditWillBeSettled: true,
+          excessAmount: 1500,
+          requiresExcessDisposition: true,
+          excessDisposition: 'REFUND',
+          plan_change_id: 'pc-1',
+          executed_at: '2026-01-01',
+          message: 'ok',
+        },
+      });
+      expect(result).toEqual(
+        jasmine.objectContaining({
+          excessAmount: 1500,
+          requiresExcessDisposition: true,
+          excessDisposition: 'REFUND',
+          planChangeId: 'pc-1',
+        }),
+      );
+    });
+
+    it('sin excedente no envía excess_disposition (flujo previo)', () => {
+      service.changePlan('credit-1', { reason: 'x' }).subscribe();
+      const req = httpMock.expectOne(`${BASE}/credits/credit-1/plan-change`);
+      expect(req.request.body).toEqual({ reason: 'x' });
+      req.flush({ ok: true, data: { message: 'ok' } });
+    });
+
+    it('propaga el code del 422 EXCESS_DISPOSITION_REQUIRED', () => {
+      let error: { status: number; code?: string } | undefined;
+      service.changePlan('credit-1').subscribe({ error: (e) => (error = e) });
+      httpMock
+        .expectOne(`${BASE}/credits/credit-1/plan-change`)
+        .flush(
+          { ok: false, message: 'm', code: 'EXCESS_DISPOSITION_REQUIRED' },
+          { status: 422, statusText: 'Unprocessable' },
+        );
+      expect(error?.status).toBe(422);
+      expect(error?.code).toBe('EXCESS_DISPOSITION_REQUIRED');
     });
   });
 
@@ -403,9 +452,7 @@ describe('CreditsService', () => {
       expect(req.request.body['down_payment']).toBe(0);
       expect(req.request.body['prepaid_installments']).toBe(1);
       expect(req.request.body['prepaid_installments_method']).toBe('TRANSFER');
-      expect(req.request.body['prepaid_installments_transfer_reference']).toBe(
-        'TRX-123',
-      );
+      expect(req.request.body['prepaid_installments_transfer_reference']).toBe('TRX-123');
       req.flush({
         ok: true,
         data: { id: 'new-id', status: 'PENDING_APPROVAL' },
@@ -434,9 +481,7 @@ describe('CreditsService', () => {
       expect(req.request.body['down_payment_cash']).toBe(200);
       expect(req.request.body['down_payment_transfer']).toBe(300);
       expect(req.request.body['down_payment_method']).toBeUndefined();
-      expect(req.request.body['down_payment_transfer_reference']).toBe(
-        'DP-MIX-001',
-      );
+      expect(req.request.body['down_payment_transfer_reference']).toBe('DP-MIX-001');
       req.flush({
         ok: true,
         data: { id: 'new-id', status: 'PENDING_APPROVAL' },
@@ -465,9 +510,7 @@ describe('CreditsService', () => {
       expect(req.request.body['prepaid_installments_cash']).toBe(150);
       expect(req.request.body['prepaid_installments_transfer']).toBe(250);
       expect(req.request.body['prepaid_installments_method']).toBeUndefined();
-      expect(req.request.body['prepaid_installments_transfer_reference']).toBe(
-        'PRE-MIX-001',
-      );
+      expect(req.request.body['prepaid_installments_transfer_reference']).toBe('PRE-MIX-001');
       req.flush({
         ok: true,
         data: { id: 'new-id', status: 'PENDING_APPROVAL' },
@@ -525,9 +568,7 @@ describe('CreditsService', () => {
 
   describe('reject', () => {
     it('sends rejectionReason as rejection_reason in body', () => {
-      service
-        .reject('credit-1', { rejectionReason: 'Mora activa' })
-        .subscribe();
+      service.reject('credit-1', { rejectionReason: 'Mora activa' }).subscribe();
       const req = httpMock.expectOne(`${BASE}/credits/credit-1/reject`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body['rejection_reason']).toBe('Mora activa');
@@ -538,12 +579,8 @@ describe('CreditsService', () => {
   describe('earlySettlement', () => {
     it('maps settlementAmount from snake_case response', () => {
       let result: any;
-      service
-        .earlySettlement('credit-1', { paymentMethod: 'CASH' })
-        .subscribe((r) => (result = r));
-      const req = httpMock.expectOne(
-        `${BASE}/credits/credit-1/early-settlement`,
-      );
+      service.earlySettlement('credit-1', { paymentMethod: 'CASH' }).subscribe((r) => (result = r));
+      const req = httpMock.expectOne(`${BASE}/credits/credit-1/early-settlement`);
       expect(req.request.method).toBe('PATCH');
       req.flush({
         ok: true,
@@ -565,9 +602,7 @@ describe('CreditsService', () => {
           transferReference: 'REF123',
         })
         .subscribe();
-      const req = httpMock.expectOne(
-        `${BASE}/credits/credit-1/early-settlement`,
-      );
+      const req = httpMock.expectOne(`${BASE}/credits/credit-1/early-settlement`);
       expect(req.request.body['payment_method']).toBe('TRANSFER');
       expect(req.request.body['transfer_reference']).toBe('REF123');
       req.flush({
@@ -591,9 +626,7 @@ describe('CreditsService', () => {
         } as any)
         .subscribe();
 
-      const req = httpMock.expectOne(
-        `${BASE}/credits/credit-1/early-settlement`,
-      );
+      const req = httpMock.expectOne(`${BASE}/credits/credit-1/early-settlement`);
       expect(req.request.body['amount_cash']).toBe(1200);
       expect(req.request.body['amount_transfer']).toBe(1800);
       expect(req.request.body['payment_method']).toBeUndefined();

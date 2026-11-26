@@ -16,6 +16,7 @@ import { AppError } from '../../../../../core/models/app-error';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import {
   CreditDetail,
+  ExcessDisposition,
   PlanChangeResult,
   PlanChangeSimulation,
 } from '../../../models/credit.model';
@@ -25,18 +26,13 @@ import { CreditsService } from '../../credits.service';
  * Cambio de plan de un crédito ACTIVE: recalcula el saldo con la tasa de un plan
  * más corto dejando una única cuota viva. El plan destino lo determina el backend
  * (cuotas_pagadas + 1). Flujo: al abrir, simula; el admin revisa y confirma.
- * Operación definitiva (sin reversión), admin-only, sin movimientos de caja.
+ * Operación definitiva (sin reversión), admin-only. Si el cliente pagó de más,
+ * exige elegir destino del excedente: saldo a favor o devolución (egreso de caja).
  */
 @Component({
   selector: 'app-plan-change-dialog',
   standalone: true,
-  imports: [
-    FormsModule,
-    ButtonModule,
-    DialogModule,
-    InputTextareaModule,
-    CurrencyArsPipe,
-  ],
+  imports: [FormsModule, ButtonModule, DialogModule, InputTextareaModule, CurrencyArsPipe],
   templateUrl: './plan-change-dialog.component.html',
 })
 export class PlanChangeDialogComponent implements OnChanges {
@@ -51,6 +47,8 @@ export class PlanChangeDialogComponent implements OnChanges {
   simulating = false;
   processing = false;
   error: string | null = null;
+  /** Destino elegido para el excedente (solo si la simulación lo exige). */
+  excessDisposition: ExcessDisposition | null = null;
 
   private readonly creditsService = inject(CreditsService);
   private readonly msg = inject(MessageService);
@@ -61,6 +59,7 @@ export class PlanChangeDialogComponent implements OnChanges {
       this.simulation = null;
       this.processing = false;
       this.error = null;
+      this.excessDisposition = null;
       this.loadSimulation();
     }
   }
@@ -81,39 +80,55 @@ export class PlanChangeDialogComponent implements OnChanges {
       },
       error: (err: AppError) => {
         this.simulating = false;
-        this.error =
-          err.message ?? 'Este crédito no es elegible para cambio de plan.';
+        this.error = err.message ?? 'Este crédito no es elegible para cambio de plan.';
       },
     });
   }
 
-  /** Confirma y ejecuta el cambio de plan. */
+  /**
+   * Indica si se puede confirmar: hay simulación y, si hay excedente, ya se
+   * eligió su destino (saldo a favor o devolución).
+   */
+  get canConfirm(): boolean {
+    if (this.simulating || this.processing || !this.simulation) return false;
+    return !this.simulation.requiresExcessDisposition || !!this.excessDisposition;
+  }
+
+  /**
+   * Confirma y ejecuta el cambio de plan. Si hay excedente, envía el destino
+   * elegido en `excess_disposition`.
+   */
   confirm(): void {
-    if (this.processing || !this.credit || !this.simulation) return;
+    if (!this.canConfirm || !this.credit || !this.simulation) return;
     this.processing = true;
-    this.creditsService
-      .changePlan(this.credit.id, { reason: this.reason.trim() || undefined })
-      .subscribe({
-        next: (res: PlanChangeResult) => {
-          this.processing = false;
-          this.close();
-          this.msg.add({
-            severity: 'success',
-            summary: 'Plan cambiado',
-            detail: res.message,
-            life: 7000,
-          });
-          this.planChanged.emit();
-        },
-        error: (err: AppError) => {
-          this.processing = false;
-          this.msg.add({
-            severity:
-              err.status === 409 || err.status === 422 ? 'warn' : 'error',
-            summary: 'No se pudo cambiar el plan',
-            detail: err.message ?? 'Error al ejecutar el cambio de plan.',
-          });
-        },
-      });
+    const payload: { reason?: string; excess_disposition?: ExcessDisposition } = {
+      reason: this.reason.trim() || undefined,
+    };
+    if (this.simulation.requiresExcessDisposition && this.excessDisposition)
+      payload.excess_disposition = this.excessDisposition;
+    this.creditsService.changePlan(this.credit.id, payload).subscribe({
+      next: (res: PlanChangeResult) => {
+        this.processing = false;
+        this.close();
+        this.msg.add({
+          severity: 'success',
+          summary: 'Plan cambiado',
+          detail: res.message,
+          life: 7000,
+        });
+        this.planChanged.emit();
+      },
+      error: (err: AppError) => {
+        this.processing = false;
+        this.msg.add({
+          severity: err.status === 409 || err.status === 422 ? 'warn' : 'error',
+          summary: 'No se pudo cambiar el plan',
+          detail:
+            err.code === 'EXCESS_DISPOSITION_REQUIRED'
+              ? 'El cliente pagó de más. Elegí si el excedente queda como saldo a favor o devolución antes de confirmar.'
+              : (err.message ?? 'Error al ejecutar el cambio de plan.'),
+        });
+      },
+    });
   }
 }

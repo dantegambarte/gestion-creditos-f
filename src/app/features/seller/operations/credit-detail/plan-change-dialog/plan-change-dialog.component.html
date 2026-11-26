@@ -18,10 +18,7 @@
   @if (!simulating && error) {
     <div
       class="rounded-lg p-3 my-2"
-      style="
-        background: rgba(239, 68, 68, 0.08);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-      "
+      style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3)"
     >
       <p class="text-xs" style="color: var(--ff-danger)">
         <i class="pi pi-exclamation-triangle mr-1"></i>
@@ -35,16 +32,12 @@
     <div class="flex flex-col gap-4 py-2">
       <div
         class="rounded-lg p-3"
-        style="
-          background: rgba(251, 176, 64, 0.08);
-          border: 1px solid rgba(251, 176, 64, 0.3);
-        "
+        style="background: rgba(251, 176, 64, 0.08); border: 1px solid rgba(251, 176, 64, 0.3)"
       >
         <p class="text-xs" style="color: var(--ff-warning)">
           <i class="pi pi-exclamation-triangle mr-1"></i>
-          El saldo se recalcula con la tasa del plan más corto. La reducción de
-          intereses es intencional. <strong>Esta acción es definitiva</strong> y
-          no se puede deshacer.
+          El saldo se recalcula con la tasa del plan más corto. La reducción de intereses es
+          intencional. <strong>Esta acción es definitiva</strong> y no se puede deshacer.
         </p>
       </div>
 
@@ -53,15 +46,13 @@
         <div class="cr-detail-cell">
           <div class="ud-label">Plan actual</div>
           <div class="ud-value ff-mono">
-            {{ simulation.currentPlan.installments }} cuotas ·
-            {{ simulation.currentPlan.rate }}%
+            {{ simulation.currentPlan.installments }} cuotas · {{ simulation.currentPlan.rate }}%
           </div>
         </div>
         <div class="cr-detail-cell">
           <div class="ud-label">Nuevo plan</div>
           <div class="ud-value ff-mono" style="color: var(--ff-accent)">
-            {{ simulation.newPlan.installments }} cuotas ·
-            {{ simulation.newPlan.rate }}%
+            {{ simulation.newPlan.installments }} cuotas · {{ simulation.newPlan.rate }}%
           </div>
         </div>
       </div>
@@ -92,10 +83,7 @@
       @if (simulation.creditWillBeSettled) {
         <div
           class="rounded-lg p-3"
-          style="
-            background: rgba(34, 197, 94, 0.08);
-            border: 1px solid rgba(34, 197, 94, 0.25);
-          "
+          style="background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.25)"
         >
           <p class="text-xs" style="color: var(--ff-success)">
             <i class="pi pi-check-circle mr-1"></i>
@@ -106,10 +94,7 @@
       } @else {
         <div
           class="rounded-lg p-3"
-          style="
-            background: rgba(79, 110, 247, 0.08);
-            border: 1px solid rgba(79, 110, 247, 0.2);
-          "
+          style="background: rgba(79, 110, 247, 0.08); border: 1px solid rgba(79, 110, 247, 0.2)"
         >
           <p class="text-xs" style="color: var(--ff-text-secondary)">
             <i class="pi pi-info-circle mr-1"></i>
@@ -118,9 +103,57 @@
             (conserva su fecha de vencimiento original).
             @if (simulation.cancelledInstallments.length > 0) {
               Se anularán las cuotas
-              {{ simulation.cancelledInstallments.join(", ") }}.
+              {{ simulation.cancelledInstallments.join(', ') }}.
             }
           </p>
+        </div>
+      }
+
+      <!-- Excedente: el cliente pagó de más y elige el destino -->
+      @if (simulation.requiresExcessDisposition) {
+        <div class="flex flex-col gap-2" data-cy="plan-change-excess">
+          <p class="text-xs" style="color: var(--ff-text-secondary)">
+            <i class="pi pi-wallet mr-1"></i>
+            El cliente pagó
+            <strong class="ff-mono" data-cy="plan-change-excess-amount">{{
+              simulation.excessAmount | currencyArs: 0
+            }}</strong>
+            de más. ¿Qué hacemos con el excedente?
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" role="radiogroup">
+            <button
+              type="button"
+              role="radio"
+              data-cy="excess-credit-balance"
+              [attr.aria-checked]="excessDisposition === 'CREDIT_BALANCE'"
+              class="rounded-xl border p-3 text-left min-h-11"
+              [style.border-color]="
+                excessDisposition === 'CREDIT_BALANCE' ? 'var(--ff-accent)' : 'var(--ff-border)'
+              "
+              (click)="excessDisposition = 'CREDIT_BALANCE'"
+            >
+              <div class="text-sm font-semibold">Saldo a favor</div>
+              <div class="text-xs" style="color: var(--ff-text-muted)">
+                Queda acreditado al cliente. Sin movimiento de caja.
+              </div>
+            </button>
+            <button
+              type="button"
+              role="radio"
+              data-cy="excess-refund"
+              [attr.aria-checked]="excessDisposition === 'REFUND'"
+              class="rounded-xl border p-3 text-left min-h-11"
+              [style.border-color]="
+                excessDisposition === 'REFUND' ? 'var(--ff-accent)' : 'var(--ff-border)'
+              "
+              (click)="excessDisposition = 'REFUND'"
+            >
+              <div class="text-sm font-semibold">Devolución</div>
+              <div class="text-xs" style="color: var(--ff-text-muted)">
+                Se devuelve en efectivo desde la caja abierta.
+              </div>
+            </button>
+          </div>
         </div>
       }
 
@@ -150,12 +183,13 @@
       />
       <p-button
         label="Confirmar cambio"
+        data-cy="plan-change-confirm"
         icon="pi pi-check"
         severity="warning"
         styleClass="w-full h-11 px-5 rounded-xl justify-center"
         (onClick)="confirm()"
         [loading]="processing"
-        [disabled]="simulating || !simulation"
+        [disabled]="!canConfirm && !processing"
       />
     </div>
   </ng-template>

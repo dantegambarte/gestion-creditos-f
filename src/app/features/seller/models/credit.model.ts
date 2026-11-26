@@ -1,11 +1,5 @@
 export type CreditStatus =
-  | 'PENDING_APPROVAL'
-  | 'ACTIVE'
-  | 'SETTLED'
-  | 'REJECTED'
-  | 'EXPIRED'
-  | 'REFINANCED'
-  | 'WRITTEN_OFF';
+  'PENDING_APPROVAL' | 'ACTIVE' | 'SETTLED' | 'REJECTED' | 'EXPIRED' | 'REFINANCED' | 'WRITTEN_OFF';
 export type CreditType = 'SALE' | 'LOAN';
 /** Condición de pago de una venta: financiada (cuotas) o contado (pago único). */
 export type PaymentCondition = 'FINANCED' | 'CASH';
@@ -418,9 +412,17 @@ export interface PlanChangeSimulation {
   survivingInstallmentId: string | null;
   cancelledInstallments: number[];
   creditWillBeSettled: boolean;
+  /** Monto pagado de más respecto del nuevo total (0 si no hay). */
+  excessAmount: number;
+  /** true si la ejecución exige elegir destino del excedente. */
+  requiresExcessDisposition: boolean;
 }
 
+/** Destino del sobrepago en un cambio de plan (lo elige el cliente). */
+export type ExcessDisposition = 'CREDIT_BALANCE' | 'REFUND';
+
 export interface PlanChangeResult extends PlanChangeSimulation {
+  excessDisposition: ExcessDisposition | null;
   planChangeId: string;
   executedAt: string;
   message: string;
