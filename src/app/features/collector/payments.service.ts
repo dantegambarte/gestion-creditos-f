@@ -128,9 +128,10 @@ export class PaymentsService {
   private readonly api = inject(ApiHttpService);
 
   /**
-   * Lista los pagos según los filtros especificados.
-   * @param filters
-   * @returns
+   * Lista los pagos según los filtros especificados. `createdFrom`/`createdTo`
+   * filtran en el backend por fecha de registro (created_at), incluyendo PENDING.
+   * @param filters - filtros opcionales en camelCase
+   * @returns pagos mapeados a camelCase
    */
   list(filters?: PaymentListFilters): Observable<Payment[]> {
     const params: Record<string, string> = {};
@@ -139,6 +140,8 @@ export class PaymentsService {
     if (filters?.installmentId) params['installment_id'] = filters.installmentId;
     if (filters?.dateFrom) params['date_from'] = filters.dateFrom;
     if (filters?.dateTo) params['date_to'] = filters.dateTo;
+    if (filters?.createdFrom) params['created_from'] = filters.createdFrom;
+    if (filters?.createdTo) params['created_to'] = filters.createdTo;
     return this.api
       .get<PaymentRaw[]>('payments', params)
       .pipe(map((items) => items.map(toPayment)));
