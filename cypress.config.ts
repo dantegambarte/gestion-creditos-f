@@ -18,17 +18,10 @@ export default defineConfig({
     // Habilitar con CYPRESS_realAuthEnabled=true o sobreescribir aquí.
     realAuthEnabled: true,
 
-    // ── Credenciales reales (seeds 01 + 04) ───────────────────────────
-    realAdminDni: '00000000',
-    realAdminPassword: 'admin123',
-    realSellerDni: '11111111',
-    realSellerPassword: '123456',
-    realCollectorDni: '22222222',
-    realCollectorPassword: '123456',
-    realSellerCollectorDni: '33333333',
-    realSellerCollectorPassword: '123456',
-    realPortalDni: '40567890',
-    realPortalPassword: '1234',
+    // ── Credenciales reales ───────────────────────────────────────────
+    // Nunca se hardcodean acá. Se leen de CYPRESS_realAdminDni,
+    // CYPRESS_realAdminPassword, etc. o de cypress.env.json (gitignored;
+    // ver cypress.env.example.json). Sin ellas, loginReal falla explícitamente.
 
     // ── URL base del backend (usada por los helpers cy.api*) ──────────
     apiBaseUrl: API_BASE,

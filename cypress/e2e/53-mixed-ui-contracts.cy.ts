@@ -83,6 +83,18 @@ const CREDIT_DETAIL = {
   ],
 };
 
+/**
+ * Devuelve una fecha local futura (YYYY-MM-DD); el calendario de próxima visita bloquea días pasados.
+ * @param {number} daysAhead - días a sumar a hoy
+ * @returns {string} fecha local en formato ISO corto
+ */
+function localIsoDaysAhead(daysAhead: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 function visitWithAdminSession(path: string): void {
   cy.intercept('GET', '**/auth/me', ADMIN_ME).as('authMe');
   cy.visit(path, {
@@ -171,222 +183,230 @@ function stubCreditDetail(
   }).as('getCreditPayments');
 }
 
-describe('Contratos UI mixtos — dialogs financieros', () => {
-  beforeEach(() => {
-    cy.viewport(1280, 720);
-  });
+const VIEWPORTS = [
+  { name: 'desktop', width: 1280, height: 720 },
+  { name: 'mobile', width: 375, height: 667 },
+];
 
-  it('admin payments: botón "Cobro directo" lleva al listado de operaciones', () => {
-    cy.intercept('GET', '**/api/users*', { ok: true, data: [] }).as('getUsers');
-    cy.intercept('GET', '**/api/payments', { ok: true, data: [] }).as(
-      'getPayments',
-    );
-    cy.intercept('GET', '**/api/credits*', { ok: true, data: [] }).as(
-      'getOperations',
-    );
-
-    visitWithAdminSession('/admin/payments');
-    cy.wait('@getPayments');
-
-    cy.contains('button', 'Cobro directo').click();
-    cy.url().should('include', '/admin/operations');
-  });
-
-  it('detalle de crédito: cobro directo mixto envía split al backend (admin-direct)', () => {
-    stubCreditDetail();
-    cy.intercept('POST', '**/api/payments/admin-direct', (req) => {
-      expect(req.body).to.include({
-        installment_id: '11111111-1111-4111-8111-111111111111',
-        amount_cash: 4000,
-        amount_transfer: 6000,
-        transfer_reference: 'PAY-UI-MIX',
-      });
-      expect(req.body.payment_method).to.eq(undefined);
-      req.reply({ ok: true, data: { id: 'pay-direct-ui' } });
-    }).as('postAdminDirect');
-
-    visitWithAdminSession('/seller/operations/cred-mixed-ui');
-    cy.wait('@getCredit');
-    cy.get('[data-cy="installment-direct-payment"]')
-      .first()
-      .find('button')
-      .click({ force: true });
-
-    cy.get('[data-cy="seller-direct-mode-direct"]').click();
-    selectDropdownValue(
-      '[data-cy="seller-direct-payment-method"]',
-      'Efectivo + transferencia',
-    );
-    cy.get('[data-cy="seller-direct-cash-amount"] input').clear().type('4000');
-    cy.get('[data-cy="seller-direct-transfer-amount"] input')
-      .clear()
-      .type('6000');
-    cy.get('[data-cy="seller-direct-transfer-reference"]').type('PAY-UI-MIX');
-    cy.get('[data-cy="seller-direct-submit"] button').click();
-
-    cy.wait('@postAdminDirect');
-  });
-
-  it('detalle de crédito: cancelación anticipada mixta envía split total', () => {
-    stubCreditDetail();
-    cy.intercept(
-      'PATCH',
-      '**/api/credits/cred-mixed-ui/early-settlement',
-      (req) => {
-        expect(req.body).to.include({
-          amount_cash: 8000,
-          amount_transfer: 12000,
-          transfer_reference: 'SET-UI-MIX',
-        });
-        expect(req.body.payment_method).to.eq(undefined);
-        req.reply({
-          ok: true,
-          data: {
-            credit_id: 'cred-mixed-ui',
-            settlement_amount: 20000,
-            payment_method: 'MIXED',
-          },
-        });
-      },
-    ).as('patchSettlement');
-
-    visitWithAdminSession('/seller/operations/cred-mixed-ui');
-    cy.wait('@getCredit');
-    cy.contains('button', 'Cancelación total anticipada').click();
-    cy.wait('@getCreditPayments');
-
-    selectDropdownValue(
-      '[data-cy="settlement-payment-method"]',
-      'Efectivo + transferencia',
-    );
-    cy.get('[data-cy="settlement-cash-amount"] input').clear().type('8000');
-    cy.get('[data-cy="settlement-transfer-amount"] input')
-      .clear()
-      .type('12000');
-    cy.get('[data-cy="settlement-transfer-reference"]').type('SET-UI-MIX');
-    cy.get('[data-cy="settlement-submit"] button').click();
-
-    cy.wait('@patchSettlement');
-  });
-});
-
-describe('Cronograma de cuotas — toggle pre-carga / cobro directo (admin)', () => {
-  beforeEach(() => {
-    cy.viewport(1280, 720);
-  });
-
-  it('el modo por defecto es pre-carga y no exige caja abierta', () => {
-    stubCreditDetail(CLOSED_CASH_DASHBOARD);
-    cy.intercept('POST', '**/api/payments', (req) => {
-      expect(req.body).to.include({
-        installment_id: '11111111-1111-4111-8111-111111111111',
-        amount_received: 10000,
-        payment_method: 'CASH',
-      });
-      req.reply({
-        ok: true,
-        data: { id: 'pay-precarga-ui', status: 'PENDING' },
-      });
-    }).as('postPrecarga');
-
-    visitWithAdminSession('/seller/operations/cred-mixed-ui');
-    cy.wait('@getCredit');
-    cy.get('[data-cy="installment-direct-payment"]')
-      .first()
-      .find('button')
-      .click({ force: true });
-
-    cy.get('[data-cy="seller-direct-submit"] button').click();
-
-    cy.wait('@postPrecarga');
-    cy.contains('pendiente de aprobación').should('be.visible');
-  });
-
-  it('en modo cobro directo, si la caja está cerrada no se registra el cobro', () => {
-    stubCreditDetail(CLOSED_CASH_DASHBOARD);
-    let adminDirectCalled = false;
-    cy.intercept('POST', '**/api/payments/admin-direct', () => {
-      adminDirectCalled = true;
-    }).as('postAdminDirectBlocked');
-
-    visitWithAdminSession('/seller/operations/cred-mixed-ui');
-    cy.wait('@getCredit');
-    cy.get('[data-cy="installment-direct-payment"]')
-      .first()
-      .find('button')
-      .click({ force: true });
-
-    cy.get('[data-cy="seller-direct-mode-direct"]').click();
-    cy.get('[data-cy="seller-direct-submit"] button').click();
-    cy.wait('@getActiveSession');
-
-    cy.contains('Caja Cerrada').should('be.visible');
-    cy.then(() => expect(adminDirectCalled).to.eq(false));
-  });
-
-  it('en modo cobro directo, si falla la consulta de caja no se registra el cobro', () => {
-    stubCreditDetail();
-    cy.intercept('GET', '**/api/cash-sessions/active', {
-      statusCode: 500,
-      body: { ok: false, message: 'boom' },
-    }).as('getActiveSessionError');
-    let adminDirectCalled = false;
-    cy.intercept('POST', '**/api/payments/admin-direct', () => {
-      adminDirectCalled = true;
+VIEWPORTS.forEach((vp) => {
+  describe(`Contratos UI mixtos — dialogs financieros (${vp.name})`, () => {
+    beforeEach(() => {
+      cy.viewport(vp.width, vp.height);
     });
 
-    visitWithAdminSession('/seller/operations/cred-mixed-ui');
-    cy.wait('@getCredit');
-    cy.get('[data-cy="installment-direct-payment"]')
-      .first()
-      .find('button')
-      .click({ force: true });
+    it('admin payments: botón "Cobro directo" lleva al listado de operaciones', () => {
+      cy.intercept('GET', '**/api/users*', { ok: true, data: [] }).as('getUsers');
+      cy.intercept('GET', '**/api/payments', { ok: true, data: [] }).as(
+        'getPayments',
+      );
+      cy.intercept('GET', '**/api/credits*', { ok: true, data: [] }).as(
+        'getOperations',
+      );
 
-    cy.get('[data-cy="seller-direct-mode-direct"]').click();
-    cy.get('[data-cy="seller-direct-submit"] button').click();
+      visitWithAdminSession('/admin/payments');
+      cy.wait('@getPayments');
 
-    cy.contains('Estado de caja desconocido').should('be.visible');
-    cy.then(() => expect(adminDirectCalled).to.eq(false));
+      cy.contains('button', 'Cobro directo').click();
+      cy.url().should('include', '/admin/operations');
+    });
+
+    it('detalle de crédito: cobro directo mixto envía split al backend (admin-direct)', () => {
+      stubCreditDetail();
+      cy.intercept('POST', '**/api/payments/admin-direct', (req) => {
+        expect(req.body).to.include({
+          installment_id: '11111111-1111-4111-8111-111111111111',
+          amount_cash: 4000,
+          amount_transfer: 6000,
+          transfer_reference: 'PAY-UI-MIX',
+        });
+        expect(req.body.payment_method).to.eq(undefined);
+        req.reply({ ok: true, data: { id: 'pay-direct-ui' } });
+      }).as('postAdminDirect');
+
+      visitWithAdminSession('/seller/operations/cred-mixed-ui');
+      cy.wait('@getCredit');
+      cy.get('[data-cy="installment-direct-payment"]')
+        .first()
+        .find('button')
+        .click({ force: true });
+
+      cy.get('[data-cy="seller-direct-mode-direct"]').click();
+      selectDropdownValue(
+        '[data-cy="seller-direct-payment-method"]',
+        'Efectivo + transferencia',
+      );
+      cy.get('[data-cy="seller-direct-cash-amount"] input').clear().type('4000');
+      cy.get('[data-cy="seller-direct-transfer-amount"] input')
+        .clear()
+        .type('6000');
+      cy.get('[data-cy="seller-direct-transfer-reference"]').type('PAY-UI-MIX');
+      cy.get('[data-cy="seller-direct-submit"] button').click();
+
+      cy.wait('@postAdminDirect');
+    });
+
+    it('detalle de crédito: cancelación anticipada mixta envía split total', () => {
+      stubCreditDetail();
+      cy.intercept(
+        'PATCH',
+        '**/api/credits/cred-mixed-ui/early-settlement',
+        (req) => {
+          expect(req.body).to.include({
+            amount_cash: 8000,
+            amount_transfer: 12000,
+            transfer_reference: 'SET-UI-MIX',
+          });
+          expect(req.body.payment_method).to.eq(undefined);
+          req.reply({
+            ok: true,
+            data: {
+              credit_id: 'cred-mixed-ui',
+              settlement_amount: 20000,
+              payment_method: 'MIXED',
+            },
+          });
+        },
+      ).as('patchSettlement');
+
+      visitWithAdminSession('/seller/operations/cred-mixed-ui');
+      cy.wait('@getCredit');
+      cy.contains('button', 'Pago total').click();
+      cy.wait('@getCreditPayments');
+
+      selectDropdownValue(
+        '[data-cy="settlement-payment-method"]',
+        'Efectivo + transferencia',
+      );
+      cy.get('[data-cy="settlement-cash-amount"] input').clear().type('8000');
+      cy.get('[data-cy="settlement-transfer-amount"] input')
+        .clear()
+        .type('12000');
+      cy.get('[data-cy="settlement-transfer-reference"]').type('SET-UI-MIX');
+      cy.get('[data-cy="settlement-submit"] button').click();
+
+      cy.wait('@patchSettlement');
+    });
   });
 
-  it('cobro parcial en modo pre-carga exige fecha de próxima visita antes de habilitar el envío', () => {
-    stubCreditDetail();
-    cy.intercept('POST', '**/api/payments', (req) => {
-      expect(req.body).to.include({
-        installment_id: '11111111-1111-4111-8111-111111111111',
-        amount_received: 4000,
-        payment_method: 'CASH',
-        next_visit_date: '2026-07-01',
+  describe(`Cronograma de cuotas — toggle pre-carga / cobro directo (admin, ${vp.name})`, () => {
+    beforeEach(() => {
+      cy.viewport(vp.width, vp.height);
+    });
+
+    it('el modo por defecto es pre-carga y no exige caja abierta', () => {
+      stubCreditDetail(CLOSED_CASH_DASHBOARD);
+      cy.intercept('POST', '**/api/payments', (req) => {
+        expect(req.body).to.include({
+          installment_id: '11111111-1111-4111-8111-111111111111',
+          amount_received: 10000,
+          payment_method: 'CASH',
+        });
+        req.reply({
+          ok: true,
+          data: { id: 'pay-precarga-ui', status: 'PENDING' },
+        });
+      }).as('postPrecarga');
+
+      visitWithAdminSession('/seller/operations/cred-mixed-ui');
+      cy.wait('@getCredit');
+      cy.get('[data-cy="installment-direct-payment"]')
+        .first()
+        .find('button')
+        .click({ force: true });
+
+      cy.get('[data-cy="seller-direct-submit"] button').click();
+
+      cy.wait('@postPrecarga');
+      cy.contains('pendiente de aprobación').should('be.visible');
+    });
+
+    it('en modo cobro directo, si la caja está cerrada no se registra el cobro', () => {
+      stubCreditDetail(CLOSED_CASH_DASHBOARD);
+      let adminDirectCalled = false;
+      cy.intercept('POST', '**/api/payments/admin-direct', () => {
+        adminDirectCalled = true;
+      }).as('postAdminDirectBlocked');
+
+      visitWithAdminSession('/seller/operations/cred-mixed-ui');
+      cy.wait('@getCredit');
+      cy.get('[data-cy="installment-direct-payment"]')
+        .first()
+        .find('button')
+        .click({ force: true });
+
+      cy.get('[data-cy="seller-direct-mode-direct"]').click();
+      cy.get('[data-cy="seller-direct-submit"] button').click();
+      cy.wait('@getActiveSession');
+
+      cy.contains('Caja Cerrada').should('be.visible');
+      cy.then(() => expect(adminDirectCalled).to.eq(false));
+    });
+
+    it('en modo cobro directo, si falla la consulta de caja no se registra el cobro', () => {
+      stubCreditDetail();
+      cy.intercept('GET', '**/api/cash-sessions/active', {
+        statusCode: 500,
+        body: { ok: false, message: 'boom' },
+      }).as('getActiveSessionError');
+      let adminDirectCalled = false;
+      cy.intercept('POST', '**/api/payments/admin-direct', () => {
+        adminDirectCalled = true;
       });
-      req.reply({
-        ok: true,
-        data: { id: 'pay-partial-ui', status: 'PENDING' },
-      });
-    }).as('postPartial');
 
-    visitWithAdminSession('/seller/operations/cred-mixed-ui');
-    cy.wait('@getCredit');
-    cy.get('[data-cy="installment-direct-payment"]')
-      .first()
-      .find('button')
-      .click({ force: true });
+      visitWithAdminSession('/seller/operations/cred-mixed-ui');
+      cy.wait('@getCredit');
+      cy.get('[data-cy="installment-direct-payment"]')
+        .first()
+        .find('button')
+        .click({ force: true });
 
-    cy.get('[data-cy="seller-direct-payment-amount"] input').clear().type('4000');
-    cy.get('[data-cy="seller-direct-submit"] button').should('be.disabled');
+      cy.get('[data-cy="seller-direct-mode-direct"]').click();
+      cy.get('[data-cy="seller-direct-submit"] button').click();
 
-    cy.get('[data-cy="seller-direct-next-visit"] input').type(
-      '2026-07-01{enter}',
-    );
-    cy.get('[data-cy="seller-direct-submit"] button').should('be.enabled');
-    cy.get('[data-cy="seller-direct-submit"] button').click();
+      cy.contains('Estado de caja desconocido').should('be.visible');
+      cy.then(() => expect(adminDirectCalled).to.eq(false));
+    });
 
-    cy.wait('@postPartial');
-  });
+    it('cobro parcial en modo pre-carga exige fecha de próxima visita antes de habilitar el envío', () => {
+      const nextVisit = localIsoDaysAhead(7);
+      stubCreditDetail();
+      cy.intercept('POST', '**/api/payments', (req) => {
+        expect(req.body).to.include({
+          installment_id: '11111111-1111-4111-8111-111111111111',
+          amount_received: 4000,
+          payment_method: 'CASH',
+          next_visit_date: nextVisit,
+        });
+        req.reply({
+          ok: true,
+          data: { id: 'pay-partial-ui', status: 'PENDING' },
+        });
+      }).as('postPartial');
 
-  it('un seller no ve el botón "Cobrar cuota" — acción exclusiva de admin', () => {
-    stubCreditDetail();
-    visitWithSellerSession('/seller/operations/cred-mixed-ui');
-    cy.wait('@getCredit');
-    cy.get('[data-cy="installment-direct-payment"]').should('not.exist');
+      visitWithAdminSession('/seller/operations/cred-mixed-ui');
+      cy.wait('@getCredit');
+      cy.get('[data-cy="installment-direct-payment"]')
+        .first()
+        .find('button')
+        .click({ force: true });
+
+      cy.get('[data-cy="seller-direct-payment-amount"] input').clear().type('4000');
+      cy.get('[data-cy="seller-direct-submit"] button').should('be.disabled');
+
+      cy.get('[data-cy="seller-direct-next-visit"] input').type(
+        `${nextVisit}{enter}`,
+      );
+      cy.get('[data-cy="seller-direct-submit"] button').should('be.enabled');
+      cy.get('[data-cy="seller-direct-submit"] button').click();
+
+      cy.wait('@postPartial');
+    });
+
+    it('un seller no ve el botón "Cobrar cuota" — acción exclusiva de admin', () => {
+      stubCreditDetail();
+      visitWithSellerSession('/seller/operations/cred-mixed-ui');
+      cy.wait('@getCredit');
+      cy.get('[data-cy="installment-direct-payment"]').should('not.exist');
+    });
   });
 });

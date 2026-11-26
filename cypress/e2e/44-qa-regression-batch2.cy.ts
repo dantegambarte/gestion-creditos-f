@@ -132,7 +132,7 @@ describe('CL-11/CL-12 — Validación nombres y DNI en modal crear cliente (Admi
     cy.get('p-dialog input[formControlName="dni"]').should('be.visible').type('123456789');
     cy.get('p-dialog input[formControlName="nombres"]').click({ force: true });
     cy.get('p-dialog').contains(/dni|d[ií]gitos|7|8|inv[aá]lido|formato/i).should('exist');
-    cy.get('p-dialog p-button[label="Crear Cliente"]').should('have.attr', 'ng-reflect-disabled', 'true');
+    cy.get('p-dialog p-button[label="Crear Cliente"] button').should('be.disabled');
   });
 });
 
@@ -237,7 +237,13 @@ describe('US-04 — Dropdown Rol en editar usuario usa appendTo="body"', () => {
     cy.get('[data-cy="admin-user-detail-edit-action"]').click();
     cy.get(
       '[data-cy="admin-user-detail-edit-form"] p-dropdown[formControlName="role"]',
-    ).should('have.attr', 'ng-reflect-append-to', 'body');
+    ).click();
+    // Con appendTo="body" el panel se monta fuera del formulario (no recortado por el card).
+    cy.get('.p-dropdown-panel')
+      .should('be.visible')
+      .and(($panel) => {
+        expect($panel.closest('[data-cy="admin-user-detail-edit-form"]').length, 'panel fuera del form').to.eq(0);
+      });
   });
 });
 
@@ -258,10 +264,8 @@ describe('US-05 — Botón Guardar Cambios deshabilitado sin cambios (editar usu
 
   it('al entrar en modo edición el botón Guardar está deshabilitado', () => {
     cy.get('[data-cy="admin-user-detail-edit-action"]').click();
-    cy.get('[data-cy="admin-user-detail-save-action"]').should(
-      'have.attr',
-      'ng-reflect-disabled',
-      'true',
+    cy.get('[data-cy="admin-user-detail-save-action"] button').should(
+      'be.disabled',
     );
   });
 
@@ -270,10 +274,8 @@ describe('US-05 — Botón Guardar Cambios deshabilitado sin cambios (editar usu
     cy.get('[data-cy="admin-user-detail-edit-fullname-input"]')
       .clear()
       .type('Nuevo Nombre');
-    cy.get('[data-cy="admin-user-detail-save-action"]').should(
-      'not.have.attr',
-      'ng-reflect-disabled',
-      'true',
+    cy.get('[data-cy="admin-user-detail-save-action"] button').should(
+      'be.enabled',
     );
   });
 });
@@ -304,14 +306,16 @@ describe('PR-10 — Botón Guardar Cambios deshabilitado sin cambios (editar pro
   it('al cargar la página el botón Guardar Cambios está deshabilitado', () => {
     cy.get('p-button')
       .filter(':contains("Guardar Cambios")')
-      .should('have.attr', 'ng-reflect-disabled', 'true');
+      .find('button')
+      .should('be.disabled');
   });
 
   it('al modificar título el botón se habilita', () => {
     cy.get('input[formControlName="title"]').clear().type('Nuevo título');
     cy.get('p-button')
       .filter(':contains("Guardar Cambios")')
-      .should('not.have.attr', 'ng-reflect-disabled', 'true');
+      .find('button')
+      .should('be.enabled');
   });
 });
 

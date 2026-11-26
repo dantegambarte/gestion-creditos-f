@@ -60,6 +60,8 @@ Valores de referencia con `db:reset` + `npm run seed` (semillas actuales):
 
 Si ya cambiaste la contraseña del ADMIN manualmente (por ejemplo `admin123`), usá ese valor real en `CYPRESS_realAdminPassword`.
 
+Las credenciales no están en `cypress.config.ts`: copiá `cypress.env.example.json` a `cypress.env.json` (gitignored) o exportá las variables `CYPRESS_*`. Sin ellas `loginReal`/`loginPortalReal` fallan explícitamente.
+
 Real backend specs included in Batch 1:
 
 - `cypress/e2e/01-auth.cy.ts`
