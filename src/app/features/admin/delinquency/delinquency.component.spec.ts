@@ -1,5 +1,6 @@
 ﻿import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MessageService } from 'primeng/api';
 import { of } from 'rxjs';
 
@@ -20,7 +21,11 @@ describe('DelinquencyComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [DelinquencyComponent],
-      providers: [provideHttpClient(), { provide: CashStatusService, useValue: cashStatusSpy }],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: CashStatusService, useValue: cashStatusSpy },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(DelinquencyComponent);

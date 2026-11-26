@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 
 import { CashRegisterComponent } from './cash-register.component';
@@ -104,6 +105,7 @@ describe('CashRegisterComponent', () => {
           useValue: { checkAction: () => of(null), resolve: () => of('OPEN') },
         },
         provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: CashRegisterService, useValue: cashRegisterServiceSpy },
         { provide: ExpenseCategoriesService, useValue: expenseCategoriesSpy },
       ],
