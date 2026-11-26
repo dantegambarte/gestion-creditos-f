@@ -193,7 +193,7 @@ Suite Cypress con más de 80 archivos de spec cubriendo:
 
 ### Suites reales (backend real)
 
-Las suites que usan `cy.loginReal`, `cy.getAuthToken`, `cy.apiRequest` o `cy.api*` le pegan al backend local (`http://localhost:3000/api`) y escriben en su base. Necesitan el backend corriendo en modo E2E (`npm run dev:e2e` en el backend) y el frontend en `npm run start:e2e`.
+Las suites que usan `cy.loginReal`, `cy.getAuthToken`, `cy.apiRequest` o `cy.api*` le pegan al backend local (`http://localhost:3000/api`) y escriben en su base. Necesitan el backend corriendo en modo E2E (`npm run dev:e2e` en el backend) y el frontend en `pnpm start:e2e`.
 
 - **Nunca contra producción.** Usan la base que tenga configurada el `.env` del backend.
 - **Guard de modo real:** con `CYPRESS_realAuthEnabled=false` se saltean solas. `cypress.config.ts` las detecta al arrancar (`cypress/scripts/real-spec-detector.js`).
@@ -211,54 +211,55 @@ Las suites que usan `cy.loginReal`, `cy.getAuthToken`, `cy.apiRequest` o `cy.api
 ## Desarrollo
 
 ```bash
-# Instalar dependencias (respeta package-lock.json; también instala los hooks de git)
-npm ci
+# Instalar dependencias (respeta pnpm-lock.yaml; también instala los hooks de git)
+# Requiere Node 22.13+ (.nvmrc) y pnpm (corepack enable)
+pnpm install --frozen-lockfile
 
 # Servidor de desarrollo
-npm start
+pnpm start
 # → http://localhost:4200
 
 # Servidor accesible en red (para Cypress contra dispositivos reales)
-npm run start:e2e
+pnpm start:e2e
 
 # Tests unitarios (Karma)
 ng test
 
 # Tests unitarios como en CI (headless, con umbral de cobertura)
-npm run test:ci
+pnpm test:ci
 
 # Specs de una sola feature
-npx ng test --watch=false --include=src/app/features/<feature>
+pnpm exec ng test --watch=false --include=src/app/features/<feature>
 
 # Lint de archivos puntuales (sin warnings permitidos)
-npm run lint -- src/app/features/<feature>/<archivo>.ts
+pnpm lint src/app/features/<feature>/<archivo>.ts
 
 # Tests E2E — modo interactivo
-npm run e2e
+pnpm e2e
 
 # Tests E2E — modo headless (con runner seguro)
-npm run e2e:run
+pnpm e2e:run
 
 # Suite de smoke tests contra servidor real
-npm run e2e:smoke:real
+pnpm e2e:smoke:real
 
 # Smoke tests con servidor levantado automáticamente
-npm run e2e:smoke:real:stable
+pnpm e2e:smoke:real:stable
 
 # Todos los E2E + reporte Mochawesome
-npm run e2e:all
+pnpm e2e:all
 
 # Servir build SSR
-npm run serve:ssr:gestion-creditos-f
+pnpm serve:ssr:gestion-creditos-f
 ```
 
 ---
 
 ## Calidad y CI
 
-**Hooks de git** (Husky, se instalan con `npm ci`):
+**Hooks de git** (Husky, se instalan con `pnpm install`):
 - `pre-commit`: ESLint (`--max-warnings 0`) y Prettier (`--write`) solo sobre los archivos staged.
-- `pre-push`: tests del script de alcance y suite unitaria completa (`npm run test:ci`).
+- `pre-push`: tests del script de alcance y suite unitaria completa (`pnpm test:ci`).
 
 **Lint incremental:** no se reformatea el repo de una vez. Cada archivo que tocás tiene que quedar limpio. Reglas: sin `any` (salvo en specs), sin `console.log` (se permiten `console.warn` y `console.error`).
 

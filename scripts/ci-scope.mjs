@@ -10,7 +10,7 @@ const SHARED_PATTERNS = [
   /^src\/app\/shared\//,
   /^src\/environments\//,
   /^angular\.json$/,
-  /^package(-lock)?\.json$/,
+  /^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|\.nvmrc)$/,
   /^tsconfig[^/]*\.json$/,
   /^karma\.conf\.js$/,
   /^eslint\.config\.js$/,
