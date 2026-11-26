@@ -81,7 +81,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
    * @param event - CustomEvent con el ReportTab destino
    */
   private onTabChange = (event: Event): void => {
-    this.activeTab = (event as CustomEvent<ReportTab>).detail;
+    const tab = (event as CustomEvent<ReportTab>).detail;
+    // Ignora valores que no son pestañas válidas para no dejar la vista en blanco.
+    if (this.TABS.some((t) => t.id === tab)) {
+      this.activeTab = tab;
+    }
   };
 
   /**

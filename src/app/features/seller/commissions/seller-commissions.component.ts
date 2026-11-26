@@ -19,6 +19,7 @@ import { CommissionsService } from '../../admin/commissions/commissions.service'
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { Commission, CommissionStatus, Liquidation } from '../../admin/models/commission.model';
 import { formatIsoDate } from '../../../shared/utils/date-format.util';
+import { paymentMethodLabel } from '../../../shared/models/payment-method-labels';
 
 @Component({
   selector: 'app-seller-commissions',
@@ -157,7 +158,7 @@ export class SellerCommissionsComponent implements OnInit, OnDestroy {
    * @returns
    */
   paymentMethodLabel(pm: string): string {
-    return pm === 'CASH' ? 'Efectivo' : 'Transferencia';
+    return paymentMethodLabel(pm);
   }
 
   formatCurrency(value: number): string {

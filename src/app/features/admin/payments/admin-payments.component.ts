@@ -90,16 +90,11 @@ export class AdminPaymentsComponent implements OnInit {
   }
 
   /**
-   * Devuelve la lista de cobros filtrada por estado y cobrador.
+   * Devuelve la lista de cobros filtrada por estado. El cobrador se filtra en el
+   * backend por id (collector_id), así dos cobradores homónimos no se mezclan.
    */
   get filteredPayments(): Payment[] {
-    return this.payments.filter((p) => {
-      const matchStatus = !this.filterStatus || p.status === this.filterStatus;
-      const matchCollector =
-        !this.filterCollectorId ||
-        p.collectorName === this.collectors.find((c) => c.id === this.filterCollectorId)?.fullName;
-      return matchStatus && matchCollector;
-    });
+    return this.payments.filter((p) => !this.filterStatus || p.status === this.filterStatus);
   }
 
   /**
@@ -167,6 +162,11 @@ export class AdminPaymentsComponent implements OnInit {
 
   /** Recarga desde el backend cuando cambia el rango de fechas. */
   onDateFilterChange(): void {
+    this.load();
+  }
+
+  /** Recarga desde el backend cuando cambia el cobrador (filtro por id). */
+  onCollectorFilterChange(): void {
     this.load();
   }
 
@@ -247,6 +247,7 @@ export class AdminPaymentsComponent implements OnInit {
     this.error = null;
     this.paymentsService
       .list({
+        collectorId: this.filterCollectorId ?? undefined,
         dateFrom: this.filterDateFrom ? this.dateSvc.toLocalIso(this.filterDateFrom) : undefined,
         dateTo: this.filterDateTo ? this.dateSvc.toLocalIso(this.filterDateTo) : undefined,
       })

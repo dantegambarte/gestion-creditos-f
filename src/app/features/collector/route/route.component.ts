@@ -21,6 +21,10 @@ import {
 import { Payment } from '../models/payment.model';
 import { PaymentsService } from '../payments.service';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import {
+  PAYMENT_METHOD_LABELS,
+  paymentMethodLabel,
+} from '../../../shared/models/payment-method-labels';
 
 @Component({
   selector: 'app-route',
@@ -165,9 +169,7 @@ export class RouteComponent implements OnInit {
    * @returns Texto corto para mostrar en UI.
    */
   paymentMethodLabel(method: Payment['paymentMethod']): string {
-    if (method === 'CASH') return 'Efectivo';
-    if (method === 'TRANSFER') return 'Transferencia';
-    return 'Mixto';
+    return paymentMethodLabel(method, PAYMENT_METHOD_LABELS.MIXED);
   }
 
   /**

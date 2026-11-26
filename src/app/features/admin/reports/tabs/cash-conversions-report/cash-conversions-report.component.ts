@@ -13,6 +13,7 @@ import { ErrorStateComponent } from '../../../../../shared/states/error-state/er
 import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
 import { CashConversionReport } from '../../report.models';
 import { ReportsService } from '../../reports.service';
+import { paymentMethodLabel } from '../../../../../shared/models/payment-method-labels';
 
 @Component({
   selector: 'app-cash-conversions-report',
@@ -87,7 +88,7 @@ export class CashConversionsReportComponent implements OnInit, OnDestroy {
    * @param method método persistido en backend
    */
   methodLabel(method: 'CASH' | 'TRANSFER'): string {
-    return method === 'CASH' ? 'Efectivo' : 'Transferencia';
+    return paymentMethodLabel(method);
   }
 
   /**

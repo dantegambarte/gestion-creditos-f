@@ -61,12 +61,18 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
     this.loadPending();
   }
 
+  /**
+   * Al cambiar el estado de caja recalcula la alerta de pendientes +48h con los
+   * últimos cobros cargados, en vez de borrarla (antes desaparecía al llegar el estado de caja).
+   */
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['isCashClosed']) {
-      // Limpiar alerta de caja si el estado cambia
-      this.alertUpdated.emit({ show: false, message: '' });
+    if (changes['isCashClosed'] && this.lastPendingPayments) {
+      this.checkPendingAlerts(this.lastPendingPayments);
     }
   }
+
+  /** Últimos cobros pendientes cargados; permiten recalcular la alerta +48h. */
+  private lastPendingPayments: { createdAt: string }[] | null = null;
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -89,6 +95,7 @@ export class DashboardPendingComponent implements OnInit, OnDestroy, OnChanges {
         this.pendingCredits = this.groupCreditsBySeller(credits);
         this.pendingPayments = this.groupPaymentsByCollector(payments);
         this.syncExpandedGroups();
+        this.lastPendingPayments = payments;
         this.checkPendingAlerts(payments);
         this.loadingPending = false;
       });

@@ -16,6 +16,9 @@ import { LoadingStateComponent } from '../../../../../shared/states/loading-stat
 import { ProductReportRow } from '../../report.models';
 import { ReportsService } from '../../reports.service';
 
+/** Umbral de stock bajo cuando el admin no carga uno. Valor de negocio a confirmar (#62). */
+export const DEFAULT_LOW_STOCK_THRESHOLD = 5;
+
 @Component({
   selector: 'app-products-report',
   imports: [
@@ -41,6 +44,7 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
   loading = false;
   error: AppError | null = null;
   stockThreshold: number | null = null;
+  readonly defaultLowStockThreshold = DEFAULT_LOW_STOCK_THRESHOLD;
   onlyWithSales = false;
   searchText = '';
   stockMode: 'ALL' | 'LOW' | 'OUT' | 'AVAILABLE' = 'ALL';
@@ -73,7 +77,7 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
       if (this.stockMode === 'OUT') return row.availableCount === 0;
       if (this.stockMode === 'AVAILABLE') return row.availableCount > 0;
       if (this.stockMode === 'LOW') {
-        const threshold = this.stockThreshold ?? 5;
+        const threshold = this.stockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
         return row.availableCount > 0 && row.availableCount <= threshold;
       }
       return true;
