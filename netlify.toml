@@ -1,12 +1,43 @@
+# Static deploy of the Angular 18 application builder output.
+# The builder emits dist/gestion-creditos-f/{browser,server}; only browser/ is
+# servable by Netlify's CDN. The Express server (server.ts) is not used here.
 [build]
-  command = "ng build --configuration production"
-  publish = "dist/gestion-creditos-f"
+  # API_BASE_URL must be set in the Netlify site environment variables, never in the repo.
+  command = "node scripts/set-api-url.mjs && npm run build -- --configuration production"
+  publish = "dist/gestion-creditos-f/browser"
 
 [build.environment]
-  NODE_VERSION = "26"
+  # Angular 18 supports Node ^18.19.1 || ^20.11.1 || ^22.0.0. Matches CI.
+  NODE_VERSION = "22"
 
+# index.html is prerendered (login markup); protected/portal routes must boot
+# from the pure CSR shell, same as server.ts does.
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/index.csr.html"
   status = 200
 
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/ngsw.json"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/ngsw-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

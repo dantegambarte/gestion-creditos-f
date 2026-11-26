@@ -42,9 +42,6 @@ testem.log
 Thumbs.db
 
 
-# Environment files
-src/environments/environment.ts
-
 # Claude AI
 .claude
 CLAUDE.md
