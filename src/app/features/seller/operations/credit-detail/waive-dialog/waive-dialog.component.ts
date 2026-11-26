@@ -9,7 +9,6 @@ import { InstallmentsService } from '../../installments.service';
 
 @Component({
   selector: 'app-waive-dialog',
-  standalone: true,
   imports: [ButtonModule, DialogModule],
   templateUrl: './waive-dialog.component.html',
 })

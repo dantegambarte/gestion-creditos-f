@@ -34,7 +34,6 @@ interface OverdueRow {
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
   imports: [
     CommonModule,
     CurrencyArsPipe,
@@ -133,8 +132,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           summary.activePortfolioBalance > 0
             ? (summary.overdueAmount / summary.activePortfolioBalance) * 100
             : 0;
-        const pendingTotal =
-          summary.pendingCreditsCount + summary.pendingPaymentsCount;
+        const pendingTotal = summary.pendingCreditsCount + summary.pendingPaymentsCount;
         const monthlyTotal = monthlyCollection?.summary?.grandTotal ?? 0;
 
         this.kpis = [
@@ -163,10 +161,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             trend: overduePercent > 10 ? 'Alerta' : 'Normal',
             trendUp: overduePercent <= 10,
             icon: 'pi pi-exclamation-triangle',
-            iconBg:
-              overduePercent > 10
-                ? 'db-kpi__bg--danger'
-                : 'db-kpi__bg--warning',
+            iconBg: overduePercent > 10 ? 'db-kpi__bg--danger' : 'db-kpi__bg--warning',
           },
           {
             label: 'Pendientes de autorizar',

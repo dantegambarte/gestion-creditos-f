@@ -3,16 +3,12 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnInit,
   Output,
   SimpleChanges,
   inject,
 } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -23,17 +19,10 @@ import { Client } from '../../models/interface/client';
 
 @Component({
   selector: 'app-client-edit-dialog',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    DialogModule,
-    DropdownModule,
-    InputTextModule,
-  ],
+  imports: [ReactiveFormsModule, ButtonModule, DialogModule, DropdownModule, InputTextModule],
   templateUrl: './client-edit-dialog.component.html',
 })
-export class ClientEditDialogComponent implements OnChanges {
+export class ClientEditDialogComponent implements OnChanges, OnInit {
   @Input() visible = false;
   @Output() visibleChange = new EventEmitter<boolean>();
   /** Cliente a editar. Se usa para pre-poblar el formulario al abrir. */
@@ -59,7 +48,7 @@ export class ClientEditDialogComponent implements OnChanges {
     // Se ejecuta una sola vez al crear el componente
     this.editForm = this.buildEditForm(this.client);
   }
-  
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible']?.currentValue === true) {
       this.editError = '';
@@ -111,15 +100,8 @@ export class ClientEditDialogComponent implements OnChanges {
   saveEdit(): void {
     if (this.editForm.invalid || !this.client) return;
     this.editError = '';
-    const {
-      nombre,
-      apellido,
-      dni,
-      phone,
-      email,
-      direccion,
-      assignedCollectorId,
-    } = this.editForm.value;
+    const { nombre, apellido, dni, phone, email, direccion, assignedCollectorId } =
+      this.editForm.value;
     const payload = {
       fullName: `${nombre} ${apellido}`.trim(),
       phone: (phone as string) || undefined,
@@ -144,9 +126,7 @@ export class ClientEditDialogComponent implements OnChanges {
       error: (err: { status?: number; message?: string }) => {
         if (err?.status === 409) {
           // DNI duplicado: marcamos el campo y mostramos el detalle.
-          this.editForm
-            .get('dni')!
-            .setErrors({ serverError: err.message ?? 'DNI duplicado.' });
+          this.editForm.get('dni')!.setErrors({ serverError: err.message ?? 'DNI duplicado.' });
           this.editForm.get('dni')!.markAsDirty();
           this.editError = err.message ?? 'Ya existe un cliente con ese DNI.';
         } else {
@@ -212,9 +192,7 @@ export class ClientEditDialogComponent implements OnChanges {
       phone: [client?.phone ?? '', [Validators.pattern(/^[\d\s\+\-]*$/)]],
       email: [client?.email ?? '', [Validators.email]],
       direccion: [client?.address ?? '', [Validators.maxLength(255)]],
-      assignedCollectorId: [
-        { value: client?.collectorId ?? '', disabled: this.collectorsLoading },
-      ],
+      assignedCollectorId: [{ value: client?.collectorId ?? '', disabled: this.collectorsLoading }],
     });
 
     return form;

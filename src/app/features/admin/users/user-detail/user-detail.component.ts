@@ -23,7 +23,6 @@ import { BackButtonComponent } from '../../../../shared/components/back-button/b
 
 @Component({
   selector: 'app-user-detail',
-  standalone: true,
   providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [
     CommonModule,

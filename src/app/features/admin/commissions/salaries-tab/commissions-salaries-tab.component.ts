@@ -20,7 +20,6 @@ type SalaryRow = {
 
 @Component({
   selector: 'app-commissions-salaries-tab',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     FormsModule,

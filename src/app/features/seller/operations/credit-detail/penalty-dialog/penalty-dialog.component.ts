@@ -18,7 +18,6 @@ import { InstallmentsService } from '../../installments.service';
 
 @Component({
   selector: 'app-penalty-dialog',
-  standalone: true,
   imports: [FormsModule, ButtonModule, DialogModule],
   templateUrl: './penalty-dialog.component.html',
 })

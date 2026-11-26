@@ -21,7 +21,6 @@ import { ProductBrandsService } from '../services/product-brands.service';
 
 @Component({
   selector: 'app-product-brands-config',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     CommonModule,

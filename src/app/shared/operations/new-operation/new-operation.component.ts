@@ -24,7 +24,6 @@ import { FfBackTopFabComponent } from '../../components/back-top-fab/ff-back-top
 
 @Component({
   selector: 'app-new-operation',
-  standalone: true,
   imports: [
     ButtonModule,
     ConfirmDialogModule,
@@ -36,16 +35,12 @@ import { FfBackTopFabComponent } from '../../components/back-top-fab/ff-back-top
     StepConfirmComponent,
     FfBackTopFabComponent,
   ],
-  providers: [
-    OperationFormService,
-    OperationCatalogService,
-    MessageService,
-    ConfirmationService,
-  ],
+  providers: [OperationFormService, OperationCatalogService, MessageService, ConfirmationService],
   templateUrl: './new-operation.component.html',
   styleUrl: './new-operation.component.scss',
 })
 export class NewOperationComponent implements OnInit {
+  // eslint-disable-next-line @angular-eslint/no-output-on-prefix -- public binding name kept as-is
   @Output() onComplete = new EventEmitter<void>();
   @ViewChild('wizardMain') private wizardMain?: ElementRef<HTMLElement>;
   @ViewChild('stepper') private stepper?: ElementRef<HTMLElement>;
@@ -70,8 +65,7 @@ export class NewOperationComponent implements OnInit {
    * Inicializa el wizard y preselecciona cliente si llega por query param.
    */
   ngOnInit(): void {
-    const clientDni =
-      this.route.snapshot.queryParamMap.get('clientDni') ?? undefined;
+    const clientDni = this.route.snapshot.queryParamMap.get('clientDni') ?? undefined;
     this.state.initialize(clientDni).subscribe({
       next: (preselected) => {
         if (preselected) this.setActiveStep(1);
@@ -121,14 +115,12 @@ export class NewOperationComponent implements OnInit {
     this.confirmationService.confirm({
       key: 'cancel-new-operation',
       header: 'Cancelar operación',
-      message:
-        '¿Estás seguro de cancelar la operación? Se perderán los datos cargados.',
+      message: '¿Estás seguro de cancelar la operación? Se perderán los datos cargados.',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Continuar editando',
       rejectLabel: 'Sí, cancelar',
       acceptButtonStyleClass: 'h-11 px-4 rounded-xl',
-      rejectButtonStyleClass:
-        'p-button-danger p-button-outlined h-11 px-4 rounded-xl',
+      rejectButtonStyleClass: 'p-button-danger p-button-outlined h-11 px-4 rounded-xl',
       reject: () => {
         this.router.navigate(['../'], { relativeTo: this.route });
       },
@@ -190,8 +182,7 @@ export class NewOperationComponent implements OnInit {
    * Traduce el índice visual al índice de validación del servicio.
    */
   canGoNext(): boolean {
-    if (this.activeIndex === 0)
-      return this.state.operationForm.controls.operationType.valid;
+    if (this.activeIndex === 0) return this.state.operationForm.controls.operationType.valid;
     if (this.activeIndex === 4) return false;
     return this.state.canNext(this.activeIndex - 1);
   }
@@ -213,12 +204,10 @@ export class NewOperationComponent implements OnInit {
         this.onComplete.emit();
         const base = this.router.url.startsWith('/admin') ? '/admin' : '/seller';
         setTimeout(() => {
-          this.router
-            .navigate([base, 'operations', created.id])
-            .finally(() => {
-              this.openingCreatedOperation = false;
-              this.state.submitting.set(false);
-            });
+          this.router.navigate([base, 'operations', created.id]).finally(() => {
+            this.openingCreatedOperation = false;
+            this.state.submitting.set(false);
+          });
         }, 1500);
       },
       error: (err: unknown) => {

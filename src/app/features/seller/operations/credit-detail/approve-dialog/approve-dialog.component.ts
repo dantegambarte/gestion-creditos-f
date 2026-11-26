@@ -21,14 +21,7 @@ import { UsersService } from '../../../../admin/users/users.service';
 
 @Component({
   selector: 'app-approve-dialog',
-  standalone: true,
-  imports: [
-    FormsModule,
-    ButtonModule,
-    DialogModule,
-    DropdownModule,
-    TooltipModule,
-  ],
+  imports: [FormsModule, ButtonModule, DialogModule, DropdownModule, TooltipModule],
   templateUrl: './approve-dialog.component.html',
 })
 export class ApproveDialogComponent implements OnChanges {
@@ -79,20 +72,18 @@ export class ApproveDialogComponent implements OnChanges {
     this.showChangeSeller = true;
     if (this.sellerOptions.length === 0) {
       this.loadingSellers = true;
-      this.usersSvc
-        .list({ roles: 'SELLER,SELLER_COLLECTOR', status: 'ACTIVE' })
-        .subscribe({
-          next: (users) => {
-            this.sellerOptions = users.map((u) => ({
-              label: u.fullName,
-              value: u.id,
-            }));
-            this.loadingSellers = false;
-          },
-          error: () => {
-            this.loadingSellers = false;
-          },
-        });
+      this.usersSvc.list({ roles: 'SELLER,SELLER_COLLECTOR', status: 'ACTIVE' }).subscribe({
+        next: (users) => {
+          this.sellerOptions = users.map((u) => ({
+            label: u.fullName,
+            value: u.id,
+          }));
+          this.loadingSellers = false;
+        },
+        error: () => {
+          this.loadingSellers = false;
+        },
+      });
     }
   }
 

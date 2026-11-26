@@ -1,18 +1,6 @@
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  inject,
-} from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { DedupMessageService } from '../../../../core/services/dedup-message.service';
@@ -28,7 +16,6 @@ import { UsersService } from '../users.service';
 
 @Component({
   selector: 'app-user-create',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -73,10 +60,7 @@ export class UserCreateComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.isModal) {
-      this.header.set([
-        { label: 'Usuarios', route: '/admin/users' },
-        { label: 'Nuevo usuario' },
-      ]);
+      this.header.set([{ label: 'Usuarios', route: '/admin/users' }, { label: 'Nuevo usuario' }]);
     }
 
     this.form = this.fb.group({
@@ -118,14 +102,11 @@ export class UserCreateComponent implements OnInit {
     if (!c?.errors) return '';
     if (c.errors['serverError']) return c.errors['serverError'];
     if (c.errors['required']) return 'Este campo es requerido.';
-    if (c.errors['minlength'])
-      return `Mínimo ${c.errors['minlength'].requiredLength} caracteres.`;
-    if (c.errors['maxlength'])
-      return `Máximo ${c.errors['maxlength'].requiredLength} caracteres.`;
+    if (c.errors['minlength']) return `Mínimo ${c.errors['minlength'].requiredLength} caracteres.`;
+    if (c.errors['maxlength']) return `Máximo ${c.errors['maxlength'].requiredLength} caracteres.`;
     if (c.errors['email']) return 'Formato de email inválido.';
     if (c.errors['pattern']) {
-      if (field === 'dni')
-        return 'El DNI debe contener entre 7 y 9 dígitos numéricos.';
+      if (field === 'dni') return 'El DNI debe contener entre 7 y 9 dígitos numéricos.';
       return 'Solo se permiten letras y espacios.';
     }
     return 'Campo inválido.';
@@ -194,17 +175,11 @@ export class UserCreateComponent implements OnInit {
     } else if (this.returnTo === 'config-users') {
       // Detalle bajo /config (misma pantalla): el menú lateral sigue en
       // Configuración. Propaga returnTo para que su "volver" respete el origen.
-      this.router.navigate(
-        ['/', AppRoutes.ADMIN, AppRoutes.CONFIG, 'users', this.createdUserId],
-        { queryParams: { returnTo: this.returnTo } },
-      );
+      this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.CONFIG, 'users', this.createdUserId], {
+        queryParams: { returnTo: this.returnTo },
+      });
     } else {
-      this.router.navigate([
-        '/',
-        AppRoutes.ADMIN,
-        AppRoutes.USERS,
-        this.createdUserId,
-      ]);
+      this.router.navigate(['/', AppRoutes.ADMIN, AppRoutes.USERS, this.createdUserId]);
     }
   }
 

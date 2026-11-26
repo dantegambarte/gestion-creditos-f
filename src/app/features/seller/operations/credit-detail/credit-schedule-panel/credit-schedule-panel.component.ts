@@ -27,7 +27,6 @@ import { ScheduleVisitDialogComponent } from '../schedule-visit-dialog/schedule-
 
 @Component({
   selector: 'app-credit-schedule-panel',
-  standalone: true,
   imports: [
     DatePipe,
     CurrencyArsPipe,

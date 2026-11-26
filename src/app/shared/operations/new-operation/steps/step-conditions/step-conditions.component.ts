@@ -39,7 +39,6 @@ import { StepConditionsSimulationPanelComponent } from './step-conditions-simula
 
 @Component({
   selector: 'app-step-conditions',
-  standalone: true,
   imports: [
     ReactiveFormsModule,
     FormsModule,

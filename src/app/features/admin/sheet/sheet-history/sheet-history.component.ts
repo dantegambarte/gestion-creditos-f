@@ -13,8 +13,13 @@ import { formatIsoDate } from '../../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-sheet-history',
-  standalone: true,
-  imports: [TableModule, ButtonModule, SkeletonModule, LoadingStateComponent, FfBackTopFabComponent],
+  imports: [
+    TableModule,
+    ButtonModule,
+    SkeletonModule,
+    LoadingStateComponent,
+    FfBackTopFabComponent,
+  ],
   templateUrl: './sheet-history.component.html',
 })
 export class SheetHistoryComponent {

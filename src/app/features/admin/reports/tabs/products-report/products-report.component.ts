@@ -18,7 +18,6 @@ import { ReportsService } from '../../reports.service';
 
 @Component({
   selector: 'app-products-report',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     FormsModule,
@@ -68,10 +67,7 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
     const term = this.searchText.trim().toLowerCase();
     return this.productRows.filter((row) => {
       if (this.onlyWithSales && row.timesSold <= 0) return false;
-      if (
-        term &&
-        !`${row.title} ${row.description}`.toLowerCase().includes(term)
-      ) {
+      if (term && !`${row.title} ${row.description}`.toLowerCase().includes(term)) {
         return false;
       }
       if (this.stockMode === 'OUT') return row.availableCount === 0;
@@ -99,9 +95,7 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
     const threshold =
-      this.stockThreshold != null && this.stockThreshold >= 0
-        ? this.stockThreshold
-        : undefined;
+      this.stockThreshold != null && this.stockThreshold >= 0 ? this.stockThreshold : undefined;
     this.service
       .getProductsReport(threshold)
       .pipe(

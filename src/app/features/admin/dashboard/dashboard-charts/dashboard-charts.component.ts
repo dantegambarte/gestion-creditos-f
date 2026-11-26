@@ -9,7 +9,6 @@ import { ChartConfig, DashboardChartsService } from '../services/dashboard-chart
 
 @Component({
   selector: 'app-dashboard-charts',
-  standalone: true,
   imports: [ChartModule, SkeletonModule, ErrorStateComponent],
   templateUrl: './dashboard-charts.component.html',
 })

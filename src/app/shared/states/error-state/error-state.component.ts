@@ -3,7 +3,6 @@ import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-error-state',
-  standalone: true,
   imports: [ButtonModule],
   templateUrl: './error-state.component.html',
 })

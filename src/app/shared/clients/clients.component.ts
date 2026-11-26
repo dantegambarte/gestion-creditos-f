@@ -42,9 +42,7 @@ const AVATAR_COLORS = [
 
 function toClient(c: Customer): Client {
   const parts = c.fullName.trim().split(/\s+/);
-  const initials = (
-    (parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')
-  ).toUpperCase();
+  const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase();
   const colorIdx = c.fullName.charCodeAt(0) % AVATAR_COLORS.length;
   return {
     id: c.id,
@@ -64,7 +62,6 @@ function toClient(c: Customer): Client {
 
 @Component({
   selector: 'app-clients',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     CommonModule,
@@ -125,8 +122,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
         !this.searchTerm ||
         c.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         c.dni.includes(this.searchTerm);
-      const matchesFilter =
-        !this.selectedFilter || c.risk === this.selectedFilter;
+      const matchesFilter = !this.selectedFilter || c.risk === this.selectedFilter;
       return matchesSearch && matchesFilter;
     });
   }
@@ -137,8 +133,8 @@ export class ClientsComponent implements OnInit, OnDestroy {
   get selectedFilterLabel(): string | null {
     if (!this.selectedFilter) return null;
     return (
-      this.filterOptions.find((option) => option.value === this.selectedFilter)
-        ?.label ?? this.selectedFilter
+      this.filterOptions.find((option) => option.value === this.selectedFilter)?.label ??
+      this.selectedFilter
     );
   }
 
@@ -198,26 +194,22 @@ export class ClientsComponent implements OnInit, OnDestroy {
    */
   loadClients(): void {
     this.loading = true;
-    this.customersService
-      .list({ status: 'ACTIVE', includeSummary: true })
-      .subscribe({
-        next: (customers) => {
-          this.clients = customers.map(toClient);
-          this.loading = false;
-        },
-        error: () => {
-          this.loading = false;
-        },
-      });
+    this.customersService.list({ status: 'ACTIVE', includeSummary: true }).subscribe({
+      next: (customers) => {
+        this.clients = customers.map(toClient);
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+      },
+    });
   }
 
   /**
    * Devuelve la severidad del badge de riesgo.
    * @param risk nivel de riesgo
    */
-  getRiskSeverity(
-    risk: string,
-  ): 'success' | 'warning' | 'danger' | 'secondary' {
+  getRiskSeverity(risk: string): 'success' | 'warning' | 'danger' | 'secondary' {
     switch (risk) {
       case 'sin mora':
         return 'success';

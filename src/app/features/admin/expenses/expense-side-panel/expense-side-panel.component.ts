@@ -34,7 +34,6 @@ import { ExpensesService } from '../expenses.service';
 
 @Component({
   selector: 'app-expense-side-panel',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,

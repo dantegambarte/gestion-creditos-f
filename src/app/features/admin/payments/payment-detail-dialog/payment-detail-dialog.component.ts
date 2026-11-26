@@ -23,7 +23,6 @@ import { CashStatusService } from '../../cash-register/cash-status.service';
 
 @Component({
   selector: 'app-payment-detail-dialog',
-  standalone: true,
   imports: [
     DatePipe,
     FormsModule,

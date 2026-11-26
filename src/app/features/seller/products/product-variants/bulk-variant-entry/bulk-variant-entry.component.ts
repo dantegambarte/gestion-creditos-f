@@ -22,7 +22,6 @@ type BulkRowErrors = Record<number, Partial<Record<BulkFieldKey, string>>>;
 
 @Component({
   selector: 'app-bulk-variant-entry',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,

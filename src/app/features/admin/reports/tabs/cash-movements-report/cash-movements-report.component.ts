@@ -62,7 +62,6 @@ const METHOD_LABELS: Record<string, string> = {
  */
 @Component({
   selector: 'app-cash-movements-report',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,
@@ -214,9 +213,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
 
   /** Clases del badge de dirección (IN/OUT) para movimientos de Caja General. */
   directionBadgeClasses(direction: 'IN' | 'OUT'): string {
-    return direction === 'IN'
-      ? 'bg-emerald-500/15 text-emerald-300'
-      : 'bg-red-500/15 text-red-300';
+    return direction === 'IN' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-red-500/15 text-red-300';
   }
 
   /** Formatea fecha/hora ISO. */
@@ -259,9 +256,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
         tab: 'cashMovements',
         dateFrom: this.dateFrom,
         dateTo: this.dateTo,
-        ...(this.selectedBusinessDayId
-          ? { businessDayId: this.selectedBusinessDayId }
-          : {}),
+        ...(this.selectedBusinessDayId ? { businessDayId: this.selectedBusinessDayId } : {}),
         ...(this.selectedSessionId || row.cashSessionId
           ? { cashSessionId: this.selectedSessionId || row.cashSessionId }
           : {}),
@@ -298,10 +293,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
           this.businessDays = rows;
           const restoredBusinessDayId = this.pendingBusinessDayId;
           this.pendingBusinessDayId = null;
-          if (
-            restoredBusinessDayId &&
-            rows.some((bd) => bd.id === restoredBusinessDayId)
-          ) {
+          if (restoredBusinessDayId && rows.some((bd) => bd.id === restoredBusinessDayId)) {
             this.onSelectBusinessDay(restoredBusinessDayId);
           }
         },
@@ -329,8 +321,7 @@ export class CashMovementsReportComponent implements OnInit, OnDestroy {
           if (rows.length > 0) {
             const restoredSessionId = this.pendingSessionId;
             this.pendingSessionId = null;
-            const session =
-              rows.find((row) => row.id === restoredSessionId) || rows[0];
+            const session = rows.find((row) => row.id === restoredSessionId) || rows[0];
             this.selectedSessionId = session.id;
             this.fetchReport(session.id);
           }

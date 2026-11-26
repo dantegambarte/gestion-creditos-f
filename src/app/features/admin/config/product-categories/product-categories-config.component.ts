@@ -21,7 +21,6 @@ import { ProductCategoriesService } from '../services/product-categories.service
 
 @Component({
   selector: 'app-product-categories-config',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     CommonModule,

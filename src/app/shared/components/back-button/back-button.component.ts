@@ -3,7 +3,6 @@ import { ButtonModule } from 'primeng/button';
 
 @Component({
   selector: 'app-back-button',
-  standalone: true,
   imports: [ButtonModule],
   template: `
     <p-button

@@ -29,7 +29,6 @@ import { CollectionDialogSuccess } from '../sheet-dialog.model';
 
 @Component({
   selector: 'app-collection-payment-dialog',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,

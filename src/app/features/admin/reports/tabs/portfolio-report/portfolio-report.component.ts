@@ -13,8 +13,13 @@ import { ReportsService } from '../../reports.service';
 
 @Component({
   selector: 'app-portfolio-report',
-  standalone: true,
-  imports: [FfBackTopFabComponent,DecimalPipe, LoadingStateComponent, ErrorStateComponent, SkeletonModule],
+  imports: [
+    FfBackTopFabComponent,
+    DecimalPipe,
+    LoadingStateComponent,
+    ErrorStateComponent,
+    SkeletonModule,
+  ],
   templateUrl: './portfolio-report.component.html',
 })
 export class PortfolioReportComponent implements OnInit, OnDestroy {
@@ -76,12 +81,7 @@ export class PortfolioReportComponent implements OnInit, OnDestroy {
    * Suma de todos los montos en el reporte de cartera para calcular porcentajes.
    */
   get portfolioGrandTotal(): number {
-    return (
-      this.portfolioReport?.byStatusType.reduce(
-        (acc, r) => acc + r.totalAmount,
-        0,
-      ) ?? 0
-    );
+    return this.portfolioReport?.byStatusType.reduce((acc, r) => acc + r.totalAmount, 0) ?? 0;
   }
 
   /**

@@ -6,7 +6,6 @@ import { PortalAuthService } from '../auth/portal-auth.service';
 
 @Component({
   selector: 'app-portal-layout',
-  standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './portal-layout.component.html',
 })
@@ -15,9 +14,9 @@ export class PortalLayoutComponent {
   private readonly router = inject(Router);
 
   readonly changePasswordRoute = AppRoutes.PORTAL_CHANGE_PASSWORD;
-  readonly dashboardRoute      = AppRoutes.PORTAL_DASHBOARD;
-  readonly creditsRoute        = AppRoutes.PORTAL_CREDITS;
-  readonly simulatorRoute      = AppRoutes.PORTAL_SIMULATOR;
+  readonly dashboardRoute = AppRoutes.PORTAL_DASHBOARD;
+  readonly creditsRoute = AppRoutes.PORTAL_CREDITS;
+  readonly simulatorRoute = AppRoutes.PORTAL_SIMULATOR;
 
   /**
    * Devuelve el cliente autenticado actualmente, o null si no hay ninguno.

@@ -16,7 +16,6 @@ import { UpcomingReportComponent } from './tabs/upcoming-report/upcoming-report.
 
 @Component({
   selector: 'app-reports',
-  standalone: true,
   imports: [
     SummaryReportComponent,
     CollectionReportComponent,
@@ -90,9 +89,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
    */
   private syncTabFromQueryParams(): void {
     this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
-    const tab = this.route.snapshot.queryParamMap.get(
-      'tab',
-    ) as ReportTab | null;
+    const tab = this.route.snapshot.queryParamMap.get('tab') as ReportTab | null;
     if (!tab) return;
     if (this.TABS.some((t) => t.id === tab)) {
       this.activeTab = tab;

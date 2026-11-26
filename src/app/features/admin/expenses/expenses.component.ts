@@ -26,7 +26,6 @@ import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-expenses',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,
@@ -80,12 +79,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
 
   get periodMostFrequentMethod(): string {
     const cash = this.rows.filter((e) => e.paymentMethod === 'CASH').length;
-    const transfer = this.rows.filter(
-      (e) => e.paymentMethod === 'TRANSFER',
-    ).length;
-    return cash >= transfer
-      ? `Efectivo (${cash})`
-      : `Transferencia (${transfer})`;
+    const transfer = this.rows.filter((e) => e.paymentMethod === 'TRANSFER').length;
+    return cash >= transfer ? `Efectivo (${cash})` : `Transferencia (${transfer})`;
   }
 
   get currentMonthLabel(): string {

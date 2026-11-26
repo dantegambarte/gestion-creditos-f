@@ -11,7 +11,6 @@ type HelpSubBlock = Extract<HelpBlock, { kind: 'sub' }>;
  */
 @Component({
   selector: 'app-help',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './help.component.html',
   styleUrl: './help.component.scss',
@@ -93,9 +92,7 @@ export class HelpComponent implements OnInit, AfterViewInit, OnDestroy {
     this.suppressObserver = true;
     clearTimeout(this.suppressTimer);
     this.setActive(id);
-    document
-      .getElementById('help-' + id)
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('help-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     this.suppressTimer = setTimeout(() => {
       this.suppressObserver = false;
     }, 700);

@@ -13,14 +13,7 @@ import { ExpenseCategoriesService } from '../expense-categories.service';
 
 @Component({
   selector: 'app-expense-category-manager',
-  standalone: true,
-  imports: [
-    FormsModule,
-    ButtonModule,
-    DialogModule,
-    InputTextModule,
-    SkeletonModule,
-  ],
+  imports: [FormsModule, ButtonModule, DialogModule, InputTextModule, SkeletonModule],
   templateUrl: './expense-category-manager.component.html',
 })
 export class ExpenseCategoryManagerComponent implements OnInit, OnDestroy {
@@ -92,9 +85,7 @@ export class ExpenseCategoryManagerComponent implements OnInit, OnDestroy {
    * @param cat categoría a modificar
    */
   toggleCat(cat: ExpenseCategory): void {
-    const call = cat.active
-      ? this.catSvc.deactivate(cat.id)
-      : this.catSvc.activate(cat.id);
+    const call = cat.active ? this.catSvc.deactivate(cat.id) : this.catSvc.activate(cat.id);
     call.pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.msg.add({

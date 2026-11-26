@@ -24,7 +24,6 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
 
 @Component({
   selector: 'app-route',
-  standalone: true,
   imports: [
     CurrencyArsPipe,
     DatePipe,
@@ -111,9 +110,7 @@ export class RouteComponent implements OnInit {
   get windowPayments(): Payment[] {
     const start = this.collectionWindowStart;
     if (start === null) return [];
-    return this.recentPayments.filter(
-      (p) => new Date(p.createdAt).getTime() >= start,
-    );
+    return this.recentPayments.filter((p) => new Date(p.createdAt).getTime() >= start);
   }
 
   /**

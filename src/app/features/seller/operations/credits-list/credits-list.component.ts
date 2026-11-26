@@ -16,19 +16,13 @@ import { HeaderService } from '../../../../core/services/header.service';
 import { EmptyStateComponent } from '../../../../shared/states/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
-import {
-  Credit,
-  CreditListFilters,
-  CreditStatus,
-  CreditType,
-} from '../../models/credit.model';
+import { Credit, CreditListFilters, CreditStatus, CreditType } from '../../models/credit.model';
 import { CreditsService } from '../credits.service';
 import { AppRoutes } from '../../../../shared/models/enums/routes.enum';
 import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-credits-list',
-  standalone: true,
   imports: [
     CurrencyArsPipe,
     CommonModule,
@@ -107,8 +101,7 @@ export class CreditsListComponent implements OnInit {
     }
     this.filteredCredits = this.credits.filter(
       (c) =>
-        c.customerName.toLowerCase().includes(term) ||
-        c.customerDni.toLowerCase().includes(term),
+        c.customerName.toLowerCase().includes(term) || c.customerDni.toLowerCase().includes(term),
     );
   }
 

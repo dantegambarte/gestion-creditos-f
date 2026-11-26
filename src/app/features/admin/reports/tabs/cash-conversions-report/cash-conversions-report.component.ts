@@ -16,7 +16,6 @@ import { ReportsService } from '../../reports.service';
 
 @Component({
   selector: 'app-cash-conversions-report',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     FormsModule,

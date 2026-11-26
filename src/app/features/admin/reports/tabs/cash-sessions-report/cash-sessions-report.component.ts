@@ -12,10 +12,7 @@ import { DateService } from '../../../../../core/services/date.service';
 import { FormatService } from '../../../../../core/services/format.service';
 import { ErrorStateComponent } from '../../../../../shared/states/error-state/error-state.component';
 import { CashRegisterService } from '../../../cash-register/cash-register.service';
-import {
-  BusinessDayDetail,
-  BusinessDayListItem,
-} from '../../../models/business-day.model';
+import { BusinessDayDetail, BusinessDayListItem } from '../../../models/business-day.model';
 import {
   CashSessionClosureSnapshot,
   CashSessionDetail,
@@ -31,7 +28,6 @@ import {
  */
 @Component({
   selector: 'app-cash-sessions-report',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     FormsModule,
@@ -247,9 +243,7 @@ export class CashSessionsReportComponent implements OnInit, OnDestroy {
   }
 
   /** Tono visual de la diferencia de cierre. */
-  differenceTone(
-    status: string | null | undefined,
-  ): 'success' | 'warning' | 'danger' | 'neutral' {
+  differenceTone(status: string | null | undefined): 'success' | 'warning' | 'danger' | 'neutral' {
     switch (status) {
       case 'EXACT':
         return 'success';
@@ -296,8 +290,7 @@ export class CashSessionsReportComponent implements OnInit, OnDestroy {
       snapshot.collections.down_payments.transfer +
       snapshot.collections.manual_incomes.cash +
       snapshot.collections.manual_incomes.transfer;
-    const expenses =
-      snapshot.outflows.expenses.cash + snapshot.outflows.expenses.transfer;
+    const expenses = snapshot.outflows.expenses.cash + snapshot.outflows.expenses.transfer;
     const drops = snapshot.drops.cash + snapshot.drops.transfer;
     return {
       collections,

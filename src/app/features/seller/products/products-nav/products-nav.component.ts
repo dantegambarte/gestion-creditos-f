@@ -1,29 +1,15 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
-import {
-  distinctUntilChanged,
-  filter,
-  switchMap,
-  takeUntil,
-} from 'rxjs/operators';
+import { distinctUntilChanged, filter, switchMap, takeUntil } from 'rxjs/operators';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { ActiveTabScrollerDirective } from '../../../../shared/directives/active-tab-scroller.directive';
 import { ProductVariantsService } from '../product-variants.service';
 
-type ProductTab =
-  | 'list'
-  | 'new'
-  | 'detail'
-  | 'variants'
-  | 'units'
-  | 'categories'
-  | 'brands'
-  | null;
+type ProductTab = 'list' | 'new' | 'detail' | 'variants' | 'units' | 'categories' | 'brands' | null;
 
 @Component({
   selector: 'app-products-nav',
-  standalone: true,
   imports: [RouterModule, ActiveTabScrollerDirective],
   templateUrl: './products-nav.component.html',
   styleUrl: './products-nav.component.scss',
@@ -89,9 +75,7 @@ export class ProductsNavComponent implements OnInit, OnDestroy {
     if (ProductsNavComponent.CONFIG_RE.test(url)) {
       const qpProductId = urlTree.queryParams['productId'];
       const contextualProductId =
-        typeof qpProductId === 'string' && qpProductId.trim().length > 0
-          ? qpProductId
-          : null;
+        typeof qpProductId === 'string' && qpProductId.trim().length > 0 ? qpProductId : null;
 
       if (contextualProductId !== this.productId) {
         this.productId = contextualProductId;
@@ -143,16 +127,12 @@ export class ProductsNavComponent implements OnInit, OnDestroy {
 
   /** Link al detalle del producto activo, o null si no hay producto en la URL. */
   get detailLink(): string | null {
-    return this.productId
-      ? `${this.basePath}/products/${this.productId}`
-      : null;
+    return this.productId ? `${this.basePath}/products/${this.productId}` : null;
   }
 
   /** Link a la pantalla de variantes del producto activo, o null si no hay producto. */
   get variantsLink(): string | null {
-    return this.productId
-      ? `${this.basePath}/products/${this.productId}/variants`
-      : null;
+    return this.productId ? `${this.basePath}/products/${this.productId}/variants` : null;
   }
 
   /** Variantid efectivo: el de la URL (si estamos en units) o el primero del producto. */

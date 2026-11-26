@@ -8,7 +8,6 @@ import { InputTextModule } from 'primeng/inputtext';
 
 @Component({
   selector: 'app-company-config',
-  standalone: true,
   imports: [FormsModule, InputTextModule, InputNumberModule, DropdownModule, ButtonModule],
   templateUrl: './company-config.component.html',
 })

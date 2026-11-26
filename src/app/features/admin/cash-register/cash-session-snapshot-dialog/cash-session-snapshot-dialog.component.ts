@@ -22,7 +22,6 @@ import { CashRegisterService } from '../cash-register.service';
  */
 @Component({
   selector: 'app-cash-session-snapshot-dialog',
-  standalone: true,
   imports: [ButtonModule, DialogModule, SkeletonModule],
   templateUrl: './cash-session-snapshot-dialog.component.html',
 })

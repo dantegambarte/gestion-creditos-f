@@ -12,8 +12,7 @@ import { ReportsService } from '../../reports.service';
 
 @Component({
   selector: 'app-upcoming-report',
-  standalone: true,
-  imports: [FfBackTopFabComponent,LoadingStateComponent, ErrorStateComponent, SkeletonModule],
+  imports: [FfBackTopFabComponent, LoadingStateComponent, ErrorStateComponent, SkeletonModule],
   templateUrl: './upcoming-report.component.html',
 })
 export class UpcomingReportComponent implements OnInit, OnDestroy {

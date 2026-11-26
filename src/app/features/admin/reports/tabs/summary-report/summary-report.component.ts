@@ -12,7 +12,6 @@ import { ReportsService } from '../../reports.service';
 
 @Component({
   selector: 'app-summary-report',
-  standalone: true,
   imports: [DecimalPipe, LoadingStateComponent, ErrorStateComponent, SkeletonModule],
   templateUrl: './summary-report.component.html',
 })
@@ -39,9 +38,7 @@ export class SummaryReportComponent implements OnInit, OnDestroy {
    * Workaround: usa un CustomEvent para comunicarse con el padre sin Output.
    */
   goToUpcoming(): void {
-    document.dispatchEvent(
-      new CustomEvent<ReportTab>('report-tab-change', { detail: 'upcoming' }),
-    );
+    document.dispatchEvent(new CustomEvent<ReportTab>('report-tab-change', { detail: 'upcoming' }));
   }
 
   /**

@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PreventDoubleSubmitDirective } from './prevent-double-submit.directive';
 
 @Component({
-  standalone: true,
   imports: [PreventDoubleSubmitDirective],
   template: `<button appPreventDoubleSubmit>Enviar</button>`,
 })

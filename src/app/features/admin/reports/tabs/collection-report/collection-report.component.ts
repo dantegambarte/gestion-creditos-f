@@ -16,7 +16,6 @@ import { ReportsService } from '../../reports.service';
 
 @Component({
   selector: 'app-collection-report',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,
@@ -78,8 +77,7 @@ export class CollectionReportComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.collectionDateFrom > this.collectionDateTo) {
-      this.dateError =
-        'La fecha desde no puede ser posterior a la fecha hasta.';
+      this.dateError = 'La fecha desde no puede ser posterior a la fecha hasta.';
       return;
     }
     this.collectionReport = null;

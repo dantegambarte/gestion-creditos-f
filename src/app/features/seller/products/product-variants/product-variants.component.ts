@@ -24,7 +24,6 @@ import { VariantFormPanelComponent } from './variant-form-panel/variant-form-pan
 
 @Component({
   selector: 'app-product-variants',
-  standalone: true,
   providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [
     FfBackTopFabComponent,

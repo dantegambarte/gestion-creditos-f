@@ -1,13 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FfBackTopFabComponent } from './../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  inject,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
@@ -22,7 +15,6 @@ import { ProductsService } from '../../../products/products.service';
 
 @Component({
   selector: 'app-credit-cart',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     CommonModule,
@@ -105,17 +97,15 @@ export class CreditCartComponent implements OnInit {
     this.selectorUnits = [];
     if (!this.selectedProductId) return;
     this.loadingVariants = true;
-    this.variantsService
-      .getAll({ productId: this.selectedProductId, status: 'ACTIVE' })
-      .subscribe({
-        next: (data) => {
-          this.selectorVariants = data;
-          this.loadingVariants = false;
-        },
-        error: () => {
-          this.loadingVariants = false;
-        },
-      });
+    this.variantsService.getAll({ productId: this.selectedProductId, status: 'ACTIVE' }).subscribe({
+      next: (data) => {
+        this.selectorVariants = data;
+        this.loadingVariants = false;
+      },
+      error: () => {
+        this.loadingVariants = false;
+      },
+    });
   }
 
   /**
@@ -126,17 +116,15 @@ export class CreditCartComponent implements OnInit {
     this.selectorUnits = [];
     if (!this.selectedVariantId) return;
     this.loadingUnits = true;
-    this.unitsService
-      .getAll({ variantId: this.selectedVariantId, status: 'AVAILABLE' })
-      .subscribe({
-        next: (data) => {
-          this.selectorUnits = data;
-          this.loadingUnits = false;
-        },
-        error: () => {
-          this.loadingUnits = false;
-        },
-      });
+    this.unitsService.getAll({ variantId: this.selectedVariantId, status: 'AVAILABLE' }).subscribe({
+      next: (data) => {
+        this.selectorUnits = data;
+        this.loadingUnits = false;
+      },
+      error: () => {
+        this.loadingUnits = false;
+      },
+    });
   }
 
   /**
@@ -146,15 +134,9 @@ export class CreditCartComponent implements OnInit {
     if (!this.selectedUnitId) return;
     const unit = this.selectorUnits.find((u) => u.id === this.selectedUnitId);
     if (!unit) return;
-    const variant = this.selectorVariants.find(
-      (v) => v.id === this.selectedVariantId,
-    );
-    const product = this.selectorProducts.find(
-      (p) => p.id === this.selectedProductId,
-    );
-    const parts = [variant?.color, variant?.size, variant?.capacity].filter(
-      Boolean,
-    );
+    const variant = this.selectorVariants.find((v) => v.id === this.selectedVariantId);
+    const product = this.selectorProducts.find((p) => p.id === this.selectedProductId);
+    const parts = [variant?.color, variant?.size, variant?.capacity].filter(Boolean);
     const variantLabel = parts.length > 0 ? parts.join(' / ') : '';
     this.cart.push({
       unitId: unit.id,

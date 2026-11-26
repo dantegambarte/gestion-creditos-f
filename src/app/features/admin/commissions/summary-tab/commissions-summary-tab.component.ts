@@ -8,15 +8,10 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { AppError } from '../../../../core/models/app-error';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
-import {
-  Liquidation,
-  PaymentMethod,
-  WeeklySummaryEmployee,
-} from '../../models/commission.model';
+import { Liquidation, PaymentMethod, WeeklySummaryEmployee } from '../../models/commission.model';
 
 @Component({
   selector: 'app-commissions-summary-tab',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     ButtonModule,

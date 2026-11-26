@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  inject,
+} from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -8,7 +16,6 @@ import { ClientOperation } from '../../../../models/interface/client';
 
 @Component({
   selector: 'app-step-client',
-  standalone: true,
   imports: [FormsModule, InputTextModule, DecimalPipe, RouterLink],
   templateUrl: './step-client.component.html',
 })
@@ -69,9 +76,7 @@ export class StepClientComponent implements OnChanges {
     const term = this.normalizeText(this.searchText);
     if (!term) return this.clients;
     return this.clients.filter(
-      (c) =>
-        this.normalizeText(c.name).includes(term) ||
-        this.normalizeText(c.dni).includes(term),
+      (c) => this.normalizeText(c.name).includes(term) || this.normalizeText(c.dni).includes(term),
     );
   }
 
@@ -132,7 +137,11 @@ export class StepClientComponent implements OnChanges {
    * Valida el formulario rápido mínimo para poder crear y continuar.
    */
   get isQuickRegisterValid(): boolean {
-    return this.quickRegisterFullNameIsValid && this.quickRegisterDniIsValid && this.quickRegisterEmailIsValid;
+    return (
+      this.quickRegisterFullNameIsValid &&
+      this.quickRegisterDniIsValid &&
+      this.quickRegisterEmailIsValid
+    );
   }
 
   /**

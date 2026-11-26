@@ -11,7 +11,6 @@ interface NavItem {
 
 @Component({
   selector: 'app-config',
-  standalone: true,
   imports: [RouterLink, RouterLinkActive, RouterOutlet, ActiveTabScrollerDirective],
   templateUrl: './config.component.html',
 })

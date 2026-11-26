@@ -12,7 +12,6 @@ import { PortalAuthService } from '../auth/portal-auth.service';
 
 @Component({
   selector: 'app-portal-login',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -55,21 +54,19 @@ export class PortalLoginComponent {
     if (this.form.invalid || this.isBlocked) return;
 
     this.loading = true;
-    this.auth
-      .login(this.form.getRawValue() as { dni: string; password: string })
-      .subscribe({
-        next: () => {
-          this.loading = false;
-          this.failedAttempts = 0;
-          this.router.navigate([AppRoutes.PORTAL_DASHBOARD]);
-        },
-        error: () => {
-          this.loading = false;
-          this.failedAttempts++;
-          this.errorMessage = this.isBlocked
-            ? 'Demasiados intentos fallidos. Recargá la página para intentar de nuevo.'
-            : 'Credenciales incorrectas.';
-        },
-      });
+    this.auth.login(this.form.getRawValue() as { dni: string; password: string }).subscribe({
+      next: () => {
+        this.loading = false;
+        this.failedAttempts = 0;
+        this.router.navigate([AppRoutes.PORTAL_DASHBOARD]);
+      },
+      error: () => {
+        this.loading = false;
+        this.failedAttempts++;
+        this.errorMessage = this.isBlocked
+          ? 'Demasiados intentos fallidos. Recargá la página para intentar de nuevo.'
+          : 'Credenciales incorrectas.';
+      },
+    });
   }
 }

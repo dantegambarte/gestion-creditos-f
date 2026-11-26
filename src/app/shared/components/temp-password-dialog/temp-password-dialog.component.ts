@@ -5,7 +5,6 @@ import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-temp-password-dialog',
-  standalone: true,
   imports: [CommonModule, ButtonModule, DialogModule],
   templateUrl: './temp-password-dialog.component.html',
 })

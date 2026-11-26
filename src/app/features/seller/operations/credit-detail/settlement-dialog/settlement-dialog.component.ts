@@ -16,7 +16,6 @@ import { CreditsService } from '../../credits.service';
 
 @Component({
   selector: 'app-settlement-dialog',
-  standalone: true,
   imports: [
     FormsModule,
     CurrencyArsPipe,

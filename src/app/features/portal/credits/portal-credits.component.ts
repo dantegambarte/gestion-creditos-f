@@ -17,8 +17,14 @@ import { PortalCredit } from '../models/portal.models';
 
 @Component({
   selector: 'app-portal-credits',
-  standalone: true,
-  imports: [FfBackTopFabComponent,CommonModule, CurrencyPipe, DatePipe, SkeletonModule, RouterLink],
+  imports: [
+    FfBackTopFabComponent,
+    CommonModule,
+    CurrencyPipe,
+    DatePipe,
+    SkeletonModule,
+    RouterLink,
+  ],
   templateUrl: './portal-credits.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -181,11 +187,16 @@ export class PortalCreditsComponent implements OnInit {
    */
   frequencyUnit(freq: PortalCredit['paymentFrequency']): string {
     switch (freq) {
-      case 'DAILY':     return 'día';
-      case 'MONTHLY':   return 'mes';
-      case 'WEEKLY':    return 'sem.';
-      case 'BIWEEKLY':  return 'quincena';
-      default:          return '';
+      case 'DAILY':
+        return 'día';
+      case 'MONTHLY':
+        return 'mes';
+      case 'WEEKLY':
+        return 'sem.';
+      case 'BIWEEKLY':
+        return 'quincena';
+      default:
+        return '';
     }
   }
 
@@ -197,9 +208,9 @@ export class PortalCreditsComponent implements OnInit {
   daysUntil(dateStr: string | null): number | null {
     if (!dateStr) return null;
     const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
-    const due   = new Date(y, m - 1, d);   // medianoche local de la fecha de vencimiento
+    const due = new Date(y, m - 1, d); // medianoche local de la fecha de vencimiento
     const today = new Date();
-    today.setHours(0, 0, 0, 0);             // medianoche local de hoy
+    today.setHours(0, 0, 0, 0); // medianoche local de hoy
     return Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   }
 

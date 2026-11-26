@@ -26,7 +26,6 @@ import { ClientPortalPanelComponent } from './client-portal-panel/client-portal-
 
 @Component({
   selector: 'app-client-detail',
-  standalone: true,
   providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [
     CommonModule,
