@@ -2,4 +2,4 @@ dist
 coverage
 node_modules
 .angular
-package-lock.json
+pnpm-lock.yaml

@@ -27,7 +27,9 @@ test('shared code forces the full suite', () => {
     'src/environments/environment.development.ts',
     'angular.json',
     'package.json',
-    'package-lock.json',
+    'pnpm-lock.yaml',
+    'pnpm-workspace.yaml',
+    '.nvmrc',
     'tsconfig.app.json',
     'karma.conf.js',
   ]) {
