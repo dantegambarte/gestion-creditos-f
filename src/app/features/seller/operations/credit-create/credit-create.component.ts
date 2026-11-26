@@ -1,5 +1,6 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -55,6 +56,7 @@ import { BackButtonComponent } from '../../../../shared/components/back-button/b
 })
 export class CreditCreateComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly creditsService = inject(CreditsService);
   private readonly customersService = inject(CustomersService);
   private readonly router = inject(Router);
@@ -133,7 +135,10 @@ export class CreditCreateComponent implements OnInit {
       { label: 'Nueva operación' },
     ]);
     this.buildForm();
-    this.form.get('downPayment')?.valueChanges.subscribe(() => {
+    this.form
+      .get('downPayment')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
       this.clearSimulationState();
       if (this.unitsError === 'El enganche no puede ser mayor al total de la venta.') {
         this.unitsError = null;

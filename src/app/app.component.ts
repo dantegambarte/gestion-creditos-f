@@ -1,6 +1,6 @@
 import { AsyncPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { Component, DestroyRef, PLATFORM_ID, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { Message, MessageService, PrimeNGConfig } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
@@ -120,7 +120,10 @@ export class AppComponent {
     }
 
     this.router.events
-      .pipe(filter((event) => event instanceof NavigationEnd))
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe(() => {
         requestAnimationFrame(() => {
           const shellMain = this.document.querySelector('.ff-shell__main');

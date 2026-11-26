@@ -1,4 +1,5 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -71,6 +72,7 @@ export type FirstPaymentDateMode = 'APPROVAL_DATE' | 'CUSTOM_DATE';
 @Injectable()
 export class OperationFormService {
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly messageService = inject(MessageService);
   private readonly customersService = inject(CustomersService);
   private readonly creditsService = inject(CreditsService);
@@ -642,7 +644,9 @@ export class OperationFormService {
   }
 
   private _setupFormSubscriptions(): void {
-    this.operationForm.controls.operationType.valueChanges.subscribe((type) => {
+    this.operationForm.controls.operationType.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((type) => {
       this.resetSimulationResult();
       // La condición de pago solo aplica a ventas; al cambiar de tipo se vuelve
       // a FINANCED y se restauran las validaciones de frecuencia.
@@ -705,7 +709,9 @@ export class OperationFormService {
       this.calculateDynamicRate();
     });
 
-    this.operationForm.controls.paymentFrequency.valueChanges.subscribe(() => {
+    this.operationForm.controls.paymentFrequency.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
       this.resetSimulationResult();
       this.operationForm.controls.installmentsCount.setValue(null, {
         emitEvent: false,
@@ -717,12 +723,16 @@ export class OperationFormService {
       this.syncFirstPaymentDateWithMode();
     });
 
-    this.operationForm.controls.firstPaymentDateMode.valueChanges.subscribe(() => {
+    this.operationForm.controls.firstPaymentDateMode.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
       this.resetSimulationResult();
       this.syncFirstPaymentDateWithMode();
     });
 
-    this.operationForm.controls.totalAmount.valueChanges.subscribe(() => {
+    this.operationForm.controls.totalAmount.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
       this.resetSimulationResult();
       this.calculateDynamicRate();
 
@@ -730,7 +740,9 @@ export class OperationFormService {
       this.ensureValidInstallmentsSelection();
     });
 
-    this.operationForm.controls.installmentsCount.valueChanges.subscribe((count) => {
+    this.operationForm.controls.installmentsCount.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((count) => {
       this.resetSimulationResult();
       this.calculateDynamicRate();
       // Si el plan baja a < 2 cuotas, "Cuotas adelantadas" deja de tener
@@ -746,7 +758,9 @@ export class OperationFormService {
       }
     });
 
-    this.operationForm.controls.downPaymentMethod.valueChanges.subscribe((method) => {
+    this.operationForm.controls.downPaymentMethod.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((method) => {
       if (method !== 'MIXED') {
         this.operationForm.controls.downPaymentCash.setValue(null);
         this.operationForm.controls.downPaymentTransfer.setValue(null);
@@ -756,7 +770,9 @@ export class OperationFormService {
       }
     });
 
-    this.operationForm.controls.advancedInstallmentsMethod.valueChanges.subscribe((method) => {
+    this.operationForm.controls.advancedInstallmentsMethod.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((method) => {
       if (method !== 'MIXED') {
         this.operationForm.controls.advancedInstallmentsCash.setValue(null);
         this.operationForm.controls.advancedInstallmentsTransfer.setValue(null);
@@ -766,19 +782,27 @@ export class OperationFormService {
       }
     });
 
-    this.operationForm.controls.firstPaymentDate.valueChanges.subscribe(() => {
+    this.operationForm.controls.firstPaymentDate.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
       this.resetSimulationResult();
     });
 
-    this.operationForm.controls.downPayment.valueChanges.subscribe(() => {
+    this.operationForm.controls.downPayment.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
       this.resetSimulationResult();
     });
 
-    this.operationForm.controls.initialPaymentType.valueChanges.subscribe(() => {
+    this.operationForm.controls.initialPaymentType.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
       this.resetSimulationResult();
     });
 
-    this.operationForm.controls.advancedInstallmentsCount.valueChanges.subscribe((count) => {
+    this.operationForm.controls.advancedInstallmentsCount.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((count) => {
       this.resetSimulationResult();
       const maxAllowed = Math.max(this.getSaleMaxInstallments() - 1, 0);
       if (count == null) return;
