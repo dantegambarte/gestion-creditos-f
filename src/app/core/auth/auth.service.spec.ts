@@ -260,6 +260,34 @@ describe('AuthService', () => {
     expect(service.isAuthenticated()).toBeTrue();
   }));
 
+  it('restoreSession: conserva la sesión si /me se aborta (navegación o recarga)', fakeAsync(() => {
+    reloadWithStoredUser();
+
+    service.restoreSession().subscribe();
+
+    http.expectOne(`${API}/auth/refresh`).flush({ ok: true, data: { token: 'fresh.token' } });
+    http.expectOne(`${API}/auth/me`).error(new ProgressEvent('abort'), { status: 0 });
+    tick();
+
+    expect(service.isAuthenticated()).toBeTrue();
+    expect(localStorage.getItem('sgcf_user')).not.toBeNull();
+  }));
+
+  it('restoreSession: limpia la sesión si /me responde 401', fakeAsync(() => {
+    reloadWithStoredUser();
+
+    service.restoreSession().subscribe();
+
+    http.expectOne(`${API}/auth/refresh`).flush({ ok: true, data: { token: 'fresh.token' } });
+    http
+      .expectOne(`${API}/auth/me`)
+      .flush({ ok: false, message: 'x' }, { status: 401, statusText: 'Unauthorized' });
+    tick();
+
+    expect(service.isAuthenticated()).toBeFalse();
+    expect(localStorage.getItem('sgcf_user')).toBeNull();
+  }));
+
   // ── restoreSession sin sesión previa ──────────────────────────────────────
   it('restoreSession: no hace HTTP si no hay sesión guardada', fakeAsync(() => {
     service.restoreSession().subscribe();
