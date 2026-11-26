@@ -546,8 +546,12 @@ Cypress.Commands.add('loginAs', (role: InternalRole, destination?: string) => {
     return;
   }
 
-  // GET /auth/me devuelve el usuario correcto para que APP_INITIALIZER
-  // (AuthService.restoreSession) persista el usuario en _user$.
+  // El access token vive sólo en memoria (#39): APP_INITIALIZER lo recupera
+  // con POST /auth/refresh (cookie HttpOnly) y luego pide GET /auth/me.
+  cy.intercept('POST', '**/auth/refresh', {
+    statusCode: 200,
+    body: { ok: true, data: { token: MOCK_AUTH_DATA[role].token } },
+  }).as('authRefresh');
   cy.intercept('GET', '**/auth/me', {
     statusCode: 200,
     body: MOCK_ME_RESPONSES[role],
@@ -711,6 +715,12 @@ Cypress.Commands.add(
         ...(overrides?.customer ?? {}),
       },
     };
+
+    // El token del portal vive sólo en memoria (#39): se recupera con refresh.
+    cy.intercept('POST', '**/auth/portal/refresh', {
+      statusCode: 200,
+      body: { ok: true, data: { token: session.token } },
+    }).as('portalRefresh');
 
     cy.visit(destination ?? PORTAL_DEFAULT_HOME, {
       onBeforeLoad(win) {

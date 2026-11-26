@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
-import { environment } from '../../../../environments/environment';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
 import { ApiHttpService } from '../../../core/http/api-http.service';
+import { AccessTokenStore, isSessionRejected } from '../../../core/auth/access-token.store';
+import { TokenRefreshService } from '../../../core/auth/token-refresh.service';
 import { LoginResponseRaw } from '../models/interface/login.interface';
 import {
   PortalChangePasswordPayload,
@@ -15,7 +16,8 @@ const isBrowser = typeof localStorage !== 'undefined';
 @Injectable({ providedIn: 'root' })
 export class PortalAuthService {
   private readonly api = inject(ApiHttpService);
-  private readonly TOKEN_KEY = environment.portalTokenKey;
+  private readonly tokens = inject(AccessTokenStore);
+  private readonly tokenRefresh = inject(TokenRefreshService);
   private readonly CUSTOMER_KEY = 'sgcf_portal_customer';
 
   private _customer$ = new BehaviorSubject<PortalCustomer | null>(null);
@@ -26,24 +28,25 @@ export class PortalAuthService {
   }
 
   /**
-   * Devuelve el cliente actualmente autenticado o null si no hay ninguno. Este valor se inicializa al cargar el servicio leyendo el token del localStorage y no se actualiza automáticamente si el token cambia fuera de este servicio. Para reactividad, subscribirse a currentCustomer$.
+   * Devuelve el cliente actualmente autenticado o null si no hay ninguno.
+   * Para reactividad, subscribirse a currentCustomer$.
    */
   get snapshot(): PortalCustomer | null {
     return this._customer$.value;
   }
 
   /**
-   * Verifica si el usuario está autenticado. Esto se determina por la presencia de un cliente en el estado actual. No verifica la validez del token ni su expiración, por lo que es posible que retorne true para un token expirado hasta que se intente usar o se recargue la página.
-   * @returns
+   * Verifica si hay un cliente en el estado actual. No valida el access token:
+   * si venció, el error interceptor lo renueva con el refresh token.
    */
   isAuthenticated(): boolean {
     return !!this._customer$.value;
   }
 
   /**
-   * Inicia sesión con las credenciales proporcionadas. Si la autenticación es exitosa, almacena el token JWT y la información del cliente en localStorage, y actualiza el estado del cliente en el servicio. El token se espera que contenga las reclamaciones necesarias para reconstruir el objeto PortalCustomer si es necesario. El método retorna un Observable que emite void al completar, o un error si la autenticación falla.
-   * @param payload
-   * @returns
+   * Inicia sesión. El access token queda sólo en memoria (#39) y en localStorage
+   * se guarda únicamente el perfil del cliente, para restaurar la sesión al recargar.
+   * @param payload - DNI y contraseña del cliente
    */
   login(payload: PortalLoginPayload): Observable<void> {
     return this.api.post<LoginResponseRaw>('auth/portal/login', payload).pipe(
@@ -54,13 +57,30 @@ export class PortalAuthService {
           dni: res.customer.dni,
           portalIsTempPassword: res.customer.portal_is_temp_password,
         };
-        if (isBrowser) {
-          localStorage.setItem(this.TOKEN_KEY, res.token);
-          localStorage.setItem(this.CUSTOMER_KEY, JSON.stringify(customer));
-        }
+        this.tokens.set(true, res.token);
+        this._storeCustomer(customer);
         this._customer$.next(customer);
       }),
       map(() => undefined),
+    );
+  }
+
+  /**
+   * Restaura la sesión del portal al iniciar la app pidiendo un access token
+   * nuevo con la cookie HttpOnly. Sólo cierra la sesión si el backend la
+   * rechaza (401/403); un corte de red conserva el perfil guardado.
+   */
+  restoreSession(): Observable<void> {
+    this.tokens.removeLegacyTokens();
+    if (!this._customer$.value) return of(undefined);
+
+    return this.tokenRefresh.refreshPortal().pipe(
+      tap((token) => this.tokens.set(true, token)),
+      map(() => undefined),
+      catchError((err) => {
+        if (isSessionRejected(err)) this._clearSession();
+        return of(undefined);
+      }),
     );
   }
 
@@ -78,8 +98,8 @@ export class PortalAuthService {
   }
 
   /**
-   * Cierra la sesión del usuario. Elimina el token JWT y la información del cliente del localStorage, y actualiza el estado del cliente en el servicio. Retorna un Observable que emite void al completar. Si la llamada a la API de logout falla, el método aún limpiará el estado local para asegurar que el usuario quede desconectado en la interfaz, aunque idealmente se debería manejar el error para informar al usuario.
-   * @returns
+   * Cierra la sesión del cliente. Aunque la llamada al backend falle, limpia
+   * el estado local para que el cliente quede desconectado en la interfaz.
    */
   logout(): Observable<void> {
     return this.api.post<null>('auth/portal/logout').pipe(
@@ -98,69 +118,43 @@ export class PortalAuthService {
     const current = this._customer$.value;
     if (!current) return;
     const updated: PortalCustomer = { ...current, portalIsTempPassword: false };
-    if (isBrowser) {
-      localStorage.setItem(this.CUSTOMER_KEY, JSON.stringify(updated));
-    }
+    this._storeCustomer(updated);
     this._customer$.next(updated);
   }
 
   /**
-   * Limpia la sesión del usuario.
+   * Guarda el perfil del cliente (nunca el token) en localStorage.
+   * @param customer - cliente autenticado
+   */
+  private _storeCustomer(customer: PortalCustomer): void {
+    if (isBrowser) localStorage.setItem(this.CUSTOMER_KEY, JSON.stringify(customer));
+  }
+
+  /**
+   * Limpia el token en memoria, el perfil guardado y el estado del cliente.
    */
   private _clearSession(): void {
+    this.tokens.set(true, null);
     if (isBrowser) {
-      localStorage.removeItem(this.TOKEN_KEY);
+      this.tokens.removeLegacyTokens();
       localStorage.removeItem(this.CUSTOMER_KEY);
     }
     this._customer$.next(null);
   }
 
   /**
-   * Inicializa el servicio de autenticación.
-   * @returns
+   * Rehidrata el perfil guardado para que los guards vean la sesión al recargar;
+   * el access token se recupera después con restoreSession().
    */
   private _bootstrap(): void {
     if (!isBrowser) return;
 
-    const token = localStorage.getItem(this.TOKEN_KEY);
-    if (!token) return;
-
-    // Decodificar y validar el JWT una sola vez.
-    let jwtPayload: Record<string, unknown>;
+    const stored = localStorage.getItem(this.CUSTOMER_KEY);
+    if (!stored) return;
     try {
-      const parts = token.split('.');
-      if (parts.length !== 3) throw new Error('invalid jwt');
-      jwtPayload = JSON.parse(
-        atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')),
-      );
-      if (jwtPayload?.['aud'] !== 'portal-cliente')
-        throw new Error('wrong audience');
+      this._customer$.next(JSON.parse(stored) as PortalCustomer);
     } catch {
       this._clearSession();
-      return;
-    }
-
-    const stored = localStorage.getItem(this.CUSTOMER_KEY);
-    if (stored) {
-      try {
-        this._customer$.next(JSON.parse(stored) as PortalCustomer);
-      } catch {
-        this._clearSession();
-      }
-    } else {
-      try {
-        const customer: PortalCustomer = {
-          id: String(jwtPayload['sub'] ?? ''),
-          fullName: String(jwtPayload['full_name'] ?? jwtPayload['name'] ?? ''),
-          dni: String(jwtPayload['dni'] ?? ''),
-          portalIsTempPassword: Boolean(
-            jwtPayload['portal_is_temp_password'] ?? false,
-          ),
-        };
-        this._customer$.next(customer);
-      } catch {
-        this._clearSession();
-      }
     }
   }
 }

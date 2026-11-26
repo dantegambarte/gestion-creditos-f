@@ -2,9 +2,11 @@
   <div class="auth-card" data-cy="portal-login-card">
     <!-- Logo -->
     <div class="auth-logo" style="font-family: var(--ff-font-mono)">finFlow</div>
-    <div style="text-align:center; margin-bottom: 24px">
-      <span class="text-xs font-semibold px-2 py-0.5 rounded uppercase tracking-wider"
-            style="background: rgba(79,110,247,0.15); color: var(--ff-accent)">
+    <div style="text-align: center; margin-bottom: 24px">
+      <span
+        class="text-xs font-semibold px-2 py-0.5 rounded uppercase tracking-wider"
+        style="background: rgba(79, 110, 247, 0.15); color: var(--ff-accent)"
+      >
         Portal del Cliente
       </span>
     </div>
@@ -38,11 +40,13 @@
         <div id="dni-error" role="alert" aria-live="polite">
           @if (submitted && form.controls['dni'].hasError('required')) {
             <small class="auth-error">
-              <i class="pi pi-exclamation-circle text-xs" aria-hidden="true"></i> El DNI es requerido.
+              <i class="pi pi-exclamation-circle text-xs" aria-hidden="true"></i> El DNI es
+              requerido.
             </small>
           } @else if (submitted && form.controls['dni'].hasError('pattern')) {
             <small class="auth-error">
-              <i class="pi pi-exclamation-circle text-xs" aria-hidden="true"></i> Ingresá un DNI válido (7 u 8 dígitos sin puntos).
+              <i class="pi pi-exclamation-circle text-xs" aria-hidden="true"></i> Ingresá un DNI
+              válido (7 u 8 dígitos sin puntos).
             </small>
           }
         </div>
@@ -68,7 +72,8 @@
         <div id="password-error" role="alert" aria-live="polite">
           @if (submitted && form.controls['password'].hasError('required')) {
             <small class="auth-error">
-              <i class="pi pi-exclamation-circle text-xs" aria-hidden="true"></i> La contraseña es requerida.
+              <i class="pi pi-exclamation-circle text-xs" aria-hidden="true"></i> La contraseña es
+              requerida.
             </small>
           }
         </div>
@@ -76,14 +81,32 @@
 
       <!-- Error de login / bloqueo -->
       @if (isBlocked) {
-        <div role="alert" class="auth-warning-banner" style="background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: var(--ff-danger)">
+        <div
+          role="alert"
+          data-cy="portal-login-locked"
+          class="auth-warning-banner"
+          style="
+            background: rgba(248, 113, 113, 0.08);
+            border-color: rgba(248, 113, 113, 0.25);
+            color: var(--ff-danger);
+          "
+        >
           <i class="pi pi-lock text-sm flex-shrink-0" aria-hidden="true"></i>
           <span>{{ errorMessage }}</span>
         </div>
       } @else if (errorMessage) {
-        <div role="alert" class="auth-warning-banner" style="background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: var(--ff-danger)">
+        <div
+          role="alert"
+          data-cy="portal-login-error"
+          class="auth-warning-banner"
+          style="
+            background: rgba(248, 113, 113, 0.08);
+            border-color: rgba(248, 113, 113, 0.25);
+            color: var(--ff-danger);
+          "
+        >
           <i class="pi pi-exclamation-triangle text-sm flex-shrink-0" aria-hidden="true"></i>
-          <span>{{ errorMessage }} ({{ failedAttempts }}/{{ maxAttempts }})</span>
+          <span>{{ errorMessage }}</span>
         </div>
       }
 
@@ -93,7 +116,6 @@
         label="Iniciar sesión"
         styleClass="w-full justify-center h-11"
         [loading]="loading"
-        [disabled]="isBlocked"
       />
     </form>
 

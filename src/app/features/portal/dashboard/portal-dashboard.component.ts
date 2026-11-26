@@ -42,22 +42,24 @@ export class PortalDashboardComponent implements OnInit {
    * Cuotas con estado OVERDUE dentro de los próximos vencimientos.
    */
   get overdueInstallments() {
-    return (this.summary?.upcomingInstallments ?? []).filter(i => i.status === 'OVERDUE');
+    return (this.summary?.upcomingInstallments ?? []).filter((i) => i.status === 'OVERDUE');
   }
 
   /**
    * Cuotas PENDING o PARTIAL (no vencidas) dentro de los próximos 30 días.
    */
   get pendingInstallments() {
-    return (this.summary?.upcomingInstallments ?? []).filter(i => i.status !== 'OVERDUE');
+    return (this.summary?.upcomingInstallments ?? []).filter((i) => i.status !== 'OVERDUE');
   }
 
   /**
-   * Primera cuota pendiente (no vencida) más próxima a vencer.
-   * Es el dato más accionable para el usuario.
+   * Próxima cuota a pagar: la de vencimiento más antiguo entre vencidas y
+   * pendientes, así una cuota OVERDUE nunca queda oculta (#55).
    */
-  get nextPendingInstallment() {
-    return this.pendingInstallments[0] ?? null;
+  get nextPendingInstallment(): UpcomingInstallment | null {
+    const all = [...(this.summary?.upcomingInstallments ?? [])];
+    all.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    return all[0] ?? null;
   }
 
   /**
@@ -85,9 +87,9 @@ export class PortalDashboardComponent implements OnInit {
   daysUntil(dateStr: string | null): number | null {
     if (!dateStr) return null;
     const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
-    const due   = new Date(y, m - 1, d);   // medianoche local de la fecha de vencimiento
+    const due = new Date(y, m - 1, d); // medianoche local de la fecha de vencimiento
     const today = new Date();
-    today.setHours(0, 0, 0, 0);             // medianoche local de hoy
+    today.setHours(0, 0, 0, 0); // medianoche local de hoy
     return Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   }
 

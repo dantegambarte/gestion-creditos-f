@@ -9,6 +9,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { PortalAuthService } from '../auth/portal-auth.service';
+import { AppError } from '../../../core/models/app-error';
 
 @Component({
   selector: 'app-portal-login',
@@ -30,46 +31,59 @@ export class PortalLoginComponent {
   private readonly router = inject(Router);
 
   form = this.fb.group({
-    dni: ['', [Validators.required, Validators.pattern(/^\d{7,9}$/)]],
+    dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
     password: ['', Validators.required],
   });
 
   loading = false;
   submitted = false;
   errorMessage = '';
-  failedAttempts = 0;
-  readonly maxAttempts = 5;
-
-  get isBlocked(): boolean {
-    return this.failedAttempts >= this.maxAttempts;
-  }
+  /** true cuando el backend informó la cuenta bloqueada (ACCOUNT_LOCKED). */
+  isBlocked = false;
 
   /**
-   * Maneja el envío del formulario de inicio de sesión.
-   * @returns
+   * Envía el login. El bloqueo por intentos fallidos lo decide el backend
+   * (persiste aunque se recargue la página); acá sólo se muestra su código.
    */
   onSubmit(): void {
     this.submitted = true;
     this.errorMessage = '';
 
-    if (this.form.invalid || this.isBlocked) return;
+    if (this.form.invalid) return;
 
     this.loading = true;
-    this.auth
-      .login(this.form.getRawValue() as { dni: string; password: string })
-      .subscribe({
-        next: () => {
-          this.loading = false;
-          this.failedAttempts = 0;
-          this.router.navigate([AppRoutes.PORTAL_DASHBOARD]);
-        },
-        error: () => {
-          this.loading = false;
-          this.failedAttempts++;
-          this.errorMessage = this.isBlocked
-            ? 'Demasiados intentos fallidos. Recargá la página para intentar de nuevo.'
-            : 'Credenciales incorrectas.';
-        },
-      });
+    this.auth.login(this.form.getRawValue() as { dni: string; password: string }).subscribe({
+      next: () => {
+        this.loading = false;
+        this.isBlocked = false;
+        this.router.navigate([AppRoutes.PORTAL_DASHBOARD]);
+      },
+      error: (err: unknown) => {
+        this.loading = false;
+        this.applyLoginError(err);
+      },
+    });
+  }
+
+  /**
+   * Traduce el error del login a un mensaje. Sólo un 401 son credenciales
+   * inválidas; un corte de red o un 5xx no se presenta como intento fallido.
+   * @param err - AppError devuelto por ApiHttpService ({ status, message, code })
+   */
+  private applyLoginError(err: unknown): void {
+    const e = err as Partial<AppError> | null;
+    this.isBlocked = e?.status === 401 && e.code === 'ACCOUNT_LOCKED';
+
+    if (this.isBlocked) {
+      this.errorMessage =
+        e?.message ||
+        'Tu cuenta fue bloqueada por seguridad. Comunicate con el negocio para reactivarla.';
+    } else if (e?.status === 401) {
+      this.errorMessage = 'Credenciales incorrectas.';
+    } else if (e?.status === 0) {
+      this.errorMessage = 'No pudimos conectarnos. Revisá tu conexión e intentá de nuevo.';
+    } else {
+      this.errorMessage = 'No pudimos iniciar sesión. Intentá de nuevo en unos minutos.';
+    }
   }
 }

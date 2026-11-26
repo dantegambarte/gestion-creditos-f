@@ -89,7 +89,11 @@ describe('AuthService', () => {
     req.flush(mockLoginResponse);
     tick();
 
-    expect(localStorage.getItem('sgcf_token')).toBe('jwt.token.here');
+    // #39: el token vive sólo en memoria, nunca en storage.
+    expect(localStorage.getItem('sgcf_token')).toBeNull();
+    expect(sessionStorage.getItem('sgcf_token')).toBeNull();
+    expect(localStorage.getItem('sgcf_user')).not.toContain('jwt.token.here');
+    expect(service.token).toBe('jwt.token.here');
     expect(emitted).not.toBeNull();
     expect(emitted!.full_name).toBe('Carlos López');
     expect(emitted!.name).toBe('Carlos López'); // alias compat
@@ -119,49 +123,127 @@ describe('AuthService', () => {
     expect(localStorage.getItem('sgcf_token')).toBeNull();
   }));
 
-  // ── restoreSession con token válido ───────────────────────────────────────
-  it('restoreSession: rehidrata usuario desde /me con token válido', fakeAsync(() => {
-    localStorage.setItem('sgcf_token', 'existing.token');
+  /**
+   * Recrea el servicio después de sembrar un perfil guardado, como al recargar la página.
+   * @param legacyToken - token que versiones anteriores dejaban en localStorage
+   */
+  function reloadWithStoredUser(legacyToken?: string): void {
+    localStorage.setItem(
+      'sgcf_user',
+      JSON.stringify({ id: 'u-1', full_name: 'Carlos López', roles: [Roles.ADMIN] }),
+    );
+    if (legacyToken) localStorage.setItem('sgcf_token', legacyToken);
+    // El servicio ya se creó en beforeEach: se fuerza un nuevo injector.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        AuthService,
+        MessageService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+      ],
+    });
+    service = TestBed.inject(AuthService);
+    http = TestBed.inject(HttpTestingController);
+  }
+
+  // ── restoreSession al recargar: refresh + /me ─────────────────────────────
+  it('restoreSession: al recargar renueva el token con la cookie y rehidrata desde /me', fakeAsync(() => {
+    reloadWithStoredUser('legacy.token');
     let emitted: AuthUser | null = null;
     service.currentUser$.subscribe((u) => (emitted = u));
 
     service.restoreSession().subscribe();
+    // El token heredado de versiones anteriores se borra de localStorage.
+    expect(localStorage.getItem('sgcf_token')).toBeNull();
 
-    const req = http.expectOne(`${API}/auth/me`);
-    expect(req.request.headers.get('Authorization')).toBeNull(); // interceptor no activo en este test
-    req.flush(mockMeResponse);
+    const refresh = http.expectOne(`${API}/auth/refresh`);
+    expect(refresh.request.method).toBe('POST');
+    expect(refresh.request.withCredentials).toBeTrue();
+    refresh.flush({ ok: true, data: { token: 'fresh.token' } });
+
+    http.expectOne(`${API}/auth/me`).flush(mockMeResponse);
     tick();
 
-    expect(emitted).not.toBeNull();
     expect(emitted!.id).toBe('u-1');
     expect(emitted!.roles).toEqual([Roles.ADMIN]);
+    expect(service.token).toBe('fresh.token');
+    expect(localStorage.getItem('sgcf_token')).toBeNull();
+    expect(localStorage.getItem('sgcf_user')).not.toContain('fresh.token');
   }));
 
-  // ── restoreSession con token inválido (401) ───────────────────────────────
-  it('restoreSession: limpia storage si /me retorna 401', fakeAsync(() => {
-    localStorage.setItem('sgcf_token', 'expired.token');
-    localStorage.setItem('sgcf_user', JSON.stringify({ id: 'u-1' }));
+  it('restoreSession: reintenta una vez si otra pestaña ya rotó el refresh token', fakeAsync(() => {
+    reloadWithStoredUser();
+    service.restoreSession().subscribe();
+
+    http
+      .expectOne(`${API}/auth/refresh`)
+      .flush(
+        { ok: false, code: 'REFRESH_TOKEN_ROTATED', message: 'rotado' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+    tick();
+    http.expectOne(`${API}/auth/refresh`).flush({ ok: true, data: { token: 'winner.token' } });
+    http.expectOne(`${API}/auth/me`).flush(mockMeResponse);
+    tick();
+
+    expect(service.token).toBe('winner.token');
+    expect(service.isAuthenticated()).toBeTrue();
+  }));
+
+  // ── restoreSession con sesión rechazada (401) ─────────────────────────────
+  it('restoreSession: limpia la sesión si el refresh retorna 401', fakeAsync(() => {
+    reloadWithStoredUser();
     let emitted: AuthUser | null | undefined = undefined;
     service.currentUser$.subscribe((u) => (emitted = u));
 
     service.restoreSession().subscribe();
 
-    const req = http.expectOne(`${API}/auth/me`);
-    req.flush(
-      { ok: false, message: 'Token expirado.' },
-      { status: 401, statusText: 'Unauthorized' },
-    );
+    http
+      .expectOne(`${API}/auth/refresh`)
+      .flush(
+        { ok: false, code: 'SESSION_REVOKED', message: 'Sesión revocada.' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
     tick();
 
     expect(emitted).toBeNull();
-    expect(localStorage.getItem('sgcf_token')).toBeNull();
     expect(localStorage.getItem('sgcf_user')).toBeNull();
   }));
 
-  // ── restoreSession sin token ──────────────────────────────────────────────
-  it('restoreSession: no hace HTTP si no hay token', fakeAsync(() => {
+  // ── restoreSession sin red: no expulsa al usuario ─────────────────────────
+  it('restoreSession: conserva la sesión si el refresh falla por red (status 0)', fakeAsync(() => {
+    reloadWithStoredUser();
+
+    service.restoreSession().subscribe();
+
+    http.expectOne(`${API}/auth/refresh`).error(new ProgressEvent('error'), { status: 0 });
+    tick();
+
+    expect(service.isAuthenticated()).toBeTrue();
+    expect(localStorage.getItem('sgcf_user')).not.toBeNull();
+  }));
+
+  it('restoreSession: conserva la sesión si /me responde 503', fakeAsync(() => {
+    reloadWithStoredUser();
+
+    service.restoreSession().subscribe();
+
+    http.expectOne(`${API}/auth/refresh`).flush({ ok: true, data: { token: 'fresh.token' } });
+    http
+      .expectOne(`${API}/auth/me`)
+      .flush({ ok: false, message: 'down' }, { status: 503, statusText: 'Unavailable' });
+    tick();
+
+    expect(service.isAuthenticated()).toBeTrue();
+  }));
+
+  // ── restoreSession sin sesión previa ──────────────────────────────────────
+  it('restoreSession: no hace HTTP si no hay sesión guardada', fakeAsync(() => {
     service.restoreSession().subscribe();
     tick();
+    http.expectNone(`${API}/auth/refresh`);
     http.expectNone(`${API}/auth/me`);
   }));
 

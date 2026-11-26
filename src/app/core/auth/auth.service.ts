@@ -5,10 +5,11 @@ import { ApiHttpService } from '../http/api-http.service';
 import { AuthUser } from '../models/interface/auth-user';
 import { UserRole } from '../models/types/user-role';
 import { landingRouteForRoles } from './role-routes';
-import { environment } from '../../../environments/environment';
 import { AuthServiceBase } from './auth-service.base';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
 import { MessageService } from 'primeng/api';
+import { AccessTokenStore, isSessionRejected } from './access-token.store';
+import { TokenRefreshService } from './token-refresh.service';
 import { LoginCredentials, LoginResponseData, MeResponseData } from '../models/interface/login';
 
 const isBrowser = typeof localStorage !== 'undefined';
@@ -18,8 +19,9 @@ export class AuthService extends AuthServiceBase {
   private readonly api = inject(ApiHttpService);
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
+  private readonly tokens = inject(AccessTokenStore);
+  private readonly tokenRefresh = inject(TokenRefreshService);
 
-  private readonly TOKEN_KEY = environment.tokenKey;
   private readonly USER_KEY = 'sgcf_user';
 
   private _user$ = new BehaviorSubject<AuthUser | null>(this.readStoredUser());
@@ -94,28 +96,31 @@ export class AuthService extends AuthServiceBase {
   }
 
   /**
-   * Devuelve el token de autenticación del usuario actual, o null si no hay ninguno.
-   * @returns
+   * Devuelve el access token en memoria del usuario actual, o null si no hay ninguno.
    */
   get token(): string | null {
-    return isBrowser ? localStorage.getItem(this.TOKEN_KEY) : null;
+    return this.tokens.get(false);
   }
 
   /**
-   * Restaura la sesión del usuario actual.
-   * @returns
+   * Restaura la sesión al iniciar la app: obtiene un access token nuevo con la
+   * cookie HttpOnly del refresh token y recarga el perfil con auth/me.
+   * Sólo cierra la sesión si el backend la rechaza (401/403); ante un corte de
+   * red o un 5xx conserva el perfil guardado para no expulsar al usuario.
    */
   restoreSession(): Observable<void> {
-    if (!this.token) return of(undefined);
+    this.tokens.removeLegacyTokens();
+    if (!this._user$.value) return of(undefined);
 
-    return this.api.get<MeResponseData>('auth/me').pipe(
-      tap((me) => {
-        const user = this.mapMeUser(me, this.token!);
-        this.persist(user);
-      }),
+    return this.tokenRefresh.refreshInternal().pipe(
+      tap((token) => this.tokens.set(false, token)),
+      switchMap((token) =>
+        this.api.get<MeResponseData>('auth/me').pipe(map((me) => this.mapMeUser(me, token))),
+      ),
+      tap((user) => this.persist(user)),
       map(() => undefined),
-      catchError(() => {
-        this.clear();
+      catchError((err) => {
+        if (isSessionRejected(err)) this.clear();
         return of(undefined);
       }),
     );
@@ -230,14 +235,17 @@ export class AuthService extends AuthServiceBase {
   }
 
   /**
-   * Almacena la información del usuario en el almacenamiento local.
-   * @param user
-   * @returns
+   * Guarda el token sólo en memoria y el perfil (sin token) en localStorage,
+   * para poder restaurar la sesión vía refresh al recargar.
+   * @param user - usuario autenticado, con su access token
    */
   private persist(user: AuthUser): void {
-    if (!isBrowser) return;
-    localStorage.setItem(this.TOKEN_KEY, user.token);
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    this.tokens.set(false, user.token || null);
+    if (isBrowser) {
+      const profile: Partial<AuthUser> = { ...user };
+      delete profile.token;
+      localStorage.setItem(this.USER_KEY, JSON.stringify(profile));
+    }
     this._user$.next(user);
   }
 
@@ -245,22 +253,22 @@ export class AuthService extends AuthServiceBase {
    * Limpia la información del usuario del almacenamiento local y del estado de la aplicación.
    */
   private clear(): void {
+    this.tokens.set(false, null);
     if (isBrowser) {
-      localStorage.removeItem(this.TOKEN_KEY);
+      this.tokens.removeLegacyTokens();
       localStorage.removeItem(this.USER_KEY);
     }
     this._user$.next(null);
   }
 
   /**
-   * Lee la información del usuario del almacenamiento local.
-   * @returns
+   * Lee el perfil guardado en localStorage; el token nunca se restaura desde ahí.
    */
   private readStoredUser(): AuthUser | null {
     if (!isBrowser) return null;
     try {
       const raw = localStorage.getItem(this.USER_KEY);
-      return raw ? (JSON.parse(raw) as AuthUser) : null;
+      return raw ? { ...(JSON.parse(raw) as AuthUser), token: '' } : null;
     } catch {
       return null;
     }

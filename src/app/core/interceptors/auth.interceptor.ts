@@ -1,6 +1,12 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
+import { AccessTokenStore } from '../auth/access-token.store';
 
+/**
+ * Adjunta el access token en memoria (interno o portal) y envía las cookies
+ * (refresh token HttpOnly) en cada request al backend.
+ */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (!req.url.startsWith(environment.apiBaseUrl)) {
     return next(req);
@@ -14,10 +20,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // No usar includes('portal') porque hace match con acciones admin como
   // customers/{id}/enable-portal y rompe el token / redirige a /portal/login.
   const isPortalUrl = req.url.includes('/portal/');
-  const tokenKey = isPortalUrl
-    ? environment.portalTokenKey
-    : environment.tokenKey;
-  const token = readStoredToken(tokenKey);
+  const token = inject(AccessTokenStore).get(isPortalUrl);
 
   const cloned = token
     ? req.clone({
@@ -28,13 +31,3 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(cloned);
 };
-
-/**
- * Lee el token JWT desde storage sólo cuando la app corre en browser.
- * @param tokenKey - Clave usada para token interno o token del portal.
- */
-function readStoredToken(tokenKey: string): string | null {
-  return typeof localStorage !== 'undefined'
-    ? localStorage.getItem(tokenKey)
-    : null;
-}

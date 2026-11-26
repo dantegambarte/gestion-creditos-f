@@ -18,7 +18,14 @@ import { PortalCredit } from '../models/portal.models';
 @Component({
   selector: 'app-portal-credits',
   standalone: true,
-  imports: [FfBackTopFabComponent,CommonModule, CurrencyPipe, DatePipe, SkeletonModule, RouterLink],
+  imports: [
+    FfBackTopFabComponent,
+    CommonModule,
+    CurrencyPipe,
+    DatePipe,
+    SkeletonModule,
+    RouterLink,
+  ],
   templateUrl: './portal-credits.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -124,14 +131,16 @@ export class PortalCreditsComponent implements OnInit {
 
   /**
    * Calcula la deuda restante aproximada de un crédito a partir de las cuotas
-   * no pagadas y la mora pendiente.
+   * no pagadas, sin sumar mora: es el mismo concepto que "Deuda restante" en
+   * el detalle (la mora se muestra aparte). No descuenta pagos parciales
+   * porque el listado del backend no trae el monto pagado por cuota.
    * Devuelve null si no hay suficiente información para el cálculo.
    * @param credit
    */
   remainingDebt(credit: PortalCredit): number | null {
     if (credit.installmentAmount == null || !credit.totalInstallments) return null;
     const unpaid = Math.max(0, credit.totalInstallments - credit.paidInstallments);
-    return unpaid * credit.installmentAmount + credit.pendingPenalty;
+    return unpaid * credit.installmentAmount;
   }
 
   ngOnInit(): void {
@@ -181,11 +190,16 @@ export class PortalCreditsComponent implements OnInit {
    */
   frequencyUnit(freq: PortalCredit['paymentFrequency']): string {
     switch (freq) {
-      case 'DAILY':     return 'día';
-      case 'MONTHLY':   return 'mes';
-      case 'WEEKLY':    return 'sem.';
-      case 'BIWEEKLY':  return 'quincena';
-      default:          return '';
+      case 'DAILY':
+        return 'día';
+      case 'MONTHLY':
+        return 'mes';
+      case 'WEEKLY':
+        return 'sem.';
+      case 'BIWEEKLY':
+        return 'quincena';
+      default:
+        return '';
     }
   }
 
@@ -197,9 +211,9 @@ export class PortalCreditsComponent implements OnInit {
   daysUntil(dateStr: string | null): number | null {
     if (!dateStr) return null;
     const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
-    const due   = new Date(y, m - 1, d);   // medianoche local de la fecha de vencimiento
+    const due = new Date(y, m - 1, d); // medianoche local de la fecha de vencimiento
     const today = new Date();
-    today.setHours(0, 0, 0, 0);             // medianoche local de hoy
+    today.setHours(0, 0, 0, 0); // medianoche local de hoy
     return Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   }
 

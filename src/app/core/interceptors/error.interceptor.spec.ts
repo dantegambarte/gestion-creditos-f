@@ -3,7 +3,9 @@ import { AuthServiceBase } from '../auth/auth-service.base';
 import { NotificationsService } from '../services/notifications.service';
 import {
   _httpErrorSummary,
+  _isAuthFormRequest,
   _isInternalSessionAlreadyClosed,
+  _needsTokenRefresh,
   _redirectToLogin,
   _shouldRedirectToChangePassword,
 } from './error.interceptor';
@@ -47,17 +49,43 @@ describe('errorInterceptor helpers', () => {
     expect(_httpErrorSummary(undefined)).toBeNull();
   });
 
-  it('detecta 401 tardíos internos cuando el logout ya limpió el token', () => {
-    localStorage.removeItem('sgcf_token');
-
-    expect(_isInternalSessionAlreadyClosed(false)).toBeTrue();
-    expect(_isInternalSessionAlreadyClosed(true)).toBeFalse();
+  it('detecta 401 tardíos internos cuando el logout ya limpió la sesión', () => {
+    expect(_isInternalSessionAlreadyClosed(false, false)).toBeTrue();
+    expect(_isInternalSessionAlreadyClosed(true, false)).toBeFalse();
   });
 
-  it('mantiene 401 internos como sesión activa cuando todavía existe token', () => {
-    localStorage.setItem('sgcf_token', 'live.token');
+  it('mantiene 401 internos como sesión activa cuando todavía hay usuario', () => {
+    expect(_isInternalSessionAlreadyClosed(false, true)).toBeFalse();
+  });
 
-    expect(_isInternalSessionAlreadyClosed(false)).toBeFalse();
+  it('pide refresh ante TOKEN_EXPIRED o 401 de una request sin token (tras recargar)', () => {
+    const url = 'http://api/api/credits';
+    expect(
+      _needsTokenRefresh({ status: 401, error: { message: 'TOKEN_EXPIRED' } }, url, true),
+    ).toBeTrue();
+    expect(_needsTokenRefresh({ status: 401, error: { message: 'x' } }, url, false)).toBeTrue();
+    expect(_needsTokenRefresh({ status: 401, error: { message: 'x' } }, url, true)).toBeFalse();
+  });
+
+  it('no pide refresh para login, refresh, SESSION_REVOKED ni errores que no son 401', () => {
+    const err = { status: 401, error: { message: 'TOKEN_EXPIRED' } };
+    expect(_needsTokenRefresh(err, 'http://api/api/auth/login', false)).toBeFalse();
+    expect(_needsTokenRefresh(err, 'http://api/api/auth/portal/login', false)).toBeFalse();
+    expect(_needsTokenRefresh(err, 'http://api/api/auth/refresh', false)).toBeFalse();
+    expect(
+      _needsTokenRefresh(
+        { status: 401, error: { code: 'SESSION_REVOKED' } },
+        'http://api/api/credits',
+        false,
+      ),
+    ).toBeFalse();
+    expect(_needsTokenRefresh({ status: 0 }, 'http://api/api/credits', false)).toBeFalse();
+  });
+
+  it('reconoce los endpoints de login y refresh como formularios de auth', () => {
+    expect(_isAuthFormRequest('http://api/api/auth/portal/login')).toBeTrue();
+    expect(_isAuthFormRequest('http://api/api/auth/portal/refresh')).toBeTrue();
+    expect(_isAuthFormRequest('http://api/api/auth/me')).toBeFalse();
   });
 });
 
@@ -68,13 +96,8 @@ describe('_redirectToLogin', () => {
 
   beforeEach(() => {
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    auth = jasmine.createSpyObj<AuthServiceBase>('AuthServiceBase', [
-      'clearSession',
-    ]);
-    notifSvc = jasmine.createSpyObj<NotificationsService>(
-      'NotificationsService',
-      ['stopPolling'],
-    );
+    auth = jasmine.createSpyObj<AuthServiceBase>('AuthServiceBase', ['clearSession']);
+    notifSvc = jasmine.createSpyObj<NotificationsService>('NotificationsService', ['stopPolling']);
   });
 
   it('corta el polling de unread-count antes de limpiar sesión y redirigir (no-portal)', () => {

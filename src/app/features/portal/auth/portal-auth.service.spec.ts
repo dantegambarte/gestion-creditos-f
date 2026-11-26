@@ -1,17 +1,21 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PortalAuthService } from './portal-auth.service';
 import { environment } from '../../../../environments/environment';
 import { provideAuthTesting } from '../../../core/auth/testing/auth-testing';
+import { AccessTokenStore } from '../../../core/auth/access-token.store';
 
 // Minimal base64url-encoded JWT with exp in far future and required portal audience
 function makeJwt(payload: Record<string, unknown>): string {
   const header = btoa(JSON.stringify({ alg: 'HS256' }));
-  const body = btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600, aud: 'portal-cliente', ...payload }));
+  const body = btoa(
+    JSON.stringify({
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      aud: 'portal-cliente',
+      ...payload,
+    }),
+  );
   return `${header}.${body}.sig`;
 }
 
@@ -61,8 +65,12 @@ describe('PortalAuthService', () => {
       },
     });
 
-    expect(localStorage.getItem(TOKEN_KEY)).toBe('portal_jwt_token');
+    // #39: el token del portal vive sólo en memoria.
+    expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
     expect(localStorage.getItem(environment.tokenKey)).toBeNull();
+    expect(localStorage.getItem(CUSTOMER_KEY)).not.toContain('portal_jwt_token');
+    expect(TestBed.inject(AccessTokenStore).get(true)).toBe('portal_jwt_token');
+    expect(TestBed.inject(AccessTokenStore).get(false)).toBeNull();
   });
 
   it('login() emits the mapped customer', () => {
@@ -94,7 +102,15 @@ describe('PortalAuthService', () => {
 
   it('logout() clears portalTokenKey', () => {
     localStorage.setItem(TOKEN_KEY, 'some_token');
-    localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ id: 'c-001', fullName: 'Ana', dni: '12345678', portalIsTempPassword: false }));
+    localStorage.setItem(
+      CUSTOMER_KEY,
+      JSON.stringify({
+        id: 'c-001',
+        fullName: 'Ana',
+        dni: '12345678',
+        portalIsTempPassword: false,
+      }),
+    );
 
     service.logout().subscribe();
 
@@ -112,45 +128,93 @@ describe('PortalAuthService', () => {
     service.logout().subscribe({ error: () => {} });
 
     const req = http.expectOne(`${environment.apiBaseUrl}/auth/portal/logout`);
-    req.flush({ ok: false, message: 'error', data: null }, { status: 500, statusText: 'Server Error' });
+    req.flush(
+      { ok: false, message: 'error', data: null },
+      { status: 500, statusText: 'Server Error' },
+    );
 
     expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
     expect(service.isAuthenticated()).toBeFalse();
   });
 
-  it('bootstrap rehydrates customer from stored object if token not expired', () => {
-    const token = makeJwt({ sub: 'c-001' });
-    const customer = { id: 'c-001', fullName: 'Ana García', dni: '12345678', portalIsTempPassword: false };
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(CUSTOMER_KEY, JSON.stringify(customer));
-
-    // Re-create service to trigger bootstrap
+  /**
+   * Recrea el servicio con un perfil guardado, como al recargar la página.
+   * @param legacyToken - token que versiones anteriores dejaban en localStorage
+   */
+  function reload(legacyToken?: string): PortalAuthService {
+    if (legacyToken) localStorage.setItem(TOKEN_KEY, legacyToken);
+    localStorage.setItem(
+      CUSTOMER_KEY,
+      JSON.stringify({
+        id: 'c-001',
+        fullName: 'Ana García',
+        dni: '12345678',
+        portalIsTempPassword: false,
+      }),
+    );
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [PortalAuthService, provideHttpClient(), provideHttpClientTesting(), ...provideAuthTesting()],
+      providers: [
+        PortalAuthService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        ...provideAuthTesting(),
+      ],
     });
-    const freshService = TestBed.inject(PortalAuthService);
+    http = TestBed.inject(HttpTestingController);
+    return TestBed.inject(PortalAuthService);
+  }
+
+  it('bootstrap rehydrates customer from stored profile', () => {
+    const freshService = reload();
 
     expect(freshService.isAuthenticated()).toBeTrue();
     expect(freshService.snapshot?.fullName).toBe('Ana García');
   });
 
-  it('bootstrap mantiene sesión activa con token expirado (refresh interceptor lo maneja)', () => {
-    // El servicio NO limpia tokens expirados en bootstrap — el error interceptor
-    // detecta TOKEN_EXPIRED en la primera llamada y hace el refresh.
-    // Si se limpiaría aquí, el refresh nunca ocurriría.
-    const expiredJwt = btoa(JSON.stringify({ alg: 'HS256' })) + '.' +
-      btoa(JSON.stringify({ sub: 'c-001', aud: 'portal-cliente', exp: Math.floor(Date.now() / 1000) - 60 })) + '.sig';
-    localStorage.setItem(TOKEN_KEY, expiredJwt);
-    localStorage.setItem(CUSTOMER_KEY, JSON.stringify({ id: 'c-001', fullName: 'Ana', dni: '12345678', portalIsTempPassword: false }));
+  it('restoreSession() renueva el token con la cookie y borra el token heredado', () => {
+    const freshService = reload(makeJwt({ sub: 'c-001' }));
 
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({
-      providers: [PortalAuthService, provideHttpClient(), provideHttpClientTesting(), ...provideAuthTesting()],
-    });
-    const freshService = TestBed.inject(PortalAuthService);
+    freshService.restoreSession().subscribe();
+    expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+
+    const req = http.expectOne(`${environment.apiBaseUrl}/auth/portal/refresh`);
+    expect(req.request.withCredentials).toBeTrue();
+    req.flush({ ok: true, data: { token: 'fresh_portal' } });
+
+    expect(TestBed.inject(AccessTokenStore).get(true)).toBe('fresh_portal');
+    expect(freshService.isAuthenticated()).toBeTrue();
+  });
+
+  it('restoreSession() cierra la sesión si el refresh devuelve 401', () => {
+    const freshService = reload();
+
+    freshService.restoreSession().subscribe();
+    http
+      .expectOne(`${environment.apiBaseUrl}/auth/portal/refresh`)
+      .flush(
+        { ok: false, code: 'SESSION_REVOKED', message: 'x' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+
+    expect(freshService.isAuthenticated()).toBeFalse();
+    expect(localStorage.getItem(CUSTOMER_KEY)).toBeNull();
+  });
+
+  it('restoreSession() conserva la sesión ante un corte de red', () => {
+    const freshService = reload();
+
+    freshService.restoreSession().subscribe();
+    http
+      .expectOne(`${environment.apiBaseUrl}/auth/portal/refresh`)
+      .error(new ProgressEvent('error'), { status: 0 });
 
     expect(freshService.isAuthenticated()).toBeTrue();
-    expect(freshService.snapshot?.fullName).toBe('Ana');
+    expect(localStorage.getItem(CUSTOMER_KEY)).not.toBeNull();
+  });
+
+  it('restoreSession() no llama al backend sin sesión guardada', () => {
+    service.restoreSession().subscribe();
+    http.expectNone(`${environment.apiBaseUrl}/auth/portal/refresh`);
   });
 });
