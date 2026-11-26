@@ -7,8 +7,8 @@
  *  - Editar variante A y luego B muestra los valores de B.
  *  - En carga masiva, el error de la fila 3 queda marcado en esa fila.
  *
- * El filtro de créditos REJECTED (toUiCredit) vive en shared/clients/client-detail,
- * que hoy no está ruteado: se cubre con unit test, no con E2E.
+ * El filtro de créditos REJECTED (toUiCredit) vivía en shared/clients/client-detail, que no
+ * estaba ruteado y se eliminó en #100; el detalle ruteado no tiene ese filtro.
  */
 
 const VIEWPORTS: Array<{ name: string; width: number; height: number }> = [
