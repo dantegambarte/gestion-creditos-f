@@ -3,13 +3,7 @@
 
 export type CashSessionStatus = 'OPEN' | 'PENDING_RECONCILIATION' | 'CLOSED';
 export type DropPaymentMethod = 'CASH' | 'TRANSFER';
-export type DeclaredPaymentMethod =
-  | 'CASH'
-  | 'TRANSFER'
-  | 'MP'
-  | 'QR'
-  | 'CHECK'
-  | 'OTHER';
+export type DeclaredPaymentMethod = 'CASH' | 'TRANSFER' | 'MP' | 'QR' | 'CHECK' | 'OTHER';
 
 /**
  * Métodos válidos para declarar al cerrar una caja. Hardcodeado contra los
@@ -159,6 +153,19 @@ export interface CashAccount {
   is_active: boolean;
   current_balance: number;
   created_at: string;
+}
+
+/**
+ * Saldo de una cuenta de tesorería desglosado por medio (backend #93).
+ * Invariante del backend: cash_balance + transfer_balance = current_balance.
+ */
+export interface CashAccountBalance {
+  id: string;
+  name: string;
+  type: 'GENERAL_CASH' | string;
+  current_balance: number;
+  cash_balance: number;
+  transfer_balance: number;
 }
 
 export interface CashSessionDropResponse {
