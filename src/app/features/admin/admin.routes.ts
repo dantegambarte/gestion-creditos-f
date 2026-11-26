@@ -6,9 +6,7 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: AppRoutes.DASHBOARD,
     loadComponent: () =>
-      import('./dashboard/dashboard.component').then(
-        (c) => c.DashboardComponent,
-      ),
+      import('./dashboard/dashboard.component').then((c) => c.DashboardComponent),
   },
   {
     path: AppRoutes.OPERATIONS_NEW,
@@ -27,16 +25,12 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: AppRoutes.OPERATIONS,
     loadComponent: () =>
-      import('../../shared/operations/operations.component').then(
-        (c) => c.OperationsComponent,
-      ),
+      import('../../shared/operations/operations.component').then((c) => c.OperationsComponent),
   },
   {
     path: AppRoutes.CLIENTS,
     loadComponent: () =>
-      import('../../shared/clients/clients.component').then(
-        (c) => c.ClientsComponent,
-      ),
+      import('../../shared/clients/clients.component').then((c) => c.ClientsComponent),
   },
   {
     path: AppRoutes.CLIENTS_DETAIL,
@@ -113,44 +107,32 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: AppRoutes.USERS_NEW,
     loadComponent: () =>
-      import('./users/user-create/user-create.component').then(
-        (c) => c.UserCreateComponent,
-      ),
+      import('./users/user-create/user-create.component').then((c) => c.UserCreateComponent),
   },
   {
     path: AppRoutes.USERS_DETAIL,
     loadComponent: () =>
-      import('./users/user-detail/user-detail.component').then(
-        (c) => c.UserDetailComponent,
-      ),
+      import('./users/user-detail/user-detail.component').then((c) => c.UserDetailComponent),
   },
   {
     path: AppRoutes.USERS,
     loadComponent: () =>
-      import('./users/users-list/users-list.component').then(
-        (c) => c.UsersListComponent,
-      ),
+      import('./users/users-list/users-list.component').then((c) => c.UsersListComponent),
   },
   {
     path: AppRoutes.APPROVALS,
     loadComponent: () =>
-      import('./approvals/approvals.component').then(
-        (c) => c.ApprovalsComponent,
-      ),
+      import('./approvals/approvals.component').then((c) => c.ApprovalsComponent),
   },
   {
     path: AppRoutes.DELINQUENCY,
     loadComponent: () =>
-      import('./delinquency/delinquency.component').then(
-        (c) => c.DelinquencyComponent,
-      ),
+      import('./delinquency/delinquency.component').then((c) => c.DelinquencyComponent),
   },
   {
     path: AppRoutes.CASH_REGISTER,
     loadComponent: () =>
-      import('./cash-register/cash-register.component').then(
-        (c) => c.CashRegisterComponent,
-      ),
+      import('./cash-register/cash-register.component').then((c) => c.CashRegisterComponent),
   },
   {
     path: AppRoutes.SHEET,
@@ -160,14 +142,11 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: AppRoutes.ADMIN_COMMISSIONS,
     loadComponent: () =>
-      import('./commissions/commissions.component').then(
-        (c) => c.CommissionsComponent,
-      ),
+      import('./commissions/commissions.component').then((c) => c.CommissionsComponent),
   },
   {
     path: AppRoutes.REPORTS,
-    loadComponent: () =>
-      import('./reports/reports.component').then((c) => c.ReportsComponent),
+    loadComponent: () => import('./reports/reports.component').then((c) => c.ReportsComponent),
   },
   // Compatibilidad de URL: Configuración ya no duplica la gestión de usuarios.
   // Las rutas antiguas bajo /config/users redirigen a la única pantalla real.
@@ -183,11 +162,14 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: AppRoutes.CONFIG,
-    loadComponent: () =>
-      import('./config/config.component').then((c) => c.ConfigComponent),
+    loadComponent: () => import('./config/config.component').then((c) => c.ConfigComponent),
     children: [
       { path: '', redirectTo: 'rates', pathMatch: 'full' },
-      { path: 'company', redirectTo: 'rates', pathMatch: 'full' },
+      {
+        path: 'company',
+        loadComponent: () =>
+          import('./config/company/company-config.component').then((c) => c.CompanyConfigComponent),
+      },
       {
         path: 'rates',
         loadComponent: () =>
@@ -248,33 +230,25 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: AppRoutes.ADMIN_COLLECTIONS,
     loadComponent: () =>
-      import('./collections/admin-collections.component').then(
-        (c) => c.AdminCollectionsComponent,
-      ),
+      import('./collections/admin-collections.component').then((c) => c.AdminCollectionsComponent),
   },
   {
     path: AppRoutes.ADMIN_PAYMENTS,
     loadComponent: () =>
-      import('./payments/admin-payments.component').then(
-        (c) => c.AdminPaymentsComponent,
-      ),
+      import('./payments/admin-payments.component').then((c) => c.AdminPaymentsComponent),
   },
   {
     path: AppRoutes.ADMIN_EXPENSES,
-    loadComponent: () =>
-      import('./expenses/expenses.component').then((c) => c.ExpensesComponent),
+    loadComponent: () => import('./expenses/expenses.component').then((c) => c.ExpensesComponent),
   },
   {
     path: AppRoutes.SIMULATOR,
     loadComponent: () =>
-      import('../../shared/simulator/simulator.component').then(
-        (c) => c.SimulatorComponent,
-      ),
+      import('../../shared/simulator/simulator.component').then((c) => c.SimulatorComponent),
   },
   {
     path: AppRoutes.HELP,
-    loadComponent: () =>
-      import('./help/help.component').then((c) => c.HelpComponent),
+    loadComponent: () => import('./help/help.component').then((c) => c.HelpComponent),
   },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 ];
