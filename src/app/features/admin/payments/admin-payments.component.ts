@@ -19,11 +19,7 @@ import { CurrencyArsPipe } from '../../../core/pipes/currency-ars.pipe';
 import { DateService } from '../../../core/services/date.service';
 import { HeaderService } from '../../../core/services/header.service';
 import { ErrorStateComponent } from '../../../shared/states/error-state/error-state.component';
-import {
-  Payment,
-  PaymentMethod,
-  PaymentStatus,
-} from '../../collector/models/payment.model';
+import { Payment, PaymentMethod, PaymentStatus } from '../../collector/models/payment.model';
 import { PaymentsService } from '../../collector/payments.service';
 import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
@@ -95,30 +91,20 @@ export class AdminPaymentsComponent implements OnInit {
   }
 
   /**
-   * Devuelve la lista de cobros filtrada por estado y cobrador.
+   * Devuelve la lista de cobros filtrada por estado. El cobrador se filtra en el
+   * backend por id (collector_id), así dos cobradores homónimos no se mezclan.
    */
   get filteredPayments(): Payment[] {
-    return this.payments.filter((p) => {
-      const matchStatus = !this.filterStatus || p.status === this.filterStatus;
-      const matchCollector =
-        !this.filterCollectorId ||
-        p.collectorName ===
-          this.collectors.find((c) => c.id === this.filterCollectorId)
-            ?.fullName;
-      return matchStatus && matchCollector;
-    });
+    return this.payments.filter((p) => !this.filterStatus || p.status === this.filterStatus);
   }
 
   /**
    * Devuelve la severidad del tag según el estado del cobro.
    * @param status estado del cobro
    */
-  statusSeverity(
-    status: PaymentStatus,
-  ): 'success' | 'warning' | 'danger' | 'secondary' {
-    return { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' }[
-      status
-    ] as 'success' | 'warning' | 'danger';
+  statusSeverity(status: PaymentStatus): 'success' | 'warning' | 'danger' | 'secondary' {
+    return { PENDING: 'warning', APPROVED: 'success', REJECTED: 'danger' }[status] as
+      'success' | 'warning' | 'danger';
   }
 
   /**
@@ -149,9 +135,7 @@ export class AdminPaymentsComponent implements OnInit {
    * Devuelve la severidad del tag de tipo de cobro.
    * @param p cobro
    */
-  paymentTypeSeverity(
-    p: Payment,
-  ): 'danger' | 'info' | 'secondary' | 'warning' | null {
+  paymentTypeSeverity(p: Payment): 'danger' | 'info' | 'secondary' | 'warning' | null {
     if (p.reversalPaymentId) return 'warning';
     if (p.isReversal) return 'danger';
     if (p.adminDirect) return 'info';
@@ -174,13 +158,16 @@ export class AdminPaymentsComponent implements OnInit {
    * @param p cobro
    */
   movementLabel(p: Payment): string {
-    return p.concepto === this.CONCEPT_CASH_SALE
-      ? p.concepto
-      : `Cuota ${p.installmentNumber}`;
+    return p.concepto === this.CONCEPT_CASH_SALE ? p.concepto : `Cuota ${p.installmentNumber}`;
   }
 
   /** Recarga desde el backend cuando cambia el rango de fechas. */
   onDateFilterChange(): void {
+    this.load();
+  }
+
+  /** Recarga desde el backend cuando cambia el cobrador (filtro por id). */
+  onCollectorFilterChange(): void {
     this.load();
   }
 
@@ -196,9 +183,7 @@ export class AdminPaymentsComponent implements OnInit {
    * Devuelve la severidad visual del método de pago para distinguirlo rápido.
    * @param method método de pago registrado en el cobro
    */
-  paymentMethodSeverity(
-    method: PaymentMethod,
-  ): 'info' | 'secondary' | 'warning' {
+  paymentMethodSeverity(method: PaymentMethod): 'info' | 'secondary' | 'warning' {
     return {
       CASH: 'warning',
       TRANSFER: 'info',
@@ -248,9 +233,7 @@ export class AdminPaymentsComponent implements OnInit {
    * @param status nuevo estado
    */
   onStatusChanged({ id, status }: { id: string; status: PaymentStatus }): void {
-    this.payments = this.payments.map((p) =>
-      p.id === id ? { ...p, status } : p,
-    );
+    this.payments = this.payments.map((p) => (p.id === id ? { ...p, status } : p));
   }
 
   /**
@@ -265,12 +248,9 @@ export class AdminPaymentsComponent implements OnInit {
     this.error = null;
     this.paymentsService
       .list({
-        dateFrom: this.filterDateFrom
-          ? this.dateSvc.toLocalIso(this.filterDateFrom)
-          : undefined,
-        dateTo: this.filterDateTo
-          ? this.dateSvc.toLocalIso(this.filterDateTo)
-          : undefined,
+        collectorId: this.filterCollectorId ?? undefined,
+        dateFrom: this.filterDateFrom ? this.dateSvc.toLocalIso(this.filterDateFrom) : undefined,
+        dateTo: this.filterDateTo ? this.dateSvc.toLocalIso(this.filterDateTo) : undefined,
       })
       .subscribe({
         next: (data) => {
