@@ -121,4 +121,23 @@ describe('Collector Sheet Detail — Payment Panel', () => {
       expect(win.document.documentElement.scrollWidth).to.be.lte(win.innerWidth);
     });
   });
+
+  it('Desktop — el panel muestra los montos de la cuota y conserva layout de dos columnas', () => {
+    visitCollectionSheetDetail(1280, 720);
+    cy.get('app-collection-sheet-detail').should('have.class', 'ff-mobile-touch-buttons');
+    cy.get('[data-cy="sheet-detail-table-row"]').first().click();
+    cy.get('[data-cy="sheet-payment-panel-desktop"]').should('be.visible');
+    cy.get('[data-cy="sheet-payment-panel"]').within(() => {
+      cy.contains('Monto cuota').should('be.visible');
+      cy.contains('Mora aplicada').should('be.visible');
+    });
+  });
+
+  it('Mobile — los botones del panel mantienen touch target de 3rem', () => {
+    visitCollectionSheetDetail(375, 667);
+    cy.get('[data-cy="sheet-detail-mobile-card"]').first().click();
+    cy.get('[data-cy="sheet-payment-panel-inline"] .p-button').each(($btn) => {
+      expect($btn[0].getBoundingClientRect().height).to.be.gte(48);
+    });
+  });
 });

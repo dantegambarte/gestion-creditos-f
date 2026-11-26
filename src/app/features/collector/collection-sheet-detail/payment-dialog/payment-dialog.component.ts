@@ -23,6 +23,7 @@ import { CurrencyAmountInputDirective } from '../../../../shared/directives/curr
 import * as overpayment from '../../../../shared/utils/overpayment.util';
 import { PaymentAttemptKeys } from '../../../../shared/utils/payment-attempt-key.util';
 import { CollectionSheetItem } from '../../models/collection.model';
+import { itemAvailableBalance } from '../../models/collection-sheet-item-amounts';
 import { PaymentCreatePayload, PaymentMethod } from '../../models/payment.model';
 import { PaymentsService } from '../../payments.service';
 import { CollectionDialogSuccess } from '../sheet-dialog.model';
@@ -102,9 +103,7 @@ export class PaymentDialogComponent implements OnChanges {
    * @param item Cuota a evaluar.
    */
   availableBalance(item: CollectionSheetItem): number {
-    const amountDue = item.live?.amountDue ?? item.amountDue;
-    const amountPaid = item.live?.amountPaid ?? item.amountPaid;
-    return Math.max(0, amountDue - amountPaid);
+    return itemAvailableBalance(item);
   }
 
   /**
