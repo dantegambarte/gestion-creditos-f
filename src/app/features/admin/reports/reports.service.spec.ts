@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ApiHttpService } from '../../../core/http/api-http.service';
 import { ReportsService } from './reports.service';
+import { ProductReportRowRaw } from './report.models';
 import { provideAuthTesting } from '../../../core/auth/testing/auth-testing';
 
 const mockCollectionRaw = {
@@ -71,26 +72,31 @@ const mockCollectorsRaw = [
   },
 ];
 
-const mockProductsRaw = [
+const mockProductsRaw: ProductReportRowRaw[] = [
   {
     id: 'p1',
-    name: 'Producto A',
+    title: 'Producto A',
+    description: 'Heladera 300L',
+    status: 'ACTIVE',
+    min_price: 12000,
     max_price: 15000,
     available_count: 10,
-    status: 'ACTIVE',
     times_sold: 25,
-    total_units_sold: 30,
     total_revenue: 450000,
+    avg_selling_price: 18000
   },
   {
     id: 'p2',
-    name: 'Producto B',
+    title: 'Producto B',
+    description: '',
+    status: 'INACTIVE',
+    min_price: 0,
+    max_price: 0,
     available_count: 0,
-    status: 'ACTIVE',
     times_sold: 0,
-    total_units_sold: 0,
     total_revenue: 0,
-  },
+    avg_selling_price: 0
+  }
 ];
 
 describe('ReportsService', () => {
@@ -209,16 +215,36 @@ describe('ReportsService', () => {
   });
 
   describe('getProductsReport', () => {
-    it('maps all fields including zero-sales products', (done) => {
+    it('maps every raw field to the camelCase row, including zero-sales products', (done) => {
       apiSpy.get.and.returnValue(of(mockProductsRaw));
       service.getProductsReport().subscribe((rows) => {
-        expect(rows.length).toBe(2);
-        expect(rows[0].maxPrice).toBe(15000);
-        expect(rows[0].availableCount).toBe(10);
-        expect(rows[0].timesSold).toBe(25);
-        expect(rows[0].totalRevenue).toBe(450000);
-        expect(rows[1].timesSold).toBe(0);
-        expect(rows[1].availableCount).toBe(0);
+        expect(rows).toEqual([
+          {
+            id: 'p1',
+            title: 'Producto A',
+            description: 'Heladera 300L',
+            status: 'ACTIVE',
+            minPrice: 12000,
+            maxPrice: 15000,
+            availableCount: 10,
+            timesSold: 25,
+            totalRevenue: 450000,
+            avgSellingPrice: 18000
+          },
+          {
+            id: 'p2',
+            title: 'Producto B',
+            description: '',
+            status: 'INACTIVE',
+            minPrice: 0,
+            maxPrice: 0,
+            availableCount: 0,
+            timesSold: 0,
+            totalRevenue: 0,
+            avgSellingPrice: 0
+          }
+        ]);
+        expect(apiSpy.get.calls.mostRecent().args[0]).toBe('reports/products');
         done();
       });
     });
