@@ -13,11 +13,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { AuthServiceBase } from '../../../../core/auth/auth-service.base';
 import { HeaderService } from '../../../../core/services/header.service';
 import { CustomersService } from '../customers.service';
-import {
-  Customer,
-  CustomerListFilters,
-  CustomerStatus,
-} from '../../models/customer.model';
+import { Customer, CustomerListFilters, CustomerStatus } from '../../models/customer.model';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { EmptyStateComponent } from '../../../../shared/states/empty-state/empty-state.component';
@@ -29,7 +25,6 @@ import { UsersService } from '../../../admin/users/users.service';
 
 @Component({
   selector: 'app-clients-list',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -142,8 +137,7 @@ export class ClientsListComponent implements OnInit, OnDestroy {
     const filters: CustomerListFilters = {};
     if (this.selectedStatus) filters.status = this.selectedStatus;
     if (this.searchTerm.trim()) filters.search = this.searchTerm.trim();
-    if (this.selectedCollectorId)
-      filters.collectorId = this.selectedCollectorId;
+    if (this.selectedCollectorId) filters.collectorId = this.selectedCollectorId;
 
     this.loading = true;
     this.error = null;

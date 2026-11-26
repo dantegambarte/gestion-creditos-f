@@ -21,7 +21,6 @@ export const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 
 @Component({
   selector: 'app-products-report',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     FormsModule,

@@ -18,7 +18,6 @@ import {
 
 @Component({
   selector: 'app-step-confirm',
-  standalone: true,
   imports: [ReactiveFormsModule, CheckboxModule, MessageModule, TooltipModule, CurrencyArsPipe],
   templateUrl: './step-confirm.component.html',
 })

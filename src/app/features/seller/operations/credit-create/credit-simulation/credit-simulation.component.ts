@@ -5,7 +5,6 @@ import { SimulateResult } from '../../../models/credit.model';
 
 @Component({
   selector: 'app-credit-simulation',
-  standalone: true,
   imports: [ButtonModule, CurrencyArsPipe],
   templateUrl: './credit-simulation.component.html',
 })

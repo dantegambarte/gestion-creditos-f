@@ -31,7 +31,6 @@ import {
 
 @Component({
   selector: 'app-product-rates-config',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     NgClass,

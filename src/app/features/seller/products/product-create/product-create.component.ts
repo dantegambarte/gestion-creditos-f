@@ -19,7 +19,6 @@ import { ProductsService } from '../products.service';
 
 @Component({
   selector: 'app-product-create',
-  standalone: true,
   providers: [{ provide: MessageService, useClass: DedupMessageService }],
   imports: [
     CommonModule,

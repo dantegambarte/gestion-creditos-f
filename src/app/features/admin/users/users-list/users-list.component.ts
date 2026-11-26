@@ -22,19 +22,12 @@ import { EmptyStateComponent } from '../../../../shared/states/empty-state/empty
 import { ErrorStateComponent } from '../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../shared/states/loading-state/loading-state.component';
 import { UserCreateComponent } from '../user-create/user-create.component';
-import {
-  ROLE_LABEL,
-  ROLE_SEVERITY,
-  User,
-  UserListFilters,
-  UserStatus,
-} from '../user.model';
+import { ROLE_LABEL, ROLE_SEVERITY, User, UserListFilters, UserStatus } from '../user.model';
 import { UsersService } from '../users.service';
 import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
 
 @Component({
   selector: 'app-users-list',
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -85,15 +78,9 @@ export class UsersListComponent implements OnInit, OnDestroy {
   roleLabel(role: string): string {
     return ROLE_LABEL[role] ?? role;
   }
-  roleSeverity(
-    role: string,
-  ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
+  roleSeverity(role: string): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
     return (ROLE_SEVERITY[role] ?? 'secondary') as
-      | 'success'
-      | 'info'
-      | 'warning'
-      | 'danger'
-      | 'secondary';
+      'success' | 'info' | 'warning' | 'danger' | 'secondary';
   }
 
   private readonly searchSubject = new Subject<string>();

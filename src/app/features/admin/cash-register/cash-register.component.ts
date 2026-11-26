@@ -48,7 +48,6 @@ type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
 
 @Component({
   selector: 'app-cash-register',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,

@@ -17,7 +17,6 @@ import { PortalService } from '../portal.service';
 
 @Component({
   selector: 'app-portal-dashboard',
-  standalone: true,
   imports: [CommonModule, CurrencyPipe, DatePipe, RouterLink, SkeletonModule],
   templateUrl: './portal-dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,14 +41,14 @@ export class PortalDashboardComponent implements OnInit {
    * Cuotas con estado OVERDUE dentro de los próximos vencimientos.
    */
   get overdueInstallments() {
-    return (this.summary?.upcomingInstallments ?? []).filter(i => i.status === 'OVERDUE');
+    return (this.summary?.upcomingInstallments ?? []).filter((i) => i.status === 'OVERDUE');
   }
 
   /**
    * Cuotas PENDING o PARTIAL (no vencidas) dentro de los próximos 30 días.
    */
   get pendingInstallments() {
-    return (this.summary?.upcomingInstallments ?? []).filter(i => i.status !== 'OVERDUE');
+    return (this.summary?.upcomingInstallments ?? []).filter((i) => i.status !== 'OVERDUE');
   }
 
   /**
@@ -85,9 +84,9 @@ export class PortalDashboardComponent implements OnInit {
   daysUntil(dateStr: string | null): number | null {
     if (!dateStr) return null;
     const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
-    const due   = new Date(y, m - 1, d);   // medianoche local de la fecha de vencimiento
+    const due = new Date(y, m - 1, d); // medianoche local de la fecha de vencimiento
     const today = new Date();
-    today.setHours(0, 0, 0, 0);             // medianoche local de hoy
+    today.setHours(0, 0, 0, 0); // medianoche local de hoy
     return Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   }
 

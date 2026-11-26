@@ -16,7 +16,6 @@ import { UpcomingReportComponent } from './tabs/upcoming-report/upcoming-report.
 
 @Component({
   selector: 'app-reports',
-  standalone: true,
   imports: [
     SummaryReportComponent,
     CollectionReportComponent,

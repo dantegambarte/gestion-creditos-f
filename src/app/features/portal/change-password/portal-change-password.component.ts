@@ -24,7 +24,6 @@ function passwordsMatchValidator(control: AbstractControl): ValidationErrors | n
 
 @Component({
   selector: 'app-portal-change-password',
-  standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,

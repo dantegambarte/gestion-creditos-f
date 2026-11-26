@@ -24,7 +24,6 @@ import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/f
 
 @Component({
   selector: 'app-admin-collection-detail',
-  standalone: true,
   imports: [
     CurrencyArsPipe,
     DatePipe,
@@ -82,9 +81,7 @@ export class AdminCollectionDetailComponent implements OnInit {
    * @returns
    */
   filterLabel(f: string): string {
-    return (
-      COLLECTION_FILTER_LABELS[f as keyof typeof COLLECTION_FILTER_LABELS] ?? f
-    );
+    return COLLECTION_FILTER_LABELS[f as keyof typeof COLLECTION_FILTER_LABELS] ?? f;
   }
 
   /**
@@ -103,15 +100,13 @@ export class AdminCollectionDetailComponent implements OnInit {
   installmentSeverity(
     status: InstallmentStatus,
   ): 'success' | 'info' | 'warning' | 'danger' | 'secondary' {
-    const map: Record<
-      InstallmentStatus,
-      'success' | 'info' | 'warning' | 'danger' | 'secondary'
-    > = {
-      PENDING: 'info',
-      OVERDUE: 'danger',
-      PAID: 'success',
-      PARTIAL: 'warning',
-    };
+    const map: Record<InstallmentStatus, 'success' | 'info' | 'warning' | 'danger' | 'secondary'> =
+      {
+        PENDING: 'info',
+        OVERDUE: 'danger',
+        PAID: 'success',
+        PARTIAL: 'warning',
+      };
     return map[status] ?? 'secondary';
   }
 

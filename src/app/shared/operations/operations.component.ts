@@ -24,7 +24,6 @@ import { CreditsService } from '../../features/seller/operations/credits.service
 
 @Component({
   selector: 'operations',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     CurrencyArsPipe,
@@ -105,9 +104,7 @@ export class OperationsComponent implements OnInit {
    * @param {CreditStatus} status - Estado recibido desde backend.
    * @returns {'warning' | 'success' | 'secondary' | 'danger'} Severidad visual del badge.
    */
-  getStatusSeverity(
-    status: CreditStatus,
-  ): 'warning' | 'success' | 'secondary' | 'danger' {
+  getStatusSeverity(status: CreditStatus): 'warning' | 'success' | 'secondary' | 'danger' {
     switch (status) {
       case 'PENDING_APPROVAL':
         return 'warning';
@@ -201,26 +198,18 @@ export class OperationsComponent implements OnInit {
     const term = this.normalizeText(this.searchTerm);
 
     return this.operations.filter((operation) => {
-      const matchesStatus =
-        !this.selectedStatus || operation.status === this.selectedStatus;
-      const matchesType =
-        !this.selectedType || operation.type === this.selectedType;
+      const matchesStatus = !this.selectedStatus || operation.status === this.selectedStatus;
+      const matchesType = !this.selectedType || operation.type === this.selectedType;
       // Condición de pago: solo aplica a ventas (en préstamos se ignora).
       const matchesPaymentCondition =
         this.selectedType !== 'SALE' ||
         !this.selectedPaymentCondition ||
         operation.paymentCondition === this.selectedPaymentCondition;
       const matchesSeller =
-        !this.selectedSeller ||
-        (operation.createdByName ?? 'Sin asignar') === this.selectedSeller;
+        !this.selectedSeller || (operation.createdByName ?? 'Sin asignar') === this.selectedSeller;
 
       if (!term) {
-        return (
-          matchesStatus &&
-          matchesType &&
-          matchesPaymentCondition &&
-          matchesSeller
-        );
+        return matchesStatus && matchesType && matchesPaymentCondition && matchesSeller;
       }
 
       const normalizedClient = this.normalizeText(operation.customerName);
@@ -242,11 +231,7 @@ export class OperationsComponent implements OnInit {
    */
   get sellerOptions(): { label: string; value: string | null }[] {
     const sellers = Array.from(
-      new Set(
-        this.operations.map(
-          (operation) => operation.createdByName ?? 'Sin asignar',
-        ),
-      ),
+      new Set(this.operations.map((operation) => operation.createdByName ?? 'Sin asignar')),
     ).sort((a, b) => a.localeCompare(b));
 
     return [

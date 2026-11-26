@@ -25,7 +25,6 @@ import { CashRegisterService } from '../cash-register.service';
  */
 @Component({
   selector: 'app-cash-session-open-dialog',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,
@@ -77,8 +76,8 @@ export class CashSessionOpenDialogComponent implements OnChanges {
     this.service
       .openSession({
         opening_amount: this.openingAmount!,
-        shift_label:    this.shiftLabel.trim() || undefined,
-        observations:   this.observations.trim() || undefined,
+        shift_label: this.shiftLabel.trim() || undefined,
+        observations: this.observations.trim() || undefined,
       })
       .pipe(finalize(() => (this.submitting = false)))
       .subscribe({

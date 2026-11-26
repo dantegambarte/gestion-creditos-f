@@ -20,7 +20,6 @@ import { BulkVariantEntryComponent } from '../bulk-variant-entry/bulk-variant-en
 
 @Component({
   selector: 'app-variant-form-panel',
-  standalone: true,
   imports: [
     ReactiveFormsModule,
     ButtonModule,

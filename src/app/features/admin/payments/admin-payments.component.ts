@@ -29,7 +29,6 @@ import { PAYMENT_METHOD_LABELS } from '../../../shared/models/payment-method-lab
 
 @Component({
   selector: 'app-admin-payments',
-  standalone: true,
   imports: [
     CurrencyArsPipe,
     DatePipe,

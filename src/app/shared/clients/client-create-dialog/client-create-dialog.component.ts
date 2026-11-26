@@ -17,7 +17,6 @@ import { CustomersService } from '../../../features/seller/clients/customers.ser
 
 @Component({
   selector: 'app-client-create-dialog',
-  standalone: true,
   imports: [ReactiveFormsModule, ButtonModule, DialogModule, DropdownModule, InputTextModule],
   templateUrl: './client-create-dialog.component.html',
   styleUrl: './client-create-dialog.component.scss',

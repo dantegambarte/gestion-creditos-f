@@ -11,7 +11,6 @@ import { UsersService } from '../../users.service';
 
 @Component({
   selector: 'app-user-edit-form',
-  standalone: true,
   imports: [ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule],
   templateUrl: './user-edit-form.component.html',
 })

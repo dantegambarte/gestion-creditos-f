@@ -34,7 +34,6 @@ import { buildBatchFailureMessages } from '../batch-failure-messages';
 
 @Component({
   selector: 'app-generate-collection-dialog',
-  standalone: true,
   imports: [
     DatePipe,
     FormsModule,

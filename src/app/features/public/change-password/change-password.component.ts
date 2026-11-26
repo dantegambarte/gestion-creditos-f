@@ -27,7 +27,6 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
 
 @Component({
   selector: 'app-change-password',
-  standalone: true,
   imports: [
     ReactiveFormsModule,
     ButtonModule,

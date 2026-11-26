@@ -17,7 +17,6 @@ import { paymentMethodLabel } from '../../../../../shared/models/payment-method-
 
 @Component({
   selector: 'app-cash-conversions-report',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     FormsModule,

@@ -23,7 +23,6 @@ import { ProductsService } from '../products.service';
 
 @Component({
   selector: 'app-product-detail',
-  standalone: true,
   providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [
     FfBackTopFabComponent,

@@ -15,7 +15,6 @@ import {
 
 @Component({
   selector: 'app-collection-sheet-payment-panel',
-  standalone: true,
   imports: [ButtonModule, CurrencyArsPipe, DatePipe, ProgressSpinnerModule, TagModule],
   templateUrl: './collection-sheet-payment-panel.component.html',
   styleUrl: './collection-sheet-payment-panel.component.scss',

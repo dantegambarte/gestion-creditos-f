@@ -12,7 +12,6 @@ import { CustomersService } from '../../customers.service';
 
 @Component({
   selector: 'app-client-portal-panel',
-  standalone: true,
   providers: [{ provide: MessageService, useClass: DedupMessageService }, ConfirmationService],
   imports: [ButtonModule, ConfirmDialogModule, ToastModule, TempPasswordDialogComponent],
   templateUrl: './client-portal-panel.component.html',

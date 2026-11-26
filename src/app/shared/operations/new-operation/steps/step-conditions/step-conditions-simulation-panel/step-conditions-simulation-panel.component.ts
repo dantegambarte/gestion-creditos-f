@@ -7,7 +7,6 @@ import { buildSchedulePreview } from '../../../operation-preview.helper';
 
 @Component({
   selector: 'app-step-conditions-simulation-panel',
-  standalone: true,
   imports: [CurrencyArsPipe, TooltipModule],
   templateUrl: './step-conditions-simulation-panel.component.html',
 })

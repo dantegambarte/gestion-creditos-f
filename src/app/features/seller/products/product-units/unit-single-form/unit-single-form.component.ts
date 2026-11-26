@@ -7,12 +7,7 @@ import {
   SimpleChanges,
   inject,
 } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -23,13 +18,7 @@ import { ProductUnitsService } from '../../product-units.service';
 
 @Component({
   selector: 'app-unit-single-form',
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    ButtonModule,
-    InputTextModule,
-    InputTextareaModule,
-  ],
+  imports: [ReactiveFormsModule, ButtonModule, InputTextModule, InputTextareaModule],
   templateUrl: './unit-single-form.component.html',
 })
 export class UnitSingleFormComponent implements OnChanges {

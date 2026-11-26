@@ -18,7 +18,6 @@ import { CreditsService } from '../../credits.service';
 
 @Component({
   selector: 'app-reject-dialog',
-  standalone: true,
   imports: [FormsModule, ButtonModule, DialogModule, InputTextareaModule],
   templateUrl: './reject-dialog.component.html',
 })

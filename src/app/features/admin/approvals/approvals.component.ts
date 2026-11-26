@@ -35,7 +35,6 @@ import { UsersService } from '../users/users.service';
 
 @Component({
   selector: 'approvals',
-  standalone: true,
   imports: [
     CurrencyArsPipe,
     DatePipe,

@@ -9,7 +9,6 @@ import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 
 @Component({
   selector: 'app-forgot-password',
-  standalone: true,
   imports: [ReactiveFormsModule, ButtonModule, InputTextModule, IconFieldModule, InputIconModule],
   templateUrl: './forgot-password.component.html',
 })

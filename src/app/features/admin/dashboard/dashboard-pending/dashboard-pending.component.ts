@@ -25,7 +25,6 @@ import { DashboardApprovePaymentDialogComponent } from '../dashboard-approve-pay
 
 @Component({
   selector: 'app-dashboard-pending',
-  standalone: true,
   imports: [CurrencyArsPipe, SkeletonModule, DashboardApprovePaymentDialogComponent],
   templateUrl: './dashboard-pending.component.html',
 })

@@ -12,7 +12,6 @@ import { CustomersService } from '../../customers.service';
 
 @Component({
   selector: 'app-client-edit-form',
-  standalone: true,
   imports: [ReactiveFormsModule, ButtonModule, DropdownModule, InputTextModule, TooltipModule],
   templateUrl: './client-edit-form.component.html',
 })

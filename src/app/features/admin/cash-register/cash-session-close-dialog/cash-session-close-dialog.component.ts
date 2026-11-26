@@ -46,7 +46,6 @@ interface DeclaredRow {
  */
 @Component({
   selector: 'app-cash-session-close-dialog',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,
@@ -105,8 +104,7 @@ export class CashSessionCloseDialogComponent implements OnChanges {
   private buildRows(snap: CashSessionSnapshot): void {
     this.rows = DECLARED_PAYMENT_METHODS.map(({ value, label }) => {
       const expected =
-        value === 'CASH'     ? snap.expected.cash :
-        value === 'TRANSFER' ? snap.expected.transfer : 0;
+        value === 'CASH' ? snap.expected.cash : value === 'TRANSFER' ? snap.expected.transfer : 0;
       return {
         method: value,
         label,
@@ -148,7 +146,7 @@ export class CashSessionCloseDialogComponent implements OnChanges {
     const declared: DeclaredItem[] = this.rows
       .filter((r) => r.declared != null)
       .map((r) => ({
-        payment_method:  r.method,
+        payment_method: r.method,
         declared_amount: r.declared!,
       }));
 

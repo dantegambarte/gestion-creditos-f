@@ -14,16 +14,11 @@ import { ReportsService } from '../../reports.service';
 
 type OverdueDaysFilter = 'all' | '31' | '61' | '91' | '121';
 type OverdueAmountFilter = 'all' | '500000' | '1000000';
-type OverdueSortKey =
-  | 'customerName'
-  | 'overdueCount'
-  | 'totalOverdue'
-  | 'maxDaysOverdue';
+type OverdueSortKey = 'customerName' | 'overdueCount' | 'totalOverdue' | 'maxDaysOverdue';
 type SortDirection = 'asc' | 'desc';
 
 @Component({
   selector: 'app-overdue-report',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,
@@ -88,19 +83,15 @@ export class OverdueReportComponent implements OnInit, OnDestroy {
     const rows = this.overdueReport?.byCustomer ?? [];
     const query = this.normalize(this.searchTerm);
     const minDays = this.daysFilter === 'all' ? null : Number(this.daysFilter);
-    const minAmount =
-      this.amountFilter === 'all' ? null : Number(this.amountFilter);
+    const minAmount = this.amountFilter === 'all' ? null : Number(this.amountFilter);
 
     return rows
       .filter((row) => {
         const matchesSearch =
           query.length === 0 ||
-          this.normalize(`${row.customerName} ${row.phone ?? ''}`).includes(
-            query,
-          );
+          this.normalize(`${row.customerName} ${row.phone ?? ''}`).includes(query);
         const matchesDays = minDays == null || row.maxDaysOverdue >= minDays;
-        const matchesAmount =
-          minAmount == null || row.totalOverdue >= minAmount;
+        const matchesAmount = minAmount == null || row.totalOverdue >= minAmount;
 
         return matchesSearch && matchesDays && matchesAmount;
       })
@@ -112,9 +103,7 @@ export class OverdueReportComponent implements OnInit, OnDestroy {
    */
   get hasActiveFilters(): boolean {
     return (
-      this.searchTerm.trim().length > 0 ||
-      this.daysFilter !== 'all' ||
-      this.amountFilter !== 'all'
+      this.searchTerm.trim().length > 0 || this.daysFilter !== 'all' || this.amountFilter !== 'all'
     );
   }
 

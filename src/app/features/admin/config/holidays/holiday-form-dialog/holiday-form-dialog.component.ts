@@ -36,7 +36,6 @@ interface HolidayForm {
 
 @Component({
   selector: 'app-holiday-form-dialog',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,

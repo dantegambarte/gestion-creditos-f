@@ -28,7 +28,6 @@ import {
 
 @Component({
   selector: 'app-route',
-  standalone: true,
   imports: [
     CurrencyArsPipe,
     DatePipe,

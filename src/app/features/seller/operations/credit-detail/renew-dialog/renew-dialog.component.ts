@@ -33,7 +33,6 @@ import { CreditsService } from '../../credits.service';
  */
 @Component({
   selector: 'app-renew-dialog',
-  standalone: true,
   imports: [
     FormsModule,
     CurrencyArsPipe,

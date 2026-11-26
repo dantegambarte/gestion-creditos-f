@@ -4,7 +4,6 @@ import { ProductsNavComponent } from '../products-nav/products-nav.component';
 
 @Component({
   selector: 'app-products-shell',
-  standalone: true,
   imports: [RouterOutlet, ProductsNavComponent],
   template: `
     <app-products-nav />

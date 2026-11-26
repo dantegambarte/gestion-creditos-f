@@ -6,7 +6,6 @@ import { Payment } from '../../models/interface/dashboard';
 
 @Component({
   selector: 'app-dashboard-approve-payment-dialog',
-  standalone: true,
   imports: [DialogModule, ButtonModule, CurrencyArsPipe],
   templateUrl: './dashboard-approve-payment-dialog.component.html',
 })

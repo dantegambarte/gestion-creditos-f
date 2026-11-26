@@ -1,11 +1,4 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  SimpleChanges,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
@@ -13,7 +6,6 @@ import { CollectionAlerts } from '../../../collector/models/collection.model';
 
 @Component({
   selector: 'app-collection-alerts-dialog',
-  standalone: true,
   imports: [DatePipe, ButtonModule, DialogModule],
   templateUrl: './collection-alerts-dialog.component.html',
 })

@@ -13,7 +13,6 @@ import { ReportsService } from '../../reports.service';
 
 @Component({
   selector: 'app-portfolio-report',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     DecimalPipe,

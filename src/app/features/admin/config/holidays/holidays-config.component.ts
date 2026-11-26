@@ -21,7 +21,6 @@ import { HolidayFormDialogComponent } from './holiday-form-dialog/holiday-form-d
 
 @Component({
   selector: 'app-holidays-config',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     DatePipe,
@@ -95,13 +94,8 @@ export class HolidaysConfigComponent implements OnInit {
    * Agrega el feriado creado a la lista local y muestra toast de confirmación.
    * @param result Resultado de creación emitido por el diálogo hijo.
    */
-  onHolidayCreated(result: {
-    holiday: Holiday;
-    recalculatedInstallments: number;
-  }): void {
-    this.holidays = [...this.holidays, result.holiday].sort((a, b) =>
-      b.date.localeCompare(a.date),
-    );
+  onHolidayCreated(result: { holiday: Holiday; recalculatedInstallments: number }): void {
+    this.holidays = [...this.holidays, result.holiday].sort((a, b) => b.date.localeCompare(a.date));
     const recalculationSuffix =
       result.recalculatedInstallments > 0
         ? ` Se recalcularon ${result.recalculatedInstallments} cuota(s) futura(s).`
@@ -118,9 +112,7 @@ export class HolidaysConfigComponent implements OnInit {
    * @param updated Feriado actualizado emitido por el diálogo hijo.
    */
   onHolidayUpdated(updated: Holiday): void {
-    this.holidays = this.holidays.map((row) =>
-      row.id === updated.id ? updated : row,
-    );
+    this.holidays = this.holidays.map((row) => (row.id === updated.id ? updated : row));
     this.messageService.add({
       severity: 'success',
       summary: 'Feriado actualizado',
@@ -132,10 +124,7 @@ export class HolidaysConfigComponent implements OnInit {
    * Genera vista previa de duplicación al próximo año sin ejecutar escritura.
    */
   previewDuplicateToNextYear(): void {
-    if (
-      !Number.isInteger(this.duplicateSourceYear) ||
-      this.duplicateSourceYear < 2000
-    ) {
+    if (!Number.isInteger(this.duplicateSourceYear) || this.duplicateSourceYear < 2000) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Año inválido',
@@ -158,9 +147,7 @@ export class HolidaysConfigComponent implements OnInit {
           this.messageService.add({
             severity: 'error',
             summary: 'Error de vista previa',
-            detail:
-              error.message ||
-              'No se pudo calcular la vista previa de duplicación.',
+            detail: error.message || 'No se pudo calcular la vista previa de duplicación.',
           });
         },
       });

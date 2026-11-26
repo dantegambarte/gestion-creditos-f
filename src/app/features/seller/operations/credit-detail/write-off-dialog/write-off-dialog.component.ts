@@ -26,7 +26,6 @@ import { CreditsService } from '../../credits.service';
  */
 @Component({
   selector: 'app-write-off-dialog',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,

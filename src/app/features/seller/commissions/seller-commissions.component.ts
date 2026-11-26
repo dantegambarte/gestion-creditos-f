@@ -23,7 +23,6 @@ import { paymentMethodLabel } from '../../../shared/models/payment-method-labels
 
 @Component({
   selector: 'app-seller-commissions',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,

@@ -18,7 +18,6 @@ import { formatIsoDate } from '../../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-sheet-review-dialog',
-  standalone: true,
   imports: [DialogModule, ButtonModule, TableModule, SkeletonModule],
   templateUrl: './sheet-review-dialog.component.html',
 })

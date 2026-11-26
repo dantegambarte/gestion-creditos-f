@@ -26,7 +26,6 @@ import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-expenses',
-  standalone: true,
   imports: [
     FormsModule,
     ButtonModule,

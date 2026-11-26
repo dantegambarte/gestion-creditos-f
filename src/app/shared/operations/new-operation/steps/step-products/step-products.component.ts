@@ -17,15 +17,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { CurrencyArsPipe } from '../../../../../core/pipes/currency-ars.pipe';
 import { CurrencyAmountInputDirective } from '../../../../directives/currency-amount-input.directive';
 import { CartLine, CartLineRef } from '../../operation-form.service';
-import {
-  CatalogProduct,
-  CatalogVariant,
-} from '../../operation-catalog.service';
+import { CatalogProduct, CatalogVariant } from '../../operation-catalog.service';
 import { ClientOperation } from '../../../../models/interface/client';
 
 @Component({
   selector: 'app-step-products',
-  standalone: true,
   imports: [
     ReactiveFormsModule,
     FormsModule,
@@ -98,9 +94,7 @@ export class StepProductsComponent implements OnChanges {
   get filteredCatalogProducts(): CatalogProduct[] {
     const term = this.catalogSearchText.trim().toLowerCase();
     if (!term) return this.catalogProducts;
-    return this.catalogProducts.filter((p) =>
-      p.nombre.toLowerCase().includes(term),
-    );
+    return this.catalogProducts.filter((p) => p.nombre.toLowerCase().includes(term));
   }
 
   /**
@@ -169,8 +163,7 @@ export class StepProductsComponent implements OnChanges {
    * @param {CatalogProduct} product - Producto elegido en el catálogo.
    */
   selectProduct(product: CatalogProduct): void {
-    this.lastProductScrollTop =
-      this.catalogScrollContainer?.nativeElement.scrollTop ?? 0;
+    this.lastProductScrollTop = this.catalogScrollContainer?.nativeElement.scrollTop ?? 0;
     this.selectedProductId = product.productoId;
     this.selectedVariantId = product.variants[0]?.variantId ?? null;
     this.scrollToSection('variant');
@@ -256,10 +249,7 @@ export class StepProductsComponent implements OnChanges {
    */
   isVariantOutOfStock(variant: CatalogVariant): boolean {
     if (!this.selectedProduct) return true;
-    const existing = this.findCartLine(
-      this.selectedProduct.productoId,
-      variant.variantId,
-    );
+    const existing = this.findCartLine(this.selectedProduct.productoId, variant.variantId);
     return (existing?.cantidad ?? 0) >= variant.stockDisponible;
   }
 
@@ -270,10 +260,7 @@ export class StepProductsComponent implements OnChanges {
    */
   getVariantRemainingStock(variant: CatalogVariant): number {
     if (!this.selectedProduct) return 0;
-    const existing = this.findCartLine(
-      this.selectedProduct.productoId,
-      variant.variantId,
-    );
+    const existing = this.findCartLine(this.selectedProduct.productoId, variant.variantId);
     return Math.max(variant.stockDisponible - (existing?.cantidad ?? 0), 0);
   }
 
@@ -291,10 +278,7 @@ export class StepProductsComponent implements OnChanges {
   get selectedCartLine(): CartLine | null {
     if (!this.selectedProduct || !this.selectedVariant) return null;
     return (
-      this.findCartLine(
-        this.selectedProduct.productoId,
-        this.selectedVariant.variantId,
-      ) ?? null
+      this.findCartLine(this.selectedProduct.productoId, this.selectedVariant.variantId) ?? null
     );
   }
 
@@ -330,8 +314,7 @@ export class StepProductsComponent implements OnChanges {
     const selectedProductStillExists = this.filteredCatalogProducts.some(
       (product) => product.productoId === this.selectedProductId,
     );
-    if (!selectedProductStillExists)
-      this.selectedProductId = firstProduct.productoId;
+    if (!selectedProductStillExists) this.selectedProductId = firstProduct.productoId;
 
     const currentProduct = this.filteredCatalogProducts.find(
       (product) => product.productoId === this.selectedProductId,
@@ -339,8 +322,7 @@ export class StepProductsComponent implements OnChanges {
     const variantExists = currentProduct?.variants.some(
       (variant) => variant.variantId === this.selectedVariantId,
     );
-    if (!variantExists)
-      this.selectedVariantId = currentProduct?.variants[0]?.variantId ?? null;
+    if (!variantExists) this.selectedVariantId = currentProduct?.variants[0]?.variantId ?? null;
   }
 
   /**
@@ -349,10 +331,7 @@ export class StepProductsComponent implements OnChanges {
    * @param {string} variantId - Variante específica.
    * @returns {CartLine | undefined} Línea encontrada si existe.
    */
-  private findCartLine(
-    productoId: string,
-    variantId: string,
-  ): CartLine | undefined {
+  private findCartLine(productoId: string, variantId: string): CartLine | undefined {
     return this.cartLines.find(
       (line) => line.productoId === productoId && line.variantId === variantId,
     );
@@ -374,8 +353,7 @@ export class StepProductsComponent implements OnChanges {
       const container = this.catalogScrollContainer?.nativeElement;
       if (!target || !container) return;
 
-      const hasInternalScroll =
-        container.scrollHeight > container.clientHeight + 1;
+      const hasInternalScroll = container.scrollHeight > container.clientHeight + 1;
       if (!hasInternalScroll) {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;

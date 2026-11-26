@@ -41,7 +41,6 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
 
 @Component({
   selector: 'app-collection-sheet-detail',
-  standalone: true,
   imports: [
     FfBackTopFabComponent,
     CurrencyArsPipe,
@@ -128,10 +127,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.header.set([
-      { label: 'Mi Ruta', route: AppRoutes.ROUTE },
-      { label: 'Planilla' },
-    ]);
+    this.header.set([{ label: 'Mi Ruta', route: AppRoutes.ROUTE }, { label: 'Planilla' }]);
     this.load();
   }
 
@@ -146,9 +142,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   filterLabel(f: string): string {
-    return (
-      COLLECTION_FILTER_LABELS[f as keyof typeof COLLECTION_FILTER_LABELS] ?? f
-    );
+    return COLLECTION_FILTER_LABELS[f as keyof typeof COLLECTION_FILTER_LABELS] ?? f;
   }
 
   antecedentLabel(t: AntecedentType): string {
@@ -193,10 +187,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   }
 
   availableBalance(item: CollectionSheetItem): number {
-    return Math.max(
-      0,
-      this.displayAmountDue(item) - this.displayAmountPaid(item),
-    );
+    return Math.max(0, this.displayAmountDue(item) - this.displayAmountPaid(item));
   }
 
   /** True si una acción está en curso sobre esta cuota (refresh silencioso). */
@@ -219,9 +210,7 @@ export class CollectionSheetDetailComponent implements OnInit {
    */
   isOperable(item: CollectionSheetItem): boolean {
     return (
-      this.sheet?.status === 'ACTIVE' &&
-      this.isTodaySheet &&
-      item.installmentStatus !== 'PAID'
+      this.sheet?.status === 'ACTIVE' && this.isTodaySheet && item.installmentStatus !== 'PAID'
     );
   }
 
@@ -287,10 +276,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   canVoidTodayAttempt(item: CollectionSheetItem): boolean {
     const live = item.live;
     if (!live?.todayAttemptId) return false;
-    return (
-      live.todayAttemptType === 'NO_PAYMENT' ||
-      live.todayAttemptType === 'NOT_FOUND'
-    );
+    return live.todayAttemptType === 'NO_PAYMENT' || live.todayAttemptType === 'NOT_FOUND';
   }
 
   // ── Apertura de dialogs ──────────────────────────────────────────────────────
@@ -301,10 +287,7 @@ export class CollectionSheetDetailComponent implements OnInit {
     this.showPaymentDialog = true;
   }
 
-  openAttemptDialog(
-    item: CollectionSheetItem,
-    type: CollectionAttemptType,
-  ): void {
+  openAttemptDialog(item: CollectionSheetItem, type: CollectionAttemptType): void {
     if (!this.canRegisterAttempt(item)) return;
     this.attemptDialogItem = item;
     this.attemptDialogType = type;
@@ -409,9 +392,7 @@ export class CollectionSheetDetailComponent implements OnInit {
 
   /** Selecciona una cuota y guarda el scroll real para volver ahí al cerrar el panel. */
   selectItem(item: CollectionSheetItem, event?: Event): void {
-    this.selectedItemScrollSnapshot = this.captureScrollSnapshot(
-      event?.currentTarget ?? undefined,
-    );
+    this.selectedItemScrollSnapshot = this.captureScrollSnapshot(event?.currentTarget ?? undefined);
     this.selectedItem = item;
     this.sidePanelOpen = true;
     this.scrollSidePanelIntoView();
@@ -457,9 +438,7 @@ export class CollectionSheetDetailComponent implements OnInit {
 
   /** Busca la fila/card visible porque desktop y mobile comparten el mismo installmentId. */
   private findVisibleInstallmentElement(installmentId: string): Element | null {
-    const nodes = Array.from(
-      document.querySelectorAll(`[data-installment-id="${installmentId}"]`),
-    );
+    const nodes = Array.from(document.querySelectorAll(`[data-installment-id="${installmentId}"]`));
     return nodes.find((node) => node.getClientRects().length > 0) ?? null;
   }
 
@@ -659,12 +638,8 @@ export class CollectionSheetDetailComponent implements OnInit {
     delete this.managementLogs[expectedItemId];
     this.collectionsService.getById(this.sheetId).subscribe({
       next: (data) => {
-        const newItems = [...data.items].sort(
-          (a, b) => a.orderNumber - b.orderNumber,
-        );
-        const stillPresent = newItems.some(
-          (i) => i.installmentId === expectedItemId,
-        );
+        const newItems = [...data.items].sort((a, b) => a.orderNumber - b.orderNumber);
+        const stillPresent = newItems.some((i) => i.installmentId === expectedItemId);
         this.sheet = data;
         this.items = newItems;
         // Re-apuntar selectedItem al objeto fresco: el panel lateral lo lee, y si
@@ -700,8 +675,7 @@ export class CollectionSheetDetailComponent implements OnInit {
         this.msg.add({
           severity: 'warn',
           summary: 'Gestión registrada',
-          detail:
-            'No pudimos refrescar la planilla. Tirá del listado o recargá la página.',
+          detail: 'No pudimos refrescar la planilla. Tirá del listado o recargá la página.',
           life: 5000,
         });
       },
@@ -713,9 +687,7 @@ export class CollectionSheetDetailComponent implements OnInit {
     this.collectionsService.getById(this.sheetId).subscribe({
       next: (data) => {
         this.sheet = data;
-        this.items = [...data.items].sort(
-          (a, b) => a.orderNumber - b.orderNumber,
-        );
+        this.items = [...data.items].sort((a, b) => a.orderNumber - b.orderNumber);
         this.selectedItem = this.items[0] ?? null;
         this.header.set([
           { label: 'Mi Ruta', route: '/collector/route' },
