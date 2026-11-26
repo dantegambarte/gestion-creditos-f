@@ -4,7 +4,7 @@ const { spawnSync } = require('child_process');
 
 /**
  * Detecta si se pasó --spec en los argumentos de CLI.
- * @param {string[]} args - Argumentos recibidos por npm run después de --.
+ * @param {string[]} args - Argumentos recibidos por pnpm run.
  * @returns {boolean} true si existe --spec o --spec=valor.
  */
 function hasExplicitSpec(args) {
@@ -21,14 +21,12 @@ const forwardedArgs = process.argv.slice(2);
 
 if (!hasExplicitSpec(forwardedArgs)) {
   console.error('[e2e:run] Seguridad Cypress: este comando requiere --spec explícito.');
-  console.error('Ejemplo: npm run e2e:run -- --spec "cypress/e2e/01-auth-real.cy.ts"');
-  console.error('Suite completa: npm run e2e:run:all');
+  console.error('Ejemplo: pnpm e2e:run --spec "cypress/e2e/01-auth-real.cy.ts"');
+  console.error('Suite completa: pnpm e2e:run:all');
   process.exit(1);
 }
 
-const npxBin = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-
-const result = spawnSync(npxBin, ['cypress', 'run', ...forwardedArgs], {
+const result = spawnSync('pnpm', ['exec', 'cypress', 'run', ...forwardedArgs], {
   stdio: 'inherit',
   shell: process.platform === 'win32',
 });
