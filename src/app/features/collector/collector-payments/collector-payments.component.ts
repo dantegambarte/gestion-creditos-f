@@ -18,6 +18,7 @@ import { ErrorStateComponent } from '../../../shared/states/error-state/error-st
 import { Payment, PaymentStatus } from '../models/payment.model';
 import { PaymentsService } from '../payments.service';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { PAYMENT_METHOD_LABELS } from '../../../shared/models/payment-method-labels';
 
 @Component({
   selector: 'app-collector-payments',
@@ -159,12 +160,7 @@ export class CollectorPaymentsComponent implements OnInit {
    * Devuelve la etiqueta del método de pago de un cobro.
    */
   paymentMethodLabel(method: Payment['paymentMethod']): string {
-    const map: Record<Payment['paymentMethod'], string> = {
-      CASH: 'Efectivo',
-      TRANSFER: 'Transferencia',
-      MIXED: 'Mixto',
-    };
-    return map[method];
+    return PAYMENT_METHOD_LABELS[method];
   }
 
   /**

@@ -29,6 +29,7 @@ import { User } from '../users/user.model';
 import { UsersService } from '../users/users.service';
 import { PaymentDetailDialogComponent } from './payment-detail-dialog/payment-detail-dialog.component';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { PAYMENT_METHOD_LABELS } from '../../../shared/models/payment-method-labels';
 
 @Component({
   selector: 'app-admin-payments',
@@ -188,11 +189,7 @@ export class AdminPaymentsComponent implements OnInit {
    * @param method método de pago registrado en el cobro
    */
   paymentMethodLabel(method: PaymentMethod): string {
-    return {
-      CASH: 'Efectivo',
-      TRANSFER: 'Transferencia',
-      MIXED: 'Mixto',
-    }[method];
+    return PAYMENT_METHOD_LABELS[method];
   }
 
   /**

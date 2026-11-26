@@ -36,6 +36,7 @@ import { CashSessionCloseDialogComponent } from './cash-session-close-dialog/cas
 import { CashSessionOpenDialogComponent } from './cash-session-open-dialog/cash-session-open-dialog.component';
 import { CashSessionSnapshotDialogComponent } from './cash-session-snapshot-dialog/cash-session-snapshot-dialog.component';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 type MovementTypeFilter = 'TODOS' | CashRegisterMovementType;
 type MovementMethodFilter = 'TODOS' | 'EFECTIVO' | 'TRANSFERENCIA';
@@ -714,9 +715,7 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
    * @param iso fecha en formato ISO
    */
   formatDate(iso: string): string {
-    if (!iso) return '—';
-    const d = iso.split('T')[0].split('-');
-    return `${d[2]}/${d[1]}/${d[0]}`;
+    return formatIsoDate(iso);
   }
 
   /**

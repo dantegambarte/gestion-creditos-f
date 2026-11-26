@@ -40,6 +40,7 @@ import { InstallmentsService } from '../../../seller/operations/installments.ser
 import { CollectionPdfService } from '../collection-pdf.service';
 import { CollectionSheet } from '../../../collector/models/collection.model';
 import { FfBackTopFabComponent } from '../../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { formatIsoDate } from '../../../../shared/utils/date-format.util';
 
 export type DetailTab = 'ALL' | 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
 
@@ -407,9 +408,7 @@ export class CollectionSheetDetailPanelComponent
    * @param iso Fecha en formato ISO
    */
   formatDate(iso: string): string {
-    if (!iso) return '—';
-    const [y, m, d] = iso.split('T')[0].split('-');
-    return `${d}/${m}/${y}`;
+    return formatIsoDate(iso);
   }
 
   /**

@@ -25,6 +25,7 @@ import {
 } from '../../report.models';
 import { ReportsService } from '../../reports.service';
 import { FfBackTopFabComponent } from '../../../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { PAYMENT_METHOD_LABELS } from '../../../../../shared/models/payment-method-labels';
 
 const TYPE_LABELS: Record<CashMovementType, string> = {
   COBRO: 'Cobro',
@@ -49,9 +50,7 @@ const SCOPE_OPTIONS: { label: string; value: 'JORNADA' | 'GENERAL' }[] = [
 ];
 
 const METHOD_LABELS: Record<string, string> = {
-  CASH: 'Efectivo',
-  TRANSFER: 'Transferencia',
-  MIXED: 'Mixto',
+  ...PAYMENT_METHOD_LABELS,
   CASH_TRANSFER: 'Efectivo → Transferencia',
   TRANSFER_CASH: 'Transferencia → Efectivo',
 };

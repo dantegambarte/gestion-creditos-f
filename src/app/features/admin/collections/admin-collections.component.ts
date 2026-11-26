@@ -39,6 +39,7 @@ import {
 } from './collection-sheet-detail-panel/collection-sheet-detail-panel.component';
 import { GenerateCollectionDialogComponent } from './generate-collection-dialog/generate-collection-dialog.component';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-admin-collections',
@@ -327,9 +328,7 @@ export class AdminCollectionsComponent implements OnInit, OnDestroy {
    * @param iso Fecha en formato ISO
    */
   formatDate(iso: string): string {
-    if (!iso) return '—';
-    const [y, m, d] = iso.split('T')[0].split('-');
-    return `${d}/${m}/${y}`;
+    return formatIsoDate(iso);
   }
 
   /**

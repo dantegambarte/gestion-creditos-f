@@ -22,6 +22,7 @@ import {
 } from '../../admin/models/commission.model';
 import { CommissionsService } from '../../admin/commissions/commissions.service';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
+import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-collector-commissions',
@@ -176,8 +177,6 @@ export class CollectorCommissionsComponent implements OnInit, OnDestroy {
    * @returns
    */
   formatDate(iso: string): string {
-    if (!iso) return '—';
-    const d = iso.split('T')[0].split('-');
-    return `${d[2]}/${d[1]}/${d[0]}`;
+    return formatIsoDate(iso);
   }
 }

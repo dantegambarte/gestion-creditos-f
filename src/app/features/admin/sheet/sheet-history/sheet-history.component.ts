@@ -9,6 +9,7 @@ import {
   CollectionFilter,
   CollectionSheet,
 } from '../../../collector/models/collection.model';
+import { formatIsoDate } from '../../../../shared/utils/date-format.util';
 
 @Component({
   selector: 'app-sheet-history',
@@ -31,9 +32,7 @@ export class SheetHistoryComponent {
    * @param iso fecha en formato ISO
    */
   formatDate(iso: string): string {
-    if (!iso) return '—';
-    const [y, m, d] = iso.split('T')[0].split('-');
-    return `${d}/${m}/${y}`;
+    return formatIsoDate(iso);
   }
 
   /**

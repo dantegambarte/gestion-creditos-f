@@ -8,6 +8,7 @@ import {
 import { DateService } from '../../../core/services/date.service';
 import { FormatService } from '../../../core/services/format.service';
 import { GeneratedPlanillaResult, PlanillaEntry } from '../models/interface/sheet';
+import { formatIsoDate } from '../../../shared/utils/date-format.util';
 
 /**
  * Genera y descarga la planilla de cobranza en formato PDF A4.
@@ -386,8 +387,6 @@ export class CollectionPdfService {
   }
 
   private formatDate(iso: string): string {
-    if (!iso) return '—';
-    const [y, m, d] = iso.split('T')[0].split('-');
-    return `${d}/${m}/${y}`;
+    return formatIsoDate(iso);
   }
 }
