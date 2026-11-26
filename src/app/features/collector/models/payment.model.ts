@@ -54,6 +54,9 @@ export interface PaymentListFilters {
   /** Filtro por fecha (YYYY-MM-DD) sobre approved_at, aplicado en el backend. */
   dateFrom?: string;
   dateTo?: string;
+  /** Filtro por fecha de registro (YYYY-MM-DD) sobre created_at; incluye PENDING. */
+  createdFrom?: string;
+  createdTo?: string;
 }
 
 export interface PaymentCreatePayload {

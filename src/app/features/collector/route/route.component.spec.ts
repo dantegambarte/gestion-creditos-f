@@ -65,18 +65,51 @@ describe('RouteComponent', () => {
   afterEach(() => httpMock.verify());
 
   /**
-   * Responde las dos cargas iniciales (planillas y cobros) con datos raw.
+   * Responde la carga de planillas y, si el componente pide cobros, también esa.
    * @param sheets - planillas raw
    * @param payments - cobros raw
+   * @returns created_from enviado en la carga de cobros (null si no se pidieron)
    */
-  function respond(sheets: unknown[], payments: unknown[]): void {
+  function respond(sheets: unknown[], payments: unknown[]): string | null {
     httpMock
       .expectOne((r) => r.method === 'GET' && /\/collections$/.test(r.url))
       .flush({ ok: true, data: sheets });
-    httpMock
-      .expectOne((r) => r.method === 'GET' && /\/payments$/.test(r.url))
-      .flush({ ok: true, data: payments });
+    const reqs = httpMock.match((r) => r.method === 'GET' && /\/payments$/.test(r.url));
+    if (reqs.length === 0) return null;
+    expect(reqs.length).toBe(1);
+    reqs[0].flush({ ok: true, data: payments });
+    return reqs[0].request.params.get('created_from');
   }
+
+  /**
+   * Fecha local (yyyy-mm-dd) de un instante ISO, como la calcula DateService.
+   * @param iso - instante ISO
+   * @returns fecha local
+   */
+  function localDay(iso: string): string {
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  it('pide los cobros filtrados en backend desde el día de la planilla más antigua del día', () => {
+    const createdFrom = respond(
+      [
+        sheetRaw('regenerada', '2026-11-26', '2026-11-26T10:00:00Z'),
+        sheetRaw('primera', '2026-11-26', '2026-11-26T08:00:00Z'),
+      ],
+      [],
+    );
+
+    expect(createdFrom).toBe(localDay('2026-11-26T08:00:00Z'));
+    expect(component.loadingPayments).toBeFalse();
+  });
+
+  it('sin planillas no pide cobros (no descarga todos los pagos)', () => {
+    expect(respond([], [])).toBeNull();
+    expect(component.recentPayments).toEqual([]);
+    expect(component.loadingPayments).toBeFalse();
+  });
 
   it('muestra solo la última planilla generada', () => {
     respond(
@@ -143,9 +176,10 @@ describe('RouteComponent', () => {
     httpMock
       .expectOne((r) => /\/collections$/.test(r.url))
       .flush({ message: 'boom' }, { status: 500, statusText: 'Error' });
-    httpMock.expectOne((r) => /\/payments$/.test(r.url)).flush({ ok: true, data: [] });
+    httpMock.expectNone((r) => /\/payments$/.test(r.url));
 
     expect(component.errorSheets).not.toBeNull();
+    expect(component.loadingPayments).toBeFalse();
     expect(component.loadingSheets).toBeFalse();
   });
 });
