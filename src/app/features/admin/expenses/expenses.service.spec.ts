@@ -23,10 +23,7 @@ describe('ExpensesService', () => {
   beforeEach(() => {
     apiSpy = jasmine.createSpyObj('ApiHttpService', ['get', 'post', 'delete']);
     TestBed.configureTestingModule({
-      providers: [
-        ExpensesService,
-        { provide: ApiHttpService, useValue: apiSpy },
-      ],
+      providers: [ExpensesService, { provide: ApiHttpService, useValue: apiSpy }],
     });
     service = TestBed.inject(ExpensesService);
   });
@@ -37,6 +34,25 @@ describe('ExpensesService', () => {
     const [, params] = apiSpy.get.calls.mostRecent().args;
     expect((params as Record<string, string>)['page']).toBe('2');
     expect((params as Record<string, string>)['limit']).toBe('20');
+  });
+
+  it('getAllRows trae todas las páginas del período para los KPIs (#63)', (done) => {
+    const row = (id: string, amount: number) => ({ ...mockExpenseRaw, id, amount });
+    apiSpy.get.and.callFake(((_url: string, params: Record<string, string>) =>
+      of(
+        params['page'] === '1'
+          ? { rows: [row('a', 100), row('b', 200)], total: 150 }
+          : { rows: [row('c', 300)], total: 150 },
+      )) as never);
+    service.getAllRows({ dateFrom: '2026-11-01', page: 3, limit: 20 }).subscribe((rows) => {
+      const calls = apiSpy.get.calls.allArgs().map((a) => a[1] as Record<string, string>);
+      expect(calls.map((p) => p['page'])).toEqual(['1', '2']);
+      expect(
+        calls.every((p) => p['limit'] === '100' && p['date_from'] === '2026-11-01'),
+      ).toBeTrue();
+      expect(rows.map((r) => r.amount)).toEqual([100, 200, 300]);
+      done();
+    });
   });
 
   it('getAll defaults to page=1 limit=20 when not specified', () => {
@@ -88,12 +104,8 @@ describe('ExpensesService', () => {
       })
       .subscribe(() => {});
     const [, body] = apiSpy.post.calls.mostRecent().args;
-    expect((body as Record<string, unknown>)['transfer_reference']).toBe(
-      'REF123',
-    );
-    expect((body as Record<string, unknown>)['payment_method']).toBe(
-      'TRANSFER',
-    );
+    expect((body as Record<string, unknown>)['transfer_reference']).toBe('REF123');
+    expect((body as Record<string, unknown>)['payment_method']).toBe('TRANSFER');
   });
 
   it('remove calls DELETE and returns void', (done) => {

@@ -19,7 +19,7 @@ import { ExpenseCategory } from '../models/interface/expenses';
 import { CategoryColorService } from './category-color.service';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseSidePanelComponent } from './expense-side-panel/expense-side-panel.component';
-import { Expense } from './expense.model';
+import { Expense, ExpenseListFilters } from './expense.model';
 import { ExpensesService } from './expenses.service';
 import { FfBackTopFabComponent } from '../../../shared/components/back-top-fab/ff-back-top-fab.component';
 import { formatIsoDate } from '../../../shared/utils/date-format.util';
@@ -69,23 +69,25 @@ export class ExpensesComponent implements OnInit, OnDestroy {
   showCatsPanel = false;
   selectedExpense: Expense | null = null;
 
+  /** Todas las filas del período filtrado (no sólo la página): base de los KPIs. */
+  statsRows: Expense[] = [];
+
+  /** Total del período sobre todas las filas filtradas, no sólo la página visible. */
   get periodTotal(): number {
-    return this.rows.reduce((sum, e) => sum + e.amount, 0);
+    return this.statsRows.reduce((sum, e) => sum + e.amount, 0);
   }
 
+  /** Mayor gasto del período completo filtrado. */
   get periodMaxExpense(): Expense | null {
-    if (!this.rows.length) return null;
-    return this.rows.reduce((max, e) => (e.amount > max.amount ? e : max));
+    if (!this.statsRows.length) return null;
+    return this.statsRows.reduce((max, e) => (e.amount > max.amount ? e : max));
   }
 
+  /** Método de pago más usado en el período completo filtrado. */
   get periodMostFrequentMethod(): string {
-    const cash = this.rows.filter((e) => e.paymentMethod === 'CASH').length;
-    const transfer = this.rows.filter(
-      (e) => e.paymentMethod === 'TRANSFER',
-    ).length;
-    return cash >= transfer
-      ? `Efectivo (${cash})`
-      : `Transferencia (${transfer})`;
+    const cash = this.statsRows.filter((e) => e.paymentMethod === 'CASH').length;
+    const transfer = this.statsRows.filter((e) => e.paymentMethod === 'TRANSFER').length;
+    return cash >= transfer ? `Efectivo (${cash})` : `Transferencia (${transfer})`;
   }
 
   get currentMonthLabel(): string {
@@ -162,6 +164,7 @@ export class ExpensesComponent implements OnInit, OnDestroy {
         next: (r) => {
           this.rows = r.rows;
           this.total = r.total;
+          this.loadStats(filters, r.rows, r.total);
         },
         error: () =>
           this.msg.add({
@@ -169,6 +172,27 @@ export class ExpensesComponent implements OnInit, OnDestroy {
             summary: 'Error',
             detail: 'No se pudieron cargar los gastos.',
           }),
+      });
+  }
+
+  /**
+   * Carga las filas de todo el período filtrado para los KPIs. Si la página ya
+   * contiene todo el dataset, la reutiliza sin pedir nada más.
+   * @param filters filtros de la página actual
+   * @param pageRows filas de la página recién cargada
+   * @param total cantidad total de gastos que informa el backend
+   */
+  private loadStats(filters: ExpenseListFilters, pageRows: Expense[], total: number): void {
+    if (total <= pageRows.length) {
+      this.statsRows = pageRows;
+      return;
+    }
+    this.svc
+      .getAllRows(filters)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (all) => (this.statsRows = all),
+        error: () => (this.statsRows = pageRows),
       });
   }
 
@@ -214,7 +238,8 @@ export class ExpensesComponent implements OnInit, OnDestroy {
    * @param expense gasto a editar
    */
   selectExpense(expense: Expense): void {
-    this.selectedExpense = expense;
+    // Copia nueva: así el panel repuebla el formulario aunque se reabra el mismo gasto.
+    this.selectedExpense = { ...expense };
     this.showCatsPanel = false;
     this.showSidePanel = true;
   }
