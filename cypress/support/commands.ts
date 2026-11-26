@@ -1346,9 +1346,28 @@ type SaleUnitFixture = {
   paymentFrequency: string;
 };
 
+/**
+ * Obtiene un access token vigente para requests directos al backend real.
+ * Desde #39 el token vive sólo en memoria de la app: se pide uno nuevo con la
+ * cookie HttpOnly de refresh que dejó el login (cy.request comparte cookies).
+ * @param portal - true para la sesión del portal, false para la interna
+ */
+Cypress.Commands.add('apiSessionToken', (portal = false) => {
+  const path = portal ? 'auth/portal/refresh' : 'auth/refresh';
+  return cy
+    .request({ method: 'POST', url: `${String(Cypress.env('apiBaseUrl'))}/${path}`, body: {} })
+    .then((res) => {
+      const token = res.body?.data?.token as string;
+      expect(token, `token ${path}`).to.be.a('string').and.not.be.empty;
+      return token;
+    });
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
+      /** Obtiene un access token nuevo con la cookie HttpOnly de refresh (#39). */
+      apiSessionToken(portal?: boolean): Chainable<string>;
       loginAs(role: InternalRole, destination?: string): Chainable<void>;
       loginReal(role: InternalRole, destination?: string): Chainable<void>;
       loginPortalAs(

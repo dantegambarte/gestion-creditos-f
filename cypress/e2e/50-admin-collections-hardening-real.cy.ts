@@ -79,7 +79,6 @@ describe('Admin Collections — hardening real', () => {
 
       cy.visit('/admin/collections', {
         onBeforeLoad(win) {
-          win.localStorage.setItem('sgcf_token', token as string);
           if (user) {
             win.localStorage.setItem('sgcf_user', JSON.stringify(user));
           }

@@ -20,7 +20,6 @@ describe('Admin — Generar Planilla de Cobro', () => {
 
         cy.visit('/admin/collections', {
           onBeforeLoad(win) {
-            win.localStorage.setItem('sgcf_token', token);
             if (user) {
               win.localStorage.setItem('sgcf_user', JSON.stringify(user));
             }

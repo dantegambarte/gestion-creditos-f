@@ -484,9 +484,8 @@ describe('El Viaje de la Venta — SALE Multi-Rol (real)', () => {
       cy.location('pathname').then((pathname) => {
         if (!pathname.includes('change-password')) return;
 
-        cy.window()
-          .then((win) => {
-            const token = win.localStorage.getItem('sgcf_portal_token');
+        cy.apiSessionToken(true)
+          .then((token) => {
             return cy.request({
               method: 'POST',
               url: `${String(Cypress.env('apiBaseUrl'))}/auth/portal/change-password`,

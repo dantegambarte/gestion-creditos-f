@@ -290,11 +290,8 @@ describe('El Viaje del Crédito — Multi-Rol (real)', () => {
       // estaban relacionados entre sí, así que el segundo login corría en
       // paralelo con el cambio de contraseña en vez de esperarlo — el login
       // llegaba a destino con is_temp_password todavía en true server-side.
-      cy.window()
-        .then((win) => {
-          const token = win.localStorage.getItem('sgcf_portal_token');
-          expect(token, 'token portal tras login temp').to.be.a('string').and.not.be.empty;
-
+      cy.apiSessionToken(true)
+        .then((token) => {
           return cy.request({
             method: 'POST',
             url: `${String(Cypress.env('apiBaseUrl'))}/auth/portal/change-password`,
