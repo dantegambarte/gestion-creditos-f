@@ -1,5 +1,4 @@
-import { DOCUMENT } from '@angular/common';
-import { DestroyRef, Injectable, inject } from '@angular/core';
+import { DestroyRef, Injectable, inject, DOCUMENT } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { MessageService } from 'primeng/api';
@@ -24,9 +23,7 @@ export class PwaUpdateService {
     this.listening = true;
     this.swUpdate.versionUpdates
       .pipe(
-        filter(
-          (event): event is VersionReadyEvent => event.type === 'VERSION_READY',
-        ),
+        filter((event): event is VersionReadyEvent => event.type === 'VERSION_READY'),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(() => this.showUpdateToast());

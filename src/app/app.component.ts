@@ -1,5 +1,5 @@
-import { AsyncPipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { Component, DestroyRef, PLATFORM_ID, inject } from '@angular/core';
+import { AsyncPipe, isPlatformBrowser } from '@angular/common';
+import { Component, DestroyRef, PLATFORM_ID, inject, DOCUMENT } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { Message, MessageService, PrimeNGConfig } from 'primeng/api';

@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { Table } from 'primeng/table';
 import { of } from 'rxjs';
 
 import { CreditsService } from '../../features/seller/operations/credits.service';
@@ -58,10 +60,7 @@ describe('OperationsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [OperationsComponent],
-      providers: [
-        provideRouter([]),
-        { provide: CreditsService, useValue: creditsServiceMock },
-      ],
+      providers: [provideRouter([]), { provide: CreditsService, useValue: creditsServiceMock }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(OperationsComponent);
@@ -108,9 +107,9 @@ describe('OperationsComponent', () => {
   });
 
   it('CR-17: la tabla tiene paginador configurado — paginator=true rows=10', () => {
-    const table = fixture.nativeElement.querySelector('p-table');
-    expect(table.getAttribute('ng-reflect-paginator')).toBe('true');
-    expect(table.getAttribute('ng-reflect-rows')).toBe('10');
+    const table = fixture.debugElement.query(By.directive(Table)).componentInstance as Table;
+    expect(table.paginator).toBeTrue();
+    expect(table.rows).toBe(10);
   });
 
   it('muestra en mobile la misma información operativa clave que desktop', () => {
@@ -129,8 +128,9 @@ describe('OperationsComponent', () => {
   });
 
   it('muestra vendedor y cobrador completos en las cards mobile', () => {
-    const mobileCards: NodeListOf<HTMLElement> =
-      fixture.nativeElement.querySelectorAll('[data-cy="operations-mobile-card"]');
+    const mobileCards: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll(
+      '[data-cy="operations-mobile-card"]',
+    );
     const text = mobileCards[1].textContent ?? '';
 
     expect(text).toContain('Vendedor Demo');
@@ -148,8 +148,6 @@ describe('OperationsComponent', () => {
     fixture.detectChanges();
 
     expect(component.searchTerm).toBe('');
-    expect(
-      fixture.nativeElement.querySelector('[data-cy="operations-search-clear"]'),
-    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-cy="operations-search-clear"]')).toBeNull();
   });
 });
