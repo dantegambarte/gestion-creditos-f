@@ -31,6 +31,7 @@ export class ConfigComponent {
     },
     { label: 'Feriados', icon: 'pi pi-calendar-plus', path: 'holidays' },
     { label: 'Notificaciones', icon: 'pi pi-bell', path: 'notifications' },
+    { label: 'Empresa', icon: 'pi pi-building', path: 'company' },
   ];
 
   /**

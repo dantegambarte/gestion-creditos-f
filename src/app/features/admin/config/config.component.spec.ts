@@ -27,6 +27,7 @@ describe('ConfigComponent', () => {
       'system-params',
       'holidays',
       'notifications',
+      'company',
     ]);
   });
 

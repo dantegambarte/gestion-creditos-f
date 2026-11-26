@@ -1,14 +1,13 @@
 <div class="space-y-6">
-  @if (!persistenceAvailable) {
+  @if (loadError) {
     <div
-      class="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800"
-      role="status"
-      data-cy="company-config-unavailable"
+      class="flex flex-wrap items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-800"
+      role="alert"
+      data-cy="company-config-load-error"
     >
-      <i class="pi pi-info-circle shrink-0 mt-0.5"></i>
-      <span>
-        Esta sección es solo de lectura: los cambios todavía no se pueden guardar en el servidor.
-      </span>
+      <i class="pi pi-exclamation-triangle shrink-0 mt-0.5"></i>
+      <span class="min-w-0 flex-1">{{ loadError }}</span>
+      <p-button label="Reintentar" [text]="true" size="small" (onClick)="load()" />
     </div>
   }
   <!-- Card: Datos de la Empresa -->
@@ -26,19 +25,44 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Nombre del sistema</label>
-        <input pInputText [(ngModel)]="systemName" class="w-full h-11 px-3.5" />
+        <input
+          pInputText
+          [(ngModel)]="systemName"
+          class="w-full h-11 px-3.5"
+          data-cy="company-config-name"
+          [disabled]="loading || !!loadError"
+        />
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Email de contacto</label>
-        <input pInputText [(ngModel)]="contactEmail" class="w-full h-11 px-3.5" />
+        <input
+          pInputText
+          type="email"
+          [(ngModel)]="contactEmail"
+          class="w-full h-11 px-3.5"
+          data-cy="company-config-email"
+          [disabled]="loading || !!loadError"
+        />
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Teléfono</label>
-        <input pInputText [(ngModel)]="phone" class="w-full h-11 px-3.5" />
+        <input
+          pInputText
+          [(ngModel)]="phone"
+          class="w-full h-11 px-3.5"
+          data-cy="company-config-phone"
+          [disabled]="loading || !!loadError"
+        />
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Dirección</label>
-        <input pInputText [(ngModel)]="address" class="w-full h-11 px-3.5" />
+        <input
+          pInputText
+          [(ngModel)]="address"
+          class="w-full h-11 px-3.5"
+          data-cy="company-config-address"
+          [disabled]="loading || !!loadError"
+        />
       </div>
     </div>
   </div>
@@ -51,49 +75,71 @@
       </div>
       <div>
         <h2 class="text-base font-semibold ff-text-primary">Tasas de Interés</h2>
-        <p class="text-xs ff-text-muted">Tasas y comisiones aplicadas a las operaciones</p>
+        <p class="text-xs ff-text-muted">
+          Mora, comisión y gracia son las que usa el sistema; VENTA y PRÉSTAMO son de referencia.
+        </p>
       </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Tasa VENTA (mensual)</label>
-        <p-dropdown
-          [options]="rateOptions"
+        <p-inputNumber
           [(ngModel)]="saleRate"
-          [filter]="rateOptions.length > 10"
-          styleClass="w-full h-11 rounded-xl"
-          appendTo="body"
+          [min]="0"
+          [max]="100"
+          [maxFractionDigits]="3"
+          suffix="%"
+          locale="es-AR"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11"
+          data-cy="company-config-sale-rate"
+          [disabled]="loading || !!loadError"
         />
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Tasa PRÉSTAMO (mensual)</label>
-        <p-dropdown
-          [options]="rateOptions"
+        <p-inputNumber
           [(ngModel)]="loanRate"
-          [filter]="rateOptions.length > 10"
-          styleClass="w-full h-11 rounded-xl"
-          appendTo="body"
+          [min]="0"
+          [max]="100"
+          [maxFractionDigits]="3"
+          suffix="%"
+          locale="es-AR"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11"
+          data-cy="company-config-loan-rate"
+          [disabled]="loading || !!loadError"
         />
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Tasa MORA (diaria)</label>
-        <p-dropdown
-          [options]="moraOptions"
+        <p-inputNumber
           [(ngModel)]="moraRate"
-          [filter]="moraOptions.length > 10"
-          styleClass="w-full h-11 rounded-xl"
-          appendTo="body"
+          [min]="0"
+          [max]="50"
+          [maxFractionDigits]="3"
+          suffix="%"
+          locale="es-AR"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11"
+          data-cy="company-config-mora-rate"
+          [disabled]="loading || !!loadError"
         />
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="auth-label">Comisión Vendedor</label>
-        <p-dropdown
-          [options]="commissionOptions"
+        <p-inputNumber
           [(ngModel)]="sellerCommission"
-          [filter]="commissionOptions.length > 10"
-          styleClass="w-full h-11 rounded-xl"
-          appendTo="body"
+          [min]="0"
+          [max]="100"
+          [maxFractionDigits]="3"
+          suffix="%"
+          locale="es-AR"
+          styleClass="w-full"
+          inputStyleClass="w-full h-11"
+          data-cy="company-config-commission"
+          [disabled]="loading || !!loadError"
         />
       </div>
     </div>
@@ -106,10 +152,12 @@
       <p-inputNumber
         [(ngModel)]="gracePeriod"
         [min]="0"
-        [max]="90"
+        [max]="30"
         inputStyleClass="w-24 h-11 text-center"
+        data-cy="company-config-grace"
+        [disabled]="loading || !!loadError"
       />
-      <span class="min-w-0 text-sm ff-text-muted">días. Recordatorio a 30d, alerta a 45d.</span>
+      <span class="min-w-0 text-sm ff-text-muted">días (0 a 30).</span>
     </div>
   </div>
 
@@ -119,9 +167,11 @@
       label="Guardar cambios"
       icon="pi pi-save"
       iconPos="left"
+      severity="primary"
       styleClass="h-11 px-5 rounded-xl shadow-sm"
       data-cy="company-config-save"
-      [disabled]="!persistenceAvailable"
+      [loading]="saving"
+      [disabled]="loading || saving || !!loadError"
       (onClick)="save()"
     />
   </div>
