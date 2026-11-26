@@ -117,6 +117,8 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   readonly conversionSubmitting = signal(false);
   /** Saldo actual de Caja General (cuenta GENERAL_CASH), para la conversión COMPANY. */
   readonly generalCashBalance = signal<number | null>(null);
+  /** Saldo de Caja General por medio, calculado por el backend (#93). null = desconocido. */
+  readonly generalCashByMethod = signal<{ cash: number; transfer: number } | null>(null);
 
   readonly showManualIncomeDialog = signal(false);
   /** Destino del ingreso: caja operativa de la jornada o Caja General directa. */
@@ -284,7 +286,9 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
 
   readonly conversionSourceAvailable = computed(() => {
     if (this.conversionCriteria() === 'COMPANY') {
-      return this.generalCashBalance() ?? 0;
+      const byMethod = this.generalCashByMethod();
+      if (!byMethod) return 0;
+      return this.conversionSourceMethod() === 'CASH' ? byMethod.cash : byMethod.transfer;
     }
     const expected = this.dailyExpected();
     return this.conversionSourceMethod() === 'CASH' ? expected.cash : expected.transfer;
@@ -788,20 +792,24 @@ export class CashRegisterComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga el saldo actual de Caja General (tesorería consolidada).
-   * Si falla, deja el saldo como desconocido (null, nunca 0) y avisa con un toast.
+   * Carga el saldo de Caja General (total y desglose efectivo/transferencia
+   * que calcula el backend). Si falla, deja ambos como desconocidos (null,
+   * nunca 0) y avisa con un toast.
    */
   loadGeneralCashBalance(): void {
     this.service
-      .getCashAccounts()
+      .getGeneralCashBalance()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (accounts) => {
-          const general = accounts.find((a) => a.type === 'GENERAL_CASH');
-          this.generalCashBalance.set(general?.current_balance ?? null);
+        next: (balance) => {
+          this.generalCashBalance.set(balance?.current_balance ?? null);
+          this.generalCashByMethod.set(
+            balance ? { cash: balance.cash_balance, transfer: balance.transfer_balance } : null,
+          );
         },
         error: () => {
           this.generalCashBalance.set(null);
+          this.generalCashByMethod.set(null);
           this.msg.add({
             severity: 'warn',
             summary: 'Saldo no disponible',

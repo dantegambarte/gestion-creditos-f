@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin } from 'rxjs';
+import { Observable, forkJoin, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { ApiHttpService } from '../../../core/http/api-http.service';
 import {
@@ -28,6 +28,7 @@ import {
 } from '../models/cash-register.model';
 import {
   CashAccount,
+  CashAccountBalance,
   CashSession,
   CashSessionClosePayload,
   CashSessionDetail,
@@ -208,9 +209,7 @@ function toCashConversion(r: CashConversionRaw): CashConversion {
  * Convierte un ingreso manual de caja desde snake_case a camelCase.
  * @param r - Ingreso manual devuelto por el backend.
  */
-function toManualIncome(
-  r: CashSessionManualIncomeRaw,
-): CashSessionManualIncome {
+function toManualIncome(r: CashSessionManualIncomeRaw): CashSessionManualIncome {
   return {
     id: r.id,
     cashSessionId: r.cash_session_id,
@@ -227,9 +226,7 @@ function toManualIncome(
  * Convierte un movimiento unificado de caja desde snake_case a camelCase.
  * @param r - Movimiento devuelto por el backend.
  */
-function toCashRegisterMovement(
-  r: CashRegisterMovementRaw,
-): CashRegisterMovement {
+function toCashRegisterMovement(r: CashRegisterMovementRaw): CashRegisterMovement {
   return {
     id: r.id,
     concepto: r.concepto,
@@ -267,8 +264,7 @@ export class CashRegisterService {
     const params: Record<string, string> = {};
     if (filters?.dateFrom) params['date_from'] = filters.dateFrom;
     if (filters?.dateTo) params['date_to'] = filters.dateTo;
-    if (filters?.differenceStatus)
-      params['difference_status'] = filters.differenceStatus;
+    if (filters?.differenceStatus) params['difference_status'] = filters.differenceStatus;
     return this.api
       .get<CashRegisterRaw[]>('cash-register', params)
       .pipe(map((items) => items.map(toCashRegister)));
@@ -310,9 +306,7 @@ export class CashRegisterService {
     if (payload.observations) body['observations'] = payload.observations;
     if (payload.force) body['force'] = true;
     if (payload.registerDate) body['register_date'] = payload.registerDate;
-    return this.api
-      .post<CashRegisterRaw>('cash-register/close', body)
-      .pipe(map(toCashRegister));
+    return this.api.post<CashRegisterRaw>('cash-register/close', body).pipe(map(toCashRegister));
   }
 
   /**
@@ -346,22 +340,15 @@ export class CashRegisterService {
       amount: payload.amount,
       description: payload.description,
     };
-    if (
-      payload.amountCash !== undefined ||
-      payload.amountTransfer !== undefined
-    ) {
+    if (payload.amountCash !== undefined || payload.amountTransfer !== undefined) {
       body['amount_cash'] = payload.amountCash ?? 0;
       body['amount_transfer'] = payload.amountTransfer ?? 0;
     } else if (payload.paymentMethod) {
       body['payment_method'] = payload.paymentMethod;
     }
-    if (payload.receiptReference)
-      body['receipt_reference'] = payload.receiptReference;
+    if (payload.receiptReference) body['receipt_reference'] = payload.receiptReference;
     return this.api
-      .post<CashSessionManualIncomeRaw>(
-        `cash-sessions/${cashSessionId}/manual-incomes`,
-        body,
-      )
+      .post<CashSessionManualIncomeRaw>(`cash-sessions/${cashSessionId}/manual-incomes`, body)
       .pipe(map(toManualIncome));
   }
 
@@ -385,10 +372,7 @@ export class CashRegisterService {
       amount: payload.amount,
       description,
     };
-    if (
-      payload.amountCash !== undefined ||
-      payload.amountTransfer !== undefined
-    ) {
+    if (payload.amountCash !== undefined || payload.amountTransfer !== undefined) {
       body['amount_cash'] = payload.amountCash ?? 0;
       body['amount_transfer'] = payload.amountTransfer ?? 0;
     }
@@ -407,13 +391,9 @@ export class CashRegisterService {
    * Obtiene los movimientos unificados de una caja operativa.
    * @param cashSessionId - ID de la sesión de caja activa.
    */
-  getSessionMovements(
-    cashSessionId: string,
-  ): Observable<CashRegisterMovement[]> {
+  getSessionMovements(cashSessionId: string): Observable<CashRegisterMovement[]> {
     return this.api
-      .get<
-        CashRegisterMovementRaw[]
-      >(`cash-register/sessions/${cashSessionId}/movements`)
+      .get<CashRegisterMovementRaw[]>(`cash-register/sessions/${cashSessionId}/movements`)
       .pipe(map((items) => items.map(toCashRegisterMovement)));
   }
 
@@ -434,9 +414,7 @@ export class CashRegisterService {
    * V4 (F3.5): listado de jornadas con filtros. Pensado para el tab
    * "Histórico Jornadas" que permite consultar jornadas CLOSED/AUDITED.
    */
-  listBusinessDays(
-    filters: BusinessDayFilters = {},
-  ): Observable<BusinessDayListItem[]> {
+  listBusinessDays(filters: BusinessDayFilters = {}): Observable<BusinessDayListItem[]> {
     const params: Record<string, string> = {};
     if (filters.status) params['status'] = filters.status;
     if (filters.branchId) params['branch_id'] = filters.branchId;
@@ -478,9 +456,7 @@ export class CashRegisterService {
    * (collections, expenses, drops, difference) — derivado del closure_snapshot
    * por el backend, sin exponer el snapshot crudo.
    */
-  listSessionsByBusinessDay(
-    businessDayId: string,
-  ): Observable<CashSessionListItem[]> {
+  listSessionsByBusinessDay(businessDayId: string): Observable<CashSessionListItem[]> {
     return this.api.get<CashSessionListItem[]>('cash-sessions', {
       business_day_id: businessDayId,
     });
@@ -505,10 +481,7 @@ export class CashRegisterService {
    * V4: cierra una caja operativa. declared es dinámico — el frontend arma el
    * array con los métodos de pago activos (DECLARED_PAYMENT_METHODS).
    */
-  closeSession(
-    id: string,
-    payload: CashSessionClosePayload,
-  ): Observable<CashSession> {
+  closeSession(id: string, payload: CashSessionClosePayload): Observable<CashSession> {
     return this.api.post<CashSession>(`cash-sessions/${id}/close`, payload);
   }
 
@@ -531,13 +504,26 @@ export class CashRegisterService {
   }
 
   /**
+   * Obtiene el saldo de Caja General desglosado en efectivo y transferencia,
+   * tal como lo calcula el backend (no se estima en el cliente).
+   * @returns Saldo por medio, o null si no existe una Caja General activa.
+   */
+  getGeneralCashBalance(): Observable<CashAccountBalance | null> {
+    return this.getCashAccounts().pipe(
+      switchMap((accounts) => {
+        const general = accounts.find((a) => a.type === 'GENERAL_CASH');
+        return general
+          ? this.api.get<CashAccountBalance>(`cash-accounts/${general.id}/balance`)
+          : of(null);
+      }),
+    );
+  }
+
+  /**
    * V4: drop de efectivo/transferencia hacia Caja General. Genera DROP_IN
    * automático en la cuenta destino dentro de la misma tx.
    */
-  createDrop(
-    id: string,
-    payload: CashSessionDropPayload,
-  ): Observable<CashSessionDropResponse> {
+  createDrop(id: string, payload: CashSessionDropPayload): Observable<CashSessionDropResponse> {
     const body: Record<string, unknown> = {
       amount: payload.amount,
       payment_method: payload.payment_method,
@@ -545,12 +531,8 @@ export class CashRegisterService {
     if (payload.destination_account_id)
       body['destination_account_id'] = payload.destination_account_id;
     if (payload.reason) body['reason'] = payload.reason;
-    if (payload.receipt_reference)
-      body['receipt_reference'] = payload.receipt_reference;
-    return this.api.post<CashSessionDropResponse>(
-      `cash-sessions/${id}/drops`,
-      body,
-    );
+    if (payload.receipt_reference) body['receipt_reference'] = payload.receipt_reference;
+    return this.api.post<CashSessionDropResponse>(`cash-sessions/${id}/drops`, body);
   }
 
   /**

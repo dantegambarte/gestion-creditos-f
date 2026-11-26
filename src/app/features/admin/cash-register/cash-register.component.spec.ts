@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { CashRegisterComponent } from './cash-register.component';
 import { CashRegisterService } from './cash-register.service';
@@ -18,7 +18,7 @@ describe('CashRegisterComponent', () => {
     cashRegisterServiceSpy = jasmine.createSpyObj<CashRegisterService>('CashRegisterService', [
       'getDashboard',
       'refreshJornadaState',
-      'getCashAccounts',
+      'getGeneralCashBalance',
       'createConversion',
       'getSessionMovements',
       'getActiveSession',
@@ -79,17 +79,15 @@ describe('CashRegisterComponent', () => {
     cashRegisterServiceSpy.refreshJornadaState.and.returnValue(
       of({ businessDay: null, activeSession }),
     );
-    cashRegisterServiceSpy.getCashAccounts.and.returnValue(
-      of([
-        {
-          id: 'acc-general',
-          name: 'Caja General',
-          type: 'GENERAL_CASH',
-          is_active: true,
-          current_balance: 5000,
-          created_at: '2026-06-15T00:00:00Z',
-        },
-      ]),
+    cashRegisterServiceSpy.getGeneralCashBalance.and.returnValue(
+      of({
+        id: 'acc-general',
+        name: 'Caja General',
+        type: 'GENERAL_CASH',
+        current_balance: 5000,
+        cash_balance: 3500,
+        transfer_balance: 1500,
+      }),
     );
 
     const expenseCategoriesSpy = jasmine.createSpyObj<ExpenseCategoriesService>(
@@ -136,11 +134,25 @@ describe('CashRegisterComponent', () => {
       expect(component.conversionSourceAvailable()).toBe(1000);
     });
 
-    it('conversionSourceAvailable usa el saldo de Caja General cuando criteria es COMPANY', () => {
+    it('conversionSourceAvailable usa el saldo por medio del backend cuando criteria es COMPANY', () => {
       component.openConversionDialog();
       component.conversionCriteria.set('COMPANY');
 
-      expect(component.conversionSourceAvailable()).toBe(5000);
+      component.conversionSourceMethod.set('CASH');
+      expect(component.conversionSourceAvailable()).toBe(3500);
+      component.conversionSourceMethod.set('TRANSFER');
+      expect(component.conversionSourceAvailable()).toBe(1500);
+    });
+
+    it('conversionSourceAvailable COMPANY es 0 si el saldo por medio es desconocido', () => {
+      cashRegisterServiceSpy.getGeneralCashBalance.and.returnValue(
+        throwError(() => new Error('boom')),
+      );
+      component.openConversionDialog();
+      component.conversionCriteria.set('COMPANY');
+
+      expect(component.generalCashByMethod()).toBeNull();
+      expect(component.conversionSourceAvailable()).toBe(0);
     });
 
     it('conversionExceedsAvailable es true cuando el monto supera el disponible', () => {
