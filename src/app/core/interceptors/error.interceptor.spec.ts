@@ -14,6 +14,9 @@ import { PortalAuthService } from '../../features/portal/auth/portal-auth.servic
 import { portalLoginGuard } from '../../features/portal/auth/portal-login.guard';
 import { AuthServiceBase } from '../auth/auth-service.base';
 import { NotificationsService } from '../services/notifications.service';
+import { AuthService } from '../auth/auth.service';
+import { AccessTokenStore } from '../auth/access-token.store';
+import { authInterceptor } from './auth.interceptor';
 import {
   _httpErrorSummary,
   _isAuthFormRequest,
@@ -210,5 +213,125 @@ describe('errorInterceptor — sesión del portal rechazada (#39)', () => {
 
     expect(errors.length).toBe(2);
     ctrl.verify();
+  });
+});
+
+describe('errorInterceptor — sesión interna y refresh concurrente (#43)', () => {
+  const API = environment.apiBaseUrl;
+  const unauthorized = { status: 401, statusText: 'Unauthorized' };
+  const expired = { ok: false, message: 'TOKEN_EXPIRED' };
+  let http: HttpClient;
+  let ctrl: HttpTestingController;
+  let router: Router;
+  let auth: AuthService;
+  let tokens: AccessTokenStore;
+
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem(
+      'sgcf_user',
+      JSON.stringify({ id: 'u-1', full_name: 'Ana', dni: '1', roles: ['ADMIN'] }),
+    );
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        MessageService,
+        AuthService,
+        { provide: AuthServiceBase, useExisting: AuthService },
+        { provide: NotificationsService, useValue: { stopPolling: () => undefined } },
+      ],
+    });
+    http = TestBed.inject(HttpClient);
+    ctrl = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
+    auth = TestBed.inject(AuthService);
+    tokens = TestBed.inject(AccessTokenStore);
+    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+  });
+
+  afterEach(() => {
+    ctrl.verify();
+    localStorage.clear();
+  });
+
+  it('un 401 de una request sin token, con refresh rechazado, limpia la sesión y redirige a login', () => {
+    expect(auth.isAuthenticated()).toBeTrue();
+    let failed = false;
+    http.get(`${API}/credits`).subscribe({ error: () => (failed = true) });
+
+    const req = ctrl.expectOne(`${API}/credits`);
+    expect(req.request.headers.has('Authorization')).toBeFalse();
+    req.flush({ ok: false, message: 'x' }, unauthorized);
+    ctrl
+      .expectOne(`${API}/auth/refresh`)
+      .flush({ ok: false, code: 'SESSION_REVOKED', message: 'x' }, unauthorized);
+
+    expect(failed).toBeTrue();
+    expect(auth.isAuthenticated()).toBeFalse();
+    expect(router.navigate).toHaveBeenCalledWith(['login']);
+  });
+
+  it('dos requests con token vencido disparan un solo refresh y se reintentan sin bucle', () => {
+    tokens.set(false, 'old.token');
+    const results: unknown[] = [];
+    http.get(`${API}/a`).subscribe((r) => results.push(r));
+    http.get(`${API}/b`).subscribe((r) => results.push(r));
+
+    ctrl.expectOne(`${API}/a`).flush(expired, unauthorized);
+    ctrl.expectOne(`${API}/b`).flush(expired, unauthorized);
+    ctrl.expectOne(`${API}/auth/refresh`).flush({ ok: true, data: { token: 'new.token' } });
+
+    const retries = ctrl.match((r) => r.url === `${API}/a` || r.url === `${API}/b`);
+    expect(retries.length).toBe(2);
+    retries.forEach((r) => {
+      expect(r.request.headers.get('Authorization')).toBe('Bearer new.token');
+      r.flush({ ok: true });
+    });
+
+    expect(results.length).toBe(2);
+    expect(tokens.get(false)).toBe('new.token');
+    ctrl.expectNone(`${API}/auth/refresh`);
+  });
+
+  it('si el reintento falla con 403 no cierra la sesión: el error llega a quien llamó', () => {
+    tokens.set(false, 'old.token');
+    let status = 0;
+    http.get(`${API}/a`).subscribe({ error: (e) => (status = e.status) });
+
+    ctrl.expectOne(`${API}/a`).flush(expired, unauthorized);
+    ctrl.expectOne(`${API}/auth/refresh`).flush({ ok: true, data: { token: 'new.token' } });
+    ctrl
+      .expectOne(`${API}/a`)
+      .flush({ ok: false, message: 'sin permisos' }, { status: 403, statusText: 'Forbidden' });
+
+    expect(status).toBe(403);
+    expect(auth.isAuthenticated()).toBeTrue();
+    expect(router.navigate).not.toHaveBeenCalledWith(['login']);
+  });
+
+  it('logout con token vencido: la sesión queda cerrada y no se rehidrata el token', () => {
+    tokens.set(false, 'old.token');
+    auth.logout();
+    expect(auth.isAuthenticated()).toBeFalse();
+
+    ctrl.expectOne(`${API}/auth/logout`).flush(expired, unauthorized);
+    ctrl.expectOne(`${API}/auth/refresh`).flush({ ok: true, data: { token: 'new.token' } });
+    ctrl.expectOne(`${API}/auth/logout`).flush({ ok: true });
+
+    expect(auth.isAuthenticated()).toBeFalse();
+    expect(tokens.get(false)).toBeNull();
+  });
+});
+
+describe('_shouldRedirectToChangePassword por código', () => {
+  it('redirige con el código TEMP_PASSWORD_REQUIRED aunque cambie el texto', () => {
+    expect(
+      _shouldRedirectToChangePassword({
+        status: 403,
+        error: { code: 'TEMP_PASSWORD_REQUIRED', message: 'otro texto' },
+      }),
+    ).toBeTrue();
   });
 });

@@ -12,6 +12,15 @@ import { TokenRefreshStateService } from '../auth/token-refresh-state.service';
 import { AccessTokenStore, isSessionRejected } from '../auth/access-token.store';
 import { NotificationsService } from '../services/notifications.service';
 
+/** Código de error estable del backend para contraseña temporal obligatoria. */
+export const TEMP_PASSWORD_REQUIRED_CODE = 'TEMP_PASSWORD_REQUIRED';
+/** Mensaje legado del backend para el mismo caso (respaldo). */
+const TEMP_PASSWORD_MESSAGE = 'Debés cambiar tu contraseña antes de continuar.';
+
+/**
+ * Maneja errores HTTP del backend: refresh serializado ante token vencido,
+ * cierre de sesión ante rechazo y toasts globales de infraestructura.
+ */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const auth = inject(AuthServiceBase);
@@ -43,16 +52,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
           const refresh$ = isPortal ? tokenRefresh.refreshPortal() : tokenRefresh.refreshInternal();
 
-          return refresh$.pipe(
-            switchMap((newToken) => {
-              tokens.set(isPortal, newToken);
-              state.succeed(newToken);
-              return next(
-                req.clone({
-                  setHeaders: { Authorization: `Bearer ${newToken}` },
-                }),
-              );
-            }),
+          // El catchError cubre sólo al refresh: un error del reintento no debe
+          // marcar el refresh como fallido ni cerrar la sesión (#43).
+          const refreshed$ = refresh$.pipe(
             catchError((refreshErr) => {
               state.fail(refreshErr);
               _showGlobalHttpError(messageService, refreshErr);
@@ -61,6 +63,20 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
                 _redirectToLogin(router, auth, notifSvc, isPortal, tokens, portalAuth);
               }
               return throwError(() => refreshErr);
+            }),
+          );
+
+          return refreshed$.pipe(
+            switchMap((newToken) => {
+              // Si el usuario cerró sesión mientras tanto (logout con token vencido),
+              // no se rehidrata el token en memoria.
+              if (isPortal || auth.isAuthenticated()) tokens.set(isPortal, newToken);
+              state.succeed(newToken);
+              return next(
+                req.clone({
+                  setHeaders: { Authorization: `Bearer ${newToken}` },
+                }),
+              );
             }),
           );
         } else {
@@ -104,15 +120,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 /**
  * Determina si un 403 corresponde al caso de contraseña temporal obligatoria.
  * @param {unknown} err Error HTTP devuelto por el backend.
- * @returns {boolean} true solo si el 403 contiene el mensaje esperado de cambio obligatorio.
+ * @returns {boolean} true si el 403 trae el código TEMP_PASSWORD_REQUIRED o el mensaje legado.
  */
 export function _shouldRedirectToChangePassword(err: unknown): boolean {
-  const message = (err as { error?: { message?: unknown } })?.error?.message;
-  return (
-    (err as { status?: number })?.status === 403 &&
-    typeof message === 'string' &&
-    message.includes('Debés cambiar tu contraseña antes de continuar.')
-  );
+  const e = err as { status?: number; error?: { message?: unknown; code?: unknown } } | null;
+  if (e?.status !== 403) return false;
+  // Preferir el código estable; el texto queda como respaldo mientras el
+  // backend no envíe `code` en este 403.
+  if (e.error?.code === TEMP_PASSWORD_REQUIRED_CODE) return true;
+  const message = e.error?.message;
+  return typeof message === 'string' && message.includes(TEMP_PASSWORD_MESSAGE);
 }
 
 /**
