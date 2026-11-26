@@ -33,6 +33,14 @@ import { ManagementLogEntry } from '../models/management-log.model';
 import { AppRoutes } from '../../../shared/models/enums/routes.enum';
 import { BackButtonComponent } from '../../../shared/components/back-button/back-button.component';
 import { ActiveTabScrollerDirective } from '../../../shared/directives/active-tab-scroller.directive';
+import { MOBILE_MEDIA_QUERY } from '../../../shared/constants/breakpoints';
+import {
+  itemAmountDue,
+  itemAmountPaid,
+  itemAvailableBalance,
+  itemCapital,
+  itemPenalty,
+} from '../models/collection-sheet-item-amounts';
 import { AttemptDialogComponent } from './attempt-dialog/attempt-dialog.component';
 import { CollectionSheetPaymentPanelComponent } from './payment-panel/collection-sheet-payment-panel.component';
 import { PaymentDialogComponent } from './payment-dialog/payment-dialog.component';
@@ -63,6 +71,7 @@ import { VoidDialogComponent } from './void-dialog/void-dialog.component';
   providers: [{ provide: MessageService, useClass: DedupMessageService }],
   templateUrl: './collection-sheet-detail.component.html',
   styleUrl: './collection-sheet-detail.component.scss',
+  host: { class: 'ff-mobile-touch-buttons' },
 })
 export class CollectionSheetDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -168,26 +177,27 @@ export class CollectionSheetDetailComponent implements OnInit {
 
   /** Monto a cobrar vivo de la cuota (con mora). Snapshot como fallback. */
   displayAmountDue(item: CollectionSheetItem): number {
-    return item.live?.amountDue ?? item.amountDue;
+    return itemAmountDue(item);
   }
 
   /** Mora viva acumulada. Snapshot como fallback. */
   displayPenalty(item: CollectionSheetItem): number {
-    return item.live?.penaltyAmount ?? item.penaltyAmount;
+    return itemPenalty(item);
   }
 
   /** Monto ya pagado vivo. Snapshot como fallback. */
   displayAmountPaid(item: CollectionSheetItem): number {
-    return item.live?.amountPaid ?? item.amountPaid;
+    return itemAmountPaid(item);
   }
 
   /** Capital de la cuota sin mora (monto vivo − mora viva). */
   displayCapital(item: CollectionSheetItem): number {
-    return Math.max(0, this.displayAmountDue(item) - this.displayPenalty(item));
+    return itemCapital(item);
   }
 
+  /** Saldo disponible a cobrar de la cuota (monto vivo − pagado vivo). */
   availableBalance(item: CollectionSheetItem): number {
-    return Math.max(0, this.displayAmountDue(item) - this.displayAmountPaid(item));
+    return itemAvailableBalance(item);
   }
 
   /** True si una acción está en curso sobre esta cuota (refresh silencioso). */
@@ -483,7 +493,7 @@ export class CollectionSheetDetailComponent implements OnInit {
   /** Detecta si la UI debe usar el panel inline mobile. */
   private detectMobileLayout(): boolean {
     if (typeof window === 'undefined') return false;
-    return window.matchMedia('(max-width: 767.98px)').matches;
+    return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
   }
 
   /** Encuentra el ancestro que realmente scrollea, evitando asumir que siempre es window. */
