@@ -116,17 +116,15 @@ describe('Regresión — Dropdowns con appendTo="body" (US-01, US-02, CL-09, CR-
     });
 
     it('dropdown de filtro se adjunta a body y no queda cortado', () => {
-      const filterSelector = '[data-cy="dropdown-filtro-clientes"], .clients-filters p-dropdown, .clients-filters p-select';
-
       const panelSelector = '.p-dropdown-panel:visible, .p-select-overlay:visible, .p-multiselect-panel:visible';
 
-      cy.get(filterSelector).should('exist').first().click({ force: true });
+      cy.get('[data-cy="dropdown-filtro-clientes"] .p-dropdown').should('be.visible').click();
 
       cy.get(panelSelector)
         .should('have.length.greaterThan', 0)
         .first()
         .then(($panel) => {
-          expect($panel.closest('.clients-filters').length, 'panel fuera del contenedor de filtros').to.eq(0);
+          expect($panel.closest('app-clients').length, 'panel adjunto a body, fuera del componente').to.eq(0);
         });
 
       cy.get('.p-dropdown-panel .p-dropdown-item:visible, .p-select-overlay .p-select-option:visible').first().click();
