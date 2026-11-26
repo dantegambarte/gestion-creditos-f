@@ -546,8 +546,12 @@ Cypress.Commands.add('loginAs', (role: InternalRole, destination?: string) => {
     return;
   }
 
-  // GET /auth/me devuelve el usuario correcto para que APP_INITIALIZER
-  // (AuthService.restoreSession) persista el usuario en _user$.
+  // El access token vive sólo en memoria (#39): APP_INITIALIZER lo recupera
+  // con POST /auth/refresh (cookie HttpOnly) y luego pide GET /auth/me.
+  cy.intercept('POST', '**/auth/refresh', {
+    statusCode: 200,
+    body: { ok: true, data: { token: MOCK_AUTH_DATA[role].token } },
+  }).as('authRefresh');
   cy.intercept('GET', '**/auth/me', {
     statusCode: 200,
     body: MOCK_ME_RESPONSES[role],
@@ -711,6 +715,12 @@ Cypress.Commands.add(
         ...(overrides?.customer ?? {}),
       },
     };
+
+    // El token del portal vive sólo en memoria (#39): se recupera con refresh.
+    cy.intercept('POST', '**/auth/portal/refresh', {
+      statusCode: 200,
+      body: { ok: true, data: { token: session.token } },
+    }).as('portalRefresh');
 
     cy.visit(destination ?? PORTAL_DEFAULT_HOME, {
       onBeforeLoad(win) {
@@ -1336,9 +1346,28 @@ type SaleUnitFixture = {
   paymentFrequency: string;
 };
 
+/**
+ * Obtiene un access token vigente para requests directos al backend real.
+ * Desde #39 el token vive sólo en memoria de la app: se pide uno nuevo con la
+ * cookie HttpOnly de refresh que dejó el login (cy.request comparte cookies).
+ * @param portal - true para la sesión del portal, false para la interna
+ */
+Cypress.Commands.add('apiSessionToken', (portal = false) => {
+  const path = portal ? 'auth/portal/refresh' : 'auth/refresh';
+  return cy
+    .request({ method: 'POST', url: `${String(Cypress.env('apiBaseUrl'))}/${path}`, body: {} })
+    .then((res) => {
+      const token = res.body?.data?.token as string;
+      expect(token, `token ${path}`).to.be.a('string').and.not.be.empty;
+      return token;
+    });
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
+      /** Obtiene un access token nuevo con la cookie HttpOnly de refresh (#39). */
+      apiSessionToken(portal?: boolean): Chainable<string>;
       loginAs(role: InternalRole, destination?: string): Chainable<void>;
       loginReal(role: InternalRole, destination?: string): Chainable<void>;
       loginPortalAs(

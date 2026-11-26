@@ -22,16 +22,11 @@ type CreditDetail = {
 };
 
 /**
- * Obtiene el token real guardado en localStorage tras login.
+ * Obtiene un token real con la cookie de refresh que dejó el login (#39:
+ * el token ya no se guarda en localStorage).
  * @returns Token Bearer válido para requests autenticados al backend.
  */
-const getAuthToken = (): Cypress.Chainable<string> => {
-  return cy.window().then((win) => {
-    const token = win.localStorage.getItem('sgcf_token');
-    expect(token, 'token sgcf_token').to.be.a('string').and.not.be.empty;
-    return token as string;
-  });
-};
+const getAuthToken = (): Cypress.Chainable<string> => cy.apiSessionToken();
 
 /**
  * Obtiene pendientes reales de aprobación desde backend.

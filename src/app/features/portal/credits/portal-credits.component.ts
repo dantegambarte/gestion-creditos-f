@@ -130,14 +130,16 @@ export class PortalCreditsComponent implements OnInit {
 
   /**
    * Calcula la deuda restante aproximada de un crédito a partir de las cuotas
-   * no pagadas y la mora pendiente.
+   * no pagadas, sin sumar mora: es el mismo concepto que "Deuda restante" en
+   * el detalle (la mora se muestra aparte). No descuenta pagos parciales
+   * porque el listado del backend no trae el monto pagado por cuota.
    * Devuelve null si no hay suficiente información para el cálculo.
    * @param credit
    */
   remainingDebt(credit: PortalCredit): number | null {
     if (credit.installmentAmount == null || !credit.totalInstallments) return null;
     const unpaid = Math.max(0, credit.totalInstallments - credit.paidInstallments);
-    return unpaid * credit.installmentAmount + credit.pendingPenalty;
+    return unpaid * credit.installmentAmount;
   }
 
   ngOnInit(): void {

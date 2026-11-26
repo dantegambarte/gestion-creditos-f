@@ -52,11 +52,13 @@ export class PortalDashboardComponent implements OnInit {
   }
 
   /**
-   * Primera cuota pendiente (no vencida) más próxima a vencer.
-   * Es el dato más accionable para el usuario.
+   * Próxima cuota a pagar: la de vencimiento más antiguo entre vencidas y
+   * pendientes, así una cuota OVERDUE nunca queda oculta (#55).
    */
-  get nextPendingInstallment() {
-    return this.pendingInstallments[0] ?? null;
+  get nextPendingInstallment(): UpcomingInstallment | null {
+    const all = [...(this.summary?.upcomingInstallments ?? [])];
+    all.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    return all[0] ?? null;
   }
 
   /**

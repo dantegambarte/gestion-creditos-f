@@ -168,11 +168,8 @@ describe('Condonación de mora — multi-rol con portal (real)', () => {
     cy.location('pathname').then((pathname) => {
       if (!pathname.includes('change-password')) return;
 
-      cy.window()
-        .then((win) => {
-          const token = win.localStorage.getItem('sgcf_portal_token');
-          expect(token, 'token portal tras login temp').to.be.a('string').and.not.be.empty;
-
+      cy.apiSessionToken(true)
+        .then((token) => {
           return cy.request({
             method: 'POST',
             url: `${String(Cypress.env('apiBaseUrl'))}/auth/portal/change-password`,

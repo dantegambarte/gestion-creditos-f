@@ -1,11 +1,27 @@
-import { Router } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  ActivatedRouteSnapshot,
+  Router,
+  RouterStateSnapshot,
+  provideRouter,
+} from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { environment } from '../../../environments/environment';
+import { provideAuthTesting } from '../auth/testing/auth-testing';
+import { PortalAuthService } from '../../features/portal/auth/portal-auth.service';
+import { portalLoginGuard } from '../../features/portal/auth/portal-login.guard';
 import { AuthServiceBase } from '../auth/auth-service.base';
 import { NotificationsService } from '../services/notifications.service';
 import {
   _httpErrorSummary,
+  _isAuthFormRequest,
   _isInternalSessionAlreadyClosed,
+  _needsTokenRefresh,
   _redirectToLogin,
   _shouldRedirectToChangePassword,
+  errorInterceptor,
 } from './error.interceptor';
 
 describe('errorInterceptor helpers', () => {
@@ -47,17 +63,43 @@ describe('errorInterceptor helpers', () => {
     expect(_httpErrorSummary(undefined)).toBeNull();
   });
 
-  it('detecta 401 tardíos internos cuando el logout ya limpió el token', () => {
-    localStorage.removeItem('sgcf_token');
-
-    expect(_isInternalSessionAlreadyClosed(false)).toBeTrue();
-    expect(_isInternalSessionAlreadyClosed(true)).toBeFalse();
+  it('detecta 401 tardíos internos cuando el logout ya limpió la sesión', () => {
+    expect(_isInternalSessionAlreadyClosed(false, false)).toBeTrue();
+    expect(_isInternalSessionAlreadyClosed(true, false)).toBeFalse();
   });
 
-  it('mantiene 401 internos como sesión activa cuando todavía existe token', () => {
-    localStorage.setItem('sgcf_token', 'live.token');
+  it('mantiene 401 internos como sesión activa cuando todavía hay usuario', () => {
+    expect(_isInternalSessionAlreadyClosed(false, true)).toBeFalse();
+  });
 
-    expect(_isInternalSessionAlreadyClosed(false)).toBeFalse();
+  it('pide refresh ante TOKEN_EXPIRED o 401 de una request sin token (tras recargar)', () => {
+    const url = 'http://api/api/credits';
+    expect(
+      _needsTokenRefresh({ status: 401, error: { message: 'TOKEN_EXPIRED' } }, url, true),
+    ).toBeTrue();
+    expect(_needsTokenRefresh({ status: 401, error: { message: 'x' } }, url, false)).toBeTrue();
+    expect(_needsTokenRefresh({ status: 401, error: { message: 'x' } }, url, true)).toBeFalse();
+  });
+
+  it('no pide refresh para login, refresh, SESSION_REVOKED ni errores que no son 401', () => {
+    const err = { status: 401, error: { message: 'TOKEN_EXPIRED' } };
+    expect(_needsTokenRefresh(err, 'http://api/api/auth/login', false)).toBeFalse();
+    expect(_needsTokenRefresh(err, 'http://api/api/auth/portal/login', false)).toBeFalse();
+    expect(_needsTokenRefresh(err, 'http://api/api/auth/refresh', false)).toBeFalse();
+    expect(
+      _needsTokenRefresh(
+        { status: 401, error: { code: 'SESSION_REVOKED' } },
+        'http://api/api/credits',
+        false,
+      ),
+    ).toBeFalse();
+    expect(_needsTokenRefresh({ status: 0 }, 'http://api/api/credits', false)).toBeFalse();
+  });
+
+  it('reconoce los endpoints de login y refresh como formularios de auth', () => {
+    expect(_isAuthFormRequest('http://api/api/auth/portal/login')).toBeTrue();
+    expect(_isAuthFormRequest('http://api/api/auth/portal/refresh')).toBeTrue();
+    expect(_isAuthFormRequest('http://api/api/auth/me')).toBeFalse();
   });
 });
 
@@ -68,13 +110,8 @@ describe('_redirectToLogin', () => {
 
   beforeEach(() => {
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    auth = jasmine.createSpyObj<AuthServiceBase>('AuthServiceBase', [
-      'clearSession',
-    ]);
-    notifSvc = jasmine.createSpyObj<NotificationsService>(
-      'NotificationsService',
-      ['stopPolling'],
-    );
+    auth = jasmine.createSpyObj<AuthServiceBase>('AuthServiceBase', ['clearSession']);
+    notifSvc = jasmine.createSpyObj<NotificationsService>('NotificationsService', ['stopPolling']);
   });
 
   it('corta el polling de unread-count antes de limpiar sesión y redirigir (no-portal)', () => {
@@ -85,11 +122,93 @@ describe('_redirectToLogin', () => {
     expect(router.navigate).toHaveBeenCalledWith(['login']);
   });
 
+  it('en el flujo portal limpia la sesión del cliente en PortalAuthService', () => {
+    const portalAuth = jasmine.createSpyObj<PortalAuthService>('PortalAuthService', [
+      'clearSession',
+    ]);
+
+    _redirectToLogin(router, auth, notifSvc, true, undefined, portalAuth);
+
+    expect(portalAuth.clearSession).toHaveBeenCalled();
+  });
+
   it('no toca el polling ni clearSession en el flujo portal (token distinto)', () => {
     _redirectToLogin(router, auth, notifSvc, true);
 
     expect(notifSvc.stopPolling).not.toHaveBeenCalled();
     expect(auth.clearSession).not.toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/portal/login']);
+  });
+});
+
+describe('errorInterceptor — sesión del portal rechazada (#39)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem(
+      'sgcf_portal_customer',
+      JSON.stringify({ id: 'c-1', fullName: 'Ana', dni: '12345678', portalIsTempPassword: false }),
+    );
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([errorInterceptor])),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        MessageService,
+        ...provideAuthTesting(null),
+        { provide: NotificationsService, useValue: { stopPolling: () => undefined } },
+      ],
+    });
+    spyOn(TestBed.inject(Router), 'navigate').and.returnValue(Promise.resolve(true));
+  });
+
+  afterEach(() => localStorage.clear());
+
+  const unauthorized = { status: 401, statusText: 'Unauthorized' };
+
+  it('si el refresh del portal es rechazado, limpia al cliente y el guard de login no lo devuelve al dashboard (sin bucle)', () => {
+    const http = TestBed.inject(HttpClient);
+    const ctrl = TestBed.inject(HttpTestingController);
+    const portalAuth = TestBed.inject(PortalAuthService);
+    expect(portalAuth.isAuthenticated()).toBeTrue();
+
+    http.get(`${environment.apiBaseUrl}/portal/me`).subscribe({ error: () => undefined });
+    ctrl
+      .expectOne(`${environment.apiBaseUrl}/portal/me`)
+      .flush({ ok: false, message: 'x' }, unauthorized);
+    ctrl
+      .expectOne(`${environment.apiBaseUrl}/auth/portal/refresh`)
+      .flush({ ok: false, code: 'SESSION_REVOKED', message: 'x' }, unauthorized);
+
+    expect(portalAuth.isAuthenticated()).toBeFalse();
+    const guardResult = TestBed.runInInjectionContext(() =>
+      portalLoginGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot),
+    );
+    expect(guardResult).toBeTrue();
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/portal/login']);
+    ctrl.verify();
+  });
+
+  it('las requests encoladas fallan (no quedan colgadas) si el refresh falla', () => {
+    const http = TestBed.inject(HttpClient);
+    const ctrl = TestBed.inject(HttpTestingController);
+    const errors: unknown[] = [];
+
+    http.get(`${environment.apiBaseUrl}/portal/me`).subscribe({ error: (e) => errors.push(e) });
+    http
+      .get(`${environment.apiBaseUrl}/portal/credits`)
+      .subscribe({ error: (e) => errors.push(e) });
+
+    ctrl
+      .expectOne(`${environment.apiBaseUrl}/portal/me`)
+      .flush({ ok: false, message: 'x' }, unauthorized);
+    ctrl
+      .expectOne(`${environment.apiBaseUrl}/portal/credits`)
+      .flush({ ok: false, message: 'x' }, unauthorized);
+    ctrl
+      .expectOne(`${environment.apiBaseUrl}/auth/portal/refresh`)
+      .flush({ ok: false, code: 'SESSION_REVOKED', message: 'x' }, unauthorized);
+
+    expect(errors.length).toBe(2);
+    ctrl.verify();
   });
 });

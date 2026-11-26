@@ -2,12 +2,14 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { throwError, switchMap, filter, take, catchError } from 'rxjs';
+import { throwError, switchMap, catchError } from 'rxjs';
+import { PortalAuthService } from '../../features/portal/auth/portal-auth.service';
 import { environment } from '../../../environments/environment';
 import { AppRoutes } from '../../shared/models/enums/routes.enum';
 import { AuthServiceBase } from '../auth/auth-service.base';
 import { TokenRefreshService } from '../auth/token-refresh.service';
 import { TokenRefreshStateService } from '../auth/token-refresh-state.service';
+import { AccessTokenStore, isSessionRejected } from '../auth/access-token.store';
 import { NotificationsService } from '../services/notifications.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
@@ -17,6 +19,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const refreshState = inject(TokenRefreshStateService);
   const messageService = inject(MessageService);
   const notifSvc = inject(NotificationsService);
+  const tokens = inject(AccessTokenStore);
+  const portalAuth = inject(PortalAuthService);
 
   return next(req).pipe(
     catchError((err) => {
@@ -24,34 +28,25 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => err);
       }
 
-      const isTokenExpired =
-        err?.status === 401 && err?.error?.message === 'TOKEN_EXPIRED';
-      const isRefreshUrl = req.url.includes('/auth/refresh');
       // Detecta endpoints del portal del cliente buscando "/portal/" como segmento.
       // No usar includes('portal') porque hace match con acciones admin como
       // customers/{id}/enable-portal y dispara redirect a /portal/login.
       const isPortal = req.url.includes('/portal/');
+      const isRefreshUrl = req.url.includes('/refresh');
+      const isTokenExpired = _needsTokenRefresh(err, req.url, req.headers.has('Authorization'));
 
       // Token expirado → refresh automático + reintento de la request original
       if (isTokenExpired && !isRefreshUrl) {
-        if (!refreshState.isRefreshing) {
-          refreshState.isRefreshing = true;
-          refreshState.tokenSubject.next(null);
+        const state = refreshState.forSession(isPortal);
+        if (!state.isRefreshing) {
+          state.start();
 
-          const refresh$ = isPortal
-            ? tokenRefresh.refreshPortal()
-            : tokenRefresh.refreshInternal();
+          const refresh$ = isPortal ? tokenRefresh.refreshPortal() : tokenRefresh.refreshInternal();
 
           return refresh$.pipe(
             switchMap((newToken) => {
-              refreshState.isRefreshing = false;
-              refreshState.tokenSubject.next(newToken);
-              const tokenKey = isPortal
-                ? environment.portalTokenKey
-                : environment.tokenKey;
-              if (typeof localStorage !== 'undefined') {
-                localStorage.setItem(tokenKey, newToken);
-              }
+              tokens.set(isPortal, newToken);
+              state.succeed(newToken);
               return next(
                 req.clone({
                   setHeaders: { Authorization: `Bearer ${newToken}` },
@@ -59,18 +54,19 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
               );
             }),
             catchError((refreshErr) => {
-              refreshState.isRefreshing = false;
-              refreshState.tokenSubject.next(null);
+              state.fail(refreshErr);
               _showGlobalHttpError(messageService, refreshErr);
-              _redirectToLogin(router, auth, notifSvc, isPortal);
+              // Un corte de red o un 5xx no cierra la sesión: sólo el rechazo del backend.
+              if (isSessionRejected(refreshErr)) {
+                _redirectToLogin(router, auth, notifSvc, isPortal, tokens, portalAuth);
+              }
               return throwError(() => refreshErr);
             }),
           );
         } else {
-          // Refresh en curso — encolar y reintentar con el nuevo token cuando llegue
-          return refreshState.tokenSubject.pipe(
-            filter((t): t is string => t !== null),
-            take(1),
+          // Refresh en curso — encolar y reintentar con el nuevo token; si el
+          // refresh falla, la request encolada falla con el mismo error.
+          return state.waitForToken().pipe(
             switchMap((newToken) =>
               next(
                 req.clone({
@@ -82,9 +78,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      if (err?.status === 401 && !_isInternalSessionAlreadyClosed(isPortal)) {
+      if (
+        err?.status === 401 &&
+        !_isAuthFormRequest(req.url) &&
+        !_isInternalSessionAlreadyClosed(isPortal, auth.isAuthenticated())
+      ) {
         _showGlobalHttpError(messageService, err);
-        _redirectToLogin(router, auth, notifSvc, isPortal);
+        _redirectToLogin(router, auth, notifSvc, isPortal, tokens, portalAuth);
       }
 
       if (err?.status !== 401) {
@@ -93,11 +93,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       if (_shouldRedirectToChangePassword(err)) {
         // Redirigir solo cuando el backend indica explícitamente "contraseña temporal".
-        router.navigate([
-          isPortal
-            ? AppRoutes.PORTAL_CHANGE_PASSWORD
-            : AppRoutes.CHANGE_PASSWORD,
-        ]);
+        router.navigate([isPortal ? AppRoutes.PORTAL_CHANGE_PASSWORD : AppRoutes.CHANGE_PASSWORD]);
       }
 
       return throwError(() => err);
@@ -124,10 +120,7 @@ export function _shouldRedirectToChangePassword(err: unknown): boolean {
  * @param messageService - Canal global de mensajes PrimeNG.
  * @param err - Error HTTP capturado por el interceptor.
  */
-function _showGlobalHttpError(
-  messageService: MessageService,
-  err: unknown,
-): void {
+function _showGlobalHttpError(messageService: MessageService, err: unknown): void {
   const status = err instanceof HttpErrorResponse ? err.status : undefined;
   const summary = _httpErrorSummary(status);
 
@@ -156,19 +149,57 @@ export function _httpErrorSummary(status: number | undefined): string | null {
 /**
  * Detecta 401 tardíos disparados después de un logout manual ya aplicado.
  * @param isPortal Indica si la request pertenece al portal cliente.
+ * @param hasInternalSession Indica si todavía hay un usuario interno autenticado.
  */
-export function _isInternalSessionAlreadyClosed(isPortal: boolean): boolean {
-  if (isPortal || typeof localStorage === 'undefined') return false;
-  return !localStorage.getItem(environment.tokenKey);
+export function _isInternalSessionAlreadyClosed(
+  isPortal: boolean,
+  hasInternalSession: boolean,
+): boolean {
+  if (isPortal) return false;
+  return !hasInternalSession;
 }
 
+/**
+ * Indica si la request es un login o un refresh, cuyos 401 los maneja
+ * quien la llamó (credenciales inválidas, bloqueo) y no deben redirigir.
+ * @param url URL de la request.
+ */
+export function _isAuthFormRequest(url: string): boolean {
+  return /\/auth\/(portal\/)?(login|refresh)$/.test(url);
+}
+
+/**
+ * Decide si un error amerita renovar el access token con el refresh token:
+ * token vencido (TOKEN_EXPIRED) o 401 de una request que salió sin token
+ * porque el access token en memoria todavía no se recuperó tras recargar.
+ * @param err Error HTTP.
+ * @param url URL de la request.
+ * @param hadToken true si la request llevaba header Authorization.
+ */
+export function _needsTokenRefresh(err: unknown, url: string, hadToken: boolean): boolean {
+  const e = err as { status?: number; error?: { message?: unknown; code?: unknown } } | null;
+  if (e?.status !== 401 || _isAuthFormRequest(url)) return false;
+  if (e.error?.code === 'SESSION_REVOKED') return false;
+  return e.error?.message === 'TOKEN_EXPIRED' || !hadToken;
+}
+
+/**
+ * Cierra la sesión local (interna o del portal) y navega al login correspondiente.
+ * @param tokens Almacén en memoria de access tokens; se descarta el del contexto.
+ */
 export function _redirectToLogin(
   router: Router,
   auth: AuthServiceBase,
   notifSvc: NotificationsService,
   isPortal: boolean,
+  tokens?: AccessTokenStore,
+  portalAuth?: PortalAuthService,
 ): void {
   if (isPortal) {
+    tokens?.set(true, null);
+    // Sin esto el guard del login del portal sigue viendo al cliente y lo
+    // devuelve al dashboard, que vuelve a fallar: bucle de redirecciones.
+    portalAuth?.clearSession();
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(environment.portalTokenKey);
       localStorage.removeItem('sgcf_portal_customer');
