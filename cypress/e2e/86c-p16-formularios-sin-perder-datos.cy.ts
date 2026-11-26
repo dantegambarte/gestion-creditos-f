@@ -7,8 +7,7 @@
  *  - Editar variante A y luego B muestra los valores de B.
  *  - En carga masiva, el error de la fila 3 queda marcado en esa fila.
  *
- * El filtro de créditos REJECTED (toUiCredit) vivía en shared/clients/client-detail, que no
- * estaba ruteado y se eliminó en #100; el detalle ruteado no tiene ese filtro.
+ *  - La ficha de cliente ruteada no muestra créditos REJECTED (#47).
  */
 
 const VIEWPORTS: Array<{ name: string; width: number; height: number }> = [
@@ -125,6 +124,60 @@ VIEWPORTS.forEach(({ name, width, height }) => {
         });
     });
 
+    it('la ficha del cliente no muestra créditos REJECTED (#47)', () => {
+      /**
+       * Crédito crudo del listado con el estado y monto dados.
+       * @param {string} id - id del crédito
+       * @param {string} status - estado de backend
+       * @param {number} total - monto total (identifica la fila en la UI)
+       */
+      const rawCredit = (id: string, status: string, total: number) => ({
+        id,
+        type: 'LOAN',
+        total_amount: total,
+        installments_count: 6,
+        payment_frequency: 'WEEKLY',
+        interest_rate: 10,
+        status,
+        created_at: '2026-02-01T00:00:00Z',
+        approved_at: null,
+        customer_id: 'cust-001',
+        customer_name: 'Ana García',
+        customer_dni: '12345678',
+        created_by_id: 'usr-002',
+        created_by_name: 'Maria Sanchez',
+      });
+      cy.intercept('GET', /\/api\/customers\/12345678/, {
+        statusCode: 200,
+        body: { ok: true, data: CUSTOMER },
+      }).as('customerDetail');
+      cy.intercept('GET', /\/api\/credits/, {
+        statusCode: 200,
+        body: {
+          ok: true,
+          data: [
+            rawCredit('crd-active', 'ACTIVE', 111000),
+            rawCredit('crd-rejected', 'REJECTED', 999000),
+          ],
+        },
+      }).as('customerCredits');
+
+      cy.loginAs('ADMIN', '/seller/clients/12345678');
+      cy.wait('@customerDetail');
+      cy.wait('@customerCredits');
+
+      const container =
+        width < 768
+          ? '[data-cy="client-credits-history-mobile-card"]'
+          : '[data-cy="client-credits-history-table"] tbody tr';
+      cy.get(container).should('have.length', 1).first().scrollIntoView();
+      cy.contains(container, /111[.,]000/).scrollIntoView().should('be.visible');
+      cy.get('body')
+        .invoke('text')
+        .should('not.match', /999[.,]000/);
+      cy.get('body').should('not.contain', 'Rechazado');
+    });
+
     it('el alta de cliente no ofrece Teléfono Alterno', () => {
       cy.intercept('GET', /\/api\/customers(\?.*)?$/, {
         statusCode: 200,
@@ -149,8 +202,7 @@ VIEWPORTS.forEach(({ name, width, height }) => {
     it('editar la variante A y luego la B muestra los valores de B', () => {
       openVariants([rawVariant('var-a', 'Rojo', 1000), rawVariant('var-b', 'Azul', 2500)]);
 
-      const container =
-        name === 'mobile' ? '[data-cy="product-variants-mobile-card"]' : 'tbody tr';
+      const container = name === 'mobile' ? '[data-cy="product-variants-mobile-card"]' : 'tbody tr';
       const clickEdit = (color: string) =>
         cy.contains(container, color).contains('a', 'Editar').click({ force: true });
 
@@ -168,7 +220,10 @@ VIEWPORTS.forEach(({ name, width, height }) => {
         if (req.body.color === 'Verde') {
           req.reply({ statusCode: 409, body: { ok: false, message: 'Variante duplicada' } });
         } else {
-          req.reply({ statusCode: 201, body: { ok: true, data: rawVariant('new', req.body.color, 100) } });
+          req.reply({
+            statusCode: 201,
+            body: { ok: true, data: rawVariant('new', req.body.color, 100) },
+          });
         }
       }).as('createVariant');
 

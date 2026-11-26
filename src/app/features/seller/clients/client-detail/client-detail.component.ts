@@ -139,13 +139,14 @@ export class ClientDetailComponent implements OnInit {
 
   /**
    * Carga el historial de créditos del cliente para el panel derecho.
+   * Excluye los créditos REJECTED: no deben aparecer ni sumar en la ficha (#47).
    * @param customerId ID interno del cliente.
    */
   private loadCredits(customerId: string): void {
     this.loadingCredits = true;
     this.creditsService.list({ customerId }).subscribe({
       next: (credits) => {
-        this.credits = credits;
+        this.credits = credits.filter((c) => c.status !== 'REJECTED');
         this.loadingCredits = false;
       },
       error: () => {
