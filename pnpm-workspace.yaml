@@ -1,0 +1,51 @@
+# pnpm settings (pnpm 11 reads them from this file).
+
+# Only these packages may run install scripts; everything else is blocked.
+allowBuilds:
+  esbuild: true
+  lmdb: true
+  msgpackr-extract: true
+  '@parcel/watcher': true
+  cypress: true
+  # Its postinstall only prints a funding banner.
+  core-js: false
+
+# Do not install versions published less than 3 days ago (minutes).
+minimumReleaseAge: 4320
+
+# Exact versions already locked by package-lock.json before the migration,
+# published inside that window. Exempt only these versions; drop the list once
+# they are older than 3 days or get updated.
+minimumReleaseAgeExclude:
+  - '@types/estree@1.0.11'
+  - '@typescript-eslint/eslint-plugin@8.74.0'
+  - '@typescript-eslint/parser@8.74.0'
+  - '@typescript-eslint/project-service@8.74.0'
+  - '@typescript-eslint/scope-manager@8.74.0'
+  - '@typescript-eslint/tsconfig-utils@8.74.0'
+  - '@typescript-eslint/type-utils@8.74.0'
+  - '@typescript-eslint/types@8.74.0'
+  - '@typescript-eslint/typescript-estree@8.74.0'
+  - '@typescript-eslint/utils@8.74.0'
+  - '@typescript-eslint/visitor-keys@8.74.0'
+  - 'brace-expansion@5.1.0'
+  - 'caniuse-lite@1.0.30001828'
+  - 'electron-to-chromium@1.5.494'
+  - 'hono@4.13.22'
+  - 'typescript-eslint@8.74.0'
+  - 'websocket-extensions@0.3.0'
+
+# `pnpm import` re-resolved these two to versions npm never installed.
+# Keep the exact versions package-lock.json had.
+overrides:
+  minimizer-webpack-plugin>terser: 5.51.4
+  websocket-driver>websocket-extensions: 0.3.0
+
+# PrimeNG 17 declares Angular 17/18 peers; it runs on Angular 20 here.
+# Replaces the former npm `overrides` block, without changing versions.
+peerDependencyRules:
+  allowedVersions:
+    primeng>@angular/core: '20'
+    primeng>@angular/common: '20'
+    primeng>@angular/forms: '20'
+    primeng>zone.js: '0.15'

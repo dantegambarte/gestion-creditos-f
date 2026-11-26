@@ -4,21 +4,21 @@ This contract defines stable conventions for E2E specs in this project.
 
 ## Global Run Policy (Safe by Default)
 
-- `npm run e2e:run` requires `--spec` explicitly and fails fast if omitted.
+- `pnpm e2e:run` requires `--spec` explicitly and fails fast if omitted.
 - This prevents accidental execution of the full Cypress suite (~110 specs) during local/CI incremental work.
-- To run all specs intentionally, use `npm run e2e:run:all`.
+- To run all specs intentionally, use `pnpm e2e:run:all`.
 
 Examples:
 
 ```bash
 # Partial run (required path for normal work)
-npm run e2e:run -- --spec "cypress/e2e/01-auth.cy.ts"
+pnpm e2e:run --spec "cypress/e2e/01-auth.cy.ts"
 
 # Multiple specs (comma-separated)
-npm run e2e:run -- --spec "cypress/e2e/01-auth.cy.ts,cypress/e2e/04-clientes-real.cy.ts"
+pnpm e2e:run --spec "cypress/e2e/01-auth.cy.ts,cypress/e2e/04-clientes-real.cy.ts"
 
 # Full suite (explicit only)
-npm run e2e:run:all
+pnpm e2e:run:all
 ```
 
 ## Core Rules
@@ -67,7 +67,7 @@ Si ya cambiaste la contraseña del ADMIN manualmente (por ejemplo `admin123`), u
 
 Las credenciales no están en `cypress.config.ts`: copiá `cypress.env.example.json` a `cypress.env.json` (gitignored) o exportá las variables `CYPRESS_*`. Sin ellas `loginReal`/`loginPortalReal` fallan explícitamente.
 
-Real backend smoke subset (see `npm run e2e:smoke:real` for the maintained list):
+Real backend smoke subset (see `pnpm e2e:smoke:real` for the maintained list):
 
 - `cypress/e2e/01-auth.cy.ts`
 - `cypress/e2e/04-clientes-real.cy.ts`
@@ -78,7 +78,7 @@ Real backend smoke subset (see `npm run e2e:smoke:real` for the maintained list)
 Recommended command to run only these real specs:
 
 ```bash
-npx cypress run --spec "cypress/e2e/01-auth.cy.ts,cypress/e2e/04-clientes-real.cy.ts,cypress/e2e/21-seller-clientes-nuevo-real.cy.ts,cypress/e2e/03-nueva-operacion-real.cy.ts,cypress/e2e/10-admin-aprobaciones-real.cy.ts"
+pnpm exec cypress run --spec "cypress/e2e/01-auth.cy.ts,cypress/e2e/04-clientes-real.cy.ts,cypress/e2e/21-seller-clientes-nuevo-real.cy.ts,cypress/e2e/03-nueva-operacion-real.cy.ts,cypress/e2e/10-admin-aprobaciones-real.cy.ts"
 ```
 
 ## Spec Naming

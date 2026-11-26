@@ -13,11 +13,11 @@
     "e2e:run": "node ./cypress/scripts/e2e-run-safe.js",
     "e2e:run:all": "cypress run",
     "e2e:smoke:real": "cypress run --spec \"cypress/e2e/01-auth.cy.ts,cypress/e2e/03-nueva-operacion-real.cy.ts,cypress/e2e/04-clientes-real.cy.ts,cypress/e2e/05-negative-auth.cy.ts,cypress/e2e/09b-cobranzas-collector.cy.ts,cypress/e2e/12-portal-clientes.cy.ts,cypress/e2e/22-admin-generar-planilla-real.cy.ts,cypress/e2e/23-credit-detail.cy.ts,cypress/e2e/37-portal-auth-use-cases.cy.ts,cypress/e2e/50-admin-collections-hardening-real.cy.ts\"",
-    "e2e:smoke:real:stable": "start-server-and-test \"npm run start:e2e\" http-get://localhost:4200 \"npm run e2e:smoke:real\"",
+    "e2e:smoke:real:stable": "start-server-and-test \"pnpm start:e2e\" http-get://localhost:4200 \"pnpm e2e:smoke:real\"",
     "e2e:report:txt": "cypress run 2>&1 | tee cypress-report.txt",
     "e2e:report": "mochawesome-merge cypress/reports/mocha/*.json -o cypress/reports/report.json && marge cypress/reports/report.json --reportDir cypress/reports --inline",
     "e2e:clean": "node -e \"const fs=require('fs');const d='cypress/reports/mocha';if(fs.existsSync(d))fs.readdirSync(d).forEach(f=>fs.unlinkSync(d+'/'+f));\"",
-    "e2e:all": "npm run e2e:clean && npm run e2e:run:all && npm run e2e:report",
+    "e2e:all": "pnpm e2e:clean && pnpm e2e:run:all && pnpm e2e:report",
     "lint": "eslint --max-warnings 0",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage",
     "test:scope": "node --test scripts/ci-scope.test.mjs",
@@ -53,6 +53,7 @@
     "@angular-devkit/build-angular": "^20.3.43",
     "@angular/cli": "^20.3.43",
     "@angular/compiler-cli": "^20.3.35",
+    "@babel/runtime": "7.28.3",
     "@types/express": "^4.17.17",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^18.18.0",
@@ -87,12 +88,8 @@
       "prettier --write"
     ]
   },
-  "overrides": {
-    "primeng": {
-      "@angular/core": "$@angular/core",
-      "@angular/common": "$@angular/common",
-      "@angular/forms": "$@angular/forms",
-      "zone.js": "$zone.js"
-    }
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": ">=22.13.0"
   }
 }

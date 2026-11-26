@@ -3,12 +3,15 @@
 # servable by Netlify's CDN. The Express server (server.ts) is not used here.
 [build]
   # API_BASE_URL must be set in the Netlify site environment variables, never in the repo.
-  command = "node scripts/set-api-url.mjs && npm run build -- --configuration production"
+  command = "node scripts/set-api-url.mjs && pnpm run build --configuration production"
   publish = "dist/gestion-creditos-f/browser"
 
 [build.environment]
-  # Angular 18 supports Node ^18.19.1 || ^20.11.1 || ^22.0.0. Matches CI.
+  # pnpm 11 (packageManager in package.json) needs Node 22.13+; "22" resolves
+  # to the latest 22.x. Matches CI (.nvmrc).
   NODE_VERSION = "22"
+  # Netlify installs with pnpm (pnpm-lock.yaml + packageManager); never re-resolve.
+  PNPM_FLAGS = "--frozen-lockfile"
 
 # index.html is prerendered (login markup); protected/portal routes must boot
 # from the pure CSR shell, same as server.ts does.
