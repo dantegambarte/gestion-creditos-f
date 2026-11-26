@@ -86,24 +86,44 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
   }
 
   get paidCount(): number {
-    return (
-      this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0
-    );
+    return this.credit?.installments.filter((i) => i.status === 'PAID').length ?? 0;
   }
 
   get pendingCount(): number {
     return (
-      this.credit?.installments.filter(
-        (i) => i.status === 'PENDING' || i.status === 'PARTIAL',
-      ).length ?? 0
+      this.credit?.installments.filter((i) => i.status === 'PENDING' || i.status === 'PARTIAL')
+        .length ?? 0
     );
   }
 
   get overdueCount(): number {
-    return (
-      this.credit?.installments.filter((i) => i.status === 'OVERDUE').length ??
-      0
-    );
+    return this.credit?.installments.filter((i) => i.status === 'OVERDUE').length ?? 0;
+  }
+
+  /**
+   * Cuotas visibles según la pestaña activa (todas, pagadas, pendientes o vencidas).
+   * Usa los mismos criterios que los contadores de cada pestaña.
+   */
+  get visibleInstallments(): CreditDetail['installments'] {
+    const all = this.credit?.installments ?? [];
+    switch (this.activeTab) {
+      case 'paid':
+        return all.filter((i) => i.status === 'PAID');
+      case 'pending':
+        return all.filter((i) => i.status === 'PENDING' || i.status === 'PARTIAL');
+      case 'overdue':
+        return all.filter((i) => i.status === 'OVERDUE');
+      default:
+        return all;
+    }
+  }
+
+  /**
+   * Activa una pestaña de cuotas; si ya estaba activa vuelve a mostrar todas.
+   * @param tab Pestaña clickeada
+   */
+  toggleTab(tab: 'paid' | 'pending' | 'overdue'): void {
+    this.activeTab = this.activeTab === tab ? 'all' : tab;
   }
 
   /**
@@ -111,6 +131,7 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
    */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['credit'] && this.credit) {
+      this.activeTab = 'all';
       this.selectedInstallment = null;
       this.mainTab = 'installments';
       this.paymentsLoaded = false;
@@ -128,8 +149,7 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
    * @param inst Cuota clickeada
    */
   selectInstallment(inst: CreditDetail['installments'][number]): void {
-    this.selectedInstallment =
-      this.selectedInstallment?.id === inst.id ? null : inst;
+    this.selectedInstallment = this.selectedInstallment?.id === inst.id ? null : inst;
   }
 
   /**
@@ -267,14 +287,10 @@ export class CreditSchedulePanelComponent implements OnChanges, OnDestroy {
    * un cobro normal (no agrega ruido en el caso común).
    * @param inst Cuota a evaluar
    */
-  installmentOriginLabel(
-    inst: CreditDetail['installments'][number],
-  ): string | null {
+  installmentOriginLabel(inst: CreditDetail['installments'][number]): string | null {
     if (inst.generationType === 'APPROVAL_PREPAYMENT') {
       // En contado la única cuota representa el pago total al aprobar, no un adelanto.
-      return this.credit?.paymentCondition === 'CASH'
-        ? 'Pago de contado'
-        : 'Cuota adelantada';
+      return this.credit?.paymentCondition === 'CASH' ? 'Pago de contado' : 'Cuota adelantada';
     }
     if (inst.generationType === 'ADVANCE_DISTRIBUTION') return 'Pago adelantado';
     return null;

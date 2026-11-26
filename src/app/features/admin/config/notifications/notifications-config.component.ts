@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { MessageService } from 'primeng/api';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputSwitchModule } from 'primeng/inputswitch';
@@ -54,23 +55,17 @@ const SETTING_META: Record<NotificationType, Omit<NotifSetting, 'enabled'>> = {
 };
 
 /** Verifica que una preferencia recibida por API tenga metadata visual soportada. */
-const isKnownNotificationType = (type: string): type is NotificationType =>
-  type in SETTING_META;
+const isKnownNotificationType = (type: string): type is NotificationType => type in SETTING_META;
 
 @Component({
   selector: 'app-notifications-config',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    ButtonModule,
-    InputSwitchModule,
-    SkeletonModule,
-  ],
+  imports: [CommonModule, FormsModule, ButtonModule, InputSwitchModule, SkeletonModule],
   templateUrl: './notifications-config.component.html',
 })
 export class NotificationsConfigComponent implements OnInit {
   private readonly notificationsSvc = inject(NotificationsService);
+  private readonly msg = inject(MessageService);
 
   settings: NotifSetting[] = [];
   history: NotificationHistoryPage['items'] = [];
@@ -106,6 +101,11 @@ export class NotificationsConfigComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
+        this.msg.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar las preferencias de notificación.',
+        });
       },
     });
   }
@@ -125,14 +125,15 @@ export class NotificationsConfigComponent implements OnInit {
     );
   }
 
-  /** Persiste solo las preferencias modificadas en una única request batch. */
+  /**
+   * Persiste solo las preferencias modificadas en una única request batch.
+   * Si falla, conserva los cambios pendientes y avisa que no se guardaron.
+   */
   save(): void {
     if (this.loading || this.saving || !this.hasChanges) return;
 
     const updates = this.settings
-      .filter(
-        (setting) => this.originalEnabled.get(setting.id) !== setting.enabled,
-      )
+      .filter((setting) => this.originalEnabled.get(setting.id) !== setting.enabled)
       .map((setting) => ({
         type: setting.id,
         enabled: setting.enabled,
@@ -152,9 +153,19 @@ export class NotificationsConfigComponent implements OnInit {
         });
         this.captureOriginalState();
         this.saving = false;
+        this.msg.add({
+          severity: 'success',
+          summary: 'Listo',
+          detail: 'Preferencias guardadas.',
+        });
       },
       error: () => {
         this.saving = false;
+        this.msg.add({
+          severity: 'error',
+          summary: 'No se guardó',
+          detail: 'No se pudieron guardar las preferencias. Reintentá en unos segundos.',
+        });
       },
     });
   }
@@ -166,9 +177,7 @@ export class NotificationsConfigComponent implements OnInit {
 
   /** Guarda el snapshot local usado para detectar cambios pendientes. */
   private captureOriginalState(): void {
-    this.originalEnabled = new Map(
-      this.settings.map((setting) => [setting.id, setting.enabled]),
-    );
+    this.originalEnabled = new Map(this.settings.map((setting) => [setting.id, setting.enabled]));
     this.hasChanges = false;
   }
 }

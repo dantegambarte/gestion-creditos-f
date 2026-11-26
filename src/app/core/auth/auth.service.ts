@@ -39,11 +39,21 @@ export class AuthService extends AuthServiceBase {
 
   /**
    * Cierra la sesión del usuario actual, limpia el estado local y muestra confirmación.
+   * Si el servidor no confirma el cierre, la sesión local se cierra igual y se avisa.
    */
   logout(): void {
     this.api
       .post<void>(AppRoutes.AUTH_LOGOUT)
-      .pipe(catchError(() => of(null)))
+      .pipe(
+        catchError(() => {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Cierre parcial',
+            detail: 'Cerraste sesión en este dispositivo, pero el servidor no lo confirmó.',
+          });
+          return of(null);
+        }),
+      )
       .subscribe();
     this.clear();
     this.messageService.add({ severity: 'success', summary: 'Sesión cerrada' });

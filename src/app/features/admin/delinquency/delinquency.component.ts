@@ -58,7 +58,6 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   searchTerm = '';
   filterEstado: string | null = null;
   filterDias: string | null = null;
-  activeStatusFilter: string | null = null;
 
   showApplyDialog = false;
   applyingRow: DelinquencyRow | null = null;
@@ -106,11 +105,12 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Alterna el filtro de estado chip. Si el valor ya está activo, lo desactiva.
+   * Alterna el filtro de estado desde los chips. Comparte estado con el dropdown
+   * (filterEstado) para que ambos controles nunca muestren filtros distintos.
    * @param value Valor del chip seleccionado.
    */
   setStatusFilter(value: string): void {
-    this.activeStatusFilter = this.activeStatusFilter === value ? null : value;
+    this.filterEstado = this.filterEstado === value ? null : value;
     this.applyFilters();
   }
 
@@ -127,7 +127,7 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
       );
     }
 
-    const status = this.activeStatusFilter ?? this.filterEstado;
+    const status = this.filterEstado;
     if (status) {
       result = result.filter((c) => c.status === status);
     }
@@ -145,21 +145,18 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Simula el envío de aviso al cliente en mora.
+   * Informa que el aviso no se envió: el backend aún no expone un endpoint de notificación
+   * a clientes morosos, así que nunca se muestra un éxito falso.
    * @param row Fila del cliente a notificar.
    */
   onNotify(row: DelinquencyRow): void {
     if (this.processingId) return;
-    this.processingId = `${row.id}_notify`;
-    setTimeout(() => {
-      this.processingId = null;
-      this.msg.add({
-        severity: 'info',
-        summary: 'Aviso enviado',
-        detail: row.clientName,
-        life: 3000,
-      });
-    }, 800);
+    this.msg.add({
+      severity: 'warn',
+      summary: 'Aviso no enviado',
+      detail: `El envío de avisos todavía no está disponible. Contactá a ${row.clientName} por otro medio.`,
+      life: 5000,
+    });
   }
 
   /**

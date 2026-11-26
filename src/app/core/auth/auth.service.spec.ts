@@ -1,10 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import {
-  HttpClientTestingModule,
-  HttpTestingController,
-} from '@angular/common/http/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { Router } from '@angular/router';
@@ -112,16 +109,13 @@ describe('AuthService', () => {
     req.flush(
       {
         ok: false,
-        message:
-          'Credenciales incorrectas. Verificá tus datos e intentá nuevamente.',
+        message: 'Credenciales incorrectas. Verificá tus datos e intentá nuevamente.',
       },
       { status: 401, statusText: 'Unauthorized' },
     );
     tick();
 
-    expect(errorMsg).toBe(
-      'Credenciales incorrectas. Verificá tus datos e intentá nuevamente.',
-    );
+    expect(errorMsg).toBe('Credenciales incorrectas. Verificá tus datos e intentá nuevamente.');
     expect(localStorage.getItem('sgcf_token')).toBeNull();
   }));
 
@@ -175,10 +169,7 @@ describe('AuthService', () => {
   it('logout: limpia storage y emite null incluso si POST /logout falla', fakeAsync(() => {
     // Simular sesión activa
     localStorage.setItem('sgcf_token', 'live.token');
-    localStorage.setItem(
-      'sgcf_user',
-      JSON.stringify({ id: 'u-1', name: 'Test' }),
-    );
+    localStorage.setItem('sgcf_user', JSON.stringify({ id: 'u-1', name: 'Test' }));
 
     let emitted: AuthUser | null | undefined = undefined;
     service.currentUser$.subscribe((u) => (emitted = u));
@@ -187,15 +178,15 @@ describe('AuthService', () => {
 
     // POST logout falla con 500
     const req = http.expectOne(`${API}/auth/logout`);
-    req.flush(
-      { ok: false, message: 'Error' },
-      { status: 500, statusText: 'Server Error' },
-    );
+    req.flush({ ok: false, message: 'Error' }, { status: 500, statusText: 'Server Error' });
     tick();
 
     expect(localStorage.getItem('sgcf_token')).toBeNull();
     expect(localStorage.getItem('sgcf_user')).toBeNull();
     expect(emitted).toBeNull();
+    expect(messageService.add).toHaveBeenCalledWith(
+      jasmine.objectContaining({ severity: 'warn', summary: 'Cierre parcial' }),
+    );
     expect(messageService.add).toHaveBeenCalledWith({
       severity: 'success',
       summary: 'Sesión cerrada',

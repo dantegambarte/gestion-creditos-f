@@ -7,10 +7,7 @@ import {
 } from '../../collector/models/collection.model';
 import { DateService } from '../../../core/services/date.service';
 import { FormatService } from '../../../core/services/format.service';
-import {
-  GeneratedPlanillaResult,
-  PlanillaEntry,
-} from '../models/interface/sheet';
+import { GeneratedPlanillaResult, PlanillaEntry } from '../models/interface/sheet';
 
 /**
  * Genera y descarga la planilla de cobranza en formato PDF A4.
@@ -69,15 +66,12 @@ export class CollectionPdfService {
     const setColor = (rgb: readonly [number, number, number]) => {
       doc.setTextColor(rgb[0], rgb[1], rgb[2]);
     };
-    const setStroke = (
-      rgb: readonly [number, number, number],
-      width: number,
-    ) => {
+    const setStroke = (rgb: readonly [number, number, number], width: number) => {
       doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
       doc.setLineWidth(width);
     };
 
-    const calcHeaderH = (_phone: string, _address: string): number => 7;
+    const calcHeaderH = (): number => 7;
 
     const drawPdfHeader = (): void => {
       setStroke(COLOR_BORDER, 0.3);
@@ -91,18 +85,9 @@ export class CollectionPdfService {
         align: 'right',
       });
       setFont(8, 'normal');
-      doc.text(
-        'Documento operativo de cobranza',
-        MARGIN_X + 3,
-        MARGIN_TOP + 11,
-      );
+      doc.text('Documento operativo de cobranza', MARGIN_X + 3, MARGIN_TOP + 11);
       setStroke(COLOR_BORDER, 0.2);
-      doc.line(
-        MARGIN_X + 3,
-        MARGIN_TOP + 13.5,
-        MARGIN_X + CONTENT_W - 3,
-        MARGIN_TOP + 13.5,
-      );
+      doc.line(MARGIN_X + 3, MARGIN_TOP + 13.5, MARGIN_X + CONTENT_W - 3, MARGIN_TOP + 13.5);
       setFont(9, 'normal');
       setColor(COLOR_TEXT);
       doc.text(
@@ -118,20 +103,11 @@ export class CollectionPdfService {
     };
 
     const drawTableHeader = (yTop: number): void => {
-      doc.setFillColor(
-        COLOR_HEADER_BG[0],
-        COLOR_HEADER_BG[1],
-        COLOR_HEADER_BG[2],
-      );
+      doc.setFillColor(COLOR_HEADER_BG[0], COLOR_HEADER_BG[1], COLOR_HEADER_BG[2]);
       doc.rect(MARGIN_X, yTop, CONTENT_W, TABLE_HEADER_H, 'F');
       setStroke(COLOR_BORDER_STRONG, 0.4);
       doc.line(MARGIN_X, yTop, MARGIN_X + CONTENT_W, yTop);
-      doc.line(
-        MARGIN_X,
-        yTop + TABLE_HEADER_H,
-        MARGIN_X + CONTENT_W,
-        yTop + TABLE_HEADER_H,
-      );
+      doc.line(MARGIN_X, yTop + TABLE_HEADER_H, MARGIN_X + CONTENT_W, yTop + TABLE_HEADER_H);
       setFont(8, 'bold');
       setColor([55, 65, 81]);
       const textY = yTop + 4.2;
@@ -145,15 +121,10 @@ export class CollectionPdfService {
       doc.text('GESTIÓN', COLS.ges.x + 1.5, textY);
     };
 
-    const measureRow = (
-      entry: PlanillaEntry,
-    ): { height: number; refLines: string[] } => {
+    const measureRow = (entry: PlanillaEntry): { height: number; refLines: string[] } => {
       setFont(7.5, 'normal');
-      const ref =
-        entry.collectionReference || `Cuota ${entry.installmentNumber} · —`;
-      let refLines = (
-        doc.splitTextToSize(ref, COLS.cli.w - 3) as string[]
-      ).slice(0, 2);
+      const ref = entry.collectionReference || `Cuota ${entry.installmentNumber} · —`;
+      let refLines = (doc.splitTextToSize(ref, COLS.cli.w - 3) as string[]).slice(0, 2);
       // "Además adeuda N más" ocupa la 2ª línea (info clave del crédito) para
       // que el PDF muestre lo mismo que la planilla del cobrador y del admin.
       const extra = additionalDebtText(entry.additionalInstallmentsCount);
@@ -173,11 +144,7 @@ export class CollectionPdfService {
     ): void => {
       const hdrH = 7;
       const textY = yTop + 4.8;
-      doc.setFillColor(
-        COLOR_HEADER_BG[0],
-        COLOR_HEADER_BG[1],
-        COLOR_HEADER_BG[2],
-      );
+      doc.setFillColor(COLOR_HEADER_BG[0], COLOR_HEADER_BG[1], COLOR_HEADER_BG[2]);
       doc.rect(MARGIN_X, yTop, CONTENT_W, hdrH, 'F');
       setStroke(COLOR_BORDER_STRONG, 0.5);
       doc.line(MARGIN_X, yTop + hdrH, MARGIN_X + CONTENT_W, yTop + hdrH);
@@ -199,8 +166,7 @@ export class CollectionPdfService {
         setColor(COLOR_MUTED);
         const contactRaw = `  ·  ${contactParts.join('  ·  ')}`;
         const maxW = CONTENT_W - nameW - countW - 4;
-        const contactFit =
-          (doc.splitTextToSize(contactRaw, maxW) as string[])[0] ?? contactRaw;
+        const contactFit = (doc.splitTextToSize(contactRaw, maxW) as string[])[0] ?? contactRaw;
         doc.text(contactFit, MARGIN_X + 2 + nameW, textY);
       }
     };
@@ -225,20 +191,14 @@ export class CollectionPdfService {
 
       setFont(8.5, 'normal');
       setColor(COLOR_TEXT);
-      doc.text(
-        this.formatDate(entry.dueDate),
-        COLS.ven.x + COLS.ven.w / 2,
-        innerTop,
-        { align: 'center' },
-      );
+      doc.text(this.formatDate(entry.dueDate), COLS.ven.x + COLS.ven.w / 2, innerTop, {
+        align: 'center',
+      });
       setFont(7.5, 'bold');
       setColor(statusColor(entry.paymentStatus));
-      doc.text(
-        entry.paymentStatus.toUpperCase(),
-        COLS.ven.x + COLS.ven.w / 2,
-        innerSecond,
-        { align: 'center' },
-      );
+      doc.text(entry.paymentStatus.toUpperCase(), COLS.ven.x + COLS.ven.w / 2, innerSecond, {
+        align: 'center',
+      });
 
       setFont(10.5, 'bold');
       setColor(COLOR_TEXT);
@@ -320,7 +280,7 @@ export class CollectionPdfService {
         const address = entry.clientAddress ?? '';
         blocks.push({
           kind: 'header',
-          height: calcHeaderH(phone, address),
+          height: calcHeaderH(),
           customerName: entry.clientName,
           cuotasCount: cuotasByCustomer.get(entry.clientName) ?? 0,
           pairedRowHeight: m.height,
@@ -340,20 +300,13 @@ export class CollectionPdfService {
 
     const TABLE_HEADER_GAP = 2;
     const pageRowsBudget =
-      PAGE_H -
-      MARGIN_TOP -
-      HEADER_H -
-      TABLE_HEADER_H -
-      TABLE_HEADER_GAP -
-      MARGIN_BOTTOM -
-      FOOTER_H;
+      PAGE_H - MARGIN_TOP - HEADER_H - TABLE_HEADER_H - TABLE_HEADER_GAP - MARGIN_BOTTOM - FOOTER_H;
     const pageBuckets: Block[][] = [];
     let bucket: Block[] = [];
     let used = 0;
     for (let i = 0; i < blocks.length; i++) {
       const b = blocks[i];
-      const requiredSpace =
-        b.kind === 'header' ? b.height + b.pairedRowHeight : b.height;
+      const requiredSpace = b.kind === 'header' ? b.height + b.pairedRowHeight : b.height;
       if (used + requiredSpace > pageRowsBudget && bucket.length > 0) {
         pageBuckets.push(bucket);
         bucket = [];
@@ -374,13 +327,7 @@ export class CollectionPdfService {
       let y = tableY + TABLE_HEADER_H + TABLE_HEADER_GAP;
       page.forEach((b) => {
         if (b.kind === 'header') {
-          drawCustomerHeader(
-            y,
-            b.customerName,
-            b.cuotasCount,
-            b.phone,
-            b.address,
-          );
+          drawCustomerHeader(y, b.customerName, b.cuotasCount, b.phone, b.address);
         } else {
           drawRow(b.entry, y, b.measure.refLines, b.measure.height);
         }
@@ -396,9 +343,12 @@ export class CollectionPdfService {
     doc.save(`planilla-${safeName}-${safeDate}.pdf`);
   }
 
-  private mapDetailToResult(
-    detail: CollectionSheetDetail,
-  ): GeneratedPlanillaResult {
+  /**
+   * Mapea el detalle de la planilla al modelo del PDF. El total esperado suma el mismo
+   * monto que se imprime por fila (saldo restante), para que encabezado y filas coincidan.
+   * @returns Resultado listo para dibujar el PDF.
+   */
+  mapDetailToResult(detail: CollectionSheetDetail): GeneratedPlanillaResult {
     const entries: PlanillaEntry[] = detail.items.map((item) => ({
       clientName: item.customerName,
       clientDni: 'N/D',
@@ -419,7 +369,7 @@ export class CollectionPdfService {
       collectorName: detail.collectorName,
       fecha: detail.sheetDate,
       clientCount: detail.items.length,
-      totalAmount: detail.items.reduce((sum, i) => sum + i.amountDue, 0),
+      totalAmount: entries.reduce((sum, e) => sum + e.amount, 0),
       sheetId: detail.id,
       entries,
     };

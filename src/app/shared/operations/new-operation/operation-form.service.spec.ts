@@ -346,4 +346,76 @@ describe('OperationFormService', () => {
       );
     });
   });
+
+  describe('reglas monetarias del plan de venta', () => {
+    const line = (id: string, subtotal: number) =>
+      ({
+        productoId: id,
+        nombre: id,
+        variantId: 'v-' + id,
+        variantLabel: 'Variante',
+        cantidad: 1,
+        precio: subtotal,
+        subtotal,
+        stockDisponible: 1,
+        unitIds: [],
+        unitCodes: [],
+        productIds: [id],
+        selectedUnitIds: [],
+        rates: [{ installmentsCount: 4, paymentFrequency: 'MONTHLY', rate: 0.2 }],
+        selectedInstallments: 4,
+      }) as any;
+
+    beforeEach(() => {
+      service.initialize().subscribe();
+      service.operationForm.controls.operationType.setValue('SALE');
+      service.operationForm.controls.paymentFrequency.setValue('MONTHLY');
+      service.cartLines.set([line('p1', 100000), line('p2', 300000)]);
+    });
+
+    it('prorratea el anticipo por el peso de cada línea en el total', () => {
+      service.operationForm.controls.initialPaymentType.setValue('DOWN_PAYMENT');
+      service.operationForm.controls.downPayment.setValue(40000);
+      const [l1, l2] = service.cartLines();
+      expect(service.getLineDownPayment(l1)).toBe(10000);
+      expect(service.getLineDownPayment(l2)).toBe(30000);
+    });
+
+    it('calcula la cuota de cada línea sobre el capital neto del anticipo con su tasa', () => {
+      service.operationForm.controls.initialPaymentType.setValue('DOWN_PAYMENT');
+      service.operationForm.controls.downPayment.setValue(40000);
+      const [l1, l2] = service.cartLines();
+      // (100000 - 10000) * 1.2 / 4 = 27000 ; (300000 - 30000) * 1.2 / 4 = 81000
+      expect(service.getLineInstallmentValue(l1)).toBe(27000);
+      expect(service.getLineInstallmentValue(l2)).toBe(81000);
+      expect(service.valorCuota).toBe(108000);
+    });
+
+    it('acota el anticipo entre 0 y el capital, y lo ignora si no es enganche', () => {
+      service.operationForm.controls.initialPaymentType.setValue('DOWN_PAYMENT');
+      service.operationForm.controls.downPayment.setValue(999999);
+      expect(service.getValidatedDownPayment()).toBe(400000);
+      service.operationForm.controls.downPayment.setValue(-500);
+      expect(service.getValidatedDownPayment()).toBe(0);
+      service.operationForm.controls.initialPaymentType.setValue('NONE');
+      service.operationForm.controls.downPayment.setValue(1000);
+      expect(service.getValidatedDownPayment()).toBe(0);
+    });
+
+    it('cobra por cuotas adelantadas el valor de cuota por la cantidad, solo en ese modo', () => {
+      service.operationForm.controls.initialPaymentType.setValue('ADVANCED_INSTALLMENTS');
+      service.operationForm.controls.advancedInstallmentsCount.setValue(2);
+      // sin anticipo: 100000*1.2/4 = 30000 ; 300000*1.2/4 = 90000 -> cuota 120000
+      expect(service.getAdvancedInstallmentsTotal()).toBe(240000);
+      service.operationForm.controls.initialPaymentType.setValue('NONE');
+      expect(service.getAdvancedInstallmentsTotal()).toBe(0);
+    });
+
+    it('acepta el pago mixto solo si ambas partes son positivas y suman el total exacto', () => {
+      expect(service.isSplitMatchingTotal(1000.1, 2000.2, 3000.3)).toBeTrue();
+      expect(service.isSplitMatchingTotal(1000, 1999, 3000)).toBeFalse();
+      expect(service.isSplitMatchingTotal(0, 3000, 3000)).toBeFalse();
+      expect(service.isSplitMatchingTotal(3000, null, 3000)).toBeFalse();
+    });
+  });
 });

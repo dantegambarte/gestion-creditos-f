@@ -1,4 +1,20 @@
-<div class="flex flex-col items-center justify-center py-16 gap-3 text-red-500">
+<div
+  class="flex flex-col items-center justify-center py-16 gap-3 text-red-500 text-center px-4"
+  role="alert"
+  data-cy="error-state"
+>
   <i class="pi pi-exclamation-triangle text-3xl"></i>
-  <span>{{ message }}</span>
+  <span data-cy="error-state-message">{{ message }}</span>
+  @if (showRetry) {
+    <p-button
+      type="button"
+      label="Reintentar"
+      icon="pi pi-refresh"
+      severity="secondary"
+      [outlined]="true"
+      styleClass="h-11 px-5 rounded-xl"
+      data-cy="error-state-retry"
+      (onClick)="onRetry()"
+    />
+  }
 </div>

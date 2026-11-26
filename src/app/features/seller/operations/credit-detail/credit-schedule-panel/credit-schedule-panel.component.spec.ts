@@ -141,4 +141,31 @@ describe('CreditSchedulePanelComponent', () => {
     expect(text).not.toContain('Cobrar');
     expect(mobileCard.querySelector('[data-cy="installment-direct-payment"]')).toBeNull();
   });
+
+  it('las pestañas filtran las cuotas por estado y un segundo click vuelve a todas', () => {
+    const base = credit.installments[0];
+    component.credit = {
+      ...credit,
+      installments: [
+        { ...base, id: 'p1', status: 'PAID' },
+        { ...base, id: 'p2', status: 'PENDING' },
+        { ...base, id: 'p3', status: 'PARTIAL' },
+        { ...base, id: 'p4', status: 'OVERDUE' },
+      ],
+    };
+
+    expect(component.visibleInstallments.length).toBe(4);
+    component.toggleTab('paid');
+    expect(component.visibleInstallments.map((i) => i.id)).toEqual(['p1']);
+    component.toggleTab('pending');
+    expect(component.visibleInstallments.map((i) => i.id)).toEqual(['p2', 'p3']);
+    component.toggleTab('overdue');
+    expect(component.visibleInstallments.map((i) => i.id)).toEqual(['p4']);
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-cy="credit-schedule-mobile-card"]').length,
+    ).toBe(1);
+    component.toggleTab('overdue');
+    expect(component.visibleInstallments.length).toBe(4);
+  });
 });

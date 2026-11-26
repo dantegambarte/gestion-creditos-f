@@ -134,15 +134,16 @@
     <div class="flex gap-2 px-4 py-3 flex-wrap" style="border-bottom: 1px solid var(--ff-border)">
       @for (chip of statusChips; track chip.value) {
         <button
+          type="button"
           class="px-4 py-1.5 rounded-full text-sm font-medium border transition-colors"
-          [style.background]="
-            activeStatusFilter === chip.value ? 'rgba(79,110,247,0.15)' : 'transparent'
-          "
+          [attr.data-cy]="'delinquency-chip-' + chip.value"
+          [attr.aria-pressed]="filterEstado === chip.value"
+          [style.background]="filterEstado === chip.value ? 'rgba(79,110,247,0.15)' : 'transparent'"
           [style.color]="
-            activeStatusFilter === chip.value ? 'var(--ff-accent)' : 'var(--ff-text-secondary)'
+            filterEstado === chip.value ? 'var(--ff-accent)' : 'var(--ff-text-secondary)'
           "
           [style.borderColor]="
-            activeStatusFilter === chip.value ? 'var(--ff-accent)' : 'var(--ff-border)'
+            filterEstado === chip.value ? 'var(--ff-accent)' : 'var(--ff-border)'
           "
           (click)="setStatusFilter(chip.value)"
         >
@@ -253,6 +254,7 @@
                   size="small"
                   styleClass="dq-action-btn dq-action-btn--notify"
                   icon="pi pi-bell"
+                  data-cy="delinquency-notify-action"
                   (onClick)="onNotify(row)"
                   [loading]="processingId === row.id + '_notify'"
                 />
@@ -343,6 +345,7 @@
                 severity="info"
                 styleClass="w-full h-11 rounded-xl justify-center"
                 icon="pi pi-bell"
+                data-cy="delinquency-notify-action"
                 (onClick)="onNotify(row)"
                 [loading]="processingId === row.id + '_notify'"
               />

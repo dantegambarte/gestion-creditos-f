@@ -122,10 +122,22 @@ export class HolidayFormDialogComponent implements OnChanges {
 
   /**
    * Envía el formulario en modo creación o edición según el estado del input.
+   * Si faltan datos obligatorios, avisa en lugar de ignorar el clic.
    */
   submit(): void {
-    if (!this.isValidForm()) return;
-    this.isEditMode ? this.submitEdit() : this.submitCreate();
+    if (!this.isValidForm()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Datos incompletos',
+        detail: 'Completá la fecha, el nombre y el tipo del feriado.',
+      });
+      return;
+    }
+    if (this.isEditMode) {
+      this.submitEdit();
+    } else {
+      this.submitCreate();
+    }
   }
 
   /**
@@ -146,8 +158,7 @@ export class HolidayFormDialogComponent implements OnChanges {
       type: this.form.type,
       affectsDueDates: this.form.affectsDueDates,
       active: this.form.active,
-      repeatsAnnually:
-        this.form.type === 'EXTRAORDINARY' ? false : this.form.repeatsAnnually,
+      repeatsAnnually: this.form.type === 'EXTRAORDINARY' ? false : this.form.repeatsAnnually,
       recalculateFutureInstallments: this.shouldShowRecalculation()
         ? this.form.recalculateFutureInstallments
         : false,
@@ -179,8 +190,7 @@ export class HolidayFormDialogComponent implements OnChanges {
       type: this.form.type,
       affectsDueDates: this.form.affectsDueDates,
       active: this.form.active,
-      repeatsAnnually:
-        this.form.type === 'EXTRAORDINARY' ? false : this.form.repeatsAnnually,
+      repeatsAnnually: this.form.type === 'EXTRAORDINARY' ? false : this.form.repeatsAnnually,
       recalculateFutureInstallments: this.shouldShowRecalculation()
         ? this.form.recalculateFutureInstallments
         : false,

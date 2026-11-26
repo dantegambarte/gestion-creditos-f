@@ -48,9 +48,7 @@ function toSheet(raw: CollectionSheetRaw): CollectionSheet {
  * Mapea la respuesta { skipped: true, existing_sheet } del backend cuando
  * skip_if_exists=true detectó una planilla ACTIVE existente.
  */
-function toSkippedResult(
-  raw: CollectionGenerateSkippedResultRaw,
-): CollectionGenerateSkippedResult {
+function toSkippedResult(raw: CollectionGenerateSkippedResultRaw): CollectionGenerateSkippedResult {
   return {
     skipped: true,
     existingSheet: {
@@ -135,7 +133,9 @@ function toAlertOverdueItem(raw: CollectionAlertsOverdueItemRaw): CollectionAler
   };
 }
 
-function toAlertUnassignedItem(raw: CollectionAlertsUnassignedItemRaw): CollectionAlertsUnassignedItem {
+function toAlertUnassignedItem(
+  raw: CollectionAlertsUnassignedItemRaw,
+): CollectionAlertsUnassignedItem {
   return {
     customerId: raw.customer_id,
     fullName: raw.full_name,
@@ -160,22 +160,30 @@ function toGenerateResult(raw: CollectionGenerateResultRaw): CollectionGenerateR
 /**
  * Convierte un resultado individual del batch a su forma estructurada,
  * preservando cuál de los tres casos (generada/omitida/error) ocurrió.
+ * Un resultado incompleto se informa como error en vez de asumir datos inexistentes.
  */
-function toBatchOutcome(raw: CollectionBatchOutcomeRaw): CollectionBatchOutcome {
+export function toBatchOutcome(raw: CollectionBatchOutcomeRaw): CollectionBatchOutcome {
+  const invalid: CollectionBatchOutcome = {
+    collectorId: raw.collector_id,
+    kind: 'error',
+    error: { status: 0, message: 'Respuesta incompleta del servidor' },
+  };
   if (raw.error) {
     return { collectorId: raw.collector_id, kind: 'error', error: raw.error };
   }
   if (raw.skipped) {
+    if (!raw.existing_sheet) return invalid;
     return {
       collectorId: raw.collector_id,
       kind: 'skipped',
-      result: toSkippedResult({ skipped: true, existing_sheet: raw.existing_sheet! }),
+      result: toSkippedResult({ skipped: true, existing_sheet: raw.existing_sheet }),
     };
   }
+  if (!raw.sheet || !raw.alerts) return invalid;
   return {
     collectorId: raw.collector_id,
     kind: 'generated',
-    result: toGenerateResult({ sheet: raw.sheet!, alerts: raw.alerts! }),
+    result: toGenerateResult({ sheet: raw.sheet, alerts: raw.alerts }),
   };
 }
 
@@ -205,9 +213,7 @@ export class CollectionsService {
    * Obtiene una planilla de cobranza por su ID.
    */
   getById(id: string): Observable<CollectionSheetDetail> {
-    return this.api
-      .get<CollectionSheetDetailRaw>(`collections/${id}`)
-      .pipe(map(toSheetDetail));
+    return this.api.get<CollectionSheetDetailRaw>(`collections/${id}`).pipe(map(toSheetDetail));
   }
 
   /**
@@ -221,9 +227,7 @@ export class CollectionsService {
     return this.api.patch<void>(`collections/${id}/send`).pipe(map(() => undefined));
   }
 
-  generate(
-    payload: CollectionGeneratePayload,
-  ): Observable<CollectionGenerateOutcome> {
+  generate(payload: CollectionGeneratePayload): Observable<CollectionGenerateOutcome> {
     const body: Record<string, unknown> = {
       collector_id: payload.collectorId,
       date: payload.date,
@@ -231,10 +235,7 @@ export class CollectionsService {
     };
     if (payload.skipIfExists) body['skip_if_exists'] = true;
     return this.api
-      .post<CollectionGenerateResultRaw | CollectionGenerateSkippedResultRaw>(
-        'collections',
-        body,
-      )
+      .post<CollectionGenerateResultRaw | CollectionGenerateSkippedResultRaw>('collections', body)
       .pipe(
         map((raw) =>
           'skipped' in raw && raw.skipped
@@ -250,9 +251,7 @@ export class CollectionsService {
    * comparte entre todos los resultados, en vez de recalcularla por cada
    * cobrador como ocurría con N requests individuales en paralelo.
    */
-  generateBatch(
-    payload: CollectionGenerateBatchPayload,
-  ): Observable<CollectionBatchOutcome[]> {
+  generateBatch(payload: CollectionGenerateBatchPayload): Observable<CollectionBatchOutcome[]> {
     const body: Record<string, unknown> = {
       collector_ids: payload.collectorIds,
       date: payload.date,
