@@ -105,7 +105,7 @@ describe('57 - Mobile UX validation', () => {
     cy.get('.app-header', { timeout: 15000 }).should('be.visible');
     cy.get('.app-header__mobile-logo')
       .should('be.visible')
-      .and('contain.text', 'finFlow');
+      .and('contain.text', 'Productcred');
     cy.get('.app-header__avatar').should('be.visible');
 
     cy.get('.mobile-bottom-nav')
@@ -126,9 +126,8 @@ describe('57 - Mobile UX validation', () => {
       'be.visible',
     );
     cy.get('.db-kpis').should('be.visible');
-    cy.get('.db-pending-row', { timeout: 15000 })
-      .scrollIntoView()
-      .should('be.visible');
+    // En mobile el panel de pendientes es solo desktop (.db-pending-row--desktop oculto).
+    cy.get('.db-pending-row--desktop', { timeout: 15000 }).should('not.be.visible');
     cy.get('.db-overdue-mobile', { timeout: 15000 })
       .scrollIntoView()
       .should('be.visible');

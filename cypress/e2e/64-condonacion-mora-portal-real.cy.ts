@@ -31,6 +31,18 @@ describe('Condonación de mora — multi-rol con portal (real)', () => {
   let originalAmountDue: number;
   let portalTempPassword: string;
 
+  // La mora automática viene deshabilitada por defecto (backend bebf4fc,
+  // penalty_rate_daily = 0): habilitarla para esta suite y restaurarla al final.
+  let originalDailyRate: string | null = null;
+  before(() => {
+    cy.apiSetSystemConfig('penalty_rate_daily', '0.005').then((previous) => {
+      originalDailyRate = previous;
+    });
+  });
+  after(() => {
+    cy.apiSetSystemConfig('penalty_rate_daily', originalDailyRate ?? '0');
+  });
+
   before(() => {
     cy.getAuthToken('ADMIN').then((token) =>
       cy.apiRequest('DELETE', '/test/business-days/today', null, token),

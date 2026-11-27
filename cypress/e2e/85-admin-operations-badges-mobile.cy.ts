@@ -26,10 +26,13 @@ const creditsResponse = {
 
 /**
  * Verifica que un badge compacto centre su texto con flex y sin line-height heredado.
+ * Se busca dentro de la card mobile: la tabla desktop (oculta en mobile)
+ * renderiza los mismos badges.
  * @param selector Selector CSS del badge visible en la card mobile.
  */
 const expectCompactBadgeAlignment = (selector: string): void => {
-  cy.get(selector)
+  cy.get('[data-cy="operations-mobile-card"]')
+    .find(selector)
     .first()
     .should('be.visible')
     .then(($badge) => {
@@ -37,7 +40,8 @@ const expectCompactBadgeAlignment = (selector: string): void => {
       const lineHeight = parseFloat(styles.lineHeight);
       const fontSize = parseFloat(styles.fontSize);
 
-      expect(styles.display).to.eq('inline-flex');
+      // Dentro de la fila flex de la card el badge se blockifica: inline-flex computa como flex.
+      expect(styles.display).to.be.oneOf(['flex', 'inline-flex']);
       expect(styles.alignItems).to.eq('center');
       expect(styles.justifyContent).to.eq('center');
       expect(lineHeight).to.be.lte(fontSize + 1);

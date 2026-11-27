@@ -93,6 +93,8 @@ describe('Cron weeklyCommissionCycle — cierre real del ciclo semanal', () => {
       });
 
   before(() => {
+    // Caja operativa propia: no depender del estado que dejó otra suite.
+    cy.apiEnsureCashSessionOpen();
     expect(
       todayWeekday,
       'hoy no es domingo: ver limitación real documentada arriba',

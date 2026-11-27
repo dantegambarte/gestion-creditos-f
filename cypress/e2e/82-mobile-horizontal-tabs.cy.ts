@@ -69,16 +69,30 @@ describe('Mobile horizontal tabs', () => {
     });
   });
 
-  it('Liquidaciones — centra y muestra completo el tab seleccionado', () => {
+  // "Sueldo fijo" es el último tab: appActiveTabScroller limita el scroll a
+  // scrollWidth - clientWidth, así que el último tab no puede quedar centrado;
+  // queda completo y con la tira scrolleada hasta el final.
+  it('Liquidaciones — muestra completo el último tab seleccionado con la tira al final', () => {
     cy.loginAs('ADMIN', '/admin/commissions');
 
     cy.get('.commissions-mobile-tabs .ff-tab').should('have.length', 3);
-    cy.contains('.commissions-mobile-tabs .ff-tab', 'Sueldo fijo')
-      .then(($tab) =>
-        $tab[0].scrollIntoView({ block: 'nearest', inline: 'center' }),
-      )
-      .click({ force: true });
+    cy.contains('.commissions-mobile-tabs .ff-tab', 'Sueldo fijo').click();
 
+    cy.contains('.commissions-mobile-tabs .ff-tab--active', 'Sueldo fijo').should('exist');
+    expectActiveTabVisible({
+      nav: '.commissions-mobile-tabs',
+      active: '.commissions-mobile-tabs .ff-tab--active',
+    });
+    cy.get('.commissions-mobile-tabs').should(($nav) => {
+      const nav = $nav[0];
+      expect(nav.scrollLeft, 'tira scrolleada al final').to.be.closeTo(
+        nav.scrollWidth - nav.clientWidth,
+        1,
+      );
+    });
+
+    // Un tab intermedio sí queda centrado.
+    cy.get('.commissions-mobile-tabs .ff-tab').eq(1).click();
     expectActiveTabVisible({
       nav: '.commissions-mobile-tabs',
       active: '.commissions-mobile-tabs .ff-tab--active',

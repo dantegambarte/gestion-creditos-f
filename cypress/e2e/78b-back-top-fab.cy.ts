@@ -64,6 +64,31 @@ const makeSheets = (count: number) => ({
 
 const FAB_SCROLL_THRESHOLD = 600; // > 520px component threshold
 
+/**
+ * Scrollea .ff-shell__main más allá del umbral del FAB. Espera a que la lista
+ * termine de renderizar (contenido scrolleable de sobra): si se scrollea antes,
+ * el navegador recorta scrollTop al alto parcial y el FAB nunca aparece.
+ */
+const scrollMainPastThreshold = (container = '.ff-shell__main', distance = FAB_SCROLL_THRESHOLD): void => {
+  cy.get('ff-back-top-fab').should('exist');
+  cy.get(container)
+    .should(($main) => {
+      expect($main[0].scrollHeight - $main[0].clientHeight).to.be.gt(distance);
+    })
+    .scrollTo(0, distance);
+  cy.get(container).its('0.scrollTop').should('be.gte', distance - 1);
+};
+
+/**
+ * Espera a que el scroll suave del FAB termine en el tope del contenedor.
+ * @param container - selector del contenedor de scroll
+ */
+const expectScrolledToTop = (container = '.ff-shell__main'): void => {
+  cy.get(container).should(($el) => {
+    expect($el[0].scrollTop).to.equal(0);
+  });
+};
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('Back-to-Top FAB — comportamiento de scroll mobile', () => {
@@ -92,13 +117,13 @@ describe('Back-to-Top FAB — comportamiento de scroll mobile', () => {
 
     it('FAB aparece al scrollear más de 520px con >5 ítems', () => {
       setup(6);
-      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD);
+      scrollMainPastThreshold();
       cy.get('[data-cy="admin-payments-back-top-action"]').should('be.visible');
     });
 
     it('FAB desaparece al volver al tope de la pantalla', () => {
       setup(6);
-      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD);
+      scrollMainPastThreshold();
       cy.get('[data-cy="admin-payments-back-top-action"]').should('be.visible');
       cy.get('.ff-shell__main').scrollTo(0, 0);
       cy.get('[data-cy="admin-payments-back-top-action"]').should('not.exist');
@@ -106,11 +131,9 @@ describe('Back-to-Top FAB — comportamiento de scroll mobile', () => {
 
     it('click en FAB vuelve el scroll al tope', () => {
       setup(6);
-      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD);
+      scrollMainPastThreshold();
       cy.get('[data-cy="admin-payments-back-top-action"]').should('be.visible').click();
-      cy.get('.ff-shell__main').then(($el) => {
-        expect($el[0].scrollTop).to.equal(0);
-      });
+      expectScrolledToTop();
       cy.get('[data-cy="admin-payments-back-top-action"]').should('not.exist');
     });
   });
@@ -123,36 +146,35 @@ describe('Back-to-Top FAB — comportamiento de scroll mobile', () => {
       cy.wait('@credits');
 
       cy.get('[data-cy="credits-list-back-top-action"]').should('not.exist');
-      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD);
+      scrollMainPastThreshold();
       cy.get('[data-cy="credits-list-back-top-action"]').should('be.visible').click();
-      cy.get('.ff-shell__main').then(($el) => {
-        expect($el[0].scrollTop).to.equal(0);
-      });
+      expectScrolledToTop();
     });
 
     it('FAB no existe con ≤5 créditos', () => {
       cy.intercept('GET', '**/api/credits*', makeCredits(2)).as('credits');
       cy.loginAs('SELLER', '/seller/operations');
       cy.wait('@credits');
-      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD);
+      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD, { ensureScrollable: false });
       cy.get('[data-cy="credits-list-back-top-action"]').should('not.exist');
     });
   });
 
   // ── Collector Route — smoke del rol Collector ─────────────────────────────
   describe('Collector Mi Ruta (collector-route-back-top-action)', () => {
-    it('FAB aparece con >5 planillas y scrollea al tope al hacer click', () => {
+    // Desde 4170090 Mi Ruta muestra sólo la planilla del día (currentSheetList
+    // tiene a lo sumo 1 ítem): aunque el backend devuelva >5 planillas, la lista
+    // no supera minItems y el FAB no aparece.
+    it('muestra sólo la planilla del día y el FAB no aparece aunque haya >5 planillas', () => {
       cy.intercept('GET', '**/api/collections*', makeSheets(6)).as('sheets');
       cy.intercept('GET', '**/api/payments*', { ok: true, data: [] }).as('recentPayments');
       cy.loginAs('COLLECTOR', '/collector/route');
       cy.wait('@sheets');
 
+      cy.get('ff-back-top-fab').should('exist');
+      cy.get('.route-card-scroll').scrollTo(0, FAB_SCROLL_THRESHOLD, { ensureScrollable: false });
+      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD, { ensureScrollable: false });
       cy.get('[data-cy="collector-route-back-top-action"]').should('not.exist');
-      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD);
-      cy.get('[data-cy="collector-route-back-top-action"]').should('be.visible').click();
-      cy.get('.ff-shell__main').then(($el) => {
-        expect($el[0].scrollTop).to.equal(0);
-      });
     });
 
     it('FAB no existe con ≤5 planillas', () => {
@@ -160,7 +182,7 @@ describe('Back-to-Top FAB — comportamiento de scroll mobile', () => {
       cy.intercept('GET', '**/api/payments*', { ok: true, data: [] }).as('recentPayments');
       cy.loginAs('COLLECTOR', '/collector/route');
       cy.wait('@sheets');
-      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD);
+      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD, { ensureScrollable: false });
       cy.get('[data-cy="collector-route-back-top-action"]').should('not.exist');
     });
   });
@@ -188,7 +210,7 @@ describe('Back-to-Top FAB — comportamiento de scroll mobile', () => {
       cy.loginAs('ADMIN', '/admin/clients');
       cy.wait('@customers');
 
-      cy.get('.ff-shell__main').scrollTo(0, FAB_SCROLL_THRESHOLD);
+      scrollMainPastThreshold();
       cy.get('[data-cy="admin-clients-back-top-action"]').should('be.visible');
     });
   });

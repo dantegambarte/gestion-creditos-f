@@ -31,8 +31,10 @@ describe('Seller — Mis Comisiones', () => {
     cy.get('p-dropdown').should('exist');
   });
 
-  it('muestra tabla, vacío o loading (no error)', () => {
-    cy.get('p-table, app-empty-state, app-loading-state').should('exist');
+  // Vacío = <p>Sin comisiones registradas.</p> desde dffd5f5; carga = skeleton.
+  it('muestra tabla o vacío tras la carga (no error)', () => {
+    cy.get('[data-cy="seller-commissions-skeleton"]', { timeout: 15000 }).should('not.exist');
+    cy.get('[data-cy="seller-commissions-table"], p:contains("Sin comisiones registradas.")').should('exist');
     cy.get('app-error-state').should('not.exist');
   });
 });
@@ -55,8 +57,10 @@ describe('Collector — Mis Comisiones', () => {
     cy.get('p-button[icon*="refresh"], p-button[icon*="sync"], button .pi-refresh, button .pi-sync').should('exist');
   });
 
-  it('muestra tabla, vacío o loading (no error)', () => {
-    cy.get('p-table, app-empty-state, app-loading-state').should('exist');
+  // Vacío = <p>Sin comisiones registradas.</p> desde dffd5f5; carga = skeleton.
+  it('muestra tabla o vacío tras la carga (no error)', () => {
+    cy.get('[data-cy="collector-commissions-skeleton"]', { timeout: 15000 }).should('not.exist');
+    cy.get('[data-cy="collector-commissions-table"], p:contains("Sin comisiones registradas.")').should('exist');
     cy.get('app-error-state').should('not.exist');
   });
 });

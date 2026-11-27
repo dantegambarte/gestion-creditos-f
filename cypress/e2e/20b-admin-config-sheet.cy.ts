@@ -18,9 +18,11 @@ describe('Admin — Configuracion (real)', () => {
   });
 
   it('muestra tabs base de configuracion', () => {
-    cy.contains('nav a', 'General').should('be.visible');
-    cy.contains('nav a', 'Usuarios').should('be.visible');
-    cy.contains('nav a', 'Notificaciones').should('be.visible');
+    // Tabs vigentes desde 5173e79: Usuarios se movió a /admin/users.
+    cy.contains('nav.ff-tab-nav a', 'Tasas de Interés').should('be.visible');
+    cy.contains('nav.ff-tab-nav a', 'Parámetros del Sistema').should('exist');
+    cy.contains('nav.ff-tab-nav a', 'Notificaciones').should('exist');
+    cy.contains('nav.ff-tab-nav a', 'Usuarios').should('not.exist');
   });
 });
 
