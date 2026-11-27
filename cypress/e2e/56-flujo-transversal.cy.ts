@@ -236,7 +236,7 @@ describe('El Viaje del Crédito — Multi-Rol (real)', () => {
     cy.contains(customer.fullName, { timeout: 15000 })
       .closest('tr')
       .within(() => {
-        cy.contains('button', 'Cobrar').click({ force: true });
+        cy.contains('button', 'Registrar cobro').click({ force: true });
       });
 
     cy.contains('.p-dialog', 'Registrar Cobro', { timeout: 10000 }).should('be.visible');

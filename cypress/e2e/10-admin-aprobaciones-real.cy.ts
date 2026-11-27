@@ -40,8 +40,10 @@ const createRealPendingLoan = (): Cypress.Chainable<string> => {
   cy.get('[data-cy="chk-capacity"] .p-checkbox-box').click({ force: true });
   cy.get('[data-cy="btn-enviar-aprobacion"] button').should('not.be.disabled').click();
 
-  cy.contains('.p-toast-message', 'Operación enviada', { timeout: 20000 }).should('be.visible');
+  // Sin validar el toast: el wizard redirige al detalle casi de inmediato y el
+  // toast puede no llegar a verse (carrera de timing). El 201 es la prueba real.
   return cy.wait('@createCreditBootstrap').then((interception) => {
+    expect(interception.response?.statusCode, 'crear crédito bootstrap').to.eq(201);
     const createdId = interception.response?.body?.data?.id as string | undefined;
     expect(createdId, 'id de crédito bootstrap').to.be.a('string').and.not.be.empty;
     return createdId as string;
