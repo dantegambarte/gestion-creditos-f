@@ -98,6 +98,7 @@ export default defineConfig({
 
         /** Imprime en la consola de Cypress (útil para debug en tasks). */
         log(message: string) {
+          // eslint-disable-next-line no-console -- this task exists to print debug output to the terminal
           console.log('[cy:task]', message);
           return null;
         },

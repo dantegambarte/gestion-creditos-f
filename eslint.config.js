@@ -6,7 +6,7 @@ const angular = require('angular-eslint');
 
 module.exports = tseslint.config(
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**', '.angular/**', 'cypress/**'],
+    ignores: ['dist/**', 'coverage/**', '.claude/**', 'node_modules/**', '.angular/**', 'cypress/**'],
   },
   {
     files: ['**/*.ts'],
@@ -27,5 +27,9 @@ module.exports = tseslint.config(
   {
     files: ['**/*.html'],
     extends: [...angular.configs.templateRecommended],
+    rules: {
+      // Loose `== null` checks intentionally cover both null and undefined.
+      '@angular-eslint/template/eqeqeq': ['error', { allowNullOrUndefined: true }],
+    },
   },
 );
