@@ -10,8 +10,9 @@ import { PortalCreditsComponent } from './portal-credits.component';
  * restante que calcula el backend (Σ amount_due − amount_paid de las no pagadas),
  * la misma fórmula que usa el detalle del crédito.
  * @param remainingAmount - deuda restante informada por el backend
+ * @param over - campos a sobreescribir
  */
-function credit(remainingAmount: number): PortalCredit {
+function credit(remainingAmount: number, over: Partial<PortalCredit> = {}): PortalCredit {
   return {
     id: 'cr-1',
     type: 'LOAN',
@@ -33,6 +34,7 @@ function credit(remainingAmount: number): PortalCredit {
     hasOverdue: false,
     overdueInstallmentsCount: 0,
     remainingAmount,
+    ...over,
   } as PortalCredit;
 }
 
@@ -80,5 +82,55 @@ describe('PortalCreditsComponent — deuda restante (#55)', () => {
     expect(cmp.remainingDebt(c)).toBe(0);
     expect(debtCell).toMatch(/0/);
     expect(debtCell).not.toContain('—');
+  });
+});
+
+describe('PortalCreditsComponent — orden y filtros de la lista (no romper)', () => {
+  /** Crea el componente con los créditos dados. */
+  function create(list: PortalCredit[]): PortalCreditsComponent {
+    TestBed.configureTestingModule({
+      imports: [PortalCreditsComponent],
+      providers: [
+        provideRouter([]),
+        { provide: PortalService, useValue: { getCredits: () => of(list) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(PortalCreditsComponent);
+    fixture.detectChanges();
+    return fixture.componentInstance;
+  }
+
+  const list = [
+    credit(1000, { id: 'futuro', nextDueDate: '2026-12-20' }),
+    credit(1000, { id: 'sin-fecha', nextDueDate: null }),
+    credit(1000, { id: 'mora', hasOverdue: true, nextDueDate: '2026-11-01' }),
+    credit(1000, { id: 'proximo', nextDueDate: '2026-12-01' }),
+    credit(0, { id: 'liquidado', status: 'SETTLED' }),
+  ];
+
+  it('ordena primero los créditos con mora y después por próximo vencimiento', () => {
+    expect(create(list).activeCredits.map((c) => c.id)).toEqual([
+      'mora',
+      'proximo',
+      'futuro',
+      'sin-fecha',
+    ]);
+  });
+
+  it('cada filtro muestra los créditos que corresponden', () => {
+    const cmp = create(list);
+    const ids = () =>
+      [...cmp.filteredActiveCredits, ...cmp.filteredSettledCredits].map((c) => c.id);
+
+    cmp.setFilter('OVERDUE');
+    expect(ids()).toEqual(['mora']);
+    cmp.setFilter('ON_TIME');
+    expect(ids()).toEqual(['proximo', 'futuro', 'sin-fecha']);
+    cmp.setFilter('SETTLED');
+    expect(ids()).toEqual(['liquidado']);
+    cmp.setFilter('ALL');
+    expect(ids().length).toBe(5);
+    expect(cmp.overdueCreditsCount).toBe(1);
+    expect(cmp.nextUrgentDueDate).toBe('2026-12-01');
   });
 });
