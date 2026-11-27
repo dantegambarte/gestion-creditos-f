@@ -842,7 +842,7 @@ function fundActiveCashSession(token: string): Cypress.Chainable<unknown> {
       .apiRequest(
         'POST',
         `/cash-sessions/${sessionId}/manual-incomes`,
-        { amount: 100000000, payment_method: 'CASH', description: 'Fondeo automático de E2E' },
+        { amount: 99999999, payment_method: 'CASH', description: 'Fondeo automático de E2E' },
         token,
       )
       .then((incomeRes) => {
@@ -851,16 +851,63 @@ function fundActiveCashSession(token: string): Cypress.Chainable<unknown> {
   });
 }
 
+/**
+ * Garantiza una caja operativa abierta hoy. Si la jornada ya tiene caja
+ * abierta la reutiliza; si la jornada quedó cerrada por otra suite (no hay
+ * reapertura en el mismo día), la resetea con el endpoint de test y abre una
+ * caja nueva, para no depender del orden de las suites.
+ * @param token - token ADMIN
+ */
 function ensureCashSessionOpen(token: string): Cypress.Chainable<unknown> {
   return cy
-    .apiRequest('POST', '/cash-sessions', { opening_amount: 100000000 }, token)
+    .apiRequest('POST', '/cash-sessions', { opening_amount: 99999999 }, token)
     .then((res) => {
       expect(
         [201, 409],
         'abrir caja operativa (nueva o ya existente)',
       ).to.include(res.status);
+      if (res.status === 201) return;
+      return cy.apiRequest('GET', '/cash-sessions/active', null, token).then((activeRes) => {
+        if (activeRes.body?.data) return;
+        return cy
+          .apiRequest('DELETE', '/test/business-days/today', null, token)
+          .then((resetRes) => {
+            expect(resetRes.status, 'reset jornada cerrada').to.eq(200);
+            return cy.apiRequest('POST', '/cash-sessions', { opening_amount: 99999999 }, token);
+          })
+          .then((reopenRes) => {
+            expect(reopenRes.status, `abrir caja tras reset — ${JSON.stringify(reopenRes.body)}`).to.eq(201);
+          });
+      });
     });
 }
+
+/**
+ * Escribe un parámetro de system_config por el endpoint real y devuelve el
+ * valor anterior, para que la suite lo restaure en su after().
+ * @param key - clave de configuración (ej. penalty_rate_daily)
+ * @param value - nuevo valor
+ * @returns valor previo (string) o null si no existía
+ */
+Cypress.Commands.add('apiSetSystemConfig', (key: string, value: string): Cypress.Chainable<string | null> =>
+  cy.getAuthToken('ADMIN').then((token) =>
+    cy.apiRequest('GET', `/system-config/${key}`, null, token).then((getRes) => {
+      const previous = (getRes.body?.data as { value?: string } | null)?.value ?? null;
+      return cy.apiRequest('PUT', `/system-config/${key}`, { value }, token).then((putRes) => {
+        expect(putRes.status, `PUT ${key}=${value}`).to.eq(200);
+        return previous;
+      });
+    }),
+  ),
+);
+
+/**
+ * Comando público de ensureCashSessionOpen con el token ADMIN, para suites que
+ * necesitan caja operativa abierta en su before().
+ */
+Cypress.Commands.add('apiEnsureCashSessionOpen', (): Cypress.Chainable<unknown> =>
+  cy.getAuthToken('ADMIN').then((token) => ensureCashSessionOpen(token)),
+);
 
 /**
  * Aprueba un crédito por id usando el token Admin. Abre caja operativa si no
@@ -1221,6 +1268,8 @@ declare global {
         role: string;
       }): Chainable<Record<string, unknown>>;
       apiUnlockUser(userId: string): Chainable<unknown>;
+      apiEnsureCashSessionOpen(): Chainable<unknown>;
+      apiSetSystemConfig(key: string, value: string): Chainable<string | null>;
       apiApproveCredit(creditId: string): Chainable<Record<string, unknown>>;
       apiRejectCreditIfPending(creditId: string): Chainable<number>;
       apiCreateActiveUser(role: string): Chainable<{ id: string; dni: string; token: string }>;

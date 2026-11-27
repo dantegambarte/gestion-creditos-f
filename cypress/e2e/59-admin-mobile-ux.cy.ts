@@ -83,9 +83,12 @@ const createRealPendingLoan = (): Cypress.Chainable<string> => {
     .should('not.be.disabled')
     .click();
 
-  cy.contains('.p-toast-message', 'Operación enviada', {
-    timeout: 20000,
-  }).should('be.visible');
+  // cy.get/cy.contains no encuentran el toast en este flujo (el helper corre dentro
+  // del .then() de otra página); se lee el document actual de la AUT con reintento.
+  cy.window({ timeout: 20000 }).should((win) => {
+    const texts = Array.from(win.document.querySelectorAll('.p-toast-message')).map((el) => el.textContent ?? '');
+    expect(texts.join(' '), 'toast de envío').to.contain('Operación enviada');
+  });
   return cy.wait('@createMobileApprovalCredit').then((interception) => {
     const createdId = interception.response?.body?.data?.id as
       | string
@@ -112,7 +115,7 @@ const ensureCashSessionOpen = (): Cypress.Chainable<unknown> => {
         return cy.apiRequest(
           'POST',
           '/cash-sessions',
-          { opening_amount: 100000000 },
+          { opening_amount: 99999999 },
           token,
         );
       })

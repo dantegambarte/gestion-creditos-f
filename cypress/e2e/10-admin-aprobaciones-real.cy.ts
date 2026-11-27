@@ -68,7 +68,7 @@ describe('Admin Aprobaciones real', () => {
           return cy.apiRequest(
             'POST',
             '/cash-sessions',
-            { opening_amount: 100000000 },
+            { opening_amount: 99999999 },
             token,
           );
         })

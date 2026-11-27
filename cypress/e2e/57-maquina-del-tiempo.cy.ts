@@ -35,6 +35,18 @@ describe('Máquina del Tiempo — Mora y Cron Job (real)', () => {
   let originalAmountDue: number;
   let forcedDueDate: string;
 
+  // La mora automática viene deshabilitada por defecto (backend bebf4fc,
+  // penalty_rate_daily = 0): habilitarla para esta suite y restaurarla al final.
+  let originalDailyRate: string | null = null;
+  before(() => {
+    cy.apiSetSystemConfig('penalty_rate_daily', '0.005').then((previous) => {
+      originalDailyRate = previous;
+    });
+  });
+  after(() => {
+    cy.apiSetSystemConfig('penalty_rate_daily', originalDailyRate ?? '0');
+  });
+
   before(() => {
     // Limpieza de jornada — evita que una caja abierta de una corrida previa
     // contamine el estado de mora/caja de esta suite.
