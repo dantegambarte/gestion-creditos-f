@@ -114,3 +114,40 @@ describe('PortalDashboardComponent — próxima cuota (#55)', () => {
     expect(el.textContent).toContain('en 3 días');
   });
 });
+
+describe('PortalDashboardComponent — lista de próximos vencimientos (#55)', () => {
+  /**
+   * Renderiza el dashboard y devuelve las tarjetas de la lista de vencimientos.
+   * @param data - resumen que devuelve el PortalService
+   */
+  function listCards(data: AccountSummary): HTMLElement[] {
+    TestBed.configureTestingModule({
+      imports: [PortalDashboardComponent],
+      providers: [
+        provideRouter([]),
+        { provide: PortalService, useValue: { getAccountSummary: () => of(data) } },
+        { provide: PortalAuthService, useValue: { snapshot: { fullName: 'Ana García' } } },
+      ],
+    });
+    const fixture = TestBed.createComponent(PortalDashboardComponent);
+    fixture.detectChanges();
+    return Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>(
+        '[data-cy="portal-dashboard-installment-card"]',
+      ),
+    );
+  }
+
+  it('marca "Hoy" en la cuota de la lista que vence hoy', () => {
+    const [card] = listCards(summary([inst({ dueDate: localIso(0) })]));
+
+    expect(card.textContent).toContain('Hoy');
+  });
+
+  it('sigue mostrando los días restantes en la lista para una cuota futura', () => {
+    const [card] = listCards(summary([inst({ dueDate: localIso(3) })]));
+
+    expect(card.textContent).toContain('en 3 días');
+    expect(card.textContent).not.toContain('Hoy');
+  });
+});
