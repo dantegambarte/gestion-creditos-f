@@ -296,8 +296,13 @@
                     >
                       Deuda restante
                     </p>
-                    @if (remainingDebt(credit); as debt) {
-                      <p class="text-sm font-bold font-mono" style="color: var(--ff-text-primary)">
+                    @let debt = remainingDebt(credit);
+                    @if (debt !== null) {
+                      <p
+                        class="text-sm font-bold font-mono"
+                        style="color: var(--ff-text-primary)"
+                        data-cy="portal-credit-remaining-debt"
+                      >
                         {{ debt | currency: 'ARS' : 'symbol' : '1.0-0' }}
                       </p>
                     } @else {
