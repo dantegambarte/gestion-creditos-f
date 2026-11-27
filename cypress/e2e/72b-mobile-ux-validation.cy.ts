@@ -127,14 +127,14 @@ describe('57 - Mobile UX validation', () => {
     );
     cy.get('.db-kpis').should('be.visible');
     cy.get('.db-pending-row', { timeout: 15000 })
-      .scrollIntoView({ block: 'center' })
+      .scrollIntoView()
       .should('be.visible');
     cy.get('.db-overdue-mobile', { timeout: 15000 })
-      .scrollIntoView({ block: 'center' })
+      .scrollIntoView()
       .should('be.visible');
     cy.get('.db-overdue-table').should('not.be.visible');
     cy.get('.db-analysis-row', { timeout: 15000 })
-      .scrollIntoView({ block: 'center' })
+      .scrollIntoView()
       .should('be.visible');
 
     shouldNotHaveHorizontalOverflow();
@@ -189,10 +189,10 @@ describe('57 - Mobile UX validation', () => {
     shouldBeInsideViewport('.client-create-dialog');
 
     createDialogFields.forEach((selector) => {
-      cy.get(selector).scrollIntoView({ block: 'center' }).should('be.visible');
+      cy.get(selector).scrollIntoView().should('be.visible');
     });
     cy.get('p-dropdown[formControlName="assignedCollectorId"]')
-      .scrollIntoView({ block: 'center' })
+      .scrollIntoView()
       .should('be.visible');
 
     assertDialogFooterButtonsVisible();

@@ -110,7 +110,7 @@ describe('Admin Aprobaciones real', () => {
    * otras corridas — sin esto, una caja vieja con poco margen hace que este
    * test falle con 409 INSUFFICIENT_CASH sin que sea un bug real.
    */
-  const ensureCashSessionOpen = (): Cypress.Chainable<void> => {
+  const ensureCashSessionOpen = (): Cypress.Chainable<unknown> => {
     return cy.getAuthToken('ADMIN').then((token) =>
       cy
         .apiRequest('DELETE', '/test/business-days/today', null, token)
@@ -132,7 +132,7 @@ describe('Admin Aprobaciones real', () => {
   /**
    * Garantiza que exista al menos una fila accionable en aprobaciones.
    */
-  const ensureApprovalRow = (): Cypress.Chainable<void> => {
+  const ensureApprovalRow = (): Cypress.Chainable<unknown> => {
     cy.visit(ADMIN_APPROVALS_URL);
     cy.url({ timeout: 20000 }).should('include', '/admin/approvals');
     return ensureCashSessionOpen().then(() =>

@@ -138,7 +138,7 @@ function ensureCustomer(token: string): Cypress.Chainable<string> {
       ? data
       : ((data as { items?: unknown[] })?.items ?? []);
     const existing = items[0] as { id?: string } | undefined;
-    if (existing?.id) return existing.id;
+    if (existing?.id) return cy.wrap(existing.id, { log: false });
 
     return cy
       .apiRequest(

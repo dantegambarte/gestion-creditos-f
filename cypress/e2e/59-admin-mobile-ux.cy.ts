@@ -109,7 +109,7 @@ const createRealPendingLoan = (): Cypress.Chainable<string> => {
  * aprobaciones previas de otras corridas (sin esto, 409 INSUFFICIENT_CASH
  * sin que sea un bug real).
  */
-const ensureCashSessionOpen = (): Cypress.Chainable<void> => {
+const ensureCashSessionOpen = (): Cypress.Chainable<unknown> => {
   return cy.getAuthToken('ADMIN').then((token) =>
     cy
       .apiRequest('DELETE', '/test/business-days/today', null, token)
@@ -131,7 +131,7 @@ const ensureCashSessionOpen = (): Cypress.Chainable<void> => {
 /**
  * Garantiza que Aprobaciones tenga al menos una card accionable en mobile.
  */
-const ensureMobileApprovalCard = (): Cypress.Chainable<void> => {
+const ensureMobileApprovalCard = (): Cypress.Chainable<unknown> => {
   cy.location('pathname', { timeout: 20000 }).should('eq', ADMIN_APPROVALS_URL);
 
   return ensureCashSessionOpen().then(() =>

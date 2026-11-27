@@ -970,7 +970,7 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
     cy.get('[data-cy="admin-payments-mobile-card"]')
       .first()
       .within(() => {
-        cy.contains(LONG_NAME).then(($name) => {
+        cy.contains(LONG_NAME).then(($name: JQuery<HTMLElement>) => {
           const el = $name[0];
           expect(el.scrollWidth).to.be.greaterThan(el.clientWidth);
         });
@@ -997,7 +997,7 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
     cy.get('[data-cy="delinquency-mobile-card"]')
       .first()
       .within(() => {
-        cy.contains(LONG_NAME).then(($name) => {
+        cy.contains(LONG_NAME).then(($name: JQuery<HTMLElement>) => {
           const el = $name[0];
           expect(el.scrollWidth).to.be.greaterThan(el.clientWidth);
         });
@@ -1022,7 +1022,7 @@ describe('Admin Backoffice — Remaining Mobile UX (Cobros, Mora, Gastos)', () =
     cy.get('[data-cy="expenses-mobile-card"]')
       .first()
       .within(() => {
-        cy.contains(LONG_DESCRIPTION).then(($desc) => {
+        cy.contains(LONG_DESCRIPTION).then(($desc: JQuery<HTMLElement>) => {
           const el = $desc[0];
           expect(el.scrollWidth).to.be.greaterThan(el.clientWidth);
         });

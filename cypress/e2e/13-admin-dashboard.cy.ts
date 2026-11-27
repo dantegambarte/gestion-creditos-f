@@ -207,7 +207,7 @@ describe('Admin — Dashboard', () => {
     );
     cy.get('[data-cy="dashboard-mobile-quick-actions"]').should('be.visible');
     cy.get('[data-cy="dashboard-mobile-pending"]')
-      .scrollIntoView({ block: 'center' })
+      .scrollIntoView()
       .should('be.visible');
     cy.get('[data-cy="dashboard-mobile-quick-actions"]').then(($quick) => {
       cy.get('[data-cy="dashboard-mobile-pending"]').should(($pending) => {
@@ -247,7 +247,7 @@ describe('Admin — Dashboard', () => {
     );
 
     cy.get('[data-cy="dashboard-mobile-pending"]')
-      .scrollIntoView({ block: 'center' })
+      .scrollIntoView()
       .should('be.visible');
     cy.get('[data-cy="dashboard-pending-tab-credits"]').should('be.visible');
     cy.contains(
