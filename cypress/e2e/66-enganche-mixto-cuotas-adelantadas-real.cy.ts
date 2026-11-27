@@ -233,11 +233,9 @@ describe('Enganche MIXED + cuotas adelantadas — flujo multi-rol real', () => {
     cy.location('pathname').then((pathname) => {
       if (!pathname.includes('change-password')) return;
 
-      cy.window()
-        .then((win) => {
-          const token = win.localStorage.getItem('sgcf_portal_token');
-          expect(token, 'token portal tras login temp').to.be.a('string').and.not.be.empty;
-
+      // El token del portal vive sólo en memoria (#39): se pide con la cookie de refresh.
+      cy.apiSessionToken(true)
+        .then((token) => {
           return cy.request({
             method: 'POST',
             url: `${String(Cypress.env('apiBaseUrl'))}/auth/portal/change-password`,
