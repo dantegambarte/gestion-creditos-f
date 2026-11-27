@@ -20,6 +20,7 @@
     "e2e:all": "pnpm e2e:clean && pnpm e2e:run:all && pnpm e2e:report",
     "lint": "eslint --max-warnings 0",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage",
+    "typecheck:e2e": "tsc -p cypress/tsconfig.json",
     "test:scope": "node --test scripts/ci-scope.test.mjs",
     "prepare": "husky",
     "format": "prettier --write"

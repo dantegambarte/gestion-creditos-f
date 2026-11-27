@@ -314,7 +314,7 @@ function requestLoginWithRetry(
     })
     .then((res) => {
       if (res.status !== 429) {
-        return res;
+        return cy.wrap(res, { log: false });
       }
 
       if (retries <= 0) {
@@ -406,7 +406,7 @@ function requestPortalLoginWithRetry(
     })
     .then((res) => {
       if (res.status !== 429) {
-        return res;
+        return cy.wrap(res, { log: false });
       }
 
       if (retries <= 0) {
@@ -669,6 +669,19 @@ const API_BASE = () => Cypress.env('apiBaseUrl') as string;
 type ApiRole = InternalRole;
 
 /**
+ * Envoltorio estándar de respuesta del backend ({ ok, data, message, code }).
+ * `data` queda abierto porque cada endpoint devuelve una forma distinta y los specs
+ * lo leen de forma dinámica, igual que el `Response<any>` nativo de `cy.request`.
+ */
+type ApiEnvelope = {
+  ok?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload dinámico por endpoint
+  data?: any;
+  message?: string;
+  code?: string;
+};
+
+/**
  * Obtiene un token real haciendo POST /auth/login con las credenciales
  * configuradas en Cypress.env para el rol indicado.
  */
@@ -709,7 +722,7 @@ Cypress.Commands.add(
     path: string,
     body: object | null,
     token: string,
-  ): Cypress.Chainable<Cypress.Response<unknown>> => {
+  ): Cypress.Chainable<Cypress.Response<ApiEnvelope>> => {
     return cy.request({
       method,
       url: `${API_BASE()}${path}`,
@@ -770,7 +783,7 @@ Cypress.Commands.add(
  */
 Cypress.Commands.add(
   'apiUnlockUser',
-  (userId: string): Cypress.Chainable<void> => {
+  (userId: string): Cypress.Chainable<unknown> => {
     return cy.getAuthToken('ADMIN').then((token) =>
       cy
         .apiRequest('PATCH', `/users/${userId}/unlock`, null, token)
@@ -794,7 +807,7 @@ Cypress.Commands.add(
  * mismo monto con que ensureCashSessionOpen abre una caja nueva.
  * @param token - token ADMIN
  */
-function fundActiveCashSession(token: string): Cypress.Chainable<void> {
+function fundActiveCashSession(token: string): Cypress.Chainable<unknown> {
   return cy.apiRequest('GET', '/cash-sessions/active', null, token).then((activeRes) => {
     const sessionId = (activeRes.body?.data as { id?: string } | null)?.id;
     expect(sessionId, 'caja operativa activa para fondear').to.be.a('string');
@@ -811,7 +824,7 @@ function fundActiveCashSession(token: string): Cypress.Chainable<void> {
   });
 }
 
-function ensureCashSessionOpen(token: string): Cypress.Chainable<void> {
+function ensureCashSessionOpen(token: string): Cypress.Chainable<unknown> {
   return cy
     .apiRequest('POST', '/cash-sessions', { opening_amount: 100000000 }, token)
     .then((res) => {
@@ -841,7 +854,7 @@ Cypress.Commands.add(
           // para no depender del orden de las suites.
           if (res.status !== 409 || res.body?.code !== 'INSUFFICIENT_CASH') {
             expect(res.status, `aprobar crédito — ${JSON.stringify(res.body)}`).to.eq(200);
-            return res.body.data as Record<string, unknown>;
+            return cy.wrap(res.body.data as Record<string, unknown>, { log: false });
           }
           return fundActiveCashSession(token).then(() =>
             approve(token).then((retry) => {
@@ -1140,7 +1153,7 @@ declare global {
         path: string,
         body: object | null,
         token: string,
-      ): Chainable<Cypress.Response<unknown>>;
+      ): Chainable<Cypress.Response<ApiEnvelope>>;
       apiCreateCustomer(data: {
         full_name: string;
         dni: string;
@@ -1155,7 +1168,7 @@ declare global {
         address: string;
         role: string;
       }): Chainable<Record<string, unknown>>;
-      apiUnlockUser(userId: string): Chainable<void>;
+      apiUnlockUser(userId: string): Chainable<unknown>;
       apiApproveCredit(creditId: string): Chainable<Record<string, unknown>>;
       apiRejectCreditIfPending(creditId: string): Chainable<number>;
       apiCreateActiveUser(role: string): Chainable<{ id: string; dni: string; token: string }>;
