@@ -32,6 +32,8 @@ function seedAdmin(win: Cypress.AUTWindow) {
 
 /** Visita con /auth/me stubado con pending_approvals_count configurable */
 function visitAsAdmin(path: string, pendingApprovals = 0) {
+  // Corre contra backend vivo: un 401 al token mock cierra la sesión mock.
+  cy.intercept('GET', '**/api/**', { statusCode: 200, body: { ok: true, data: [] } });
   cy.intercept('GET', '**/auth/me', {
     statusCode: 200,
     body: {
@@ -44,6 +46,7 @@ function visitAsAdmin(path: string, pendingApprovals = 0) {
       },
     },
   }).as('authMe');
+  cy.stubSessionRefresh('mock_admin_token');
   cy.visit(path, { onBeforeLoad: seedAdmin });
 }
 
@@ -60,7 +63,7 @@ describe('A — Sidebar: badge de aprobaciones pendientes', () => {
   it('muestra el badge con el conteo cuando pending_approvals_count > 0', () => {
     cy.viewport(1280, 720);
     visitAsAdmin('/admin/dashboard', 3);
-    cy.get('[data-testid="nav-aprobaciones"] .nav-item__badge')
+    cy.get('[data-testid="nav-aprobaciones"]:visible .nav-item__badge')
       .should('be.visible')
       .and('have.text', '3');
   });

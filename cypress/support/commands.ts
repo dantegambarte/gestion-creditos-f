@@ -387,6 +387,36 @@ function getPortalRealCredentials(): PortalRealCredentials {
 }
 
 /**
+ * Login por API que no pisa la sesión del navegador: cy.request comparte el
+ * cookie jar, así que la cookie HttpOnly `rt` del helper reemplazaría la del
+ * usuario logueado por UI. Guarda las cookies previas y las restaura después.
+ * @param creds Credenciales reales.
+ * @returns Respuesta del endpoint /auth/login.
+ */
+function requestDetachedLogin(
+  creds: RealCredentials,
+): Cypress.Chainable<Cypress.Response<LoginResponseBody>> {
+  return cy.getCookies({ log: false }).then((before) =>
+    requestLoginWithRetry(creds).then((res) =>
+      cy.clearCookies({ log: false }).then(() => {
+        before.forEach((c) => {
+          cy.setCookie(c.name, c.value, {
+            path: c.path,
+            domain: c.domain,
+            httpOnly: c.httpOnly,
+            secure: c.secure,
+            sameSite: c.sameSite,
+            expiry: c.expiry,
+            log: false,
+          });
+        });
+        return cy.wrap(res, { log: false });
+      }),
+    ),
+  );
+}
+
+/**
  * Ejecuta login real de portal por API con reintentos ante 429.
  * @param creds Credenciales reales del portal.
  * @param retries Cantidad de reintentos restantes.
@@ -700,7 +730,7 @@ Cypress.Commands.add(
       return cy.wrap(cachedToken, { log: false });
     }
 
-    return requestLoginWithRetry({ dni, password }).then((res) => {
+    return requestDetachedLogin({ dni, password }).then((res) => {
       expect(res.status, `login ${role}`).to.eq(200);
       const token = res.body.data?.token as string;
       AUTH_TOKEN_CACHE[role] = token;
@@ -889,7 +919,7 @@ Cypress.Commands.add(
       .then((created) => {
         const user = (created as { user: { id: string } }).user;
         const tempPassword = String((created as { tempPassword: string }).tempPassword);
-        return requestLoginWithRetry({ dni, password: tempPassword }).then((loginRes) => {
+        return requestDetachedLogin({ dni, password: tempPassword }).then((loginRes) => {
           expect(loginRes.status, 'login con contraseña temporal').to.eq(200);
           const tempToken = String(loginRes.body?.data?.token);
           return cy
@@ -901,7 +931,7 @@ Cypress.Commands.add(
             )
             .then((changeRes) => {
               expect(changeRes.status, 'cambiar contraseña temporal').to.eq(200);
-              return requestLoginWithRetry({ dni, password: newPassword }).then((res) => {
+              return requestDetachedLogin({ dni, password: newPassword }).then((res) => {
                 expect(res.status, 'login con contraseña definitiva').to.eq(200);
                 return { id: user.id, dni, token: String(res.body?.data?.token) };
               });
@@ -1129,9 +1159,34 @@ Cypress.Commands.add('apiSessionToken', (portal = false) => {
     });
 });
 
+/**
+ * Stub de la restauración de sesión mock: desde #39 el access token vive en
+ * memoria y APP_INITIALIZER lo recupera con POST /auth/refresh antes de pedir
+ * /auth/me. Sin este stub, una sesión sembrada sólo en localStorage no arranca.
+ * @param token - token mock que devuelve el refresh
+ * @param portal - true para el refresh del portal (/auth/portal/refresh)
+ */
+Cypress.Commands.add('stubSessionRefresh', (token: string, portal = false) => {
+  const url = portal ? '**/auth/portal/refresh' : '**/auth/refresh';
+  cy.intercept('POST', url, {
+    statusCode: 200,
+    body: { ok: true, data: { token } },
+  }).as(portal ? 'portalRefresh' : 'authRefresh');
+  if (!portal) {
+    // El polling de notificaciones sale apenas hay sesión: contra un backend
+    // vivo el token mock da 401 y el interceptor cierra la sesión mock.
+    cy.intercept('GET', '**/api/notifications/unread-count', {
+      statusCode: 200,
+      body: { ok: true, data: { count: 0 } },
+    });
+  }
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
+      /** Stubea POST /auth/refresh (o el del portal) para restaurar una sesión mock. */
+      stubSessionRefresh(token: string, portal?: boolean): Chainable<void>;
       /** Obtiene un access token nuevo con la cookie HttpOnly de refresh (#39). */
       apiSessionToken(portal?: boolean): Chainable<string>;
       loginAs(role: InternalRole, destination?: string): Chainable<void>;

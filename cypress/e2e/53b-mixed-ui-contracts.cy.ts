@@ -97,6 +97,7 @@ function localIsoDaysAhead(daysAhead: number): string {
 
 function visitWithAdminSession(path: string): void {
   cy.intercept('GET', '**/auth/me', ADMIN_ME).as('authMe');
+  cy.stubSessionRefresh('mock_admin_token');
   cy.visit(path, {
     onBeforeLoad(win) {
       win.localStorage.setItem('sgcf_token', 'mock_admin_token');
@@ -131,6 +132,7 @@ function visitWithSellerSession(path: string): void {
       force_relogin_at: null,
     },
   }).as('authMe');
+  cy.stubSessionRefresh('mock_seller_token');
   cy.visit(path, {
     onBeforeLoad(win) {
       win.localStorage.setItem('sgcf_token', 'mock_seller_token');
