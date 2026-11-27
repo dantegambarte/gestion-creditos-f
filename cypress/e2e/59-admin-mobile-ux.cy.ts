@@ -47,12 +47,6 @@ const usersResponse = {
 };
 
 /**
- * Obtiene un token interno real con la cookie de refresh del login (#39:
- * el token ya no se guarda en localStorage).
- */
-const getAuthToken = (): Cypress.Chainable<string> => cy.apiSessionToken();
-
-/**
  * Crea una operación préstamo real para garantizar una aprobación pendiente.
  */
 const createRealPendingLoan = (): Cypress.Chainable<string> => {

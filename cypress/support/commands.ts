@@ -13,7 +13,6 @@ type PortalRealCredentials = {
 };
 
 const AUTH_TOKEN_CACHE: Partial<Record<InternalRole, string>> = {};
-let PORTAL_SESSION_CACHE: PortalSession | null = null;
 
 type LoginResponseBody = {
   ok?: boolean;
@@ -634,7 +633,6 @@ Cypress.Commands.add('loginPortalReal', (destination?: string) => {
         portalIsTempPassword: Boolean(customer?.portal_is_temp_password),
       },
     };
-    PORTAL_SESSION_CACHE = session;
     const customerRaw = JSON.stringify(session.customer);
 
     cy.visit(targetPath, {
@@ -656,7 +654,6 @@ Cypress.Commands.add('logout', () => {
   delete AUTH_TOKEN_CACHE.SELLER;
   delete AUTH_TOKEN_CACHE.COLLECTOR;
   delete AUTH_TOKEN_CACHE.SELLER_COLLECTOR;
-  PORTAL_SESSION_CACHE = null;
   cy.clearAllLocalStorage();
   cy.visit('/login');
 });
