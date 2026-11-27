@@ -60,12 +60,12 @@ describe('Sidebar y Guardias de Ruta', () => {
     });
 
     it('el badge de Aprobaciones (si existe) tiene formato visible y no vacío', () => {
-      cy.get('[data-testid="nav-aprobaciones"]')
+      cy.get('[data-testid="nav-aprobaciones"]:visible')
         .scrollIntoView()
         .should('be.visible');
       cy.get('body').then(($body) => {
         const badge = $body.find(
-          '[data-testid="nav-aprobaciones"] .nav-item__badge',
+          '[data-testid="nav-aprobaciones"]:visible .nav-item__badge',
         );
         if (badge.length === 0) {
           cy.get('[data-testid="nav-aprobaciones"]').should('be.visible');
