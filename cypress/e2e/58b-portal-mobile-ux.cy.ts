@@ -159,18 +159,15 @@ function visitPortalWithSession(path: string): void {
     'sig',
   ].join('.');
 
-  cy.visit(path, {
-    onBeforeLoad(win) {
-      win.localStorage.setItem('sgcf_portal_token', token);
-      win.localStorage.setItem(
-        'sgcf_portal_customer',
-        JSON.stringify({
-          id: 'cust-mobile-ux',
-          fullName: 'Cliente Mobile',
-          dni: '40567890',
-          portalIsTempPassword: false,
-        }),
-      );
+  // Desde #39 el token vive en memoria: loginPortalAs stubbea el refresh del
+  // portal además de sembrar el cliente.
+  cy.loginPortalAs(path, {
+    token,
+    customer: {
+      id: 'cust-mobile-ux',
+      fullName: 'Cliente Mobile',
+      dni: '40567890',
+      portalIsTempPassword: false,
     },
   });
 }

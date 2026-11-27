@@ -72,8 +72,12 @@ describe('Wizard Nueva Operación real — Unhappy Paths', () => {
     cy.contains('Paso 1 de 5', { timeout: 20000 }).should('be.visible');
   });
 
-  it('cancelar en el paso inicial abandona el wizard', () => {
+  // Desde afc6e50 cancelar pide confirmación antes de abandonar el wizard.
+  it('cancelar en el paso inicial pide confirmación y abandona el wizard', () => {
     cy.get('[data-cy="btn-cancelar"] button').click();
+    cy.contains('.p-confirm-dialog:visible', 'Cancelar operación').should('be.visible');
+    cy.url().should('include', '/operations/new');
+    cy.contains('.p-confirm-dialog:visible button', 'Sí, cancelar').click();
     cy.url().should('not.include', '/operations/new');
   });
 

@@ -10,7 +10,7 @@ describe('PWA — Installability', () => {
     cy.visit('/login');
 
     cy.get('html').should('have.attr', 'lang', 'es');
-    cy.title().should('eq', 'FinFlow');
+    cy.title().should('eq', 'Productcred');
     cy.get('link[rel="manifest"]')
       .should('have.attr', 'href')
       .and('eq', 'manifest.webmanifest');
@@ -28,13 +28,13 @@ describe('PWA — Installability', () => {
       .and('include', 'viewport-fit=cover');
   });
 
-  it('configura el manifest como app standalone FinFlow con iconos instalables', () => {
+  it('configura el manifest como app standalone Productcred con iconos instalables', () => {
     cy.request('/manifest.webmanifest')
       .its('body')
       .then((manifest) => {
         expect(manifest).to.include({
-          name: 'FinFlow',
-          short_name: 'FinFlow',
+          name: 'Productcred s.a.s.',
+          short_name: 'Productcred',
           display: 'standalone',
           theme_color: '#0b0d14',
           background_color: '#0b0d14',

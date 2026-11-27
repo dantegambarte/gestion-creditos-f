@@ -75,8 +75,11 @@ describe('P20 — sesión sin tokens en storage y portal', () => {
           ok: true,
           data: { token: 'jwt.refreshed.token' },
         }).as('refresh');
+        // cy.intercept no expone withCredentials: se prueba su efecto, que la
+        // cookie de refresh viaja en el POST (el API corre en otro puerto/origen).
+        cy.setCookie('e2e_rt_probe', 'refresh-cookie');
         cy.reload();
-        cy.wait('@refresh').its('request.withCredentials').should('eq', true);
+        cy.wait('@refresh').its('request.headers.cookie').should('include', 'e2e_rt_probe=refresh-cookie');
         cy.wait('@me').its('request.headers.authorization').should('eq', 'Bearer jwt.refreshed.token');
         cy.location('pathname').should('eq', '/admin/dashboard');
         cy.window().then(expectNoTokensInStorage);

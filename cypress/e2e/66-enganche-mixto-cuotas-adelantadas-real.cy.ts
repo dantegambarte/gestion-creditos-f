@@ -181,10 +181,11 @@ describe('Enganche MIXED + cuotas adelantadas — flujo multi-rol real', () => {
         const amountDue = Number(res.body?.data?.amount_due);
 
         cy.intercept('POST', '/api/payments').as('createPayment');
-        cy.contains(customer.fullName, { timeout: 15000 })
-          .closest('tr')
+        // La acción de la fila de la planilla es "Registrar cobro".
+        cy.get(`[data-cy="sheet-detail-table-row"][data-installment-id="${survivingInstallmentId}"]`, { timeout: 15000 })
+          .scrollIntoView()
           .within(() => {
-            cy.contains('button', 'Cobrar').click({ force: true });
+            cy.contains('button', 'Registrar cobro').should('be.visible').click();
           });
 
         cy.contains('.p-dialog', 'Registrar Cobro', { timeout: 10000 }).should('be.visible');

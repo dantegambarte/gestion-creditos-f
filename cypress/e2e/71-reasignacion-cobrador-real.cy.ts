@@ -237,10 +237,11 @@ describe('Reasignación de cobrador a mitad de ciclo (real)', () => {
     cy.contains('h1', 'Planilla', { timeout: 15000 }).should('be.visible');
 
     cy.intercept('POST', '/api/payments').as('createPayment');
-    cy.contains(customer.fullName, { timeout: 15000 })
-      .closest('tr')
+    // La acción de la fila de la planilla es "Registrar cobro".
+    cy.get(`[data-cy="sheet-detail-table-row"][data-installment-id="${installmentId}"]`, { timeout: 15000 })
+      .scrollIntoView()
       .within(() => {
-        cy.contains('button', 'Cobrar').click({ force: true });
+        cy.contains('button', 'Registrar cobro').should('be.visible').click();
       });
 
     cy.contains('.p-dialog', 'Registrar Cobro', { timeout: 10000 }).should(

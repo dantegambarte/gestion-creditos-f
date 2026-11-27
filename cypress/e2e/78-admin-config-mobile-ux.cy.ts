@@ -155,17 +155,19 @@ describe('Admin Config — Remaining Mobile UX (Feriados, Usuarios, Tasas)', () 
     });
   });
 
-  // P1 #4 — Config > Usuarios: tabla legacy + panel "Nueva tasa" sin maxWidth.
+  // P1 #4 — Usuarios: tabla + modal de alta acotados en mobile. Desde 5173e79
+  // /admin/config/users redirige a la única pantalla real /admin/users.
   it('Config Usuarios Mobile — cards en vez de tabla, toolbar apilado y modal acotado', () => {
     cy.loginAs('ADMIN', '/admin/config/users');
+    cy.location('pathname', { timeout: 15000 }).should('eq', '/admin/users');
 
-    cy.get('[data-cy="admin-config-users-table"]').should('not.be.visible');
-    cy.get('[data-cy="admin-config-users-mobile-card"]').should(
+    cy.get('[data-cy="admin-users-table"]').should('not.be.visible');
+    cy.get('[data-cy="admin-users-mobile-card"]').should(
       'have.length.at.least',
       1,
     );
 
-    cy.contains('button', '+ Nuevo Usuario').click();
+    cy.get('[data-cy="admin-users-create-cta"] button').click();
     cy.window().then((win) => {
       cy.get('.p-dialog')
         .should('be.visible')

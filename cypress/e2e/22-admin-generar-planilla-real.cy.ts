@@ -10,23 +10,8 @@
 describe('Admin — Generar Planilla de Cobro', () => {
   beforeEach(() => {
     cy.viewport(1280, 720);
-    cy.getAuthToken('ADMIN').then((token) => {
-      cy.request({
-        method: 'GET',
-        url: `${String(Cypress.env('apiBaseUrl'))}/auth/me`,
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((meRes) => {
-        const user = meRes.body?.data ?? null;
-
-        cy.visit('/admin/collections', {
-          onBeforeLoad(win) {
-            if (user) {
-              win.localStorage.setItem('sgcf_user', JSON.stringify(user));
-            }
-          },
-        });
-      });
-    });
+    // Desde #39 la sesión no se restaura desde localStorage: login real.
+    cy.loginReal('ADMIN', '/admin/collections');
     cy.location('pathname', { timeout: 20000 }).should('eq', '/admin/collections');
     cy.contains('button', 'Generar nueva planilla', { timeout: 20000 }).should('be.visible');
     cy.contains('button', 'Generar nueva planilla', { timeout: 15000 }).click();

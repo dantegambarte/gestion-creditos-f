@@ -26,8 +26,10 @@ describe('Admin — Configuración', () => {
     cy.get('nav.ff-tab-nav a').should('have.length.gte', 4);
   });
 
-  it('la tab activa tiene estilo visual de selección', () => {
-    cy.get('nav.ff-tab-nav a').first().should('have.class', 'ff-tab--active');
+  // /admin/config redirige a la tab por defecto "Tasas de Interés" (5173e79).
+  it('la tab activa por defecto es Tasas de Interés', () => {
+    cy.location('pathname').should('eq', '/admin/config/rates');
+    cy.get('nav.ff-tab-nav a').first().should('have.class', 'ff-tab--active').and('contain.text', 'Tasas de Interés');
   });
 
   it('muestra tabs de navegación de configuración', () => {
@@ -36,15 +38,16 @@ describe('Admin — Configuración', () => {
 
   it('renderiza contenido de la tab activa', () => {
     cy.get('router-outlet').should('exist');
-    cy.contains('Datos de la Empresa').should('be.visible');
+    cy.get('[data-cy="interest-rates-table"], [data-cy="interest-rates-empty-state"]').should('exist');
   });
 
-  it('muestra la opción de tab "General"', () => {
-    cy.contains('nav.ff-tab-nav a', 'General').should('be.visible');
+  it('muestra la opción de tab "Empresa"', () => {
+    cy.contains('nav.ff-tab-nav a', 'Empresa').scrollIntoView().should('be.visible');
   });
 
-  it('muestra la opción de tab "Usuarios"', () => {
-    cy.contains('nav.ff-tab-nav a', 'Usuarios').scrollIntoView().should('be.visible');
+  // Usuarios dejó de ser una tab de Configuración: vive en /admin/users (5173e79).
+  it('no duplica la gestión de usuarios como tab', () => {
+    cy.contains('nav.ff-tab-nav a', 'Usuarios').should('not.exist');
   });
 
   it('muestra la opción de tab "Notificaciones"', () => {
