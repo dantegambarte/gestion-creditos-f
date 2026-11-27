@@ -332,6 +332,12 @@ describe('Liquidaciones × Caja Fuerte Central — escenarios límite (real)', (
     );
   });
 
+  // Los casos abren una caja de $10.000 en la jornada de hoy: sin este reset,
+  // specs posteriores que desembolsan préstamos chocan con 409 por fondos.
+  after(() => {
+    adminToken().then((t) => resetToday(t));
+  });
+
   // Cada test usa un vendedor nuevo: sus comisiones y liquidaciones no chocan
   // con corridas previas (UNIQUE user_id + week_start) ni con otros casos.
   // Un usuario nuevo no tiene sueldo fijo, así que totalNet = solo comisiones.
