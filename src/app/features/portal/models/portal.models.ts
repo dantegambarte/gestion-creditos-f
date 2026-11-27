@@ -65,6 +65,8 @@ export interface PortalCredit {
   pendingPenalty: number;
   hasOverdue: boolean;
   overdueInstallmentsCount: number;
+  /** Deuda restante calculada por el backend: Σ (amount_due − amount_paid) de las cuotas no pagadas. */
+  remainingAmount: number | null;
 }
 
 export interface PortalInstallment {
