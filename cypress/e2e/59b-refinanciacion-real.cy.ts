@@ -17,7 +17,6 @@
  * incluida, monto no determinístico).
  */
 
-type MeResponse = { id?: string };
 
 describe('Refinanciación de crédito con mora (real)', () => {
   const stamp = Date.now().toString().slice(-6);

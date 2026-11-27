@@ -53,25 +53,6 @@ const MOCK_DASHBOARD_JORNADA_YESTERDAY = {
   },
 };
 
-/** Dashboard del día actual ya cerrado. */
-const MOCK_DASHBOARD_TODAY_CLOSED = {
-  ok: true,
-  data: {
-    date: TODAY,
-    is_closed: true,
-    cash_amount: 50000,
-    transfer_amount: 20000,
-    total_collected: 70000,
-    total_outflows: 5000,
-    net_balance: 65000,
-    approved_count: 3,
-    pending_count: 0,
-    pending_amount: 0,
-    down_payments_total: 0,
-    down_payments_count: 0,
-  },
-};
-
 const MOCK_PRE_CLOSE_YESTERDAY = {
   ok: true,
   data: {
@@ -93,37 +74,6 @@ const MOCK_PRE_CLOSE_YESTERDAY = {
     efectivo: { esperado: 45000 },
     transferencias: { esperado: 20000 },
     pendientes: { count: 0, amount: 0 },
-  },
-};
-
-const MOCK_CLOSE_RESULT = {
-  ok: true,
-  data: {
-    id: 'cr-001',
-    register_date: YESTERDAY,
-    total_collected: 70000,
-    cash_amount: 45000,
-    transfer_amount: 20000,
-    total_outflows: 5000,
-    declared_cash: 45000,
-    difference: 0,
-    difference_status: 'EXACT',
-    observations: null,
-    created_at: `${YESTERDAY}T03:10:00Z`,
-    closed_by_name: 'Admin Sistema',
-  },
-};
-
-const MOCK_DETAIL = {
-  ok: true,
-  data: {
-    ...MOCK_CLOSE_RESULT.data,
-    breakdown: {
-      payments: [],
-      down_payments: [],
-      liquidations: [],
-      expenses: [],
-    },
   },
 };
 

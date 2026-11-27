@@ -3,10 +3,11 @@
 // so existing code is fixed as it is touched instead of in one mass reformat.
 const tseslint = require('typescript-eslint');
 const angular = require('angular-eslint');
+const chaiFriendly = require('eslint-plugin-chai-friendly');
 
 module.exports = tseslint.config(
   {
-    ignores: ['dist/**', 'coverage/**', '.claude/**', 'node_modules/**', '.angular/**', 'cypress/**'],
+    ignores: ['dist/**', 'coverage/**', '.claude/**', 'node_modules/**', '.angular/**'],
   },
   {
     files: ['**/*.ts'],
@@ -22,6 +23,15 @@ module.exports = tseslint.config(
     rules: {
       // Test doubles often need loose typing.
       '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    files: ['cypress/**/*.ts'],
+    // Chai assertions such as `expect(x).to.be.true` are expressions by design.
+    extends: [chaiFriendly.configs.recommendedFlat],
+    rules: {
+      // `declare global { namespace Cypress {...} }` is the documented way to type custom commands.
+      '@typescript-eslint/no-namespace': ['error', { allowDeclarations: true }],
     },
   },
   {
