@@ -44,7 +44,7 @@
           [useGrouping]="false"
           styleClass="w-full"
           inputStyleClass="w-full h-11 bg-[var(--ff-secondary)] border-[var(--ff-border)] text-[var(--ff-text-primary)] text-base md:text-sm rounded-xl px-3"
-          [placeholder]="defaultLowStockThreshold.toString()"
+          [placeholder]="(configuredThreshold ?? defaultLowStockThreshold).toString()"
         />
       </div>
 
@@ -148,7 +148,7 @@
                     class="px-2 py-0.5 rounded text-xs font-bold bg-red-900/60 text-red-400 uppercase tracking-wide"
                     >Sin stock</span
                   >
-                } @else if (stockThreshold !== null && row.availableCount <= stockThreshold) {
+                } @else if (row.availableCount <= effectiveThreshold) {
                   <span
                     class="px-2 py-0.5 rounded text-xs font-bold bg-orange-900/60 text-orange-400 uppercase tracking-wide"
                   >
@@ -187,7 +187,7 @@
                   class="shrink-0 px-2 py-0.5 rounded text-xs font-bold bg-red-900/60 text-red-400 uppercase tracking-wide"
                   >Sin stock</span
                 >
-              } @else if (stockThreshold !== null && row.availableCount <= stockThreshold) {
+              } @else if (row.availableCount <= effectiveThreshold) {
                 <span
                   class="shrink-0 px-2 py-0.5 rounded text-xs font-bold bg-orange-900/60 text-orange-400 uppercase tracking-wide"
                 >

@@ -21,6 +21,8 @@ export interface CompanyRates {
 export interface CompanySettings {
   company: CompanyData;
   rates: CompanyRates;
+  /** Umbral de stock bajo de `system_config`; puede faltar en backends viejos. */
+  low_stock_threshold?: number | null;
 }
 
 /** Cuerpo de `PUT /api/company` (parcial). */
