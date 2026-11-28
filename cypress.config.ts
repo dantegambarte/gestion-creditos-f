@@ -6,11 +6,11 @@ const { dbResetBlockReason, readEnvFile, effectiveBackendEnv } = require('./cypr
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { findRealSpecs } = require('./cypress/scripts/real-spec-detector');
 
-const BACKEND_DIR = path.resolve(
-  __dirname,
-  '../../backend/gestion_creditos_backend',
-);
-const API_BASE = 'http://localhost:3000/api';
+// CI y las copias aisladas los sobreescriben con E2E_BACKEND_DIR / E2E_API_BASE.
+const BACKEND_DIR = process.env['E2E_BACKEND_DIR']
+  ? path.resolve(process.env['E2E_BACKEND_DIR'])
+  : path.resolve(__dirname, '../../backend/gestion_creditos_backend');
+const API_BASE = process.env['E2E_API_BASE'] || 'http://localhost:3000/api';
 
 export default defineConfig({
   env: {
