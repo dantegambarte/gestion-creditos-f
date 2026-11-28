@@ -96,13 +96,13 @@ jobs:
 
       - name: Install backend
         working-directory: backend
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Migrate and seed
         working-directory: backend
         run: |
-          npm run migration:run
-          npm run seed
+          pnpm run migration:run
+          pnpm run seed
           # The admin seed forces a password change; the suite logs in directly.
           PGPASSWORD="$DB_PASSWORD" psql -h localhost -U postgres -d "$DB_NAME" \
             -c "UPDATE users SET is_temp_password = FALSE WHERE dni = '00000000'"
