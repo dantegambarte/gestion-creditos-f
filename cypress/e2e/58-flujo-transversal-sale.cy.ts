@@ -79,6 +79,12 @@ describe('El Viaje de la Venta — SALE Multi-Rol (real)', () => {
   let secondPaymentId: string;
   let portalTempPassword: string;
 
+  // Cobros y desembolsos exigen caja operativa abierta: no depender de que otra
+  // suite la haya dejado abierta (o cerrada) hoy.
+  before(() => {
+    cy.apiEnsureCashSessionOpen();
+  });
+
   // Una corrida fallida puede dejar su unidad de E2E sin vender.
   after(() => {
     cy.apiDeactivateLeftoverSaleUnits();

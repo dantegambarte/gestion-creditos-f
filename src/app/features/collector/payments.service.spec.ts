@@ -73,6 +73,15 @@ describe('PaymentsService', () => {
       req.flush({ ok: true, data: [mockPaymentRaw], message: '' });
     });
 
+    it('envía created_from/created_to cuando se filtra por fecha de registro', () => {
+      service.list({ createdFrom: '2026-11-25', createdTo: '2026-11-26' }).subscribe();
+      const req = httpMock.expectOne((r) => r.url === `${BASE}/payments`);
+      expect(req.request.params.get('created_from')).toBe('2026-11-25');
+      expect(req.request.params.get('created_to')).toBe('2026-11-26');
+      expect(req.request.params.has('date_from')).toBeFalse();
+      req.flush({ ok: true, data: [mockPaymentRaw], message: '' });
+    });
+
     it('maps snake_case to camelCase', () => {
       let result: any[] = [];
       service.list().subscribe((d) => (result = d));

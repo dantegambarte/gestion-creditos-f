@@ -33,6 +33,7 @@ function loginSellerForSaleFlow() {
       },
     },
   }).as('authMe');
+  cy.stubSessionRefresh('mock_seller_token');
 
   cy.intercept('GET', /\/api\/customers(\?.*)?$/, {
     statusCode: 200,

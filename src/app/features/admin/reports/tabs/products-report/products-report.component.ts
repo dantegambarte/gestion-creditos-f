@@ -7,16 +7,17 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { InputTextModule } from 'primeng/inputtext';
 import { SkeletonModule } from 'primeng/skeleton';
-import { Subject } from 'rxjs';
-import { finalize, takeUntil } from 'rxjs/operators';
+import { Subject, of } from 'rxjs';
+import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
 import { AppError } from '../../../../../core/models/app-error';
 import { FormatService } from '../../../../../core/services/format.service';
+import { CompanySettingsService } from '../../../config/services/company-settings.service';
 import { ErrorStateComponent } from '../../../../../shared/states/error-state/error-state.component';
 import { LoadingStateComponent } from '../../../../../shared/states/loading-state/loading-state.component';
 import { ProductReportRow } from '../../report.models';
 import { ReportsService } from '../../reports.service';
 
-/** Umbral de stock bajo cuando el admin no carga uno. Valor de negocio a confirmar (#62). */
+/** Umbral de stock bajo si la configuración del backend no trae uno (#109). */
 export const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 
 @Component({
@@ -37,13 +38,17 @@ export const DEFAULT_LOW_STOCK_THRESHOLD = 5;
 })
 export class ProductsReportComponent implements OnInit, OnDestroy {
   private readonly service = inject(ReportsService);
+  private readonly companySettings = inject(CompanySettingsService);
   readonly format = inject(FormatService);
   private destroy$ = new Subject<void>();
 
   productRows: ProductReportRow[] = [];
   loading = false;
   error: AppError | null = null;
+  /** Umbral que el admin escribe en pantalla; `null` = usar el configurado. */
   stockThreshold: number | null = null;
+  /** Umbral de la configuración del backend (`low_stock_threshold`); `null` mientras no llega. */
+  configuredThreshold: number | null = null;
   readonly defaultLowStockThreshold = DEFAULT_LOW_STOCK_THRESHOLD;
   onlyWithSales = false;
   searchText = '';
@@ -56,7 +61,15 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    this.loadConfiguredThreshold();
     this.fetchProducts();
+  }
+
+  /**
+   * Umbral vigente: el que escribe el admin, si no el de la configuración, si no el default.
+   */
+  get effectiveThreshold(): number {
+    return this.stockThreshold ?? this.configuredThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
   }
 
   ngOnDestroy(): void {
@@ -77,8 +90,7 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
       if (this.stockMode === 'OUT') return row.availableCount === 0;
       if (this.stockMode === 'AVAILABLE') return row.availableCount > 0;
       if (this.stockMode === 'LOW') {
-        const threshold = this.stockThreshold ?? DEFAULT_LOW_STOCK_THRESHOLD;
-        return row.availableCount > 0 && row.availableCount <= threshold;
+        return row.availableCount > 0 && row.availableCount <= this.effectiveThreshold;
       }
       return true;
     });
@@ -90,6 +102,23 @@ export class ProductsReportComponent implements OnInit, OnDestroy {
   consultProducts(): void {
     this.productRows = [];
     this.fetchProducts();
+  }
+
+  /**
+   * Lee el umbral de `GET /company`. Si falla o no viene, queda en `null` y rige el
+   * default: el reporte se muestra igual.
+   */
+  private loadConfiguredThreshold(): void {
+    this.companySettings
+      .get()
+      .pipe(
+        map((s) => s.low_stock_threshold),
+        catchError(() => of(null)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((value) => {
+        this.configuredThreshold = typeof value === 'number' && value >= 0 ? value : null;
+      });
   }
 
   /**

@@ -261,12 +261,13 @@ export class DelinquencyComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Carga las cuotas vencidas desde el backend y las mapea a filas de mora.
+   * Carga las cuotas vencidas por fecha de vencimiento (no por el status
+   * OVERDUE persistido) y las mapea a filas de mora.
    */
   private loadClients(): void {
     this.loadingClients = true;
     this.installmentsService
-      .list({ status: 'OVERDUE' })
+      .list({ overdue: true })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (installments) => {

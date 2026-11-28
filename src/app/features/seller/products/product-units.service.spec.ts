@@ -1,8 +1,5 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../../environments/environment';
 import { jwtInterceptor } from '../../../core/interceptors/jwt.interceptor';
@@ -25,12 +22,6 @@ const mockUnitRaw: ProductUnitRaw = {
   current_price: 150000,
   product_id: 'prod-1',
   product_name: 'iPhone 15',
-};
-
-const mockUnitSoldRaw: ProductUnitRaw = {
-  ...mockUnitRaw,
-  id: 'unit-2',
-  status: 'SOLD',
 };
 
 describe('ProductUnitsService', () => {
@@ -65,7 +56,10 @@ describe('ProductUnitsService', () => {
       expect(req.request.body['units']).toEqual([{ unit_code: '111' }, { unit_code: '222' }]);
       req.flush({
         ok: true,
-        data: { created: 2, units: [mockUnitRaw, { ...mockUnitRaw, id: 'unit-2', unit_code: '222' }] },
+        data: {
+          created: 2,
+          units: [mockUnitRaw, { ...mockUnitRaw, id: 'unit-2', unit_code: '222' }],
+        },
         message: '',
       });
       expect(result.created).toBe(2);

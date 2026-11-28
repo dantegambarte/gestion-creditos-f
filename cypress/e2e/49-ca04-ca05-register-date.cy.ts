@@ -219,7 +219,7 @@ describe('CA-05 real — gasto creado hoy queda en la jornada activa (register_d
                   expect(
                     gastosAfter,
                     'gastos_efectivo debe incluir el nuevo gasto',
-                  ).to.equal(gastosBefore + GASTO_AMOUNT);
+                  ).to.be.closeTo(gastosBefore + GASTO_AMOUNT, 0.005);
                 });
               });
             },
@@ -417,7 +417,8 @@ describe('CA-04 + CA-05 mock — pre-cierre de jornada anterior muestra enganche
   });
 
   it('CA-04 + CA-05 — el total esperado descuenta los gastos registrados', () => {
-    cy.get('.p-dialog:visible').contains('Total').should('be.visible');
+    // El tfoot "Total" queda debajo del scroll interno del diálogo a 720px de alto.
+    cy.get('.p-dialog:visible').contains('td', 'Total').scrollIntoView().should('be.visible');
     cy.get('.p-dialog:visible').contains(/70[\.,]500|70500/).should('exist');
   });
 

@@ -47,12 +47,6 @@ const usersResponse = {
 };
 
 /**
- * Obtiene un token interno real con la cookie de refresh del login (#39:
- * el token ya no se guarda en localStorage).
- */
-const getAuthToken = (): Cypress.Chainable<string> => cy.apiSessionToken();
-
-/**
  * Crea una operación préstamo real para garantizar una aprobación pendiente.
  */
 const createRealPendingLoan = (): Cypress.Chainable<string> => {
@@ -89,9 +83,12 @@ const createRealPendingLoan = (): Cypress.Chainable<string> => {
     .should('not.be.disabled')
     .click();
 
-  cy.contains('.p-toast-message', 'Operación enviada', {
-    timeout: 20000,
-  }).should('be.visible');
+  // cy.get/cy.contains no encuentran el toast en este flujo (el helper corre dentro
+  // del .then() de otra página); se lee el document actual de la AUT con reintento.
+  cy.window({ timeout: 20000 }).should((win) => {
+    const texts = Array.from(win.document.querySelectorAll('.p-toast-message')).map((el) => el.textContent ?? '');
+    expect(texts.join(' '), 'toast de envío').to.contain('Operación enviada');
+  });
   return cy.wait('@createMobileApprovalCredit').then((interception) => {
     const createdId = interception.response?.body?.data?.id as
       | string
@@ -109,7 +106,7 @@ const createRealPendingLoan = (): Cypress.Chainable<string> => {
  * aprobaciones previas de otras corridas (sin esto, 409 INSUFFICIENT_CASH
  * sin que sea un bug real).
  */
-const ensureCashSessionOpen = (): Cypress.Chainable<void> => {
+const ensureCashSessionOpen = (): Cypress.Chainable<unknown> => {
   return cy.getAuthToken('ADMIN').then((token) =>
     cy
       .apiRequest('DELETE', '/test/business-days/today', null, token)
@@ -118,7 +115,7 @@ const ensureCashSessionOpen = (): Cypress.Chainable<void> => {
         return cy.apiRequest(
           'POST',
           '/cash-sessions',
-          { opening_amount: 100000000 },
+          { opening_amount: 99999999 },
           token,
         );
       })
@@ -131,7 +128,7 @@ const ensureCashSessionOpen = (): Cypress.Chainable<void> => {
 /**
  * Garantiza que Aprobaciones tenga al menos una card accionable en mobile.
  */
-const ensureMobileApprovalCard = (): Cypress.Chainable<void> => {
+const ensureMobileApprovalCard = (): Cypress.Chainable<unknown> => {
   cy.location('pathname', { timeout: 20000 }).should('eq', ADMIN_APPROVALS_URL);
 
   return ensureCashSessionOpen().then(() =>

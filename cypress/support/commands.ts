@@ -13,7 +13,6 @@ type PortalRealCredentials = {
 };
 
 const AUTH_TOKEN_CACHE: Partial<Record<InternalRole, string>> = {};
-let PORTAL_SESSION_CACHE: PortalSession | null = null;
 
 type LoginResponseBody = {
   ok?: boolean;
@@ -314,7 +313,7 @@ function requestLoginWithRetry(
     })
     .then((res) => {
       if (res.status !== 429) {
-        return res;
+        return cy.wrap(res, { log: false });
       }
 
       if (retries <= 0) {
@@ -344,14 +343,13 @@ function requestLoginWithRetry(
 }
 
 /**
- * Convierte el usuario real del backend al contrato AuthUser que la app guarda en storage.
- * @param user Usuario crudo devuelto por auth/login o auth/me.
- * @param token Token JWT emitido por el backend real.
- * @returns Usuario normalizado para `sgcf_user`.
+ * Convierte el usuario real del backend al perfil que la app guarda en storage.
+ * Desde #39 el perfil no incluye el token: el access token vive sólo en memoria.
+ * @param user Usuario crudo devuelto por auth/login.
+ * @returns Perfil normalizado para `sgcf_user`.
  */
 function normalizeRealInternalUser(
   user: Record<string, unknown>,
-  token: string,
 ): Record<string, unknown> {
   const fullName = String(user['full_name'] ?? user['name'] ?? '').trim();
   const role = String(user['role'] ?? '').trim();
@@ -368,86 +366,7 @@ function normalizeRealInternalUser(
       .join(''),
     is_temp_password: Boolean(user['is_temp_password']),
     force_relogin_at: user['force_relogin_at'] ?? null,
-    token,
   };
-}
-
-/**
- * Persiste una sesión interna real antes de iniciar Angular.
- * @param win Ventana del AUT donde se inyecta storage.
- * @param token Token JWT emitido por el backend real.
- * @param user Usuario devuelto por el backend, si está disponible.
- */
-function seedRealInternalSession(
-  win: Cypress.AUTWindow,
-  token: string,
-  user: Record<string, unknown> | null,
-): void {
-  win.localStorage.setItem(INTERNAL_TOKEN_KEY, token);
-  if (user) {
-    win.localStorage.setItem(
-      INTERNAL_USER_KEY,
-      JSON.stringify(normalizeRealInternalUser(user, token)),
-    );
-  }
-}
-
-/**
- * Obtiene una sesión real fresca para recuperar navegación si la sesión cacheada cae en /login.
- * @param role Rol interno a autenticar.
- * @param creds Credenciales reales del rol.
- * @returns Token y usuario devueltos por el backend.
- */
-function fetchFreshInternalSession(
-  role: InternalRole,
-  creds: RealCredentials,
-): Cypress.Chainable<{ token: string; user: Record<string, unknown> | null }> {
-  return requestLoginWithRetry(creds).then((res) => {
-    expect(res.status, `[cypress][loginReal] relogin ${role}`).to.eq(200);
-
-    const token = res.body?.data?.token;
-    const user =
-      (res.body?.data?.user as Record<string, unknown> | undefined) ?? null;
-
-    expect(token, '[cypress][loginReal] token backend fresco').to.be.a('string')
-      .and.not.be.empty;
-
-    AUTH_TOKEN_CACHE[role] = token as string;
-
-    return { token: token as string, user };
-  });
-}
-
-/**
- * Reutiliza el token que dejó cy.session en localStorage; sólo pide login nuevo si no hay sesión cacheada.
- * Evita un POST /auth/login por test (rate limit) sin perder la sesión validada.
- * @param role Rol interno a autenticar.
- * @param creds Credenciales reales del rol (para el fallback de login fresco).
- * @returns Token y usuario serializado listos para sembrar en localStorage.
- */
-function reuseInternalSession(
-  role: InternalRole,
-  creds: RealCredentials,
-): Cypress.Chainable<{ token: string; userRaw: string | null }> {
-  return cy.getAllLocalStorage().then((byOrigin) => {
-    const storage = Object.values(byOrigin).find(
-      (entries) => typeof entries[INTERNAL_TOKEN_KEY] === 'string',
-    );
-    const cachedToken = storage?.[INTERNAL_TOKEN_KEY];
-    if (typeof cachedToken === 'string' && cachedToken) {
-      const cachedUser = storage?.[INTERNAL_USER_KEY];
-      return cy.wrap({
-        token: cachedToken,
-        userRaw: typeof cachedUser === 'string' ? cachedUser : null,
-      });
-    }
-    return fetchFreshInternalSession(role, creds).then(({ token, user }) => ({
-      token,
-      userRaw: user
-        ? JSON.stringify(normalizeRealInternalUser(user, token))
-        : null,
-    }));
-  });
 }
 
 /**
@@ -465,6 +384,36 @@ function getPortalRealCredentials(): PortalRealCredentials {
   }
 
   return { dni, password };
+}
+
+/**
+ * Login por API que no pisa la sesión del navegador: cy.request comparte el
+ * cookie jar, así que la cookie HttpOnly `rt` del helper reemplazaría la del
+ * usuario logueado por UI. Guarda las cookies previas y las restaura después.
+ * @param creds Credenciales reales.
+ * @returns Respuesta del endpoint /auth/login.
+ */
+function requestDetachedLogin(
+  creds: RealCredentials,
+): Cypress.Chainable<Cypress.Response<LoginResponseBody>> {
+  return cy.getCookies({ log: false }).then((before) =>
+    requestLoginWithRetry(creds).then((res) =>
+      cy.clearCookies({ log: false }).then(() => {
+        before.forEach((c) => {
+          cy.setCookie(c.name, c.value, {
+            path: c.path,
+            domain: c.domain,
+            httpOnly: c.httpOnly,
+            secure: c.secure,
+            sameSite: c.sameSite,
+            expiry: c.expiry,
+            log: false,
+          });
+        });
+        return cy.wrap(res, { log: false });
+      }),
+    ),
+  );
 }
 
 /**
@@ -486,7 +435,7 @@ function requestPortalLoginWithRetry(
     })
     .then((res) => {
       if (res.status !== 429) {
-        return res;
+        return cy.wrap(res, { log: false });
       }
 
       if (retries <= 0) {
@@ -567,136 +516,50 @@ Cypress.Commands.add('loginAs', (role: InternalRole, destination?: string) => {
 });
 
 /**
- * Inicia sesión real por UI y navega de forma robusta al destino solicitado.
- * Reutiliza sesión con cy.session para reducir relogueos y rate limit.
+ * Inicia sesión real por API y deja una sesión que la app puede restaurar sola.
+ * Desde #39 el access token vive sólo en memoria: el login por cy.request deja
+ * la cookie HttpOnly `rt` en el navegador y el perfil (sin token) se siembra en
+ * `sgcf_user`; al cargar, APP_INITIALIZER hace POST /auth/refresh + GET /auth/me.
+ * No usa cy.session: el refresh rota la cookie en cada carga y una cookie
+ * cacheada quedaría revocada en el test siguiente.
  * @param role Rol a autenticar contra backend real.
- * @param destination Ruta protegida de destino opcional. Si el redirect real
- * post-login cae en home del rol, este helper navega explícitamente al destino.
+ * @param destination Ruta protegida de destino (por defecto, home del rol).
  */
 Cypress.Commands.add(
   'loginReal',
   (role: InternalRole, destination?: string) => {
     assertRealAuthEnabled();
-    const { dni, password } = getRealCredentials(role);
-    const roleHome = REAL_ROLE_HOME[role];
-    const normalizedDestination = destination
-      ? normalizePath(destination)
-      : undefined;
+    const creds = getRealCredentials(role);
+    const targetPath = normalizePath(destination ?? REAL_ROLE_HOME[role]);
 
+    cy.intercept('POST', '**/auth/refresh').as('authRefreshReal');
     cy.intercept('GET', '**/auth/me').as('authMeReal');
 
-    cy.session(
-      `internal-real-v2-${role}-${dni}`,
-      () => {
-        cy.clearAllLocalStorage();
+    requestLoginWithRetry(creds).then((res) => {
+      expect(res.status, `[cypress][loginReal] login ${role}`).to.eq(200);
+      const token = res.body?.data?.token;
+      const user = res.body?.data?.user;
 
-        const visitWithToken = (
-          token: string,
-          user: Record<string, unknown> | null,
-        ) => {
-          cy.visit('/login', {
-            onBeforeLoad(win) {
-              seedRealInternalSession(win, token, user);
-            },
-          });
-        };
+      expect(token, '[cypress][loginReal] token backend').to.be.a('string')
+        .and.not.be.empty;
+      expect(user, '[cypress][loginReal] user backend').to.be.an('object');
 
-        requestLoginWithRetry({ dni, password }).then((res) => {
-          expect(res.status, `[cypress][loginReal] login ${role}`).to.eq(200);
-          const token = res.body?.data?.token;
-          const user =
-            (res.body?.data?.user as Record<string, unknown> | undefined) ??
-            null;
-
-          expect(token, '[cypress][loginReal] token backend').to.be.a('string')
-            .and.not.be.empty;
-
-          AUTH_TOKEN_CACHE[role] = token as string;
-          visitWithToken(token as string, user);
-        });
-      },
-      {
-        validate: () => {
-          cy.window().then((win) => {
-            const token = win.localStorage.getItem(INTERNAL_TOKEN_KEY);
-            expect(token, '[cypress][loginReal] sesión restaurada').to.be.a(
-              'string',
-            ).and.not.be.empty;
-
-            cy.request({
-              method: 'GET',
-              url: `${String(Cypress.env('apiBaseUrl'))}/auth/me`,
-              headers: { Authorization: `Bearer ${token}` },
-              failOnStatusCode: false,
-            })
-              .its('status')
-              .should('eq', 200);
-          });
-        },
-      },
-    );
-
-    const targetPath = normalizedDestination ?? roleHome;
-
-    reuseInternalSession(role, { dni, password }).then(
-      ({ token, userRaw }) => {
-        cy.request({
-          method: 'GET',
-          url: `${String(Cypress.env('apiBaseUrl'))}/auth/me`,
-          headers: { Authorization: `Bearer ${token}` },
-          failOnStatusCode: false,
-        }).then((res) => {
-          expect(res.status, '[cypress][loginReal] auth/me backend').to.eq(200);
-          cy.intercept('GET', '**/auth/me', {
-            statusCode: 200,
-            body: res.body,
-          }).as('authMeReal');
-        });
-
-        cy.visit(targetPath, {
-          onBeforeLoad(win) {
-            win.localStorage.setItem(INTERNAL_TOKEN_KEY, token);
-            if (userRaw) {
-              win.localStorage.setItem(INTERNAL_USER_KEY, userRaw);
-            }
-          },
-        });
-      },
-    );
-
-    cy.url({ timeout: 15000 }).should('include', targetPath);
-
-    cy.location('pathname', { timeout: 15000 }).then((pathname) => {
-      if (normalizePath(pathname) !== '/login') {
-        return;
-      }
-
-      fetchFreshInternalSession(role, { dni, password }).then(
-        ({ token, user }) => {
-          cy.visit(targetPath, {
-            onBeforeLoad(win) {
-              seedRealInternalSession(win, token, user);
-            },
-          });
-        },
+      AUTH_TOKEN_CACHE[role] = token as string;
+      const profile = JSON.stringify(
+        normalizeRealInternalUser(user as Record<string, unknown>),
       );
+
+      cy.visit(targetPath, {
+        onBeforeLoad(win) {
+          win.localStorage.setItem(INTERNAL_USER_KEY, profile);
+        },
+      });
     });
 
-    if (!normalizedDestination) {
-      return;
-    }
-
-    cy.location('pathname', { timeout: 15000 }).then((pathname) => {
-      const normalizedCurrentPath = normalizePath(pathname);
-      if (normalizedCurrentPath !== normalizedDestination) {
-        cy.visit(normalizedDestination);
-      }
-    });
-
-    cy.location('pathname', { timeout: 15000 }).should(
-      'eq',
-      normalizedDestination,
-    );
+    cy.wait('@authRefreshReal', { timeout: 15000 })
+      .its('response.statusCode')
+      .should('eq', 200);
+    cy.location('pathname', { timeout: 15000 }).should('eq', targetPath);
   },
 );
 
@@ -731,167 +594,88 @@ Cypress.Commands.add(
 );
 
 /**
- * Inicia sesión real de portal por API y navega al destino solicitado.
- * Reutiliza sesión con cy.session para reducir relogueos y rate limit.
+ * Pide login real de portal; si el cliente E2E no existe, corre el seed y reintenta.
+ * @param creds Credenciales reales del portal.
+ * @returns Respuesta 200 del endpoint /auth/portal/login.
+ */
+function requestPortalLoginOrSeed(
+  creds: PortalRealCredentials,
+): Cypress.Chainable<Cypress.Response<PortalLoginResponseBody>> {
+  return requestPortalLoginWithRetry(creds).then((res) => {
+    if (res.status !== 401) {
+      expect(res.status, '[cypress][loginPortalReal] login portal').to.eq(200);
+      return cy.wrap(res);
+    }
+
+    return cy.task('db:seed:e2e').then((result) => {
+      const taskResult = result as { ok?: boolean; error?: string };
+      expect(taskResult?.ok, '[cypress][loginPortalReal] db:seed:e2e').to.eq(
+        true,
+      );
+
+      return requestPortalLoginWithRetry(creds).then((retryRes) => {
+        expect(
+          retryRes.status,
+          '[cypress][loginPortalReal] login portal tras seed',
+        ).to.eq(200);
+        return retryRes;
+      });
+    });
+  });
+}
+
+/**
+ * Inicia sesión real de portal por API y deja una sesión que la app puede restaurar.
+ * El login por cy.request deja la cookie HttpOnly `prt` (path /api/auth/portal,
+ * backend#101) y se siembra sólo el cliente en `sgcf_portal_customer`; al cargar,
+ * la app recupera el token con POST /auth/portal/refresh.
  * @param destination Ruta destino del portal (por defecto dashboard).
  */
 Cypress.Commands.add('loginPortalReal', (destination?: string) => {
   assertRealAuthEnabled();
-  const { dni, password } = getPortalRealCredentials();
-  const normalizedDestination = normalizePath(
-    destination ?? PORTAL_DEFAULT_HOME,
-  );
+  const creds = getPortalRealCredentials();
+  const targetPath = normalizePath(destination ?? PORTAL_DEFAULT_HOME);
 
-  cy.session(
-    `portal-real-${dni}`,
-    () => {
-      cy.clearAllLocalStorage();
+  cy.intercept('POST', '**/auth/portal/refresh').as('portalRefreshReal');
 
-      if (PORTAL_SESSION_CACHE) {
-        cy.visit(PORTAL_DEFAULT_HOME, {
-          onBeforeLoad(win) {
-            seedPortalSession(win, PORTAL_SESSION_CACHE as PortalSession);
-          },
-        });
-        return;
-      }
+  requestPortalLoginOrSeed(creds).then((res) => {
+    const token = res.body?.data?.token;
+    const customer = res.body?.data?.customer;
 
-      requestPortalLoginWithRetry({ dni, password }).then((res) => {
-        if (res.status === 401) {
-          cy.task('db:seed:e2e')
-            .then((result) => {
-              const taskResult = result as { ok?: boolean; error?: string };
-              expect(
-                taskResult?.ok,
-                '[cypress][loginPortalReal] db:seed:e2e',
-              ).to.eq(true);
+    expect(token, '[cypress][loginPortalReal] token backend').to.be.a('string')
+      .and.not.be.empty;
+    expect(customer?.id, '[cypress][loginPortalReal] customer.id').to.be.a(
+      'string',
+    ).and.not.be.empty;
 
-              return requestPortalLoginWithRetry({ dni, password }).then(
-                (retryRes) => {
-                  expect(
-                    retryRes.status,
-                    '[cypress][loginPortalReal] login portal tras seed',
-                  ).to.eq(200);
-                  return retryRes;
-                },
-              );
-            })
-            .then((retryRes) => {
-              const token = retryRes.body?.data?.token;
-              const customer = retryRes.body?.data?.customer;
-
-              expect(token, '[cypress][loginPortalReal] token backend').to.be.a(
-                'string',
-              ).and.not.be.empty;
-              expect(
-                customer?.id,
-                '[cypress][loginPortalReal] customer.id',
-              ).to.be.a('string').and.not.be.empty;
-
-              const customerFullName =
-                typeof customer?.full_name === 'string' &&
-                customer.full_name.length > 0
-                  ? customer.full_name
-                  : 'Cliente Portal';
-              const customerDni =
-                typeof customer?.dni === 'string' && customer.dni.length > 0
-                  ? customer.dni
-                  : dni;
-
-              const session: PortalSession = {
-                token: token as string,
-                customer: {
-                  id: customer?.id as string,
-                  fullName: customerFullName,
-                  dni: customerDni,
-                  portalIsTempPassword: Boolean(
-                    customer?.portal_is_temp_password,
-                  ),
-                },
-              };
-
-              PORTAL_SESSION_CACHE = session;
-
-              cy.visit(PORTAL_DEFAULT_HOME, {
-                onBeforeLoad(win) {
-                  seedPortalSession(win, session);
-                },
-              });
-            });
-
-          return;
-        }
-
-        expect(res.status, '[cypress][loginPortalReal] login portal').to.eq(
-          200,
-        );
-
-        const token = res.body?.data?.token;
-        const customer = res.body?.data?.customer;
-
-        expect(token, '[cypress][loginPortalReal] token backend').to.be.a(
-          'string',
-        ).and.not.be.empty;
-        expect(customer?.id, '[cypress][loginPortalReal] customer.id').to.be.a(
-          'string',
-        ).and.not.be.empty;
-
-        const customerFullName =
-          typeof customer?.full_name === 'string' &&
-          customer.full_name.length > 0
+    const session: PortalSession = {
+      token: token as string,
+      customer: {
+        id: customer?.id as string,
+        fullName:
+          typeof customer?.full_name === 'string' && customer.full_name
             ? customer.full_name
-            : 'Cliente Portal';
-        const customerDni =
-          typeof customer?.dni === 'string' && customer.dni.length > 0
+            : 'Cliente Portal',
+        dni:
+          typeof customer?.dni === 'string' && customer.dni
             ? customer.dni
-            : dni;
-
-        const session: PortalSession = {
-          token: token as string,
-          customer: {
-            id: customer?.id as string,
-            fullName: customerFullName,
-            dni: customerDni,
-            portalIsTempPassword: Boolean(customer?.portal_is_temp_password),
-          },
-        };
-
-        PORTAL_SESSION_CACHE = session;
-
-        cy.visit(PORTAL_DEFAULT_HOME, {
-          onBeforeLoad(win) {
-            seedPortalSession(win, session);
-          },
-        });
-      });
-    },
-    {
-      validate: () => {
-        cy.window().then((win) => {
-          const token = win.localStorage.getItem(PORTAL_TOKEN_KEY);
-          expect(token, '[cypress][loginPortalReal] sesión restaurada').to.be.a(
-            'string',
-          ).and.not.be.empty;
-
-          cy.request({
-            method: 'GET',
-            url: `${String(Cypress.env('apiBaseUrl'))}/portal/me`,
-            headers: { Authorization: `Bearer ${token}` },
-            failOnStatusCode: false,
-          })
-            .its('status')
-            .should('eq', 200);
-        });
+            : creds.dni,
+        portalIsTempPassword: Boolean(customer?.portal_is_temp_password),
       },
-    },
-  );
+    };
+    const customerRaw = JSON.stringify(session.customer);
 
-  cy.visit(normalizedDestination);
+    cy.visit(targetPath, {
+      onBeforeLoad(win) {
+        win.localStorage.setItem(PORTAL_CUSTOMER_KEY, customerRaw);
+      },
+    });
+  });
 
-  cy.location('pathname', { timeout: 15000 }).should(
-    'eq',
-    normalizedDestination,
-  );
+  cy.wait('@portalRefreshReal', { timeout: 15000 })
+    .its('response.statusCode')
+    .should('eq', 200);
+  cy.location('pathname', { timeout: 15000 }).should('eq', targetPath);
 });
 
 /** Limpia estado de auth y navega a /login */
@@ -900,7 +684,6 @@ Cypress.Commands.add('logout', () => {
   delete AUTH_TOKEN_CACHE.SELLER;
   delete AUTH_TOKEN_CACHE.COLLECTOR;
   delete AUTH_TOKEN_CACHE.SELLER_COLLECTOR;
-  PORTAL_SESSION_CACHE = null;
   cy.clearAllLocalStorage();
   cy.visit('/login');
 });
@@ -911,6 +694,19 @@ Cypress.Commands.add('logout', () => {
 const API_BASE = () => Cypress.env('apiBaseUrl') as string;
 
 type ApiRole = InternalRole;
+
+/**
+ * Envoltorio estándar de respuesta del backend ({ ok, data, message, code }).
+ * `data` queda abierto porque cada endpoint devuelve una forma distinta y los specs
+ * lo leen de forma dinámica, igual que el `Response<any>` nativo de `cy.request`.
+ */
+type ApiEnvelope = {
+  ok?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload dinámico por endpoint
+  data?: any;
+  message?: string;
+  code?: string;
+};
 
 /**
  * Obtiene un token real haciendo POST /auth/login con las credenciales
@@ -934,7 +730,7 @@ Cypress.Commands.add(
       return cy.wrap(cachedToken, { log: false });
     }
 
-    return requestLoginWithRetry({ dni, password }).then((res) => {
+    return requestDetachedLogin({ dni, password }).then((res) => {
       expect(res.status, `login ${role}`).to.eq(200);
       const token = res.body.data?.token as string;
       AUTH_TOKEN_CACHE[role] = token;
@@ -953,7 +749,7 @@ Cypress.Commands.add(
     path: string,
     body: object | null,
     token: string,
-  ): Cypress.Chainable<Cypress.Response<unknown>> => {
+  ): Cypress.Chainable<Cypress.Response<ApiEnvelope>> => {
     return cy.request({
       method,
       url: `${API_BASE()}${path}`,
@@ -1014,7 +810,7 @@ Cypress.Commands.add(
  */
 Cypress.Commands.add(
   'apiUnlockUser',
-  (userId: string): Cypress.Chainable<void> => {
+  (userId: string): Cypress.Chainable<unknown> => {
     return cy.getAuthToken('ADMIN').then((token) =>
       cy
         .apiRequest('PATCH', `/users/${userId}/unlock`, null, token)
@@ -1038,7 +834,7 @@ Cypress.Commands.add(
  * mismo monto con que ensureCashSessionOpen abre una caja nueva.
  * @param token - token ADMIN
  */
-function fundActiveCashSession(token: string): Cypress.Chainable<void> {
+function fundActiveCashSession(token: string): Cypress.Chainable<unknown> {
   return cy.apiRequest('GET', '/cash-sessions/active', null, token).then((activeRes) => {
     const sessionId = (activeRes.body?.data as { id?: string } | null)?.id;
     expect(sessionId, 'caja operativa activa para fondear').to.be.a('string');
@@ -1046,7 +842,7 @@ function fundActiveCashSession(token: string): Cypress.Chainable<void> {
       .apiRequest(
         'POST',
         `/cash-sessions/${sessionId}/manual-incomes`,
-        { amount: 100000000, payment_method: 'CASH', description: 'Fondeo automático de E2E' },
+        { amount: 99999999, payment_method: 'CASH', description: 'Fondeo automático de E2E' },
         token,
       )
       .then((incomeRes) => {
@@ -1055,16 +851,63 @@ function fundActiveCashSession(token: string): Cypress.Chainable<void> {
   });
 }
 
-function ensureCashSessionOpen(token: string): Cypress.Chainable<void> {
+/**
+ * Garantiza una caja operativa abierta hoy. Si la jornada ya tiene caja
+ * abierta la reutiliza; si la jornada quedó cerrada por otra suite (no hay
+ * reapertura en el mismo día), la resetea con el endpoint de test y abre una
+ * caja nueva, para no depender del orden de las suites.
+ * @param token - token ADMIN
+ */
+function ensureCashSessionOpen(token: string): Cypress.Chainable<unknown> {
   return cy
-    .apiRequest('POST', '/cash-sessions', { opening_amount: 100000000 }, token)
+    .apiRequest('POST', '/cash-sessions', { opening_amount: 99999999 }, token)
     .then((res) => {
       expect(
         [201, 409],
         'abrir caja operativa (nueva o ya existente)',
       ).to.include(res.status);
+      if (res.status === 201) return;
+      return cy.apiRequest('GET', '/cash-sessions/active', null, token).then((activeRes) => {
+        if (activeRes.body?.data) return;
+        return cy
+          .apiRequest('DELETE', '/test/business-days/today', null, token)
+          .then((resetRes) => {
+            expect(resetRes.status, 'reset jornada cerrada').to.eq(200);
+            return cy.apiRequest('POST', '/cash-sessions', { opening_amount: 99999999 }, token);
+          })
+          .then((reopenRes) => {
+            expect(reopenRes.status, `abrir caja tras reset — ${JSON.stringify(reopenRes.body)}`).to.eq(201);
+          });
+      });
     });
 }
+
+/**
+ * Escribe un parámetro de system_config por el endpoint real y devuelve el
+ * valor anterior, para que la suite lo restaure en su after().
+ * @param key - clave de configuración (ej. penalty_rate_daily)
+ * @param value - nuevo valor
+ * @returns valor previo (string) o null si no existía
+ */
+Cypress.Commands.add('apiSetSystemConfig', (key: string, value: string): Cypress.Chainable<string | null> =>
+  cy.getAuthToken('ADMIN').then((token) =>
+    cy.apiRequest('GET', `/system-config/${key}`, null, token).then((getRes) => {
+      const previous = (getRes.body?.data as { value?: string } | null)?.value ?? null;
+      return cy.apiRequest('PUT', `/system-config/${key}`, { value }, token).then((putRes) => {
+        expect(putRes.status, `PUT ${key}=${value}`).to.eq(200);
+        return previous;
+      });
+    }),
+  ),
+);
+
+/**
+ * Comando público de ensureCashSessionOpen con el token ADMIN, para suites que
+ * necesitan caja operativa abierta en su before().
+ */
+Cypress.Commands.add('apiEnsureCashSessionOpen', (): Cypress.Chainable<unknown> =>
+  cy.getAuthToken('ADMIN').then((token) => ensureCashSessionOpen(token)),
+);
 
 /**
  * Aprueba un crédito por id usando el token Admin. Abre caja operativa si no
@@ -1085,7 +928,7 @@ Cypress.Commands.add(
           // para no depender del orden de las suites.
           if (res.status !== 409 || res.body?.code !== 'INSUFFICIENT_CASH') {
             expect(res.status, `aprobar crédito — ${JSON.stringify(res.body)}`).to.eq(200);
-            return res.body.data as Record<string, unknown>;
+            return cy.wrap(res.body.data as Record<string, unknown>, { log: false });
           }
           return fundActiveCashSession(token).then(() =>
             approve(token).then((retry) => {
@@ -1123,7 +966,7 @@ Cypress.Commands.add(
       .then((created) => {
         const user = (created as { user: { id: string } }).user;
         const tempPassword = String((created as { tempPassword: string }).tempPassword);
-        return requestLoginWithRetry({ dni, password: tempPassword }).then((loginRes) => {
+        return requestDetachedLogin({ dni, password: tempPassword }).then((loginRes) => {
           expect(loginRes.status, 'login con contraseña temporal').to.eq(200);
           const tempToken = String(loginRes.body?.data?.token);
           return cy
@@ -1135,7 +978,7 @@ Cypress.Commands.add(
             )
             .then((changeRes) => {
               expect(changeRes.status, 'cambiar contraseña temporal').to.eq(200);
-              return requestLoginWithRetry({ dni, password: newPassword }).then((res) => {
+              return requestDetachedLogin({ dni, password: newPassword }).then((res) => {
                 expect(res.status, 'login con contraseña definitiva').to.eq(200);
                 return { id: user.id, dni, token: String(res.body?.data?.token) };
               });
@@ -1363,9 +1206,34 @@ Cypress.Commands.add('apiSessionToken', (portal = false) => {
     });
 });
 
+/**
+ * Stub de la restauración de sesión mock: desde #39 el access token vive en
+ * memoria y APP_INITIALIZER lo recupera con POST /auth/refresh antes de pedir
+ * /auth/me. Sin este stub, una sesión sembrada sólo en localStorage no arranca.
+ * @param token - token mock que devuelve el refresh
+ * @param portal - true para el refresh del portal (/auth/portal/refresh)
+ */
+Cypress.Commands.add('stubSessionRefresh', (token: string, portal = false) => {
+  const url = portal ? '**/auth/portal/refresh' : '**/auth/refresh';
+  cy.intercept('POST', url, {
+    statusCode: 200,
+    body: { ok: true, data: { token } },
+  }).as(portal ? 'portalRefresh' : 'authRefresh');
+  if (!portal) {
+    // El polling de notificaciones sale apenas hay sesión: contra un backend
+    // vivo el token mock da 401 y el interceptor cierra la sesión mock.
+    cy.intercept('GET', '**/api/notifications/unread-count', {
+      statusCode: 200,
+      body: { ok: true, data: { count: 0 } },
+    });
+  }
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
+      /** Stubea POST /auth/refresh (o el del portal) para restaurar una sesión mock. */
+      stubSessionRefresh(token: string, portal?: boolean): Chainable<void>;
       /** Obtiene un access token nuevo con la cookie HttpOnly de refresh (#39). */
       apiSessionToken(portal?: boolean): Chainable<string>;
       loginAs(role: InternalRole, destination?: string): Chainable<void>;
@@ -1384,7 +1252,7 @@ declare global {
         path: string,
         body: object | null,
         token: string,
-      ): Chainable<Cypress.Response<unknown>>;
+      ): Chainable<Cypress.Response<ApiEnvelope>>;
       apiCreateCustomer(data: {
         full_name: string;
         dni: string;
@@ -1399,7 +1267,9 @@ declare global {
         address: string;
         role: string;
       }): Chainable<Record<string, unknown>>;
-      apiUnlockUser(userId: string): Chainable<void>;
+      apiUnlockUser(userId: string): Chainable<unknown>;
+      apiEnsureCashSessionOpen(): Chainable<unknown>;
+      apiSetSystemConfig(key: string, value: string): Chainable<string | null>;
       apiApproveCredit(creditId: string): Chainable<Record<string, unknown>>;
       apiRejectCreditIfPending(creditId: string): Chainable<number>;
       apiCreateActiveUser(role: string): Chainable<{ id: string; dni: string; token: string }>;

@@ -78,6 +78,7 @@ function visitAsAdmin(path: string): void {
       force_relogin_at: null,
     },
   }).as('authMe');
+  cy.stubSessionRefresh('mock_admin_token');
   cy.visit(path, {
     onBeforeLoad(win) {
       win.localStorage.setItem('sgcf_token', 'mock_admin_token');

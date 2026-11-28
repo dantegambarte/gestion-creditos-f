@@ -1,7 +1,7 @@
 /**
  * Inyecta la URL del backend en environment.ts en tiempo de build, para no versionar
  * la URL de producción en el repositorio público.
- * Lee API_BASE_URL; en Netlify (NETLIFY=true) es obligatoria y el build falla si falta.
+ * Lee API_BASE_URL (la usa el script de deploy al VPS); si falta, deja environment.ts como está.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -9,10 +9,6 @@ const file = new URL('../src/environments/environment.ts', import.meta.url);
 const url = process.env.API_BASE_URL?.trim();
 
 if (!url) {
-  if (process.env.NETLIFY === 'true') {
-    console.error('API_BASE_URL is required for Netlify builds.');
-    process.exit(1);
-  }
   console.log('API_BASE_URL not set; keeping environment.ts as is.');
   process.exit(0);
 }

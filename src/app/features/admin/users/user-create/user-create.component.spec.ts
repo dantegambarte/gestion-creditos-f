@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
 import { UserCreateComponent } from './user-create.component';

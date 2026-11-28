@@ -126,6 +126,26 @@ describe('Admin — Dashboard', () => {
       },
     }).as('credits');
 
+    // Aprobar cobros exige caja abierta: el dashboard no debe depender de la
+    // caja real que haya dejado otra suite.
+    cy.intercept('GET', '**/api/cash-sessions/active', {
+      statusCode: 200,
+      body: {
+        ok: true,
+        data: {
+          id: 'sess-dashboard-open',
+          business_day_id: 'business-day-dashboard',
+          owner_user_id: 'admin-001',
+          opened_at: '2026-06-01T08:00:00.000Z',
+          opened_by: 'admin-001',
+          opening_amount: 100000,
+          status: 'OPEN',
+          cash_counted: null,
+          closure_total_difference: null,
+        },
+      },
+    }).as('activeCashSession');
+
     cy.intercept('GET', '**/api/payments*', {
       statusCode: 200,
       body: {
@@ -207,7 +227,7 @@ describe('Admin — Dashboard', () => {
     );
     cy.get('[data-cy="dashboard-mobile-quick-actions"]').should('be.visible');
     cy.get('[data-cy="dashboard-mobile-pending"]')
-      .scrollIntoView({ block: 'center' })
+      .scrollIntoView()
       .should('be.visible');
     cy.get('[data-cy="dashboard-mobile-quick-actions"]').then(($quick) => {
       cy.get('[data-cy="dashboard-mobile-pending"]').should(($pending) => {
@@ -247,7 +267,7 @@ describe('Admin — Dashboard', () => {
     );
 
     cy.get('[data-cy="dashboard-mobile-pending"]')
-      .scrollIntoView({ block: 'center' })
+      .scrollIntoView()
       .should('be.visible');
     cy.get('[data-cy="dashboard-pending-tab-credits"]').should('be.visible');
     cy.contains(
@@ -295,15 +315,12 @@ describe('Admin — Dashboard', () => {
     cy.get('p-table, table').should('have.length.gte', 1);
   });
 
-  it('muestra el panel de próximos vencimientos', () => {
+  // "Próximos vencimientos" se reemplazó por el ranking de mora en f5ab0e7.
+  it('muestra el ranking de clientes en mora', () => {
     cy.get('app-error-state').should('not.exist');
-    cy.get('body').then(($body) => {
-      if ($body.text().includes('Próximos vencimientos')) {
-        cy.contains('Próximos vencimientos').should('be.visible');
-      } else {
-        cy.contains(/vencim/i).should('exist');
-      }
-    });
+    cy.contains('.db-panel__header', 'Ranking de clientes en mora').should('be.visible');
+    cy.get('.db-overdue-table').should('exist');
+    cy.contains('Próximos vencimientos').should('not.exist');
   });
 
   it('DV-01 — requiere doble validación al aprobar un cobro desde dashboard', () => {

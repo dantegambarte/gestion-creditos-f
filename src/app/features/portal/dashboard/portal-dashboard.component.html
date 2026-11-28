@@ -318,7 +318,8 @@
                     <p class="text-xs flex-shrink-0" style="color: var(--ff-text-muted)">
                       Vence el {{ inst.dueDate | date: 'dd/MM/yyyy' }}
                     </p>
-                    @if (daysUntil(inst.dueDate); as days) {
+                    @let days = daysUntil(inst.dueDate);
+                    @if (days !== null) {
                       @if (days === 0) {
                         <span class="text-xs font-semibold" style="color: #fbb040">· Hoy</span>
                       } @else if (days > 0 && days <= 5) {

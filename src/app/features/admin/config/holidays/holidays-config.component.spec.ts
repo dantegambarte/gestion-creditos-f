@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { HolidaysConfigComponent } from './holidays-config.component';
 import { HolidaysService } from '../services/holidays.service';

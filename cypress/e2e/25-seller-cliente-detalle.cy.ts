@@ -76,7 +76,8 @@ describe('Detalle de Cliente — Admin', () => {
 
   it('clic en Editar activa el modo edición', () => {
     cy.get('[data-cy="seller-client-detail-edit-action"] button').click();
-    cy.get('[data-cy="seller-client-detail-save-action"]').should('be.visible');
+    // El formulario de edición es largo: el botón queda debajo del scroll del shell.
+    cy.get('[data-cy="seller-client-detail-save-action"] button').scrollIntoView().should('be.visible');
   });
 
   it('en modo edición: campo fullName visible y prellenado', () => {
@@ -117,7 +118,8 @@ describe('Detalle de Cliente — Estado de carga/error', () => {
       req.reply({ delay: 3000, statusCode: 200, body: { ok: true, data: null } });
     }).as('slowCustomer');
     cy.loginAs('SELLER', '/seller/clients/99999999');
-    cy.get('app-loading-state').should('exist');
+    // Carga = skeleton desde f636c64.
+    cy.get('[data-cy="seller-client-detail-skeleton"]').should('exist');
   });
 
   it('muestra error si no existe el cliente', () => {

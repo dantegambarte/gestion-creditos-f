@@ -142,7 +142,6 @@ export class RouteComponent implements OnInit {
   ngOnInit(): void {
     this.header.set([{ label: 'Mi Ruta' }]);
     this.loadSheets();
-    this.loadRecentPayments();
   }
 
   /**
@@ -227,20 +226,32 @@ export class RouteComponent implements OnInit {
       next: (data) => {
         this.sheets = data;
         this.loadingSheets = false;
+        this.loadRecentPayments();
       },
       error: (err: AppError) => {
         this.errorSheets = err;
         this.loadingSheets = false;
+        this.loadingPayments = false;
       },
     });
   }
 
   /**
-   * Carga los pagos recientes.
+   * Carga solo los cobros registrados desde el día en que arranca la ventana de
+   * la planilla actual (filtro created_from en el backend). La fecha local es un
+   * piso seguro; el corte exacto por instante lo aplica windowPayments. Sin
+   * planilla actual no hay ventana, así que no se piden cobros.
    */
   private loadRecentPayments(): void {
+    const start = this.collectionWindowStart;
+    if (start === null) {
+      this.recentPayments = [];
+      this.loadingPayments = false;
+      return;
+    }
     this.loadingPayments = true;
-    this.paymentsService.list().subscribe({
+    const createdFrom = this.dateSvc.toLocalIso(new Date(start));
+    this.paymentsService.list({ createdFrom }).subscribe({
       next: (data) => {
         this.recentPayments = data;
         this.loadingPayments = false;

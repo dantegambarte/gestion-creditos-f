@@ -73,14 +73,15 @@ export class InstallmentsService {
   private readonly api = inject(ApiHttpService);
 
   /**
-   * Lista los recibos de crédito según los filtros especificados.
-   * @param filters
-   * @returns
+   * Lista las cuotas según los filtros; `overdue` pide al backend las vencidas
+   * por fecha de vencimiento aunque el status persistido no sea OVERDUE.
+   * @param filters - filtros opcionales (crédito, status, vencidas por fecha)
    */
   list(filters?: InstallmentListFilters): Observable<Installment[]> {
     const params: Record<string, string> = {};
     if (filters?.creditId) params['credit_id'] = filters.creditId;
     if (filters?.status) params['status'] = filters.status;
+    if (filters?.overdue) params['overdue'] = 'true';
     return this.api
       .get<InstallmentRaw[]>('installments', params)
       .pipe(map((items) => items.map(toInstallment)));
@@ -92,9 +93,7 @@ export class InstallmentsService {
    * @returns
    */
   getById(id: string): Observable<InstallmentDetail> {
-    return this.api
-      .get<InstallmentDetailRaw>(`installments/${id}`)
-      .pipe(map(toInstallmentDetail));
+    return this.api.get<InstallmentDetailRaw>(`installments/${id}`).pipe(map(toInstallmentDetail));
   }
 
   /**
@@ -103,10 +102,7 @@ export class InstallmentsService {
    * @param payload
    * @returns
    */
-  applyPenalty(
-    id: string,
-    payload: ApplyPenaltyPayload,
-  ): Observable<Partial<Installment>> {
+  applyPenalty(id: string, payload: ApplyPenaltyPayload): Observable<Partial<Installment>> {
     const body: Record<string, unknown> = {
       penalty_amount: payload.penaltyAmount,
     };
@@ -159,10 +155,7 @@ export class InstallmentsService {
    */
   earlyPay(id: string, payload: EarlyPayPayload): Observable<EarlyPayResult> {
     const body: Record<string, unknown> = {};
-    if (
-      payload.amountCash !== undefined ||
-      payload.amountTransfer !== undefined
-    ) {
+    if (payload.amountCash !== undefined || payload.amountTransfer !== undefined) {
       body['amount_cash'] = payload.amountCash ?? 0;
       body['amount_transfer'] = payload.amountTransfer ?? 0;
     } else if (payload.paymentMethod) {
@@ -183,9 +176,7 @@ export class InstallmentsService {
    */
   getManagementLog(installmentId: string): Observable<ManagementLogEntry[]> {
     return this.api
-      .get<
-        ManagementLogEntryRaw[]
-      >(`installments/${installmentId}/management-log`)
+      .get<ManagementLogEntryRaw[]>(`installments/${installmentId}/management-log`)
       .pipe(
         map((items) =>
           items.map((raw) => ({

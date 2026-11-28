@@ -31,6 +31,18 @@ describe('Aplicación manual de mora + tope máximo (real)', () => {
   let originalAmount: number;
   let maxPenalty: number;
 
+  // La mora automática viene deshabilitada por defecto (backend bebf4fc,
+  // penalty_rate_daily = 0): habilitarla para esta suite y restaurarla al final.
+  let originalDailyRate: string | null = null;
+  before(() => {
+    cy.apiSetSystemConfig('penalty_rate_daily', '0.005').then((previous) => {
+      originalDailyRate = previous;
+    });
+  });
+  after(() => {
+    cy.apiSetSystemConfig('penalty_rate_daily', originalDailyRate ?? '0');
+  });
+
   before(() => {
     cy.getAuthToken('ADMIN').then((token) =>
       cy.apiRequest('DELETE', '/test/business-days/today', null, token),
@@ -201,7 +213,7 @@ describe('Aplicación manual de mora + tope máximo (real)', () => {
         cy.contains('button', 'Aplicar mora').click({ force: true });
       });
 
-    cy.contains('.p-dialog-title', 'Aplicar mora', { timeout: 10000 })
+    cy.contains('.p-dialog:visible h2', 'Aplicar mora', { timeout: 10000 })
       .closest('.p-dialog')
       .as('applyDialog');
     cy.get('@applyDialog')
@@ -349,7 +361,7 @@ describe('Aplicación manual de mora + tope máximo (real)', () => {
                   expect(
                     res.body?.message,
                     'mensaje real de "solo OVERDUE"',
-                  ).to.match(/solo se aplica mora a cuotas overdue/i);
+                  ).to.match(/solo se aplica mora a cuotas vencidas/i);
                 });
               });
             });

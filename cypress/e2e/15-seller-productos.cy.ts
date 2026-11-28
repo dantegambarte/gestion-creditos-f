@@ -13,8 +13,8 @@ describe('Admin — Lista de Productos', () => {
     cy.get('app-error-state').should('not.exist');
   });
 
-  it('muestra campo de búsqueda por título o descripción', () => {
-    cy.get('input[placeholder*="Buscar por título o descripción"]').should('exist');
+  it('muestra campo de búsqueda de productos', () => {
+    cy.get('input[placeholder="Buscar producto..."]').should('exist');
   });
 
   it('muestra dropdown de filtro por Estado', () => {
@@ -50,6 +50,6 @@ describe('Seller — Lista de Productos (sin botón crear)', () => {
   });
 
   it('muestra campo de búsqueda', () => {
-    cy.get('input[placeholder*="Buscar por título o descripción"]').should('exist');
+    cy.get('input[placeholder="Buscar producto..."]').should('exist');
   });
 });

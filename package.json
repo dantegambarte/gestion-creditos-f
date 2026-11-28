@@ -20,6 +20,7 @@
     "e2e:all": "pnpm e2e:clean && pnpm e2e:run:all && pnpm e2e:report",
     "lint": "eslint --max-warnings 0",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadlessCI --code-coverage",
+    "typecheck:e2e": "tsc -p cypress/tsconfig.json",
     "test:scope": "node --test scripts/ci-scope.test.mjs",
     "prepare": "husky",
     "format": "prettier --write"
@@ -61,6 +62,7 @@
     "autoprefixer": "^10.5.0",
     "cypress": "^13.17.0",
     "eslint": "^9.39.5",
+    "eslint-plugin-chai-friendly": "1.2.1",
     "husky": "^9.1.7",
     "jasmine-core": "~5.2.0",
     "karma": "~6.4.0",

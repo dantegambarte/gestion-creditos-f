@@ -181,10 +181,11 @@ describe('Enganche MIXED + cuotas adelantadas — flujo multi-rol real', () => {
         const amountDue = Number(res.body?.data?.amount_due);
 
         cy.intercept('POST', '/api/payments').as('createPayment');
-        cy.contains(customer.fullName, { timeout: 15000 })
-          .closest('tr')
+        // La acción de la fila de la planilla es "Registrar cobro".
+        cy.get(`[data-cy="sheet-detail-table-row"][data-installment-id="${survivingInstallmentId}"]`, { timeout: 15000 })
+          .scrollIntoView()
           .within(() => {
-            cy.contains('button', 'Cobrar').click({ force: true });
+            cy.contains('button', 'Registrar cobro').should('be.visible').click();
           });
 
         cy.contains('.p-dialog', 'Registrar Cobro', { timeout: 10000 }).should('be.visible');
@@ -233,11 +234,9 @@ describe('Enganche MIXED + cuotas adelantadas — flujo multi-rol real', () => {
     cy.location('pathname').then((pathname) => {
       if (!pathname.includes('change-password')) return;
 
-      cy.window()
-        .then((win) => {
-          const token = win.localStorage.getItem('sgcf_portal_token');
-          expect(token, 'token portal tras login temp').to.be.a('string').and.not.be.empty;
-
+      // El token del portal vive sólo en memoria (#39): se pide con la cookie de refresh.
+      cy.apiSessionToken(true)
+        .then((token) => {
           return cy.request({
             method: 'POST',
             url: `${String(Cypress.env('apiBaseUrl'))}/auth/portal/change-password`,

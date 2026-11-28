@@ -17,7 +17,6 @@
  * incluida, monto no determinístico).
  */
 
-type MeResponse = { id?: string };
 
 describe('Refinanciación de crédito con mora (real)', () => {
   const stamp = Date.now().toString().slice(-6);
@@ -31,6 +30,18 @@ describe('Refinanciación de crédito con mora (real)', () => {
   let creditId: string;
   let pendingBalanceBefore: number;
   let newCreditId: string;
+
+  // La mora automática viene deshabilitada por defecto (backend bebf4fc,
+  // penalty_rate_daily = 0): habilitarla para esta suite y restaurarla al final.
+  let originalDailyRate: string | null = null;
+  before(() => {
+    cy.apiSetSystemConfig('penalty_rate_daily', '0.005').then((previous) => {
+      originalDailyRate = previous;
+    });
+  });
+  after(() => {
+    cy.apiSetSystemConfig('penalty_rate_daily', originalDailyRate ?? '0');
+  });
 
   before(() => {
     cy.getAuthToken('ADMIN').then((token) =>

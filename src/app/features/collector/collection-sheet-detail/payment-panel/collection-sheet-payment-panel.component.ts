@@ -8,6 +8,13 @@ import { InstallmentStatus } from '../../../seller/models/installment.model';
 import { CollectionSheetItem, ManagementStatus } from '../../models/collection.model';
 import { CollectionAttemptType } from '../../models/collection-attempt.model';
 import {
+  itemAmountDue,
+  itemAmountPaid,
+  itemAvailableBalance,
+  itemCapital,
+  itemPenalty,
+} from '../../models/collection-sheet-item-amounts';
+import {
   MANAGEMENT_EVENT_LABELS,
   ManagementEventType,
   ManagementLogEntry,
@@ -62,27 +69,27 @@ export class CollectionSheetPaymentPanelComponent {
 
   /** Monto vivo de la cuota, usando snapshot como fallback histórico. */
   displayAmountDue(): number {
-    return this.item.live?.amountDue ?? this.item.amountDue;
+    return itemAmountDue(this.item);
   }
 
   /** Mora viva acumulada, usando snapshot como fallback histórico. */
   displayPenalty(): number {
-    return this.item.live?.penaltyAmount ?? this.item.penaltyAmount;
+    return itemPenalty(this.item);
   }
 
   /** Monto ya pagado vivo, usando snapshot como fallback histórico. */
   displayAmountPaid(): number {
-    return this.item.live?.amountPaid ?? this.item.amountPaid;
+    return itemAmountPaid(this.item);
   }
 
   /** Capital de la cuota sin mora. */
   displayCapital(): number {
-    return Math.max(0, this.displayAmountDue() - this.displayPenalty());
+    return itemCapital(this.item);
   }
 
   /** Saldo disponible a gestionar. */
   availableBalance(): number {
-    return Math.max(0, this.displayAmountDue() - this.displayAmountPaid());
+    return itemAvailableBalance(this.item);
   }
 
   /** True si la cuota seleccionada ya tuvo una gestión diaria. */

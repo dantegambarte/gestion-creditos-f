@@ -204,9 +204,9 @@ describe('CU01 — Autenticar usuario (backend real)', () => {
     // Redirige a /login
     cy.url({ timeout: 10000 }).should('include', '/login');
 
-    // Token ya no está en localStorage
+    // El perfil persistido se borra (el token sólo vivía en memoria, #39)
     cy.window().then((win) => {
-      expect(win.localStorage.getItem('sgcf_token')).to.be.null;
+      expect(win.localStorage.getItem('sgcf_user')).to.be.null;
     });
 
     // Navegar directo a ruta protegida debe redirigir a /login (token invalidado)
@@ -243,12 +243,17 @@ describe('CU01 — Autenticar usuario (backend real)', () => {
   // ────────────────────────────────────────────────────────────────────
 
   it('JWT audiencias separadas: token interno no da acceso al portal', () => {
-    cy.getAuthToken('ADMIN').then((internalToken) => {
-      cy.visit('/portal/dashboard', {
-        onBeforeLoad(win) {
-          win.localStorage.setItem('sgcf_portal_token', internalToken);
-        },
-      });
+    // Login interno por API: el navegador queda sólo con la cookie `rt` interna.
+    // El portal la acepta como legada si falta `prt`, pero responde 401
+    // INVALID_TOKEN_TYPE por la audiencia (backend#101).
+    cy.loginReal('ADMIN', ADMIN_HOME);
+    cy.visit('/portal/dashboard', {
+      onBeforeLoad(win) {
+        win.localStorage.setItem(
+          'sgcf_portal_customer',
+          JSON.stringify({ id: 'x', fullName: 'Cliente', dni: '0', portalIsTempPassword: false }),
+        );
+      },
     });
 
     // El guard del portal debe rechazar token con audiencia de sistema interno

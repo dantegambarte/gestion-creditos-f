@@ -62,6 +62,21 @@ describe('PortalService', () => {
     expect(result!.upcomingInstallments[0].penaltyAmount).toBe(500);
   });
 
+  it('getCredits() mapea remaining_amount (deuda restante calculada por el backend) (#55)', () => {
+    let result: Record<string, unknown>[] = [];
+    service
+      .getCredits()
+      .subscribe((data) => (result = data as unknown as Record<string, unknown>[]));
+
+    http.expectOne(`${environment.apiBaseUrl}/portal/credits`).flush({
+      ok: true,
+      message: '',
+      data: [{ id: 'cred-1', type: 'LOAN', status: 'ACTIVE', remaining_amount: 3500 }],
+    });
+
+    expect(result[0]['remainingAmount']).toBe(3500);
+  });
+
   it('getCreditById() maps installments with camelCase', () => {
     let result: ReturnType<typeof service.getCreditById> extends import('rxjs').Observable<infer T>
       ? T

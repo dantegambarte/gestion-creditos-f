@@ -92,42 +92,102 @@ function getGeneralCashAccount(
   });
 }
 
-/** Ajusta (IN/OUT) el saldo de Caja General vía movimiento de ajuste. */
+type CashMethod = 'CASH' | 'TRANSFER';
+
+interface GeneralCashBalance {
+  cash_balance: number;
+  transfer_balance: number;
+}
+
+/**
+ * Lee el saldo de Caja General separado por método (backend#99).
+ * @returns Saldos de efectivo y transferencia.
+ */
+function getGeneralCashBalance(
+  token: string,
+  accountId: string,
+): Cypress.Chainable<GeneralCashBalance> {
+  return cy
+    .apiRequest('GET', `/cash-accounts/${accountId}/balance`, null, token)
+    .then((res) => {
+      expect(res.status, 'balance Caja General').to.eq(200);
+      const data = (res.body as ApiData<GeneralCashBalance>).data;
+      return {
+        cash_balance: Number(data.cash_balance),
+        transfer_balance: Number(data.transfer_balance),
+      };
+    });
+}
+
+/**
+ * Ajusta (IN/OUT) el saldo de Caja General por método de pago. Desde backend#99
+ * un OUT exige payment_method y un IN sin método cae en CASH, así que siempre se envía.
+ * Falla el test si el backend rechaza el ajuste (antes fallaba en silencio).
+ */
 function adjustGeneralCash(
   token: string,
   accountId: string,
   direction: 'IN' | 'OUT',
   amount: number,
-): Cypress.Chainable<Cypress.Response<unknown>> {
-  if (amount <= 0)
-    return cy.wrap(null) as unknown as Cypress.Chainable<
-      Cypress.Response<unknown>
-    >;
-  return cy.apiRequest(
-    'POST',
-    `/cash-accounts/${accountId}/movements`,
-    {
-      movement_type: 'ADJUSTMENT',
-      direction,
-      amount,
-      description: `Ajuste E2E liquidaciones (${direction})`,
-    },
-    token,
-  );
+  paymentMethod: CashMethod = 'CASH',
+): Cypress.Chainable<unknown> {
+  if (amount <= 0) return cy.wrap(null);
+  return cy
+    .apiRequest(
+      'POST',
+      `/cash-accounts/${accountId}/movements`,
+      {
+        movement_type: 'ADJUSTMENT',
+        direction,
+        amount,
+        payment_method: paymentMethod,
+        description: `Ajuste E2E liquidaciones (${direction} ${paymentMethod})`,
+      },
+      token,
+    )
+    .then((res) => {
+      expect(
+        res.status,
+        `ajuste ${direction} ${paymentMethod}: ${JSON.stringify(res.body)}`,
+      ).to.be.oneOf([200, 201]);
+      return res;
+    });
 }
 
-/** Vacía Caja General a $0 (para forzar saldo insuficiente). */
+/**
+ * Lleva cada método de Caja General al saldo objetivo con ajustes IN/OUT.
+ * @param target - saldos objetivo por método
+ */
+function setGeneralCashBalance(
+  token: string,
+  accountId: string,
+  target: GeneralCashBalance,
+): Cypress.Chainable<unknown> {
+  return getGeneralCashBalance(token, accountId).then((current) => {
+    const cashDiff = target.cash_balance - current.cash_balance;
+    const transferDiff = target.transfer_balance - current.transfer_balance;
+    return adjustGeneralCash(token, accountId, cashDiff > 0 ? 'IN' : 'OUT', Math.abs(cashDiff), 'CASH').then(
+      () =>
+        adjustGeneralCash(
+          token,
+          accountId,
+          transferDiff > 0 ? 'IN' : 'OUT',
+          Math.abs(transferDiff),
+          'TRANSFER',
+        ),
+    );
+  });
+}
+
+/** Vacía Caja General a $0 en efectivo y transferencia (para forzar saldo insuficiente). */
 function drainGeneralCashToZero(
   token: string,
 ): Cypress.Chainable<CashAccountApi> {
-  return getGeneralCashAccount(token).then((account) => {
-    return adjustGeneralCash(
-      token,
-      account.id,
-      'OUT',
-      account.current_balance,
-    ).then(() => getGeneralCashAccount(token));
-  });
+  return getGeneralCashAccount(token).then((account) =>
+    setGeneralCashBalance(token, account.id, { cash_balance: 0, transfer_balance: 0 }).then(() =>
+      getGeneralCashAccount(token),
+    ),
+  );
 }
 
 /** Busca un cliente existente o crea uno de fallback. */
@@ -138,7 +198,7 @@ function ensureCustomer(token: string): Cypress.Chainable<string> {
       ? data
       : ((data as { items?: unknown[] })?.items ?? []);
     const existing = items[0] as { id?: string } | undefined;
-    if (existing?.id) return existing.id;
+    if (existing?.id) return cy.wrap(existing.id, { log: false });
 
     return cy
       .apiRequest(
@@ -244,14 +304,16 @@ describe('Liquidaciones × Caja Fuerte Central — escenarios límite (real)', (
   let adminTok = '';
   let sellerTok = '';
   let sellerId = '';
-  let initialGeneralBalance: number | null = null;
+  let initialGeneralBalance: GeneralCashBalance | null = null;
 
   before(function () {
     if (!Cypress.env('realAuthEnabled')) this.skip();
     adminToken().then((t) =>
-      getGeneralCashAccount(t).then((account) => {
-        initialGeneralBalance = account.current_balance;
-      }),
+      getGeneralCashAccount(t).then((account) =>
+        getGeneralCashBalance(t, account.id).then((balance) => {
+          initialGeneralBalance = balance;
+        }),
+      ),
     );
   });
 
@@ -266,11 +328,14 @@ describe('Liquidaciones × Caja Fuerte Central — escenarios límite (real)', (
     if (initialGeneralBalance === null) return;
     const target = initialGeneralBalance;
     adminToken().then((t) =>
-      getGeneralCashAccount(t).then((account) => {
-        const diff = target - account.current_balance;
-        adjustGeneralCash(t, account.id, diff > 0 ? 'IN' : 'OUT', Math.abs(diff));
-      }),
+      getGeneralCashAccount(t).then((account) => setGeneralCashBalance(t, account.id, target)),
     );
+  });
+
+  // Los casos abren una caja de $10.000 en la jornada de hoy: sin este reset,
+  // specs posteriores que desembolsan préstamos chocan con 409 por fondos.
+  after(() => {
+    adminToken().then((t) => resetToday(t));
   });
 
   // Cada test usa un vendedor nuevo: sus comisiones y liquidaciones no chocan
@@ -565,7 +630,7 @@ describe('Liquidaciones × Caja Fuerte Central — escenarios límite (real)', (
         }
 
         getGeneralCashAccount(adminTok).then((before) => {
-          adjustGeneralCash(adminTok, before.id, 'IN', pendingTotal).then(
+          adjustGeneralCash(adminTok, before.id, 'IN', pendingTotal, 'TRANSFER').then(
             () => {
               cy.apiRequest(
                 'POST',

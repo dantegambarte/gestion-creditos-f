@@ -313,14 +313,13 @@ describe('Admin — Caja Fuerte Central V4 — operatoria diaria', () => {
       'postConversion',
     );
 
-    // Se seedea con opening_amount + gasto + ingreso manual: el saldo
-    // estimado siempre es > 0 una vez que el snapshot terminó de propagarse
-    // a la UI (poll con .should() en vez de leer una sola vez).
+    // Se compara el delta (la conversión no cambia el saldo estimado), no el
+    // signo absoluto: el saldo depende de lo sembrado y del snapshot real.
     cy.contains('span', 'Saldo Estimado')
       .parent()
       .find('span.font-mono')
       .should(($el) => {
-        expect(parseAmount($el.text())).to.be.greaterThan(0);
+        expect(Number.isFinite(parseAmount($el.text())), 'saldo estimado renderizado').to.be.true;
       })
       .invoke('text')
       .then((before) => {
@@ -657,4 +656,10 @@ describe('Admin — Caja Fuerte Central V4 — operaciones a Caja General con jo
 
     cy.get('.p-dialog-mask', { timeout: 10000 }).should('not.exist');
   });
+});
+
+// La última suite deja la jornada de hoy reseteada y sin caja (y TEST 4 la
+// cierra): reabrir caja para que las suites siguientes no hereden ese estado.
+after(() => {
+  cy.apiEnsureCashSessionOpen();
 });
