@@ -536,12 +536,15 @@ describe('Admin — Caja Fuerte Central V4 — operaciones a Caja General con jo
     cy.intercept('GET', '**/api/cash-sessions/active').as('getActiveSession');
     cy.intercept('GET', '**/api/cash-register/dashboard*').as('getDashboard');
     cy.intercept('GET', '**/api/cash-accounts').as('getCashAccounts');
+    cy.intercept('GET', '**/api/cash-accounts/*/balance').as('getCashBalance');
 
     cy.loginReal('ADMIN', '/admin/cash-register');
 
     cy.wait('@getActiveBusinessDay');
     cy.wait('@getActiveSession');
     cy.wait('@getDashboard');
+    // El Saldo Total Empresa se lee antes de operar: esperar el saldo real.
+    cy.wait('@getCashBalance');
     cy.get('[data-cy="admin-cash-register-title"]').should('be.visible');
   });
 

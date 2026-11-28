@@ -270,10 +270,13 @@ describe('Admin — Dashboard', () => {
       .scrollIntoView()
       .should('be.visible');
     cy.get('[data-cy="dashboard-pending-tab-credits"]').should('be.visible');
+    // Los pendientes llegan después del primer render y empujan el panel.
     cy.contains(
       '[data-cy="dashboard-pending-mobile-panel"]',
       'Administrador del Sistema',
-    ).should('be.visible');
+    )
+      .scrollIntoView()
+      .should('be.visible');
     ensurePendingGroupExpanded('Administrador del Sistema', 'Crédito Pendiente 08');
     assertLastPendingButtonReachable('Crédito Pendiente 08', 'Revisar');
 

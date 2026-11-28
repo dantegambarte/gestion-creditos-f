@@ -377,6 +377,8 @@ describe('Nueva Operación real — Admin', () => {
 
   it('venta: detalle y aprobación respetan cuotas ya definidas', () => {
     cy.viewport(1280, 720);
+    // Aprobar exige caja del día abierta; otra suite puede haberla cerrado.
+    cy.apiEnsureCashSessionOpen();
     ensureSaleCredit();
 
     cy.then(() => {
