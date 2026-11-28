@@ -97,20 +97,21 @@ describe('Cambio de plan — acortar cuotas restantes (real)', () => {
     // Varios diálogos de acción (Refinanciar/Castigar/etc) viven en el DOM al
     // mismo tiempo (ocultos) — se escopea explícitamente al p-dialog cuyo
     // header dice "Cambio de plan" para no pisar selectores con otro diálogo.
-    cy.contains('.p-dialog-title', 'Cambio de plan', { timeout: 15000 })
-      .closest('.p-dialog')
-      .as('planDialog');
+    // Se re-consulta en cada uso: un alias de .closest() queda colgado si el
+    // diálogo se re-renderiza (Cypress 13: "subjectChain is not iterable").
+    const planDialog = () =>
+      cy.contains('.p-dialog-title', 'Cambio de plan', { timeout: 15000 }).closest('.p-dialog');
 
-    cy.get('@planDialog').contains('Plan actual', { timeout: 15000 }).should('be.visible');
-    cy.get('@planDialog').contains('Nuevo plan').should('be.visible');
-    cy.get('@planDialog').contains('2 cuotas').should('be.visible');
+    planDialog().contains('Plan actual', { timeout: 15000 }).should('be.visible');
+    planDialog().contains('Nuevo plan').should('be.visible');
+    planDialog().contains('2 cuotas').should('be.visible');
 
-    cy.get('@planDialog')
+    planDialog()
       .find('textarea')
       .type('Cambio de plan — control QA, acortar tras pago inicial.');
 
     cy.intercept('POST', /\/api\/credits\/[^/]+\/plan-change$/).as('planChange');
-    cy.get('@planDialog').contains('button', 'Confirmar cambio').should('not.be.disabled').click();
+    planDialog().contains('button', 'Confirmar cambio').should('not.be.disabled').click();
 
     cy.wait('@planChange').then((interception) => {
       expect(interception.response?.statusCode, 'ejecución de cambio de plan').to.eq(200);

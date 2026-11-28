@@ -78,7 +78,8 @@ describe('Admin — Reportes — Movimientos de caja', () => {
       .find('app-error-state')
       .should('not.exist');
 
-    cy.get('app-cash-movements-report').then(($el) => {
+    // should() reintenta hasta que la búsqueda resuelva; then() evaluaba una sola vez.
+    cy.get('app-cash-movements-report').should(($el) => {
       const hasDropdown = $el.find('p-dropdown').length > 0;
       const hasEmptyMessage = $el
         .text()
