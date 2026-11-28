@@ -392,7 +392,15 @@ VIEWPORTS.forEach((vp) => {
         .find('button')
         .click({ force: true });
 
-      cy.get('[data-cy="seller-direct-payment-amount"] input').clear().type('4000');
+      // El diálogo precarga el monto de la cuota al abrir: esperar ese valor
+      // antes de reemplazarlo, o la precarga pisa lo tipeado (lento en CI).
+      cy.get('[data-cy="seller-direct-payment-amount"] input')
+        .should('not.have.value', '')
+        .clear()
+        .type('4000');
+      cy.get('[data-cy="seller-direct-payment-amount"] input')
+        .invoke('val')
+        .should('match', /4.?000/);
       cy.get('[data-cy="seller-direct-submit"] button').should('be.disabled');
 
       cy.get('[data-cy="seller-direct-next-visit"] input').type(
